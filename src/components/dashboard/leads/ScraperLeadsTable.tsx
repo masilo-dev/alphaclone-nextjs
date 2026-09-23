@@ -63,7 +63,7 @@ const GRADE_COLORS: Record<string, string> = {
   D: 'text-slate-400 bg-slate-800',
 };
 
-const fieldClass = 'rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface)] px-2 py-1 text-sm text-[var(--ws-text-primary)] outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50';
+const fieldClass = 'rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface)] px-2 py-1 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50';
 // Native select popups do not reliably inherit Tailwind colors.  Explicit
 // colors plus a dark color scheme prevent white-on-white options until hover.
 const optionStyle = { backgroundColor: '#0f172a', color: '#f8fafc' };
@@ -375,12 +375,12 @@ export default function ScraperLeadsTable({
     <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden min-h-0 flex flex-col">
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 bg-slate-950/80 border-b border-slate-800">
-          <span className="text-xs text-slate-400 mr-1">{selectedIds.size} selected</span>
+          <span className="type-caption text-slate-400 mr-1">{selectedIds.size} selected</span>
           <button
             type="button"
             disabled={acting}
             onClick={() => void runAction('qualify')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-800 hover:bg-slate-700 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-slate-800 hover:bg-slate-700 text-white"
           >
             <Star className="w-3.5 h-3.5" /> Qualify
           </button>
@@ -388,7 +388,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('save')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-teal-700 hover:bg-teal-600 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-teal-700 hover:bg-teal-600 text-white"
           >
             <Save className="w-3.5 h-3.5" /> Save to CRM
           </button>
@@ -396,7 +396,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('prepare_outreach')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-blue-800 hover:bg-blue-700 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-blue-800 hover:bg-blue-700 text-white"
           >
             <Mail className="w-3.5 h-3.5" /> Prepare email
           </button>
@@ -404,14 +404,14 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('automate')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-purple-800 hover:bg-purple-700 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-purple-800 hover:bg-purple-700 text-white"
           >
             <Zap className="w-3.5 h-3.5" /> Auto-sequence
           </button>
           <button
             type="button"
             onClick={() => exportCsv(selectedLeads)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-800 hover:bg-slate-700 text-slate-200"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-slate-800 hover:bg-slate-700 text-slate-200"
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
@@ -424,10 +424,10 @@ export default function ScraperLeadsTable({
             <Filter className="w-4 h-4 text-teal-400" />
             Prospects
             {total > 0 && (
-              <span className="text-xs font-normal text-slate-500">({total})</span>
+              <span className="type-caption font-normal text-slate-500">({total})</span>
             )}
             {locationFilter && (
-              <span className="text-xs font-normal text-teal-400/90">· {locationFilter}</span>
+              <span className="type-caption font-normal text-teal-400/90">· {locationFilter}</span>
             )}
           </h3>
           <div className="flex items-center gap-2">
@@ -465,7 +465,7 @@ export default function ScraperLeadsTable({
         </div>
 
         <div className="overflow-x-auto overflow-y-auto max-h-[min(52vh,520px)] min-h-[200px] ac-scroll-full -mx-1 px-1">
-          <table className="w-full text-sm">
+          <table className="w-full type-ui">
             <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
               <tr className="text-slate-500 border-b border-slate-800">
                 <th className="py-2 px-2 w-8">
@@ -509,14 +509,14 @@ export default function ScraperLeadsTable({
                     >
                       <div className="font-medium">{lead.name || '—'}</div>
                       {lead.title && (
-                        <div className="text-[11px] text-teal-400/90">{lead.title}</div>
+                        <div className="type-ui text-teal-400/90">{lead.title}</div>
                       )}
                     </button>
                   </td>
                   <td className="py-2 px-2 text-slate-300">{lead.email || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.phone || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.company || '—'}</td>
-                  <td className="py-2 px-2 text-slate-400 text-xs hidden lg:table-cell max-w-[240px]">
+                  <td className="py-2 px-2 text-slate-400 type-table-cell hidden lg:table-cell max-w-[240px]">
                     <div className="truncate">
                       {lead.match_reasons?.[0] || lead.quality_reason || lead.address || lead.source_label || lead.industry || lead.source || '—'}
                     </div>
@@ -531,13 +531,13 @@ export default function ScraperLeadsTable({
                       </a>
                     )}
                   </td>
-                  <td className="py-2 px-2 text-center text-slate-300 tabular-nums text-xs hidden md:table-cell">
+                  <td className="py-2 px-2 text-center text-slate-300 tabular-nums type-table-cell hidden md:table-cell">
                     {lead.reach_km != null ? `${lead.reach_km} km` : '—'}
                   </td>
                   <td className="py-2 px-2 text-center text-white tabular-nums">{lead.confidence_score ?? lead.score ?? '—'}</td>
                   <td className="py-2 px-2 text-center">
                     {lead.grade ? (
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${GRADE_COLORS[lead.grade] || ''}`}>
+                      <span className={`px-2 py-0.5 rounded type-caption font-medium ${GRADE_COLORS[lead.grade] || ''}`}>
                         {lead.grade}
                       </span>
                     ) : (
@@ -546,7 +546,7 @@ export default function ScraperLeadsTable({
                   </td>
                   <td className="py-2 px-2 text-slate-400 capitalize">
                     <div>{lead.status || 'new'}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="type-ui text-slate-500">
                       {lead.verification_status || 'unverified'} · {lead.enrichment_status || 'queued'}
                     </div>
                   </td>
@@ -555,14 +555,14 @@ export default function ScraperLeadsTable({
             </tbody>
           </table>
           {total === 0 && !loading && (
-            <p className="text-center text-slate-500 py-10 text-sm">
+            <p className="text-center text-slate-500 py-10 type-card-description">
               {campaignId ? 'No leads match these filters.' : showAllWhenNoCampaign ? 'No leads yet.' : 'Run a search to see leads here.'}
             </p>
           )}
         </div>
 
         {total > 0 && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1 text-xs text-slate-500">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1 type-caption text-slate-500">
             <p>
               Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
             </p>
@@ -582,18 +582,18 @@ export default function ScraperLeadsTable({
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 type-ui hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
-              <span className="text-sm text-slate-400 font-semibold">
+              <span className="type-ui text-slate-400 font-semibold">
                 Page {page} / {pages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(pages, p + 1))}
                 disabled={page >= pages}
-                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 type-ui hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

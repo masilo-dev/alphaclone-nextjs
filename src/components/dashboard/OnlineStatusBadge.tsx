@@ -54,7 +54,7 @@ const OnlineStatusBadge: React.FC<OnlineStatusBadgeProps> = ({
                 )}
             </div>
             {showLabel && (
-                <span className="text-xs font-medium text-slate-400">{config.label}</span>
+                <span className="type-caption font-medium text-slate-400">{config.label}</span>
             )}
         </div>
     );

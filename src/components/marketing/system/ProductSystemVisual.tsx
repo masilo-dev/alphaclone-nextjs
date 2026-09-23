@@ -138,16 +138,16 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
           <div className="flex items-center gap-2.5">
             <div className={`grid h-7 w-7 place-items-center rounded-lg border ${TONE[data.accent]}`}><Icon className="h-3.5 w-3.5" /></div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">AlphaClone / {product}</p>
-              <p className="mt-0.5 text-xs font-semibold text-slate-200">{data.eyebrow}</p>
+              <p className="type-caption font-black uppercase tracking-caps text-slate-500">AlphaClone / {product}</p>
+              <p className="mt-0.5 type-caption font-semibold text-slate-200">{data.eyebrow}</p>
             </div>
           </div>
-          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-bold text-emerald-200 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Live workspace</span>
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 type-ui font-bold text-emerald-200 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Live workspace</span>
         </div>
         <div className="grid lg:grid-cols-[.82fr_1.18fr]">
           <aside className="hidden border-r border-white/10 bg-[#081326] p-4 lg:block">
-            <p className="text-[9px] font-black uppercase tracking-[.18em] text-slate-500">Workspace map</p>
-            <div className="mt-4 space-y-1.5 text-[11px]">
+            <p className="type-caption font-black uppercase tracking-caps text-slate-500">Workspace map</p>
+            <div className="mt-4 space-y-1.5 type-ui">
               {['Overview', product, 'Tasks', 'Activity', 'Connections'].map((item, index) => (
                 <div key={item} className={`flex items-center gap-2 rounded-lg px-2.5 py-2 ${index === 1 ? 'border border-cyan-300/20 bg-cyan-300/10 font-bold text-cyan-100' : 'text-slate-400'}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${index === 1 ? 'bg-cyan-300' : 'bg-slate-700'}`} />{item}
@@ -155,8 +155,8 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
               ))}
             </div>
             <div className="mt-8 rounded-xl border border-white/10 bg-white/[.03] p-3">
-              <p className="text-[9px] font-black uppercase tracking-[.16em] text-slate-500">Connected context</p>
-              <div className="mt-3 space-y-2 text-[10px] text-slate-300">
+              <p className="type-caption font-black uppercase tracking-caps text-slate-500">Connected context</p>
+              <div className="mt-3 space-y-2 type-ui text-slate-300">
                 <span className="flex items-center gap-2"><Mail className="h-3 w-3 text-cyan-300" /> Email</span>
                 <span className="flex items-center gap-2"><FileCheck2 className="h-3 w-3 text-emerald-300" /> Contracts</span>
                 <span className="flex items-center gap-2"><CircleDollarSign className="h-3 w-3 text-amber-300" /> Billing</span>
@@ -166,20 +166,20 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
           <section className="p-4 sm:p-5">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[.18em] text-cyan-300">{data.eyebrow}</p>
+                <p className="type-caption font-black uppercase tracking-caps text-cyan-300">{data.eyebrow}</p>
                 <h3 className="mt-2 max-w-lg text-base font-bold leading-tight text-white sm:text-xl">{data.title}</h3>
-                <p className="mt-1.5 max-w-xl text-[11px] leading-5 text-slate-400">{data.subtitle}</p>
+                <p className="mt-1.5 max-w-xl type-card-description leading-5 text-slate-400">{data.subtitle}</p>
               </div>
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/10 bg-white/[.04] px-2.5 py-2 text-[10px] font-semibold text-slate-300"><ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> Context verified</span>
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/10 bg-white/[.04] px-2.5 py-2 type-ui font-semibold text-slate-300"><ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /> Context verified</span>
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-3">
-              {metrics.map((metric) => <div key={metric.label} className="rounded-xl border border-white/10 bg-[#071426] p-3"><p className="text-[10px] text-slate-500">{metric.label}</p><p className="mt-1 text-lg font-bold text-white">{metric.value}</p><p className="mt-0.5 text-[10px] text-emerald-300">{metric.detail}</p></div>)}
+              {metrics.map((metric) => <div key={metric.label} className="rounded-xl border border-white/10 bg-[#071426] p-3"><p className="type-card-description text-slate-500">{metric.label}</p><p className="mt-1 text-lg font-bold text-white">{metric.value}</p><p className="mt-0.5 type-card-description text-emerald-300">{metric.detail}</p></div>)}
             </div>
             <div className="mt-4 rounded-xl border border-white/10 bg-[#071426] p-3">
-              <div className="flex items-center justify-between gap-2"><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">Next actions</p><p className="mt-1 text-xs font-semibold text-white">Work that is ready to move</p></div><MessageSquareText className="h-4 w-4 text-cyan-300" /></div>
-              <div className="mt-3 space-y-2">{rows.map((row) => <div key={row.label} className="flex items-center gap-3 rounded-lg border border-white/[.07] bg-white/[.025] px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate text-[11px] font-bold text-slate-200">{row.label}</p><p className="mt-0.5 truncate text-[10px] text-slate-500">{row.detail}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-bold ${TONE[row.tone]}`}>{row.status}</span><ArrowRight className="hidden h-3.5 w-3.5 text-slate-600 sm:block" /></div>)}</div>
+              <div className="flex items-center justify-between gap-2"><div><p className="type-caption font-black uppercase tracking-caps text-slate-500">Next actions</p><p className="mt-1 type-caption font-semibold text-white">Work that is ready to move</p></div><MessageSquareText className="h-4 w-4 text-cyan-300" /></div>
+              <div className="mt-3 space-y-2">{rows.map((row) => <div key={row.label} className="flex items-center gap-3 rounded-lg border border-white/[.07] bg-white/[.025] px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate type-caption font-bold text-slate-200">{row.label}</p><p className="mt-0.5 truncate type-caption text-slate-500">{row.detail}</p></div><span className={`shrink-0 rounded-full border px-2 py-1 type-caption font-bold ${TONE[row.tone]}`}>{row.status}</span><ArrowRight className="hidden h-3.5 w-3.5 text-slate-600 sm:block" /></div>)}</div>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500"><Check className="h-3.5 w-3.5 text-emerald-300" /> Human review stays in the workflow before external action.</div>
+            <div className="mt-3 flex items-center gap-2 type-ui text-slate-500"><Check className="h-3.5 w-3.5 text-emerald-300" /> Human review stays in the workflow before external action.</div>
           </section>
         </div>
       </div>
@@ -192,9 +192,9 @@ export function ProductFlowRail() {
     <div className="grid gap-3 sm:grid-cols-4">
       {[['01', 'Capture', 'The request or record enters the workspace.'], ['02', 'Context', 'AlphaClone resolves the right client and history.'], ['03', 'Approve', 'A person reviews consequential external actions.'], ['04', 'Verify', 'The result is checked and recorded.']].map(([step, title, body]) => (
         <div key={step} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <span className="text-xs font-bold tracking-wider text-blue-600 font-mono">{step}</span>
-          <p className="mt-2 text-sm font-bold text-slate-900">{title}</p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">{body}</p>
+          <span className="type-caption font-bold tracking-wider text-blue-600 font-mono">{step}</span>
+          <p className="mt-2 type-card-description font-bold text-slate-900">{title}</p>
+          <p className="mt-1 type-card-description leading-relaxed text-slate-600">{body}</p>
         </div>
       ))}
     </div>
@@ -203,7 +203,7 @@ export function ProductFlowRail() {
 
 export function ProductOutcomeStrip({ product }: { product: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 text-xs font-semibold text-slate-800">
+    <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 type-caption font-semibold text-slate-800">
       <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
       <span>{product} is connected to the same approval, execution, and verification trail as the rest of the workspace.</span>
     </div>

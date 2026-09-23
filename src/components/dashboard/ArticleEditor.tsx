@@ -132,7 +132,7 @@ const ArticleEditor: React.FC = () => {
                 <div className="space-y-4">
                     {/* Title */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Title *
                         </label>
                         <input
@@ -146,7 +146,7 @@ const ArticleEditor: React.FC = () => {
 
                     {/* Slug */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             URL Slug *
                         </label>
                         <input
@@ -156,14 +156,14 @@ const ArticleEditor: React.FC = () => {
                             className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="article-url-slug"
                         />
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="type-card-description text-slate-400 mt-1">
                             URL: /blog/{editing.slug || 'article-url-slug'}
                         </p>
                     </div>
 
                     {/* Meta Description */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Meta Description * (150-160 characters)
                         </label>
                         <textarea
@@ -173,14 +173,14 @@ const ArticleEditor: React.FC = () => {
                             rows={2}
                             placeholder="Brief description for search engines"
                         />
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="type-card-description text-slate-400 mt-1">
                             {editing.meta_description.length} / 160 characters
                         </p>
                     </div>
 
                     {/* Category */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Category *
                         </label>
                         <input
@@ -194,7 +194,7 @@ const ArticleEditor: React.FC = () => {
 
                     {/* Keywords */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Keywords (comma-separated)
                         </label>
                         <input
@@ -211,7 +211,7 @@ const ArticleEditor: React.FC = () => {
 
                     {/* Tags */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Tags (comma-separated)
                         </label>
                         <input
@@ -228,17 +228,17 @@ const ArticleEditor: React.FC = () => {
 
                     {/* Content */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             Content * (Markdown supported)
                         </label>
                         <textarea
                             value={editing.content}
                             onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono text-sm"
+                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
                             rows={20}
                             placeholder="Write your article content here... Use markdown for formatting."
                         />
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="type-card-description text-slate-400 mt-1">
                             {editing.content.split(/\s+/).length} words
                         </p>
                     </div>
@@ -251,7 +251,7 @@ const ArticleEditor: React.FC = () => {
                             onChange={(e) => setEditing({ ...editing, published: e.target.checked })}
                             className="w-4 h-4"
                         />
-                        <label className="text-sm text-slate-300">
+                        <label className="type-label text-slate-300">
                             Publish article (make visible to search engines)
                         </label>
                     </div>
@@ -284,19 +284,19 @@ const ArticleEditor: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-white">{articles.length}</div>
-                    <div className="text-sm text-slate-400">Total Articles</div>
+                    <div className="type-ui text-slate-400">Total Articles</div>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-teal-400">
                         {articles.filter(a => a.published).length}
                     </div>
-                    <div className="text-sm text-slate-400">Published</div>
+                    <div className="type-ui text-slate-400">Published</div>
                 </div>
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-violet-400">
                         {articles.reduce((sum: number, a: Article) => sum + (a.views || 0), 0)}
                     </div>
-                    <div className="text-sm text-slate-400">Total Views</div>
+                    <div className="type-ui text-slate-400">Total Views</div>
                 </div>
             </div>
 
@@ -306,9 +306,9 @@ const ArticleEditor: React.FC = () => {
                     <MobileDataCard key={article.id} className="border-slate-700 bg-slate-800">
                         <div className="min-w-0">
                             <p className="text-white font-medium truncate">{article.title}</p>
-                            <p className="text-xs text-slate-400 truncate">/blog/{article.slug}</p>
+                            <p className="type-card-description text-slate-400 truncate">/blog/{article.slug}</p>
                         </div>
-                        <div className="flex flex-wrap gap-2 text-xs">
+                        <div className="flex flex-wrap gap-2 type-caption">
                             <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">{article.category}</span>
                             <span className="text-slate-400">{article.views || 0} views</span>
                             {article.published ? (
@@ -318,11 +318,11 @@ const ArticleEditor: React.FC = () => {
                             )}
                         </div>
                         <div className={`${rowActionsClass} justify-end`}>
-                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-teal-400 rounded-lg border border-slate-600 text-xs">
+                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-teal-400 rounded-lg border border-slate-600 type-ui">
                                 {article.published ? 'Unpublish' : 'Publish'}
                             </button>
-                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-violet-400 rounded-lg border border-slate-600 text-xs">Edit</button>
-                            <button onClick={() => handleDelete(article.id)} className="min-h-11 px-3 py-2 text-red-400 rounded-lg border border-red-500/30 text-xs">Delete</button>
+                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-violet-400 rounded-lg border border-slate-600 type-ui">Edit</button>
+                            <button onClick={() => handleDelete(article.id)} className="min-h-11 px-3 py-2 text-red-400 rounded-lg border border-red-500/30 type-ui">Delete</button>
                         </div>
                     </MobileDataCard>
                 ))}
@@ -332,11 +332,11 @@ const ArticleEditor: React.FC = () => {
                 <table className="w-full min-w-[640px]">
                     <thead className="bg-slate-700">
                         <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Title</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Category</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Views</th>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Status</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Actions</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Title</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Category</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Views</th>
+                            <th className="px-4 py-3 text-left type-caption font-semibold text-slate-300">Status</th>
+                            <th className="px-4 py-3 text-right type-table-header font-semibold text-slate-300">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
@@ -344,21 +344,21 @@ const ArticleEditor: React.FC = () => {
                             <tr key={article.id} className="hover:bg-slate-700/50">
                                 <td className="px-4 py-3">
                                     <div className="text-white font-medium">{article.title}</div>
-                                    <div className="text-xs text-slate-400">/blog/{article.slug}</div>
+                                    <div className="type-caption text-slate-400">/blog/{article.slug}</div>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <span className="px-2 py-1 bg-slate-700 text-slate-300 text-xs rounded">
+                                    <span className="px-2 py-1 bg-slate-700 text-slate-300 type-caption rounded">
                                         {article.category}
                                     </span>
                                 </td>
                                 <td className="px-4 py-3 text-slate-300">{article.views || 0}</td>
                                 <td className="px-4 py-3">
                                     {article.published ? (
-                                        <span className="px-2 py-1 bg-teal-500/20 text-teal-400 text-xs rounded">
+                                        <span className="px-2 py-1 bg-teal-500/20 text-teal-400 type-caption rounded">
                                             Published
                                         </span>
                                     ) : (
-                                        <span className="px-2 py-1 bg-slate-700 text-slate-400 text-xs rounded">
+                                        <span className="px-2 py-1 bg-slate-700 text-slate-400 type-caption rounded">
                                             Draft
                                         </span>
                                     )}

@@ -126,7 +126,7 @@ function AuthorizeContent() {
         return (
             <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-3 text-slate-400">
                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
-                <p className="text-sm">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
+                <p className="type-card-description">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
             </div>
         );
     }
@@ -163,13 +163,13 @@ function AuthorizeContent() {
                 </p>
 
                 {codeChallenge && (
-                    <div className="flex items-center justify-center gap-1.5 text-xs text-teal-400 mb-6">
+                    <div className="flex items-center justify-center gap-1.5 type-caption text-teal-400 mb-6">
                         <Shield className="w-3.5 h-3.5" />
                         <span>PKCE-secured connection</span>
                     </div>
                 )}
 
-                <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 text-sm space-y-2">
+                <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 type-ui space-y-2">
                     <p className="text-slate-300 font-medium">This will allow the connector to:</p>
                     <ul className="text-slate-400 space-y-1 list-disc list-inside">
                         <li>Read your CRM, deals, and contacts</li>
@@ -177,12 +177,12 @@ function AuthorizeContent() {
                         <li>Access your workspace tools via MCP</li>
                     </ul>
                     {clientId && (
-                        <p className="text-slate-500 text-xs pt-1">Client: {clientId}</p>
+                        <p className="text-slate-500 type-card-description pt-1">Client: {clientId}</p>
                     )}
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl type-ui">
                         {error}
                     </div>
                 )}

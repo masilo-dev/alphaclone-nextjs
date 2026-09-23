@@ -141,7 +141,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
 
       {selectedCampaignId && runStatus && (
         <div className="rounded-lg bg-slate-800/60 p-4 space-y-3">
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between type-ui">
             <span className="text-slate-400">Step</span>
             <span className="text-white">{stepLabels[runStatus.current_step] || runStatus.current_step}</span>
           </div>
@@ -151,7 +151,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
               style={{ width: `${runStatus.progress}%` }}
             />
           </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="grid grid-cols-3 gap-2 text-center type-caption">
             <div>
               <div className="text-slate-400">Found</div>
               <div className="text-white font-semibold">{runStatus.source_count}</div>
@@ -166,7 +166,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
             </div>
           </div>
           {runStatus.errors && runStatus.errors.length > 0 && (
-            <div className="text-xs text-red-400">
+            <div className="type-caption text-red-400">
               {runStatus.errors.slice(0, 3).join('; ')}
             </div>
           )}
@@ -175,7 +175,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
 
       <div className="space-y-2">
         {campaigns.length === 0 && !loading && (
-          <p className="text-slate-500 text-sm">No campaigns yet. Create one above.</p>
+          <p className="text-slate-500 type-card-description">No campaigns yet. Create one above.</p>
         )}
         {campaigns.map((c) => (
           <div
@@ -185,14 +185,14 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
             }`}
           >
             <div>
-              <div className="text-white text-sm font-medium">{c.name}</div>
-              <div className="text-xs text-slate-500">
+              <div className="text-white type-ui font-medium">{c.name}</div>
+              <div className="type-caption text-slate-500">
                 {(c.sources || []).join(', ')} · limit {c.daily_limit}
               </div>
             </div>
             <div className="flex items-center gap-2">
               <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
+                className={`type-caption px-2 py-0.5 rounded-full ${
                   c.status === 'active' ? 'bg-emerald-900 text-emerald-300' : 'bg-slate-800 text-slate-400'
                 }`}
               >
@@ -208,7 +208,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
               <button
                 onClick={() => handleRun(c.id)}
                 disabled={running}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white type-caption disabled:opacity-50"
               >
                 <Play className="w-3 h-3" />
                 Run

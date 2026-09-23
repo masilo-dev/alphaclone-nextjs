@@ -127,8 +127,8 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
     >
       <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-toolbar)_92%,transparent)] px-5 py-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ws-text-tertiary)]">Activity Timeline</p>
-          <p className="mt-0.5 truncate text-sm font-semibold text-[var(--ws-text-primary)]">{contactName}</p>
+          <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]">Activity Timeline</p>
+          <p className="mt-0.5 truncate type-card-description font-semibold text-[var(--ws-text-primary)]">{contactName}</p>
         </div>
         <button
           type="button"
@@ -149,7 +149,7 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
           <div className="py-16 text-center">
             <Clock className="mx-auto mb-3 text-[var(--ws-text-tertiary)]" size={36} aria-hidden="true" />
             <p className="font-semibold text-[var(--ws-text-secondary)]">No activity yet</p>
-            <p className="mt-1 text-xs leading-5 text-[var(--ws-text-tertiary)]">Deals, emails, and invoices linked to this contact will appear here.</p>
+            <p className="mt-1 type-card-description leading-5 text-[var(--ws-text-tertiary)]">Deals, emails, and invoices linked to this contact will appear here.</p>
           </div>
         ) : (
           <div className="relative">
@@ -165,15 +165,15 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
                     </div>
                     <div className="ac-workspace-panel min-w-0 flex-1 px-3 py-2">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-xs font-semibold capitalize text-[var(--ws-text-primary)]">{activity.title}</p>
-                        <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] ${cfg.bg} ${cfg.color}`}>
+                        <p className="truncate type-card-description font-semibold capitalize text-[var(--ws-text-primary)]">{activity.title}</p>
+                        <span className={`shrink-0 rounded-full px-1.5 py-0.5 type-caption font-semibold uppercase tracking-label ${cfg.bg} ${cfg.color}`}>
                           {cfg.label}
                         </span>
                       </div>
                       {activity.detail ? (
-                        <p className="mt-0.5 truncate text-[11px] text-[var(--ws-text-secondary)]">{activity.detail}</p>
+                        <p className="mt-0.5 truncate type-card-description text-[var(--ws-text-secondary)]">{activity.detail}</p>
                       ) : null}
-                      <p className="mt-1 text-[10px] text-[var(--ws-text-tertiary)]">
+                      <p className="mt-1 type-card-description text-[var(--ws-text-tertiary)]">
                         {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>

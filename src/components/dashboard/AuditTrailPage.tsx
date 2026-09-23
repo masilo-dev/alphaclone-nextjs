@@ -142,7 +142,7 @@ export default function AuditTrailPage() {
               {viewMode === 'business' ? 'Business Activity Log' : 'Technical System Log'}
             </h2>
           </div>
-          <p className="mt-1 text-sm text-[var(--ws-text-muted)]">
+          <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
             {viewMode === 'business'
               ? 'Human-readable operational history: WHO DID WHAT → FOR WHOM → WHY → WHAT RESULTED → WHAT NEEDS TO HAPPEN NEXT.'
               : 'Low-level engineering audit log displaying raw API calls, HTTP status codes, and tool identifiers.'}
@@ -154,7 +154,7 @@ export default function AuditTrailPage() {
           <div className="inline-flex rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1">
             <button
               onClick={() => setViewMode('business')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 type-caption font-semibold rounded-md transition-colors ${
                 viewMode === 'business'
                   ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40'
                   : 'text-slate-400 hover:text-white'
@@ -165,7 +165,7 @@ export default function AuditTrailPage() {
             </button>
             <button
               onClick={() => setViewMode('technical')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 type-caption font-semibold rounded-md transition-colors ${
                 viewMode === 'technical'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
                   : 'text-slate-400 hover:text-white'
@@ -179,7 +179,7 @@ export default function AuditTrailPage() {
           <button
             type="button"
             onClick={() => void loadAuditLogs()}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--ws-border)] px-3 text-sm font-medium text-slate-300 transition-colors hover:bg-[var(--ws-hover)]"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[var(--ws-border)] px-3 type-ui font-medium text-slate-300 transition-colors hover:bg-[var(--ws-hover)]"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Refresh
@@ -196,13 +196,13 @@ export default function AuditTrailPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search business events, clients, actors, or actions..."
-            className="h-10 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 text-sm text-white outline-none transition-colors placeholder:text-slate-500 focus:border-teal-500"
+            className="h-10 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-ui text-white outline-none transition-colors placeholder:text-slate-500 focus:border-teal-500"
           />
         </label>
       </div>
 
       {error ? (
-        <div className="m-4 flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+        <div className="m-4 flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 type-ui text-rose-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">Audit trail unavailable</p>
@@ -220,8 +220,8 @@ export default function AuditTrailPage() {
       ) : viewMode === 'business' ? (
         /* ── BUSINESS ACTIVITY LOG VIEW ── */
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-[var(--ws-surface-secondary)] text-xs uppercase tracking-wide text-slate-400">
+          <table className="w-full min-w-[900px] text-left type-ui">
+            <thead className="bg-[var(--ws-surface-secondary)] type-caption uppercase tracking-wide text-slate-400">
               <tr>
                 <th scope="col" className="px-4 py-3 font-semibold">When</th>
                 <th scope="col" className="px-4 py-3 font-semibold">Business Event</th>
@@ -251,13 +251,13 @@ export default function AuditTrailPage() {
                 return (
                   <React.Fragment key={row.id}>
                     <tr className="align-top transition-colors hover:bg-[var(--ws-hover)]">
-                      <td className="whitespace-nowrap px-4 py-4 text-xs text-slate-400">
+                      <td className="whitespace-nowrap px-4 py-4 type-table-cell text-slate-400">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-4 font-semibold text-white">
                         {eventName}
                         {meta.business_context && (
-                          <div className="mt-0.5 font-normal text-xs text-slate-400 max-w-xs">
+                          <div className="mt-0.5 font-normal type-caption text-slate-400 max-w-xs">
                             {meta.business_context}
                           </div>
                         )}
@@ -271,25 +271,25 @@ export default function AuditTrailPage() {
                       </td>
                       <td className="px-4 py-4 text-slate-300 max-w-xs">{resultText}</td>
                       <td className="px-4 py-4">
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${badge.bg} ${badge.text}`}>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 type-caption font-semibold ${badge.bg} ${badge.text}`}>
                           {badge.label}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-xs font-medium text-teal-300 max-w-xs">
+                      <td className="px-4 py-4 type-table-cell font-medium text-teal-300 max-w-xs">
                         {nextActionText}
                       </td>
-                      <td className="px-4 py-4 text-slate-300 text-xs">{ownerName}</td>
+                      <td className="px-4 py-4 text-slate-300 type-table-cell">{ownerName}</td>
                       <td className="px-4 py-4">
                         {hasTechDetails ? (
                           <button
                             onClick={() => toggleExpand(row.id)}
-                            className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-teal-300 transition-colors"
+                            className="inline-flex items-center gap-1 type-caption text-slate-400 hover:text-teal-300 transition-colors"
                           >
                             {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                             <span>View details</span>
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-600">—</span>
+                          <span className="type-caption text-slate-600">—</span>
                         )}
                       </td>
                     </tr>
@@ -298,7 +298,7 @@ export default function AuditTrailPage() {
                     {isExpanded && (
                       <tr className="bg-slate-950/80">
                         <td colSpan={9} className="px-6 py-4 border-t border-b border-slate-800">
-                          <div className="font-mono text-xs space-y-2 text-slate-300">
+                          <div className="font-mono type-caption space-y-2 text-slate-300">
                             <div className="flex items-center gap-2 text-purple-400 font-semibold mb-2">
                               <Terminal className="h-4 w-4" />
                               Technical Execution Context
@@ -327,8 +327,8 @@ export default function AuditTrailPage() {
       ) : (
         /* ── TECHNICAL SYSTEM LOG VIEW ── */
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left text-sm font-mono">
-            <thead className="bg-[var(--ws-surface-secondary)] text-xs uppercase tracking-wide text-slate-400">
+          <table className="w-full min-w-[760px] text-left type-ui font-mono">
+            <thead className="bg-[var(--ws-surface-secondary)] type-caption uppercase tracking-wide text-slate-400">
               <tr>
                 <th scope="col" className="px-5 py-3 font-semibold">Timestamp</th>
                 <th scope="col" className="px-5 py-3 font-semibold">Action / Event</th>
@@ -339,7 +339,7 @@ export default function AuditTrailPage() {
             </thead>
             <tbody className="divide-y divide-[var(--ws-border)]">
               {filteredRows.map((row) => (
-                <tr key={row.id} className="align-top hover:bg-[var(--ws-hover)] text-xs">
+                <tr key={row.id} className="align-top hover:bg-[var(--ws-hover)] type-caption">
                   <td className="whitespace-nowrap px-5 py-3 text-slate-400">{row.created_at}</td>
                   <td className="px-5 py-3 text-purple-300 font-semibold">{row.action}</td>
                   <td className="px-5 py-3 text-slate-300">{row.entity_type || row.resource_type}:{row.entity_id || row.resource_id || 'null'}</td>
@@ -352,7 +352,7 @@ export default function AuditTrailPage() {
         </div>
       )}
 
-      <div className="border-t border-[var(--ws-border)] px-5 py-3 text-xs text-[var(--ws-text-muted)] flex justify-between items-center">
+      <div className="border-t border-[var(--ws-border)] px-5 py-3 type-caption text-[var(--ws-text-muted)] flex justify-between items-center">
         <span>Showing {filteredRows.length} of {rows.length} loaded audit items.</span>
         <span>Mode: <strong>{viewMode === 'business' ? 'Business Activity Log' : 'Technical System Log'}</strong></span>
       </div>

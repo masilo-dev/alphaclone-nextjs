@@ -63,8 +63,8 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         <MessageCircle className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-white text-sm font-semibold tracking-wide">Meeting Chat</h3>
-                        <span className="text-[11px] text-slate-400">{messages.length} {messages.length === 1 ? 'message' : 'messages'}</span>
+                        <h3 className="text-white type-caption font-semibold tracking-wide">Meeting Chat</h3>
+                        <span className="type-ui text-slate-400">{messages.length} {messages.length === 1 ? 'message' : 'messages'}</span>
                     </div>
                 </div>
                 <button
@@ -84,8 +84,8 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                             <MessageCircle className="w-8 h-8" />
                         </div>
                         <div className="text-center">
-                            <p className="text-sm font-medium text-slate-300">No messages yet</p>
-                            <p className="text-xs">Start the conversation</p>
+                            <p className="type-card-description font-medium text-slate-300">No messages yet</p>
+                            <p className="type-card-description">Start the conversation</p>
                         </div>
                     </div>
                 ) : (
@@ -100,7 +100,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                             >
                                 {!msg.isLocal && (
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mr-2 border border-slate-700 mt-0.5 shadow-sm">
-                                        <span className="text-white text-xs font-bold">
+                                        <span className="text-white type-caption font-bold">
                                             {(msg.userName?.[0] || 'G').toUpperCase()}
                                         </span>
                                     </div>
@@ -108,7 +108,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
 
                                 <div className={`flex flex-col max-w-[75%] ${msg.isLocal ? 'items-end' : 'items-start'}`}>
                                     {!msg.isLocal && (
-                                        <span className="text-[11px] font-medium text-slate-400 mb-1 ml-1">
+                                        <span className="type-ui font-medium text-slate-400 mb-1 ml-1">
                                             {msg.userName}
                                         </span>
                                     )}
@@ -119,11 +119,11 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                                                 : 'bg-slate-800 text-slate-100 border border-slate-700 rounded-2xl rounded-tl-sm'
                                             }`}
                                     >
-                                        <p className="text-[13px] leading-relaxed break-words">{msg.message}</p>
+                                        <p className="type-card-description leading-relaxed break-words">{msg.message}</p>
                                     </div>
 
                                     {showsTime && (
-                                        <p className="text-xs text-slate-500 mt-1 mx-1 font-medium">
+                                        <p className="type-card-description text-slate-500 mt-1 mx-1 font-medium">
                                             {msg.timestamp.toLocaleTimeString([], {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
@@ -146,7 +146,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Type your message..."
-                        className="flex-1 bg-transparent text-white px-3 py-2 text-[13px] resize-none focus:outline-none max-h-24 min-h-[40px] scrollbar-hide"
+                        className="flex-1 bg-transparent text-white px-3 py-2 type-ui resize-none focus:outline-none max-h-24 min-h-[40px] scrollbar-hide"
                         rows={1}
                     />
                     <button
@@ -161,7 +161,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         <Send className="w-4 h-4 ml-0.5" />
                     </button>
                 </div>
-                <p className="text-xs text-slate-500 mt-2 text-center">Press <kbd className="bg-slate-800 px-1 py-0.5 rounded border border-slate-700">Enter</kbd> to send</p>
+                <p className="type-card-description text-slate-500 mt-2 text-center">Press <kbd className="bg-slate-800 px-1 py-0.5 rounded border border-slate-700">Enter</kbd> to send</p>
             </div>
         </div>
     );

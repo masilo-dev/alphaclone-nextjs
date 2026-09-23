@@ -44,7 +44,7 @@ export function LeadScoreBadge({ contact, hasDeal = false, dealStage = '', size 
   if (size === 'sm') {
     return (
       <span
-        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-black ${bg} ${color}`}
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border type-ui font-black ${bg} ${color}`}
         title={`Lead Score: ${score}/100 (${label})`}
       >
         <Zap size={9} />
@@ -54,7 +54,7 @@ export function LeadScoreBadge({ contact, hasDeal = false, dealStage = '', size 
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-black ${bg} ${color}`}>
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border type-caption font-black ${bg} ${color}`}>
       <Zap size={12} />
       <span>Score {score}</span>
       <span className="opacity-70">· {label}</span>

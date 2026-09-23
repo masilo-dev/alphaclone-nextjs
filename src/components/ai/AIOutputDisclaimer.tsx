@@ -47,7 +47,7 @@ export default function AIOutputDisclaimer({
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-400/10 px-3 py-2 type-caption text-amber-100">
       <div className="flex items-center gap-2">
         <TriangleAlert className="h-4 w-4 shrink-0 text-amber-300" />
         <span className="font-medium">{getCopy(type)}</span>
@@ -55,7 +55,7 @@ export default function AIOutputDisclaimer({
       <button
         type="button"
         onClick={dismiss}
-        className="rounded-full px-2 py-1 text-[11px] font-semibold text-amber-200 hover:bg-amber-400/10"
+        className="rounded-full px-2 py-1 type-ui font-semibold text-amber-200 hover:bg-amber-400/10"
       >
         Dismiss
       </button>

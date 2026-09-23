@@ -62,7 +62,7 @@ export default function MarketingDeliveryPage() {
       <div className="space-y-6 max-w-4xl">
         <div>
           <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Delivery</h1>
-          <p className="text-[13px] text-[var(--ws-text-secondary)] mt-0.5">
+          <p className="type-card-description text-[var(--ws-text-secondary)] mt-0.5">
             Connected email and social providers. AlphaClone selects automatically unless you override.
           </p>
         </div>
@@ -74,18 +74,18 @@ export default function MarketingDeliveryPage() {
         ) : (
           <>
             <section>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Email delivery</h2>
-              <p className="text-[12px] text-[var(--ws-text-secondary)] mb-3">
+              <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Email delivery</h2>
+              <p className="type-card-description text-[var(--ws-text-secondary)] mb-3">
                 Current automatic selection: <span className="text-teal-400">{resolvedLabel || 'None connected'}</span>
               </p>
               <div className="space-y-2">
                 {providers.length === 0 ? (
                   <div className="ac-workspace-panel p-6 text-center">
                     <Mail className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                    <p className="text-[13px] text-[var(--ws-text-secondary)]">No email providers connected.</p>
+                    <p className="type-card-description text-[var(--ws-text-secondary)]">No email providers connected.</p>
                     <Link
                       href="/dashboard/marketplace"
-                      className="inline-block mt-3 text-[12px] text-teal-400 hover:text-teal-300"
+                      className="inline-block mt-3 type-ui text-teal-400 hover:text-teal-300"
                     >
                       Connect a provider →
                     </Link>
@@ -98,13 +98,13 @@ export default function MarketingDeliveryPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <HealthIcon health={p.health} />
                           <div>
-                            <p className="text-[13px] font-medium text-[var(--ws-text-primary)]">{p.label}</p>
-                            <p className="text-[11px] text-[var(--ws-text-secondary)] capitalize">{p.role}</p>
+                            <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{p.label}</p>
+                            <p className="type-card-description text-[var(--ws-text-secondary)] capitalize">{p.role}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className={`text-[11px] font-semibold ${health.className}`}>{health.label}</p>
-                          <p className="text-[10px] text-slate-500">{p.connected ? 'Connected' : 'Not connected'}</p>
+                          <p className={`type-card-description font-semibold ${health.className}`}>{health.label}</p>
+                          <p className="type-card-description text-slate-500">{p.connected ? 'Connected' : 'Not connected'}</p>
                         </div>
                       </div>
                     );
@@ -114,7 +114,7 @@ export default function MarketingDeliveryPage() {
             </section>
 
             <section>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3 flex items-center gap-1.5">
+              <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3 flex items-center gap-1.5">
                 <Settings className="w-3.5 h-3.5" />
                 Workspace defaults
               </h2>
@@ -124,7 +124,7 @@ export default function MarketingDeliveryPage() {
             </section>
 
             <section>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Deliverability</h2>
+              <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Deliverability</h2>
               <DeliverabilityPanel />
             </section>
           </>

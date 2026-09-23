@@ -34,16 +34,16 @@ export function WorkspaceGuide({ user }: WorkspaceGuideProps) {
     <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-4 shadow-sm md:p-5" aria-labelledby="workspace-guide-title">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ac-accent)]">Workspace map</p>
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ac-accent)]">Workspace map</p>
           <h2 id="workspace-guide-title" className="mt-1 text-base font-semibold tracking-tight text-[var(--ws-text-primary)]">Know where each kind of work belongs</h2>
-          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--ws-text-secondary)]">You can start with any area. Each one keeps the next step connected instead of making you jump between separate systems.</p>
+          <p className="mt-1 max-w-2xl type-caption leading-relaxed text-[var(--ws-text-secondary)]">You can start with any area. Each one keeps the next step connected instead of making you jump between separate systems.</p>
         </div>
         {open ? (
           <button type="button" onClick={closeGuide} className="min-h-10 min-w-10 rounded-lg p-2 text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]" aria-label="Hide workspace map">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (
-          <button type="button" onClick={() => setOpen(true)} className="min-h-10 rounded-lg border border-[var(--ws-border)] px-3 text-xs font-semibold text-[var(--ac-accent)] hover:bg-[var(--ws-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
+          <button type="button" onClick={() => setOpen(true)} className="min-h-10 rounded-lg border border-[var(--ws-border)] px-3 type-ui font-semibold text-[var(--ac-accent)] hover:bg-[var(--ws-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
             Show guide
           </button>
         )}
@@ -56,9 +56,9 @@ export function WorkspaceGuide({ user }: WorkspaceGuideProps) {
             return (
               <button key={area.title} type="button" onClick={() => router.push(area.href)} className="group flex min-h-[150px] flex-col rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-3 text-left transition-colors hover:border-[var(--ac-accent)]/50 hover:bg-[var(--ws-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
                 <Icon className={cn('h-5 w-5', area.color)} aria-hidden="true" />
-                <span className="mt-3 text-sm font-semibold text-[var(--ws-text-primary)]">{area.title}</span>
-                <span className="mt-1 text-[11px] leading-4 text-[var(--ws-text-secondary)]">{area.description}</span>
-                <span className="mt-auto inline-flex items-center gap-1 pt-3 text-[11px] font-semibold text-[var(--ac-accent)]">{area.action}<ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></span>
+                <span className="mt-3 type-ui font-semibold text-[var(--ws-text-primary)]">{area.title}</span>
+                <span className="mt-1 type-ui leading-4 text-[var(--ws-text-secondary)]">{area.description}</span>
+                <span className="mt-auto inline-flex items-center gap-1 pt-3 type-ui font-semibold text-[var(--ac-accent)]">{area.action}<ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></span>
               </button>
             );
           })}

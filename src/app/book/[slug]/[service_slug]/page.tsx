@@ -179,16 +179,16 @@ export default function BookingPage() {
 
                     <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-6 mb-6 text-left border border-slate-100 dark:border-slate-800 space-y-4">
                         <div className="flex justify-between">
-                            <span className="text-sm font-medium text-slate-500">Service</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">{service.name}</span>
+                            <span className="type-ui font-medium text-slate-500">Service</span>
+                            <span className="type-ui font-bold text-slate-900 dark:text-white">{service.name}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-sm font-medium text-slate-500">Date</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">{format(bookingSuccess.date, 'MMM do, yyyy')}</span>
+                            <span className="type-ui font-medium text-slate-500">Date</span>
+                            <span className="type-ui font-bold text-slate-900 dark:text-white">{format(bookingSuccess.date, 'MMM do, yyyy')}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-sm font-medium text-slate-500">Time</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">{bookingSuccess.time}</span>
+                            <span className="type-caption font-medium text-slate-500">Time</span>
+                            <span className="type-caption font-bold text-slate-900 dark:text-white">{bookingSuccess.time}</span>
                         </div>
                     </div>
 
@@ -202,7 +202,7 @@ export default function BookingPage() {
                             Join Meeting
                         </a>
                     ) : null}
-                    <button onClick={() => window.location.reload()} className="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                    <button onClick={() => window.location.reload()} className="type-ui font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                         Book Another
                     </button>
                 </div>
@@ -219,7 +219,7 @@ export default function BookingPage() {
                         if (step === 'form') setStep('date');
                         else router.back();
                     }}
-                    className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
+                    className="flex items-center gap-2 type-ui font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     {step === 'form' ? 'Back to Calendar' : 'Back'}
@@ -245,18 +245,18 @@ export default function BookingPage() {
                                 </div>
                             )}
                             <div>
-                                <p className="text-sm font-medium text-slate-500">{tenant.name}</p>
+                                <p className="type-card-description font-medium text-slate-500">{tenant.name}</p>
                                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{service.name}</h1>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+                            <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-slate-400">
                                 <Clock className="w-5 h-5 text-slate-900 dark:text-white" />
                                 {service.duration} min
                             </div>
                             {service.price > 0 && (
-                                <div className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-slate-400">
                                     <div className="w-5 h-5 flex items-center justify-center font-bold text-slate-900 dark:text-white">$</div>
                                     {service.currency} {service.price}
                                 </div>
@@ -264,7 +264,7 @@ export default function BookingPage() {
                         </div>
 
                         {service.description && (
-                            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-6">
+                            <p className="type-card-description leading-relaxed text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-6">
                                 {service.description}
                             </p>
                         )}
@@ -272,7 +272,7 @@ export default function BookingPage() {
                         {/* Desktop: Selected Slot Preview */}
                         {selectedSlot && window.innerWidth >= 1024 && (
                             <div className="mt-8 p-4 bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 rounded-xl">
-                                <div className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1">Selected Time</div>
+                                <div className="type-caption font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1">Selected Time</div>
                                 <div className="font-semibold text-teal-900 dark:text-teal-100">
                                     {format(parseISO(selectedSlot.start), 'EEEE, MMMM do')}
                                     <br />
@@ -311,7 +311,7 @@ export default function BookingPage() {
                                                 </div>
 
                                                 <div className="grid grid-cols-7 gap-y-2 text-center mb-2">
-                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="text-[10px] font-bold text-slate-400 uppercase">{d}</div>)}
+                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="type-caption font-bold text-slate-400 uppercase">{d}</div>)}
                                                 </div>
                                                 <div className="grid grid-cols-7 gap-y-2">
                                                     {calendarDays.map((day, i) => {
@@ -324,7 +324,7 @@ export default function BookingPage() {
                                                                 disabled={isPast || !isCurrentMonth}
                                                                 onClick={() => setSelectedDate(day)}
                                                                 className={`
-                                                            h-10 w-10 mx-auto rounded-full flex items-center justify-center text-sm font-medium transition-all
+                                                            h-10 w-10 mx-auto rounded-full flex items-center justify-center type-ui font-medium transition-all
                                                             ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
                                                             ${isPast ? 'text-slate-300 dark:text-slate-700 line-through decoration-slate-300' : ''}
                                                             ${isSelected
@@ -337,7 +337,7 @@ export default function BookingPage() {
                                                         );
                                                     })}
                                                 </div>
-                                                <div className="mt-8 flex items-center justify-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
+                                                <div className="mt-8 flex items-center justify-center gap-2 type-caption font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
                                                     <Globe className="w-3.5 h-3.5" />
                                                     {Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
@@ -345,7 +345,7 @@ export default function BookingPage() {
 
                                             {/* Slots Column (Desktop: Side / Mobile: Below) */}
                                             <div className={`md:w-64 md:border-l border-slate-200 dark:border-slate-800 md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                                                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
+                                                <h3 className="type-caption font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
                                                     {selectedDate ? format(selectedDate, 'EEEE, MMM d') : 'Select date'}
                                                 </h3>
 
@@ -354,7 +354,7 @@ export default function BookingPage() {
                                                         {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
                                                     </div>
                                                 ) : slots.length === 0 ? (
-                                                    <div className="text-sm text-slate-500 py-4">No availability for this day.</div>
+                                                    <div className="type-ui text-slate-500 py-4">No availability for this day.</div>
                                                 ) : (
                                                     <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                                         {slots.map((slot, idx) => (
@@ -373,7 +373,7 @@ export default function BookingPage() {
                                                                     }
                                                                     handleDesktopClick();
                                                                 }}
-                                                                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
+                                                                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all type-ui font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
                                                             >
                                                                 {format(parseISO(slot.start), 'h:mm a')}
                                                                 <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
@@ -390,27 +390,27 @@ export default function BookingPage() {
                                         <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
                                             <div>
                                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Final Details</h2>
-                                                <p className="text-slate-500 text-sm">Please fill in your information to complete the booking.</p>
+                                                <p className="text-slate-500 type-card-description">Please fill in your information to complete the booking.</p>
                                             </div>
 
                                             <form onSubmit={handleBook} className="space-y-5">
                                                 <div className="space-y-4">
                                                     <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
+                                                        <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
                                                         <div className="relative">
                                                             <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                             <input
                                                                 required
                                                                 value={formData.name}
                                                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="John Doe"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
+                                                        <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
                                                         <div className="relative">
                                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                             <input
@@ -418,33 +418,33 @@ export default function BookingPage() {
                                                                 type="email"
                                                                 value={formData.email}
                                                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="john@example.com"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
+                                                        <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
                                                         <div className="relative">
                                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                             <input
                                                                 type="tel"
                                                                 value={formData.phone}
                                                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="+1 (555) 000-0000"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notes</label>
+                                                        <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Notes</label>
                                                         <textarea
                                                             rows={3}
                                                             value={formData.notes}
                                                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
+                                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
                                                             placeholder="Anything we should know?"
                                                         />
                                                     </div>
@@ -460,7 +460,7 @@ export default function BookingPage() {
                                                     />
                                                 )}
                                                 {turnstileEnabled && !turnstileToken && (
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    <p className="type-card-description text-slate-500 dark:text-slate-400">
                                                         Please complete the security check before confirming.
                                                     </p>
                                                 )}

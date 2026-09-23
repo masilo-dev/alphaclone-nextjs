@@ -52,7 +52,7 @@ export function getStageBadge(stage: string): React.ReactNode {
   };
   const stageInfo = stages[stage] || stages.lead;
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${stageInfo.color}`}>
+    <span className={`px-3 py-1 rounded-full type-caption font-medium ${stageInfo.color}`}>
       {stageInfo.label}
     </span>
   );

@@ -49,12 +49,12 @@ export function PreferenceCentre() {
   ] as const;
   return <main className="min-h-screen bg-slate-950 px-4 py-12 text-slate-100">
     <form onSubmit={submit} className="mx-auto max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-6 sm:p-8">
-      <p className="text-sm font-medium text-teal-300">Communication preferences</p>
+      <p className="type-card-description font-medium text-teal-300">Communication preferences</p>
       <h1 className="mt-1 text-3xl font-semibold">Choose what you receive</h1>
       <p className="mt-2 text-slate-400">{email || 'Secure preference centre'}</p>
       <section className="mt-7 border-t border-white/10 pt-6">
         <h2 className="font-semibold">Required service messages</h2>
-        <p className="mt-1 text-sm text-slate-400">Security, authentication, billing, and essential service notices cannot be disabled here.</p>
+        <p className="mt-1 type-card-description text-slate-400">Security, authentication, billing, and essential service notices cannot be disabled here.</p>
       </section>
       <fieldset className="mt-6 space-y-3" disabled={state === 'loading' || state === 'saving' || state === 'error'}>
         <legend className="mb-3 font-semibold">Optional messages</legend>
@@ -63,11 +63,11 @@ export function PreferenceCentre() {
         </label>)}
       </fieldset>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <label className="text-sm">Preferred language<input value={values.preferredLanguage} onChange={(event) => setValues({ ...values, preferredLanguage: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-3" placeholder="e.g. en, pl, de" /></label>
-        <label className="text-sm">Frequency<select value={values.preferredFrequency} onChange={(event) => setValues({ ...values, preferredFrequency: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-3"><option value="immediate">As sent</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
+        <label className="type-label">Preferred language<input value={values.preferredLanguage} onChange={(event) => setValues({ ...values, preferredLanguage: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-3" placeholder="e.g. en, pl, de" /></label>
+        <label className="type-label">Frequency<select value={values.preferredFrequency} onChange={(event) => setValues({ ...values, preferredFrequency: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-3"><option value="immediate">As sent</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
       </div>
-      {error && <p role="alert" className="mt-5 rounded-xl bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}
-      {state === 'saved' && <p role="status" className="mt-5 rounded-xl bg-teal-400/10 p-3 text-sm text-teal-200">Your preferences have been saved.</p>}
+      {error && <p role="alert" className="mt-5 rounded-xl bg-red-400/10 p-3 type-card-description text-red-200">{error}</p>}
+      {state === 'saved' && <p role="status" className="mt-5 rounded-xl bg-teal-400/10 p-3 type-caption text-teal-200">Your preferences have been saved.</p>}
       <button disabled={state === 'loading' || state === 'saving' || state === 'error'} className="mt-6 min-h-11 rounded-xl bg-teal-400 px-5 py-2 font-semibold text-slate-950 disabled:opacity-50">Save preferences</button>
     </form>
   </main>;

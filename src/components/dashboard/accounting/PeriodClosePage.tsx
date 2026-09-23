@@ -217,7 +217,7 @@ export default function PeriodClosePage() {
 
   if (!period) {
     return (
-      <div className="p-4 text-sm text-slate-400">
+      <div className="p-4 type-ui text-slate-400">
         No accounting period available. Contact an admin to initialize fiscal periods.
       </div>
     );
@@ -226,17 +226,17 @@ export default function PeriodClosePage() {
   return (
     <div className="p-4 space-y-5 pb-24 max-w-lg mx-auto ac-scroll-full ac-enterprise-module">
       <div className="dashboard-panel-soft p-4">
-        <h3 className="text-sm font-bold text-white mb-1">{period.periodName}</h3>
-        <p className="text-xs text-slate-500 mb-2">
+        <h3 className="type-ui font-bold text-white mb-1">{period.periodName}</h3>
+        <p className="type-card-description text-slate-500 mb-2">
           {period.startDate} — {period.endDate} · Status:{' '}
           <span className="text-slate-300 capitalize">{period.status}</span>
         </p>
-        <h3 className="text-sm font-bold text-white mb-2">Period close progress</h3>
+        <h3 className="type-ui font-bold text-white mb-2">Period close progress</h3>
         <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
           <div className="bg-emerald-500 h-full transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <p className="text-xs text-slate-300 mt-2">{progress}% complete</p>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="type-card-description text-slate-300 mt-2">{progress}% complete</p>
+        <p className="type-card-description text-slate-500 mt-2">
           Use this checklist to confirm books, payables, cash, and receivables are reviewed before you lock the period.
         </p>
       </div>
@@ -254,7 +254,7 @@ export default function PeriodClosePage() {
             ) : (
               <Circle className="w-5 h-5 text-slate-600 flex-shrink-0" />
             )}
-            <span className="text-sm text-white">{item.label}</span>
+            <span className="type-ui text-white">{item.label}</span>
           </button>
         ))}
       </div>

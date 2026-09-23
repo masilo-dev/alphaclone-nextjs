@@ -60,7 +60,7 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
 
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Preset Colors</h4>
+            <h4 className="type-ui font-medium text-slate-300 mb-3">Preset Colors</h4>
             <div className="grid grid-cols-5 gap-2">
               {presetColors.map((color) => (
                 <button
@@ -79,7 +79,7 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
           </div>
 
           <div>
-            <h4 className="text-sm font-medium text-slate-300 mb-3">Custom Color</h4>
+            <h4 className="type-ui font-medium text-slate-300 mb-3">Custom Color</h4>
             <div className="flex gap-2">
               <input
                 type="color"

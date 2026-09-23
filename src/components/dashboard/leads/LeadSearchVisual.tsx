@@ -59,9 +59,9 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
             <div className="absolute top-8 left-0 w-full px-8 flex justify-between items-center z-10">
                 <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2 border border-slate-700/50 rounded-full">
                     <Zap className="w-5 h-5 text-teal-400 animate-pulse" />
-                    <span className="text-white font-mono text-sm">ACTIVE SEARCH</span>
+                    <span className="text-white font-mono type-ui">ACTIVE SEARCH</span>
                 </div>
-                <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2 border border-slate-700/50 rounded-full font-mono text-sm text-slate-300">
+                <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-2 border border-slate-700/50 rounded-full font-mono type-ui text-slate-300">
                     Target: <span className="text-teal-400 font-bold">{industry}</span> in <span className="text-blue-400 font-bold">{location}</span>
                 </div>
             </div>
@@ -186,7 +186,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                                 <Search className="w-5 h-5 text-teal-400" />
                                 {statusText}
                             </h3>
-                            <p className="text-slate-400 text-sm mt-1">Cross-referencing multiple databases in real-time...</p>
+                            <p className="text-slate-400 type-caption mt-1">Cross-referencing multiple databases in real-time...</p>
                         </div>
                         <div className="text-teal-400 font-mono text-2xl font-bold">
                             {Math.floor(progress)}%
@@ -205,15 +205,15 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
 
                     <div className="grid grid-cols-3 gap-2 mt-4 text-center">
                         <div className="bg-slate-800/50 rounded-lg py-2 border border-slate-700/50">
-                            <div className="text-xs text-slate-400 mb-1">Signals Analyzed</div>
+                            <div className="type-caption text-slate-400 mb-1">Signals Analyzed</div>
                             <div className="text-white font-mono font-bold">{Math.floor(progress * 1342).toLocaleString()}</div>
                         </div>
                         <div className="bg-slate-800/50 rounded-lg py-2 border border-slate-700/50">
-                            <div className="text-xs text-slate-400 mb-1">Company Matches</div>
+                            <div className="type-caption text-slate-400 mb-1">Company Matches</div>
                             <div className="text-white font-mono font-bold animate-pulse">{Math.floor(progress * 1.5)}</div>
                         </div>
                         <div className="bg-slate-800/50 rounded-lg py-2 border border-slate-700/50">
-                            <div className="text-xs text-slate-400 mb-1">Data Quality</div>
+                            <div className="type-caption text-slate-400 mb-1">Data Quality</div>
                             <div className="text-emerald-400 font-mono font-bold">Quality check</div>
                         </div>
                     </div>

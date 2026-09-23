@@ -26,7 +26,7 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-white">Session Expiring Soon</h3>
-                        <p className="text-sm text-slate-400">Your session will expire in {countdown} seconds</p>
+                        <p className="type-card-description text-slate-400">Your session will expire in {countdown} seconds</p>
                     </div>
                 </div>
 
@@ -49,7 +49,7 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
                     </button>
                 </div>
 
-                <div className="mt-4 text-center text-xs text-slate-500">
+                <div className="mt-4 text-center type-caption text-slate-500">
                     Any unsaved changes will be lost if you log out
                 </div>
             </div>

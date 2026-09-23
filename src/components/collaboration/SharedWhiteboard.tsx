@@ -107,7 +107,7 @@ const SharedWhiteboard: React.FC<SharedWhiteboardProps> = ({ onClose }) => {
                             onChange={(e) => setBrushSize(Number(e.target.value))}
                             className="w-24"
                         />
-                        <span className="text-sm text-slate-400">{brushSize}px</span>
+                        <span className="type-ui text-slate-400">{brushSize}px</span>
                     </div>
 
                     <div className="flex items-center gap-2">

@@ -32,13 +32,13 @@ export default function WhoWeServePage() {
                 <section className="relative flex flex-col items-center justify-center pt-16 pb-14 px-4 sm:px-6">
                     <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn" delay={0}>
-                            <div className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] text-xs font-bold uppercase tracking-wider">
+                            <div className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] type-caption font-bold uppercase tracking-wider">
                                 <Workflow className="w-3.5 h-3.5 text-[#0878f9]" />
                                 <span>{WHO_WE_SERVE_HERO.badge.toUpperCase()}</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading tracking-tight text-[#07152f] mb-6 leading-[1.05]">
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading tracking-tight text-[#07152f] mb-6 leading-tight">
                                 {WHO_WE_SERVE_HERO.headline} <br />
                                 <span className="text-[#0878f9]">{WHO_WE_SERVE_HERO.headlineAccent}</span>
                             </h1>
@@ -60,7 +60,7 @@ export default function WhoWeServePage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-12 max-w-2xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-bold font-marketing-heading text-[#07152f] mb-3 tracking-tight">Same problem, different team shape</h2>
-                        <p className="text-[#52627b] text-sm leading-relaxed">
+                        <p className="text-[#52627b] type-card-description leading-relaxed">
                             Each segment below starts with the business challenge — not a module list. See full before/after stories on{' '}
                             <Link href="/results" className="text-[#075fc7] hover:text-[#0878f9] font-semibold underline underline-offset-2">
                                 /results
@@ -83,20 +83,20 @@ export default function WhoWeServePage() {
 
                                         {segment.stackReplaced && (
                                             <div className="p-3 rounded-xl bg-[#f7f9fc] border border-[#e2e8f0] mb-4">
-                                                <p className="text-[10px] font-bold text-[#76849a] uppercase tracking-wider mb-1">
+                                                <p className="type-caption font-bold text-[#76849a] uppercase tracking-wider mb-1">
                                                     Often replaces
                                                 </p>
-                                                <p className="text-sm font-semibold text-[#102443]">{segment.stackReplaced}</p>
+                                                <p className="type-card-description font-semibold text-[#102443]">{segment.stackReplaced}</p>
                                             </div>
                                         )}
 
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[#76849a] mb-2">Challenge</p>
-                                        <p className="text-sm text-[#52627b] leading-relaxed mb-5">{segment.challenge}</p>
+                                        <p className="type-caption font-bold uppercase tracking-wider text-[#76849a] mb-2">Challenge</p>
+                                        <p className="type-card-description text-[#52627b] leading-relaxed mb-5">{segment.challenge}</p>
 
-                                        <p className="text-xs font-bold uppercase tracking-wider text-[#075fc7] mb-2">Outcomes</p>
+                                        <p className="type-caption font-bold uppercase tracking-wider text-[#075fc7] mb-2">Outcomes</p>
                                         <ul className="space-y-2 flex-grow mb-4">
                                             {segment.outcomes.map((outcome) => (
-                                                <li key={outcome} className="flex items-start gap-2 text-sm text-[#33445e]">
+                                                <li key={outcome} className="flex items-start gap-2 type-ui text-[#33445e]">
                                                     <CheckCircle2 className="w-4 h-4 text-[#0878f9] mt-0.5 flex-shrink-0" />
                                                     <span>{outcome}</span>
                                                 </li>
@@ -106,7 +106,7 @@ export default function WhoWeServePage() {
                                         {segment.resultsHref && (
                                             <Link
                                                 href={segment.resultsHref}
-                                                className="text-sm font-semibold text-[#075fc7] hover:text-[#0878f9] inline-flex items-center gap-1 mt-auto"
+                                                className="type-ui font-semibold text-[#075fc7] hover:text-[#0878f9] inline-flex items-center gap-1 mt-auto"
                                             >
                                                 Related story
                                                 <ArrowRight className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export default function WhoWeServePage() {
                             <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                             <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
-                        <p className="mt-6 text-xs font-bold text-[#76849a] uppercase tracking-[0.14em]">
+                        <p className="mt-6 type-caption font-bold text-[#76849a] uppercase tracking-caps">
                             Starter $15 · Pro $45 · Enterprise $80
                         </p>
                     </div>

@@ -78,7 +78,7 @@ export default function PublicProposalPage() {
           {branding.logoUrl ? (
             <img src={branding.logoUrl} alt="" className="h-12 mx-auto mb-4 object-contain" />
           ) : null}
-          <p className="text-teal-400 text-sm font-medium">{branding.name}</p>
+          <p className="text-teal-400 type-card-description font-medium">{branding.name}</p>
           <h1 className="text-3xl font-bold text-white mt-2">{String(proposal.title || 'Proposal')}</h1>
         </div>
 
@@ -128,7 +128,7 @@ export default function PublicProposalPage() {
           )}
         </Card>
 
-        <p className="text-center text-slate-500 text-xs flex items-center justify-center gap-1">
+        <p className="text-center text-slate-500 type-card-description flex items-center justify-center gap-1">
           <FileText className="w-3 h-3" aria-hidden="true" />
           Secure proposal from {branding.name}
         </p>

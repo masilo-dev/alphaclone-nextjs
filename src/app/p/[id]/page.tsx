@@ -214,7 +214,7 @@ export default function PublicProjectPage() {
             <Lock className="w-5 h-5" />
             <h1 className="text-xl font-bold text-white">Password required</h1>
           </div>
-          <p className="text-sm text-slate-400 mb-6">
+          <p className="type-card-description text-slate-400 mb-6">
             {project?.name ? `"${project.name}" is protected.` : 'This project link is protected.'}{' '}
             Enter the password your provider shared with you.
           </p>
@@ -255,7 +255,7 @@ export default function PublicProjectPage() {
     <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-4">
-          <div className="inline-block px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 text-sm font-medium border border-teal-500/20">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 type-ui font-medium border border-teal-500/20">
             AlphaClone Systems — Project Portal
           </div>
           <div className="flex flex-col items-center gap-3">
@@ -263,7 +263,7 @@ export default function PublicProjectPage() {
             {clientFinancePortalUrl && (
               <a
                 href={clientFinancePortalUrl}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200 text-xs font-bold uppercase tracking-wider transition-all"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200 type-caption font-bold uppercase tracking-wider transition-all"
               >
                 Go to client workspace
                 <ExternalLink className="w-3 h-3" />
@@ -275,7 +275,7 @@ export default function PublicProjectPage() {
 
         <Card className="p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
           <div className="space-y-2 mb-6">
-            <div className="flex justify-between text-sm text-slate-400">
+            <div className="flex justify-between type-ui text-slate-400">
               <span>Overall Progress</span>
               <span className="text-teal-400 font-bold">{project.progress}%</span>
             </div>
@@ -284,7 +284,7 @@ export default function PublicProjectPage() {
             </div>
           </div>
           <div className="text-3xl font-bold text-teal-400">{project.currentStage || 'In Progress'}</div>
-          <div className="grid gap-3 md:grid-cols-3 mt-6 text-sm">
+          <div className="grid gap-3 md:grid-cols-3 mt-6 type-ui">
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
               <p className="text-slate-500">Status</p>
               <p className="font-semibold text-white">{project.status || 'Active'}</p>
@@ -301,7 +301,7 @@ export default function PublicProjectPage() {
             </div>
           </div>
           {(project as any).portalExpiresAt && (
-            <p className="mt-4 text-xs text-slate-500">
+            <p className="mt-4 type-card-description text-slate-500">
               This secure portal link is valid until {new Date((project as any).portalExpiresAt).toLocaleString()}.
             </p>
           )}
@@ -318,11 +318,11 @@ export default function PublicProjectPage() {
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold text-white">{invoice.invoiceNumber || 'Invoice'}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="type-card-description text-slate-500">
                         {invoice.dueDate ? `Due ${new Date(invoice.dueDate).toLocaleDateString()}` : 'No due date'}
                       </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 text-right text-sm">
+                    <div className="grid grid-cols-3 gap-4 text-right type-ui">
                       <div>
                         <p className="text-slate-500">Total</p>
                         <p className="font-semibold">{invoice.currency} {invoice.total.toFixed(2)}</p>
@@ -338,7 +338,7 @@ export default function PublicProjectPage() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${invoice.isPaid ? 'bg-teal-500/10 text-teal-300' : 'bg-amber-500/10 text-amber-300'}`}>
+                    <span className={`inline-flex rounded-full px-3 py-1 type-caption font-bold ${invoice.isPaid ? 'bg-teal-500/10 text-teal-300' : 'bg-amber-500/10 text-amber-300'}`}>
                       {invoice.isPaid ? 'Paid' : invoice.status || 'Open'}
                     </span>
                   </div>
@@ -360,11 +360,11 @@ export default function PublicProjectPage() {
                   <div>
                     <h4 className="font-semibold text-white">{m.name}</h4>
                     {m.dueDate && (
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                      <p className="type-card-description text-slate-500 flex items-center gap-1 mt-1">
                         <Calendar className="w-3 h-3" /> {new Date(m.dueDate).toLocaleDateString()}
                       </p>
                     )}
-                    {m.description && <p className="text-sm text-slate-400 mt-2">{m.description}</p>}
+                    {m.description && <p className="type-card-description text-slate-400 mt-2">{m.description}</p>}
                   </div>
                 </div>
               </div>
@@ -378,26 +378,26 @@ export default function PublicProjectPage() {
           </h3>
           <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
             {comments.length === 0 ? (
-              <p className="text-sm text-slate-500 italic">No messages yet. Tell your team what you need below.</p>
+              <p className="type-card-description text-slate-500 italic">No messages yet. Tell your team what you need below.</p>
             ) : (
               comments.map((c) => (
                 <div key={c.id} className={`p-4 rounded-xl ${c.is_client ? 'bg-teal-500/5 border border-teal-500/20 ml-4' : 'bg-slate-800/50 border border-slate-700/50 mr-4'}`}>
-                  <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <div className="flex justify-between type-caption text-slate-500 mb-1">
                     <span className="font-bold text-slate-300">{c.author_name}{c.is_client ? ' (You)' : ' (Team)'}</span>
                     <span>{new Date(c.created_at).toLocaleString()}</span>
                   </div>
-                  <p className="text-sm text-slate-200 whitespace-pre-wrap">{c.content}</p>
+                  <p className="type-card-description text-slate-200 whitespace-pre-wrap">{c.content}</p>
                 </div>
               ))
             )}
           </div>
           <form onSubmit={handlePostComment} className="space-y-3 border-t border-slate-800 pt-4">
             <div className="grid sm:grid-cols-2 gap-3">
-              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm text-white" required />
-              <input value={authorEmail} onChange={(e) => setAuthorEmail(e.target.value)} placeholder="Email (optional)" type="email" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm text-white" />
+              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui text-white" required />
+              <input value={authorEmail} onChange={(e) => setAuthorEmail(e.target.value)} placeholder="Email (optional)" type="email" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui text-white" />
             </div>
-            <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="What do you need? Add notes, questions, or feedback..." rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white resize-none" required />
-            <button type="submit" disabled={posting} className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold text-sm disabled:opacity-50">
+            <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="What do you need? Add notes, questions, or feedback..." rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 type-ui text-white resize-none" required />
+            <button type="submit" disabled={posting} className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold type-ui disabled:opacity-50">
               {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Message
             </button>
           </form>

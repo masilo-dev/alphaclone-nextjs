@@ -111,7 +111,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
     }, [dueDate, onOverdue, showAlarm, label, t]);
 
     if (Number.isNaN(new Date(dueDate).getTime())) {
-        return <span className="text-xs text-slate-600 italic">{t('No deadline')}</span>;
+        return <span className="type-caption text-slate-600 italic">{t('No deadline')}</span>;
     }
 
     const isOverdue = remainingMs <= 0;
@@ -121,7 +121,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
     if (isOverdue) {
         return (
             <span
-                className="inline-flex items-center gap-1 text-xs font-bold text-red-500"
+                className="inline-flex items-center gap-1 type-caption font-bold text-red-500"
                 title={`${t('Deadline passed on')} ${dueLabel}`}
                 aria-label={`${t('Overdue by')} ${formatDurationParts(remainingMs)}`}
             >
@@ -133,7 +133,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
 
     return (
         <span
-            className={`inline-flex items-center gap-1 text-xs font-medium ${isSoon ? 'text-amber-500' : 'text-slate-400'}`}
+            className={`inline-flex items-center gap-1 type-caption font-medium ${isSoon ? 'text-amber-500' : 'text-slate-400'}`}
             title={`${t('Due')} ${dueLabel}`}
         >
             <Clock className="w-3.5 h-3.5" aria-hidden />

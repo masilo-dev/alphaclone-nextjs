@@ -65,7 +65,7 @@ export function SmartWorkflowChain({ context, steps, className }: SmartWorkflowC
       <BusinessFlowGuardrail context={context} />
       {suggestedSteps.length > 0 ? (
         <div className="mt-3 space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)] flex items-center gap-1">
+          <p className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)] flex items-center gap-1">
             <Bot className="w-3 h-3" aria-hidden="true" />
             Suggested next step
           </p>
@@ -81,8 +81,8 @@ export function SmartWorkflowChain({ context, steps, className }: SmartWorkflowC
             >
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-[12px] font-medium text-[var(--ws-text-primary)]">{step.label}</p>
-                  <p className="text-[11px] text-[var(--ws-text-secondary)] mt-0.5">{step.description}</p>
+                  <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{step.label}</p>
+                  <p className="type-card-description text-[var(--ws-text-secondary)] mt-0.5">{step.description}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
               </div>

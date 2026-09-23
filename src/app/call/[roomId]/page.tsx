@@ -92,12 +92,12 @@ export default function CallPage() {
         return (
             <div className="h-screen w-screen bg-slate-950 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/80">
-                    <p className="text-sm text-slate-300">Microsoft Teams · 40 minute session</p>
+                    <p className="type-card-description text-slate-300">Microsoft Teams · 40 minute session</p>
                     <a
                         href={teamsJoinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-blue-300 hover:text-blue-200"
+                        className="inline-flex items-center gap-2 type-caption font-semibold text-blue-300 hover:text-blue-200"
                     >
                         Open in Teams app <ExternalLink className="w-3.5 h-3.5" />
                     </a>

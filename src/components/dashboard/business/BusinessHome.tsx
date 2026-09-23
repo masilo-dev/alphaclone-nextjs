@@ -45,7 +45,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   useEffect(() => {
     // Companion Home delegates its summary fetch to AttentionFirstDashboard and
     // deliberately avoids the extra desktop setup/context request path.
-    if (isCompanion || !currentTenant?.id || !user.id) return;
+    if (isCompanion || onboardingComplete || dismissed || !currentTenant?.id || !user.id) return;
     let active = true;
     void getDashboardStats(currentTenant.id, user.id).then((result) => {
       if (!active) return;
@@ -55,7 +55,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     return () => {
       active = false;
     };
-  }, [currentTenant?.id, user.id, getDashboardStats, isCompanion]);
+  }, [currentTenant?.id, user.id, getDashboardStats, isCompanion, onboardingComplete, dismissed]);
 
   useEffect(() => {
     const syncOnboarding = () => {
@@ -80,7 +80,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
-      <WorkspaceGuide user={user} />
       {showSetup ? (
         <NewUserSetupPanel
           user={user}
@@ -93,11 +92,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
       {homeLayout === 'attention_first' ? <AttentionFirstDashboard /> : <OperatingSystemHome />}
 
+      <WorkspaceGuide user={user} />
+
       <div className="flex justify-center pt-1">
         <button
           type="button"
           onClick={() => setShowMoreContext((v) => !v)}
-          className="text-xs font-medium text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-500)] transition-colors underline-offset-2 hover:underline"
+          className="type-caption font-medium text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-500)] transition-colors underline-offset-2 hover:underline"
         >
           {showMoreContext ? 'Hide extra workspace context' : 'Show platform insights & overview'}
         </button>

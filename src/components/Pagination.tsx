@@ -32,7 +32,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <div className={`flex items-center justify-between ${className}`}>
             {/* Items per page selector */}
             {onItemsPerPageChange && (
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 type-ui text-slate-400">
                     <span>Show</span>
                     <select
                         value={itemsPerPage}
@@ -50,7 +50,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
             {/* Page info */}
             {totalItems !== undefined && (
-                <div className="text-sm text-slate-400">
+                <div className="type-ui text-slate-400">
                     Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} to{' '}
                     {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} items
                 </div>
@@ -89,7 +89,7 @@ const Pagination: React.FC<PaginationProps> = ({
                             <button
                                 key={page}
                                 onClick={() => goToPage(Number(page))}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                                className={`px-3 py-1 rounded-lg type-ui font-medium transition-colors ${currentPage === page
                                         ? 'bg-teal-500 text-white'
                                         : 'text-slate-400 hover:text-white hover:bg-slate-800'
                                     }`}

@@ -42,7 +42,7 @@ export function SubNavigation({ moduleId, items, activeHref, className }: SubNav
             key={item.id}
             href={item.href}
             className={cn(
-              'relative inline-flex items-center gap-2 whitespace-nowrap px-3 min-h-10 text-[13px] font-medium transition-colors duration-150',
+              'relative inline-flex items-center gap-2 whitespace-nowrap px-3 min-h-10 type-ui font-medium transition-colors duration-150',
               active
                 ? 'text-[var(--ws-text-primary)]'
                 : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
@@ -50,7 +50,7 @@ export function SubNavigation({ moduleId, items, activeHref, className }: SubNav
           >
             {t(item.label)}
             {item.badge != null ? (
-              <span className="inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-[var(--ws-surface-tertiary)] px-1 text-[10px] font-semibold text-[var(--ws-text-secondary)]">
+              <span className="inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-[var(--ws-surface-tertiary)] px-1 type-ui font-semibold text-[var(--ws-text-secondary)]">
                 {item.badge}
               </span>
             ) : null}

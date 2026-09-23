@@ -27,7 +27,7 @@ export function FunnelVisualization({
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className={WORKSPACE.typography.sectionTitle}>Funnel & conversion</h2>
-          <p className="text-[11.5px] text-[var(--ws-text-muted)] mt-0.5">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
             {topCount > 0 ? (
               <>
                 {topCount.toLocaleString()} {multiplierName} at top · {analysis.overallConversionPct}% end-to-end
@@ -42,7 +42,7 @@ export function FunnelVisualization({
           if (!bn) {
             return (
               <div className={cn(
-                'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-bold uppercase border',
+                'inline-flex items-center gap-1.5 px-2 py-1 rounded-md type-caption font-bold uppercase border',
                 getSemanticStyles('success').bg, getSemanticStyles('success').text, getSemanticStyles('success').border,
               )}>
                 <CheckCircle2 className="w-3 h-3" />
@@ -55,7 +55,7 @@ export function FunnelVisualization({
               ? getSemanticStyles('critical').bg + ' ' + getSemanticStyles('critical').text + ' ' + getSemanticStyles('critical').border
               : getSemanticStyles('warning').bg + ' ' + getSemanticStyles('warning').text + ' ' + getSemanticStyles('warning').border;
           return (
-            <div className={cn('inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-bold uppercase border', styleStr)}>
+            <div className={cn('inline-flex items-center gap-1.5 px-2 py-1 rounded-md type-caption font-bold uppercase border', styleStr)}>
               <AlertCircle className="w-3 h-3" />
               Bottleneck
             </div>
@@ -102,19 +102,19 @@ export function FunnelVisualization({
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[13px] font-semibold text-[var(--ws-text-primary)] truncate">
+                      <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">
                         {stage.label}
                       </p>
                       {isBottleneck ? (
                         <span className={cn(
-                          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase border',
+                          'inline-flex items-center gap-1 px-1.5 py-0.5 rounded type-caption font-bold uppercase border',
                           sem.bg, sem.text, sem.border,
                         )}>
                           {severity === 'critical' ? 'Severe' : 'Moderate'} drop
                         </span>
                       ) : null}
                       {stage.description ? (
-                        <span className="text-[10.5px] text-[var(--ws-text-muted)]">
+                        <span className="type-ui text-[var(--ws-text-muted)]">
                           · {stage.description}
                         </span>
                       ) : null}
@@ -131,17 +131,17 @@ export function FunnelVisualization({
                     </div>
                   </div>
                   <div className="min-w-[90px] text-right">
-                    <p className="text-[15px] font-black tabular-nums text-[var(--ws-text-primary)]">
+                    <p className="type-card-description font-black tabular-nums text-[var(--ws-text-primary)]">
                       {stage.count.toLocaleString()}
                     </p>
-                    <p className="text-[10.5px] text-[var(--ws-text-muted)] tabular-nums">
+                    <p className="type-card-description text-[var(--ws-text-muted)] tabular-nums">
                       {cumulative}% of top
                     </p>
                   </div>
                 </div>
 
                 {next ? (
-                  <div className="mt-2 pt-2 border-t border-white/[0.03] flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                  <div className="mt-2 pt-2 border-t border-white/[0.03] flex flex-wrap items-center gap-x-3 gap-y-1 type-ui">
                     <span className="inline-flex items-center gap-1 text-[var(--ws-text-secondary)]">
                       <ChevronRight className="w-3 h-3" />
                       <span className="font-semibold text-[var(--ws-text-primary)] tabular-nums">
@@ -177,10 +177,10 @@ export function FunnelVisualization({
 
       {analysis.bottleneck ? (
         <div className="mt-4 pt-4 border-t border-white/[0.04]">
-          <p className="text-[12px] font-semibold text-[var(--ws-text-primary)] mb-1">
+          <p className="type-card-description font-semibold text-[var(--ws-text-primary)] mb-1">
             Where to focus first
           </p>
-          <p className="text-[11.5px] text-[var(--ws-text-secondary)] leading-relaxed">
+          <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
             {analysis.bottleneck.recommendation}
           </p>
         </div>

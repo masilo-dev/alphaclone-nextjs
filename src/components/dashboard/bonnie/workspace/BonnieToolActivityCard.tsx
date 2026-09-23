@@ -44,7 +44,7 @@ export default function BonnieToolActivityCard({ tools }: Props) {
             key={`${tool.tool}-${index}`}
             className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50 open:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:open:bg-slate-900"
           >
-            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200">
+            <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 type-ui font-medium text-slate-700 dark:text-slate-200">
               {pending ? (
                 <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
               ) : failed ? (
@@ -61,7 +61,7 @@ export default function BonnieToolActivityCard({ tools }: Props) {
               </span>
               <Sparkles className="h-3.5 w-3.5 text-slate-400 opacity-0 transition group-open:opacity-100" />
             </summary>
-            <div className="space-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300">
+            <div className="space-y-1 border-t border-slate-200 px-3 py-2 type-caption text-slate-600 dark:border-slate-700 dark:text-slate-300">
               <p>
                 <span className="font-semibold">Activity:</span> {hermetic.text}
                 {hermetic.moduleLabel ? ` · ${hermetic.moduleLabel}` : ''}

@@ -143,7 +143,7 @@ export default function WorkerMonitoringDashboard() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
-            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white"
+            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white"
           >
             <option value="today">Today</option>
             <option value="week">This Week</option>
@@ -168,7 +168,7 @@ export default function WorkerMonitoringDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">Active Now</p>
+              <p className="text-slate-400 type-card-description">Active Now</p>
               <p className="text-2xl font-bold text-white">{stats.total_active}</p>
             </div>
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -177,7 +177,7 @@ export default function WorkerMonitoringDashboard() {
           </div>
           <div className="flex items-center gap-1 mt-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400">Live</span>
+            <span className="type-caption text-green-400">Live</span>
           </div>
         </motion.div>
 
@@ -189,14 +189,14 @@ export default function WorkerMonitoringDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">Workers Today</p>
+              <p className="text-slate-400 type-card-description">Workers Today</p>
               <p className="text-2xl font-bold text-white">{stats.active_today}</p>
             </div>
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-blue-400" />
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Unique users active</p>
+          <p className="type-card-description text-slate-500 mt-2">Unique users active</p>
         </motion.div>
 
         <motion.div
@@ -207,7 +207,7 @@ export default function WorkerMonitoringDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">Avg Productivity</p>
+              <p className="text-slate-400 type-card-description">Avg Productivity</p>
               <p className="text-2xl font-bold text-white">{stats.avg_productivity}%</p>
             </div>
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -230,25 +230,25 @@ export default function WorkerMonitoringDashboard() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">Total Activities</p>
+              <p className="text-slate-400 type-card-description">Total Activities</p>
               <p className="text-2xl font-bold text-white">{stats.total_activities.toLocaleString()}</p>
             </div>
             <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
               <MousePointer className="w-5 h-5 text-orange-400" />
             </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Clicks & actions tracked</p>
+          <p className="type-card-description text-slate-500 mt-2">Clicks & actions tracked</p>
         </motion.div>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3">
         <Filter className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-slate-400">Filter by app:</span>
+        <span className="type-ui text-slate-400">Filter by app:</span>
         <div className="flex gap-2">
           <button
             onClick={() => setFilterApp('all')}
-            className={`px-3 py-1.5 rounded-lg text-sm ${
+            className={`px-3 py-1.5 rounded-lg type-ui ${
               filterApp === 'all' 
                 ? 'bg-blue-500 text-white' 
                 : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
@@ -260,7 +260,7 @@ export default function WorkerMonitoringDashboard() {
             <button
               key={app}
               onClick={() => setFilterApp(app)}
-              className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg type-ui flex items-center gap-1.5 ${
                 filterApp === app 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
@@ -304,7 +304,7 @@ export default function WorkerMonitoringDashboard() {
                       <h3 className="font-semibold text-white">
                         {worker.user_name || worker.user_email?.split('@')[0] || 'Unknown'}
                       </h3>
-                      <p className="text-xs text-slate-400">{worker.user_email}</p>
+                      <p className="type-card-description text-slate-400">{worker.user_email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -314,7 +314,7 @@ export default function WorkerMonitoringDashboard() {
 
                 {/* Current Activity */}
                 <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 type-ui">
                     {APP_ICONS[worker.app_name] || <Monitor className="w-4 h-4" />}
                     <span className="text-slate-300 capitalize">{worker.app_name}</span>
                     {worker.module_name && (
@@ -325,7 +325,7 @@ export default function WorkerMonitoringDashboard() {
                     )}
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 type-ui">
                     <Activity className="w-4 h-4 text-slate-400" />
                     <span className="text-slate-300">
                       {worker.action_type === 'view' && 'Viewing'}
@@ -338,7 +338,7 @@ export default function WorkerMonitoringDashboard() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 type-ui">
                     <Clock className="w-4 h-4 text-slate-400" />
                     <span className={`${getActivityColor(worker.session_minutes)}`}>
                       {worker.session_minutes < 1 
@@ -352,17 +352,17 @@ export default function WorkerMonitoringDashboard() {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-700">
                   <div className="flex items-center gap-2">
                     {DEVICE_ICONS[worker.device_type || 'desktop'] || <Monitor className="w-4 h-4 text-slate-400" />}
-                    <span className="text-xs text-slate-500 capitalize">{worker.device_type || 'desktop'}</span>
+                    <span className="type-caption text-slate-500 capitalize">{worker.device_type || 'desktop'}</span>
                   </div>
                   
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                       <MousePointer className="w-3 h-3 text-slate-400" />
-                      <span className="text-xs text-slate-400">{worker.clicks_count}</span>
+                      <span className="type-caption text-slate-400">{worker.clicks_count}</span>
                     </div>
                     
                     {prod && (
-                      <div className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      <div className={`px-2 py-0.5 rounded type-caption font-medium ${
                         prod.productivity_score >= 80 ? 'bg-green-500/20 text-green-400' :
                         prod.productivity_score >= 60 ? 'bg-blue-500/20 text-blue-400' :
                         prod.productivity_score >= 40 ? 'bg-yellow-500/20 text-yellow-400' :
@@ -383,29 +383,29 @@ export default function WorkerMonitoringDashboard() {
                       exit={{ height: 0, opacity: 0 }}
                       className="mt-3 pt-3 border-t border-slate-700 space-y-2"
                     >
-                      <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="grid grid-cols-2 gap-2 type-ui">
                         <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-slate-400 text-xs">Today's Activities</p>
+                          <p className="text-slate-400 type-card-description">Today's Activities</p>
                           <p className="text-white font-semibold">{prod.total_activities}</p>
                         </div>
                         <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-slate-400 text-xs">Active Hours</p>
+                          <p className="text-slate-400 type-card-description">Active Hours</p>
                           <p className="text-white font-semibold">{prod.active_hours}h</p>
                         </div>
                         <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-slate-400 text-xs">Apps Used</p>
+                          <p className="text-slate-400 type-card-description">Apps Used</p>
                           <p className="text-white font-semibold">{prod.unique_apps}</p>
                         </div>
                         <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-slate-400 text-xs">Entities</p>
+                          <p className="text-slate-400 type-card-description">Entities</p>
                           <p className="text-white font-semibold">{prod.entities_touched}</p>
                         </div>
                       </div>
                       
                       {worker.metadata && Object.keys(worker.metadata).length > 0 && (
                         <div className="bg-slate-900/50 rounded p-2">
-                          <p className="text-slate-400 text-xs mb-1">Current Context</p>
-                          <pre className="text-xs text-slate-300 overflow-x-auto">
+                          <p className="text-slate-400 type-card-description mb-1">Current Context</p>
+                          <pre className="type-caption text-slate-300 overflow-x-auto">
                             {JSON.stringify(worker.metadata, null, 2)}
                           </pre>
                         </div>
@@ -423,7 +423,7 @@ export default function WorkerMonitoringDashboard() {
         <div className="text-center py-12">
           <Monitor className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <p className="text-slate-400">No active workers found</p>
-          <p className="text-sm text-slate-500">Workers will appear here when they start using the apps</p>
+          <p className="type-card-description text-slate-500">Workers will appear here when they start using the apps</p>
         </div>
       )}
     </div>

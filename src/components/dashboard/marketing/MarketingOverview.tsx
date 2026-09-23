@@ -77,13 +77,13 @@ type OverviewData = {
   globalPauseAvailable: boolean;
 };
 
-const sectionLabel = 'mb-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]';
-const inlineAction = 'text-[11px] font-medium text-[var(--brand-teal)] transition-colors hover:text-[var(--interactive-secondary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-sm';
+const sectionLabel = 'mb-3 type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]';
+const inlineAction = 'type-ui font-medium text-[var(--brand-teal)] transition-colors hover:text-[var(--interactive-secondary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] rounded-sm';
 
 function KpiCell({ label, value }: { label: string; value: number }) {
   return (
     <div className="ac-workspace-panel p-3 text-center">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-[var(--ws-text-tertiary)]">{label}</p>
+      <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums text-[var(--ws-text-primary)]">{value}</p>
     </div>
   );
@@ -164,7 +164,7 @@ export default function MarketingOverview() {
     return (
       <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/marketing">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-[14px] text-[var(--ws-text-secondary)]">Unable to load marketing overview.</p>
+          <p className="type-card-description text-[var(--ws-text-secondary)]">Unable to load marketing overview.</p>
           <button
             type="button"
             onClick={load}
@@ -184,8 +184,8 @@ export default function MarketingOverview() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-[18px] font-semibold leading-[26px] tracking-tight text-[var(--ws-text-primary)]">Marketing</h1>
-            <p className="mt-0.5 text-[13px] text-[var(--ws-text-secondary)]">
+            <h1 className="text-lg font-semibold leading-ui tracking-tight text-[var(--ws-text-primary)]">Marketing</h1>
+            <p className="mt-0.5 type-card-description text-[var(--ws-text-secondary)]">
               Run outreach, campaigns and social from one place.
             </p>
           </div>
@@ -227,7 +227,7 @@ export default function MarketingOverview() {
               </div>
               {d.activeWork.length === 0 && d.socialScheduled === 0 ? (
                 <div className="ac-workspace-panel p-6 text-center">
-                  <p className="text-[13px] text-[var(--ws-text-secondary)]">Nothing running right now.</p>
+                  <p className="type-card-description text-[var(--ws-text-secondary)]">Nothing running right now.</p>
                   <Link href="/dashboard/business/campaigns?new=1" className={`${inlineAction} mt-3 inline-block`}>Start a campaign</Link>
                 </div>
               ) : (
@@ -237,8 +237,8 @@ export default function MarketingOverview() {
                   ))}
                   {d.socialScheduled > 0 ? (
                     <div className="ac-workspace-panel p-4">
-                      <h3 className="text-[13px] font-semibold text-[var(--ws-text-primary)]">Social campaign</h3>
-                      <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">{d.socialScheduled} post{d.socialScheduled === 1 ? '' : 's'} scheduled</p>
+                      <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">Social campaign</h3>
+                      <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">{d.socialScheduled} post{d.socialScheduled === 1 ? '' : 's'} scheduled</p>
                       <Link href="/dashboard/business/social-command" className={`${inlineAction} mt-3 inline-block`}>View schedule →</Link>
                     </div>
                   ) : null}
@@ -264,12 +264,12 @@ export default function MarketingOverview() {
                     <div key={item.id} className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-[var(--ws-hover)]">
                       <Activity className="mt-0.5 h-4 w-4 shrink-0 text-[var(--ws-text-tertiary)]" aria-hidden="true" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] capitalize text-[var(--ws-text-primary)]">{item.label}</p>
-                        {item.detail ? <p className="truncate text-[11px] text-[var(--ws-text-secondary)]">{item.detail}</p> : null}
+                        <p className="type-card-description capitalize text-[var(--ws-text-primary)]">{item.label}</p>
+                        {item.detail ? <p className="truncate type-card-description text-[var(--ws-text-secondary)]">{item.detail}</p> : null}
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-[10px] text-[var(--ws-text-tertiary)]">{item.time}</p>
-                        {item.source ? <p className="text-[10px] text-[var(--brand-teal)]">{item.source}</p> : null}
+                        <p className="type-caption text-[var(--ws-text-tertiary)]">{item.time}</p>
+                        {item.source ? <p className="type-card-description text-[var(--brand-teal)]">{item.source}</p> : null}
                       </div>
                     </div>
                   ))}
@@ -287,19 +287,19 @@ export default function MarketingOverview() {
               {d.needsAttention.length === 0 ? (
                 <div className="ac-workspace-panel flex items-center gap-2 p-4">
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--success)]" aria-hidden="true" />
-                  <p className="text-[12px] text-[var(--ws-text-secondary)]">All clear — no issues detected.</p>
+                  <p className="type-card-description text-[var(--ws-text-secondary)]">All clear — no issues detected.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {d.needsAttention.map((item) => (
                     <div key={item.id} className="ac-workspace-panel p-3">
-                      <p className="text-[12px] font-medium text-[var(--ws-text-primary)]">{item.title}</p>
-                      <p className="mt-0.5 text-[11px] text-[var(--ws-text-secondary)]">{item.detail}</p>
+                      <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{item.title}</p>
+                      <p className="mt-0.5 type-card-description text-[var(--ws-text-secondary)]">{item.detail}</p>
                       {item.href && item.action ? (
                         <button
                           type="button"
                           onClick={() => router.push(item.href!)}
-                          className="mt-2 rounded-sm text-[10px] font-semibold text-[var(--warning)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                          className="mt-2 rounded-sm type-ui font-semibold text-[var(--warning)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                         >
                           {item.action} →
                         </button>
@@ -316,11 +316,11 @@ export default function MarketingOverview() {
                 <Link href="/dashboard/marketing/delivery" className={inlineAction}>Manage →</Link>
               </div>
               <div className="ac-workspace-panel space-y-2 p-4">
-                <p className="text-[12px] text-[var(--ws-text-secondary)]">
+                <p className="type-card-description text-[var(--ws-text-secondary)]">
                   Automatic · <span className="text-[var(--brand-teal)]">{d.delivery.resolvedLabel}</span>
                 </p>
                 {d.delivery.providers.filter((p) => p.connected).slice(0, 5).map((p) => (
-                  <div key={p.id} className="flex items-center justify-between text-[11px]">
+                  <div key={p.id} className="flex items-center justify-between type-ui">
                     <span className="text-[var(--ws-text-primary)]">{p.label}</span>
                     <span className="flex items-center gap-1 text-[var(--success)]">
                       <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
@@ -336,8 +336,8 @@ export default function MarketingOverview() {
                 <div className="flex items-start gap-2">
                   <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warning)]" aria-hidden="true" />
                   <div>
-                    <p className="text-[11px] font-semibold text-[var(--warning)]">Emergency pause</p>
-                    <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--ws-text-secondary)]">Global outbound pause is not yet available. Pause individual campaigns from Active work above.</p>
+                    <p className="type-card-description font-semibold text-[var(--warning)]">Emergency pause</p>
+                    <p className="mt-0.5 type-card-description leading-relaxed text-[var(--ws-text-secondary)]">Global outbound pause is not yet available. Pause individual campaigns from Active work above.</p>
                   </div>
                 </div>
               </div>

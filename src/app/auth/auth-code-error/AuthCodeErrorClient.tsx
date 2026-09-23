@@ -15,7 +15,7 @@ export default function AuthCodeErrorClient() {
           <AlertTriangle className="w-7 h-7 text-red-400" />
         </div>
         <h1 className="text-xl font-bold text-white">Sign-in could not be completed</h1>
-        <p className="text-sm text-slate-400">
+        <p className="type-card-description text-slate-400">
           {error === 'linkedin_sync_failed'
             ? 'Your account signed in, but LinkedIn could not be connected. You can retry from Settings → Integrations.'
             : error === 'zoho_auth_failed'
@@ -33,7 +33,7 @@ export default function AuthCodeErrorClient() {
           >
             Back to login
           </Link>
-          <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-300">
+          <Link href="/dashboard" className="type-ui text-slate-500 hover:text-slate-300">
             Go to dashboard
           </Link>
         </div>

@@ -55,7 +55,7 @@ export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutTogg
             title={t(opt.hint)}
             onClick={() => void saveDashboardHomeLayout(opt.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold rounded-[6px] transition-colors',
+              'inline-flex items-center gap-1.5 px-2.5 py-1.5 type-ui font-semibold rounded-[6px] transition-colors',
               active
               ? 'bg-teal-500/15 text-teal-800 dark:bg-teal-500/20 dark:text-teal-100'
               : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]',

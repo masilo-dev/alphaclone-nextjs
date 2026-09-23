@@ -26,7 +26,7 @@ export default function DocsPageContent() {
             <div className="flex">
                 {/* Sticky Sidebar Nav — Desktop */}
                 <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20 self-start h-[calc(100vh-5rem)] overflow-y-auto border-r border-slate-800/50 py-8 px-4">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">On This Page</p>
+                    <p className="type-caption font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">On This Page</p>
                     <nav className="space-y-1">
                         {[
                             { id: 'onboarding', label: '1. Registration & Setup', icon: CheckCircle2 },
@@ -43,7 +43,7 @@ export default function DocsPageContent() {
                             <a
                                 key={item.id}
                                 href={`#${item.id}`}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg type-ui text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                             >
                                 <item.icon className="w-4 h-4 text-teal-500 flex-shrink-0" />
                                 {item.label}
@@ -51,7 +51,7 @@ export default function DocsPageContent() {
                         ))}
                     </nav>
                     <div className="mt-8 px-2">
-                        <Link href="/guide" className="flex items-center gap-2 text-teal-400 hover:text-teal-300 text-xs font-semibold">
+                        <Link href="/guide" className="flex items-center gap-2 text-teal-400 hover:text-teal-300 type-ui font-semibold">
                             <BookOpen className="w-4 h-4" />
                             Full Onboarding Guide
                             <ExternalLink className="w-3 h-3" />
@@ -97,7 +97,7 @@ export default function DocsPageContent() {
                     <header className="mb-16">
                         <div className="flex items-center gap-2 mb-4">
                             <BookOpen className="w-5 h-5 text-teal-400" />
-                            <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">Documentation</span>
+                            <span className="text-teal-400 type-caption font-semibold tracking-widest uppercase">Documentation</span>
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">AlphaClone Business OS — Full Reference</h1>
                         <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
@@ -118,8 +118,8 @@ export default function DocsPageContent() {
                                 { label: 'Non-technical', sub: 'plain language' },
                             ].map((stat, i) => (
                                 <div key={i} className="p-3 bg-slate-900 rounded-lg border border-slate-800 text-center">
-                                    <div className="font-bold text-white text-sm">{stat.label}</div>
-                                    <div className="text-slate-500 text-xs">{stat.sub}</div>
+                                    <div className="font-bold text-white type-ui">{stat.label}</div>
+                                    <div className="text-slate-500 type-caption">{stat.sub}</div>
                                 </div>
                             ))}
                         </div>
@@ -134,7 +134,7 @@ export default function DocsPageContent() {
                                     <CheckCircle2 className="w-6 h-6 text-teal-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-teal-500 font-semibold uppercase tracking-wider mb-1">Module 1</p>
+                                    <p className="type-caption text-teal-500 font-semibold uppercase tracking-wider mb-1">Module 1</p>
                                     <h2 className="text-3xl font-bold text-white">Registration & Onboarding</h2>
                                 </div>
                             </div>
@@ -164,10 +164,10 @@ export default function DocsPageContent() {
                                             },
                                         ].map(step => (
                                             <li key={step.n} className="flex gap-4">
-                                                <div className="w-7 h-7 rounded-full bg-teal-500 text-slate-950 flex-shrink-0 flex items-center justify-center text-xs font-bold">{step.n}</div>
+                                                <div className="w-7 h-7 rounded-full bg-teal-500 text-slate-950 flex-shrink-0 flex items-center justify-center type-caption font-bold">{step.n}</div>
                                                 <div>
                                                     <p className="text-white font-semibold mb-1">{step.title}</p>
-                                                    <p className="text-sm text-slate-400 leading-relaxed">{step.body}</p>
+                                                    <p className="type-card-description text-slate-400 leading-relaxed">{step.body}</p>
                                                 </div>
                                             </li>
                                         ))}
@@ -183,7 +183,7 @@ export default function DocsPageContent() {
                                     <LayoutDashboard className="w-6 h-6 text-blue-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-blue-500 font-semibold uppercase tracking-wider mb-1">Module 2</p>
+                                    <p className="type-caption text-blue-500 font-semibold uppercase tracking-wider mb-1">Module 2</p>
                                     <h2 className="text-3xl font-bold text-white">Business Home — Mission Control</h2>
                                 </div>
                             </div>
@@ -211,7 +211,7 @@ export default function DocsPageContent() {
                                 ].map((item, i) => (
                                     <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
                                         <h4 className={`${item.color} font-bold mb-3`}>{item.title}</h4>
-                                        <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -224,7 +224,7 @@ export default function DocsPageContent() {
                                     <Users className="w-6 h-6 text-indigo-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wider mb-1">Module 3</p>
+                                    <p className="type-caption text-indigo-500 font-semibold uppercase tracking-wider mb-1">Module 3</p>
                                     <h2 className="text-3xl font-bold text-white">CRM & Deals</h2>
                                 </div>
                             </div>
@@ -255,7 +255,7 @@ export default function DocsPageContent() {
                                             <ChevronRight className="w-4 h-4 text-teal-400" />
                                             <h4 className="text-white font-bold">{item.title}</h4>
                                         </div>
-                                        <p className="text-sm text-slate-400 leading-relaxed">{item.body}</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.body}</p>
                                     </div>
                                 ))}
                             </div>
@@ -268,7 +268,7 @@ export default function DocsPageContent() {
                                     <ClipboardCheck className="w-6 h-6 text-teal-600" aria-hidden="true" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-teal-500 font-semibold uppercase tracking-wider mb-1">Module 4</p>
+                                    <p className="type-caption text-teal-500 font-semibold uppercase tracking-wider mb-1">Module 4</p>
                                     <h2 className="text-3xl font-bold text-white">AI Growth Agent</h2>
                                 </div>
                             </div>
@@ -304,7 +304,7 @@ export default function DocsPageContent() {
                                             <div className="mt-1"><CheckCircle2 className="w-5 h-5 text-teal-500 flex-shrink-0" /></div>
                                             <div>
                                                 <p className="text-white font-bold mb-1">{step.title}</p>
-                                                <p className="text-slate-400 text-sm leading-relaxed">{step.body}</p>
+                                                <p className="text-slate-400 type-card-description leading-relaxed">{step.body}</p>
                                             </div>
                                         </li>
                                     ))}
@@ -319,7 +319,7 @@ export default function DocsPageContent() {
                                     <Globe className="w-6 h-6 text-blue-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-blue-500 font-semibold uppercase tracking-wider mb-1">Module 5</p>
+                                    <p className="type-caption text-blue-500 font-semibold uppercase tracking-wider mb-1">Module 5</p>
                                     <h2 className="text-3xl font-bold text-white">Communications & Integrations</h2>
                                 </div>
                             </div>
@@ -333,11 +333,11 @@ export default function DocsPageContent() {
                                         <h4 className="text-xl font-bold text-white">Gmail Integration</h4>
                                     </div>
                                     <div className="space-y-3 flex-1">
-                                        <p className="text-sm text-slate-400 leading-relaxed">Connect your Google account to read, draft, and send emails directly within the Business OS. Every email thread is contextually linked to the matching CRM contact automatically.</p>
-                                        <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
-                                        <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">Connect your Google account to read, draft, and send emails directly within the Business OS. Every email thread is contextually linked to the matching CRM contact automatically.</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
+                                        <p className="type-caption text-slate-400 leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
                                     </div>
-                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
+                                    <p className="type-caption text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col">
@@ -346,10 +346,10 @@ export default function DocsPageContent() {
                                         <h4 className="text-xl font-bold text-white">HD Video Platform</h4>
                                     </div>
                                     <div className="space-y-3 flex-1">
-                                        <p className="text-sm text-slate-400 leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
-                                        <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
                                     </div>
-                                    <p className="text-xs text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
+                                    <p className="type-caption text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col md:col-span-2">
@@ -358,7 +358,7 @@ export default function DocsPageContent() {
                                         <h4 className="text-xl font-bold text-white">Calendly & Scheduling Integration</h4>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-6">
-                                        <p className="text-sm text-slate-400 leading-relaxed">
+                                        <p className="type-card-description text-slate-400 leading-relaxed">
                                             Connect your Calendly account to enable branded client booking pages and automatic appointment syncing. Two connection methods are available:
                                             <br /><br />
                                             <strong className="text-white">Manual URL:</strong> Paste your Calendly URL in Settings → Integrations → Calendly. Immediate setup, no OAuth required. New appointments show in Calendly but not auto-synced to AlphaClone dashboard.
@@ -374,14 +374,14 @@ export default function DocsPageContent() {
                                                 'Multiple meeting type configuration (Discovery, Check-In, Board)',
                                                 'Buffer time and availability window management',
                                             ].map((feat, i) => (
-                                                <div key={i} className="flex gap-3 text-xs">
+                                                <div key={i} className="flex gap-3 type-caption">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-1.5 flex-shrink-0" />
                                                     <span className="text-slate-300">{feat}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
+                                    <p className="type-caption text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
                                 </div>
                             </div>
                         </div>
@@ -393,7 +393,7 @@ export default function DocsPageContent() {
                                     <Receipt className="w-6 h-6 text-green-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-green-500 font-semibold uppercase tracking-wider mb-1">Module 6</p>
+                                    <p className="type-caption text-green-500 font-semibold uppercase tracking-wider mb-1">Module 6</p>
                                     <h2 className="text-3xl font-bold text-white">Financial Suite & Accounting</h2>
                                 </div>
                             </div>
@@ -436,7 +436,7 @@ export default function DocsPageContent() {
                                         </div>
                                         <ul className="space-y-2">
                                             {col.items.map((item, ii) => (
-                                                <li key={ii} className="flex items-start gap-2 text-sm text-slate-400">
+                                                <li key={ii} className="flex items-start gap-2 type-ui text-slate-400">
                                                     <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                                                     {item}
                                                 </li>
@@ -446,14 +446,14 @@ export default function DocsPageContent() {
                                 ))}
                             </div>
                             <div className="mt-4 p-4 bg-green-500/5 border border-green-500/20 rounded-xl">
-                                <p className="text-green-400 text-xs font-semibold uppercase tracking-wider mb-1">Navigation Paths</p>
+                                <p className="text-green-400 type-caption font-semibold uppercase tracking-wider mb-1">Navigation Paths</p>
                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                     {[
                                         'Finance → Invoices', 'Finance → Quotes',
                                         'Finance → Accounting', 'Finance → Reports',
                                         'Finance → Expenses', 'Finance → Settings',
                                     ].map((path, i) => (
-                                        <p key={i} className="text-xs text-green-500/70 font-mono">{path}</p>
+                                        <p key={i} className="type-card-description text-green-500/70 font-mono">{path}</p>
                                     ))}
                                 </div>
                             </div>
@@ -466,7 +466,7 @@ export default function DocsPageContent() {
                                     <FileText className="w-6 h-6 text-violet-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-violet-500 font-semibold uppercase tracking-wider mb-1">Module 7</p>
+                                    <p className="type-caption text-violet-500 font-semibold uppercase tracking-wider mb-1">Module 7</p>
                                     <h2 className="text-3xl font-bold text-white">Contract Engine & E-Signatures</h2>
                                 </div>
                             </div>
@@ -481,10 +481,10 @@ export default function DocsPageContent() {
                                 ].map((step, i) => (
                                     <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <div className="w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center text-xs font-bold">{i + 1}</div>
-                                            <h4 className="font-bold text-white text-sm">{step.title}</h4>
+                                            <div className="w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center type-caption font-bold">{i + 1}</div>
+                                            <h4 className="font-bold text-white type-ui">{step.title}</h4>
                                         </div>
-                                        <p className="text-xs text-slate-400 leading-relaxed">{step.desc}</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">{step.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -497,7 +497,7 @@ export default function DocsPageContent() {
                                     <CheckSquare className="w-6 h-6 text-amber-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-amber-500 font-semibold uppercase tracking-wider mb-1">Module 8</p>
+                                    <p className="type-caption text-amber-500 font-semibold uppercase tracking-wider mb-1">Module 8</p>
                                     <h2 className="text-3xl font-bold text-white">Task & Project Management</h2>
                                 </div>
                             </div>
@@ -513,7 +513,7 @@ export default function DocsPageContent() {
                                 ].map((item, i) => (
                                     <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
                                         <h4 className="text-white font-bold mb-2">{item.title}</h4>
-                                        <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -526,7 +526,7 @@ export default function DocsPageContent() {
                                     <ShieldCheck className="w-6 h-6 text-rose-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-rose-500 font-semibold uppercase tracking-wider mb-1">Module 9</p>
+                                    <p className="type-caption text-rose-500 font-semibold uppercase tracking-wider mb-1">Module 9</p>
                                     <h2 className="text-3xl font-bold text-white">Security & Compliance</h2>
                                 </div>
                             </div>
@@ -543,8 +543,8 @@ export default function DocsPageContent() {
                                     { title: '2FA Authentication', desc: 'Two-factor authentication available for all accounts. Enable via Settings → Security → Two-Factor Authentication. Supports authenticator apps and SMS.' },
                                 ].map((item, i) => (
                                     <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 text-center">
-                                        <h5 className="text-white font-bold mb-2 text-sm">{item.title}</h5>
-                                        <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+                                        <h5 className="text-white font-bold mb-2 type-ui">{item.title}</h5>
+                                        <p className="type-card-description text-slate-500 leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -557,7 +557,7 @@ export default function DocsPageContent() {
                                     <Settings className="w-6 h-6 text-slate-400" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Module 10</p>
+                                    <p className="type-caption text-slate-500 font-semibold uppercase tracking-wider mb-1">Module 10</p>
                                     <h2 className="text-3xl font-bold text-white">Settings & Configuration</h2>
                                 </div>
                             </div>
@@ -574,10 +574,10 @@ export default function DocsPageContent() {
                                     { section: 'Notifications', items: ['Email alert preferences', 'In-app notification settings', 'Digest frequency'] },
                                 ].map((group, i) => (
                                     <div key={i} className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                                        <h5 className="text-teal-400 font-semibold text-sm mb-3">{group.section}</h5>
+                                        <h5 className="text-teal-400 font-semibold type-ui mb-3">{group.section}</h5>
                                         <ul className="space-y-1">
                                             {group.items.map((item, ii) => (
-                                                <li key={ii} className="text-xs text-slate-500">{item}</li>
+                                                <li key={ii} className="type-caption text-slate-500">{item}</li>
                                             ))}
                                         </ul>
                                     </div>

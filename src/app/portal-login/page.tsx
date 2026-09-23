@@ -116,7 +116,7 @@ function PortalLoginContent() {
                         <h1 className="text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">
                             Client workspace sign in
                         </h1>
-                        <p className="mt-2 text-sm text-[color:var(--ws-text-secondary)]">
+                        <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)]">
                             Enter your credentials to access your secure shared workspace.
                         </p>
                     </div>
@@ -125,14 +125,14 @@ function PortalLoginContent() {
                         {error ? (
                             <div
                                 role="alert"
-                                className="mb-5 rounded-xl border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--ws-panel))] p-3.5 text-sm"
+                                className="mb-5 rounded-xl border border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_10%,var(--ws-panel))] p-3.5 type-ui"
                             >
                                 <div className="flex gap-3">
                                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-[color:var(--error)]" />
                                     <div className="min-w-0 flex-1">
                                         <p className="text-[color:var(--ws-text-primary)] font-medium">{error}</p>
                                         {rateLimitInfo ? (
-                                            <p className="mt-1 text-xs text-[color:var(--ws-text-tertiary)]">
+                                            <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">
                                                 Retry available in <span className="font-semibold text-[color:var(--error)]">{formatRateLimit(rateLimitInfo.retryAfter)}</span>
                                             </p>
                                         ) : null}
@@ -143,7 +143,7 @@ function PortalLoginContent() {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-[color:var(--ws-text-primary)] mb-1.5">
+                                <label htmlFor="email" className="block type-label font-medium text-[color:var(--ws-text-primary)] mb-1.5">
                                     Email address
                                 </label>
                                 <input
@@ -155,18 +155,18 @@ function PortalLoginContent() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="name@company.com"
                                     disabled={isSubmitting || !!rateLimitInfo}
-                                    className="w-full rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-3.5 py-2.5 text-sm text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="w-full rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-3.5 py-2.5 type-caption text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 />
                             </div>
 
                             <div>
                                 <div className="flex items-center justify-between mb-1.5">
-                                    <label htmlFor="password" className="block text-sm font-medium text-[color:var(--ws-text-primary)]">
+                                    <label htmlFor="password" className="block type-label font-medium text-[color:var(--ws-text-primary)]">
                                         Password
                                     </label>
                                     <Link
                                         href="/auth/reset-password"
-                                        className="text-xs font-medium text-[color:var(--brand-teal)] hover:opacity-80 transition-opacity"
+                                        className="type-caption font-medium text-[color:var(--brand-teal)] hover:opacity-80 transition-opacity"
                                     >
                                         Forgot password?
                                     </Link>
@@ -181,7 +181,7 @@ function PortalLoginContent() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         placeholder="Enter your password"
                                         disabled={isSubmitting || !!rateLimitInfo}
-                                        className="w-full rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-3.5 py-2.5 pr-10 text-sm text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="w-full rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-3.5 py-2.5 pr-10 type-caption text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     />
                                     <button
                                         type="button"
@@ -199,7 +199,7 @@ function PortalLoginContent() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting || !!rateLimitInfo}
-                                className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:ring-offset-2 focus:ring-offset-[color:var(--ws-panel)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2.5 type-ui font-semibold text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[color:var(--brand-teal)] focus:ring-offset-2 focus:ring-offset-[color:var(--ws-panel)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -216,7 +216,7 @@ function PortalLoginContent() {
                         </form>
 
                         <div className="mt-5 pt-5 border-t border-[color:var(--ws-border)]">
-                            <p className="text-center text-xs text-[color:var(--ws-text-tertiary)]">
+                            <p className="text-center type-card-description text-[color:var(--ws-text-tertiary)]">
                                 Need staff access?{' '}
                                 <Link
                                     href="/auth/login"
@@ -228,7 +228,7 @@ function PortalLoginContent() {
                         </div>
                     </div>
 
-                    <div className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-[color:var(--ws-text-tertiary)]">
+                    <div className="mt-6 flex items-center justify-center gap-1.5 type-ui text-[color:var(--ws-text-tertiary)]">
                         <ShieldCheck className="h-3.5 w-3.5 text-[color:var(--success)]" />
                         <span>Private · encrypted · secure connection</span>
                     </div>

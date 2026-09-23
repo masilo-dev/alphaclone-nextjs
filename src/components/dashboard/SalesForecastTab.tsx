@@ -77,7 +77,7 @@ const SalesForecastTab = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-white">Sales Forecast & Pipeline</h2>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
+                    <p className="text-slate-400 type-card-description sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
                 </div>
             </div>
 

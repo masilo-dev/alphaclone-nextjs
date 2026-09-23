@@ -71,7 +71,7 @@ function DataDeletionContent() {
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
                     <div className="flex gap-3">
                         <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-blue-300 space-y-2">
+                        <div className="type-ui text-blue-300 space-y-2">
                             <p><strong>What data will be deleted?</strong></p>
                             <ul className="list-disc list-inside space-y-1 text-blue-400">
                                 <li>Your account profile (name, email, phone)</li>
@@ -81,7 +81,7 @@ function DataDeletionContent() {
                                 <li>All messages, emails, and communication logs</li>
                                 <li>Uploaded media assets and documents</li>
                             </ul>
-                            <p className="text-blue-500 text-xs mt-2">Processing time: up to 30 days as required by law.</p>
+                            <p className="text-blue-500 type-caption mt-2">Processing time: up to 30 days as required by law.</p>
                         </div>
                     </div>
                 </div>
@@ -90,14 +90,14 @@ function DataDeletionContent() {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
                     <div className="flex gap-3">
                         <Shield className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-slate-300 space-y-2">
+                        <div className="type-ui text-slate-300 space-y-2">
                             <p><strong>Connected via Facebook Login?</strong></p>
                             <p className="text-slate-400">If you used Facebook Login, you can also remove your data from Facebook's settings:</p>
                             <a
                                 href="https://www.facebook.com/settings?tab=applications"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-teal-400 hover:text-teal-300 text-sm font-medium"
+                                className="inline-flex items-center gap-1.5 text-teal-400 hover:text-teal-300 type-ui font-medium"
                             >
                                 <ExternalLink className="w-3.5 h-3.5" />
                                 Go to Facebook Settings → Apps
@@ -120,25 +120,25 @@ function DataDeletionContent() {
                         ) : statusCheck ? (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                    <span className={`px-3 py-1 rounded-full type-caption font-semibold ${
                                         statusCheck.status === 'completed' ? 'bg-green-500/20 text-green-400'
                                         : statusCheck.status === 'processing' ? 'bg-amber-500/20 text-amber-400'
                                         : 'bg-blue-500/20 text-blue-400'
                                     }`}>
                                         {statusCheck.status.toUpperCase()}
                                     </span>
-                                    <span className="text-xs text-slate-500 capitalize">Source: {statusCheck.source}</span>
+                                    <span className="type-caption text-slate-500 capitalize">Source: {statusCheck.source}</span>
                                 </div>
-                                <div className="text-sm text-slate-400 space-y-1">
+                                <div className="type-ui text-slate-400 space-y-1">
                                     <p>Request submitted: {statusCheck.created_at ? new Date(statusCheck.created_at).toLocaleString() : '—'}</p>
                                     {statusCheck.processed_at && (
                                         <p>Processed: {new Date(statusCheck.processed_at).toLocaleString()}</p>
                                     )}
                                 </div>
                                 <div className="bg-slate-800/50 rounded-lg p-3">
-                                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Confirmation Code</p>
-                                    <code className="text-sm font-mono text-teal-400">{codeFromUrl || result?.confirmation_code}</code>
-                                    <p className="text-xs text-slate-600 mt-1">Save this code to check status later.</p>
+                                    <p className="type-caption text-slate-500 uppercase tracking-wider mb-1">Confirmation Code</p>
+                                    <code className="type-ui font-mono text-teal-400">{codeFromUrl || result?.confirmation_code}</code>
+                                    <p className="type-caption text-slate-600 mt-1">Save this code to check status later.</p>
                                 </div>
                                 {statusCheck.status === 'verification_pending' && codeFromUrl && (
                                     <button type="button" onClick={verifyRequest} disabled={verifying} className="w-full rounded-lg bg-teal-500 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50">
@@ -162,7 +162,7 @@ function DataDeletionContent() {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                                <label className="block type-label font-medium text-slate-400 mb-1.5">
                                     Email Address * <span className="text-slate-600">(associated with your account)</span>
                                 </label>
                                 <div className="relative">
@@ -179,7 +179,7 @@ function DataDeletionContent() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                                <label className="block type-label font-medium text-slate-400 mb-1.5">
                                     Full Name <span className="text-slate-600">(optional)</span>
                                 </label>
                                 <div className="relative">
@@ -195,7 +195,7 @@ function DataDeletionContent() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-400 mb-1.5">
+                                <label className="block type-label font-medium text-slate-400 mb-1.5">
                                     Reason for Deletion <span className="text-slate-600">(optional, helps us improve)</span>
                                 </label>
                                 <div className="relative">
@@ -212,7 +212,7 @@ function DataDeletionContent() {
 
                             <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                                 <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                                <p className="text-xs text-amber-300">
+                                <p className="type-card-description text-amber-300">
                                     <strong>Warning:</strong> This action cannot be undone. Once your data is deleted, it cannot be recovered. Please ensure you have exported any data you wish to keep before submitting this request.
                                 </p>
                             </div>
@@ -248,12 +248,12 @@ function DataDeletionContent() {
                             <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
                             <div>
                                 <h3 className="font-semibold text-green-400">Request Received</h3>
-                                <p className="text-sm text-green-300 mt-1">{result.message}</p>
+                                <p className="type-card-description text-green-300 mt-1">{result.message}</p>
                                 {result.confirmation_code && (
                                     <div className="mt-4 bg-slate-900 rounded-lg p-4 border border-slate-800">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Your Confirmation Code</p>
+                                        <p className="type-caption text-slate-500 uppercase tracking-wider mb-1">Your Confirmation Code</p>
                                         <code className="text-lg font-mono text-teal-400">{result.confirmation_code}</code>
-                                        <p className="text-xs text-slate-600 mt-2">
+                                        <p className="type-card-description text-slate-600 mt-2">
                                             Save this code. You can use it to check the status of your request at any time.
                                         </p>
                                     </div>
@@ -265,7 +265,7 @@ function DataDeletionContent() {
 
                 {/* Contact support */}
                 <div className="text-center py-4 border-t border-slate-800">
-                    <p className="text-sm text-slate-500">
+                    <p className="type-card-description text-slate-500">
                         Questions? Contact us at{' '}
                         <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:text-teal-300">
                             privacy@alphaclonesystems.com

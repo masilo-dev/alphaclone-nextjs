@@ -41,11 +41,11 @@ export function OperationalWorkflowStrip({
     >
       <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <div className="flex-1 min-w-0">
-          <p className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+          <p className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 type-caption font-bold uppercase tracking-caps text-slate-500">
             {t('Finish the job')}
           </p>
-          <p className="mt-1 text-sm font-semibold text-white">{t(title)}</p>
-          <p className="mt-1 text-[11px] leading-relaxed text-slate-400 line-clamp-2">
+          <p className="mt-1 type-card-description font-semibold text-white">{t(title)}</p>
+          <p className="mt-1 type-card-description leading-relaxed text-slate-400 line-clamp-2">
             {t(playbook[0])}
           </p>
         </div>
@@ -55,7 +55,7 @@ export function OperationalWorkflowStrip({
               key={link.resolvedHref + link.label}
               type="button"
               onClick={() => router.push(link.resolvedHref)}
-              className="inline-flex h-8 items-center rounded-full border border-slate-700 bg-slate-950/40 px-2.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+              className="inline-flex h-8 items-center rounded-full border border-slate-700 bg-slate-950/40 px-2.5 type-ui font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
             >
               {t(link.label)}
             </button>
@@ -63,7 +63,7 @@ export function OperationalWorkflowStrip({
           <button
             type="button"
             onClick={() => router.push(primary.resolvedHref)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-2.5 text-[11px] font-bold text-white transition-colors hover:bg-teal-500"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-2.5 type-ui font-bold text-white transition-colors hover:bg-teal-500"
           >
             {t(primary.label)}
             <ChevronRight className="h-3 w-3" />

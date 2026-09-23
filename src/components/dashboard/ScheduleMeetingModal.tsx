@@ -131,7 +131,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
             <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Meeting Title */}
                 <div>
-                    <label className="block text-sm font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-white mb-2">
                         {isAdmin ? 'Meeting Title' : 'What do you need help with?'}
                     </label>
                     <input
@@ -146,13 +146,13 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
                 {/* Date and Time - Clearer Layout */}
                 <div className="space-y-3">
-                    <label className="block text-sm font-bold text-white">
+                    <label className="block type-label font-bold text-white">
                         <Calendar className="w-4 h-4 inline mr-2" />
                         When?
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs text-slate-400 mb-1">Date</label>
+                            <label className="block type-label text-slate-400 mb-1">Date</label>
                             <input
                                 type="date"
                                 value={date}
@@ -163,7 +163,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                             />
                         </div>
                         <div>
-                            <label className="block text-xs text-slate-400 mb-1">Time</label>
+                            <label className="block type-caption text-slate-400 mb-1">Time</label>
                             <input
                                 type="time"
                                 value={time}
@@ -174,7 +174,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         </div>
                     </div>
                     {!isAdmin && (
-                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-200">
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 type-ui text-amber-200">
                             ⏰ Book at least 3 hours in advance
                         </div>
                     )}
@@ -182,7 +182,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
                 {/* Participants - Simplified */}
                 <div>
-                    <label className="block text-sm font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-white mb-2">
                         <UserIcon className="w-4 h-4 inline mr-2" />
                         {isAdmin ? 'Select Participants' : 'Book With'}
                     </label>
@@ -203,8 +203,8 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         }}
                                         className="w-4 h-4 rounded bg-slate-700 border-slate-600"
                                     />
-                                    <span className="text-white text-sm">{p.name}</span>
-                                    <span className="text-slate-400 text-xs">({p.email})</span>
+                                    <span className="text-white type-ui">{p.name}</span>
+                                    <span className="text-slate-400 type-caption">({p.email})</span>
                                 </label>
                             ))}
                         </div>
@@ -229,7 +229,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                     <div className="border-t border-slate-800 pt-4">
                         <button
                             onClick={() => setShowAdvanced(!showAdvanced)}
-                            className="flex items-center gap-2 text-sm text-teal-400 hover:text-teal-300 mb-3"
+                            className="flex items-center gap-2 type-ui text-teal-400 hover:text-teal-300 mb-3"
                         >
                             <Settings className="w-4 h-4" />
                             {showAdvanced ? 'Hide' : 'Show'} Advanced Settings
@@ -238,7 +238,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         {showAdvanced && (
                             <div className="space-y-4 pl-6 border-l-2 border-teal-500/20">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block type-label font-medium text-slate-300 mb-2">
                                         Max Participants
                                     </label>
                                     <input
@@ -252,7 +252,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block type-label font-medium text-slate-300 mb-2">
                                         Cancellation Policy (hours before meeting)
                                     </label>
                                     <input
@@ -263,7 +263,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         max="72"
                                         className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
                                     />
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className="type-card-description text-slate-500 mt-1">
                                         Clients can cancel up to this many hours before the meeting
                                     </p>
                                 </div>
@@ -276,7 +276,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setRecordingEnabled(e.target.checked)}
                                         className="w-4 h-4 rounded bg-slate-800 border-slate-700"
                                     />
-                                    <label htmlFor="recordingEnabled" className="text-sm text-slate-300">
+                                    <label htmlFor="recordingEnabled" className="type-label text-slate-300">
                                         Enable Recording
                                     </label>
                                 </div>
@@ -289,7 +289,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setAllowClientCancellation(e.target.checked)}
                                         className="w-4 h-4 rounded bg-slate-800 border-slate-700"
                                     />
-                                    <label htmlFor="allowClientCancellation" className="text-sm text-slate-300">
+                                    <label htmlFor="allowClientCancellation" className="type-label text-slate-300">
                                         <Shield className="w-4 h-4 inline mr-1" />
                                         Allow Client Cancellation
                                     </label>

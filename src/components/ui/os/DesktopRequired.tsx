@@ -35,15 +35,15 @@ export function DesktopRequired({
           <MonitorUp className="h-5 w-5 text-[var(--ac-bonnie)]" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 id="desktop-required-title" className="text-sm font-semibold text-[var(--text-primary)]">
+          <h2 id="desktop-required-title" className="type-ui font-semibold text-[var(--text-primary)]">
             {title}
           </h2>
-          <p className="mt-1 text-sm leading-5 text-[var(--text-secondary)]">{description}</p>
+          <p className="mt-1 type-caption leading-5 text-[var(--text-secondary)]">{description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={openDesktop}
-              className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 text-sm font-semibold text-white transition-transform active:scale-[0.98]"
+              className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 type-ui font-semibold text-white transition-transform active:scale-[0.98]"
             >
               Continue here anyway
             </button>
@@ -51,7 +51,7 @@ export function DesktopRequired({
               <button
                 type="button"
                 onClick={onRemindLater}
-                className="min-h-11 rounded-[12px] border border-[var(--border-default)] px-4 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+                className="min-h-11 rounded-[12px] border border-[var(--border-default)] px-4 type-caption font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
               >
                 <span className="inline-flex items-center gap-2"><Clock3 className="h-4 w-4" aria-hidden /> Remind me later</span>
               </button>

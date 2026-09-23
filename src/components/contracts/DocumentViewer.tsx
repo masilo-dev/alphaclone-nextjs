@@ -217,7 +217,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                         <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.max(0.5, s - 0.25))} className="p-1 h-8 w-8 hover:bg-slate-700">
                             <span className="text-lg">-</span>
                         </Button>
-                        <span className="text-xs font-bold w-12 text-center text-slate-400">{Math.round(renderScale * 100)}%</span>
+                        <span className="type-caption font-bold w-12 text-center text-slate-400">{Math.round(renderScale * 100)}%</span>
                         <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.min(3, s + 0.25))} className="p-1 h-8 w-8 hover:bg-slate-700">
                             <span className="text-lg">+</span>
                         </Button>
@@ -248,13 +248,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 {isLoading ? (
                     <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
                         <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
-                        <p className="text-sm font-medium animate-pulse">Initializing Secure PDF Canvas...</p>
+                        <p className="type-card-description font-medium animate-pulse">Initializing Secure PDF Canvas...</p>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center gap-0 pb-20 max-w-full mx-auto bg-white" id="editor-pdf-content">
                         {Array.from({ length: numPages }, (_, i) => i + 1).map(pageNo => (
                             <div key={pageNo} className="relative group">
-                                <div className="absolute -left-12 top-0 text-slate-600 font-black text-xs h-full flex flex-col items-center pt-2 gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="absolute -left-12 top-0 text-slate-600 font-black type-caption h-full flex flex-col items-center pt-2 gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                                     <span>P. {pageNo}</span>
                                     <div className="w-px flex-1 bg-slate-800" />
                                 </div>
@@ -288,7 +288,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 )}
             </div>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-slate-900/90 backdrop-blur-xl text-white text-xs font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-slate-900/90 backdrop-blur-xl text-white type-caption font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
                 {tool === 'note' && <span className="flex items-center gap-2"><MessageSquare className="w-3 h-3 text-teal-400" /> Click to drop a note</span>}
                 {tool === 'redact' && <span className="flex items-center gap-2"><Eraser className="w-3 h-3 text-red-400" /> Click to redact content</span>}
                 {tool === 'text' && <span className="flex items-center gap-2"><Type className="w-3 h-3 text-blue-400" /> Click to type text</span>}
@@ -437,14 +437,14 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                     {isActive && (
                         <div className="absolute top-0 left-full ml-4 w-72 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in duration-200 origin-left ring-1 ring-white/5">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-400/10 px-2 py-0.5 rounded-md">Note - {annotation.author}</span>
+                                <span className="type-caption font-black text-teal-400 uppercase tracking-widest bg-teal-400/10 px-2 py-0.5 rounded-md">Note - {annotation.author}</span>
                                 <button onClick={onDelete} className="text-slate-500 hover:text-red-400 transition-colors p-1 hover:bg-red-500/10 rounded-lg">
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                             <textarea
                                 autoFocus
-                                className="w-full bg-slate-950/50 border border-white/5 rounded-xl p-3 text-sm text-slate-200 outline-none focus:border-teal-500/50 min-h-[100px] shadow-inner transition-all placeholder:text-slate-700"
+                                className="w-full bg-slate-950/50 border border-white/5 rounded-xl p-3 type-ui text-slate-200 outline-none focus:border-teal-500/50 min-h-[100px] shadow-inner transition-all placeholder:text-slate-700"
                                 value={annotation.text}
                                 onChange={(e) => onUpdate({ text: e.target.value })}
                                 placeholder="Write your comment..."
@@ -452,7 +452,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                             <div className="mt-3 flex justify-end">
                                 <button
                                     onClick={onDeactivate}
-                                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition-all"
+                                    className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white type-caption font-bold rounded-lg transition-all"
                                 >
                                     Close
                                 </button>
@@ -534,13 +534,13 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                                 <div className="flex bg-slate-950/80 p-1 rounded-xl border border-white/5 ring-1 ring-white/5">
                                     <button
                                         onClick={() => onUpdate({ signatureType: 'type' })}
-                                        className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'type' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'type' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                                     >
                                         Type
                                     </button>
                                     <button
                                         onClick={() => onUpdate({ signatureType: 'draw' })}
-                                        className={`px-4 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'draw' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'draw' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
                                     >
                                         Draw
                                     </button>
@@ -566,8 +566,8 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                                 />
                             )}
                             <div className="mt-4 flex justify-between items-center">
-                                <span className="text-xs text-slate-500 font-medium">ESIGN Secure Signature</span>
-                                <Button size="sm" variant="primary" onClick={onDeactivate} className="text-xs h-9 px-6 bg-teal-600 hover:bg-teal-500">Done</Button>
+                                <span className="type-caption text-slate-500 font-medium">ESIGN Secure Signature</span>
+                                <Button size="sm" variant="primary" onClick={onDeactivate} className="type-caption h-9 px-6 bg-teal-600 hover:bg-teal-500">Done</Button>
                             </div>
                         </div>
                     )}

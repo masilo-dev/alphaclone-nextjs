@@ -83,8 +83,8 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
         style={isMobile ? undefined : { top: anchor.top, right: anchor.right }}
       >
         <div className="px-3 py-3 border-b border-[var(--border-default)] bg-[var(--surface-secondary)]">
-          <p className="text-sm font-medium text-[var(--text-primary)] truncate">{displayName}</p>
-          <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">{user.email}</p>
+          <p className="type-card-description font-medium text-[var(--text-primary)] truncate">{displayName}</p>
+          <p className="type-card-description text-[var(--text-muted)] truncate mt-0.5">{user.email}</p>
         </div>
 
         {showMobileApp && onPwaSettings ? (
@@ -95,7 +95,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
               setOpen(false);
               onPwaSettings();
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
           >
             <Smartphone className="w-4 h-4 text-teal-500 dark:text-teal-400" />
             {t('Mobile app')}
@@ -109,14 +109,14 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             setOpen(false);
             onSettings();
           }}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
         >
           <Settings className="w-4 h-4 text-[var(--text-muted)]" />
           {t('Settings')}
         </button>
 
         <div className="px-3 py-2.5 border-t border-[var(--border-default)] bg-[var(--surface-secondary)]">
-          <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+          <label className="flex items-center gap-2 type-caption font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
             <Globe className="w-3 h-3" />
             {t('Language')}
           </label>
@@ -124,7 +124,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             value={language}
             onChange={(e) => setLanguage(e.target.value as typeof language)}
             aria-label={t('Language')}
-            className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-primary)] px-2.5 py-1.5 text-xs text-[var(--text-primary)] outline-none focus:border-teal-500/50"
+            className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-primary)] px-2.5 py-1.5 type-caption text-[var(--text-primary)] outline-none focus:border-teal-500/50"
           >
             {LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -141,7 +141,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             setOpen(false);
             onLogout();
           }}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-red-500/10 border-t border-[var(--border-default)] transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 type-ui text-red-500 dark:text-red-400 hover:bg-red-500/10 border-t border-[var(--border-default)] transition-colors"
         >
           <LogOut className="w-4 h-4" />
           {t('Log out')}

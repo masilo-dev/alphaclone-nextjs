@@ -34,7 +34,7 @@ export function MaterialChangesStrip({
           <Zap className="w-3.5 h-3.5 text-[var(--brand-amber-400)]" />
           <h2 className={WORKSPACE.typography.sectionTitle}>Material changes</h2>
         </div>
-        <span className="text-[11px] text-[var(--ws-text-muted)]">
+        <span className="type-ui text-[var(--ws-text-muted)]">
           {prioritized.length} meaningful change{prioritized.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -58,10 +58,10 @@ export function MaterialChangesStrip({
                     <Icon className="w-3.5 h-3.5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-[11.5px] font-bold leading-tight truncate', sem.text)}>
+                    <p className={cn('type-card-description font-bold leading-tight truncate', sem.text)}>
                       {formatMaterialChangeLabel(c)}
                     </p>
-                    <p className="text-[10.5px] text-[var(--ws-text-muted)] truncate mt-0.5">{c.summary}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)] truncate mt-0.5">{c.summary}</p>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-[var(--ws-text-disabled)] shrink-0" />
                 </Link>
@@ -71,10 +71,10 @@ export function MaterialChangesStrip({
                     <Icon className="w-3.5 h-3.5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-[11.5px] font-bold leading-tight truncate', sem.text)}>
+                    <p className={cn('type-card-description font-bold leading-tight truncate', sem.text)}>
                       {formatMaterialChangeLabel(c)}
                     </p>
-                    <p className="text-[10.5px] text-[var(--ws-text-muted)] truncate mt-0.5">{c.summary}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)] truncate mt-0.5">{c.summary}</p>
                   </div>
                 </div>
               )}
@@ -113,26 +113,26 @@ export function BottleneckDetector({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className={cn('text-[11px] font-bold uppercase tracking-wider', sem.text)}>
+            <p className={cn('type-caption font-bold uppercase tracking-wider', sem.text)}>
               Primary bottleneck
             </p>
             <span className={cn(
-              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border',
+              'inline-flex items-center gap-1 px-1.5 py-0.5 rounded type-caption font-bold uppercase border',
               sem.bg, sem.text, sem.border,
             )}>
               {bottleneck.dropOffPct}% loss
             </span>
           </div>
-          <h3 className="mt-1.5 text-[14.5px] font-bold text-[var(--ws-text-primary)]">
+          <h3 className="mt-1.5 type-ui font-bold text-[var(--ws-text-primary)]">
             {bottleneck.stageLabel} → {bottleneck.nextStageLabel}
           </h3>
-          <p className="mt-1 text-[12.5px] text-[var(--ws-text-secondary)] leading-relaxed">
+          <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
             {bottleneck.impactDescription}
           </p>
           <div className="mt-3 pt-3 border-t border-white/[0.04]">
             <div className="flex items-start gap-2">
               <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[var(--brand-amber-400)]" />
-              <p className="text-[12px] text-[var(--ws-text-primary)] leading-relaxed">
+              <p className="type-card-description text-[var(--ws-text-primary)] leading-relaxed">
                 {bottleneck.recommendation}
               </p>
             </div>
@@ -143,7 +143,7 @@ export function BottleneckDetector({
                 type="button"
                 onClick={() => onDrillDown(bottleneck.stageKey)}
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition-colors',
+                  'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 type-ui font-bold transition-colors',
                   sem.bg, sem.text, 'hover:bg-white/[0.06]',
                 )}
               >
@@ -181,7 +181,7 @@ export function OpportunityHighlight({
           </span>
           <div>
             <h2 className={WORKSPACE.typography.sectionTitle}>Highest expected-value actions</h2>
-            <p className="text-[11.5px] text-[var(--ws-text-muted)] mt-0.5">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
               Sorted by value × probability — what moves the needle most today.
             </p>
           </div>
@@ -223,22 +223,22 @@ function OpportunityRow({
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-[13px] font-semibold text-[var(--ws-text-primary)] truncate">
+          <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">
             {deal.label}
           </p>
           <span className={cn(
-            'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold uppercase border',
+            'inline-flex items-center gap-1 px-1.5 py-0.5 rounded type-caption font-bold uppercase border',
             priorityStyles.bg, priorityStyles.text, priorityStyles.border,
           )}>
             {label} priority
           </span>
           {deal.stage ? (
-            <span className="text-[10px] text-[var(--ws-text-muted)]">
+            <span className="type-ui text-[var(--ws-text-muted)]">
               · {deal.stage}
             </span>
           ) : null}
         </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[var(--ws-text-muted)]">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 type-ui text-[var(--ws-text-muted)]">
           <span className="inline-flex items-center gap-1 text-[var(--ws-text-primary)] font-bold tabular-nums">
             <DollarSign className="w-3 h-3 text-[var(--success-text)]" />
             {formatCurrency(deal.value)} value
@@ -260,7 +260,7 @@ function OpportunityRow({
             {deal.attention.flags.map((f) => (
               <span
                 key={f}
-                className="inline-flex items-center rounded bg-[var(--warning-500)]/8 text-[var(--warning-text)] px-1.5 py-0.5 text-[9.5px] font-bold"
+                className="inline-flex items-center rounded bg-[var(--warning-500)]/8 text-[var(--warning-text)] px-1.5 py-0.5 type-ui font-bold"
               >
                 {f}
               </span>
@@ -312,12 +312,12 @@ export function BonnieBrief({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className={cn('text-[11px] font-bold uppercase tracking-wider', aiSem.text)}>Bonnie brief</p>
-            <span className="text-[10.5px] text-[var(--ws-text-muted)] whitespace-nowrap">
+            <p className={cn('type-caption font-bold uppercase tracking-wider', aiSem.text)}>Bonnie brief</p>
+            <span className="type-ui text-[var(--ws-text-muted)] whitespace-nowrap">
               {whatChanged.length + whyItMatters.length + whatToDo.length} point{whatChanged.length + whyItMatters.length + whatToDo.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <h3 className="mt-1 text-[14px] font-bold text-[var(--ws-text-primary)]">
+          <h3 className="mt-1 type-ui font-bold text-[var(--ws-text-primary)]">
             3-sentence executive read
           </h3>
         </div>
@@ -372,10 +372,10 @@ function BriefRow({
   if (!rows.length) return null;
   return (
     <div>
-      <p className={cn('text-[10.5px] font-black uppercase tracking-wider mb-1.5', labelColor)}>{label}</p>
+      <p className={cn('type-caption font-black uppercase tracking-wider mb-1.5', labelColor)}>{label}</p>
       <ul className="space-y-1">
         {rows.map((r, i) => (
-          <li key={i} className="text-[12.5px] text-[var(--ws-text-primary)] leading-relaxed flex gap-2">
+          <li key={i} className="type-ui text-[var(--ws-text-primary)] leading-relaxed flex gap-2">
             <span className={cn('font-black shrink-0 mt-0.5', labelColor)}>{bullet}</span>
             <span className="min-w-0">{r}</span>
           </li>

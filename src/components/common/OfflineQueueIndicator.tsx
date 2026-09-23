@@ -19,7 +19,7 @@ export function OfflineQueueIndicator({ tenantId, userId }: OfflineQueueIndicato
       type="button"
       onClick={() => void syncNow()}
       disabled={syncing}
-      className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-200 hover:bg-amber-500/15 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 type-ui font-medium text-amber-200 hover:bg-amber-500/15 transition-colors"
       title="Tap to sync queued offline changes"
     >
       {syncing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <CloudOff className="h-3.5 w-3.5" />}

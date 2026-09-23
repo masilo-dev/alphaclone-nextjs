@@ -42,10 +42,10 @@ export default function MessageAttachments({ files, onRemove, onPreview }: Messa
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="type-card-description font-medium text-gray-900 truncate">
               {file.name}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="type-card-description text-gray-500">
               {formatFileSize(file.size)}
             </p>
           </div>

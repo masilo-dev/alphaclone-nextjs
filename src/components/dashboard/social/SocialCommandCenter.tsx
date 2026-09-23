@@ -767,13 +767,13 @@ export default function SocialCommandCenter() {
             <div className="flex gap-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-2">
                 <button
                     onClick={() => setActiveMainTab('manager')}
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
+                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
                 >
                     Platform Manager
                 </button>
                 <button
                     onClick={() => setActiveMainTab('intelligence')}
-                    className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'intelligence' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
+                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'intelligence' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
                 >
                     Nexus Intelligence & Tools
                 </button>
@@ -802,7 +802,7 @@ export default function SocialCommandCenter() {
                                     style={{ height: '44px' }}
                                 >
                                     <Icon className={`w-4 h-4 ${plat.color}`} />
-                                    <span className={`text-[13px] font-bold ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                                    <span className={`type-ui font-bold ${isActive ? 'text-white' : 'text-slate-500'}`}>
                                         {plat.label}
                                     </span>
                                     {isActive && (
@@ -826,11 +826,11 @@ export default function SocialCommandCenter() {
                                 <button
                                     key={sub.id}
                                     onClick={() => setActiveSubView(sub.id as any)}
-                                    className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${isActive ? 'bg-teal-500/10 text-teal-400 border border-teal-500/30' : 'bg-slate-900 text-slate-400 border border-transparent'}`}
+                                    className={`flex-1 py-1.5 px-3 rounded-full type-caption font-bold transition-all flex items-center justify-center gap-1.5 ${isActive ? 'bg-teal-500/10 text-teal-400 border border-teal-500/30' : 'bg-slate-900 text-slate-400 border border-transparent'}`}
                                 >
                                     <span>{sub.label}</span>
                                     {sub.count !== null && (
-                                        <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded-md">
+                                        <span className="type-ui px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded-md">
                                             {sub.count}
                                         </span>
                                     )}
@@ -841,7 +841,7 @@ export default function SocialCommandCenter() {
 
                     {activeSubView !== 'analytics' && (
                         <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-white/5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            <p className="type-caption font-bold uppercase tracking-wider text-slate-500">
                                 Content calendar
                             </p>
                             <div className="flex bg-slate-900 p-0.5 rounded-lg border border-white/5">
@@ -854,7 +854,7 @@ export default function SocialCommandCenter() {
                                         key={mode.id}
                                         type="button"
                                         onClick={() => setQueueDisplayMode(mode.id)}
-                                        className={`px-2.5 py-1 text-[10px] font-bold rounded-md ${
+                                        className={`px-2.5 py-1 type-ui font-bold rounded-md ${
                                             queueDisplayMode === mode.id
                                                 ? 'bg-teal-600 text-white'
                                                 : 'text-slate-500 hover:text-slate-300'
@@ -894,8 +894,8 @@ export default function SocialCommandCenter() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3">
                                     <div>
-                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Provider metrics</p>
-                                        <p className="text-[11px] text-slate-500">
+                                        <p className="type-caption font-bold uppercase tracking-wider text-slate-400">Provider metrics</p>
+                                        <p className="type-card-description text-slate-500">
                                             {metricsSyncedAt
                                                 ? `Last synced ${new Date(metricsSyncedAt).toLocaleString()}`
                                                 : 'Not synced yet — pull reach and engagement from Facebook/LinkedIn'}
@@ -905,7 +905,7 @@ export default function SocialCommandCenter() {
                                         type="button"
                                         onClick={refreshSocialMetrics}
                                         disabled={syncingMetrics}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-xs font-bold text-teal-300 disabled:opacity-60"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 type-caption font-bold text-teal-300 disabled:opacity-60"
                                     >
                                         {syncingMetrics ? (
                                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -958,12 +958,12 @@ export default function SocialCommandCenter() {
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
                                                 >
                                                     {/* Swipe Left Action Reveal: Delete (Red) */}
-                                                    <div className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center gap-1.5 text-white font-bold text-xs">
+                                                    <div className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center gap-1.5 text-white font-bold type-caption">
                                                         <Trash2 className="w-4 h-4" /> Delete
                                                     </div>
 
                                                     {/* Swipe Right Action Reveal: Duplicate (Green) */}
-                                                    <div className="absolute inset-y-0 left-0 w-24 bg-emerald-600 flex items-center justify-center gap-1.5 text-white font-bold text-xs">
+                                                    <div className="absolute inset-y-0 left-0 w-24 bg-emerald-600 flex items-center justify-center gap-1.5 text-white font-bold type-caption">
                                                         <Repeat className="w-4 h-4" /> Duplicate
                                                     </div>
 
@@ -987,21 +987,21 @@ export default function SocialCommandCenter() {
                                                                     </div>
                                                                     <div className="min-w-0">
                                                                         <div className="flex items-center gap-2">
-                                                                            <h4 className="text-sm font-black text-white truncate">
+                                                                            <h4 className="type-ui font-black text-white truncate">
                                                                                 AlphaClone Systems
                                                                             </h4>
-                                                                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-950 text-slate-400 border border-white/5 uppercase font-black">
+                                                                            <span className="type-caption px-1.5 py-0.5 rounded-md bg-slate-950 text-slate-400 border border-white/5 uppercase font-black">
                                                                                 {activePlatform}
                                                                             </span>
                                                                         </div>
-                                                                        <p className="text-[11px] text-slate-500 font-bold">
+                                                                        <p className="type-card-description text-slate-500 font-bold">
                                                                             {post.scheduled_at
                                                                                 ? `Scheduled for ${new Date(post.scheduled_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`
                                                                                 : `Published ${new Date(publishedOrCreatedAt).toLocaleDateString([], { dateStyle: 'medium' })}`}
                                                                         </p>
                                                                     </div>
                                                                 </div>
-                                                                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex-shrink-0 ${
+                                                                <span className={`type-caption font-black uppercase px-2.5 py-1 rounded-lg border flex-shrink-0 ${
                                                                     post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                                                     post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
                                                                     post.status === 'publishing' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' :
@@ -1013,13 +1013,13 @@ export default function SocialCommandCenter() {
                                                             </div>
 
                                                             <div className="space-y-3">
-                                                                <p className="text-[15px] text-slate-100 font-medium leading-relaxed whitespace-pre-line break-words">
+                                                                <p className="type-card-description text-slate-100 font-medium leading-relaxed whitespace-pre-line break-words">
                                                                     {post.caption}
                                                                 </p>
                                                                 {post.hashtags?.length > 0 && (
                                                                     <div className="flex flex-wrap gap-1.5">
                                                                         {post.hashtags.slice(0, 5).map(tag => (
-                                                                            <span key={tag} className="text-xs font-bold text-sky-400">#{tag.replace(/^#/, '')}</span>
+                                                                            <span key={tag} className="type-caption font-bold text-sky-400">#{tag.replace(/^#/, '')}</span>
                                                                         ))}
                                                                     </div>
                                                                 )}
@@ -1044,7 +1044,7 @@ export default function SocialCommandCenter() {
                                                                         />
                                                                     )}
                                                                     {post.media_urls.length > 1 && (
-                                                                        <div className="px-3 py-2 text-[11px] text-slate-400 font-bold bg-slate-950/90">
+                                                                        <div className="px-3 py-2 type-ui text-slate-400 font-bold bg-slate-950/90">
                                                                             +{post.media_urls.length - 1} more media item{post.media_urls.length > 2 ? 's' : ''}
                                                                         </div>
                                                                     )}
@@ -1062,14 +1062,14 @@ export default function SocialCommandCenter() {
                                                                     return (
                                                                         <div key={metric.label} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-950/80 px-2 py-2 text-slate-400">
                                                                             <Icon className="w-3.5 h-3.5" />
-                                                                            <span className="text-[11px] font-black text-white">{compactNumber(metric.value)}</span>
+                                                                            <span className="type-ui font-black text-white">{compactNumber(metric.value)}</span>
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
 
                                                             <div className="flex items-center justify-between pt-1">
-                                                                <div className="flex items-center gap-4 text-[11px] font-bold text-slate-500">
+                                                                <div className="flex items-center gap-4 type-ui font-bold text-slate-500">
                                                                     <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> React</span>
                                                                     <span className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Comment</span>
                                                                     <span className="flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> Share</span>
@@ -1083,7 +1083,7 @@ export default function SocialCommandCenter() {
                                                             <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                                                         )}
                                                         {post.status === 'publishing' && (
-                                                            <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200">
+                                                            <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-2 py-1 type-ui text-blue-200">
                                                                 Publishing in progress — platform recovery will retry if this stays stuck for 15+ minutes.
                                                             </div>
                                                         )}
@@ -1116,13 +1116,13 @@ export default function SocialCommandCenter() {
                     <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                         <div className="flex justify-between items-center">
                             <div>
-                                <h3 className="text-sm font-bold text-white">AlphaClone Lead Intelligence</h3>
-                                <p className="text-xs text-slate-500">Autonomous intelligence agents finding prospective deals.</p>
+                                <h3 className="type-ui font-bold text-white">AlphaClone Lead Intelligence</h3>
+                                <p className="type-card-description text-slate-500">Autonomous intelligence agents finding prospective deals.</p>
                             </div>
                             <button
                                 onClick={handleTriggerNexusIntelligence}
                                 disabled={isIntelligenceRunning}
-                                className={`${WORKSPACE.action.primary} h-9 px-3.5 text-xs`}
+                                className={`${WORKSPACE.action.primary} h-9 px-3.5 type-caption`}
                             >
                                 {isIntelligenceRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Run Nexus Sync'}
                             </button>
@@ -1132,12 +1132,12 @@ export default function SocialCommandCenter() {
                     {/* Bookmarks */}
                     <section className="space-y-3">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <h3 className="type-caption font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                 <Bookmark className="w-4 h-4 text-teal-400" /> Bookmarks & Targets
                             </h3>
                             <button 
                                 onClick={() => setIsAddingBookmark(!isAddingBookmark)}
-                                className="text-xs text-teal-400 font-bold"
+                                className="type-caption text-teal-400 font-bold"
                             >
                                 {isAddingBookmark ? 'Close' : 'Add Link'}
                             </button>
@@ -1150,7 +1150,7 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.title}
                                     onChange={e => setNewBookmark({...newBookmark, title: e.target.value})}
                                     placeholder="Title"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none"
                                 />
                                 <input 
                                     required
@@ -1158,9 +1158,9 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.url}
                                     onChange={e => setNewBookmark({...newBookmark, url: e.target.value})}
                                     placeholder="URL Link"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none"
                                 />
-                                <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full text-xs`}>
+                                <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full type-ui`}>
                                     Save
                                 </button>
                             </form>
@@ -1170,8 +1170,8 @@ export default function SocialCommandCenter() {
                             {bookmarks.map(bm => (
                                 <div key={bm.id} className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <div className="min-w-0 flex-1 pr-2">
-                                        <h4 className="text-xs font-bold text-white truncate">{bm.title}</h4>
-                                        <span className="text-[10px] text-slate-500 truncate block">{bm.url}</span>
+                                        <h4 className="type-card-title font-bold text-white truncate">{bm.title}</h4>
+                                        <span className="type-ui text-slate-500 truncate block">{bm.url}</span>
                                     </div>
                                     <div className="flex gap-1.5">
                                         <a href={bm.url} target="_blank" rel="noreferrer" className="p-1.5 bg-slate-950 hover:bg-slate-800 text-slate-400 rounded-lg">
@@ -1188,19 +1188,19 @@ export default function SocialCommandCenter() {
 
                     {/* Viral Script Generator */}
                     <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <h3 className="type-caption font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Video className="w-4 h-4 text-rose-500" /> Viral Hook Generator (Grok)
                         </h3>
                         <textarea
                             value={videoTopic}
                             onChange={e => setVideoTopic(e.target.value)}
                             placeholder="Video niche / topic details..."
-                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none resize-none"
+                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none resize-none"
                         />
                         <button
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo || !videoTopic}
-                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white type-caption font-bold rounded-lg flex items-center justify-center gap-2"
                         >
                             {isGeneratingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                             Generate script
@@ -1209,12 +1209,12 @@ export default function SocialCommandCenter() {
                         {videoResult && (
                             <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <div>
-                                    <span className="text-[10px] font-bold text-rose-400 uppercase block">Hook</span>
-                                    <p className="text-xs text-white font-bold italic">"{videoResult.hook}"</p>
+                                    <span className="type-caption font-bold text-rose-400 uppercase block">Hook</span>
+                                    <p className="type-card-description text-white font-bold italic">"{videoResult.hook}"</p>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase block">Script</span>
-                                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">{videoResult.script}</p>
+                                    <span className="type-caption font-bold text-slate-500 uppercase block">Script</span>
+                                    <p className="type-card-description text-slate-300 leading-relaxed whitespace-pre-line">{videoResult.script}</p>
                                 </div>
                             </div>
                         )}
@@ -1238,15 +1238,15 @@ export default function SocialCommandCenter() {
                         <div className="h-14 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between">
                             <button 
                                 onClick={() => setIsComposeOpen(false)}
-                                className="text-xs font-bold text-slate-400 px-2 py-1.5"
+                                className="type-caption font-bold text-slate-400 px-2 py-1.5"
                             >
                                 Cancel
                             </button>
-                            <span className="text-[15px] font-bold text-white">Compose Post</span>
+                            <span className="type-ui font-bold text-white">Compose Post</span>
                             <button 
                                 onClick={handleSavePost}
                                 disabled={isOverLimit || !composeCaption.trim()}
-                                className="px-4 py-1.5 bg-teal-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-full text-xs font-black uppercase tracking-wider"
+                                className="px-4 py-1.5 bg-teal-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-full type-caption font-black uppercase tracking-wider"
                             >
                                 {composeIsScheduled ? 'Schedule' : 'Share'}
                             </button>
@@ -1257,7 +1257,7 @@ export default function SocialCommandCenter() {
                             
                             {/* Platform Selector Switches */}
                             <div className="space-y-1.5">
-                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-1">Publish platforms</label>
+                                <label className="type-caption font-bold text-slate-500 uppercase tracking-widest px-1">Publish platforms</label>
                                 <div className={`grid grid-cols-3 gap-2 p-1.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     {[
                                         { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
@@ -1277,7 +1277,7 @@ export default function SocialCommandCenter() {
                                                             : [...prev, plat.id]
                                                     );
                                                 }}
-                                                className={`py-2 rounded-xl flex flex-col items-center justify-center gap-1 border text-xs font-bold transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500/40 text-teal-400' : 'bg-slate-950 border-transparent text-slate-500'}`}
+                                                className={`py-2 rounded-xl flex flex-col items-center justify-center gap-1 border type-caption font-bold transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500/40 text-teal-400' : 'bg-slate-950 border-transparent text-slate-500'}`}
                                             >
                                                 <Icon className="w-4 h-4" />
                                                 <span>{plat.label}</span>
@@ -1314,15 +1314,15 @@ export default function SocialCommandCenter() {
 
                             {composePlatforms.includes('facebook') && (
                                 <div className={`space-y-3 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                    <span className="text-xs font-bold text-blue-500 flex items-center gap-1.5">
+                                    <span className="type-caption font-bold text-blue-500 flex items-center gap-1.5">
                                         <Facebook className="w-4 h-4" /> Facebook Configuration
                                     </span>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] text-slate-500 uppercase font-black">Publish Target Page</label>
+                                        <label className="type-caption text-slate-500 uppercase font-black">Publish Target Page</label>
                                         <select
                                             value={selectedPageId}
                                             onChange={e => setSelectedPageId(e.target.value)}
-                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 text-xs text-white outline-none"
+                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-white outline-none"
                                         >
                                             {fbPages.length === 0 ? (
                                                 <option value="">No pages configured</option>
@@ -1337,7 +1337,7 @@ export default function SocialCommandCenter() {
                                     {composeMediaUrl && (
                                         <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
                                             <img src={composeMediaUrl} alt="Selected post media preview" className="w-full h-20 object-cover rounded-lg" />
-                                            <span className="text-[10px] text-slate-500 font-bold block truncate">{composeMediaUrl}</span>
+                                            <span className="type-ui text-slate-500 font-bold block truncate">{composeMediaUrl}</span>
                                         </div>
                                     )}
                                 </div>
@@ -1345,14 +1345,14 @@ export default function SocialCommandCenter() {
 
                             {composePlatforms.includes('x') && (
                                 <div className={`space-y-4 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <span className="type-caption font-bold text-white flex items-center gap-1.5">
                                         <Twitter className="w-4 h-4" /> X Thread stacks
                                     </span>
 
                                     {/* Thread replies list */}
                                     {xThreadPosts.map((reply, index) => (
                                         <div key={index} className="space-y-1.5 p-3 bg-slate-950 rounded-xl border border-white/5 relative">
-                                            <span className="text-[9px] font-bold text-slate-500 uppercase">Reply Post #{index + 1}</span>
+                                            <span className="type-caption font-bold text-slate-500 uppercase">Reply Post #{index + 1}</span>
                                             <textarea
                                                 value={reply}
                                                 onChange={e => {
@@ -1361,7 +1361,7 @@ export default function SocialCommandCenter() {
                                                     setXThreadPosts(updated);
                                                 }}
                                                 placeholder="Thread continuation..."
-                                                className="w-full bg-transparent text-xs text-white outline-none resize-none h-14"
+                                                className="w-full bg-transparent type-caption text-white outline-none resize-none h-14"
                                             />
                                             <button
                                                 type="button"
@@ -1376,7 +1376,7 @@ export default function SocialCommandCenter() {
                                     <button
                                         type="button"
                                         onClick={() => setXThreadPosts(prev => [...prev, ''])}
-                                        className="w-full py-2 bg-slate-950 border border-dashed border-white/10 text-[11px] text-slate-400 font-bold rounded-xl hover:border-white/20 transition-all flex items-center justify-center gap-1.5"
+                                        className="w-full py-2 bg-slate-950 border border-dashed border-white/10 type-ui text-slate-400 font-bold rounded-xl hover:border-white/20 transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <Plus className="w-3.5 h-3.5" /> Add Thread Reply
                                     </button>
@@ -1386,8 +1386,8 @@ export default function SocialCommandCenter() {
                             {/* Caption Text Area Input */}
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center px-1">
-                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Post Copy</label>
-                                    <span className={`text-[11px] font-bold ${isOverLimit ? 'text-rose-500' : 'text-slate-400'}`}>
+                                    <label className="type-caption font-bold text-slate-500 uppercase tracking-widest">Post Copy</label>
+                                    <span className={`type-ui font-bold ${isOverLimit ? 'text-rose-500' : 'text-slate-400'}`}>
                                         {charCount} / {maxChars}
                                     </span>
                                 </div>
@@ -1404,9 +1404,9 @@ export default function SocialCommandCenter() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Paperclip className="w-4 h-4 text-teal-400" />
-                                        <span className="text-xs font-bold text-white">Attach media URL</span>
+                                        <span className="type-caption font-bold text-white">Attach media URL</span>
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-500 uppercase">{composeMedia.length} attached</span>
+                                    <span className="type-caption font-black text-slate-500 uppercase">{composeMedia.length} attached</span>
                                 </div>
                                 <div className="flex gap-2">
                                     <input
@@ -1420,12 +1420,12 @@ export default function SocialCommandCenter() {
                                             }
                                         }}
                                         placeholder="https://... image, gif, or mp4"
-                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-white outline-none focus:border-teal-500/50"
                                     />
                                     <button
                                         type="button"
                                         onClick={addComposeMediaUrl}
-                                        className={`${WORKSPACE.action.primary} h-11 px-4 text-xs`}
+                                        className={`${WORKSPACE.action.primary} h-11 px-4 type-caption`}
                                     >
                                         Add
                                     </button>
@@ -1449,7 +1449,7 @@ export default function SocialCommandCenter() {
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
-                                                    <span className="absolute left-2 bottom-2 px-2 py-0.5 rounded-md bg-black/70 text-[9px] font-black uppercase text-white">
+                                                    <span className="absolute left-2 bottom-2 px-2 py-0.5 rounded-md bg-black/70 type-caption font-black uppercase text-white">
                                                         {mediaType}
                                                     </span>
                                                 </div>
@@ -1464,7 +1464,7 @@ export default function SocialCommandCenter() {
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-teal-400" />
-                                        <span className="text-xs font-bold text-white">Schedule this post</span>
+                                        <span className="type-caption font-bold text-white">Schedule this post</span>
                                     </div>
                                     <button
                                         type="button"
@@ -1480,7 +1480,7 @@ export default function SocialCommandCenter() {
                                         type="datetime-local"
                                         value={composeScheduledAt}
                                         onChange={e => setComposeScheduledAt(e.target.value)}
-                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-white outline-none focus:border-teal-500/50"
                                     />
                                 )}
                             </div>
@@ -1492,7 +1492,7 @@ export default function SocialCommandCenter() {
                             <button
                                 type="button"
                                 onClick={() => setAiPromptOpen(true)}
-                            className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-lg border border-teal-500/20"
+                            className="flex items-center gap-2 type-caption font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-lg border border-teal-500/20"
                             >
                                 <Sparkles className="w-4 h-4" /> Write Draft with AI
                             </button>
@@ -1512,19 +1512,19 @@ export default function SocialCommandCenter() {
                             className={`w-full max-w-sm space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}
                         >
                             <div className="flex justify-between items-center">
-                                <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Topic prompt</h3>
+                                <h3 className="type-caption font-black text-slate-500 uppercase tracking-wider">AI Topic prompt</h3>
                                 <button onClick={() => setAiPromptOpen(false)} className="text-slate-500"><X className="w-4 h-4" /></button>
                             </div>
                             <textarea
                                 value={aiPromptText}
                                 onChange={e => setAiPromptText(e.target.value)}
                                 placeholder="e.g. A message welcoming new beta testers for our workspace automation application..."
-                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white outline-none resize-none"
+                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white outline-none resize-none"
                             />
                             <button
                                 onClick={generateDraftWithAI}
                                 disabled={aiGenerating || !aiPromptText.trim()}
-                                className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5"
+                                className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-lg type-caption font-bold flex items-center justify-center gap-1.5"
                             >
                                 {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                                 Generate Content Draft
@@ -1558,7 +1558,7 @@ export default function SocialCommandCenter() {
                             
                             {/* Header details */}
                             <div className="px-5 pb-3 border-b border-white/5 flex items-center justify-between">
-                                <span className="text-xs font-black uppercase text-slate-500 tracking-wider">Post details</span>
+                                <span className="type-caption font-black uppercase text-slate-500 tracking-wider">Post details</span>
                                 <button 
                                     onClick={() => setSelectedPost(null)}
                                     className="p-1 hover:bg-slate-800 rounded-lg text-slate-400"
@@ -1572,15 +1572,15 @@ export default function SocialCommandCenter() {
                                 
                                 {/* Caption Preview */}
                                 <div className="space-y-1.5">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Content caption</span>
-                                    <div className={`text-sm leading-relaxed font-medium text-slate-200 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+                                    <span className="type-caption font-black text-slate-500 uppercase tracking-wider block">Content caption</span>
+                                    <div className={`type-ui leading-relaxed font-medium text-slate-200 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                         {selectedPost.caption}
                                     </div>
                                 </div>
 
                                 {selectedPrimaryMedia && (
                                     <div className="space-y-1.5">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Rendered media</span>
+                                        <span className="type-caption font-black text-slate-500 uppercase tracking-wider block">Rendered media</span>
                                         <div className={`overflow-hidden border bg-slate-950 ${WORKSPACE.panel.radius}`} style={{ borderColor: 'var(--ws-border)' }}>
                                             {selectedPrimaryMediaType === 'video' ? (
                                                 <video src={selectedPrimaryMedia} className="w-full max-h-[440px] bg-black object-cover" controls playsInline preload="metadata" />
@@ -1594,18 +1594,18 @@ export default function SocialCommandCenter() {
                                 {/* Platform and Date Info */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                        <span className="text-[9px] font-bold text-slate-500 uppercase">Platforms</span>
+                                        <span className="type-caption font-bold text-slate-500 uppercase">Platforms</span>
                                         <div className="flex gap-1.5 mt-1">
                                             {selectedPost.platforms.map((plat) => (
-                                                <span key={plat} className="px-2 py-0.5 bg-slate-800 text-[10px] text-slate-300 font-bold uppercase rounded">
+                                                <span key={plat} className="px-2 py-0.5 bg-slate-800 type-caption text-slate-300 font-bold uppercase rounded">
                                                     {plat}
                                                 </span>
                                             ))}
                                         </div>
                                     </div>
                                     <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                        <span className="text-[9px] font-bold text-slate-500 uppercase">Publish Status</span>
-                                        <span className="text-xs text-white font-bold uppercase mt-1">
+                                        <span className="type-caption font-bold text-slate-500 uppercase">Publish Status</span>
+                                        <span className="type-caption text-white font-bold uppercase mt-1">
                                             {selectedPost.status}
                                         </span>
                                     </div>
@@ -1613,7 +1613,7 @@ export default function SocialCommandCenter() {
 
                                 {/* statistics grid */}
                                 <div className="space-y-2">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Performance metrics</span>
+                                    <span className="type-caption font-black text-slate-500 uppercase tracking-wider block">Performance metrics</span>
                                     <div className="grid grid-cols-4 gap-2">
                                         {[
                                             { label: 'Views', val: compactNumber(selectedMetrics?.impressions) },
@@ -1622,8 +1622,8 @@ export default function SocialCommandCenter() {
                                             { label: 'Clicks', val: compactNumber(selectedMetrics?.clicks) }
                                         ].map((stat, i) => (
                                             <div key={i} className={`flex flex-col justify-center p-3 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                                <span className="text-[17px] font-black text-white">{stat.val}</span>
-                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5">{stat.label}</span>
+                                                <span className="text-lg font-black text-white">{stat.val}</span>
+                                                <span className="type-caption text-slate-500 font-bold uppercase tracking-tight mt-0.5">{stat.label}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1636,7 +1636,7 @@ export default function SocialCommandCenter() {
                                             handleDuplicatePost(selectedPost);
                                             setSelectedPost(null);
                                         }}
-                                        className={`${WORKSPACE.action.primary} py-3.5 text-xs uppercase tracking-wider flex items-center justify-center gap-1.5`}
+                                        className={`${WORKSPACE.action.primary} py-3.5 type-caption uppercase tracking-wider flex items-center justify-center gap-1.5`}
                                     >
                                         <Repeat className="w-4 h-4" /> Duplicate Post
                                     </button>
@@ -1647,7 +1647,7 @@ export default function SocialCommandCenter() {
                                                 setSelectedPost(null);
                                             }
                                         }}
-                                        className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
+                                        className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-lg type-caption font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
                                     >
                                         <Trash2 className="w-4 h-4" /> Delete post
                                     </button>

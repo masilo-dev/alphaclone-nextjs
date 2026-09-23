@@ -100,9 +100,9 @@ export default function BookingLandingPage() {
                                             {service.name}
                                         </h2>
                                         {service.description && (
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 pr-4">{service.description}</p>
+                                            <p className="type-card-description text-slate-500 dark:text-slate-400 line-clamp-2 pr-4">{service.description}</p>
                                         )}
-                                        <div className="flex items-center gap-4 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-1">
+                                        <div className="flex items-center gap-4 type-caption font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-1">
                                             <div className="flex items-center gap-1.5">
                                                 <Clock className="w-3.5 h-3.5" />
                                                 {service.duration} mins
@@ -127,7 +127,7 @@ export default function BookingLandingPage() {
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
-                            <p className="text-slate-500 dark:text-slate-400 text-sm">
+                            <p className="text-slate-500 dark:text-slate-400 type-card-description">
                                 Online booking is being set up for this workspace.
                             </p>
                             <a
@@ -145,7 +145,7 @@ export default function BookingLandingPage() {
 
                 {/* Footer brand */}
                 <div className="mt-16 text-center">
-                    <a href="https://alphaclonesystems.com" target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all">
+                    <a href="https://alphaclonesystems.com" target="_blank" className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full type-caption font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all">
                         <span>Powered by AlphaClone</span>
                     </a>
                 </div>

@@ -37,7 +37,7 @@ export function FeatureCard({
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
         {name}
       </h3>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--marketing-text-secondary)]">{outcome}</p>
+      <p className="mt-2 type-caption leading-relaxed text-[var(--marketing-text-secondary)]">{outcome}</p>
     </Link>
   );
 }
@@ -53,9 +53,9 @@ export function WorkflowStep({
 }) {
   return (
     <div className="relative mkt-surface p-6">
-      <div className="mb-3 text-sm font-bold text-[var(--marketing-accent-hover)]">Step {step}</div>
+      <div className="mb-3 type-ui font-bold text-[var(--marketing-accent-hover)]">Step {step}</div>
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)]">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--marketing-text-secondary)]">{body}</p>
+      <p className="mt-2 type-caption leading-relaxed text-[var(--marketing-text-secondary)]">{body}</p>
     </div>
   );
 }
@@ -66,7 +66,7 @@ export function TrustStrip({ items }: { items: string[] }) {
       {items.map((item) => (
         <li
           key={item}
-          className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-surface)] px-3.5 py-1.5 text-xs sm:text-sm font-medium text-[var(--marketing-text-secondary)]"
+          className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-surface)] px-3.5 py-1.5 type-caption sm:text-xs font-medium text-[var(--marketing-text-secondary)]"
         >
           {item}
         </li>

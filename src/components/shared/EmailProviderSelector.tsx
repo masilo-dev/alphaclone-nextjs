@@ -43,7 +43,7 @@ export default function EmailProviderSelector({
 
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest block px-0.5">
+      <label className="type-caption text-slate-500 uppercase font-black tracking-widest block px-0.5">
         Send via
       </label>
       <div className={`flex flex-wrap gap-2 ${compact ? '' : 'pb-1'}`}>
@@ -56,7 +56,7 @@ export default function EmailProviderSelector({
               type="button"
               disabled={isDisabled}
               onClick={() => !isDisabled && onChange(provider.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wide border transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-black uppercase tracking-wide border transition-all ${
                 selected
                   ? 'bg-teal-600/20 border-teal-500/40 text-teal-300'
                   : isDisabled
@@ -67,7 +67,7 @@ export default function EmailProviderSelector({
               {provider.native && <Mail className="w-3 h-3" />}
               {provider.label}
               {provider.campaigns && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 normal-case font-bold">
+                <span className="type-ui px-1 py-0.5 rounded bg-purple-500/20 text-purple-300 normal-case font-bold">
                   + campaigns
                 </span>
               )}
@@ -76,7 +76,7 @@ export default function EmailProviderSelector({
           );
         })}
       </div>
-      <p className="text-[10px] text-slate-500 leading-relaxed">
+      <p className="type-card-description text-slate-500 leading-relaxed">
         Marketing campaigns use Zoho natively. This choice applies to replies, invoices, and document email.
       </p>
     </div>

@@ -513,7 +513,7 @@ export default function EnhancedInvoiceModal({
   const renderDetailsTab = () => (
     <div className="space-y-6">
       <div className="relative" ref={dropdownRef}>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Search Client</label>
+        <label className="block type-label font-medium text-slate-300 mb-2">Search Client</label>
         <div className="relative">
           <input
             type="text"
@@ -567,17 +567,17 @@ export default function EnhancedInvoiceModal({
                       className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
-                        <span className="text-teal-400 text-xs font-black">{c.name?.charAt(0).toUpperCase()}</span>
+                        <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0).toUpperCase()}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-slate-200">{c.name}</span>
-                        <span className="text-xs text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                        <span className="type-ui font-bold text-slate-200">{c.name}</span>
+                        <span className="type-caption text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
                       </div>
                     </button>
                   ))
               ) : (
                 <div className="p-4 text-center">
-                  <p className="text-xs text-slate-500 font-medium italic">No matches found.</p>
+                  <p className="type-card-description text-slate-500 font-medium italic">No matches found.</p>
                 </div>
               )}
             </motion.div>
@@ -587,7 +587,7 @@ export default function EnhancedInvoiceModal({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Client Name</label>
+          <label className="block type-label font-medium text-slate-300 mb-2">Client Name</label>
           <input
             type="text"
             value={formData.clientName}
@@ -597,7 +597,7 @@ export default function EnhancedInvoiceModal({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Client Email</label>
+          <label className="block type-label font-medium text-slate-300 mb-2">Client Email</label>
           <input
             type="email"
             value={formData.clientEmail}
@@ -622,10 +622,10 @@ export default function EnhancedInvoiceModal({
               <Briefcase className="w-4 h-4 text-indigo-300" />
             </div>
             <div className="flex-1 text-left min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-400/80">Linked project</p>
-              <p className="text-sm font-bold text-indigo-200 truncate">{projectName}</p>
+              <p className="type-caption font-black uppercase tracking-caps text-indigo-400/80">Linked project</p>
+              <p className="type-card-description font-bold text-indigo-200 truncate">{projectName}</p>
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70 group-hover:text-indigo-300 transition-colors">
+            <span className="type-caption font-black uppercase tracking-widest text-indigo-400/70 group-hover:text-indigo-300 transition-colors">
               Open →
             </span>
           </button>
@@ -633,7 +633,7 @@ export default function EnhancedInvoiceModal({
       })()}
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Linked contract (optional)</label>
+        <label className="block type-label font-medium text-slate-300 mb-2">Linked contract (optional)</label>
         <select
           value={formData.contractId}
           onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
@@ -648,7 +648,7 @@ export default function EnhancedInvoiceModal({
               </option>
             ))}
         </select>
-        <p className="mt-1 text-[11px] text-slate-500">
+        <p className="mt-1 type-card-description text-slate-500">
           Billing documents filed to the vault will reference this agreement when sent.
         </p>
       </div>
@@ -664,7 +664,7 @@ export default function EnhancedInvoiceModal({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Due Date</label>
+          <label className="block type-label font-medium text-slate-300 mb-2">Due Date</label>
           <input
             type="date"
             value={formData.dueDate}
@@ -691,7 +691,7 @@ export default function EnhancedInvoiceModal({
       />
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
+        <label className="block type-label font-medium text-slate-300 mb-2">Notes</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -773,13 +773,13 @@ export default function EnhancedInvoiceModal({
       <div className="flex gap-2">
         <button
           onClick={handleAddItem}
-          className="flex-1 py-2 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:border-slate-500 hover:text-slate-300 font-black uppercase text-[10px] tracking-widest"
+          className="flex-1 py-2 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:border-slate-500 hover:text-slate-300 font-black uppercase type-caption tracking-widest"
         >
           + Add Custom Item
         </button>
         <button
           onClick={() => setShowServicePicker(true)}
-          className="flex-1 py-2 border-2 border-dashed border-teal-500/30 rounded-lg text-teal-400 hover:border-teal-500 hover:text-teal-300 font-black uppercase text-[10px] tracking-widest bg-teal-500/5"
+          className="flex-1 py-2 border-2 border-dashed border-teal-500/30 rounded-lg text-teal-400 hover:border-teal-500 hover:text-teal-300 font-black uppercase type-caption tracking-widest bg-teal-500/5"
         >
           <Package className="w-3 h-3 inline mr-1" /> Add From Catalog
         </button>
@@ -818,7 +818,7 @@ export default function EnhancedInvoiceModal({
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="text-white font-bold">{s.name}</p>
-                        <p className="text-xs text-slate-500 line-clamp-1">{s.description}</p>
+                        <p className="type-card-description text-slate-500 line-clamp-1">{s.description}</p>
                       </div>
                       <span className="text-teal-400 font-black">${s.defaultPrice}</span>
                     </div>
@@ -826,7 +826,7 @@ export default function EnhancedInvoiceModal({
                 ))}
                 {services.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-slate-500 text-sm italic">Catalog is empty. Add services in the Billing Hub.</p>
+                    <p className="text-slate-500 type-card-description italic">Catalog is empty. Add services in the Billing Hub.</p>
                   </div>
                 )}
               </div>
@@ -855,7 +855,7 @@ export default function EnhancedInvoiceModal({
   const renderPaymentTab = () => (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-3">Payment Methods</label>
+        <label className="block type-label font-medium text-slate-300 mb-3">Payment Methods</label>
         <div className="space-y-2">
           {PAYMENT_METHODS.map(method => (
             <label key={method.id} className="flex items-center p-3 border border-slate-700 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700/50">
@@ -892,7 +892,7 @@ export default function EnhancedInvoiceModal({
       {invoicePreviewInput ? (
         <DocumentPreview input={invoicePreviewInput} />
       ) : (
-        <p className="text-sm text-slate-400">Add client details and line items to preview your themed invoice.</p>
+        <p className="type-card-description text-slate-400">Add client details and line items to preview your themed invoice.</p>
       )}
 
       {invoice ? (
@@ -900,7 +900,7 @@ export default function EnhancedInvoiceModal({
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h4 className="font-medium text-teal-400">Payment Link</h4>
-              <p className="text-sm text-teal-500">Share this link with your client for payment</p>
+              <p className="type-card-description text-teal-500">Share this link with your client for payment</p>
             </div>
             <button
               onClick={handleCopyPaymentLink}
@@ -950,7 +950,7 @@ export default function EnhancedInvoiceModal({
               <h2 className="text-xl font-semibold text-white">
                 {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="type-card-description text-slate-400">
                 {mode === 'send' ? 'Review and finalize invoice' : 'Update invoice details for your client'}
               </p>
             </div>
@@ -965,8 +965,8 @@ export default function EnhancedInvoiceModal({
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition-all"
                 >
                   <Briefcase className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Project:</span>
-                  <span className="text-xs font-bold max-w-[180px] truncate">{projectName}</span>
+                  <span className="type-caption font-black uppercase tracking-widest">Project:</span>
+                  <span className="type-caption font-bold max-w-[180px] truncate">{projectName}</span>
                 </button>
               );
             })()}
@@ -991,7 +991,7 @@ export default function EnhancedInvoiceModal({
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                "flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                "flex items-center space-x-2 px-6 py-3 type-ui font-medium border-b-2 transition-colors",
                 activeTab === tab.id
                   ? "border-teal-500 text-teal-400"
                   : "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-800/50"

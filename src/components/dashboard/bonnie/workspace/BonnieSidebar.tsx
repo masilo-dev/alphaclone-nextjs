@@ -50,7 +50,7 @@ type Props = {
   onOpenApprovals?: () => void;
 };
 
-const navButton = 'flex min-h-11 w-full items-center gap-2 rounded-[var(--ws-radius-control,8px)] px-2 text-left text-sm text-[var(--ws-text-secondary)] transition-colors hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
+const navButton = 'flex min-h-11 w-full items-center gap-2 rounded-[var(--ws-radius-control,8px)] px-2 text-left type-caption text-[var(--ws-text-secondary)] transition-colors hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]';
 
 export default function BonnieSidebar({
   collapsed,
@@ -90,8 +90,8 @@ export default function BonnieSidebar({
       <div className="flex items-center gap-2 border-b border-[var(--ws-border)] px-3 py-3">
         {!collapsed ? (
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--brand-teal)]">AlphaClone Systems</p>
-            <h2 className="truncate text-sm font-semibold tracking-tight text-[var(--ws-text-primary)]">Bonnie AI</h2>
+            <p className="truncate type-caption font-semibold uppercase tracking-label text-[var(--brand-teal)]">AlphaClone Systems</p>
+            <h2 className="truncate type-caption font-semibold tracking-tight text-[var(--ws-text-primary)]">Bonnie AI</h2>
           </div>
         ) : null}
         <button
@@ -128,14 +128,14 @@ export default function BonnieSidebar({
                 onSearch(e.target.value);
               }}
               placeholder="Search conversations"
-              className="min-h-11 w-full rounded-[var(--ws-radius-control,8px)] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 text-xs text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-tertiary)] focus:border-[var(--ac-bonnie)] focus:ring-2 focus:ring-[var(--focus-ring)]"
+              className="min-h-11 w-full rounded-[var(--ws-radius-control,8px)] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-caption text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-tertiary)] focus:border-[var(--ac-bonnie)] focus:ring-2 focus:ring-[var(--focus-ring)]"
             />
           </label>
         ) : null}
       </div>
 
       <nav className="ios-scroll min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label="Conversation lists">
-        {loading && !collapsed ? <p className="px-2 py-3 text-xs text-[var(--ws-text-tertiary)]">Loading conversations…</p> : null}
+        {loading && !collapsed ? <p className="px-2 py-3 type-card-description text-[var(--ws-text-tertiary)]">Loading conversations…</p> : null}
 
         {!collapsed && pinned.length > 0 ? (
           <Section label="Pinned">
@@ -163,7 +163,7 @@ export default function BonnieSidebar({
         {!collapsed ? (
           <Section label="Recent">
             {recent.length === 0 ? (
-              <p className="px-2 py-2 text-xs text-[var(--ws-text-tertiary)]">No conversations yet.</p>
+              <p className="px-2 py-2 type-card-description text-[var(--ws-text-tertiary)]">No conversations yet.</p>
             ) : (
               recent.map((c) => (
                 <ConversationRow
@@ -227,7 +227,7 @@ export default function BonnieSidebar({
                   Approvals
                 </span>
                 {pendingApprovals > 0 ? (
-                  <span className="rounded-full bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-2 py-0.5 text-[11px] font-semibold text-[var(--warning)]">{pendingApprovals}</span>
+                  <span className="rounded-full bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-2 py-0.5 type-ui font-semibold text-[var(--warning)]">{pendingApprovals}</span>
                 ) : null}
               </button>
             ) : null}
@@ -237,9 +237,9 @@ export default function BonnieSidebar({
 
       {!collapsed ? (
         <div className="border-t border-[var(--ws-border)] p-3">
-          <p className="truncate text-xs font-medium text-[var(--ws-text-tertiary)]">Workspace</p>
-          <p className="truncate text-sm font-semibold text-[var(--ws-text-primary)]">{workspaceName || 'Business workspace'}</p>
-          <p className="mt-1 truncate text-xs text-[var(--ws-text-tertiary)]">{userLabel || 'Signed in'}</p>
+          <p className="truncate type-card-description font-medium text-[var(--ws-text-tertiary)]">Workspace</p>
+          <p className="truncate type-card-description font-semibold text-[var(--ws-text-primary)]">{workspaceName || 'Business workspace'}</p>
+          <p className="mt-1 truncate type-card-description text-[var(--ws-text-tertiary)]">{userLabel || 'Signed in'}</p>
         </div>
       ) : null}
     </aside>
@@ -263,7 +263,7 @@ export default function BonnieSidebar({
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <p className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ws-text-tertiary)]">{label}</p>
+      <p className="px-2 pb-1 type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]">{label}</p>
       <div className="space-y-0.5">{children}</div>
     </div>
   );
@@ -293,8 +293,8 @@ function ConversationRow({
   return (
     <div className={`group relative flex items-start gap-1 rounded-[var(--ws-radius-control,8px)] px-2 py-2 transition-colors ${active ? 'bg-[color-mix(in_srgb,var(--ac-bonnie)_12%,var(--ws-panel))] text-[var(--ws-text-primary)]' : 'hover:bg-[var(--ws-hover)]'}`}>
       <button type="button" onClick={onSelect} className="min-h-11 min-w-0 flex-1 text-left focus-visible:outline-none">
-        <p className="truncate text-sm font-medium">{item.title || 'New conversation'}</p>
-        <p className="truncate text-[11px] text-[var(--ws-text-tertiary)]">
+        <p className="truncate type-card-description font-medium">{item.title || 'New conversation'}</p>
+        <p className="truncate type-card-description text-[var(--ws-text-tertiary)]">
           {item.module ? `${item.module} · ` : ''}
           {relativeTime(item.updatedAt)}
         </p>
@@ -338,7 +338,7 @@ function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; lab
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-11 w-full items-center gap-2 rounded-[var(--ws-radius-control,8px)] px-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${danger ? 'text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'}`}
+      className={`flex min-h-11 w-full items-center gap-2 rounded-[var(--ws-radius-control,8px)] px-2 text-left type-caption transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${danger ? 'text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'}`}
     >
       {icon}
       {label}

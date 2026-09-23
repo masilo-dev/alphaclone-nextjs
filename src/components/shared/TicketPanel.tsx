@@ -135,10 +135,10 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white">Tickets ({tickets.length})</h3>
+                <h3 className="type-ui font-semibold text-white">Tickets ({tickets.length})</h3>
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 type-caption font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                 >
                     <Plus className="w-3.5 h-3.5" />
                     New Ticket
@@ -152,20 +152,20 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                         placeholder="Ticket title"
                         value={newTicketTitle}
                         onChange={(e) => setNewTicketTitle(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     />
                     <textarea
                         placeholder="Describe the issue..."
                         value={newTicketDescription}
                         onChange={(e) => setNewTicketDescription(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                        className="w-full px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
                     />
                     <div className="flex items-center gap-3">
                         <select
                             value={newTicketPriority}
                             onChange={(e) => setNewTicketPriority(e.target.value as TicketPriority)}
-                            className="px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                            className="px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
                         >
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
@@ -175,7 +175,7 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                         <button
                             onClick={handleCreateTicket}
                             disabled={creating || !newTicketTitle.trim() || !newTicketDescription.trim()}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                            className="px-4 py-2 type-ui font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                         >
                             {creating ? 'Creating...' : 'Create Ticket'}
                         </button>
@@ -186,7 +186,7 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             {tickets.length === 0 ? (
                 <div className="text-center py-8 text-slate-500">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No tickets yet</p>
+                    <p className="type-card-description">No tickets yet</p>
                 </div>
             ) : (
                 <div className="space-y-2">
@@ -201,17 +201,17 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             }`}
                         >
                             <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-medium text-white truncate flex-1">
+                                <span className="type-ui font-medium text-white truncate flex-1">
                                     {ticket.title}
                                 </span>
                                 <div className="flex items-center gap-2 ml-2">
                                     <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[ticket.priority]}`} />
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white ${STATUS_COLORS[ticket.status]}`}>
+                                    <span className={`type-caption px-1.5 py-0.5 rounded-full text-white ${STATUS_COLORS[ticket.status]}`}>
                                         {ticket.status.replace('_', ' ')}
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                            <div className="flex items-center gap-3 type-ui text-slate-500">
                                 <span className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     {new Date(ticket.created_at).toLocaleDateString()}
@@ -228,12 +228,12 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             {selectedTicket && (
                 <div className="bg-slate-800 rounded-lg border border-slate-700 p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-semibold text-white">{selectedTicket.title}</h4>
+                        <h4 className="type-ui font-semibold text-white">{selectedTicket.title}</h4>
                         <div className="flex items-center gap-2">
                             <select
                                 value={selectedTicket.status}
                                 onChange={(e) => handleStatusChange(selectedTicket.id, e.target.value as TicketStatus)}
-                                className="text-xs px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white"
+                                className="type-caption px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white"
                             >
                                 <option value="open">Open</option>
                                 <option value="in_progress">In Progress</option>
@@ -243,13 +243,13 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             </select>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-400">{selectedTicket.description}</p>
+                    <p className="type-card-description text-slate-400">{selectedTicket.description}</p>
 
                     <div className="space-y-2 mt-3">
                         {comments.map(comment => (
                             <div key={comment.id} className="bg-slate-900 rounded p-2">
-                                <p className="text-xs text-slate-300">{comment.content}</p>
-                                <span className="text-[10px] text-slate-500 mt-1 block">
+                                <p className="type-card-description text-slate-300">{comment.content}</p>
+                                <span className="type-ui text-slate-500 mt-1 block">
                                     {new Date(comment.created_at).toLocaleString()}
                                 </span>
                             </div>
@@ -262,12 +262,12 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             placeholder="Add a comment..."
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            className="flex-1 px-3 py-2 text-sm bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                            className="flex-1 px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                         />
                         <button
                             onClick={handleAddComment}
                             disabled={!newComment.trim()}
-                            className="px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                            className="px-3 py-2 type-ui font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
                         >
                             Send
                         </button>

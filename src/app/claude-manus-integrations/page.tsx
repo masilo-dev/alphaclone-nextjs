@@ -45,7 +45,7 @@ export default function ClaudeManusIntegrationsPage() {
             <p className="text-slate-300 mb-6">
               AlphaClone supports AI integration patterns that help businesses execute CRM, lead, and project workflows with assisted intelligence. Also supports DeepSeek V3/R1.
             </p>
-            <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 text-sm text-slate-300">
+            <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 type-ui text-slate-300">
               <ul className="space-y-2">
                 <li>Integration-ready workspace model for AI assistants</li>
                 <li>Lead research and qualification support workflows</li>

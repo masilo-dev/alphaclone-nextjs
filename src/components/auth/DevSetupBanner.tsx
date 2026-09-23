@@ -12,7 +12,7 @@ export default function DevSetupBanner() {
         <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-left">
             <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-                <div className="space-y-1 text-xs text-amber-100/90">
+                <div className="space-y-1 type-caption text-amber-100/90">
                     <p className="font-semibold text-amber-300">Local setup required</p>
                     <p>
                         Supabase credentials are missing. Copy <code className="text-amber-200">.env.example</code> to{' '}

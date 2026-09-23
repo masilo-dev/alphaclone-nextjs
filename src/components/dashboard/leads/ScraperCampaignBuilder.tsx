@@ -84,7 +84,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm text-slate-400 mb-1">Campaign name</label>
+        <label className="block type-label text-slate-400 mb-1">Campaign name</label>
         <input
           className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
           value={name}
@@ -95,14 +95,14 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm text-slate-400 mb-2">Sources</label>
+        <label className="block type-label text-slate-400 mb-2">Sources</label>
         <div className="flex flex-wrap gap-2">
           {SOURCES.map((source) => (
             <button
               key={source}
               type="button"
               onClick={() => toggleSource(source)}
-              className={`px-3 py-1 rounded-full text-xs border ${
+              className={`px-3 py-1 rounded-full type-caption border ${
                 sources.includes(source)
                   ? 'bg-emerald-600/30 border-emerald-500 text-emerald-300'
                   : 'border-slate-700 text-slate-400'
@@ -116,7 +116,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Industry (comma-separated)</label>
+          <label className="block type-label text-slate-400 mb-1">Industry (comma-separated)</label>
           <input
             className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
             value={industry}
@@ -125,7 +125,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Location</label>
+          <label className="block type-label text-slate-400 mb-1">Location</label>
           <input
             className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
             value={location}
@@ -136,7 +136,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm text-slate-400 mb-1">Title keywords (comma-separated)</label>
+        <label className="block type-label text-slate-400 mb-1">Title keywords (comma-separated)</label>
         <input
           className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
           value={titleKeywords}
@@ -147,7 +147,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Daily limit</label>
+          <label className="block type-label text-slate-400 mb-1">Daily limit</label>
           <input
             type="number"
             className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
@@ -158,7 +158,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Min score</label>
+          <label className="block type-label text-slate-400 mb-1">Min score</label>
           <input
             type="number"
             className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
@@ -169,7 +169,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-400 mb-1">Enrichment</label>
+          <label className="block type-label text-slate-400 mb-1">Enrichment</label>
           <select
             className="w-full rounded-lg bg-slate-800 border border-slate-700 px-3 py-2 text-white"
             value={enrichmentLevel}
@@ -184,7 +184,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <button
         type="submit"
         disabled={saving}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white type-ui font-medium disabled:opacity-50"
       >
         <Plus className="w-4 h-4" />
         {saving ? 'Creating...' : 'Create Campaign'}

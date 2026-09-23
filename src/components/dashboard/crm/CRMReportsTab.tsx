@@ -134,9 +134,9 @@ export default function CRMReportsTab() {
   return (
     <div className="p-4 space-y-5 md:space-y-6 overflow-y-auto pb-24 ac-scroll-full">
       <div>
-        <p className="text-[11px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">CRM</p>
-        <h1 className="mt-1 text-[1.375rem] font-bold tracking-tight text-[var(--ws-text-primary)]">Relationships & conversions</h1>
-        <p className="mt-1 text-[13px] text-[var(--ws-text-secondary)] max-w-2xl">
+        <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">CRM</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ws-text-primary)]">Relationships & conversions</h1>
+        <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] max-w-2xl">
           Lead health · qualification · funnel conversion · relationship engagement.
         </p>
       </div>
@@ -196,12 +196,12 @@ export default function CRMReportsTab() {
               {leadStats.stale / Math.max(leadStats.total, 1) > 0.25 ? <AlertCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                 {leadStats.stale > 0
                   ? `${leadStats.stale} stale lead${leadStats.stale !== 1 ? 's' : ''} — 30+ days without action`
                   : `Conversion is ${leadStats.conversion}% — qualification bottleneck likely`}
               </p>
-              <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">
+              <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">
                 {leadStats.stale > 0
                   ? 'These records need a documented follow-up, lifecycle exit, or suppression decision so they do not disappear from the process.'
                   : 'Inspect source, qualification, and activity evidence before increasing acquisition spend.'}
@@ -215,7 +215,7 @@ export default function CRMReportsTab() {
 
       <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5')}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[13.5px] font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
+          <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[var(--brand-violet-400)]" />
             Lead → customer funnel
           </h3>
@@ -224,11 +224,11 @@ export default function CRMReportsTab() {
       </section>
 
       <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5')}>
-        <h3 className="text-[13.5px] font-bold text-[var(--ws-text-primary)] mb-4">Pipeline by stage</h3>
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-4">Pipeline by stage</h3>
         <WrapChart height={220}>
           <BarChart data={pipeline} margin={{ left: -12, right: 8 }}>
-            <XAxis dataKey="stage" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="stage" tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
             <Bar dataKey="totalValue" fill="#14b8a6" radius={[4, 4, 0, 0]} />
           </BarChart>
@@ -237,7 +237,7 @@ export default function CRMReportsTab() {
 
       {winLoss.length > 0 && (
         <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5')}>
-          <h3 className="text-[13.5px] font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
+          <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[var(--success-text)]" />
             Win / loss — closed deals
           </h3>
@@ -263,7 +263,7 @@ export default function CRMReportsTab() {
       <button
         type="button"
         onClick={() => window.open('/dashboard/business/reports', '_self')}
-        className="w-full flex items-center justify-center gap-2 min-h-11 rounded-lg border border-teal-500/30 text-teal-400 text-[13px] font-bold hover:bg-teal-500/10 transition"
+        className="w-full flex items-center justify-center gap-2 min-h-11 rounded-lg border border-teal-500/30 text-teal-400 type-ui font-bold hover:bg-teal-500/10 transition"
       >
         <Download className="w-4 h-4" aria-hidden="true" /> Export full revenue report
       </button>

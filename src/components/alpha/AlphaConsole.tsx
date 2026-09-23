@@ -106,8 +106,8 @@ export default function AlphaConsole() {
                         <Lock className="w-3 h-3" />
                     </motion.div>
                     <div className="flex flex-col">
-                        <span className="text-xs text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
-                        <span className="text-xs font-bold tracking-widest uppercase">{typingText}</span>
+                        <span className="type-caption text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
+                        <span className="type-caption font-bold tracking-widest uppercase">{typingText}</span>
                     </div>
                 </div>
 
@@ -115,19 +115,19 @@ export default function AlphaConsole() {
                     <div className="flex bg-black/40 border border-[#00FFD1]/20 p-1 rounded-sm">
                         <button
                             onClick={() => setView('terminal')}
-                            className={`px-3 py-1 flex items-center gap-2 text-xs font-bold transition-all ${view === 'terminal' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'terminal' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
                         >
                             <Terminal className="w-2.5 h-2.5" /> DIRECT_SHELL
                         </button>
                         <button
                             onClick={() => setView('fleet')}
-                            className={`px-3 py-1 flex items-center gap-2 text-xs font-bold transition-all ${view === 'fleet' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'fleet' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
                         >
                             <LayoutDashboard className="w-2.5 h-2.5" /> FLEET_CONTROL
                         </button>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8 text-xs tracking-tighter opacity-70">
+                    <div className="hidden md:flex items-center gap-8 type-caption tracking-tighter opacity-70">
                         <div className="flex items-center gap-2">
                             <Activity className="w-3 h-3 text-yellow-400" />
                             <span>NODE_STATUS: STABLE</span>
@@ -144,12 +144,12 @@ export default function AlphaConsole() {
                 {view === 'terminal' ? (
                     <>
                         <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-4 md:p-6 flex flex-col gap-6 bg-[#00080D] min-h-0">
-                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-4 text-xs leading-relaxed text-[#00FFD1]/80">
+                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-4 type-caption leading-relaxed text-[#00FFD1]/80">
                                 Alpha runs authorized tools inside the selected workspace. Mission state and completion logs are stored durably and remain available after restarts.
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-sm font-bold flex items-center gap-2 text-white italic">
+                                <h2 className="type-ui font-bold flex items-center gap-2 text-white italic">
                                     <Command className="w-4 h-4 text-[#00FFD1]" />
                                     ASSISTED_EXECUTION_QUEUE
                                 </h2>
@@ -158,7 +158,7 @@ export default function AlphaConsole() {
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
                                         placeholder="DESCRIBE THE TASK YOU WANT ALPHA TO HANDLE..."
-                                        className="w-full bg-[#00121A] border border-[#00FFD1]/20 p-4 text-xs focus:outline-none focus:border-[#00FFD1] min-h-[150px] resize-none transition-all placeholder:opacity-30 uppercase"
+                                        className="w-full bg-[#00121A] border border-[#00FFD1]/20 p-4 type-caption focus:outline-none focus:border-[#00FFD1] min-h-[150px] resize-none transition-all placeholder:opacity-30 uppercase"
                                     />
                                     <button
                                         type="submit"
@@ -171,7 +171,7 @@ export default function AlphaConsole() {
                             </div>
 
                             <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar min-h-0">
-                                <h3 className="text-xs font-bold text-[#00FFD1]/50 tracking-[0.3em]">CAPABILITY_MATRIX</h3>
+                                <h3 className="type-caption font-bold text-[#00FFD1]/50 tracking-caps">CAPABILITY_MATRIX</h3>
                                 {[
                                     { icon: Target, label: 'LEAD_PROSPECTOR', status: 'ACTIVE' },
                                     { icon: Send, label: 'OUTREACH_EXECUTIVE', status: 'READY' },
@@ -181,9 +181,9 @@ export default function AlphaConsole() {
                                     <div key={i} className="group p-3 border border-[#00FFD1]/10 bg-[#00121A] hover:border-[#00FFD1]/40 flex items-center justify-between transition-all">
                                         <div className="flex items-center gap-3">
                                             <cap.icon className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                            <span className="text-xs font-bold group-hover:text-white">{cap.label}</span>
+                                            <span className="type-caption font-bold group-hover:text-white">{cap.label}</span>
                                         </div>
-                                        <span className={`text-xs px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
+                                        <span className={`type-caption px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
                                             {cap.status}
                                         </span>
                                     </div>
@@ -193,11 +193,11 @@ export default function AlphaConsole() {
 
                         <div className="md:col-span-8 p-4 md:p-6 flex flex-col bg-[#000508] min-h-0">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xs font-bold tracking-widest flex items-center gap-2">
+                                <h2 className="type-caption font-bold tracking-widest flex items-center gap-2">
                                     <Activity className="w-3 h-3 animate-pulse" />
                                     MISSION_CORE_STREAM
                                 </h2>
-                                <span className="text-xs opacity-40 italic">STREAMING_REALTIME_LOGS</span>
+                                <span className="type-caption opacity-40 italic">STREAMING_REALTIME_LOGS</span>
                             </div>
 
                             <div className="flex-1 overflow-y-auto space-y-6 pr-2 md:pr-4 custom-scrollbar min-h-0">
@@ -205,7 +205,7 @@ export default function AlphaConsole() {
                                     {missions.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center opacity-20 italic">
                                             <Cpu className="w-12 h-12 mb-4 animate-pulse" />
-                                            <p className="text-xs tracking-tighter uppercase font-bold text-center">No Active Missions Yet</p>
+                                            <p className="type-caption tracking-tighter uppercase font-bold text-center">No Active Missions Yet</p>
                                         </div>
                                     ) : (
                                         [...missions].reverse().map((mission) => (
@@ -218,12 +218,12 @@ export default function AlphaConsole() {
                                                 <div className="flex items-center justify-between mb-4 border-b border-[#00FFD1]/10 pb-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[#00FFD1]' : 'bg-[#00D1FF] animate-pulse'}`} />
-                                                        <span className="text-[11px] font-bold text-white uppercase">{mission.description}</span>
+                                                        <span className="type-caption font-bold text-white uppercase">{mission.description}</span>
                                                     </div>
-                                                    <span className="text-xs font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
+                                                    <span className="type-caption font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
                                                 </div>
 
-                                                <div className="space-y-2 max-h-[300px] overflow-y-auto font-mono text-xs">
+                                                <div className="space-y-2 max-h-[300px] overflow-y-auto font-mono type-caption">
                                                     {mission.logs.map((log, li) => (
                                                         <div key={li} className="flex gap-4 group/log">
                                                             <span className="opacity-20 select-none">{li.toString().padStart(3, '0')}</span>

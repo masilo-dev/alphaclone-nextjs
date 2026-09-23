@@ -176,12 +176,10 @@ export function OperatingSystemHome() {
   const leads = Number(normalizedStats.newLeads ?? normalizedStats.totalLeads ?? 0);
   const leadsPrev = Number(normalizedStats.leadsPrev ?? normalizedStats.previousLeads ?? 0);
   const dealsWon = Number(normalizedStats.dealsWon ?? normalizedStats.closedWon ?? normalizedStats.wonDeals ?? 0);
-  const dealsWonPrev = Number(normalizedStats.dealsWonPrev ?? normalizedStats.previousDealsWon ?? 0);
   const outstanding = Number(normalizedStats.outstanding ?? normalizedStats.pendingRevenue ?? 0);
   const outstandingPrev = Number(normalizedStats.outstandingPrev ?? 0);
   const tasksCompleted = Number(normalizedStats.tasksCompleted ?? normalizedStats.completedTasks ?? 0);
   const openTasks = Number(normalizedStats.openTasks ?? normalizedStats.open_tasks ?? 0);
-  const overdueInvoices = Number(normalizedStats.overdueInvoices ?? normalizedStats.overdue_invoices ?? 0);
 
   const attentionItems: AttentionItem[] = useMemo(() => {
     const items: AttentionItem[] = [];
@@ -225,7 +223,7 @@ export function OperatingSystemHome() {
       });
     }
     return items;
-  }, [pendingCount, overdueInvoices, openTasks, brief?.attentionItems, decisionVm.attentionFlags, t]);
+  }, [pendingCount, openTasks, brief?.attentionItems, decisionVm.attentionFlags, t]);
 
   const todayItems: TodayItem[] = useMemo(() => {
     const items: TodayItem[] = [];
@@ -325,12 +323,7 @@ export function OperatingSystemHome() {
   const revenueTrend = [revenuePrev * 0.8, revenuePrev, revenuePrev * 0.95, revenue * 0.9, revenue];
   const leadsTrend = [leadsPrev * 0.7, leadsPrev * 0.9, leadsPrev, leads * 0.85, leads];
 
-  const upcomingMeetingsCount = Array.isArray(stats?.upcomingMeetings)
-    ? (stats.upcomingMeetings as unknown[]).length
-    : null;
   const tasksAttention = openTasks + (Number(normalizedStats.missedTasks) || 0);
-  const conversionCurrent = decisionVm.kpis.conversionRate.current;
-  const conversionPrev = decisionVm.kpis.conversionRate.previous;
 
   const homeKpis = useMemo(
     () => [
@@ -353,15 +346,6 @@ export function OperatingSystemHome() {
         state: loading ? 'loading' : 'ready',
       }),
       platformKpiFromNumbers({
-        metricId: 'home.conversion_rate',
-        label: 'Conversion rate',
-        current: conversionCurrent,
-        previous: conversionPrev,
-        isPercentage: true,
-        referencePeriod: comparisonLabel,
-        state: loading ? 'loading' : leads === 0 && leadsPrev === 0 ? 'empty' : 'ready',
-      }),
-      platformKpiFromNumbers({
         metricId: 'home.outstanding_invoices',
         label: 'Outstanding invoices',
         current: outstanding,
@@ -371,31 +355,9 @@ export function OperatingSystemHome() {
         state: loading ? 'loading' : 'ready',
       }),
       platformKpiFromNumbers({
-        metricId: 'home.upcoming_meetings',
-        label: 'Upcoming meetings',
-        current: upcomingMeetingsCount,
-        referencePeriod: 'Next 7 days',
-        state: loading ? 'loading' : upcomingMeetingsCount == null ? 'empty' : 'ready',
-      }),
-      platformKpiFromNumbers({
         metricId: 'home.tasks_attention',
         label: 'Tasks requiring attention',
         current: tasksAttention,
-        referencePeriod: comparisonLabel,
-        state: loading ? 'loading' : 'ready',
-      }),
-      platformKpiFromNumbers({
-        label: 'Deals won',
-        current: dealsWon,
-        previous: dealsWonPrev,
-        referencePeriod: comparisonLabel,
-        href: '/dashboard/deals',
-        state: loading ? 'loading' : 'ready',
-      }),
-      platformKpiFromNumbers({
-        metricId: 'invoices.overdue_invoices',
-        label: 'Overdue invoices',
-        current: overdueInvoices,
         referencePeriod: comparisonLabel,
         state: loading ? 'loading' : 'ready',
       }),
@@ -406,15 +368,9 @@ export function OperatingSystemHome() {
       revenuePrev,
       leads,
       leadsPrev,
-      conversionCurrent,
-      conversionPrev,
       outstanding,
       outstandingPrev,
-      upcomingMeetingsCount,
       tasksAttention,
-      dealsWon,
-      dealsWonPrev,
-      overdueInvoices,
       comparisonLabel,
       revenueTrend,
       leadsTrend,
@@ -464,23 +420,17 @@ export function OperatingSystemHome() {
       {user?.id ? <PlatformExecutionWelcome userId={user.id} surface="home" /> : null}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[var(--ws-text-muted)]">{todayLabel}</p>
+          <p className="type-card-description font-medium text-[var(--ws-text-muted)]">{todayLabel}</p>
           <h1 className={cn(WORKSPACE.typography.pageTitle, 'mt-1')}>
             {greeting}, {firstName}
           </h1>
-          <p className="mt-1.5 text-sm text-[var(--ws-text-secondary)] max-w-2xl">
+          <p className="mt-1.5 type-caption text-[var(--ws-text-secondary)] max-w-2xl">
             {t('Here is what needs your attention across')} {businessName} {t('today.')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DashboardHomeLayoutToggle />
           <MetricDateRangeSelector value={preset} onChange={setPeriod} compact className="mb-0" />
-          <a
-            href="/dashboard/business/settings"
-            className={WORKSPACE.action.secondary}
-          >
-            {t('Customise')}
-          </a>
           <a
             href="/dashboard/crm?quickAdd=true"
             className={WORKSPACE.action.secondary}
@@ -497,17 +447,9 @@ export function OperatingSystemHome() {
           formattedValue: item.metricId === 'home.total_revenue' ? money(revenue) : item.formattedValue,
         }))}
         loading={loading}
-        skeletonCount={8}
+        skeletonCount={4}
         className="ac-metric-enter"
       />
-
-      {overviewRich ? (
-        <ModuleKpiRichSections
-          data={overviewRich}
-          comparisonLabel={comparisonLabel}
-          showPlatformHealth
-        />
-      ) : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 md:gap-5">
         <div className="space-y-4 md:space-y-5 min-w-0">
@@ -522,7 +464,20 @@ export function OperatingSystemHome() {
             loading={loading}
           />
 
-          <ModuleLauncher items={modules} />
+          <details className="group ac-workspace-panel p-4 md:p-5">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 type-card-title text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
+              {t('More business details')}
+              <span className="type-ui font-medium text-[var(--ws-text-muted)] group-open:hidden">{t('Show')}</span>
+              <span className="type-ui font-medium text-[var(--ws-text-muted)] hidden group-open:inline">{t('Hide')}</span>
+            </summary>
+            <div className="mt-4 space-y-5">
+              {overviewRich ? (
+                <ModuleKpiRichSections data={overviewRich} comparisonLabel={comparisonLabel} showPlatformHealth />
+              ) : null}
+              <ModuleLauncher items={modules} />
+              <a href="/dashboard/business/settings" className={WORKSPACE.action.secondary}>{t('Customise dashboard')}</a>
+            </div>
+          </details>
         </div>
         <div className="space-y-4 md:space-y-5">
           <TodayPanel items={todayItems} className="xl:sticky xl:top-4 h-fit" />

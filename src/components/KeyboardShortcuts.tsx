@@ -92,7 +92,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search shortcuts..."
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 type-ui text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
                                 autoFocus
                             />
                         </div>
@@ -104,7 +104,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
 
                             return (
                                 <div key={category}>
-                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                                    <h3 className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-3">
                                         {category}
                                     </h3>
                                     <div className="space-y-2">
@@ -113,8 +113,8 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                                                 key={index}
                                                 className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
                                             >
-                                                <span className="text-sm text-slate-300">{shortcut.description}</span>
-                                                <kbd className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md text-xs font-mono text-slate-300">
+                                                <span className="type-ui text-slate-300">{shortcut.description}</span>
+                                                <kbd className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md type-caption font-mono text-slate-300">
                                                     {shortcut.key}
                                                 </kbd>
                                             </div>
@@ -132,7 +132,7 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                     </div>
 
                     <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-                        <p className="text-xs text-slate-400 text-center">
+                        <p className="type-card-description text-slate-400 text-center">
                             Press <kbd className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Esc</kbd> to close
                         </p>
                     </div>

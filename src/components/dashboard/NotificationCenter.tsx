@@ -174,7 +174,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-white text-xs font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-white type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
                         >
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </motion.span>
@@ -207,8 +207,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             {/* Header */}
                             <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">
                                 <div>
-                                    <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Notifications</h3>
-                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                                    <h3 className="type-caption font-black text-[var(--text-primary)] uppercase tracking-widest">Notifications</h3>
+                                    <p className="type-card-description text-[var(--text-muted)] mt-0.5">
                                         {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                                     </p>
                                 </div>
@@ -216,7 +216,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={handleMarkAllAsRead}
-                                            className="text-xs font-bold text-teal-400 hover:text-teal-300 transition-colors px-2 py-1 rounded-lg hover:bg-teal-500/10"
+                                            className="type-caption font-bold text-teal-400 hover:text-teal-300 transition-colors px-2 py-1 rounded-lg hover:bg-teal-500/10"
                                         >
                                             Mark all read
                                         </button>
@@ -233,7 +233,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
-                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all ${filter === f
+                                        className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${filter === f
                                             ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
                                             : 'text-slate-500 hover:text-slate-300 bg-white/5'
                                             }`}
@@ -245,7 +245,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     <button
                                         key={`sev-${f}`}
                                         onClick={() => setSeverityFilter(f)}
-                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all ${severityFilter === f
+                                        className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${severityFilter === f
                                             ? 'bg-amber-500 text-slate-950'
                                             : 'text-slate-500 hover:text-slate-300 bg-white/5'
                                             }`}
@@ -262,13 +262,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         <Smartphone className="w-4 h-4 text-teal-300" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-black text-white">Get alerts on this device</p>
-                                        <p className="text-[11px] text-slate-400 leading-snug">Receive messages &amp; updates even when the app is closed.</p>
+                                        <p className="type-card-description font-black text-white">Get alerts on this device</p>
+                                        <p className="type-card-description text-slate-400 leading-snug">Receive messages &amp; updates even when the app is closed.</p>
                                     </div>
                                     <button
                                         onClick={handleEnablePush}
                                         disabled={pushBusy}
-                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white text-xs font-black uppercase tracking-wide transition-colors flex-shrink-0"
+                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white type-caption font-black uppercase tracking-wide transition-colors flex-shrink-0"
                                     >
                                         {pushBusy ? '…' : 'Enable'}
                                     </button>
@@ -279,11 +279,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {loadError ? (
                                     <div className="p-6 text-center space-y-3">
-                                        <p className="text-xs text-rose-300">{loadError}</p>
+                                        <p className="type-card-description text-rose-300">{loadError}</p>
                                         <button
                                             type="button"
                                             onClick={() => void loadNotifications()}
-                                            className="text-xs font-bold text-teal-400 hover:text-teal-300"
+                                            className="type-caption font-bold text-teal-400 hover:text-teal-300"
                                         >
                                             Retry
                                         </button>
@@ -296,7 +296,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     ) : (
                                     <div className="py-16 flex flex-col items-center justify-center text-slate-600">
                                         <BellOff className="w-10 h-10 mb-3 opacity-40" />
-                                        <p className="text-xs font-bold uppercase tracking-widest">
+                                        <p className="type-caption font-bold uppercase tracking-widest">
                                             {filter === 'unread' ? 'All caught up!' : 'No notifications'}
                                         </p>
                                     </div>
@@ -307,7 +307,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         if (!typeGroups || Object.keys(typeGroups).length === 0) return null;
                                         return (
                                             <div key={dateGroup}>
-                                                <div className="px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-600 bg-slate-950 sticky top-0 z-10">
+                                                <div className="px-4 py-2 type-caption font-black uppercase tracking-caps text-slate-600 bg-slate-950 sticky top-0 z-10">
                                                     {dateGroup}
                                                 </div>
                                                 {Object.entries(typeGroups).map(([type, notifs]) => {
@@ -322,10 +322,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                 <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${cfg.bg}`}>
                                                                     <Icon className={`w-3 h-3 ${cfg.color}`} />
                                                                 </div>
-                                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex-1">
+                                                                <span className="type-caption font-bold text-slate-400 uppercase tracking-wider flex-1">
                                                                     {cfg.label}
                                                                 </span>
-                                                                <span className="text-xs text-slate-600 font-mono">
+                                                                <span className="type-caption text-slate-600 font-mono">
                                                                     {notifs.length} {unreadCount > 0 ? `(${unreadCount} unread)` : ''}
                                                                 </span>
                                                             </div>
@@ -341,7 +341,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                     className={`group px-4 py-3 border-b border-white/[0.02] hover:bg-white/[0.02] transition-all pl-12 ${!n.read ? 'bg-teal-500/[0.02]' : ''}`}
                                                                 >
                                                                     <div className="flex items-start justify-between gap-1">
-                                                                        <p className={`text-xs font-bold leading-snug ${n.read ? 'text-slate-400' : 'text-white'}`}>
+                                                                        <p className={`type-card-description font-bold leading-snug ${n.read ? 'text-slate-400' : 'text-white'}`}>
                                                                             {n.title}
                                                                         </p>
                                                                         {!n.read && (
@@ -349,10 +349,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                         )}
                                                                     </div>
                                                                     {n.message && (
-                                                                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                                                        <p className="type-card-description text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
                                                                     )}
                                                                     <div className="flex items-center justify-between mt-2">
-                                                                        <span className="text-xs text-slate-600">
+                                                                        <span className="type-caption text-slate-600">
                                                                             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                                                                         </span>
                                                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -396,7 +396,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             {/* Footer */}
                             {notifications.length > 0 && (
                                 <div className="p-3 border-t border-white/5 bg-slate-950 text-center">
-                                    <p className="text-xs text-slate-600 font-mono">{notifications.length} total notifications</p>
+                                    <p className="type-card-description text-slate-600 font-mono">{notifications.length} total notifications</p>
                                 </div>
                             )}
                         </motion.div>

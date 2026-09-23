@@ -227,7 +227,7 @@ export default function ScreenShareManager({
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 bg-gradient-to-b from-black/70 to-transparent">
         <div className="flex items-center space-x-2">
           <Monitor className="w-5 h-5 text-green-400" />
-          <span className="text-white text-sm font-medium">
+          <span className="text-white type-ui font-medium">
             {screenShareParticipant?.user_name || 'Someone'} is sharing their screen
           </span>
         </div>

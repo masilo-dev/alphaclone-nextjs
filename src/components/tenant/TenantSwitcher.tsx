@@ -34,7 +34,7 @@ export default function TenantSwitcher() {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg">
         <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
-        <span className="text-sm text-slate-400">Loading...</span>
+        <span className="type-ui text-slate-400">Loading...</span>
       </div>
     );
   }
@@ -48,11 +48,11 @@ export default function TenantSwitcher() {
       >
         <Building2 className="w-5 h-5 text-teal-400" />
         <div className="flex-1 text-left">
-          <div className="text-sm font-medium text-white truncate">
+          <div className="type-ui font-medium text-white truncate">
             {currentTenant.name}
           </div>
           {userTenants.length > 1 && (
-            <div className="text-xs text-slate-400">
+            <div className="type-caption text-slate-400">
               {userTenants.length} organizations
             </div>
           )}
@@ -73,8 +73,8 @@ export default function TenantSwitcher() {
           <div className="absolute top-full left-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="px-4 py-3 border-b border-slate-700">
-              <h3 className="text-sm font-semibold text-white">Switch Organization</h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <h3 className="type-ui font-semibold text-white">Switch Organization</h3>
+              <p className="type-card-description text-slate-400 mt-1">
                 Select an organization to view its data
               </p>
             </div>
@@ -104,7 +104,7 @@ export default function TenantSwitcher() {
                     {/* Tenant Info */}
                     <div className="flex-1 text-left min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium truncate ${isActive ? 'text-white' : 'text-slate-300'
+                        <span className={`type-ui font-medium truncate ${isActive ? 'text-white' : 'text-slate-300'
                           }`}>
                           {tenant.name}
                         </span>
@@ -113,7 +113,7 @@ export default function TenantSwitcher() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${tenantRole === 'admin'
+                        <span className={`type-caption px-2 py-0.5 rounded-full ${tenantRole === 'admin'
                           ? 'bg-purple-500/20 text-purple-300'
                           : tenantRole === 'member'
                             ? 'bg-blue-500/20 text-blue-300'
@@ -121,7 +121,7 @@ export default function TenantSwitcher() {
                           }`}>
                           {tenantRole}
                         </span>
-                        <span className="text-xs text-slate-500 truncate">
+                        <span className="type-caption text-slate-500 truncate">
                           {tenant.slug}
                         </span>
                       </div>
@@ -141,7 +141,7 @@ export default function TenantSwitcher() {
               <button
                 onClick={handleCreateNew}
                 disabled={isSwitching}
-                className="w-full px-4 py-2.5 flex items-center gap-3 text-sm text-teal-400 hover:bg-slate-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 flex items-center gap-3 type-ui text-teal-400 hover:bg-slate-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 <span className="font-medium">Create New Organization</span>

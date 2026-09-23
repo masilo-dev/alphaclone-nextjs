@@ -163,7 +163,7 @@ export default function AccountsPage() {
       >
         <div className="p-4 space-y-4">
           {detailTab === 'overview' && (
-            <dl className="grid grid-cols-2 gap-3 text-sm">
+            <dl className="grid grid-cols-2 gap-3 type-ui">
               {[
                 ['Website', selected.website || '—'],
                 ['Industry', selected.industry || '—'],
@@ -171,7 +171,7 @@ export default function AccountsPage() {
                 ['Revenue', selected.annual_revenue ? `$${selected.annual_revenue.toLocaleString()}` : '—'],
               ].map(([k, v]) => (
                 <div key={k} className="bg-slate-900 border border-white/5 rounded-xl p-3">
-                  <dt className="text-xs text-slate-500">{k}</dt>
+                  <dt className="type-caption text-slate-500">{k}</dt>
                   <dd className="text-white font-medium mt-0.5">{v}</dd>
                 </div>
               ))}
@@ -183,13 +183,13 @@ export default function AccountsPage() {
                 type="datetime-local"
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+                className="px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white type-ui"
               />
               <button
                 type="button"
                 onClick={() => void handleScheduleFollowUp()}
                 disabled={!followUpDate}
-                className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold disabled:opacity-50"
+                className="px-3 py-2 rounded-xl bg-teal-600 text-white type-caption font-bold disabled:opacity-50"
               >
                 Schedule follow-up
               </button>
@@ -201,11 +201,11 @@ export default function AccountsPage() {
           {detailTab === 'deals' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm text-slate-400">Unified opportunities stay in sync with the deals pipeline.</p>
+                <p className="type-card-description text-slate-400">Unified opportunities stay in sync with the deals pipeline.</p>
                 <button
                   type="button"
                   onClick={() => router.push('/dashboard/deals')}
-                  className="text-xs font-bold text-teal-400 hover:text-teal-300"
+                  className="type-caption font-bold text-teal-400 hover:text-teal-300"
                 >
                   Open pipeline →
                 </button>
@@ -248,7 +248,7 @@ export default function AccountsPage() {
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="text-sm text-teal-400 font-bold hover:text-teal-300"
+            className="type-ui text-teal-400 font-bold hover:text-teal-300"
           >
             ← Back to accounts
           </button>
@@ -283,7 +283,7 @@ export default function AccountsPage() {
             type="button"
             disabled={creating}
             onClick={() => setCreateOpen(true)}
-            className="h-10 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold flex items-center gap-1 disabled:opacity-50"
+            className="h-10 px-3 rounded-xl bg-teal-500 text-white type-caption font-bold flex items-center gap-1 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" /> New
           </button>
@@ -314,8 +314,8 @@ export default function AccountsPage() {
                 <Building2 className="w-4 h-4 text-teal-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-white truncate">{c.name}</div>
-                <div className="text-xs text-slate-500 capitalize">{c.lifecycle_stage} · Health {c.health_score}</div>
+                <div className="type-ui font-bold text-white truncate">{c.name}</div>
+                <div className="type-caption text-slate-500 capitalize">{c.lifecycle_stage} · Health {c.health_score}</div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-600" />
             </button>
@@ -337,14 +337,14 @@ export default function AccountsPage() {
 
 function RelatedList({ items, labelKey, fallback }: { items: unknown[]; labelKey: string; fallback: string }) {
   if (!items.length) {
-    return <p className="text-sm text-slate-500 py-8 text-center">No {fallback.toLowerCase()}s linked yet.</p>;
+    return <p className="type-card-description text-slate-500 py-8 text-center">No {fallback.toLowerCase()}s linked yet.</p>;
   }
   return (
     <div className="divide-y divide-white/5 bg-slate-900 border border-white/5 rounded-xl overflow-hidden">
       {items.map((item, i) => {
         const row = item as Record<string, unknown>;
         return (
-          <div key={String(row.id ?? i)} className="px-4 py-3 text-sm text-white">
+          <div key={String(row.id ?? i)} className="px-4 py-3 type-ui text-white">
             {String(row[labelKey] ?? row.name ?? fallback)}
           </div>
         );

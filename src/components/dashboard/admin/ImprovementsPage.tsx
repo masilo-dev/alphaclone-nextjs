@@ -203,7 +203,7 @@ const ImprovementsPage: React.FC = () => {
                 <Card className="p-12 text-center">
                     <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-slate-400 mb-2">No improvements found</h3>
-                    <p className="text-slate-500 text-sm">
+                    <p className="text-slate-500 type-card-description">
                         {Object.keys(filters).length > 0
                             ? 'Try adjusting your filters'
                             : 'Exit-intent submissions will appear here'}
@@ -225,9 +225,9 @@ const ImprovementsPage: React.FC = () => {
                                     </p>
 
                                     {/* Metadata */}
-                                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                                    <div className="flex flex-wrap items-center gap-3 type-ui">
                                         {/* Severity */}
-                                        <span className={`px-2 py-1 rounded-md border text-xs font-medium ${getSeverityColor(improvement.severity)}`}>
+                                        <span className={`px-2 py-1 rounded-md border type-caption font-medium ${getSeverityColor(improvement.severity)}`}>
                                             {improvement.severity.toUpperCase()}
                                         </span>
 
@@ -251,7 +251,7 @@ const ImprovementsPage: React.FC = () => {
                                 {/* Status badge */}
                                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${getStatusColor(improvement.status)}`}>
                                     {getStatusIcon(improvement.status)}
-                                    <span className="text-sm font-medium capitalize">
+                                    <span className="type-ui font-medium capitalize">
                                         {improvement.status.replace('_', ' ')}
                                     </span>
                                 </div>
@@ -270,10 +270,10 @@ const ImprovementsPage: React.FC = () => {
                             <div>
                                 <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Improvement Details</h2>
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded-md border text-xs font-medium ${getSeverityColor(selectedImprovement.severity)}`}>
+                                    <span className={`px-2 py-1 rounded-md border type-caption font-medium ${getSeverityColor(selectedImprovement.severity)}`}>
                                         {selectedImprovement.severity.toUpperCase()}
                                     </span>
-                                    <span className="text-slate-400 text-sm">
+                                    <span className="text-slate-400 type-ui">
                                         {selectedImprovement.created_at.toLocaleString()}
                                     </span>
                                 </div>
@@ -288,7 +288,7 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Message */}
                         <div className="mb-6">
-                            <h3 className="text-sm font-semibold text-slate-400 mb-2">Message</h3>
+                            <h3 className="type-ui font-semibold text-slate-400 mb-2">Message</h3>
                             <div className="bg-slate-800 rounded-lg p-4">
                                 <p className="text-white whitespace-pre-wrap">{selectedImprovement.message}</p>
                             </div>
@@ -297,31 +297,31 @@ const ImprovementsPage: React.FC = () => {
                         {/* Metadata */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-400 mb-1">User Type</h3>
+                                <h3 className="type-ui font-semibold text-slate-400 mb-1">User Type</h3>
                                 <p className="text-white capitalize">{selectedImprovement.user_type}</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-400 mb-1">Source</h3>
+                                <h3 className="type-ui font-semibold text-slate-400 mb-1">Source</h3>
                                 <p className="text-white">{selectedImprovement.source} / {selectedImprovement.channel}</p>
                             </div>
                             <div className="col-span-2">
-                                <h3 className="text-sm font-semibold text-slate-400 mb-1">Page URL</h3>
+                                <h3 className="type-ui font-semibold text-slate-400 mb-1">Page URL</h3>
                                 <a
                                     href={selectedImprovement.page_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-teal-400 hover:text-teal-300 text-sm break-all"
+                                    className="text-teal-400 hover:text-teal-300 type-ui break-all"
                                 >
                                     {selectedImprovement.page_url}
                                 </a>
                                 {selectedImprovement.screenshot_url && (
                                     <>
-                                        <h3 className="text-sm font-semibold text-slate-400 mb-1 mt-4">Screenshot</h3>
+                                        <h3 className="type-ui font-semibold text-slate-400 mb-1 mt-4">Screenshot</h3>
                                         <a
                                             href={selectedImprovement.screenshot_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-teal-400 hover:underline text-sm"
+                                            className="text-teal-400 hover:underline type-ui"
                                         >
                                             View Screenshot
                                         </a>
@@ -332,7 +332,7 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Status Update */}
                         <div className="mb-6">
-                            <h3 className="text-sm font-semibold text-slate-400 mb-2">Status</h3>
+                            <h3 className="type-caption font-semibold text-slate-400 mb-2">Status</h3>
                             <select
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Improvement['status'])}
@@ -347,7 +347,7 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Admin Notes */}
                         <div className="mb-6">
-                            <h3 className="text-sm font-semibold text-slate-400 mb-2">Admin Notes (Internal)</h3>
+                            <h3 className="type-ui font-semibold text-slate-400 mb-2">Admin Notes (Internal)</h3>
                             <textarea
                                 value={editNotes}
                                 onChange={(e) => setEditNotes(e.target.value)}

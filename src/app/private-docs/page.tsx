@@ -16,7 +16,7 @@ export default function PrivateDocsPage() {
                         </div>
                         <span className="font-bold text-white">INTERNAL DOCUMENTATION</span>
                     </div>
-                    <Link href="/" className="text-xs text-slate-500 hover:text-white transition-colors uppercase tracking-widest font-bold">
+                    <Link href="/" className="type-caption text-slate-500 hover:text-white transition-colors uppercase tracking-widest font-bold">
                         Exit Portal
                     </Link>
                 </div>
@@ -32,18 +32,18 @@ export default function PrivateDocsPage() {
                     {/* Security */}
                     <div className="md:col-span-2 space-y-12">
                         <section>
-                            <h2 className="text-sm font-black text-teal-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <h2 className="type-caption font-black text-teal-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <Activity className="w-4 h-4" />
                                 Deployment Pipeline
                             </h2>
                             <div className="bg-slate-900/50 rounded-2xl p-8 border border-white/5 space-y-6">
                                 <div>
                                     <h4 className="text-white font-bold mb-2">Railway & Next.js</h4>
-                                    <p className="text-sm text-slate-400 leading-relaxed">
+                                    <p className="type-card-description text-slate-400 leading-relaxed">
                                         Production deployments are continuous via Railway. Ensure all environment variables (Supabase, Stripe, OAuth providers) are set in the Railway service dashboard.
                                     </p>
                                 </div>
-                                <div className="p-4 bg-slate-950 rounded-xl border border-white/5 font-mono text-[11px] text-teal-500">
+                                <div className="p-4 bg-slate-950 rounded-xl border border-white/5 font-mono type-ui text-teal-500">
                                     # Trigger production build<br />
                                     git push origin main
                                 </div>
@@ -51,22 +51,22 @@ export default function PrivateDocsPage() {
                         </section>
 
                         <section>
-                            <h2 className="text-sm font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <h2 className="type-caption font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <Server className="w-4 h-4" />
                                 Database Schema
                             </h2>
                             <div className="bg-slate-900/50 rounded-2xl p-8 border border-white/5">
-                                <p className="text-sm text-slate-400 mb-6">
+                                <p className="type-card-description text-slate-400 mb-6">
                                     Our multi-tenant architecture relies on the `tenants` table for scoping. Every request must be filtered by `tenant_id` to prevent cross-leakage.
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-xs text-slate-600 font-bold mb-1">AUTH</div>
-                                        <div className="text-xs text-slate-300">Supabase Auth hooks handles role assignment.</div>
+                                        <div className="type-caption text-slate-600 font-bold mb-1">AUTH</div>
+                                        <div className="type-caption text-slate-300">Supabase Auth hooks handles role assignment.</div>
                                     </div>
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-xs text-slate-600 font-bold mb-1">STORAGE</div>
-                                        <div className="text-xs text-slate-300">S3 protocol via Supabase Buckets.</div>
+                                        <div className="type-caption text-slate-600 font-bold mb-1">STORAGE</div>
+                                        <div className="type-caption text-slate-300">S3 protocol via Supabase Buckets.</div>
                                     </div>
                                 </div>
                             </div>
@@ -76,8 +76,8 @@ export default function PrivateDocsPage() {
                     {/* Sidebar */}
                     <aside className="space-y-8">
                         <div className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/20">
-                            <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Quick Links</h3>
-                            <ul className="space-y-3 text-xs">
+                            <h3 className="type-caption font-black text-white uppercase tracking-widest mb-4">Quick Links</h3>
+                            <ul className="space-y-3 type-caption">
                                 <li><Link href="/dashboard/business/settings" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Database className="w-3 h-3" /> Database Settings</Link></li>
                                 <li><a href="https://dashboard.stripe.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Code className="w-3 h-3" /> Stripe Dashboard</a></li>
                                 <li><a href="https://railway.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Lock className="w-3 h-3" /> Railway Deployments</a></li>
@@ -85,11 +85,11 @@ export default function PrivateDocsPage() {
                         </div>
 
                         <div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/5">
-                            <h3 className="text-sm font-black text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <h3 className="type-caption font-black text-red-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                                 <ShieldCheck className="w-4 h-4" />
                                 Security Alert
                             </h3>
-                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                            <p className="type-card-description text-slate-500 leading-relaxed">
                                 Never commit raw `.env` files. Rotate Stripe API keys every 90 days.
                             </p>
                         </div>

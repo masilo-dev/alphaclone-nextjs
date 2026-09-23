@@ -116,7 +116,7 @@ const EcosystemPage: React.FC = () => {
                         </p>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.3}>
-                        <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500">
+                        <div className="flex flex-wrap items-center justify-center gap-4 type-ui text-slate-500">
                             <div className="flex items-center gap-2">
                                 <Check className="w-4 h-4 text-teal-400" />
                                 <span>CRM & Pipeline Management</span>
@@ -164,7 +164,7 @@ const EcosystemPage: React.FC = () => {
                                         <module.icon className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
                                     </div>
                                     <h3 className="text-lg font-bold text-slate-950 mb-2">{module.title}</h3>
-                                    <p className="text-sm text-slate-600 leading-relaxed">{module.desc}</p>
+                                    <p className="type-card-description text-slate-600 leading-relaxed">{module.desc}</p>
                                 </div>
                             </AnimateIn>
                         ))}
@@ -236,18 +236,18 @@ const EcosystemPage: React.FC = () => {
                             <label className="relative block">
                                 <span className="sr-only">Search integrations</span>
                                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-                                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools or capabilities" className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools or capabilities" className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 type-ui text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                             </label>
                             <div className="flex items-center gap-2">
                                 <SlidersHorizontal className="h-4 w-4 text-slate-500" aria-hidden="true" />
                                 <label className="sr-only" htmlFor="integration-category">Filter integrations by category</label>
-                                <select id="integration-category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 min-w-44 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+                                <select id="integration-category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 min-w-44 rounded-xl border border-slate-300 bg-white px-3 type-ui text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                                     <option value="all">All categories</option>
                                     {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
                                 </select>
                             </div>
                         </div>
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 type-caption text-slate-500">
                             <span>{integrations.length} connection{integrations.length === 1 ? '' : 's'} shown</span>
                             <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ready to connect <span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber-400" /> Beta <span className="ml-2 h-1.5 w-1.5 rounded-full bg-slate-500" /> Coming soon</span>
                         </div>
@@ -259,12 +259,12 @@ const EcosystemPage: React.FC = () => {
                                             <div className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white shadow-sm">
                                                 <IntegrationBrandIcon id={integration.id} className="h-5 w-5" />
                                             </div>
-                                            <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
+                                            <span className={`rounded-full border px-2 py-1 type-caption font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
                                         </div>
                                         <p className="mt-4 text-base font-bold text-slate-950">{integration.name}</p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-600">{integration.description}</p>
-                                        <p className="mt-3 text-[11px] leading-4 text-blue-700">{capabilityByCategory[integration.category]}</p>
-                                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200 pt-3 text-[11px]">
+                                        <p className="mt-1 type-card-description leading-5 text-slate-600">{integration.description}</p>
+                                        <p className="mt-3 type-card-description leading-4 text-blue-700">{capabilityByCategory[integration.category]}</p>
+                                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200 pt-3 type-ui">
                                             <span className="text-slate-600">{categoryLabels[integration.category]}</span>
                                             <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900">View connection details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
                                         </div>
@@ -272,7 +272,7 @@ const EcosystemPage: React.FC = () => {
                                 </AnimateIn>
                             ))}
                         </div>
-                        {integrations.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No connections match that search. Try a different tool or category.</p> : null}
+                        {integrations.length === 0 ? <p className="py-10 text-center type-card-description text-slate-400">No connections match that search. Try a different tool or category.</p> : null}
                     </div>
                 </section>
 

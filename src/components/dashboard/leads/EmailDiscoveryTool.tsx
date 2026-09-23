@@ -185,7 +185,7 @@ export default function EmailDiscoveryTool() {
         <p className="text-slate-400">
           Find business emails using only public data sources - no APIs needed, completely free
         </p>
-        <div className="flex items-center justify-center gap-2 text-sm">
+        <div className="flex items-center justify-center gap-2 type-ui">
           <span className="text-green-400 font-medium">100% Free</span>
           <span className="text-slate-500">•</span>
           <span className="text-slate-400">Open Source Methods</span>
@@ -198,7 +198,7 @@ export default function EmailDiscoveryTool() {
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Domain * <span className="text-slate-500">(e.g., example.com)</span>
             </label>
             <div className="relative">
@@ -214,7 +214,7 @@ export default function EmailDiscoveryTool() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Company Name <span className="text-slate-500">(optional, helps GitHub search)</span>
             </label>
             <input
@@ -266,7 +266,7 @@ export default function EmailDiscoveryTool() {
                 {source.status === 'loading' && <Loader2 className="w-4 h-4 animate-spin text-blue-400" />}
                 {source.status === 'success' && <CheckCircle className="w-4 h-4 text-green-400" />}
                 {source.status === 'error' && <XCircle className="w-4 h-4 text-red-400" />}
-                <span className={`text-sm font-medium ${
+                <span className={`type-ui font-medium ${
                   source.status === 'loading' ? 'text-blue-400' :
                   source.status === 'success' ? 'text-green-400' :
                   source.status === 'error' ? 'text-red-400' :
@@ -275,9 +275,9 @@ export default function EmailDiscoveryTool() {
                   {source.name}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">{source.description}</p>
+              <p className="type-card-description text-slate-500">{source.description}</p>
               {source.count > 0 && (
-                <p className="text-sm text-green-400 mt-1">{source.count} found</p>
+                <p className="type-card-description text-green-400 mt-1">{source.count} found</p>
               )}
             </motion.div>
           ))}
@@ -297,7 +297,7 @@ export default function EmailDiscoveryTool() {
             </h2>
             <button
               onClick={exportEmails}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-slate-700"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-slate-300 hover:text-white hover:bg-slate-700"
             >
               <Download className="w-4 h-4" />
               Export CSV
@@ -337,7 +337,7 @@ export default function EmailDiscoveryTool() {
                         </button>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-3 type-ui">
                         <span className="text-slate-400">
                           Source: <span className="text-slate-300 capitalize">{email.source.replace(/_/g, ' ')}</span>
                         </span>
@@ -355,13 +355,13 @@ export default function EmailDiscoveryTool() {
                         )}
 
                         {email.pattern && (
-                          <span className="text-orange-400 text-xs bg-orange-500/10 px-2 py-0.5 rounded">
+                          <span className="text-orange-400 type-caption bg-orange-500/10 px-2 py-0.5 rounded">
                             Pattern: {email.pattern}
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-slate-500 mt-2">
+                      <p className="type-card-description text-slate-500 mt-2">
                         {sourceInfo.description}
                       </p>
                     </div>
@@ -369,14 +369,14 @@ export default function EmailDiscoveryTool() {
                     <div className="flex flex-col items-end gap-2 ml-4">
                       {/* Confidence Score */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Confidence</span>
+                        <span className="type-caption text-slate-500">Confidence</span>
                         <div className="w-16 bg-slate-700 h-2 rounded-full overflow-hidden">
                           <div 
                             className={`h-full ${getConfidenceColor(email.confidence)}`}
                             style={{ width: `${email.confidence}%` }}
                           />
                         </div>
-                        <span className={`text-sm font-medium ${
+                        <span className={`type-ui font-medium ${
                           email.confidence >= 80 ? 'text-green-400' :
                           email.confidence >= 60 ? 'text-blue-400' :
                           email.confidence >= 40 ? 'text-yellow-400' :
@@ -388,12 +388,12 @@ export default function EmailDiscoveryTool() {
 
                       {/* Verified Badge */}
                       {email.verified ? (
-                        <span className="flex items-center gap-1 text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded">
+                        <span className="flex items-center gap-1 type-caption text-green-400 bg-green-500/10 px-2 py-0.5 rounded">
                           <CheckCircle className="w-3 h-3" />
                           Verified
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <span className="flex items-center gap-1 type-caption text-slate-400">
                           <AlertCircle className="w-3 h-3" />
                           Unverified
                         </span>
@@ -426,7 +426,7 @@ export default function EmailDiscoveryTool() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mt-4 space-y-4 text-sm text-slate-400"
+              className="mt-4 space-y-4 type-ui text-slate-400"
             >
               <p>
                 This tool uses only <strong className="text-slate-300">public data sources</strong> and 
@@ -440,7 +440,7 @@ export default function EmailDiscoveryTool() {
                     <Server className="w-4 h-4 text-blue-400" />
                     DNS Records
                   </h4>
-                  <p className="text-xs">
+                  <p className="type-card-description">
                     Checks TXT records (SPF, DMARC) which often list email addresses 
                     for domain verification. Uses public DNS over HTTPS.
                   </p>
@@ -451,7 +451,7 @@ export default function EmailDiscoveryTool() {
                     <Shield className="w-4 h-4 text-purple-400" />
                     WHOIS/RDAP
                   </h4>
-                  <p className="text-xs">
+                  <p className="type-card-description">
                     Domain registration records often contain contact emails. 
                     Uses RDAP.org which is the official registry access protocol.
                   </p>
@@ -462,7 +462,7 @@ export default function EmailDiscoveryTool() {
                     <Github className="w-4 h-4 text-gray-400" />
                     GitHub Public API
                   </h4>
-                  <p className="text-xs">
+                  <p className="type-card-description">
                     Searches public repositories and extracts commit author emails 
                     that match the company domain. Rate limited, no key needed.
                   </p>
@@ -473,7 +473,7 @@ export default function EmailDiscoveryTool() {
                     <Globe className="w-4 h-4 text-green-400" />
                     Website Scraping
                   </h4>
-                  <p className="text-xs">
+                  <p className="type-card-description">
                     Scrapes public pages (/contact, /about, /team) for mailto links 
                     and visible email addresses. Uses Playwright for JS-rendered sites.
                   </p>
@@ -481,14 +481,14 @@ export default function EmailDiscoveryTool() {
               </div>
 
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                <p className="text-yellow-400 text-xs">
+                <p className="text-yellow-400 type-card-description">
                   <strong>Note:</strong> Pattern-based emails (first.last@domain) are 
                   <strong>guesses</strong> based on names found on the website. These have lower 
                   confidence scores and should be verified before use.
                 </p>
               </div>
 
-              <p className="text-xs">
+              <p className="type-card-description">
                 <strong className="text-slate-300">No APIs used:</strong> Hunter.io, Apollo, 
                 ZoomInfo, or any paid services. Everything is free, public data.
               </p>
@@ -498,7 +498,7 @@ export default function EmailDiscoveryTool() {
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center type-card-description text-slate-500">
         By using this tool, you agree to only use discovered emails in compliance with 
         applicable laws (CAN-SPAM, GDPR, etc.) and the target website's Terms of Service.
       </p>

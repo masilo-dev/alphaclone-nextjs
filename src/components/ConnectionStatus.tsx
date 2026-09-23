@@ -57,19 +57,19 @@ export const ConnectionStatus: React.FC = () => {
             {isOnline ? (
                 <>
                     <Wifi className="w-4 h-4 text-green-400" />
-                    <span className="text-sm text-green-400 font-medium">Connected</span>
+                    <span className="type-ui text-green-400 font-medium">Connected</span>
                     {!isSupabaseConnected && (
                         <>
                             <div className="w-px h-4 bg-slate-600" />
                             <CloudOff className="w-4 h-4 text-amber-400" />
-                            <span className="text-xs text-amber-400">Database syncing...</span>
+                            <span className="type-caption text-amber-400">Database syncing...</span>
                         </>
                     )}
                 </>
             ) : (
                 <>
                     <WifiOff className="w-4 h-4 text-red-400 animate-pulse" />
-                    <span className="text-sm text-red-400 font-medium">No connection</span>
+                    <span className="type-ui text-red-400 font-medium">No connection</span>
                     <CloudOff className="w-4 h-4 text-red-400" />
                 </>
             )}

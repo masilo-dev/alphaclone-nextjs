@@ -128,8 +128,8 @@ const ContactPage: React.FC = () => {
       <section className="relative flex flex-col items-center justify-center pt-16 pb-10 px-4 sm:px-6">
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <AnimateIn type="fadeUp">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#075fc7] mb-3">Get in touch</p>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight leading-[1.05]">
+            <p className="type-caption font-bold uppercase tracking-caps text-[#075fc7] mb-3">Get in touch</p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight leading-tight">
               Let&apos;s Build Your <br />
               <span className="text-[#0878f9]">Growth Engine.</span>
             </h1>
@@ -142,7 +142,7 @@ const ContactPage: React.FC = () => {
                 target={bookingIsExternal ? '_blank' : undefined}
                 rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
                 aria-label="Book a consultation"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm text-sm"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm type-ui"
               >
                 <Calendar className="w-4 h-4 mr-1 inline" />
                 Book a Walkthrough
@@ -150,7 +150,7 @@ const ContactPage: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
-                className="border-[#dfe6ef] hover:border-[#0878f9] text-[#07152f] font-semibold h-11 px-6 rounded-xl text-sm"
+                className="border-[#dfe6ef] hover:border-[#0878f9] text-[#07152f] font-semibold h-11 px-6 rounded-xl type-ui"
               >
                 <span className="relative z-10">Chat on WhatsApp</span>
               </Button>
@@ -172,7 +172,7 @@ const ContactPage: React.FC = () => {
                   <Mail className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-bold text-[#07152f] mb-1">Email</div>
-                    <div className="flex flex-col gap-1 text-sm">
+                    <div className="flex flex-col gap-1 type-ui">
                       <div className="text-[#075fc7]">
                         General: <ObfuscatedEmail email="info@alphaclonesystems.com" className="hover:underline" />
                       </div>
@@ -190,7 +190,7 @@ const ContactPage: React.FC = () => {
                   <Phone className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-bold text-[#07152f] mb-1">Phone &amp; WhatsApp</div>
-                    <div className="flex flex-col gap-1 text-sm">
+                    <div className="flex flex-col gap-1 type-ui">
                       <a href="tel:+48517809674" className="text-[#075fc7] hover:underline transition-colors font-medium">
                         +48 517 809 674
                       </a>
@@ -198,7 +198,7 @@ const ContactPage: React.FC = () => {
                         href="https://wa.me/48517809674"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-[#52627b] hover:text-[#0878f9] transition-colors"
+                        className="type-caption text-[#52627b] hover:text-[#0878f9] transition-colors"
                       >
                         Send WhatsApp message
                       </a>
@@ -210,8 +210,8 @@ const ContactPage: React.FC = () => {
                   <MapPin className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
                   <div>
                     <div className="font-bold text-[#07152f] mb-1">Registered office</div>
-                    <div className="text-[#52627b] text-sm">{formatLegalAddress()}</div>
-                    <div className="text-[#76849a] text-xs mt-1">
+                    <div className="text-[#52627b] type-ui">{formatLegalAddress()}</div>
+                    <div className="text-[#76849a] type-caption mt-1">
                       Support is available by phone and WhatsApp — remote team, US-registered entity.
                     </div>
                   </div>
@@ -219,15 +219,15 @@ const ContactPage: React.FC = () => {
               </div>
 
               <div className="p-6 bg-[#f7f9fc] border border-[#dfe6ef] rounded-2xl">
-                <p className="text-sm font-bold text-[#07152f] mb-1">Prefer a live call?</p>
-                <p className="text-sm text-[#52627b] mb-4">
+                <p className="type-card-description font-bold text-[#07152f] mb-1">Prefer a live call?</p>
+                <p className="type-card-description text-[#52627b] mb-4">
                   Skip the inbox and schedule a 30-minute walkthrough directly.
                 </p>
                 <a
                   href={bookingDestination}
                   target={bookingIsExternal ? '_blank' : undefined}
                   rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#075fc7] hover:text-[#0878f9] transition-colors"
+                  className="inline-flex items-center gap-2 type-ui font-semibold text-[#075fc7] hover:text-[#0878f9] transition-colors"
                 >
                   <Calendar className="w-4 h-4" />
                   Book a free 30-min meeting
@@ -249,7 +249,7 @@ const ContactPage: React.FC = () => {
                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
                   <div>
                     <p className="font-semibold">Inquiry received!</p>
-                    <p className="text-sm text-emerald-700">
+                    <p className="type-card-description text-emerald-700">
                       {notificationSent
                         ? 'We received your inquiry and will be in touch within 24 hours.'
                         : 'Your inquiry is saved, but the email notification could not be delivered. For an urgent reply, email bonnie@alphaclonesystems.com.'}
@@ -262,7 +262,7 @@ const ContactPage: React.FC = () => {
               {status === 'error' && (
                 <div className="flex items-start gap-3 text-red-800 bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600" />
-                  <span className="text-sm">{errorMessage || 'Failed to send message. Please try again.'}</span>
+                  <span className="type-ui">{errorMessage || 'Failed to send message. Please try again.'}</span>
                 </div>
               )}
 
@@ -336,7 +336,7 @@ const ContactPage: React.FC = () => {
                 />
 
                 <div>
-                  <label htmlFor="contact-message" className="block text-sm font-medium text-[#33445e] mb-1.5">
+                  <label htmlFor="contact-message" className="block type-label font-medium text-[#33445e] mb-1.5">
                     Message *
                   </label>
                   <textarea

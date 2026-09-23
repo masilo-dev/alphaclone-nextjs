@@ -16,7 +16,7 @@ export function DocumentPreview({ input, className, hideLabel = false }: Documen
   return (
     <div className={className}>
       {!hideLabel ? (
-        <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">
+        <p className="type-caption font-black uppercase tracking-widest text-slate-500 mb-2">
           Preview
         </p>
       ) : null}

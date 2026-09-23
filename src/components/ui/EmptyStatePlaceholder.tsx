@@ -40,12 +40,12 @@ export function EmptyStatePlaceholder({
         <div className="w-10 h-10 rounded-xl bg-slate-800/60 border border-white/5 flex items-center justify-center">
           <Icon className="w-5 h-5 text-slate-500" />
         </div>
-        <p className="text-[13px] font-semibold text-slate-400">{title}</p>
-        <p className="text-[12px] text-slate-500 max-w-xs leading-relaxed">{description}</p>
+        <p className="type-card-description font-semibold text-slate-400">{title}</p>
+        <p className="type-card-description text-slate-500 max-w-xs leading-relaxed">{description}</p>
         {action && (
           <button
             onClick={action.onClick}
-            className="mt-1 text-[12px] font-bold text-teal-400 hover:text-teal-300 transition-colors"
+            className="mt-1 type-ui font-bold text-teal-400 hover:text-teal-300 transition-colors"
           >
             {action.label} →
           </button>
@@ -70,8 +70,8 @@ export function EmptyStatePlaceholder({
       </div>
 
       <div className="space-y-1.5 max-w-sm">
-        <h3 className="text-[15px] font-bold text-white">{title}</h3>
-        <p className="text-[13px] text-slate-400 leading-relaxed">{description}</p>
+        <h3 className="type-ui font-bold text-white">{title}</h3>
+        <p className="type-card-description text-slate-400 leading-relaxed">{description}</p>
       </div>
 
       {(action || secondaryAction) && (
@@ -79,7 +79,7 @@ export function EmptyStatePlaceholder({
           {action && (
             <button
               onClick={action.onClick}
-              className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all ${
+              className={`px-4 py-2 rounded-xl type-ui font-bold transition-all ${
                 action.variant === 'secondary'
                   ? 'bg-slate-800 text-slate-300 border border-white/5 hover:bg-slate-700'
                   : 'bg-teal-500 text-white hover:bg-teal-400 shadow-md shadow-teal-500/20'
@@ -91,7 +91,7 @@ export function EmptyStatePlaceholder({
           {secondaryAction && (
             <button
               onClick={secondaryAction.onClick}
-              className="px-4 py-2 rounded-xl text-[13px] font-bold text-slate-400 border border-white/5 hover:bg-slate-800 transition-all"
+              className="px-4 py-2 rounded-xl type-ui font-bold text-slate-400 border border-white/5 hover:bg-slate-800 transition-all"
             >
               {secondaryAction.label}
             </button>

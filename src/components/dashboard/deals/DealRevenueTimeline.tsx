@@ -98,7 +98,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
         return (
             <div className={`flex items-center gap-2 py-4 ${className}`}>
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
-                <span className="text-xs text-slate-500">Loading revenue chain…</span>
+                <span className="type-caption text-slate-500">Loading revenue chain…</span>
             </div>
         );
     }
@@ -107,16 +107,16 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
         <div className={`bg-slate-900 border border-teal-500/20 rounded-2xl p-4 space-y-4 ${className}`}>
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-teal-400">
+                    <h3 className="type-caption font-black uppercase tracking-widest text-teal-400">
                         Revenue chain
                     </h3>
-                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                    <p className="type-card-description text-slate-500 mt-1 leading-relaxed">
                         Find → qualify → conduct → propose → contract → invoice → project
                     </p>
                 </div>
                 <div className="text-right shrink-0">
                     <div className="text-lg font-black text-white tabular-nums">{timeline.percent}%</div>
-                    <div className="text-[10px] text-slate-500 font-bold">
+                    <div className="type-ui text-slate-500 font-bold">
                         {timeline.completedCount}/10 steps
                     </div>
                 </div>
@@ -132,7 +132,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
             {dealStage === 'closed_lost' && (
                 <div className="flex items-start gap-2 rounded-lg bg-red-950/30 border border-red-500/20 px-3 py-2">
                     <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-red-300/90 leading-relaxed">
+                    <p className="type-card-description text-red-300/90 leading-relaxed">
                         Deal closed lost. Start a new deal if this opportunity reopens.
                     </p>
                 </div>
@@ -145,11 +145,11 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                     className="w-full flex items-center justify-between gap-3 rounded-xl bg-teal-950/50 border border-teal-500/30 px-3 py-2.5 text-left hover:bg-teal-950/80 transition-colors"
                 >
                     <div className="min-w-0">
-                        <div className="text-[10px] font-bold uppercase tracking-wide text-teal-400">
+                        <div className="type-caption font-bold uppercase tracking-wide text-teal-400">
                             Next money move
                         </div>
-                        <div className="text-sm font-semibold text-white truncate">{timeline.nextAction.label}</div>
-                        <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">{timeline.nextAction.detail}</p>
+                        <div className="type-ui font-semibold text-white truncate">{timeline.nextAction.label}</div>
+                        <p className="type-card-description text-slate-400 mt-0.5 line-clamp-2">{timeline.nextAction.detail}</p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-teal-400 shrink-0" />
                 </button>
@@ -188,14 +188,14 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                             >
                                 <div className="flex items-center gap-2">
                                     <span
-                                        className={`text-[10px] font-bold tabular-nums ${
+                                        className={`type-ui font-bold tabular-nums ${
                                             item.state === 'current' ? 'text-teal-400' : 'text-slate-600'
                                         }`}
                                     >
                                         {item.index}
                                     </span>
                                     <span
-                                        className={`text-sm font-semibold ${
+                                        className={`type-ui font-semibold ${
                                             item.state === 'complete'
                                                 ? 'text-slate-300'
                                                 : item.state === 'current'
@@ -208,7 +208,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                                         {item.label}
                                     </span>
                                 </div>
-                                <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed group-hover:text-slate-400">
+                                <p className="type-card-description text-slate-500 mt-0.5 leading-relaxed group-hover:text-slate-400">
                                     {item.detail}
                                 </p>
                             </button>

@@ -26,12 +26,12 @@ export default async function PublicSharePage({
                     </div>
                     <div className="space-y-2">
                         <h1 className="text-2xl font-bold tracking-tight text-white">Link Expired</h1>
-                        <p className="text-slate-400 text-sm leading-relaxed">
+                        <p className="text-slate-400 type-card-description leading-relaxed">
                             This document share link is invalid or has expired after its 48-hour window. Please contact the sender to generate a new link.
                         </p>
                     </div>
                     <div className="pt-4 border-t border-slate-800/80">
-                        <p className="text-xs text-slate-500 text-center">AlphaClone Systems Secure Sharing</p>
+                        <p className="type-card-description text-slate-500 text-center">AlphaClone Systems Secure Sharing</p>
                     </div>
                 </div>
             </div>
@@ -59,10 +59,10 @@ export default async function PublicSharePage({
                     </div>
                     <div>
                         <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">AlphaClone</span>
-                        <span className="text-xs block text-slate-400">Secure Document Share</span>
+                        <span className="type-caption block text-slate-400">Secure Document Share</span>
                     </div>
                 </div>
-                <div className="text-xs sm:text-sm text-slate-400 bg-slate-900/50 border border-slate-800/60 rounded-full px-4 py-1.5 backdrop-blur-sm">
+                <div className="type-caption sm:text-sm text-slate-400 bg-slate-900/50 border border-slate-800/60 rounded-full px-4 py-1.5 backdrop-blur-sm">
                     Expires: <span className="text-teal-400 font-medium">{formattedExpiry}</span>
                 </div>
             </div>
@@ -81,7 +81,7 @@ export default async function PublicSharePage({
                             <h1 className="text-lg font-bold text-white leading-tight break-all">
                                 {share.original_name || 'shared_document.pdf'}
                             </h1>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="type-card-description text-slate-400 mt-1">
                                 Securely hosted on AlphaClone Systems. Available for inline reading and download.
                             </p>
                         </div>
@@ -90,7 +90,7 @@ export default async function PublicSharePage({
                     <a
                         href={`/api/public/shares/${share.id}/download?download=true`}
                         download
-                        className="w-full sm:w-auto bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition duration-200 shadow-lg shadow-teal-500/15 flex items-center justify-center space-x-2 text-sm uppercase tracking-wider shrink-0"
+                        className="w-full sm:w-auto bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition duration-200 shadow-lg shadow-teal-500/15 flex items-center justify-center space-x-2 type-caption uppercase tracking-wider shrink-0"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -124,7 +124,7 @@ export default async function PublicSharePage({
             </div>
 
             {/* Footer */}
-            <div className="max-w-6xl w-full mx-auto text-center mt-6 text-xs text-slate-500 space-y-1">
+            <div className="max-w-6xl w-full mx-auto text-center mt-6 type-caption text-slate-500 space-y-1">
                 <p>© {new Date().getFullYear()} AlphaClone Systems. All rights reserved.</p>
                 <p>Protected by end-to-end transport layer security. Expires after 24 hours.</p>
             </div>

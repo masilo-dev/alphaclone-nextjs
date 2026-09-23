@@ -115,7 +115,7 @@ export function PageHeader({
     >
       {/* Breadcrumbs — desktop / tablet */}
       {(breadcrumbs?.length || moduleLabel) && (
-        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--app-text-muted,var(--ws-text-tertiary))] mb-1.5">
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 type-caption text-[var(--app-text-muted,var(--ws-text-tertiary))] mb-1.5">
           {moduleLabel ? <span className="font-medium text-teal-400/90">{moduleLabel}</span> : null}
           {moduleLabel && breadcrumbs?.length ? <span aria-hidden>/</span> : null}
           {breadcrumbs?.map((crumb, i) => {
@@ -164,7 +164,7 @@ export function PageHeader({
 
             <div className="min-w-0">
               {moduleLabel ? (
-                <p className="sm:hidden text-[11px] font-semibold uppercase tracking-wide text-teal-400/90 mb-0.5">
+                <p className="sm:hidden type-caption font-semibold uppercase tracking-wide text-teal-400/90 mb-0.5">
                   {moduleLabel}
                 </p>
               ) : null}
@@ -172,7 +172,7 @@ export function PageHeader({
                 {title}
               </h1>
               {description ? (
-                <p className="mt-0.5 text-sm text-[var(--app-text-secondary,var(--ws-text-secondary))] line-clamp-2 md:line-clamp-none">
+                <p className="mt-0.5 type-caption text-[var(--app-text-secondary,var(--ws-text-secondary))] line-clamp-2 md:line-clamp-none">
                   {description}
                 </p>
               ) : null}
@@ -232,7 +232,7 @@ export function PageHeader({
                       <Link
                         role="menuitem"
                         href={helpHref}
-                        className="flex min-h-11 items-center px-3 text-sm text-slate-200 hover:bg-white/5 rounded-lg"
+                        className="flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg"
                         onClick={() => setMoreOpen(false)}
                       >
                         {helpLabel}
@@ -244,7 +244,7 @@ export function PageHeader({
                           key={a.label}
                           role="menuitem"
                           href={a.href}
-                          className="flex min-h-11 items-center px-3 text-sm text-slate-200 hover:bg-white/5 rounded-lg"
+                          className="flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg"
                           onClick={() => setMoreOpen(false)}
                         >
                           {a.label}
@@ -255,7 +255,7 @@ export function PageHeader({
                           type="button"
                           role="menuitem"
                           disabled={a.disabled}
-                          className="w-full flex min-h-11 items-center px-3 text-sm text-slate-200 hover:bg-white/5 rounded-lg text-left disabled:opacity-50"
+                          className="w-full flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg text-left disabled:opacity-50"
                           onClick={() => {
                             a.onClick?.();
                             setMoreOpen(false);

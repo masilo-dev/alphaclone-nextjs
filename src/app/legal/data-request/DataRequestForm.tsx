@@ -44,7 +44,7 @@ export default function DataRequestForm() {
   return (
     <form onSubmit={submit} className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-200">Email address</label>
+        <label className="mb-2 block type-label font-medium text-slate-200">Email address</label>
         <input
           type="email"
           required
@@ -54,7 +54,7 @@ export default function DataRequestForm() {
         />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-200">Request type</label>
+        <label className="mb-2 block type-label font-medium text-slate-200">Request type</label>
         <select
           value={requestType}
           onChange={(event) => setRequestType(event.target.value)}
@@ -67,7 +67,7 @@ export default function DataRequestForm() {
         </select>
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-200">Additional details</label>
+        <label className="mb-2 block type-label font-medium text-slate-200">Additional details</label>
         <textarea
           value={details}
           onChange={(event) => setDetails(event.target.value)}
@@ -87,11 +87,11 @@ export default function DataRequestForm() {
       <button
         type="submit"
         disabled={loading || (turnstileEnabled && !turnstileToken)}
-        className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? 'Submitting...' : 'Submit request'}
       </button>
-      {status && <p className="text-sm text-slate-300">{status}</p>}
+      {status && <p className="type-caption text-slate-300">{status}</p>}
     </form>
   );
 }

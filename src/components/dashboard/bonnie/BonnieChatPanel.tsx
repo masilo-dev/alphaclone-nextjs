@@ -644,14 +644,14 @@ export default function BonnieChatPanel({
       {!compact && messages.length > 1 && (
         <div className="flex items-center justify-between border-b border-slate-800 px-3 py-1.5">
           {timelineEvents.length > 0 && (
-            <span className="text-[10px] text-teal-400/70 font-semibold">
+            <span className="type-ui text-teal-400/70 font-semibold">
               {timelineEvents.filter(e => e.status === 'done').length}/{timelineEvents.length} steps
             </span>
           )}
           <button
             type="button"
             onClick={clearChat}
-            className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
+            className="ml-auto flex items-center gap-1 type-caption font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
           >
             <Trash2 className="h-3 w-3" />
             Clear
@@ -666,7 +666,7 @@ export default function BonnieChatPanel({
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[90%] rounded-xl px-3 py-2 text-xs leading-relaxed sm:text-[13px] ${
+              className={`max-w-[90%] rounded-xl px-3 py-2 type-caption leading-relaxed sm:text-sm ${
                 msg.role === 'user'
                   ? 'bg-teal-600 text-white'
                   : msg.error
@@ -675,29 +675,29 @@ export default function BonnieChatPanel({
               }`}
             >
               {msg.role === 'assistant' && msg.id !== 'intro' && (
-                <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-teal-400/80">
+                <p className="mb-1.5 type-caption font-bold uppercase tracking-wider text-teal-400/80">
                   Bonnie AI
                 </p>
               )}
               {msg.executionStatus && msg.executionStatus !== 'read_only_answer' ? (
                 <div className="mb-2">
                   {msg.executionStatus === 'queued_for_approval' ? (
-                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 type-ui font-bold text-amber-100">
                       <Clock className="h-3 w-3" />
                       Awaiting approval
                     </div>
                   ) : msg.executionStatus === 'planning_failed' ? (
-                    <div className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-200">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 type-ui font-bold text-rose-200">
                       <AlertCircle className="h-3 w-3" />
                       Could not execute
                     </div>
                   ) : msg.executionStatus === 'provider_blocked' ? (
-                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 type-ui font-bold text-amber-100">
                       <Wrench className="h-3 w-3" />
                       Provider blocked
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-100">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 type-ui font-bold text-emerald-100">
                       <CheckCircle2 className="h-3 w-3" />
                       Executed
                     </div>
@@ -706,7 +706,7 @@ export default function BonnieChatPanel({
               ) : null}
               <p className="whitespace-pre-wrap">{sanitizeDisplayText(msg.text)}</p>
               {msg.error && isProviderOutageMessage(msg.text) ? (
-                <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 type-ui text-amber-100">
                   Bonnie is online, but execution is blocked by AI provider billing or credit exhaustion. Re-enable at least one provider and retry the action.
                 </div>
               ) : null}
@@ -716,7 +716,7 @@ export default function BonnieChatPanel({
                     <BonnieToolActivityCard tools={msg.tools} />
                   ) : (
                     <>
-                  <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <p className="flex items-center gap-1 type-caption font-bold uppercase tracking-wider text-slate-500">
                     <Sparkles className="h-3 w-3 text-[color:var(--brand-blue-400)]" /> Bonnie did this
                   </p>
                   {/* Timeline events for live runs */}
@@ -728,7 +728,7 @@ export default function BonnieChatPanel({
                         const hermetic = hermeticBonnieActivityLabel(t.tool);
                         const Icon = hermetic.Icon || Wrench;
                         return (
-                          <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                          <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 type-ui text-slate-400">
                             {t.success ? (
                               <Icon className={`mt-0.5 h-3 w-3 shrink-0 ${hermetic.accent}`} />
                             ) : (
@@ -818,7 +818,7 @@ export default function BonnieChatPanel({
           </div>
         ))}
         {sending && phaseLabel && (
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="flex items-center gap-2 type-caption text-slate-500">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
             {phaseLabel}
           </div>
@@ -828,7 +828,7 @@ export default function BonnieChatPanel({
       <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-3">
         {tenantId && aiQuota && (
           <div className="mb-2 rounded-lg border border-white/10 bg-slate-900 px-2.5 py-2">
-            <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px]">
+            <div className="mb-1.5 flex items-center justify-between gap-2 type-ui">
               <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-500">
                 <Zap className="h-3 w-3 text-teal-400" />
                 AI Priority Layer
@@ -868,7 +868,7 @@ export default function BonnieChatPanel({
         )}
         <Link
           href="/dashboard/help"
-          className="mb-2 inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-teal-400 transition-colors"
+          className="mb-2 inline-flex items-center gap-1 type-ui text-slate-500 hover:text-teal-400 transition-colors"
         >
           <BookOpen className="h-3 w-3" />
           Platform guide & glossary
@@ -912,7 +912,7 @@ export default function BonnieChatPanel({
                 : placeholder
             }
             aria-label="Message Bonnie"
-            className={`min-h-[40px] flex-1 resize-none rounded-md border px-3 py-2 text-xs sm:text-[13px] focus:outline-none focus:ring-1 disabled:opacity-50 ${
+            className={`min-h-[40px] flex-1 resize-none rounded-md border px-3 py-2 type-caption sm:text-sm focus:outline-none focus:ring-1 disabled:opacity-50 ${
               workspaceMode
                 ? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white'
                 : 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-teal-500'
@@ -953,7 +953,7 @@ export default function BonnieChatPanel({
             </button>
           )}
         </div>
-        <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+        <p className="mt-2 type-card-description leading-relaxed text-slate-500">
           Enter to send · Shift+Enter for newline · Stop cancels in-flight generation · High-risk actions always ask for approval
         </p>
       </div>

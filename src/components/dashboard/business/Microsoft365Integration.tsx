@@ -99,7 +99,7 @@ export default function Microsoft365Integration() {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
-                <p className="text-sm text-slate-400">Verifying Microsoft 365 status...</p>
+                <p className="type-caption text-slate-400">Verifying Microsoft 365 status...</p>
             </div>
         );
     }
@@ -116,17 +116,17 @@ export default function Microsoft365Integration() {
                         <Mail className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Microsoft 365 / Teams Suite</h2>
                             {status === 'connected' && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
                                     Connected
                                 </span>
                             )}
                         </div>
-                        <p className="text-sm text-slate-400">Connect Outlook, Teams, Calendar, To Do, OneDrive, and contacts with delegated Microsoft OAuth.</p>
+                        <p className="type-card-description text-slate-400">Connect Outlook, Teams, Calendar, To Do, OneDrive, and contacts with delegated Microsoft OAuth.</p>
                     </div>
                 </div>
                 <MicrosoftConnectButton
@@ -140,20 +140,20 @@ export default function Microsoft365Integration() {
             <div className="p-6 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
-                        <p className="text-[11px] uppercase tracking-widest font-black text-slate-500 mb-2">Connection</p>
-                        <p className="text-sm text-white font-semibold">{displayName || 'No Microsoft account connected'}</p>
-                        <p className="text-xs text-slate-400 mt-1">{connectionEmail || 'Connect a work or school account to enable Outlook + Teams.'}</p>
+                        <p className="type-caption uppercase tracking-widest font-black text-slate-500 mb-2">Connection</p>
+                        <p className="type-card-description text-white font-semibold">{displayName || 'No Microsoft account connected'}</p>
+                        <p className="type-card-description text-slate-400 mt-1">{connectionEmail || 'Connect a work or school account to enable Outlook + Teams.'}</p>
                     </div>
                     <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
-                        <p className="text-[11px] uppercase tracking-widest font-black text-slate-500 mb-2">Status</p>
-                        <p className={`text-sm font-semibold ${status === 'connected' ? 'text-emerald-400' : status === 'error' ? 'text-rose-400' : 'text-slate-300'}`}>
+                        <p className="type-caption uppercase tracking-widest font-black text-slate-500 mb-2">Status</p>
+                        <p className={`type-caption font-semibold ${status === 'connected' ? 'text-emerald-400' : status === 'error' ? 'text-rose-400' : 'text-slate-300'}`}>
                             {status === 'connected' ? 'Delegated Microsoft Graph access active' : status === 'error' ? 'Connection issue detected' : 'Not connected'}
                         </p>
                         <button
                             type="button"
                             onClick={handleTest}
                             disabled={status !== 'connected' || isBusy}
-                            className="mt-3 text-xs font-bold text-blue-300 hover:text-blue-200 disabled:text-slate-600"
+                            className="mt-3 type-caption font-bold text-blue-300 hover:text-blue-200 disabled:text-slate-600"
                         >
                             Test Microsoft Graph access
                         </button>
@@ -171,14 +171,14 @@ export default function Microsoft365Integration() {
                         return (
                             <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/40 p-4">
                                 <Icon className="w-4 h-4 text-blue-400 mb-2" />
-                                <p className="text-sm font-semibold text-white">{item.label}</p>
-                                <p className="text-xs text-slate-400 mt-1">{item.desc}</p>
+                                <p className="type-card-description font-semibold text-white">{item.label}</p>
+                                <p className="type-card-description text-slate-400 mt-1">{item.desc}</p>
                             </div>
                         );
                     })}
                 </div>
 
-                <p className="text-[11px] text-slate-500 border-t border-white/5 pt-4">
+                <p className="type-card-description text-slate-500 border-t border-white/5 pt-4">
                     Uses Microsoft delegated OAuth with PKCE. Token exchange runs server-side; `AZURE_CLIENT_SECRET` never reaches the browser.
                 </p>
             </div>

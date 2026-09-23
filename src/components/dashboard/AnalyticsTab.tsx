@@ -137,7 +137,7 @@ const AnalyticsTab: React.FC = () => {
               key={m}
               type="button"
               onClick={() => setMetric(m)}
-              className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${metric === m ? 'text-[#f5f5f5]' : 'text-[#94a3b8] bg-transparent'}`}
+              className={`flex-1 py-1.5 rounded-lg type-ui font-bold capitalize transition-all ${metric === m ? 'text-[#f5f5f5]' : 'text-[#94a3b8] bg-transparent'}`}
               style={{
                 backgroundColor: metric === m ? `${METRIC_COLORS[m]}33` : undefined,
                 color: metric === m ? METRIC_COLORS[m] : undefined,
@@ -167,7 +167,7 @@ const AnalyticsTab: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-teal-400" />
-              <span className="text-sm font-semibold text-white group-hover:text-teal-300">{name}</span>
+              <span className="type-ui font-semibold text-white group-hover:text-teal-300">{name}</span>
               <ChevronRight className="w-4 h-4 ml-auto text-slate-500 group-hover:text-teal-400" />
             </div>
           </button>
@@ -175,7 +175,7 @@ const AnalyticsTab: React.FC = () => {
       </div>
 
       {isValidating ? (
-        <p className="text-[11px] text-slate-500 text-right">Refreshing metrics…</p>
+        <p className="type-card-description text-slate-500 text-right">Refreshing metrics…</p>
       ) : null}
     </div>
   );

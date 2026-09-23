@@ -38,7 +38,7 @@ export default function CompliancePage() {
 
           <CompanyInfoBlock className="mb-8" />
 
-          <div className="space-y-4 text-sm">
+          <div className="space-y-4 type-ui">
             <div className="mkt-surface p-5">
               <h2 className="text-lg font-bold text-[var(--marketing-text-primary)] mb-2">
                 Data Governance

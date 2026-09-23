@@ -179,7 +179,7 @@ const PublicPortfolio: React.FC = () => {
                                     {/* Project Info */}
                                     <div className="p-6">
                                         <div className="mb-3">
-                                            <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 text-xs font-semibold rounded-full border border-teal-500/20">
+                                            <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 type-caption font-semibold rounded-full border border-teal-500/20">
                                                 {project.category}
                                             </span>
                                         </div>
@@ -188,14 +188,14 @@ const PublicPortfolio: React.FC = () => {
                                             {project.name}
                                         </h3>
 
-                                        <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+                                        <p className="text-slate-400 type-card-description mb-4 line-clamp-2">
                                             {project.description || 'A stunning project showcasing modern design and cutting-edge technology.'}
                                         </p>
 
                                         <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-                                            <span className="text-xs text-slate-500">Completed</span>
+                                            <span className="type-caption text-slate-500">Completed</span>
                                             <div className="flex items-center gap-2 text-teal-400">
-                                                <span className="text-sm font-medium">View Details</span>
+                                                <span className="type-ui font-medium">View Details</span>
                                                 <ArrowRight className="w-4 h-4" />
                                             </div>
                                         </div>

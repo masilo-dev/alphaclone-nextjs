@@ -286,7 +286,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-black text-white uppercase tracking-tight">Record Outflow</h2>
-                                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">General Ledger · Expense Entry</p>
+                                    <p className="type-caption text-slate-500 font-mono uppercase tracking-widest">General Ledger · Expense Entry</p>
                                 </div>
                             </div>
                             <button
@@ -313,42 +313,42 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 <Receipt className="w-24 h-24 text-rose-500" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Total Recorded Outflow</p>
-                                                <p className="text-[28px] font-black text-white mt-1 font-mono tracking-tight leading-none">
+                                                <p className="type-caption font-black uppercase tracking-widest text-rose-400">Total Recorded Outflow</p>
+                                                <p className="text-3xl font-black text-white mt-1 font-mono tracking-tight leading-none">
                                                     ${formData.amount ? parseFloat(formData.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                                                 </p>
                                             </div>
-                                            <div className="flex justify-between items-center text-xs text-slate-500 mt-2">
-                                                <span className="uppercase tracking-widest font-mono text-[9px]">Neobank Outflow Ledger</span>
-                                                <span className="font-semibold text-rose-400 uppercase tracking-widest text-[10px]">{formData.paymentMethod}</span>
+                                            <div className="flex justify-between items-center type-caption text-slate-500 mt-2">
+                                                <span className="uppercase tracking-widest font-mono type-caption">Neobank Outflow Ledger</span>
+                                                <span className="font-semibold text-rose-400 uppercase tracking-widest type-caption">{formData.paymentMethod}</span>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Effective Date</label>
+                                                <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Effective Date</label>
                                                 <input
                                                     type="date"
                                                     value={formData.date}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner"
+                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Amount ({currencyCode})</label>
+                                                <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Amount ({currencyCode})</label>
                                                 <input
                                                     type="number"
                                                     value={formData.amount}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                                                     placeholder="0.00"
-                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-mono"
+                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-mono"
                                                 />
                                             </div>
                                         </div>
 
                                         {/* Quick Categories preset selection */}
                                         <div className="space-y-3">
-                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Quick Categories</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Quick Categories</label>
                                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                                                 {CATEGORY_PRESETS.map((preset) => {
                                                     const Icon = preset.icon;
@@ -365,7 +365,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             }`}
                                                         >
                                                             <Icon className="w-4 h-4" />
-                                                            <span className="text-[10px] uppercase font-bold tracking-wider">{preset.label}</span>
+                                                            <span className="type-caption uppercase font-bold tracking-wider">{preset.label}</span>
                                                         </button>
                                                     );
                                                 })}
@@ -374,7 +374,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Expense Account (Category)</label>
+                                                <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Expense Account (Category)</label>
                                                 <select
                                                     value={formData.expenseAccountId}
                                                     onChange={(e) => {
@@ -386,7 +386,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                             setSelectedCategoryPreset(preset ? preset.label : 'Other');
                                                         }
                                                     }}
-                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
+                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
                                                 >
                                                     <option value="">Select Category</option>
                                                     {expenseAccounts.map(acc => (
@@ -395,11 +395,11 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Paid From (Asset Account)</label>
+                                                <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Paid From (Asset Account)</label>
                                                 <select
                                                     value={formData.assetAccountId}
                                                     onChange={(e) => setFormData(prev => ({ ...prev, assetAccountId: e.target.value }))}
-                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
+                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner appearance-none"
                                                 >
                                                     <option value="">Select Asset</option>
                                                     {assetAccounts.map(acc => (
@@ -410,7 +410,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         </div>
 
                                         <div className="relative" ref={dropdownRef}>
-                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Vendor / Counterparty</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black tracking-caps block mb-3 px-1">Vendor / Counterparty</label>
                                             <div className="relative group">
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                                     <Users className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-500" />
@@ -425,20 +425,20 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                     }}
                                                     onFocus={() => setShowContactDropdown(true)}
                                                     placeholder="Search entity or enter manual name..."
-                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
+                                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
                                                 />
                                             </div>
 
                                             {/* Quick Select Vendors */}
                                             {clients.length > 0 && !formData.vendorName && (
                                                 <div className="mt-4 flex flex-wrap gap-2">
-                                                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest w-full mb-1 ml-1 cursor-default">Quick Select</span>
+                                                    <span className="type-caption font-black text-slate-600 uppercase tracking-widest w-full mb-1 ml-1 cursor-default">Quick Select</span>
                                                     {clients.slice(0, 5).map(client => (
                                                         <button
                                                             key={client.id}
                                                             type="button"
                                                             onClick={() => handleVendorSelect(client.name)}
-                                                            className="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 text-xs font-bold text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
+                                                            className="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 type-caption font-bold text-slate-400 hover:bg-teal-500/10 hover:border-teal-500/30 hover:text-teal-400 transition-all flex items-center gap-1.5"
                                                         >
                                                             <Plus className="w-3 h-3" /> {client.name}
                                                         </button>
@@ -463,18 +463,18 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                                 >
                                                                     <div className="flex items-center gap-4">
                                                                         <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shadow-inner">
-                                                                            <span className="text-xs font-black text-teal-500">{client.name?.charAt(0)}</span>
+                                                                            <span className="type-caption font-black text-teal-500">{client.name?.charAt(0)}</span>
                                                                         </div>
                                                                         <div>
-                                                                            <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
-                                                                            <p className="text-xs text-slate-500 font-mono">{client.email}</p>
+                                                                            <p className="type-card-description font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
+                                                                            <p className="type-card-description text-slate-500 font-mono">{client.email}</p>
                                                                         </div>
                                                                     </div>
                                                                 </button>
                                                             ))
                                                         ) : (
                                                             <div className="p-8 text-center">
-                                                                <p className="text-xs font-black uppercase tracking-widest text-slate-600 italic">Press Enter to use manual name</p>
+                                                                <p className="type-caption font-black uppercase tracking-widest text-slate-600 italic">Press Enter to use manual name</p>
                                                              </div>
                                                         )}
                                                     </motion.div>
@@ -483,26 +483,26 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         </div>
 
                                         <div className="space-y-2">
-                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block px-1">Description</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black tracking-caps block px-1">Description</label>
                                             <input
                                                 type="text"
                                                 value={formData.description}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                                 placeholder="What was this expense for?"
-                                                className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
+                                                className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700 font-medium"
                                             />
                                         </div>
 
                                         {/* Camera & File Input Launcher */}
                                         <div className="border-t border-white/5 pt-8">
-                                            <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-4 px-1">Proof of Transaction (Optional)</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black tracking-caps block mb-4 px-1">Proof of Transaction (Optional)</label>
                                             
                                             {receiptPreview ? (
                                                 <div className="relative border border-white/10 rounded-3xl p-4 bg-slate-950/40 flex items-center gap-4">
                                                     <img src={receiptPreview} alt="Receipt Preview" className="w-16 h-16 object-cover rounded-xl border border-white/10 bg-white" />
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-sm font-bold text-white truncate">{receiptFile?.name || 'Captured Image'}</p>
-                                                        <p className="text-xs text-slate-500 mt-1 font-mono uppercase">
+                                                        <p className="type-card-description font-bold text-white truncate">{receiptFile?.name || 'Captured Image'}</p>
+                                                        <p className="type-caption text-slate-500 mt-1 font-mono uppercase">
                                                             {(receiptFile?.size || 0) > 0 
                                                                 ? `${((receiptFile?.size || 0) / 1024 / 1024).toFixed(2)} MB` 
                                                                 : 'Camera Capture'
@@ -527,8 +527,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                         <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                                                             <Receipt className="w-6 h-6 text-slate-500 group-hover:text-teal-400 transition-colors" />
                                                         </div>
-                                                        <span className="text-xs font-bold text-slate-300">Choose File</span>
-                                                        <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">PDF, PNG, JPG</span>
+                                                        <span className="type-caption font-bold text-slate-300">Choose File</span>
+                                                        <span className="type-caption text-slate-500 uppercase font-mono tracking-wider">PDF, PNG, JPG</span>
                                                     </button>
 
                                                     <button
@@ -539,8 +539,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                                         <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                                                             <Camera className="w-6 h-6 text-slate-500 group-hover:text-teal-400 transition-colors" />
                                                         </div>
-                                                        <span className="text-xs font-bold text-slate-300">Take Photo</span>
-                                                        <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">Mobile Camera</span>
+                                                        <span className="type-caption font-bold text-slate-300">Take Photo</span>
+                                                        <span className="type-caption text-slate-500 uppercase font-mono tracking-wider">Mobile Camera</span>
                                                     </button>
                                                 </div>
                                             )}
@@ -593,7 +593,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         <p className="text-slate-500 max-w-sm mb-10 text-lg leading-relaxed font-medium">
                                             The expense entry was saved successfully and posted to the ledger.
                                         </p>
-                                        <Button onClick={handleClose} className="h-14 px-12 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] outline-none">
+                                        <Button onClick={handleClose} className="h-14 px-12 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black uppercase tracking-widest type-caption outline-none">
                                             Close
                                         </Button>
                                     </motion.div>
@@ -604,13 +604,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                         {/* Footer */}
                         {step === 'edit' && (
                             <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
-                                <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
+                                <div className="type-caption font-black text-slate-600 uppercase tracking-caps hidden sm:block">
                                     Ledger entry
                                 </div>
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
                                     <button
                                         onClick={handleClose}
-                                        className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
+                                        className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black type-caption uppercase tracking-widest transition-all"
                                     >
                                         Cancel
                                     </button>
@@ -619,7 +619,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ isOpen, onClose, onEx
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handleSave}
                                         disabled={isSubmitting || !formData.expenseAccountId || !formData.assetAccountId}
-                                        className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:grayscale"
+                                        className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black type-caption uppercase tracking-caps transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:grayscale"
                                     >
                                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 stroke-[2.5px]" />}
                                         Save Expense

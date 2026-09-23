@@ -36,7 +36,7 @@ export default function PlanActivationPanel() {
         <section className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/80 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 type-caption font-semibold uppercase tracking-caps text-teal-300">
                         <Sparkles className="h-3.5 w-3.5" />
                         Plan Visibility
                     </div>
@@ -49,7 +49,7 @@ export default function PlanActivationPanel() {
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => router.push('/dashboard/business/settings')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-teal-400"
+                        className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 transition-colors hover:bg-teal-400"
                     >
                         <CreditCard className="h-4 w-4" />
                         Manage Billing
@@ -59,14 +59,14 @@ export default function PlanActivationPanel() {
 
             <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current Plan</div>
+                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-slate-500">Current Plan</div>
                     <div className="text-lg font-bold text-white">{planName}</div>
-                    <div className="mt-1 text-sm text-slate-400">Quotas and support scale with your plan.</div>
+                    <div className="mt-1 type-ui text-slate-400">Quotas and support scale with your plan.</div>
                 </div>
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Subscription Status</div>
+                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-slate-500">Subscription Status</div>
                     <div className="text-lg font-bold capitalize text-white">{statusName}</div>
-                    <div className="mt-1 text-sm text-slate-400">
+                    <div className="mt-1 type-ui text-slate-400">
                         {trialInfo
                             ? trialInfo.expired
                                 ? 'Your trial has expired and billing needs attention.'
@@ -75,7 +75,7 @@ export default function PlanActivationPanel() {
                     </div>
                 </div>
                 <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    <div className="mb-2 flex items-center gap-2 type-caption font-semibold uppercase tracking-caps text-slate-500">
                         <Gauge className="h-3.5 w-3.5" />
                         What Counts
                     </div>

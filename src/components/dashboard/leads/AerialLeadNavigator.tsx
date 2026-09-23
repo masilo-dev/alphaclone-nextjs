@@ -210,10 +210,10 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                 />
                                 <Compass className="absolute inset-0 m-auto w-6 h-6 sm:w-8 sm:h-8 text-teal-400 animate-pulse" />
                             </div>
-                            <h2 className="text-sm sm:text-lg font-bold text-white mb-1 uppercase tracking-tighter italic">
+                            <h2 className="type-caption sm:text-lg font-bold text-white mb-1 uppercase tracking-tighter italic">
                                 Initiating Deep Scan
                             </h2>
-                            <p className="text-teal-400 font-mono text-sm uppercase tracking-widest mb-6 px-4">
+                            <p className="text-teal-400 font-mono type-caption uppercase tracking-widest mb-6 px-4">
                                 Locating {searchTopic || 'Leads'} in {searchLocation || 'Region'}...
                             </p>
                             <div className="space-y-2">
@@ -224,7 +224,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                         className="h-full w-1/3 bg-gradient-to-r from-transparent via-teal-500 to-transparent"
                                     />
                                 </div>
-                                <div className="flex justify-between font-mono text-xs text-slate-500">
+                                <div className="flex justify-between font-mono type-caption text-slate-500">
                                     <span>DATA LINK ESTABLISHED</span>
                                     <span>STREAM: ACTIVE</span>
                                 </div>
@@ -236,7 +236,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-2 pointer-events-auto">
                             <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-teal-500/30 flex items-center gap-2 max-w-fit">
                                 <div className="w-2 h-2 sm:w-3 sm:h-3 bg-teal-500 rounded-full animate-pulse" />
-                                <span className="text-white font-mono text-xs sm:text-xs tracking-widest uppercase">Live Lead Feed</span>
+                                <span className="text-white font-mono type-caption sm:text-xs tracking-widest uppercase">Live Lead Feed</span>
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -250,10 +250,10 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                     >
                                         <div className="flex items-start justify-between mb-2 sm:mb-3">
                                             <div className="min-w-0 pr-2">
-                                                <h2 className="text-white font-bold text-xs sm:text-sm leading-tight truncate">
+                                                <h2 className="text-white font-bold type-card-title sm:text-sm leading-tight truncate">
                                                     {geocodedLeads[currentIndex].businessName}
                                                 </h2>
-                                                <p className="text-teal-400 text-xs sm:text-xs font-mono mt-0.5 uppercase tracking-wider truncate">
+                                                <p className="text-teal-400 type-caption sm:text-xs font-mono mt-0.5 uppercase tracking-wider truncate">
                                                     Verified Prospect
                                                 </p>
                                             </div>
@@ -262,7 +262,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-slate-400 text-sm leading-relaxed">
+                                            <p className="text-slate-400 type-card-description leading-relaxed">
                                                 {geocodedLeads[currentIndex].formatted_address}
                                             </p>
                                         </div>
@@ -276,8 +276,8 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                             <div className="flex items-center gap-2 sm:gap-4">
                                 {geocodedLeads.length > 0 && (
                                     <div className="text-right bg-slate-900/80 backdrop-blur-md px-2 py-1.5 rounded-lg border border-white/5">
-                                        <div className="text-xs sm:text-xs text-slate-500 uppercase tracking-widest">Processed</div>
-                                        <div className="text-teal-400 font-mono text-sm sm:text-base font-bold leading-tight">
+                                        <div className="type-caption sm:text-xs text-slate-500 uppercase tracking-widest">Processed</div>
+                                        <div className="text-teal-400 font-mono type-ui sm:text-base font-bold leading-tight">
                                             {Math.round(((currentIndex + 1) / geocodedLeads.length) * 100 || 0)}%
                                         </div>
                                     </div>

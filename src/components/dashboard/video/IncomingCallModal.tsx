@@ -130,7 +130,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-300 transform group-hover:scale-110">
                                 <PhoneOff className="w-6 h-6 text-red-500 group-hover:text-white" />
                             </div>
-                            <span className="text-sm text-slate-400 group-hover:text-white transition-colors">Decline</span>
+                            <span className="type-ui text-slate-400 group-hover:text-white transition-colors">Decline</span>
                         </button>
 
                         <button
@@ -140,7 +140,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 transform group-hover:scale-110 animate-bounce">
                                 <Phone className="w-6 h-6 text-white fill-current" />
                             </div>
-                            <span className="text-sm text-white font-medium">Answer</span>
+                            <span className="type-ui text-white font-medium">Answer</span>
                         </button>
                     </div>
                 </div>

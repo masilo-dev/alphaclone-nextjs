@@ -22,11 +22,36 @@
 }
 
 @theme {
-  --font-sans: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-ui);
   --font-mono: ui-monospace, monospace;
-  --font-inter: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
-  --font-heading: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
-  --font-body: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
+  --font-inter: var(--font-ui);
+  --text-xs: 0.75rem;
+  --text-xs--line-height: var(--leading-ui);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: var(--leading-ui);
+  --text-base: 1rem;
+  --text-base--line-height: var(--leading-body);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: var(--leading-body);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: var(--leading-ui);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: var(--leading-heading);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: var(--leading-heading);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: var(--leading-tight);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: var(--leading-tight);
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: var(--leading-tight);
+  --leading-tight: 1.15;
+  --leading-heading: 1.25;
+  --leading-ui: 1.4;
+  --leading-body: 1.6;
+  --tracking-display: -0.025em;
+  --tracking-label: 0.04em;
+  --tracking-caps: 0.12em;
   --color-ac-accent: #356AF4;
   --color-ac-accent-hover: #5F8FFF;
   --color-ac-accent-deep: #2553DD;
@@ -43,6 +68,125 @@
 }
 
 :root {
+  /* Authoritative AlphaClone typography primitives */
+  --font-brand: var(--font-plus-jakarta-next, "Plus Jakarta Sans"), sans-serif;
+  --font-ui: var(--font-inter-next, "Inter"), sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --leading-tight: 1.15;
+  --leading-heading: 1.25;
+  --leading-ui: 1.4;
+  --leading-body: 1.6;
+  --tracking-display: -0.025em;
+  --tracking-label: 0.04em;
+  --tracking-caps: 0.12em;
+
+  /* Semantic typography */
+  --type-hero-family: var(--font-brand);
+  --type-hero-size: clamp(2.25rem, 5vw, var(--text-6xl));
+  --type-hero-weight: var(--weight-bold);
+  --type-hero-leading: 1.05;
+  --type-h1-family: var(--font-brand);
+  --type-h1-size: clamp(var(--text-3xl), 3.4vw, var(--text-5xl));
+  --type-h1-weight: var(--weight-bold);
+  --type-h1-leading: var(--leading-tight);
+  --type-h2-family: var(--font-brand);
+  --type-h2-size: clamp(var(--text-2xl), 2.5vw, var(--text-4xl));
+  --type-h2-weight: var(--weight-bold);
+  --type-h2-leading: var(--leading-heading);
+  --type-h3-family: var(--font-brand);
+  --type-h3-size: clamp(var(--text-xl), 1.8vw, var(--text-2xl));
+  --type-h3-weight: var(--weight-semibold);
+  --type-h3-leading: var(--leading-heading);
+  --type-body-family: var(--font-ui);
+  --type-body-size: var(--text-base);
+  --type-body-weight: var(--weight-regular);
+  --type-body-leading: var(--leading-body);
+  --type-ui-family: var(--font-ui);
+  --type-ui-size: var(--text-sm);
+  --type-ui-weight: var(--weight-regular);
+  --type-ui-leading: var(--leading-ui);
+  --type-label-family: var(--font-ui);
+  --type-label-size: var(--text-sm);
+  --type-label-weight: var(--weight-medium);
+  --type-label-leading: var(--leading-ui);
+  --type-button-family: var(--font-ui);
+  --type-button-size: var(--text-sm);
+  --type-button-weight: var(--weight-semibold);
+  --type-button-leading: var(--leading-ui);
+  --type-caption-family: var(--font-ui);
+  --type-caption-size: var(--text-xs);
+  --type-caption-weight: var(--weight-regular);
+  --type-caption-leading: var(--leading-ui);
+  --type-navigation-family: var(--font-ui);
+  --type-navigation-size: var(--text-sm);
+  --type-navigation-weight: var(--weight-medium);
+  --type-sidebar-family: var(--font-ui);
+  --type-sidebar-size: var(--text-sm);
+  --type-sidebar-weight: var(--weight-medium);
+  --type-form-label-family: var(--font-ui);
+  --type-form-label-size: var(--text-sm);
+  --type-form-label-weight: var(--weight-medium);
+  --type-input-family: var(--font-ui);
+  --type-input-size: var(--text-base);
+  --type-input-weight: var(--weight-regular);
+  --type-placeholder-size: var(--text-sm);
+  --type-table-header-family: var(--font-ui);
+  --type-table-header-size: var(--text-xs);
+  --type-table-header-weight: var(--weight-semibold);
+  --type-table-cell-family: var(--font-ui);
+  --type-table-cell-size: var(--text-sm);
+  --type-table-cell-weight: var(--weight-regular);
+  --type-card-title-family: var(--font-brand);
+  --type-card-title-size: var(--text-lg);
+  --type-card-title-weight: var(--weight-semibold);
+  --type-card-description-family: var(--font-ui);
+  --type-card-description-size: var(--text-sm);
+  --type-card-description-weight: var(--weight-regular);
+  --type-modal-title-family: var(--font-brand);
+  --type-modal-title-size: var(--text-xl);
+  --type-modal-title-weight: var(--weight-bold);
+  --type-modal-body-family: var(--font-ui);
+  --type-modal-body-size: var(--text-base);
+  --type-modal-body-weight: var(--weight-regular);
+  --type-dropdown-family: var(--font-ui);
+  --type-dropdown-size: var(--text-sm);
+  --type-dropdown-weight: var(--weight-medium);
+  --type-tab-family: var(--font-ui);
+  --type-tab-size: var(--text-sm);
+  --type-tab-weight: var(--weight-semibold);
+  --type-badge-family: var(--font-ui);
+  --type-badge-size: var(--text-xs);
+  --type-badge-weight: var(--weight-semibold);
+  --type-status-family: var(--font-ui);
+  --type-status-size: var(--text-xs);
+  --type-status-weight: var(--weight-medium);
+  --type-breadcrumb-family: var(--font-ui);
+  --type-breadcrumb-size: var(--text-sm);
+  --type-breadcrumb-weight: var(--weight-medium);
+  --type-empty-title-family: var(--font-brand);
+  --type-empty-title-size: var(--text-xl);
+  --type-empty-title-weight: var(--weight-semibold);
+  --type-empty-body-family: var(--font-ui);
+  --type-empty-body-size: var(--text-sm);
+  --type-empty-body-weight: var(--weight-regular);
+  --type-toast-family: var(--font-ui);
+  --type-toast-size: var(--text-sm);
+  --type-toast-weight: var(--weight-medium);
+
   /* Alphaclone Systems semantic foundation */
   --brand-navy: #212446;
   --brand-teal: #4199A4;
@@ -238,23 +382,23 @@ html.dark {
 }
 
 .font-marketing-heading {
-  font-family: var(--font-heading);
-  letter-spacing: -0.018em;
-  font-weight: 650;
+  font-family: var(--font-brand);
+  letter-spacing: var(--tracking-display);
+  font-weight: var(--weight-semibold);
 }
 
 .font-marketing-body {
-  font-family: var(--font-body);
-  line-height: 1.6;
+  font-family: var(--font-ui);
+  line-height: var(--leading-body);
 }
 
 .font-marketing-brand {
-  font-family: var(--font-heading);
-  font-weight: 800;
+  font-family: var(--font-brand);
+  font-weight: var(--weight-extrabold);
 }
 
 .font-marketing-data {
-  font-family: var(--font-heading);
+  font-family: var(--font-brand);
   font-feature-settings: "tnum";
 }
 
@@ -308,6 +452,131 @@ body {
   scroll-behavior: smooth;
   @apply text-base antialiased;
   overflow-x: clip;
+  font-family: var(--type-body-family);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  line-height: var(--type-body-leading);
+}
+
+:where(h1, h2, h3) {
+  font-family: var(--font-brand);
+}
+
+:where(button, input, select, textarea) {
+  font-family: var(--font-ui);
+}
+
+:where(button, [role="button"]) {
+  font-size: var(--type-button-size);
+  font-weight: var(--type-button-weight);
+  line-height: var(--type-button-leading);
+}
+
+:where(label) {
+  font-family: var(--type-form-label-family);
+  font-size: var(--type-form-label-size);
+  font-weight: var(--type-form-label-weight);
+  line-height: var(--leading-ui);
+}
+
+:where(input, select, textarea) {
+  font-size: var(--type-input-size);
+  font-weight: var(--type-input-weight);
+  line-height: var(--leading-ui);
+}
+
+:where(nav a, [role="navigation"] a) {
+  font-family: var(--type-navigation-family);
+  font-size: var(--type-navigation-size);
+  line-height: var(--leading-ui);
+}
+
+:where([role="menuitem"], [role="option"], [data-radix-menu-content] button) {
+  font-family: var(--type-dropdown-family);
+  font-size: var(--type-dropdown-size);
+  font-weight: var(--type-dropdown-weight);
+  line-height: var(--leading-ui);
+}
+
+:where([role="tab"]) {
+  font-family: var(--type-tab-family);
+  font-size: var(--type-tab-size);
+  font-weight: var(--type-tab-weight);
+  line-height: var(--leading-ui);
+}
+
+:where(th) {
+  font-family: var(--type-table-header-family);
+  font-size: var(--type-table-header-size);
+  font-weight: var(--type-table-header-weight);
+  line-height: var(--leading-ui);
+}
+
+:where(td) {
+  font-family: var(--type-table-cell-family);
+  font-size: var(--type-table-cell-size);
+  font-weight: var(--type-table-cell-weight);
+  line-height: var(--leading-ui);
+}
+
+:where([role="dialog"]) {
+  font-family: var(--type-modal-body-family);
+  font-size: var(--type-modal-body-size);
+  line-height: var(--leading-body);
+}
+
+:where([role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3, [data-dialog-title]) {
+  font-family: var(--type-modal-title-family);
+  font-size: var(--type-modal-title-size);
+  font-weight: var(--type-modal-title-weight);
+  line-height: var(--leading-heading);
+}
+
+:where(.ac-responsive-sidebar, .ac-workspace-sidebar, [data-sidebar]) {
+  font-family: var(--type-sidebar-family);
+  font-size: var(--type-sidebar-size);
+  line-height: var(--leading-ui);
+}
+
+::placeholder {
+  font-family: var(--font-ui);
+  font-size: var(--type-placeholder-size);
+}
+
+/* Semantic typography utilities. Components consume these instead of inventing sizes. */
+.type-hero { font: var(--type-hero-weight) var(--type-hero-size)/var(--type-hero-leading) var(--type-hero-family); }
+.type-h1 { font: var(--type-h1-weight) var(--type-h1-size)/var(--type-h1-leading) var(--type-h1-family); }
+.type-h2 { font: var(--type-h2-weight) var(--type-h2-size)/var(--type-h2-leading) var(--type-h2-family); }
+.type-h3 { font: var(--type-h3-weight) var(--type-h3-size)/var(--type-h3-leading) var(--type-h3-family); }
+.type-body { font: var(--type-body-weight) var(--type-body-size)/var(--type-body-leading) var(--type-body-family); }
+.type-ui { font: var(--type-ui-weight) var(--type-ui-size)/var(--type-ui-leading) var(--type-ui-family); }
+.type-label { font: var(--type-label-weight) var(--type-label-size)/var(--type-label-leading) var(--type-label-family); }
+.type-button { font: var(--type-button-weight) var(--type-button-size)/var(--type-button-leading) var(--type-button-family); }
+.type-caption { font: var(--type-caption-weight) var(--type-caption-size)/var(--type-caption-leading) var(--type-caption-family); }
+.type-navigation { font-family: var(--type-navigation-family); font-size: var(--type-navigation-size); font-weight: var(--type-navigation-weight); line-height: var(--leading-ui); }
+.type-sidebar { font-family: var(--type-sidebar-family); font-size: var(--type-sidebar-size); font-weight: var(--type-sidebar-weight); line-height: var(--leading-ui); }
+.type-form-label { font-family: var(--type-form-label-family); font-size: var(--type-form-label-size); font-weight: var(--type-form-label-weight); line-height: var(--leading-ui); }
+.type-input { font-family: var(--type-input-family); font-size: var(--type-input-size); font-weight: var(--type-input-weight); line-height: var(--leading-ui); }
+.type-table-header { font-family: var(--type-table-header-family); font-size: var(--type-table-header-size); font-weight: var(--type-table-header-weight); line-height: var(--leading-ui); }
+.type-table-cell { font-family: var(--type-table-cell-family); font-size: var(--type-table-cell-size); font-weight: var(--type-table-cell-weight); line-height: var(--leading-ui); }
+.type-card-title { font-family: var(--type-card-title-family); font-size: var(--type-card-title-size); font-weight: var(--type-card-title-weight); line-height: var(--leading-heading); }
+.type-card-description { font-family: var(--type-card-description-family); font-size: var(--type-card-description-size); font-weight: var(--type-card-description-weight); line-height: var(--leading-body); }
+.type-modal-title { font-family: var(--type-modal-title-family); font-size: var(--type-modal-title-size); font-weight: var(--type-modal-title-weight); line-height: var(--leading-heading); }
+.type-modal-body { font-family: var(--type-modal-body-family); font-size: var(--type-modal-body-size); font-weight: var(--type-modal-body-weight); line-height: var(--leading-body); }
+.type-dropdown { font-family: var(--type-dropdown-family); font-size: var(--type-dropdown-size); font-weight: var(--type-dropdown-weight); line-height: var(--leading-ui); }
+.type-tab { font-family: var(--type-tab-family); font-size: var(--type-tab-size); font-weight: var(--type-tab-weight); line-height: var(--leading-ui); }
+.type-badge { font-family: var(--type-badge-family); font-size: var(--type-badge-size); font-weight: var(--type-badge-weight); line-height: var(--leading-ui); }
+.type-status { font-family: var(--type-status-family); font-size: var(--type-status-size); font-weight: var(--type-status-weight); line-height: var(--leading-ui); }
+.type-breadcrumb { font-family: var(--type-breadcrumb-family); font-size: var(--type-breadcrumb-size); font-weight: var(--type-breadcrumb-weight); line-height: var(--leading-ui); }
+.type-empty-title { font-family: var(--type-empty-title-family); font-size: var(--type-empty-title-size); font-weight: var(--type-empty-title-weight); line-height: var(--leading-heading); }
+.type-empty-body { font-family: var(--type-empty-body-family); font-size: var(--type-empty-body-size); font-weight: var(--type-empty-body-weight); line-height: var(--leading-body); }
+.type-toast { font-family: var(--type-toast-family); font-size: var(--type-toast-size); font-weight: var(--type-toast-weight); line-height: var(--leading-ui); }
+
+/* Compact metadata may use captions; actionable controls never do. */
+:where(button, a, [role="button"], [role="menuitem"], [role="option"], [role="tab"]).type-caption,
+:where(button, a, [role="button"], [role="menuitem"], [role="option"], [role="tab"]) .type-caption {
+  font-size: var(--type-ui-size) !important;
+  line-height: var(--leading-ui) !important;
 }
 
 @media (min-width: 1024px) {
@@ -401,46 +670,46 @@ html.light .ac-business-scroll .text-slate-300,
 
 /* Typography Overrides - Scoped to Marketing Theme */
 .marketing-theme {
-  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 1.6;
+  font-family: var(--type-body-family);
+  font-weight: var(--type-body-weight);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
   letter-spacing: normal;
   color: #e6edf7;
 }
 
 .marketing-theme h1 {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-weight: 700;
-  font-size: clamp(1.5rem, 4.4vw, 2.8rem);
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  font-family: var(--type-h1-family);
+  font-weight: var(--type-h1-weight);
+  font-size: var(--type-h1-size);
+  line-height: var(--type-h1-leading);
+  letter-spacing: var(--tracking-display);
   color: #f8fbff;
 }
 
 .marketing-theme h2 {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-weight: 650;
-  font-size: clamp(1.25rem, 3.1vw, 2.2rem);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-family: var(--type-h2-family);
+  font-weight: var(--type-h2-weight);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-leading);
+  letter-spacing: var(--tracking-display);
   color: #f2f7ff;
 }
 
 .marketing-theme h3,
 .marketing-theme h4 {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-weight: 600;
-  font-size: clamp(1.05rem, 2.3vw, 1.65rem);
-  line-height: 1.3;
+  font-family: var(--type-h3-family);
+  font-weight: var(--type-h3-weight);
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-leading);
   color: #edf3fb;
 }
 
 .marketing-theme p {
-  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-weight: 400;
-  font-size: clamp(0.88rem, 0.95vw, 0.98rem);
-  line-height: 1.55;
+  font-family: var(--type-body-family);
+  font-weight: var(--type-body-weight);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-leading);
   color: #dbe6f4;
 }
 
@@ -694,39 +963,39 @@ html.light .page-network-bg.marketing-theme {
 
 .marketing-theme button,
 .marketing-theme .cta {
-  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  font-weight: 600;
-  font-size: 16px;
+  font-family: var(--font-ui);
+  font-weight: var(--weight-semibold);
+  font-size: var(--type-body-size);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
   transition: all 0.2s ease;
 }
 
 .marketing-theme button:hover,
 .marketing-theme .cta:hover {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .marketing-theme nav a,
 .marketing-theme .nav-link {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
-  font-weight: 500;
-  font-size: 15px;
+  font-family: var(--font-brand);
+  font-weight: var(--weight-medium);
+  font-size: var(--type-body-size);
   line-height: 1;
   color: #dbe7f7;
 }
 
 .marketing-theme nav a:hover,
 .marketing-theme .nav-link:hover {
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .data-metrics {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-brand);
   font-feature-settings: "tnum";
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.4;
+  font-weight: var(--weight-medium);
+  font-size: var(--type-body-size);
+  line-height: var(--leading-ui);
 }
 
 /* iPhone Safe Area Support */
@@ -924,7 +1193,7 @@ nav a,
 
 /* Prevent iOS Safari from auto-zooming on input focus */
 input, textarea, select {
-  font-size: 16px !important;
+  font-size: var(--type-input-size) !important;
 }
 /* Active Input Glows */
 input:focus-visible, textarea:focus-visible, select:focus-visible {
@@ -1060,19 +1329,19 @@ body {
   input[type="number"],
   textarea,
   select {
-    font-size: 16px !important;
+    font-size: var(--type-input-size) !important;
     /* Matches accessible base font */
   }
 }
 
 .text-accessible-xs {
-  font-size: 0.75rem !important; /* 12px */
+  font-size: var(--type-caption-size) !important; /* 12px */
   line-height: 1rem !important;
 }
 
 .text-accessible-sm {
-  font-size: 0.875rem !important; /* 14px */
-  line-height: 1.25rem !important;
+  font-size: var(--type-ui-size) !important; /* 14px */
+  line-height: var(--leading-heading) !important;
 }
 
 /* Mobile Menu Lock — avoid touch-action:none so inputs stay usable if menu state desyncs */
@@ -1149,7 +1418,7 @@ body {
 .cta-primary {
   background: linear-gradient(135deg, var(--ac-accent) 0%, var(--ac-accent-deep) 100%);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   box-shadow: 0 12px 26px rgba(53, 106, 244, 0.24);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1161,9 +1430,9 @@ body {
 
 /* Activation & Founder Utilities */
 .text-founder-punchy {
-  font-family: "Space Grotesk", "Inter", sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-family: var(--font-brand);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-display);
   text-transform: uppercase;
 }
 
@@ -1207,9 +1476,9 @@ body {
   border: 1px solid rgba(0, 210, 160, 0.2);
   color: #00D2A0;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.7rem;
-  font-weight: 700;
+  letter-spacing: var(--tracking-caps);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-bold);
   padding: 4px 12px;
   border-radius: 9999px;
   display: inline-flex;
@@ -1247,18 +1516,18 @@ body {
   .font-marketing-brand,
   .font-marketing-heading,
   .font-marketing-body {
-    font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+    font-family: var(--font-ui);
   }
 }
 
 /* Small Desktop Adjustments (e.g. Dell Latitude E7240) */
 @media (min-width: 1025px) and (max-width: 1366px) {
   .marketing-theme h1 {
-    font-size: 2.9rem;
+    font-size: var(--text-5xl);
   }
   
   .marketing-theme h2 {
-    font-size: 2.1rem;
+    font-size: var(--text-4xl);
   }
 
   .marketing-theme section {
@@ -1286,49 +1555,49 @@ body {
 
 /* Unified marketing typography scale across all public pages */
 .marketing-theme .text-xs {
-  font-size: 0.8rem !important;
-  line-height: 1.45 !important;
+  font-size: var(--type-ui-size) !important;
+  line-height: var(--leading-ui) !important;
 }
 
 .marketing-theme .text-sm {
-  font-size: 0.92rem !important;
-  line-height: 1.55 !important;
+  font-size: var(--type-body-size) !important;
+  line-height: var(--leading-ui) !important;
 }
 
 .marketing-theme .text-base {
-  font-size: 1rem !important;
-  line-height: 1.65 !important;
+  font-size: var(--type-body-size) !important;
+  line-height: var(--leading-body) !important;
 }
 
 .marketing-theme .text-lg {
-  font-size: 1.1rem !important;
-  line-height: 1.6 !important;
+  font-size: var(--text-lg) !important;
+  line-height: var(--leading-body) !important;
 }
 
 .marketing-theme .text-xl {
-  font-size: 1.25rem !important;
-  line-height: 1.45 !important;
+  font-size: var(--text-xl) !important;
+  line-height: var(--leading-ui) !important;
 }
 
 .marketing-theme .text-2xl {
-  font-size: 1.5rem !important;
-  line-height: 1.35 !important;
+  font-size: var(--text-2xl) !important;
+  line-height: var(--leading-heading) !important;
 }
 
 .marketing-theme .text-3xl {
   font-size: clamp(1.75rem, 3vw, 2.1rem) !important;
-  line-height: 1.25 !important;
+  line-height: var(--leading-heading) !important;
 }
 
 .marketing-theme .text-4xl {
   font-size: clamp(2rem, 4.2vw, 2.8rem) !important;
-  line-height: 1.15 !important;
+  line-height: var(--leading-tight) !important;
 }
 
 .marketing-theme .text-5xl,
 .marketing-theme .text-6xl {
   font-size: clamp(2rem, 4.5vw, 3rem) !important;
-  line-height: 1.08 !important;
+  line-height: var(--leading-tight) !important;
 }
 
 /* ── Marketing-wide font size reduction ──────────────────────────────────── */
@@ -1337,16 +1606,16 @@ body {
 .marketing-theme .text-5xl  { font-size: clamp(1.75rem, 3.5vw, 2.6rem) !important; }
 .marketing-theme .text-4xl  { font-size: clamp(1.5rem, 3vw, 2rem) !important; }
 .marketing-theme .text-3xl  { font-size: clamp(1.3rem, 2.5vw, 1.7rem) !important; }
-.marketing-theme .text-2xl  { font-size: 1.3rem !important; }
-.marketing-theme .text-xl   { font-size: 1.1rem !important; }
-.marketing-theme .text-lg   { font-size: 0.9375rem !important; }
-.marketing-theme .text-base { font-size: 0.875rem !important; }
-.marketing-theme .text-sm   { font-size: 0.8125rem !important; }
+.marketing-theme .text-2xl  { font-size: var(--text-xl) !important; }
+.marketing-theme .text-xl   { font-size: var(--text-lg) !important; }
+.marketing-theme .text-lg   { font-size: var(--type-body-size) !important; }
+.marketing-theme .text-base { font-size: var(--type-ui-size) !important; }
+.marketing-theme .text-sm   { font-size: var(--type-ui-size) !important; }
 
 .marketing-theme .font-black,
 .marketing-theme .font-extrabold,
 .marketing-theme .font-bold {
-  letter-spacing: -0.015em;
+  letter-spacing: var(--tracking-display);
 }
 
 .marketing-theme .bg-slate-900\/50 {
@@ -1457,41 +1726,41 @@ deep-chat {
 
 /* iOS zoom prevention: Force input/textarea/select to minimum 16px font-size */
 input, textarea, select {
-  font-size: 16px !important;
+  font-size: var(--type-input-size) !important;
 }
 
 /* Strict Typography Presets */
 .pwa-page-title {
-  font-size: 17px !important;
-  font-weight: 600 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  font-size: var(--text-lg) !important;
+  font-weight: var(--weight-semibold) !important;
+  font-family: var(--font-brand) !important;
 }
 
 .pwa-section-label {
-  font-size: 13px !important;
-  font-weight: 600 !important;
+  font-size: var(--text-sm) !important;
+  font-weight: var(--weight-semibold) !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.04em !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  letter-spacing: var(--tracking-label) !important;
+  font-family: var(--font-ui) !important;
 }
 
 .pwa-body-label {
-  font-size: 15px !important;
-  font-weight: 400 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  font-size: var(--text-base) !important;
+  font-weight: var(--weight-regular) !important;
+  font-family: var(--font-ui) !important;
 }
 
 .pwa-secondary-meta {
-  font-size: 13px !important;
+  font-size: var(--text-xs) !important;
   opacity: 0.55 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  font-family: var(--font-ui) !important;
 }
 
 .pwa-tab-label {
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--weight-semibold) !important;
+  letter-spacing: var(--tracking-label) !important;
+  font-family: var(--font-ui) !important;
 }
 
 html.pwa-standalone .pwa-page-title {
@@ -1502,18 +1771,18 @@ html.pwa-standalone .pwa-page-title {
 }
 
 .pwa-badge {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--weight-bold) !important;
+  font-family: var(--font-ui) !important;
 }
 
 /* Font family defaults for dashboard components */
 .ac-dashboard-root, .ac-business-root {
-  font-family: var(--font-sans) !important;
+  font-family: var(--font-ui) !important;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.011em;
+  letter-spacing: var(--tracking-display);
 }
 
 .ac-dashboard-root .ac-metric-card,
@@ -1523,9 +1792,12 @@ html.pwa-standalone .pwa-page-title {
 
 .ac-dashboard-root h1,
 .ac-dashboard-root h2,
+.ac-dashboard-root h3,
 .ac-business-root h1,
-.ac-business-root h2 {
-  letter-spacing: -0.02em;
+.ac-business-root h2,
+.ac-business-root h3 {
+  font-family: var(--font-brand);
+  letter-spacing: var(--tracking-display);
 }
 
 .ac-dashboard-root,
@@ -1592,11 +1864,11 @@ html.pwa-standalone .pwa-page-title {
   }
 
   html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module {
-    font-size: 14px;
+    font-size: var(--type-ui-size);
   }
 
   html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module :is(button, a, input, select, textarea) {
-    font-size: max(13px, 0.8125rem);
+    font-size: var(--type-ui-size);
   }
 
   html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module .ac-workspace-panel {
@@ -1616,13 +1888,13 @@ html.pwa-standalone .pwa-page-title {
 }
 
 .native-screen {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
 }
 
 .native-section-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.38);
   margin: 0 0 8px 4px;
@@ -1696,8 +1968,8 @@ html.pwa-standalone .pwa-page-title {
 .native-chip {
   padding: 8px 14px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
   color: rgba(255, 255, 255, 0.65);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1777,11 +2049,11 @@ html.pwa-standalone .pwa-page-title {
 
 .ac-data-table th {
   padding: 10px 16px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-semibold);
   text-align: left;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
   color: var(--ws-text-muted, #a8b0c2);
   background: var(--ws-toolbar, #171A26);
   border-bottom: 1px solid var(--ws-border, rgba(255, 255, 255, 0.1));
@@ -1789,7 +2061,7 @@ html.pwa-standalone .pwa-page-title {
 
 .ac-data-table td {
   padding: 12px 16px;
-  font-size: 13px;
+  font-size: var(--type-ui-size);
   color: var(--ws-text-primary, #ffffff);
   border-bottom: 1px solid var(--ws-border, rgba(255, 255, 255, 0.08));
 }
@@ -1866,7 +2138,7 @@ html.pwa-standalone .pwa-page-title {
   --info-surface: #11283C;
   --info-border: #235579;
   --info-text: #77C4FF;
-  font-family: "Space Grotesk", "Inter Variable", "Inter", system-ui, sans-serif;
+  font-family: var(--font-brand);
   font-feature-settings: "tnum" 1;
   color: var(--ws-text-primary);
 }
@@ -2059,8 +2331,8 @@ html.light .ac-kpi-card--interactive:hover {
   min-height: 32px;
   padding: 6px 10px;
   border-radius: var(--ws-radius);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-medium);
   color: var(--ws-text-secondary);
   transition: background-color 140ms ease, color 140ms ease, transform 140ms ease;
 }
@@ -2097,8 +2369,8 @@ html.light .ac-kpi-card--interactive:hover {
   min-height: 28px;
   padding: 4px 10px;
   border-radius: var(--ws-radius);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
   color: var(--ws-text-tertiary);
   transition: background-color 120ms ease, color 120ms ease;
 }
@@ -2120,8 +2392,8 @@ html.light .ac-kpi-card--interactive:hover {
   min-height: 36px;
   padding: 0 12px;
   border-bottom: 2px solid transparent;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-semibold);
   color: var(--ws-text-tertiary);
   transition: color 120ms ease, border-color 120ms ease;
   margin-bottom: -1px;
@@ -2152,8 +2424,8 @@ html.light .ac-kpi-card--interactive:hover {
   border-radius: var(--ws-radius);
   border: 1px solid var(--ws-border-strong);
   background: var(--ws-panel-hover);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--type-ui-size);
+  font-weight: var(--weight-semibold);
   color: var(--ws-text-primary);
   transition: background-color 150ms ease, border-color 150ms ease;
 }
@@ -2493,43 +2765,43 @@ html.light textarea::placeholder {
   /* Keep html font-size standard (1rem = 16px) so PWA shells, drawers, and grids do not shrink */
   
   body {
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: var(--type-input-size);
+    line-height: var(--leading-ui);
   }
 
   /* Preserve readable mobile typography; metadata utilities may remain smaller. */
   p, li, td, th, label, figcaption, blockquote, .text-xs, .text-sm {
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: var(--type-ui-size);
+    line-height: var(--leading-ui);
   }
 
   .marketing-theme p,
   .ac-dashboard-root p,
   .ac-business-root p {
-    font-size: 14px;
+    font-size: var(--type-ui-size);
   }
 
   /* Compact phone headings for better vertical fit */
   h1, .h1, .marketing-theme h1 {
-    font-size: 1.4rem !important;
-    line-height: 1.2 !important;
-    letter-spacing: -0.015em !important;
+    font-size: var(--text-2xl) !important;
+    line-height: var(--leading-heading) !important;
+    letter-spacing: var(--tracking-display) !important;
   }
 
   h2, .h2, .marketing-theme h2 {
-    font-size: 1.2rem !important;
-    line-height: 1.25 !important;
-    letter-spacing: -0.01em !important;
+    font-size: var(--text-xl) !important;
+    line-height: var(--leading-heading) !important;
+    letter-spacing: var(--tracking-display) !important;
   }
 
   h3, .h3, .marketing-theme h3 {
-    font-size: 1.0rem !important;
-    line-height: 1.3 !important;
+    font-size: var(--type-body-size) !important;
+    line-height: var(--leading-heading) !important;
   }
 
   h4, .h4, .marketing-theme h4 {
-    font-size: 0.88rem !important;
-    line-height: 1.35 !important;
+    font-size: var(--type-ui-size) !important;
+    line-height: var(--leading-heading) !important;
   }
 
   /* Compact Card Content (scoped to cards, not outer PWA shell containers) */
@@ -2549,8 +2821,8 @@ html.light textarea::placeholder {
   .mkt-btn-secondary,
   .mkt-btn-large,
   .ac-workspace-action-btn {
-    font-size: 14px !important;
-    font-weight: 750 !important;
+    font-size: var(--type-ui-size) !important;
+    font-weight: var(--weight-bold) !important;
     padding: 0.5rem 0.9rem !important;
     min-height: 2.75rem !important;
     border-radius: 10px !important;
@@ -2577,7 +2849,7 @@ html.light textarea::placeholder {
   .mkt-label,
   [class*="badge"],
   [class*="chip"] {
-    font-size: 10.5px !important;
+    font-size: var(--type-caption-size) !important;
     padding: 0.2rem 0.5rem !important;
   }
 }
@@ -2602,8 +2874,8 @@ html.light textarea::placeholder {
 /* Inbox: HTML email body rendering */
 .email-html-body {
   color: #e2e8f0;
-  font-size: 0.875rem;
-  line-height: 1.75;
+  font-size: var(--type-ui-size);
+  line-height: var(--leading-body);
   word-break: break-words;
   max-width: 100%;
   overflow-x: auto;
@@ -2627,7 +2899,7 @@ html.light textarea::placeholder {
 .email-html-body table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: var(--type-ui-size);
 }
 .email-html-body td, .email-html-body th {
   padding: 0.5rem;

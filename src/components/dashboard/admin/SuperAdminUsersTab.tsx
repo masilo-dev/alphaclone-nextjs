@@ -183,14 +183,14 @@ export const SuperAdminUsersTab: React.FC = () => {
             />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="font-bold text-white text-sm truncate">{u.name}</p>
+                <p className="font-bold text-white type-card-description truncate">{u.name}</p>
                 {u.password_change_required && (
                   <span className="p-0.5 bg-amber-500/20 text-amber-400 rounded" title="Forced Password Reset Pending">
                     <Lock className="w-3 h-3" />
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 font-mono truncate">{u.email}</p>
+              <p className="type-card-description text-slate-500 font-mono truncate">{u.email}</p>
             </div>
           </div>
         ),
@@ -216,7 +216,7 @@ export const SuperAdminUsersTab: React.FC = () => {
                 });
               }
             }}
-            className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter cursor-pointer bg-slate-900 border ${
+            className={`px-2 py-1 rounded type-caption font-black uppercase tracking-tighter cursor-pointer bg-slate-900 border ${
               u.role === 'super_admin' || u.role === 'admin'
                 ? 'text-purple-400 border-purple-500/40'
                 : u.role === 'tenant_admin'
@@ -245,13 +245,13 @@ export const SuperAdminUsersTab: React.FC = () => {
         id: 'onboarding',
         header: 'Onboarding & Verify',
         accessor: (u) => (
-          <div className="text-xs space-y-0.5">
-            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+          <div className="type-caption space-y-0.5">
+            <span className={`px-2 py-0.5 rounded type-ui font-bold ${
               u.onboarding_status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
             }`}>
               {u.onboarding_status || 'pending'}
             </span>
-            <span className="block text-slate-500 text-[10px]">
+            <span className="block text-slate-500 type-ui">
               {u.email_verified ? 'Verified' : 'Unverified'}
             </span>
           </div>
@@ -351,7 +351,7 @@ export const SuperAdminUsersTab: React.FC = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+              className={`px-4 py-1.5 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${
                 filter === f
                   ? 'bg-teal-500 text-white border-teal-500 shadow-lg shadow-teal-500/20'
                   : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700'
@@ -385,7 +385,7 @@ export const SuperAdminUsersTab: React.FC = () => {
               </button>
             </div>
 
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 text-xs text-purple-300 space-y-2">
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 type-caption text-purple-300 space-y-2">
               <p className="font-bold flex items-center gap-1.5">
                 <ShieldAlert className="w-4 h-4" />
                 Security Requirement #40 Warning
@@ -399,26 +399,26 @@ export const SuperAdminUsersTab: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Reason for Promotion (Optional)</label>
+              <label className="block type-label font-semibold text-slate-400 mb-1">Reason for Promotion (Optional)</label>
               <input
                 type="text"
                 value={roleReason}
                 onChange={(e) => setRoleReason(e.target.value)}
                 placeholder="e.g. Assigned as Platform Operations Admin"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl type-caption text-white"
               />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption font-semibold"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRoleChangeSubmit(true)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-purple-500/20"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl type-caption shadow-lg shadow-purple-500/20"
               >
                 Confirm Role Elevation
               </button>
@@ -436,7 +436,7 @@ export const SuperAdminUsersTab: React.FC = () => {
                 <Avatar src={selectedUser.avatar} name={selectedUser.name} email={selectedUser.email} size={44} shape="rounded" />
                 <div>
                   <h3 className="text-lg font-bold text-white">{selectedUser.name}</h3>
-                  <p className="text-xs text-slate-400 font-mono">{selectedUser.email}</p>
+                  <p className="type-card-description text-slate-400 font-mono">{selectedUser.email}</p>
                 </div>
               </div>
               <button onClick={() => setShowDetailModal(false)} className="text-slate-400 hover:text-white">
@@ -444,35 +444,35 @@ export const SuperAdminUsersTab: React.FC = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-2 gap-3 type-caption">
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">User Role</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">User Role</span>
                 <span className="font-black text-purple-400 uppercase">{selectedUser.role}</span>
               </div>
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">Account Status</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">Account Status</span>
                 <span className="font-bold text-white uppercase">{selectedUser.account_status}</span>
               </div>
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">Onboarding</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">Onboarding</span>
                 <span className="text-slate-300 font-semibold">{selectedUser.onboarding_status}</span>
               </div>
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">Email Verification</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">Email Verification</span>
                 <span className="text-slate-300 font-semibold">{selectedUser.email_verified ? 'Verified' : 'Unverified'}</span>
               </div>
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">Business Type</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">Business Type</span>
                 <span className="text-slate-300">{selectedUser.business_type || 'Not specified'}</span>
               </div>
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold text-[10px]">Company Name</span>
+                <span className="text-slate-500 block uppercase font-bold type-caption">Company Name</span>
                 <span className="text-slate-300">{selectedUser.company_name || 'Not specified'}</span>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 text-xs">
-              <span className="text-slate-500 block uppercase font-bold text-[10px]">Timestamps & Identifiers</span>
+            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 type-caption">
+              <span className="text-slate-500 block uppercase font-bold type-caption">Timestamps & Identifiers</span>
               <p className="text-slate-400">User ID: <span className="font-mono text-white">{selectedUser.id}</span></p>
               <p className="text-slate-400">Registered: <span className="text-slate-300">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}</span></p>
               <p className="text-slate-400">Last Login: <span className="text-slate-300">{selectedUser.last_login_at ? new Date(selectedUser.last_login_at).toLocaleString() : 'Never'}</span></p>
@@ -481,7 +481,7 @@ export const SuperAdminUsersTab: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl type-caption"
               >
                 Close
               </button>
@@ -504,18 +504,18 @@ export const SuperAdminUsersTab: React.FC = () => {
               </button>
             </div>
 
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-300">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 type-caption text-amber-300">
               User <strong>{selectedUser.name}</strong> is the sole owner of active workspace <span className="font-mono">{transferTenantId}</span>. Transfer ownership before deleting this user account.
             </div>
 
             <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Select New Owner</label>
+                <label className="block type-label font-semibold text-slate-300 mb-1">Select New Owner</label>
                 <select
                   required
                   value={newOwnerId}
                   onChange={(e) => setNewOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl type-caption text-white"
                 >
                   <option value="">-- Choose active platform user --</option>
                   {users
@@ -532,13 +532,13 @@ export const SuperAdminUsersTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl type-caption shadow-lg"
                 >
                   Transfer Ownership
                 </button>

@@ -55,7 +55,7 @@ export function StandardStatusBadge({
       role="status"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border whitespace-nowrap select-none transition-all duration-300',
+        'inline-flex items-center px-2.5 py-0.5 rounded-md type-caption font-black uppercase tracking-wider border whitespace-nowrap select-none transition-all duration-300',
         VARIANT_MAP[variant],
         className
       )}

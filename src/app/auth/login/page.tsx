@@ -438,7 +438,7 @@ function LoginContent() {
                         <Shield className="w-10 h-10 text-teal-600 dark:text-teal-400" />
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h2>
-                    <p className="text-slate-600 dark:text-slate-400 mb-8 text-sm">
+                    <p className="text-slate-600 dark:text-slate-400 mb-8 type-card-description">
                         Enter the 6-digit verification code from your authenticator app to continue.
                     </p>
 
@@ -449,14 +449,14 @@ function LoginContent() {
                             value={mfaCode}
                             onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                             placeholder="123456"
-                            className="font-mono text-center tracking-[0.5em] text-2xl h-14"
+                            className="font-mono text-center tracking-caps text-2xl h-14"
                         />
                     </div>
 
                     {error && (
                         <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6 animate-fade-in">
                             <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <p className="text-sm text-rose-200">{error}</p>
+                            <p className="type-card-description text-rose-200">{error}</p>
                         </div>
                     )}
 
@@ -477,7 +477,7 @@ function LoginContent() {
                             setMfaCode('');
                             setError('');
                         }}
-                        className="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                        className="mt-6 type-ui text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                     >
                         Back to Login
                     </button>
@@ -514,7 +514,7 @@ function LoginContent() {
                         </Link>
                     )}
                     <h1 className="text-base font-bold text-slate-900 dark:text-white mb-0.5">AlphaClone Systems</h1>
-                    <p className="text-slate-600 dark:text-slate-400 text-[11px] mb-2">
+                    <p className="text-slate-600 dark:text-slate-400 type-card-description mb-2">
                         {isRegistering
                             ? '14-day free trial · workspace ready in seconds'
                             : 'Sign in to your business workspace'}
@@ -538,7 +538,7 @@ function LoginContent() {
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                     </div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-wide">
+                    <div className="relative flex justify-center type-caption uppercase tracking-wide">
                         <span className="bg-white dark:bg-slate-900/80 px-2 text-slate-500">Or use email</span>
                     </div>
                 </div>
@@ -577,7 +577,7 @@ function LoginContent() {
 
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Password</label>
+                            <label className="type-label font-medium text-slate-600 dark:text-slate-400">Password</label>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -599,7 +599,7 @@ function LoginContent() {
                                         }
                                         setIsLoading(false);
                                     }}
-                                    className="text-[11px] font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                    className="type-ui font-semibold text-teal-400 hover:text-teal-300 transition-colors"
                                 >
                                     Forgot password?
                                 </button>
@@ -628,26 +628,26 @@ function LoginContent() {
                     </div>
 
                     {!isRegistering && passwordResetSentTo && (
-                        <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-teal-300 text-xs">
+                        <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-teal-300 type-caption">
                             Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>.
                         </div>
                     )}
 
                     {isRegistering && (
                         <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
-                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
+                            <div className={`flex items-center gap-1 type-ui ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                 12+ chars
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                            <div className={`flex items-center gap-1 type-ui ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                 Upper
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                            <div className={`flex items-center gap-1 type-ui ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                 Number
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                            <div className={`flex items-center gap-1 type-ui ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                 Special
                             </div>
@@ -655,7 +655,7 @@ function LoginContent() {
                     )}
 
                     {isRegistering && (
-                        <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+                        <div className="space-y-1.5 type-ui text-slate-600 dark:text-slate-400">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -683,8 +683,8 @@ function LoginContent() {
                     )}
 
                     {isRegistering && isEuLikeRegistration && (
-                        <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] text-slate-600 dark:text-slate-400">
-                            <p className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
+                        <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 type-ui text-slate-600 dark:text-slate-400">
+                            <p className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide type-caption">EU / UK consent</p>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
                                 <span>I consent to data processing per the Privacy Policy.</span>
@@ -697,7 +697,7 @@ function LoginContent() {
                     )}
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-red-400 text-xs flex items-start gap-2 animate-fade-in">
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-red-400 type-caption flex items-start gap-2 animate-fade-in">
                             <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
@@ -722,7 +722,7 @@ function LoginContent() {
                                 }}
                             />
                             {turnstileError && (
-                                <p className="text-[11px] text-amber-400 text-center">
+                                <p className="type-card-description text-amber-400 text-center">
                                     Security check unavailable. Please refresh the page and try again.
                                 </p>
                             )}
@@ -731,7 +731,7 @@ function LoginContent() {
 
                     <Button
                         type="submit"
-                        className="w-full h-9 text-sm font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                        className="w-full h-9 type-ui font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                         isLoading={isLoading}
                         disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >
@@ -749,7 +749,7 @@ function LoginContent() {
                             setIsRegistering(!isRegistering);
                             setError('');
                         }}
-                        className="text-sm text-teal-400 hover:text-teal-300 font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
+                        className="type-ui text-teal-400 hover:text-teal-300 font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
                     >
                         {isRegistering ? (
                             <>
@@ -762,9 +762,9 @@ function LoginContent() {
                         )}
                     </button>
                     {!registrationOpen && policyLoaded && (
-                        <p className="text-[11px] text-amber-400">Account registration is temporarily closed.</p>
+                        <p className="type-card-description text-amber-400">Account registration is temporarily closed.</p>
                     )}
-                    <p className="text-xs text-slate-500 dark:text-slate-600 uppercase tracking-wider">
+                    <p className="type-caption text-slate-500 dark:text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
                 </div>

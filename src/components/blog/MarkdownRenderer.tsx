@@ -44,7 +44,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     ),
                     code: ({ node, className, ...props }) => {
                         return (
-                            <code {...props} className={`${className} bg-slate-800 text-teal-300 rounded px-1.5 py-0.5 text-sm font-mono border border-white/10`} />
+                            <code {...props} className={`${className} bg-slate-800 text-teal-300 rounded px-1.5 py-0.5 type-ui font-mono border border-white/10`} />
                         );
                     },
                     pre: ({ node, ...props }) => (
@@ -63,7 +63,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     ),
                     table: ({ node, ...props }) => (
                         <div className="overflow-x-auto mb-8 rounded-lg border border-white/10 min-w-0">
-                            <table {...props} className="w-full min-w-[480px] text-left text-sm text-slate-300" />
+                            <table {...props} className="w-full min-w-[480px] text-left type-ui text-slate-300" />
                         </div>
                     ),
                     th: ({ node, ...props }) => (

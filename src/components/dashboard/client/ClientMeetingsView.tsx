@@ -111,7 +111,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
                                     <div className="flex items-start gap-4">
                                         <div className="flex flex-col items-center justify-center w-16 h-16 bg-slate-800 rounded-xl border border-slate-700 shrink-0">
-                                            <div className="text-xs uppercase font-bold text-slate-400">
+                                            <div className="type-caption uppercase font-bold text-slate-400">
                                                 {format(dateToFormat, 'MMM')}
                                             </div>
                                             <div className="text-2xl font-bold text-white">
@@ -120,7 +120,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-semibold text-white mb-1">{meeting.title}</h3>
-                                            <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+                                            <div className="flex flex-wrap gap-4 type-ui text-slate-400">
                                                 <span className="flex items-center gap-1.5">
                                                     <Clock className="w-4 h-4" />
                                                     {format(dateToFormat, 'h:mm a')}

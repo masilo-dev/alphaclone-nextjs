@@ -29,7 +29,7 @@ export default function DemoPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
                         >
-                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold tracking-widest uppercase mb-6">
+                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 type-caption font-semibold tracking-widest uppercase mb-6">
                                 <Play className="w-3 h-3 fill-current" /> Recorded product demo
                             </span>
                             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tighter leading-tight font-marketing-heading mb-6 text-slate-950">
@@ -94,7 +94,7 @@ export default function DemoPage() {
                                     {feature.icon}
                                 </div>
                                 <h3 className="text-xl font-semibold text-slate-950 mb-3">{feature.title}</h3>
-                                <p className="text-slate-600 leading-relaxed text-sm">
+                                <p className="text-slate-600 leading-relaxed type-card-description">
                                     {feature.desc}
                                 </p>
                             </motion.div>

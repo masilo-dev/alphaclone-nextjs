@@ -8,7 +8,7 @@ import type { LeadMapPin } from '@/components/leads/LeadMapView';
 const LeadMapView = dynamic(() => import('@/components/leads/LeadMapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[320px] md:h-[420px] rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center text-slate-500 text-sm">
+    <div className="w-full h-[320px] md:h-[420px] rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center text-slate-500 type-ui">
       Loading map…
     </div>
   ),
@@ -37,13 +37,13 @@ export default function LeadFinderMapPanel({
         <div className="flex items-center gap-2 min-w-0">
           <MapPin className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">Reach map</p>
-            <p className="text-[11px] text-slate-500 truncate">
+            <p className="type-card-description font-semibold text-white truncate">Reach map</p>
+            <p className="type-card-description text-slate-500 truncate">
               {pinned.length} pinned · aerial satellite · free geodata
             </p>
           </div>
         </div>
-        <span className="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">
+        <span className="type-caption uppercase tracking-wider text-slate-500 shrink-0">
           {previewRadiusKm} km
         </span>
       </div>
@@ -51,7 +51,7 @@ export default function LeadFinderMapPanel({
       {pinned.length === 0 ? (
         <div className="h-[280px] md:h-[360px] flex flex-col items-center justify-center gap-2 px-6 text-center bg-[radial-gradient(circle_at_30%_20%,rgba(20,184,166,0.12),transparent_55%)]">
           <MapPin className="w-8 h-8 text-slate-600" />
-          <p className="text-sm text-slate-400">{emptyHint}</p>
+          <p className="type-card-description text-slate-400">{emptyHint}</p>
         </div>
       ) : (
         <LeadMapView

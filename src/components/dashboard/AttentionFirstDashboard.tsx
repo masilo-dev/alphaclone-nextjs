@@ -14,6 +14,9 @@ import {
   Target,
   Trophy,
   Activity,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,6 +63,20 @@ function greetingForNow(name: string | null | undefined, t: (s: string) => strin
   return short ? `${part}, ${short}` : part;
 }
 
+function relativeTime(value: string): string {
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return '';
+  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`;
+  return new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 export function AttentionFirstDashboard() {
   const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
@@ -69,20 +86,31 @@ export function AttentionFirstDashboard() {
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [bonnieActions, setBonnieActions] = useState<BonnieAction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsError, setStatsError] = useState(false);
+  const [bonnieLoading, setBonnieLoading] = useState(true);
+  const [bonnieError, setBonnieError] = useState(false);
   const [workspaceActivity, setWorkspaceActivity] = useState<WorkspaceActivityItem[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) return;
     setLoading(true);
+    setStatsError(false);
     void getDashboardStats(currentTenant.id, user.id)
       .then((r) => {
         setStats((r.stats as Record<string, unknown>) ?? null);
+        setStatsError(Boolean(r.error));
       })
+      .catch(() => setStatsError(true))
       .finally(() => setLoading(false));
-  }, [currentTenant?.id, user?.id, getDashboardStats]);
+  }, [currentTenant?.id, user?.id, getDashboardStats, reloadKey]);
 
   useEffect(() => {
     if (!currentTenant?.id) return;
+    setBonnieLoading(true);
+    setBonnieError(false);
     void fetch(`/api/bonnie/outcomes?tenantId=${currentTenant.id}&limit=5`)
       .then((r) => r.json())
       .then((data) => {
@@ -115,19 +143,23 @@ export function AttentionFirstDashboard() {
             .filter((o) => !isTechnicalJargonText(o.label))
         );
       })
-      .catch(() => {});
-  }, [currentTenant?.id]);
+      .catch(() => setBonnieError(true))
+      .finally(() => setBonnieLoading(false));
+  }, [currentTenant?.id, reloadKey]);
 
   useEffect(() => {
     if (!currentTenant?.id) return;
+    setActivityLoading(true);
+    setActivityError(false);
     void fetch(`/api/dashboard/workspace-activity?tenantId=${currentTenant.id}&limit=20`)
       .then((r) => r.json())
       .then((data) => {
         const items = (data?.activity || []) as WorkspaceActivityItem[];
         setWorkspaceActivity(items);
       })
-      .catch(() => {});
-  }, [currentTenant?.id]);
+      .catch(() => setActivityError(true))
+      .finally(() => setActivityLoading(false));
+  }, [currentTenant?.id, reloadKey]);
 
   const attentionItems: AttentionItem[] = [];
 
@@ -183,23 +215,6 @@ export function AttentionFirstDashboard() {
 
   const greeting = greetingForNow(user?.name || user?.email, t);
 
-  if (loading && !stats) {
-    return (
-      <div className="space-y-4 ac-module-section" role="status" aria-busy="true" aria-label="Loading home">
-        <div className="ac-workspace-panel p-5 ac-skeleton-pulse min-h-[88px]">
-          <div className="h-4 w-40 bg-[var(--ws-hover)] rounded" />
-          <div className="h-3 w-56 bg-[var(--ws-hover)] rounded mt-3" />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2].map((i) => (
-            <div key={i} className="ac-workspace-panel p-4 ac-skeleton-pulse min-h-[84px]" />
-          ))}
-        </div>
-        <div className="ac-workspace-panel p-4 ac-skeleton-pulse min-h-[120px]" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 ac-module-section ac-home-feed">
       {/* First viewport: greeting + money — one clear composition */}
@@ -207,17 +222,16 @@ export function AttentionFirstDashboard() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <p className={WORKSPACE.typography.sectionLabel}>{t('Home')}</p>
-            <h2 className="mt-1 text-[1.25rem] md:text-[1.375rem] font-semibold tracking-tight text-[var(--ws-text-primary,#fff)]">
+            <h2 className="mt-1 text-xl md:text-2xl font-semibold tracking-tight text-[var(--ws-text-primary,#fff)]">
               {greeting}
             </h2>
-            <p className="mt-1 text-[13px] text-[var(--ws-text-secondary)] line-clamp-2">
+            <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] line-clamp-2">
               {currentTenant?.name
                 ? `${currentTenant.name} — ${t('focus on what needs you, then let Bonnie handle the rest.')}`
                 : t('Focus on what needs you, then let Bonnie handle the rest.')}
             </p>
           </div>
-          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
-            <DashboardHomeLayoutToggle />
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/dashboard/bonnie"
               className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
@@ -233,25 +247,25 @@ export function AttentionFirstDashboard() {
             href="/dashboard/business/billing"
             className="rounded-[var(--ws-radius-lg)] border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-3 transition-colors hover:border-emerald-500/35"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
+            <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-emerald-400" aria-hidden />
               {t('Money in')}
             </p>
-            <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-emerald-400">
-              {formatCurrency(revenue)}
-            </p>
+            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : (
+              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-emerald-400">{formatCurrency(revenue)}</p>
+            )}
           </Link>
           <Link
             href="/dashboard/business/billing/manage"
             className="rounded-[var(--ws-radius-lg)] border border-amber-500/20 bg-amber-500/[0.06] px-3 py-3 transition-colors hover:border-amber-500/35"
           >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
+            <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
               <Receipt className="w-3.5 h-3.5 text-amber-400" aria-hidden />
               {t('To collect')}
             </p>
-            <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-amber-400">
-              {formatCurrency(outstanding)}
-            </p>
+            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : (
+              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-amber-400">{formatCurrency(outstanding)}</p>
+            )}
           </Link>
         </div>
       </header>
@@ -267,19 +281,36 @@ export function AttentionFirstDashboard() {
             {HUMAN_LABELS.needsAttention}
           </h3>
           {attentionItems.length > 0 ? (
-            <span className="text-[11px] font-medium text-[var(--ws-text-tertiary)] tabular-nums">
+            <span className="type-ui font-medium text-[var(--ws-text-tertiary)] tabular-nums">
               {Math.min(attentionItems.length, 6)} open
             </span>
           ) : null}
         </div>
-        {attentionItems.length === 0 ? (
-          <p className="text-[13px] text-[var(--ws-text-secondary)] flex items-start gap-2">
+        {loading && !stats ? (
+          <div className="space-y-2" role="status" aria-label={t('Loading attention items')}>
+            {[1, 2].map((item) => <div key={item} className="h-11 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" />)}
+          </div>
+        ) : statsError ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--ws-radius-lg)] bg-[var(--ws-hover)] px-3 py-3">
+            <p className="type-ui text-[var(--ws-text-secondary)]">{t('Some business totals could not be loaded.')}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((value) => value + 1)}
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--ws-radius-lg)] px-3 type-button text-[var(--ac-accent)] hover:bg-[var(--ws-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden />
+              {t('Retry')}
+            </button>
+          </div>
+        ) : attentionItems.length === 0 ? (
+          <p className="type-card-description text-[var(--ws-text-secondary)] flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden />
             {t('Nothing urgent right now — Bonnie is watching your business.')}
           </p>
         ) : (
+          <div>
           <ul className="space-y-2">
-            {attentionItems.slice(0, 6).map((item) => (
+            {attentionItems.slice(0, 4).map((item) => (
               <li key={item.id}>
                 <Link
                   href={item.href}
@@ -292,11 +323,11 @@ export function AttentionFirstDashboard() {
                 >
                   <item.icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-[var(--ws-text-primary,#fff)]">
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary,#fff)]">
                       {item.label}
                     </p>
                     {item.detail ? (
-                      <p className="text-[12px] text-[var(--ws-text-tertiary)]">{item.detail}</p>
+                      <p className="type-card-description text-[var(--ws-text-tertiary)]">{item.detail}</p>
                     ) : null}
                   </div>
                   <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)] shrink-0" aria-hidden />
@@ -304,6 +335,26 @@ export function AttentionFirstDashboard() {
               </li>
             ))}
           </ul>
+          {attentionItems.length > 4 ? (
+            <details className="mt-2 group">
+              <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-[var(--ws-radius-lg)] px-2 type-ui font-medium text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
+                <MoreHorizontal className="h-4 w-4" aria-hidden />
+                {t('Show remaining attention items')} ({attentionItems.length - 4})
+              </summary>
+              <ul className="mt-2 space-y-2">
+                {attentionItems.slice(4).map((item) => (
+                  <li key={item.id}>
+                    <Link href={item.href} className="flex min-h-11 items-center gap-3 rounded-[var(--ws-radius-lg)] bg-[var(--ws-hover)] px-3 py-2.5 type-ui text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]">
+                      <item.icon className="h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                      <span className="min-w-0 flex-1 line-clamp-2">{item.label}</span>
+                      <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+          </div>
         )}
       </section>
 
@@ -317,8 +368,17 @@ export function AttentionFirstDashboard() {
             <Bot className="w-4 h-4 text-teal-400" aria-hidden />
             {HUMAN_LABELS.whatBonnieDid}
           </h3>
-          {bonnieActions.length === 0 ? (
-            <p className="text-[13px] text-[var(--ws-text-secondary)]">
+          {bonnieLoading ? (
+            <div className="space-y-2" role="status" aria-label={t('Loading Bonnie activity')}>
+              {[1, 2, 3].map((item) => <div key={item} className="h-5 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" />)}
+            </div>
+          ) : bonnieError ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="type-ui text-[var(--ws-text-secondary)]">{t('Unable to load Bonnie activity.')}</p>
+              <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="min-h-11 px-2 type-button text-[var(--ac-accent)]">{t('Retry')}</button>
+            </div>
+          ) : bonnieActions.length === 0 ? (
+            <p className="type-card-description text-[var(--ws-text-secondary)]">
               {t('Recent Bonnie actions will show here as your workspace gets active.')}
             </p>
           ) : (
@@ -326,17 +386,20 @@ export function AttentionFirstDashboard() {
               {bonnieActions.map((action) => (
                 <li
                   key={action.id}
-                  className="flex items-start gap-2 text-[13px] text-[var(--ws-text-secondary)]"
+                  className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)]"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden />
-                  <span className="line-clamp-2">{action.label}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block line-clamp-2">{action.label}</span>
+                    <time className="mt-0.5 block type-caption text-[var(--ws-text-tertiary)]">{relativeTime(action.timestamp)}</time>
+                  </span>
                 </li>
               ))}
             </ul>
           )}
           <Link
             href="/dashboard/bonnie"
-            className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
+            className="inline-flex mt-4 type-ui font-medium text-teal-400 hover:text-teal-300"
           >
             {t('Open Bonnie')}
           </Link>
@@ -350,28 +413,32 @@ export function AttentionFirstDashboard() {
             <Activity className="w-4 h-4 text-teal-400" aria-hidden />
             {t('Recent activity')}
           </h3>
-          {workspaceActivity.length > 0 ? (
+          {activityLoading ? (
+            <div className="space-y-3" role="status" aria-label={t('Loading recent activity')}>
+              {[1, 2, 3].map((item) => <div key={item} className="h-10 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" />)}
+            </div>
+          ) : activityError ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="type-ui text-[var(--ws-text-secondary)]">{t('Unable to load recent activity.')}</p>
+              <button type="button" onClick={() => setReloadKey((value) => value + 1)} className="min-h-11 px-2 type-button text-[var(--ac-accent)]">{t('Retry')}</button>
+            </div>
+          ) : workspaceActivity.length > 0 ? (
             <ol className="relative border-l border-[var(--ws-border)] ml-2 space-y-3 max-h-[320px] overflow-y-auto pr-1">
-              {workspaceActivity.slice(0, 10).map((item) => (
+              {workspaceActivity.slice(0, 5).map((item) => (
                 <li key={item.id} className="ml-4 last:pb-0">
                   <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-teal-400 ring-4 ring-[var(--ws-panel)]" />
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-[var(--ws-text-primary,#fff)] line-clamp-2">
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary,#fff)] line-clamp-2">
                       {item.summary}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       {item.actor_display_name ? (
-                        <span className="inline-flex items-center text-[11px] text-[var(--ws-text-tertiary)]">
+                        <span className="inline-flex items-center type-ui text-[var(--ws-text-tertiary)]">
                           {item.actor_display_name}
                         </span>
                       ) : null}
-                      <time className="inline-block text-[11px] text-[var(--ws-text-tertiary)] tabular-nums">
-                        {new Date(item.created_at).toLocaleString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <time className="inline-block type-caption text-[var(--ws-text-tertiary)] tabular-nums">
+                        {relativeTime(item.created_at)}
                       </time>
                     </div>
                   </div>
@@ -383,13 +450,13 @@ export function AttentionFirstDashboard() {
               {recentActivity.map((item, i) => (
                 <li
                   key={`${item.text}-${i}`}
-                  className="flex items-start justify-between gap-3 text-[13px]"
+                  className="flex items-start justify-between gap-3 type-ui"
                 >
                   <span className="text-[var(--ws-text-secondary)] line-clamp-2">
                     {item.text || 'Update'}
                   </span>
                   {item.time ? (
-                    <span className="text-[11px] text-[var(--ws-text-tertiary)] shrink-0 tabular-nums">
+                    <span className="type-ui text-[var(--ws-text-tertiary)] shrink-0 tabular-nums">
                       {item.time}
                     </span>
                   ) : null}
@@ -397,23 +464,35 @@ export function AttentionFirstDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="text-[13px] text-[var(--ws-text-secondary)]">
+            <p className="type-card-description text-[var(--ws-text-secondary)]">
               {t('Invoices, deals, and messages will appear here as work moves forward.')}
             </p>
           )}
           <Link
             href="/dashboard/notifications"
-            className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
+            className="inline-flex mt-4 type-ui font-medium text-teal-400 hover:text-teal-300"
           >
             {t('View all activity')}
           </Link>
         </section>
       </div>
 
-      {/* Compact jump row — not a card grid of equal panels */}
-      <nav aria-label={t('Quick links')} className="flex flex-wrap gap-2">
-        {[
-          { label: 'Customers', href: '/dashboard/crm/workspace', icon: Target },
+      {/* One primary shortcut; the wider module set remains available on demand. */}
+      <nav aria-label={t('Quick actions')} className="flex flex-wrap items-start gap-2">
+        <Link
+          href="/dashboard/crm/workspace?quickAdd=true"
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--ws-radius-lg)] bg-[var(--ac-accent)] px-4 type-button text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] focus-visible:ring-offset-2"
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+          {t('Add customer')}
+        </Link>
+        <details className="group relative">
+          <summary className="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 type-button text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
+            <MoreHorizontal className="h-4 w-4" aria-hidden />
+            {t('More actions')}
+          </summary>
+          <div className="mt-2 grid min-w-[220px] gap-1 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] p-2 shadow-lg sm:absolute sm:left-0 sm:z-20">
+          {[
           { label: 'Communication', href: '/dashboard/comms', icon: Mail },
           { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: Receipt },
           { label: 'Schedule', href: '/dashboard/business/calendar', icon: Calendar },
@@ -421,12 +500,17 @@ export function AttentionFirstDashboard() {
           <Link
             key={item.href}
             href={item.href}
-            className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[12px] font-medium text-[var(--ws-text-secondary)] hover:border-teal-500/35 hover:text-[var(--ws-text-primary,#fff)] transition-colors"
+            className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] type-ui font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary,#fff)] transition-colors"
           >
             <item.icon className="w-3.5 h-3.5 text-teal-400" aria-hidden />
             {t(item.label)}
           </Link>
         ))}
+          </div>
+        </details>
+        <div className="ml-auto hidden sm:block">
+          <DashboardHomeLayoutToggle />
+        </div>
       </nav>
     </div>
   );

@@ -166,7 +166,7 @@ export function RevenueChart() {
                 borderColor: borderColor,
                 borderRadius: '8px',
                 color: textColor,
-                fontSize: '12px',
+                fontSize: 'var(--type-caption-size)',
               }}
               formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']}
             />

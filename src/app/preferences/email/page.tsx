@@ -81,13 +81,13 @@ function EmailPreferencesContent() {
     <main className="min-h-screen bg-[#060d1a] text-white px-4 py-12">
       <div className="max-w-xl mx-auto">
         <header className="mb-8">
-          <p className="text-cyan-400 text-sm font-semibold tracking-wide uppercase">AlphaClone Systems</p>
+          <p className="text-cyan-400 type-caption font-semibold tracking-wide uppercase">AlphaClone Systems</p>
           <h1 className="text-3xl font-bold mt-2">Email Preferences</h1>
-          {email && <p className="text-slate-400 mt-2 text-sm">{email}</p>}
+          {email && <p className="text-slate-400 mt-2 type-card-description">{email}</p>}
         </header>
 
-        {error && <p className="mb-4 text-red-400 text-sm">{error}</p>}
-        {message && <p className="mb-4 text-emerald-400 text-sm">{message}</p>}
+        {error && <p className="mb-4 text-red-400 type-card-description">{error}</p>}
+        {message && <p className="mb-4 text-emerald-400 type-card-description">{message}</p>}
 
         {prefs && (
           <div className="space-y-6">
@@ -115,7 +115,7 @@ function EmailPreferencesContent() {
                 <label key={cat.key} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
                   <span>
                     <span className="text-slate-200 block">{cat.label}</span>
-                    <span className="text-slate-500 text-xs">{cat.description}</span>
+                    <span className="text-slate-500 type-caption">{cat.description}</span>
                   </span>
                   <input
                     type="checkbox"
@@ -145,7 +145,7 @@ function EmailPreferencesContent() {
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="type-card-description text-slate-500 leading-relaxed">
               Account security, verification, and legally required transactional messages may still be delivered when necessary.
             </p>
           </div>

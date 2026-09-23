@@ -321,7 +321,7 @@ export function ProjectWorkspaceDrawer({
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-center gap-2 min-w-0">
               <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${getHealthColor(project.health)} animate-pulse`} />
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest truncate">
+              <span className="type-caption font-bold text-slate-400 uppercase tracking-widest truncate">
                 {project.name}
               </span>
             </div>
@@ -339,7 +339,7 @@ export function ProjectWorkspaceDrawer({
                 aria-selected={tab === id}
                 onClick={() => setTab(id)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors',
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-semibold whitespace-nowrap transition-colors',
                   tab === id
                     ? 'bg-[var(--brand-blue-600)] text-white'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5',
@@ -397,7 +397,7 @@ export function ProjectWorkspaceDrawer({
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center text-base font-bold text-white">{progress || 0}%</div>
                 </div>
-                <div className="text-sm text-slate-300 space-y-1">
+                <div className="type-ui text-slate-300 space-y-1">
                   <p><span className="text-slate-500">Stage:</span> {normalizedStage}</p>
                   {project.budget ? <p><span className="text-slate-500">Budget:</span> ${project.budget.toLocaleString()}</p> : null}
                 </div>
@@ -405,10 +405,10 @@ export function ProjectWorkspaceDrawer({
 
               {(clientEmail || clientName) && (
                 <div className="rounded-lg border border-white/5 bg-slate-900/40 p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Client</p>
-                  <p className="text-sm text-white font-semibold">{clientName || 'Linked client'}</p>
+                  <p className="type-caption font-bold uppercase tracking-widest text-slate-400 mb-1">Client</p>
+                  <p className="type-card-description text-white font-semibold">{clientName || 'Linked client'}</p>
                   {clientEmail ? (
-                    <button type="button" onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName}`))} className="text-xs text-[var(--brand-blue-300)] hover:underline">
+                    <button type="button" onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName}`))} className="type-ui text-[var(--brand-blue-300)] hover:underline">
                       {clientEmail}
                     </button>
                   ) : null}
@@ -416,16 +416,16 @@ export function ProjectWorkspaceDrawer({
               )}
 
               <div className="space-y-3">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Project notes</span>
+                <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Project notes</span>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {commentsLoading ? (
                     <div className="h-16 bg-slate-900/60 rounded animate-pulse" />
                   ) : comments.length === 0 ? (
-                    <p className="text-xs text-slate-500">No notes yet.</p>
+                    <p className="type-card-description text-slate-500">No notes yet.</p>
                   ) : (
                     comments.map((c) => (
-                      <div key={c.id} className="rounded-lg border border-white/5 bg-slate-900/60 p-3 text-sm text-slate-300">
-                        <p className="font-semibold text-white text-xs mb-1">{c.author_name}</p>
+                      <div key={c.id} className="rounded-lg border border-white/5 bg-slate-900/60 p-3 type-ui text-slate-300">
+                        <p className="font-semibold text-white type-card-description mb-1">{c.author_name}</p>
                         {c.content}
                       </div>
                     ))
@@ -435,16 +435,16 @@ export function ProjectWorkspaceDrawer({
                   <textarea
                     value={commentDraft}
                     onChange={(e) => setCommentDraft(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm resize-none min-h-[72px]"
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white type-ui resize-none min-h-[72px]"
                     placeholder="Add a project note…"
                   />
-                  <button type="submit" disabled={postingComment || !commentDraft.trim()} className="px-4 py-2 bg-[var(--brand-blue-600)] text-white rounded-xl text-sm font-bold disabled:opacity-50">
+                  <button type="submit" disabled={postingComment || !commentDraft.trim()} className="px-4 py-2 bg-[var(--brand-blue-600)] text-white rounded-xl type-ui font-bold disabled:opacity-50">
                     {postingComment ? 'Saving…' : 'Add note'}
                   </button>
                 </form>
               </div>
 
-              <a href="/dashboard/business/documents" className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl text-xs text-slate-300">
+              <a href="/dashboard/business/documents" className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl type-ui text-slate-300">
                 <FileText className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Open Document Hub
               </a>
@@ -472,9 +472,9 @@ export function ProjectWorkspaceDrawer({
           {tab === 'milestones' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Milestones</span>
+                <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Milestones</span>
                 {milestones.length > 0 && (
-                  <span className="text-xs font-bold text-[var(--brand-blue-400)]">
+                  <span className="type-caption font-bold text-[var(--brand-blue-400)]">
                     {milestones.filter((m) => m.checked).length}/{milestones.length} done
                   </span>
                 )}
@@ -483,7 +483,7 @@ export function ProjectWorkspaceDrawer({
                 {milestonesLoading ? (
                   [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-slate-900/60 rounded animate-pulse" />)
                 ) : milestones.length === 0 ? (
-                  <p className="text-sm text-slate-500 py-4 text-center">
+                  <p className="type-card-description text-slate-500 py-4 text-center">
                     No milestones yet. Add them when you want checkpoints — opening a project no longer plants unfinished ones.
                   </p>
                 ) : (
@@ -491,14 +491,14 @@ export function ProjectWorkspaceDrawer({
                     <div key={m.id} className="flex flex-wrap items-center gap-3 py-1">
                       <div className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => void toggleMilestone(m.id)}>
                         <input type="checkbox" checked={m.checked} readOnly className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800" />
-                        <span className={`text-sm ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>{m.label}</span>
+                        <span className={`type-ui ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>{m.label}</span>
                       </div>
                       <input
                         type="date"
                         value={toDateInput(m.dueDate)}
                         onChange={(e) => void updateMilestoneDueDate(m.id, e.target.value)}
                         title="Milestone due date — syncs to calendar"
-                        className="shrink-0 px-2 py-1 bg-slate-950 border border-white/10 rounded-lg text-white text-xs"
+                        className="shrink-0 px-2 py-1 bg-slate-950 border border-white/10 rounded-lg text-white type-caption"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
@@ -510,9 +510,9 @@ export function ProjectWorkspaceDrawer({
 
           {tab === 'timeline' && (
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">Task schedule by due date</p>
+              <p className="type-card-description text-slate-500">Task schedule by due date</p>
               {ganttTasks.length === 0 ? (
-                <p className="text-sm text-slate-500 py-8 text-center">Add tasks with due dates to see the timeline.</p>
+                <p className="type-card-description text-slate-500 py-8 text-center">Add tasks with due dates to see the timeline.</p>
               ) : (
                 <GanttChart tasks={ganttTasks} edges={[]} />
               )}
@@ -522,28 +522,28 @@ export function ProjectWorkspaceDrawer({
           {tab === 'team' && (
             <div className="space-y-5">
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Project team</span>
+                <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Project team</span>
                 {teamList.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {teamList.map((name, i) => (
-                      <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--brand-blue-600)]/20 text-sm text-white">
+                      <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--brand-blue-600)]/20 type-ui text-white">
                         <UsersIcon className="w-3.5 h-3.5" />
                         {name}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">No team members assigned — edit the project to add people.</p>
+                  <p className="type-card-description text-slate-500">No team members assigned — edit the project to add people.</p>
                 )}
               </div>
 
               <div className="space-y-2 rounded-lg border border-white/5 bg-slate-900/40 p-4">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Lifecycle stage</span>
-                <p className="text-sm text-white font-semibold">{normalizedStage}</p>
+                <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Lifecycle stage</span>
+                <p className="type-card-description text-white font-semibold">{normalizedStage}</p>
                 <select
                   value={normalizedStage}
                   onChange={(e) => void handleStageSelect(e.target.value as ProjectStage)}
-                  className="w-full mt-2 px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-sm text-white"
+                  className="w-full mt-2 px-3 py-2 bg-slate-950 border border-white/10 rounded-xl type-ui text-white"
                 >
                   {PROJECT_STAGES_ORDER.map((stage) => (
                     <option key={stage} value={stage} disabled={!availableStages.includes(stage) && stage !== normalizedStage}>
@@ -553,7 +553,7 @@ export function ProjectWorkspaceDrawer({
                   ))}
                   <option value="On Hold">On Hold</option>
                 </select>
-                <p className="text-[11px] text-slate-500 mt-2">
+                <p className="type-card-description text-slate-500 mt-2">
                   Stage changes are validated — missing requirements block forward moves.
                 </p>
               </div>
@@ -561,7 +561,7 @@ export function ProjectWorkspaceDrawer({
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/business/team')}
-                className="text-xs font-semibold text-[var(--brand-blue-300)] hover:underline"
+                className="type-caption font-semibold text-[var(--brand-blue-300)] hover:underline"
               >
                 Open team allocation →
               </button>
@@ -573,7 +573,7 @@ export function ProjectWorkspaceDrawer({
           <button
             type="button"
             onClick={() => setShareDialogOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-300)] text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-300)] type-caption font-semibold"
           >
             <Share2 className="w-3.5 h-3.5" />
             Share with client
@@ -581,7 +581,7 @@ export function ProjectWorkspaceDrawer({
           <button
             type="button"
             onClick={() => { onEdit(project); onClose(); }}
-            className="px-4 py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-xl text-xs font-bold"
+            className="px-4 py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-xl type-caption font-bold"
           >
             Edit project
           </button>

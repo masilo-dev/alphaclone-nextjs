@@ -34,12 +34,12 @@ export const QuotaGate: React.FC<QuotaGateProps> = ({ resource, currentUsage, la
                 <p className="text-white font-semibold mb-1">
                     {label || String(resource)} limit reached
                 </p>
-                <p className="text-slate-400 text-sm mb-4">
+                <p className="text-slate-400 type-card-description mb-4">
                     Your {plan} plan includes {formatLimit(limit)}. Upgrade to increase your limit.
                 </p>
                 <Button
                     onClick={() => router.push('/dashboard/settings?tab=billing')}
-                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-sm px-4 py-2"
+                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold type-ui px-4 py-2"
                 >
                     Upgrade Plan
                 </Button>
@@ -50,7 +50,7 @@ export const QuotaGate: React.FC<QuotaGateProps> = ({ resource, currentUsage, la
     return (
         <>
             {isNear && (
-                <div className="mb-3 flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                <div className="mb-3 flex items-center gap-2 type-caption text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
                     <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>
                         {currentUsage} / {formatLimit(limit)} {label || String(resource)} used.{' '}

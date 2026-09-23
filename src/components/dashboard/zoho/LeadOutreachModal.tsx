@@ -106,7 +106,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white tracking-tight">AI Growth Agent: Lead Discovery</h2>
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
+                            <p className="type-caption font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -122,7 +122,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                 <button
                                     key={provider.id}
                                     onClick={() => setSelectedProvider(provider)}
-                                    className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                    className={`px-4 py-2 rounded-2xl type-caption font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
                                         ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
                                         : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
                                         }`}
@@ -133,7 +133,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         </div>
                     )}
                     {availableProviders.length === 0 && (
-                        <div className="text-xs text-gray-500 mb-2">
+                        <div className="type-caption text-gray-500 mb-2">
                             No email providers connected. Please connect Zoho, Outlook, or Gmail in Settings → Integrations.
                         </div>
                     )}
@@ -152,7 +152,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                         <button 
                             type="submit"
                             disabled={searching || !query}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold type-ui transition-all shadow-lg flex items-center gap-2"
                         >
                             {searching ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                             <span>Discovery</span>
@@ -168,14 +168,14 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                 <Loader2 size={48} className="animate-spin text-teal-500" />
                                 <Sparkles size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-400 animate-pulse" />
                             </div>
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-teal-400">Scanning High-Intent Signals...</p>
+                            <p className="type-caption font-black uppercase tracking-caps text-teal-400">Scanning High-Intent Signals...</p>
                         </div>
                     ) : results.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-30 italic">
                             <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
                                 <Globe size={32} />
                             </div>
-                            <p className="text-sm">Initiate a global intelligence search to uncover potential leads.</p>
+                            <p className="type-card-description">Initiate a global intelligence search to uncover potential leads.</p>
                         </div>
                     ) : (
                         results.map(lead => (
@@ -196,23 +196,23 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                             <div>
                                                 <h3 className="font-bold text-white text-lg">{lead.businessName}</h3>
                                                 <div className="flex items-center gap-3 mt-0.5">
-                                                    <div className="flex items-center gap-1 text-xs font-bold text-teal-400 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 type-caption font-bold text-teal-400 uppercase tracking-widest">
                                                         <Briefcase size={10} />
                                                         <span>{lead.industry}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 type-caption font-bold text-gray-500 uppercase tracking-widest">
                                                         <MapPin size={10} />
                                                         <span>{lead.location}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-400 leading-relaxed font-medium">{lead.notes}</p>
+                                        <p className="type-card-description text-gray-400 leading-relaxed font-medium">{lead.notes}</p>
                                     </div>
 
                                     <div className="flex md:flex-col gap-2 shrink-0">
                                         {syncedIds.has(lead.id!) ? (
-                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black text-xs uppercase tracking-widest">
+                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black type-caption uppercase tracking-widest">
                                                 <CheckCircle2 size={14} />
                                                 <span>Fully Synced</span>
                                             </div>
@@ -220,7 +220,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                             <button 
                                                 onClick={() => handleSyncAndEngage(lead)}
                                                 disabled={!!syncing}
-                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
+                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
                                             >
                                                 {syncing === lead.id ? (
                                                     <>
@@ -235,7 +235,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                                 )}
                                             </button>
                                         )}
-                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border border-white/5 transition-all">
+                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest border border-white/5 transition-all">
                                             Quick View
                                         </button>
                                     </div>
@@ -247,12 +247,12 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
 
                 {/* Footer Info */}
                 <div className="p-4 bg-gray-950/80 border-t border-white/5 flex items-center justify-between px-8">
-                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest">
+                    <div className="flex items-center gap-2 type-caption font-bold text-gray-600 uppercase tracking-widest">
                         <CheckCircle2 size={14} className="text-teal-500" />
                         <span>Connected to Zoho CRM & AlphaClone Native Storage</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
+                        <span className="type-caption font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
                     </div>
                 </div>
             </motion.div>

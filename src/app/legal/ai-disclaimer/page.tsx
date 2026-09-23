@@ -30,7 +30,7 @@ export default function Page() {
     >
       <section id="what-is-bonnie" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">What Bonnie AI is</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           Bonnie AI is an automation assistant built on Anthropic's Claude API. It helps draft, summarize, and
           automate work, but it is not a professional advisor.
         </p>
@@ -38,7 +38,7 @@ export default function Page() {
 
       <section id="no-advice" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">No professional advice</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           Bonnie AI does not provide legal, financial, medical, tax, or regulatory advice. You must use your own
           professional judgment and seek expert review where required.
         </p>
@@ -46,7 +46,7 @@ export default function Page() {
 
       <section id="accuracy" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Accuracy is not guaranteed</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           AI systems can make mistakes, hallucinate facts, or generate outdated content. Always verify important
           outputs before using them.
         </p>
@@ -54,7 +54,7 @@ export default function Page() {
 
       <section id="responsibility" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">User responsibility</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           You are responsible for reviewing all AI-generated emails, contracts, invoices, and social posts before
           sending or publishing them.
         </p>
@@ -62,7 +62,7 @@ export default function Page() {
 
       <section id="liability" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">No liability</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           Alphaclone Systems, LLC is not liable for decisions made based on Bonnie AI output or for losses caused by
           reliance on unverified AI content.
         </p>
@@ -70,7 +70,7 @@ export default function Page() {
 
       <section id="data" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Data sent to AI</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           User inputs are sent to Anthropic's API and are subject to Anthropic's privacy policy at{' '}
           <a href="https://anthropic.com/privacy" className="text-teal-300 hover:underline" target="_blank" rel="noreferrer">
             anthropic.com/privacy
@@ -80,7 +80,7 @@ export default function Page() {
 
       <section id="prohibited" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Prohibited AI uses</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           You may not use Bonnie AI to generate spam, illegal content, deceptive content, or content that violates any
           third-party terms of service.
         </p>
@@ -88,7 +88,7 @@ export default function Page() {
 
       <section id="feedback" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Feedback</h2>
-        <p className="text-sm leading-7 text-slate-300">
+        <p className="type-card-description leading-7 text-slate-300">
           If Bonnie AI generates an error or something looks wrong, please report it to{' '}
           <a href="mailto:support@alphaclonesystems.com" className="text-teal-300 hover:underline">support@alphaclonesystems.com</a>.
         </p>

@@ -49,7 +49,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
         <div className="overflow-y-auto px-4 py-3 space-y-5">
           {groups.map((group) => (
             <section key={group.id} aria-labelledby={`more-group-${group.id}`}>
-              <h3 id={`more-group-${group.id}`} className="text-[11px] font-semibold tracking-wide text-[var(--text-muted)] mb-2">
+              <h3 id={`more-group-${group.id}`} className="type-caption font-semibold tracking-wide text-[var(--text-muted)] mb-2">
                 {group.label}
               </h3>
               <ul className="grid grid-cols-1 gap-1">
@@ -61,7 +61,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                       <button
                         type="button"
                         onClick={() => go(item.href)}
-                        className="native-tap w-full flex items-center gap-3 min-h-14 px-3 rounded-[12px] text-left text-sm text-[var(--text-primary)] hover:bg-[var(--surface-hover)] active:scale-[0.99]"
+                        className="native-tap w-full flex items-center gap-3 min-h-14 px-3 rounded-[12px] text-left type-ui text-[var(--text-primary)] hover:bg-[var(--surface-hover)] active:scale-[0.99]"
                       >
                         <span className="w-10 h-10 rounded-xl bg-[color-mix(in_srgb,var(--ac-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--ac-accent)_20%,transparent)] flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
@@ -69,7 +69,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                         <span className="min-w-0 flex-1">
                           <span className="block font-medium truncate">{item.label}</span>
                           {capability.level === 'DESKTOP' ? (
-                            <span className="block text-[11px] leading-4 text-[var(--text-muted)]">Use on laptop</span>
+                            <span className="block type-ui leading-4 text-[var(--text-muted)]">Use on laptop</span>
                           ) : null}
                         </span>
                       </button>

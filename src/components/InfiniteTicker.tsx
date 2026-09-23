@@ -18,7 +18,7 @@ const InfiniteTicker: React.FC = () => {
                 {/* First set of items */}
                 <div className="flex shrink-0 gap-16 px-8 items-center">
                     {items.map((item, i) => (
-                        <span key={i} className="text-slate-900 font-bold text-sm tracking-widest uppercase flex items-center gap-4">
+                        <span key={i} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
                             <span className="w-2 h-2 bg-slate-900 rounded-full" />
                         </span>
@@ -28,7 +28,7 @@ const InfiniteTicker: React.FC = () => {
                 {/* Duplicate set for seamless loop */}
                 <div className="flex shrink-0 gap-16 px-8 items-center">
                     {items.map((item, i) => (
-                        <span key={`dup-${i}`} className="text-slate-900 font-bold text-sm tracking-widest uppercase flex items-center gap-4">
+                        <span key={`dup-${i}`} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
                             <span className="w-2 h-2 bg-slate-900 rounded-full" />
                         </span>
@@ -38,7 +38,7 @@ const InfiniteTicker: React.FC = () => {
                 {/* Third set just in case of wide screens */}
                 <div className="flex shrink-0 gap-16 px-8 items-center">
                     {items.map((item, i) => (
-                        <span key={`dup2-${i}`} className="text-slate-900 font-bold text-sm tracking-widest uppercase flex items-center gap-4">
+                        <span key={`dup2-${i}`} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
                             <span className="w-2 h-2 bg-slate-900 rounded-full" />
                         </span>

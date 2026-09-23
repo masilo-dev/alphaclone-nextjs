@@ -52,15 +52,15 @@ export default function RevenueMomentumCard() {
               <Zap className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Revenue Momentum</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Current sales pace and collection pressure</p>
+              <h3 className="type-caption font-black uppercase tracking-widest text-slate-400">Revenue Momentum</h3>
+              <p className="type-card-description text-slate-500 mt-0.5">Current sales pace and collection pressure</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             {trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
             {trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
             {trend === 'flat' && <Minus className="w-4 h-4 text-slate-500" />}
-            <span className={`text-xs font-bold uppercase ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-slate-500'}`}>
+            <span className={`type-caption font-bold uppercase ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-slate-500'}`}>
               {trend}
             </span>
           </div>
@@ -73,15 +73,15 @@ export default function RevenueMomentumCard() {
             {displayScore}
           </motion.span>
           <div className="mb-2">
-            <p className="text-[10px] text-slate-500 font-bold uppercase leading-none">Momentum</p>
-            <p className="text-[10px] text-slate-500 font-bold uppercase leading-none">Score</p>
+            <p className="type-caption text-slate-500 font-bold uppercase leading-none">Momentum</p>
+            <p className="type-caption text-slate-500 font-bold uppercase leading-none">Score</p>
           </div>
         </div>
 
         <div className="space-y-3">
           {/* Nudge Box */}
           <div className="rounded-lg bg-slate-950/45 p-3 border border-white/5">
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="type-card-description text-slate-300 leading-relaxed">
               {nudge}
             </p>
           </div>
@@ -89,16 +89,16 @@ export default function RevenueMomentumCard() {
           {/* Mini Stats Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center">
-              <p className="text-[10px] text-slate-500 font-medium mb-0.5">Leads</p>
-              <p className="text-xs font-bold text-white">+{breakdown.leadsContacted}</p>
+              <p className="type-card-description text-slate-500 font-medium mb-0.5">Leads</p>
+              <p className="type-card-description font-bold text-white">+{breakdown.leadsContacted}</p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-slate-500 font-medium mb-0.5">Deals</p>
-              <p className="text-xs font-bold text-white">+{breakdown.dealsAdvanced}</p>
+              <p className="type-card-description text-slate-500 font-medium mb-0.5">Deals</p>
+              <p className="type-card-description font-bold text-white">+{breakdown.dealsAdvanced}</p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-slate-500 font-medium mb-0.5">Invoices</p>
-              <p className="text-xs font-bold text-white">+{breakdown.invoicesSent}</p>
+              <p className="type-card-description text-slate-500 font-medium mb-0.5">Invoices</p>
+              <p className="type-card-description font-bold text-white">+{breakdown.invoicesSent}</p>
             </div>
           </div>
         </div>

@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
                 <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
                     <Loader2 className="w-10 h-10 text-teal-400 animate-spin mx-auto mb-6" />
                     <h2 className="text-xl font-bold text-white mb-2">Verifying your reset link…</h2>
-                    <p className="text-slate-400 text-sm">Just a moment while we securely open your password reset session.</p>
+                    <p className="text-slate-400 type-card-description">Just a moment while we securely open your password reset session.</p>
                 </div>
             </div>
         );
@@ -202,21 +202,21 @@ export default function ResetPasswordPage() {
                         </div>
 
                         <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
+                            <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <div className={`flex items-center gap-2 text-xs ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 type-caption ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     12+ Characters
                                 </div>
-                                <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 type-caption ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Uppercase
                                 </div>
-                                <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 type-caption ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Number
                                 </div>
-                                <div className={`flex items-center gap-2 text-xs ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`flex items-center gap-2 type-caption ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     Special Char
                                 </div>
@@ -225,7 +225,7 @@ export default function ResetPasswordPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2">
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>

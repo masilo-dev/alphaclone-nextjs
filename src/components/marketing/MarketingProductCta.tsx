@@ -11,7 +11,7 @@ export default function MarketingProductCta({
   return (
     <div className="mt-10 rounded-[var(--marketing-radius-lg)] border border-[rgba(20,184,166,0.28)] bg-[var(--marketing-surface)] p-6 sm:p-8">
       <h2 className="text-xl font-bold text-[var(--marketing-text-primary)] mb-2">{title}</h2>
-      <p className="text-sm text-[var(--marketing-text-secondary)] mb-6 leading-relaxed">{description}</p>
+      <p className="type-caption text-[var(--marketing-text-secondary)] mb-6 leading-relaxed">{description}</p>
       <CtaPair />
     </div>
   );

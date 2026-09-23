@@ -30,16 +30,16 @@ export default function PromotionMonthBanner({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
+          <p className="flex items-center gap-2 type-caption font-bold uppercase tracking-wider text-blue-700">
             <CalendarCheck className="h-3.5 w-3.5" aria-hidden />
             {copy.eyebrow}
           </p>
           <p className="mt-1 text-base sm:text-lg font-bold text-slate-950 font-marketing-heading">{copy.title}</p>
-          <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-3xl">{copy.body}</p>
+          <p className="mt-2 type-card-description text-slate-600 leading-relaxed max-w-3xl">{copy.body}</p>
         </div>
         <Link
           href={`${TRIAL_HREF}&plan=enterprise`}
-          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-[#0878f9] hover:bg-[#075fc7] px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-sm"
+          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-[#0878f9] hover:bg-[#075fc7] px-4 py-2.5 type-ui font-semibold text-white transition-colors shadow-sm"
         >
           Explore {PREMIUM_UNLIMITED.planName}
         </Link>

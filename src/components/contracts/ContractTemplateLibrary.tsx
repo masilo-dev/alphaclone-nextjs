@@ -247,14 +247,14 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
           <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
             <FileText className="text-violet-400" size={20} /> Contract Templates
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">Starter templates — clone into a new draft instantly</p>
+          <p className="type-card-description text-slate-400 mt-0.5">Starter templates — clone into a new draft instantly</p>
         </div>
         <input
           type="text"
           placeholder="Search templates..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 w-full sm:w-64"
+          className="px-3 py-2 bg-slate-900 border border-white/10 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 w-full sm:w-64"
         />
       </div>
 
@@ -274,16 +274,16 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-white">{template.title}</p>
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${colorClass}`}>
+                      <p className="type-card-description font-bold text-white">{template.title}</p>
+                      <span className={`type-caption font-black uppercase px-2 py-0.5 rounded-full border ${colorClass}`}>
                         {template.category}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5 truncate">{template.description}</p>
+                    <p className="type-card-description text-slate-400 mt-0.5 truncate">{template.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-slate-500">~{template.estimatedPages}p</span>
+                  <span className="type-ui text-slate-500">~{template.estimatedPages}p</span>
                   {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
                 </div>
               </div>
@@ -292,26 +292,26 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                 <div className="border-t border-white/5">
                   <div className="px-5 py-3 flex flex-wrap gap-2 border-b border-white/5 bg-white/[0.01]">
                     {template.tags.map(tag => (
-                      <span key={tag} className="text-[10px] font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">{tag}</span>
+                      <span key={tag} className="type-ui font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">{tag}</span>
                     ))}
                     <div className="ml-auto flex gap-2">
                       <button
                         onClick={() => handleCopy(template)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-white/10 hover:bg-white/5 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-slate-300 border border-white/10 hover:bg-white/5 transition-all"
                       >
                         <Copy size={12} /> Copy Text
                       </button>
                       {onUseTemplate && (
                         <button
                           onClick={() => onUseTemplate(template)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 transition-all"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-white bg-violet-600 hover:bg-violet-500 transition-all"
                         >
                           <Plus size={12} /> Use Template
                         </button>
                       )}
                     </div>
                   </div>
-                  <pre className="px-5 py-4 text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-slate-950/40">
+                  <pre className="px-5 py-4 type-caption text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-slate-950/40">
                     {template.body}
                   </pre>
                 </div>

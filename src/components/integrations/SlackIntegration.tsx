@@ -128,25 +128,25 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Slack Integration</h3>
-              <p className="text-sm text-slate-400">Connected to {status.teamName}</p>
+              <p className="type-caption text-slate-400">Connected to {status.teamName}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-green-400">
             <CheckCircle className="w-4 h-4" />
-            <span className="text-sm">Connected</span>
+            <span className="type-ui">Connected</span>
           </div>
         </div>
 
         <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between type-ui">
             <span className="text-slate-400">Team ID:</span>
             <span className="text-slate-300 font-mono">{status.teamId}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between type-ui">
             <span className="text-slate-400">Bot User ID:</span>
             <span className="text-slate-300 font-mono">{status.botUserId}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between type-ui">
             <span className="text-slate-400">Last Sync:</span>
             <span className="text-slate-300">
               {status.lastSync ? new Date(status.lastSync).toLocaleDateString() : 'Never'}
@@ -159,19 +159,19 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 text-slate-300">
               <MessageSquare className="w-4 h-4 text-purple-400" />
-              <span className="text-sm">Lead Management</span>
+              <span className="type-ui">Lead Management</span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <Calendar className="w-4 h-4 text-purple-400" />
-              <span className="text-sm">Meeting Scheduling</span>
+              <span className="type-ui">Meeting Scheduling</span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <Users className="w-4 h-4 text-purple-400" />
-              <span className="text-sm">Team Notifications</span>
+              <span className="type-ui">Team Notifications</span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
               <Settings className="w-4 h-4 text-purple-400" />
-              <span className="text-sm">Workflow Automation</span>
+              <span className="type-ui">Workflow Automation</span>
             </div>
           </div>
         </div>
@@ -207,14 +207,14 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
               <div>
                 <h4 className="text-white font-medium mb-2">Slack Commands</h4>
                 <div className="bg-slate-800 rounded-lg p-3 space-y-2">
-                  <code className="text-sm text-purple-400">/alphaclone help</code>
-                  <p className="text-xs text-slate-400">Show all available commands</p>
+                  <code className="type-ui text-purple-400">/alphaclone help</code>
+                  <p className="type-card-description text-slate-400">Show all available commands</p>
                   
-                  <code className="text-sm text-purple-400">/lead create &lt;name&gt;</code>
-                  <p className="text-xs text-slate-400">Create a new lead</p>
+                  <code className="type-ui text-purple-400">/lead create &lt;name&gt;</code>
+                  <p className="type-card-description text-slate-400">Create a new lead</p>
                   
-                  <code className="text-sm text-purple-400">/meeting schedule &lt;title&gt;</code>
-                  <p className="text-xs text-slate-400">Schedule a meeting</p>
+                  <code className="type-ui text-purple-400">/meeting schedule &lt;title&gt;</code>
+                  <p className="type-card-description text-slate-400">Schedule a meeting</p>
                 </div>
               </div>
 
@@ -224,7 +224,7 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
                   type="text"
                   readOnly
                   value={`${window.location.origin}/api/slack/events`}
-                  className="w-full bg-slate-800 text-slate-300 px-3 py-2 rounded-lg text-sm font-mono"
+                  className="w-full bg-slate-800 text-slate-300 px-3 py-2 rounded-lg type-ui font-mono"
                 />
               </div>
 
@@ -246,19 +246,19 @@ export function SlackIntegration({ tenantId, onConnected }: SlackIntegrationProp
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white">Slack Integration</h3>
-          <p className="text-sm text-slate-400">
+          <p className="type-card-description text-slate-400">
             Connect your Slack workspace to manage leads and automate workflows
           </p>
         </div>
         <div className="flex items-center gap-2 text-slate-500">
           <AlertCircle className="w-4 h-4" />
-          <span className="text-sm">Not Connected</span>
+          <span className="type-ui">Not Connected</span>
         </div>
       </div>
 
       <div className="bg-slate-800/50 rounded-lg p-4 mb-6">
         <h4 className="text-white font-medium mb-3">What you can do with Slack:</h4>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 type-ui text-slate-300">
           <li className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
             Create and manage leads using slash commands

@@ -93,7 +93,7 @@ export default function MarketingOutreachPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Outreach</h1>
-            <p className="text-[13px] text-[var(--ws-text-secondary)] mt-0.5">
+            <p className="type-card-description text-[var(--ws-text-secondary)] mt-0.5">
               Track who you contacted, who replied, and what needs follow-up.
             </p>
           </div>
@@ -116,8 +116,8 @@ export default function MarketingOutreachPage() {
 
         {!currentTenant?.id ? (
           <div className="ac-workspace-panel p-8 text-center">
-            <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">Select a workspace to open Outreach</h2>
-            <p className="mt-2 text-[13px] text-[var(--ws-text-secondary)]">Outreach is workspace-specific. Choose a workspace from the top bar, then your pipeline and recipient list will appear here.</p>
+            <h2 className="type-ui font-semibold text-[var(--ws-text-primary)]">Select a workspace to open Outreach</h2>
+            <p className="mt-2 type-card-description text-[var(--ws-text-secondary)]">Outreach is workspace-specific. Choose a workspace from the top bar, then your pipeline and recipient list will appear here.</p>
           </div>
         ) : null}
 
@@ -129,11 +129,11 @@ export default function MarketingOutreachPage() {
           <>
             {/* Pipeline */}
             <section>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Pipeline</h2>
+              <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Pipeline</h2>
               <div className="ac-workspace-panel p-4 flex flex-wrap items-center gap-1">
                 {PIPELINE_STAGES.map((stage, i) => (
                   <React.Fragment key={stage.id}>
-                    <span className="text-[11px] font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-slate-800/50">
+                    <span className="type-ui font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-slate-800/50">
                       {stage.label}
                     </span>
                     {i < PIPELINE_STAGES.length - 1 ? (
@@ -142,7 +142,7 @@ export default function MarketingOutreachPage() {
                   </React.Fragment>
                 ))}
               </div>
-              <p className="text-[11px] text-[var(--ws-text-secondary)] mt-2">
+              <p className="type-card-description text-[var(--ws-text-secondary)] mt-2">
                 Marketing actions move CRM records through these stages.{' '}
                 <Link href="/dashboard/crm" className="text-teal-400 hover:text-teal-300">
                   View CRM →
@@ -152,7 +152,7 @@ export default function MarketingOutreachPage() {
 
             {/* Today KPIs */}
             <section>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Today</h2>
+              <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)] mb-3">Today</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
                   { label: 'Sent', value: data?.today.outreachSent ?? 0 },
@@ -161,7 +161,7 @@ export default function MarketingOutreachPage() {
                   { label: 'Meetings', value: data?.today.meetingsBooked ?? 0 },
                 ].map((kpi) => (
                   <div key={kpi.label} className="ac-workspace-panel p-3 text-center">
-                    <p className="text-[10px] uppercase tracking-wide text-[var(--ws-text-secondary)]">{kpi.label}</p>
+                    <p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">{kpi.label}</p>
                     <p className="text-xl font-bold text-[var(--ws-text-primary)] mt-1">{kpi.value}</p>
                   </div>
                 ))}
@@ -171,33 +171,33 @@ export default function MarketingOutreachPage() {
             {/* Recent outreach table */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-[var(--ws-text-secondary)]">Recent outreach</h2>
-                <button type="button" onClick={load} className="text-[11px] text-slate-500 hover:text-slate-300 inline-flex items-center gap-1">
+                <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)]">Recent outreach</h2>
+                <button type="button" onClick={load} className="type-ui text-slate-500 hover:text-slate-300 inline-flex items-center gap-1">
                   <RefreshCw className="w-3 h-3" />
                   Refresh
                 </button>
               </div>
               {!(data?.recentOutreach.length) ? (
                 <div className="ac-workspace-panel p-8 text-center">
-                  <p className="text-[13px] text-[var(--ws-text-secondary)]">No outreach history yet.</p>
+                  <p className="type-card-description text-[var(--ws-text-secondary)]">No outreach history yet.</p>
                   <button
                     type="button"
                     onClick={() => setOutreachOpen(true)}
-                    className="inline-block mt-3 text-[12px] text-teal-400 hover:text-teal-300"
+                    className="inline-block mt-3 type-ui text-teal-400 hover:text-teal-300"
                   >
                     Send your first outreach
                   </button>
                 </div>
               ) : (
                 <div className="ac-workspace-panel overflow-hidden">
-                  <table className="w-full text-[12px]">
+                  <table className="w-full type-ui">
                     <thead>
                       <tr className="border-b border-white/5 text-[var(--ws-text-secondary)]">
-                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Company</th>
-                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Recipient</th>
-                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Status</th>
-                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Last action</th>
-                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide text-[10px]">Next step</th>
+                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Company</th>
+                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Recipient</th>
+                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Status</th>
+                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Last action</th>
+                        <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Next step</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -206,11 +206,11 @@ export default function MarketingOutreachPage() {
                           <td className="px-4 py-3 text-[var(--ws-text-primary)] font-medium">{row.company}</td>
                           <td className="px-4 py-3 text-[var(--ws-text-secondary)]">{row.recipient || '—'}</td>
                           <td className="px-4 py-3">
-                            <span className={cn('inline-flex px-2 py-0.5 rounded text-[10px] font-semibold uppercase border capitalize', statusTone(row.status))}>
+                            <span className={cn('inline-flex px-2 py-0.5 rounded type-caption font-semibold uppercase border capitalize', statusTone(row.status))}>
                               {row.status}
                             </span>
                             {row.error ? (
-                              <p className="text-[10px] text-red-400/80 mt-0.5 truncate max-w-[160px]" title={row.error}>
+                              <p className="type-card-description text-red-400/80 mt-0.5 truncate max-w-[160px]" title={row.error}>
                                 {row.error}
                               </p>
                             ) : null}
@@ -221,16 +221,16 @@ export default function MarketingOutreachPage() {
                               <button
                                 type="button"
                                 onClick={() => router.push('/dashboard/marketing/outreach')}
-                                className="text-[10px] font-semibold uppercase text-amber-400 hover:text-amber-300"
+                                className="type-caption font-semibold uppercase text-amber-400 hover:text-amber-300"
                               >
                                 Retry
                               </button>
                             ) : row.status === 'replied' ? (
-                              <Link href="/dashboard/outreach/inbox" className="text-[10px] font-semibold uppercase text-teal-400 hover:text-teal-300">
+                              <Link href="/dashboard/outreach/inbox" className="type-caption font-semibold uppercase text-teal-400 hover:text-teal-300">
                                 Review reply
                               </Link>
                             ) : (
-                              <span className="text-[11px] text-[var(--ws-text-secondary)]">{row.nextStep}</span>
+                              <span className="type-ui text-[var(--ws-text-secondary)]">{row.nextStep}</span>
                             )}
                           </td>
                         </tr>

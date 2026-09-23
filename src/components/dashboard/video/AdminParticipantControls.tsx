@@ -46,7 +46,7 @@ const AdminParticipantControls: React.FC<AdminParticipantControlsProps> = ({
             {/* Admin badge */}
             <div className="bg-teal-500/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center space-x-1">
                 <Shield className="w-3 h-3 text-white" />
-                <span className="text-xs text-white font-medium">Admin</span>
+                <span className="type-caption text-white font-medium">Admin</span>
             </div>
 
             {/* Mute button */}

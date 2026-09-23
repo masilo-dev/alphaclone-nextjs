@@ -75,7 +75,7 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Ghost Intelligence</span>
+          <span className="type-caption uppercase tracking-wider text-slate-500 font-semibold">Ghost Intelligence</span>
         </div>
         <button 
           onClick={handleRefresh}
@@ -96,7 +96,7 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
         </div>
 
         <div className="relative z-10">
-          <p className="text-[11px] text-blue-400/70 font-medium mb-1">Why now:</p>
+          <p className="type-card-description text-blue-400/70 font-medium mb-1">Why now:</p>
           
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -117,13 +117,13 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
                 animate={{ opacity: 1 }}
                 className="space-y-3"
               >
-                <p className="text-sm text-slate-200 leading-relaxed font-medium">
+                <p className="type-card-description text-slate-200 leading-relaxed font-medium">
                   {insight}
                 </p>
                 
                 <button 
                   onClick={onAction}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg type-caption font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
                   <Send className="w-3 h-3" />
                   Strike now

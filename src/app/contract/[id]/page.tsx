@@ -165,13 +165,13 @@ export default function PublicContractPage() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-white">{contract.title}</h1>
-                            <p className="text-sm text-slate-400">Provided by {contract.tenant?.name || 'AlphaClone'}</p>
+                            <p className="type-card-description text-slate-400">Provided by {contract.tenant?.name || 'AlphaClone'}</p>
                         </div>
                     </div>
                     {signed && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-400 rounded-lg border border-green-500/20">
                             <CheckCircle className="w-5 h-5" />
-                            <span className="font-bold text-sm">Signed & Active</span>
+                            <span className="font-bold type-ui">Signed & Active</span>
                         </div>
                     )}
                 </div>
@@ -193,7 +193,7 @@ export default function PublicContractPage() {
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">
                             <XCircle className="w-5 h-5" />
-                            <span className="font-bold text-sm">Contract Declined</span>
+                            <span className="font-bold type-ui">Contract Declined</span>
                         </div>
                     </div>
                 ) : !signed ? (
@@ -201,7 +201,7 @@ export default function PublicContractPage() {
                         {/* ESIGN Disclosure */}
                         <div className="mb-8 p-6 bg-slate-900 border border-slate-700 rounded-xl">
                             <div
-                                className="text-xs text-slate-400 overflow-y-auto max-h-48 mb-4 esign-disclosure-content"
+                                className="type-caption text-slate-400 overflow-y-auto max-h-48 mb-4 esign-disclosure-content"
                                 dangerouslySetInnerHTML={{ __html: esignatureComplianceService.ESIGN_DISCLOSURE }}
                             />
                             <label className="flex items-start gap-3 p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors">
@@ -212,13 +212,13 @@ export default function PublicContractPage() {
                                     className="mt-1 h-5 w-5 shrink-0 accent-teal-500 focus-visible:ring-2 focus-visible:ring-teal-400"
                                 />
                                 <div>
-                                    <p className="text-sm font-semibold text-white">I agree to the Electronic Signature Disclosure</p>
-                                    <p className="text-xs text-slate-400 mt-1">I consent to use electronic signatures for this transaction and agree to be legally bound by the terms of this document.</p>
+                                    <p className="type-card-description font-semibold text-white">I agree to the Electronic Signature Disclosure</p>
+                                    <p className="type-card-description text-slate-400 mt-1">I consent to use electronic signatures for this transaction and agree to be legally bound by the terms of this document.</p>
                                 </div>
                             </label>
                         </div>
 
-                        <label className="block text-sm font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
+                        <label className="block type-caption font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
                         <div className={`overflow-hidden bg-white rounded-xl transition-opacity ${!consentAccepted ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
                             <SignaturePad
                                 onSave={(data, fullName) => {
@@ -232,18 +232,18 @@ export default function PublicContractPage() {
                             />
                         </div>
                         <div className="mt-4">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Signer Email</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Signer Email</label>
                             <input
                                 type="email"
                                 value={signerEmail}
                                 onChange={(e) => setSignerEmail(e.target.value)}
                                 placeholder="name@company.com"
                                 disabled={!consentAccepted}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-50"
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-50"
                             />
-                            <p className="text-[11px] text-slate-500 mt-2">Use the same email that received this signing link.</p>
+                            <p className="type-card-description text-slate-500 mt-2">Use the same email that received this signing link.</p>
                         </div>
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 text-xs">
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 type-caption">
                             <span className="text-slate-500 flex items-center gap-1">
                                 <ShieldCheck className="w-3 h-3" /> Secure 256-bit SSL Cryptography Applied
                             </span>
@@ -277,18 +277,18 @@ export default function PublicContractPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowDeclineForm(true)}
-                                    className="text-sm text-slate-500 hover:text-red-400 transition-colors"
+                                    className="type-ui text-slate-500 hover:text-red-400 transition-colors"
                                 >
                                     Decline this contract instead
                                 </button>
                             ) : (
                                 <div className="space-y-3">
-                                    <label className="block text-sm font-medium text-slate-300">Reason for declining (optional)</label>
+                                    <label className="block type-label font-medium text-slate-300">Reason for declining (optional)</label>
                                     <textarea
                                         value={declineNote}
                                         onChange={(e) => setDeclineNote(e.target.value)}
                                         placeholder="Let us know why you're declining..."
-                                        className="w-full h-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                                        className="w-full h-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white resize-none"
                                     />
                                     <div className="flex gap-3">
                                         <button
@@ -303,7 +303,7 @@ export default function PublicContractPage() {
                                         <button
                                             type="button"
                                             onClick={() => setShowDeclineForm(false)}
-                                            className="px-4 py-3 text-slate-500 hover:text-white text-sm"
+                                            className="px-4 py-3 text-slate-500 hover:text-white type-ui"
                                         >
                                             Cancel
                                         </button>
@@ -316,12 +316,12 @@ export default function PublicContractPage() {
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
                         <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-400" />
                         <h2 className="text-lg font-semibold text-white">Your signature is recorded</h2>
-                        <p className="mx-auto mt-2 max-w-lg text-sm text-slate-400">The sender will receive your signed agreement. When all required signers have completed it, the authoritative agreement and completion receipt will be made available by the sender.</p>
+                        <p className="mx-auto mt-2 max-w-lg type-card-description text-slate-400">The sender will receive your signed agreement. When all required signers have completed it, the authoritative agreement and completion receipt will be made available by the sender.</p>
                     </div>
                 )}
             </div>
 
-            <div className="text-center mt-8 text-slate-500 text-sm">
+            <div className="text-center mt-8 text-slate-500 type-ui">
                 Securely powered by <span className="text-slate-400 font-semibold">AlphaClone Systems</span>
             </div>
         </div>

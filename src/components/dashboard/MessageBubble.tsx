@@ -35,20 +35,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                     {/* Sender Name */}
                     {!isOwn && showSenderName && (
-                        <span className="text-xs text-slate-400 ml-1 mb-1 flex items-center gap-2">
+                        <span className="type-caption text-slate-400 ml-1 mb-1 flex items-center gap-2">
                             {message.source === 'whatsapp' && (
                                 <MessageCircle className="w-3.5 h-3.5 text-green-500 fill-green-500/20" />
                             )}
                             {message.role === 'system' || message.senderName === 'Admin' || (message.senderId && message.senderId.includes('admin')) ? 'Admin' : message.senderName}
-                            {isUrgent && <span className="text-red-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
-                            {isHigh && <span className="text-orange-400 flex items-center text-xs font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}
+                            {isUrgent && <span className="text-red-400 flex items-center type-caption font-bold"><Flag size={10} className="mr-0.5 fill-red-400" /> URGENT</span>}
+                            {isHigh && <span className="text-orange-400 flex items-center type-caption font-bold"><Flag size={10} className="mr-0.5 fill-orange-400" /> HIGH PRIORITY</span>}
                         </span>
                     )}
 
                     {/* Message Bubble */}
                     <div
                         className={`
-              relative px-4 py-2 rounded-2xl text-sm shadow-sm border
+              relative px-4 py-2 rounded-2xl type-ui shadow-sm border
               ${isOwn
                                 ? 'bg-blue-600 text-white rounded-br-sm border-blue-500'
                                 : isUrgent
@@ -91,8 +91,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                                     <FileIcon size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-medium truncate">{att.name}</p>
-                                                    <p className="text-xs opacity-70">Attachment</p>
+                                                    <p className="type-card-description font-medium truncate">{att.name}</p>
+                                                    <p className="type-card-description opacity-70">Attachment</p>
                                                 </div>
                                                 <Download size={14} opacity={0.7} />
                                             </a>
@@ -109,14 +109,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                         {/* Thinking/Loading State (for AI) */}
                         {message.isThinking && (
-                            <div className="flex items-center gap-2 mt-2 text-xs opacity-70">
+                            <div className="flex items-center gap-2 mt-2 type-caption opacity-70">
                                 <Loader2 size={12} className="animate-spin" />
                                 <span>Thinking...</span>
                             </div>
                         )}
 
                         {/* Timestamp & Status (Inside bubble) */}
-                        <div className={`text-xs mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-200 justify-end' : 'text-slate-400'}`}>
+                        <div className={`type-caption mt-1 flex items-center gap-1 ${isOwn ? 'text-blue-200 justify-end' : 'text-slate-400'}`}>
                             {format(new Date(message.timestamp), 'h:mm a')}
                             {isOwn && (
                                 <CheckCheck

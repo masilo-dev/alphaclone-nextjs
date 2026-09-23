@@ -119,17 +119,17 @@ export default function RecordFilesTab({ clientId, dealId, companyId }: RecordFi
   }
 
   if (!files.length) {
-    return <p className="text-sm text-slate-500 py-8 text-center">No files linked to this record yet.</p>;
+    return <p className="type-card-description text-slate-500 py-8 text-center">No files linked to this record yet.</p>;
   }
 
   return (
     <div className="divide-y divide-white/5 bg-slate-900 border border-white/5 rounded-xl overflow-hidden">
       {files.map((file) => (
-        <div key={`${file.source}-${file.id}`} className="flex items-center justify-between px-4 py-3 text-sm">
+        <div key={`${file.source}-${file.id}`} className="flex items-center justify-between px-4 py-3 type-ui">
           <div className="flex items-center gap-2 min-w-0">
             <FileText className="w-4 h-4 text-teal-400 shrink-0" />
             <span className="text-white truncate">{file.name}</span>
-            <span className="text-[10px] uppercase text-slate-500 shrink-0">{file.source}</span>
+            <span className="type-caption uppercase text-slate-500 shrink-0">{file.source}</span>
           </div>
           {file.url && (
             <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-teal-400 hover:text-teal-300 shrink-0 ml-2">

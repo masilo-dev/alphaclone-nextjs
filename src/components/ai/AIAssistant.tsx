@@ -142,7 +142,7 @@ export function AIAssistant() {
                                             : 'bg-gray-100 text-gray-900'
                                     }`}
                                 >
-                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                    <p className="type-card-description whitespace-pre-wrap">{message.content}</p>
                                 </div>
                             </div>
                         ))}
@@ -165,7 +165,7 @@ export function AIAssistant() {
                                 onKeyPress={handleKeyPress}
                                 placeholder="Ask me anything..."
                                 rows={2}
-                                className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent type-ui"
                                 disabled={loading}
                             />
                             <button
@@ -176,7 +176,7 @@ export function AIAssistant() {
                                 <Send className="h-5 w-5" />
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">
+                        <p className="type-card-description text-gray-500 mt-2 text-center">
                             Powered by OpenAI & Anthropic
                         </p>
                     </div>

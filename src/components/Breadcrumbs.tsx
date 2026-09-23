@@ -24,7 +24,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
     };
 
     return (
-        <nav className={`flex items-center gap-2 text-sm ${className}`}>
+        <nav className={`flex items-center gap-2 type-ui ${className}`}>
             <button
                 onClick={() => handleClick('/dashboard')}
                 className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"

@@ -38,10 +38,10 @@ function StateShell({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{t(label)}</p>
+        <p className="type-card-description font-medium text-[var(--ws-text-secondary)] truncate">{t(label)}</p>
         <Icon className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" aria-hidden />
       </div>
-      <p className="mt-3 text-sm text-[var(--ws-text-muted)] leading-snug">{t(message)}</p>
+      <p className="mt-3 type-card-description text-[var(--ws-text-muted)] leading-snug">{t(message)}</p>
     </div>
   );
 }
@@ -139,7 +139,7 @@ export function PlatformKpiCard({
         compact={compact}
       />
       {estimated ? (
-        <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wide text-[var(--ws-text-muted)]">
+        <span className="absolute top-3 right-3 type-caption uppercase tracking-wide text-[var(--ws-text-muted)]">
           {t('Est.')}
         </span>
       ) : null}

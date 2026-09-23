@@ -76,10 +76,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               transition={{ delay: 0.3, duration: 0.8 }}
               className="flex flex-col items-center gap-2"
             >
-              <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em] text-white">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-caps text-white">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
-              <p className="text-xs uppercase tracking-[0.35em] text-teal-400/60 font-medium text-center px-4">
+              <p className="type-caption uppercase tracking-caps text-teal-400/60 font-medium text-center px-4">
                 {APP_TAGLINE}
               </p>
             </motion.div>

@@ -206,7 +206,7 @@ export default async function PlatformStatusPage() {
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div
-                  className={`mb-4 inline-flex items-center gap-2.5 rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] ${statusBadgeClass(report.status)}`}
+                  className={`mb-4 inline-flex items-center gap-2.5 rounded-full border px-4 py-1.5 type-caption font-bold uppercase tracking-caps ${statusBadgeClass(report.status)}`}
                 >
                   <StatusDot status={report.status} />
                   {report.label}
@@ -214,22 +214,22 @@ export default async function PlatformStatusPage() {
                 <h1 className="text-3xl font-black text-white sm:text-4xl">
                   System Status & Reliability
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                <p className="mt-2 max-w-2xl type-card-description leading-6 text-slate-300">
                   {report.summary}
                 </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4 text-right text-xs text-slate-400">
+              <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4 text-right type-caption text-slate-400">
                 <div className="font-semibold uppercase tracking-wider text-slate-500">
                   Last Verified
                 </div>
-                <time dateTime={report.checkedAt} className="mt-1 block font-mono text-sm text-slate-200">
+                <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-slate-200">
                   {new Date(report.checkedAt).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
                   })}
                 </time>
-                <div className="mt-0.5 text-[10px] text-slate-500">Auto-refreshes every 30s</div>
+                <div className="mt-0.5 type-ui text-slate-500">Auto-refreshes every 30s</div>
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default async function PlatformStatusPage() {
               >
                 {icon}
                 <div className="text-2xl font-black text-white">{value}</div>
-                <div className="mt-1 text-xs font-medium text-slate-400">{label}</div>
+                <div className="mt-1 type-caption font-medium text-slate-400">{label}</div>
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ export default async function PlatformStatusPage() {
               <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl font-bold text-white">Platform Components</h2>
-                  <p className="mt-0.5 text-xs text-slate-400">
+                  <p className="mt-0.5 type-card-description text-slate-400">
                     Real-time status across all AlphaClone services.
                   </p>
                 </div>
@@ -297,14 +297,14 @@ export default async function PlatformStatusPage() {
                     className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
-                      <div className="flex items-center gap-2.5 text-sm font-semibold text-white">
+                      <div className="flex items-center gap-2.5 type-ui font-semibold text-white">
                         <StatusDot status={check.status} />
                         <span>{check.name}</span>
                       </div>
-                      <p className="mt-1 pl-5 text-xs text-slate-400">{check.detail}</p>
+                      <p className="mt-1 pl-5 type-card-description text-slate-400">{check.detail}</p>
                     </div>
                     <span
-                      className={`w-fit rounded-full border px-3 py-1 text-xs font-bold capitalize ${statusRowBadge(check.status)}`}
+                      className={`w-fit rounded-full border px-3 py-1 type-caption font-bold capitalize ${statusRowBadge(check.status)}`}
                     >
                       {check.status === 'healthy'
                         ? 'Operational'
@@ -324,7 +324,7 @@ export default async function PlatformStatusPage() {
                   <Zap className="h-5 w-5 text-teal-400" />
                   <h2 className="text-lg font-bold text-white">Security & Compliance</h2>
                 </div>
-                <dl className="space-y-3.5 text-xs">
+                <dl className="space-y-3.5 type-caption">
                   {[
                     ['Data Encryption', 'In-transit & at-rest'],
                     ['Workspace Isolation', 'Strict per-tenant boundaries'],
@@ -346,7 +346,7 @@ export default async function PlatformStatusPage() {
                   <AlertCircle className="mt-0.5 h-5 w-5 text-teal-400 shrink-0" />
                   <div>
                     <h2 className="text-base font-bold text-white">Incident Log</h2>
-                    <p className="mt-1.5 text-xs leading-5 text-slate-400">
+                    <p className="mt-1.5 type-card-description leading-5 text-slate-400">
                       No active incidents or scheduled maintenance. All services are operating smoothly.
                     </p>
                   </div>
@@ -368,14 +368,14 @@ export default async function PlatformStatusPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-3 text-xs font-semibold text-emerald-200"
+                  className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-3 type-caption font-semibold text-emerald-200"
                 >
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                   {item}
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex flex-wrap gap-5 border-t border-white/10 pt-4 text-xs font-medium text-slate-400">
+            <div className="mt-6 flex flex-wrap gap-5 border-t border-white/10 pt-4 type-caption font-medium text-slate-400">
               <Link href="/sla" className="text-cyan-400 transition-colors hover:text-cyan-300">
                 SLA Agreement
               </Link>

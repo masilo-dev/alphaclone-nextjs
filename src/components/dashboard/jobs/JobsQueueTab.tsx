@@ -143,7 +143,7 @@ export default function JobsQueueTab() {
     >
       <div className="ac-scroll-full pb-24">
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading queue…</p>
+          <p className="p-6 type-card-description text-slate-500">Loading queue…</p>
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Clock}
@@ -158,11 +158,11 @@ export default function JobsQueueTab() {
                   <div className="flex items-start gap-3">
                     {statusIcon(row.status)}
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-medium text-white truncate">{row.detail}</p>
-                      <p className="text-[11px] text-[var(--ws-text-tertiary)] mt-0.5">
+                      <p className="type-card-description font-medium text-white truncate">{row.detail}</p>
+                      <p className="type-card-description text-[var(--ws-text-tertiary)] mt-0.5">
                         {row.kind.replace('_', ' ')} · {row.status}
                       </p>
-                      <p className="text-[11px] text-[var(--ws-text-tertiary)]">
+                      <p className="type-card-description text-[var(--ws-text-tertiary)]">
                         {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                       </p>
                     </div>
@@ -171,7 +171,7 @@ export default function JobsQueueTab() {
               ))}
             </ResponsiveTableMobile>
             <ResponsiveTableDesktop className="ac-workspace-panel overflow-hidden">
-              <table className="w-full min-w-[640px] text-sm ac-data-table">
+              <table className="w-full min-w-[640px] type-ui ac-data-table">
                 <thead>
                   <tr>
                     <th className="w-10" />
@@ -188,7 +188,7 @@ export default function JobsQueueTab() {
                       <td className="font-medium text-white max-w-[280px] truncate">{row.detail}</td>
                       <td className="text-[var(--ws-text-secondary)] capitalize">{row.kind.replace('_', ' ')}</td>
                       <td className="text-[var(--ws-text-secondary)] capitalize">{row.status}</td>
-                      <td className="text-[var(--ws-text-tertiary)] text-xs whitespace-nowrap">
+                      <td className="text-[var(--ws-text-tertiary)] type-table-cell whitespace-nowrap">
                         {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                       </td>
                     </tr>

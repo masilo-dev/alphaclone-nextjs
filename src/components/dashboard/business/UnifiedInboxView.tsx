@@ -52,7 +52,7 @@ const FOLDER_LABELS: Record<InboxFolder, string> = {
 };
 
 export const EMAIL_BODY_SURFACE_CLASS =
-  'prose prose-sm max-w-none bg-white text-slate-900 p-4 rounded-xl border border-white/10 text-sm leading-relaxed overflow-x-auto break-words [&_a]:text-teal-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_table]:max-w-full [&_blockquote]:border-slate-300 [&_blockquote]:text-slate-600';
+  'prose prose-sm max-w-none bg-white text-slate-900 p-4 rounded-xl border border-white/10 type-ui leading-relaxed overflow-x-auto break-words [&_a]:text-teal-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_table]:max-w-full [&_blockquote]:border-slate-300 [&_blockquote]:text-slate-600';
 import { refreshMicrosoftTokenIfNeeded, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { useZohoEmails } from '@/hooks/useZohoEmails';
@@ -800,7 +800,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-[var(--brand-blue-500)] mx-auto mb-3" />
-        <p className="text-sm text-slate-400">{t('Checking your email accounts…')}</p>
+        <p className="type-card-description text-slate-400">{t('Checking your email accounts…')}</p>
       </div>
     );
   }
@@ -812,7 +812,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
         <h2 className="text-lg font-bold text-white mb-2">
           {statusTimedOut ? t('We could not reach your email accounts') : t('Connect email to see your inbox')}
         </h2>
-        <p className="text-sm text-slate-400 mb-6">
+        <p className="type-card-description text-slate-400 mb-6">
           {statusTimedOut
             ? t('The connection check took too long. Your accounts may still be connected — check again before reconnecting.')
             : t('Link Outlook or Zoho to read mail here. When you send, pick Microsoft, Zoho, Brevo, SendGrid, or Resend — whatever you have connected.')}
@@ -821,7 +821,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           <button
             type="button"
             onClick={() => setStatusAttempt((n) => n + 1)}
-            className="mb-4 inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--brand-blue-500)]/40 bg-[var(--brand-blue-500)]/10 px-4 py-2 text-sm font-semibold text-[var(--brand-blue-200)] hover:bg-[var(--brand-blue-500)]/20"
+            className="mb-4 inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--brand-blue-500)]/40 bg-[var(--brand-blue-500)]/10 px-4 py-2 type-ui font-semibold text-[var(--brand-blue-200)] hover:bg-[var(--brand-blue-500)]/20"
           >
             {t('Check again')}
           </button>
@@ -830,14 +830,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           <button
             type="button"
             onClick={connectMicrosoft}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2 type-ui font-semibold text-white"
           >
             {t('Connect Microsoft 365')}
           </button>
           <button
             type="button"
             onClick={connectZoho}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-4 py-2 type-ui font-semibold text-white"
           >
             {t('Connect Zoho Mail')}
           </button>
@@ -860,7 +860,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               onClick={openNewEmail}
               disabled={!providerConnected}
               aria-label={t('Compose new email')}
-              className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand-blue-600)] px-3 py-2 text-sm font-bold text-white shadow-lg shadow-[var(--brand-blue-600)]/20 hover:bg-[var(--brand-blue-500)] disabled:opacity-40"
+              className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand-blue-600)] px-3 py-2 type-ui font-bold text-white shadow-lg shadow-[var(--brand-blue-600)]/20 hover:bg-[var(--brand-blue-500)] disabled:opacity-40"
             >
               <PenSquare className="h-4 w-4" />
               {t('Compose')}
@@ -870,7 +870,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <button
                 type="button"
                 onClick={() => switchProvider('microsoft')}
-                className={`rounded-md py-1.5 text-[11px] font-bold transition-all ${
+                className={`rounded-md py-1.5 type-ui font-bold transition-all ${
                   provider === 'microsoft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
@@ -879,7 +879,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <button
                 type="button"
                 onClick={() => switchProvider('zoho')}
-                className={`rounded-md py-1.5 text-[11px] font-bold transition-all ${
+                className={`rounded-md py-1.5 type-ui font-bold transition-all ${
                   provider === 'zoho' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`}
               >
@@ -897,7 +897,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     setSelectedId(null);
                     setThreadMessages([]);
                   }}
-                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold capitalize transition-all ${
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left type-ui font-semibold capitalize transition-all ${
                     folder === f
                       ? 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] ring-1 ring-[var(--brand-blue-500)]/30'
                       : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
@@ -905,7 +905,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 >
                   <span>{t(FOLDER_LABELS[f])}</span>
                   {f === 'inbox' && unreadCount > 0 ? (
-                    <span className="rounded-full bg-[var(--brand-blue-500)]/20 px-2 py-0.5 text-[10px] font-black text-[var(--brand-blue-300)]">
+                    <span className="rounded-full bg-[var(--brand-blue-500)]/20 px-2 py-0.5 type-ui font-black text-[var(--brand-blue-300)]">
                       {unreadCount}
                     </span>
                   ) : null}
@@ -917,7 +917,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <button
                 type="button"
                 onClick={refresh}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-white/20 hover:text-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 type-caption font-semibold text-slate-300 hover:border-white/20 hover:text-white"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Refresh
@@ -946,7 +946,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
             {/* Not-connected banner */}
             {!providerConnected && (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-2.5 text-xs text-amber-200">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-2.5 type-caption text-amber-200">
                 {provider === 'microsoft' ? (
                   <>
                     Outlook not connected.{' '}
@@ -963,7 +963,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
             {/* Error banner */}
             {active.error && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-200 space-y-1">
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5 type-caption text-rose-200 space-y-1">
                 <p>{active.error}</p>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={refresh} className="underline font-semibold">Retry</button>
@@ -986,13 +986,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('Search mail (press / to focus)…')}
                   aria-label="Search mail"
-                  className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full pl-8 pr-3 py-1.5 text-xs text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] focus:ring-1 focus:ring-[var(--brand-blue-500)]/20"
+                  className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full pl-8 pr-3 py-1.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] focus:ring-1 focus:ring-[var(--brand-blue-500)]/20"
                 />
               </div>
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(true)}
-                className="px-2 py-1.5 text-[10px] font-bold rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] flex items-center gap-1 shrink-0 transition-all"
+                className="px-2 py-1.5 type-ui font-bold rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] flex items-center gap-1 shrink-0 transition-all"
                 title="Keyboard Shortcuts (Press ?)"
               >
                 <Keyboard className="w-3 h-3 text-[var(--brand-blue-400)]" />
@@ -1006,13 +1006,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             {active.loading ? (
               <div className="p-6 flex flex-col items-center gap-2 text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin text-[var(--brand-blue-500)]" />
-                <span className="text-xs">{t('Loading')} {t(FOLDER_LABELS[folder]).toLowerCase()}…</span>
+                <span className="type-caption">{t('Loading')} {t(FOLDER_LABELS[folder]).toLowerCase()}…</span>
               </div>
             ) : filteredEmails.length === 0 ? (
-              <div className="p-6 text-sm text-slate-500 text-center space-y-2">
+              <div className="p-6 type-ui text-slate-500 text-center space-y-2">
                 <p>{providerConnected ? `${t('No messages in')} ${t(FOLDER_LABELS[folder]).toLowerCase()}.` : t('Connect this account first.')}</p>
                 {providerConnected && folder !== 'drafts' && (
-                  <button type="button" onClick={openNewEmail} className="text-[var(--brand-blue-400)] text-xs font-semibold underline">
+                  <button type="button" onClick={openNewEmail} className="text-[var(--brand-blue-400)] type-ui font-semibold underline">
                     Compose a new email
                   </button>
                 )}
@@ -1043,7 +1043,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   >
                     <div className="flex items-start gap-2.5">
                       {/* Avatar badge */}
-                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-md shadow-slate-950/50 mt-0.5 border border-white/10`}>
+                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-white type-ui font-black shrink-0 shadow-md shadow-slate-950/50 mt-0.5 border border-white/10`}>
                         {initials}
                       </div>
 
@@ -1054,14 +1054,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                               <span className="w-2 h-2 rounded-full bg-[var(--brand-blue-500)] shadow-[0_0_8px_rgba(53,106,244,0.9)] animate-pulse shrink-0" />
                             )}
                             <p
-                              className={`text-xs truncate ${
+                              className={`type-caption truncate ${
                                 isUnread ? 'font-black text-white' : 'font-semibold text-slate-200'
                               }`}
                             >
                               {senderDisplay}
                             </p>
                           </div>
-                          <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                          <span className="type-ui text-slate-400 font-medium shrink-0">
                             {new Date(email.receivedAt).toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
@@ -1069,26 +1069,26 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           </span>
                         </div>
 
-                        <p className={`text-[11px] truncate mb-1 ${
+                        <p className={`type-card-description truncate mb-1 ${
                           isUnread ? 'font-bold text-slate-100' : 'font-normal text-slate-400'
                         }`}>
                           {email.subject || '(no subject)'}
                         </p>
 
                         {email.snippet && (
-                          <p className="text-[11px] text-slate-400/80 truncate leading-tight mb-1.5">{email.snippet}</p>
+                          <p className="type-card-description text-slate-400/80 truncate leading-tight mb-1.5">{email.snippet}</p>
                         )}
 
                         <div className="flex flex-wrap gap-1 items-center">
                           {/* AI Intent Badge */}
-                          <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shadow-sm flex items-center gap-0.5 ${intent.color}`}>
+                          <span className={`type-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shadow-sm flex items-center gap-0.5 ${intent.color}`}>
                             <IntentIcon className="w-2.5 h-2.5 shrink-0" />
                             {intent.label}
                           </span>
 
                           {/* Has attachments */}
                           {email.hasAttachments && (
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10 flex items-center gap-0.5">
+                            <span className="type-caption font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10 flex items-center gap-0.5">
                               <Paperclip className="w-2.5 h-2.5 text-[var(--brand-blue-400)]" />
                               Attachment
                             </span>
@@ -1096,7 +1096,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
                           {/* Sent delivery badge */}
                           {folder === 'sent' && (
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-0.5">
+                            <span className="type-caption font-bold uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-0.5">
                               <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                               Delivered
                             </span>
@@ -1105,7 +1105,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
                             <span
                               key={lab}
-                              className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 shadow-sm"
+                              className="type-caption font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 shadow-sm"
                             >
                               {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
                             </span>
@@ -1113,7 +1113,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         </div>
 
                         {folder === 'drafts' && (
-                          <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-400">
+                          <span className="inline-block mt-1 type-caption font-bold uppercase tracking-wide text-amber-400">
                             Tap to edit draft
                           </span>
                         )}
@@ -1146,14 +1146,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   </button>
                   <div className="flex-1 min-w-0">
                     {/* Subject */}
-                    <h3 className="text-sm font-semibold text-white leading-snug mb-0.5">
+                    <h3 className="type-ui font-semibold text-white leading-snug mb-0.5">
                       {selectedEmail.subject || '(no subject)'}
                     </h3>
                     {/* From + provider badge */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
+                      <p className="type-card-description text-slate-400 truncate">{selectedEmail.from}</p>
                       <span
-                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                        className={`type-caption font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
                           provider === 'microsoft'
                             ? 'bg-blue-500/15 text-blue-300'
                             : 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)]'
@@ -1162,7 +1162,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border shrink-0 ${classificationColors[emailClassification]}`}
+                        className={`inline-flex items-center gap-1 type-caption font-bold uppercase px-1.5 py-0.5 rounded border shrink-0 ${classificationColors[emailClassification]}`}
                       >
                         {emailClassification === 'Unverified' && <AlertTriangle className="w-2.5 h-2.5" />}
                         {emailClassification}
@@ -1178,14 +1178,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           key={opt.id}
                           type="button"
                           onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                          className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/40 hover:bg-[var(--brand-blue-500)]/30"
+                          className="type-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/40 hover:bg-[var(--brand-blue-500)]/30"
                         >
                           {opt.label} ×
                         </button>
                       ))}
                       {/* Compact 'Tag' dropdown trigger — only unassigned labels shown on hover */}
                       <details className="relative">
-                        <summary className="list-none cursor-pointer text-[10px] font-bold text-slate-500 hover:text-[var(--brand-blue-400)] px-2 py-0.5 rounded-full border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30">
+                        <summary className="list-none cursor-pointer type-ui font-bold text-slate-500 hover:text-[var(--brand-blue-400)] px-2 py-0.5 rounded-full border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30">
                           + Tag
                         </summary>
                         <div className="absolute top-full left-0 mt-1 z-50 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-2 flex flex-col gap-1 min-w-[120px] shadow-xl">
@@ -1197,7 +1197,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                                 key={opt.id}
                                 type="button"
                                 onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                                className={`text-[11px] font-semibold text-left px-2.5 py-1 rounded-lg transition-colors ${
+                                className={`type-ui font-semibold text-left px-2.5 py-1 rounded-lg transition-colors ${
                                   assigned ? 'text-[var(--brand-blue-300)] bg-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-white'
                                 }`}
                               >
@@ -1210,12 +1210,12 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </div>
                     {senderKnown === false && (
                       <div className="mt-1.5 flex items-center gap-2">
-                        <span className="text-[10px] text-amber-400 font-semibold">{t('Unknown sender')}</span>
+                        <span className="type-ui text-amber-400 font-semibold">{t('Unknown sender')}</span>
                         <button
                           type="button"
                           onClick={handleCreateContactFromSender}
                           disabled={creatingContact}
-                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-[var(--brand-blue-600)]/20 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-600)]/30 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 type-caption font-bold uppercase px-2 py-0.5 rounded-lg bg-[var(--brand-blue-600)]/20 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-600)]/30 disabled:opacity-50"
                         >
                           {creatingContact ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -1234,7 +1234,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   <button
                     type="button"
                     onClick={() => setReaderExpanded((current) => !current)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/10 hover:bg-[var(--brand-blue-500)]/20 px-3 py-1.5 text-xs font-semibold text-[var(--brand-blue-200)]"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/10 hover:bg-[var(--brand-blue-500)]/20 px-3 py-1.5 type-caption font-semibold text-[var(--brand-blue-200)]"
                     aria-label={readerExpanded ? 'Exit full-window email reader' : 'Open email in full window'}
                     title={readerExpanded ? 'Exit full window (Esc)' : 'Full-window reader'}
                   >
@@ -1245,7 +1245,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     type="button"
                     onClick={() => openReply(false)}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] hover:bg-[var(--ws-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--ws-text-secondary)] disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] hover:bg-[var(--ws-hover)] px-3 py-1.5 type-caption font-semibold text-[var(--ws-text-secondary)] disabled:opacity-40"
                     title="Reply with provider picker"
                   >
                     <Reply className="w-3.5 h-3.5" />
@@ -1255,7 +1255,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     type="button"
                     onClick={() => openReply(true)}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 type-caption font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <ReplyAll className="w-3.5 h-3.5" />
                     {t('Reply all')}
@@ -1264,7 +1264,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     type="button"
                     onClick={openForward}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 type-caption font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <Forward className="w-3.5 h-3.5" />
                     {t('Forward')}
@@ -1273,7 +1273,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 type-caption font-semibold text-rose-300 disabled:opacity-40"
                   >
                     {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     {t('Delete')}
@@ -1283,7 +1283,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                       href={selectedEmail.webLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5 ml-auto"
+                      className="type-ui font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5 ml-auto"
                     >
                       Open in Outlook ↗
                     </a>
@@ -1301,18 +1301,18 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 {/* ── Attachment Card Grid (if email has attachments) ── */}
                 {selectedEmail?.hasAttachments && (
                   <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <p className="type-caption font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                       <Paperclip className="w-3.5 h-3.5 text-teal-400" />
                       Attached Files
                     </p>
-                    <p className="mt-2 text-xs text-slate-400">
+                    <p className="mt-2 type-card-description text-slate-400">
                       This message has attachments. Open it in the mail provider to download the original files.
                     </p>
                   </div>
                 )}
 
                 {threadLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <div className="flex items-center gap-2 type-ui text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t('Loading conversation…')}
                   </div>
@@ -1320,8 +1320,8 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   displayMessages.map((msg) => (
                     <div key={msg.id} className="border-b border-white/5 pb-6 last:border-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <p className="text-sm font-semibold text-white">{msg.from}</p>
-                        <span className="text-[10px] text-slate-500">
+                        <p className="type-card-description font-semibold text-white">{msg.from}</p>
+                        <span className="type-ui text-slate-500">
                           {new Date(msg.receivedAt).toLocaleString()}
                         </span>
                       </div>
@@ -1334,7 +1334,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </div>
                   ))
                 ) : loadingBody && provider === 'zoho' && !selectedEmail.body ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <div className="flex items-center gap-2 type-ui text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     {t('Loading message…')}
                   </div>
@@ -1354,7 +1354,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         type="button"
                         onClick={() => setReplyComposerOpen(true)}
                         disabled={!providerConnected}
-                        className="flex-1 text-left rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 text-sm text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:border-[var(--brand-blue-500)]/40 disabled:opacity-40"
+                        className="flex-1 text-left rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:border-[var(--brand-blue-500)]/40 disabled:opacity-40"
                       >
                         {t('Write a reply…')}
                       </button>
@@ -1362,7 +1362,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         type="button"
                         onClick={() => openReply(false)}
                         disabled={!providerConnected}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-3 py-2 type-caption font-bold text-white disabled:opacity-40"
                       >
                         <Reply className="w-3.5 h-3.5" />
                         {t('Reply')}
@@ -1372,7 +1372,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     <div className="p-4">
                       <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-3 space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                          <p className="type-caption font-bold uppercase text-slate-500 tracking-wider">
                             {provider === 'microsoft' && deliveryProvider === 'microsoft'
                               ? 'Quick reply via Outlook'
                               : 'Quick reply — or open full compose to send'}
@@ -1380,7 +1380,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           <button
                             type="button"
                             onClick={() => setReplyComposerOpen(false)}
-                            className="text-[10px] font-bold uppercase text-slate-500 hover:text-white"
+                            className="type-caption font-bold uppercase text-slate-500 hover:text-white"
                           >
                             {t('Hide reply')}
                           </button>
@@ -1396,7 +1396,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
                         {selectedEmail && (
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider inline-flex items-center gap-1 mr-1">
+                            <span className="type-caption font-bold uppercase text-slate-400 tracking-wider inline-flex items-center gap-1 mr-1">
                               <Sparkles className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                               {t('Suggestions')}
                             </span>
@@ -1405,7 +1405,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                                 key={chip.id}
                                 type="button"
                                 onClick={() => setInlineReply(chip.prompt)}
-                                className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-500)]/20 hover:text-white transition-all"
+                                className="type-ui font-medium px-2.5 py-1 rounded-lg border border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-500)]/20 hover:text-white transition-all"
                               >
                                 {chip.label}
                               </button>
@@ -1420,7 +1420,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                           rows={3}
                           aria-label="Quick reply message"
                           autoFocus
-                          className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] resize-y"
+                          className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)] resize-y"
                         />
                         <div className="flex items-center justify-end gap-2 flex-wrap">
                           {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
@@ -1428,7 +1428,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                               type="button"
                               onClick={() => handleInlineReply(true)}
                               disabled={sendingReply || !inlineReply.trim()}
-                              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
+                              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 type-caption font-semibold text-slate-300 hover:text-white disabled:opacity-40"
                             >
                               <ReplyAll className="w-3.5 h-3.5" />
                               {t('Reply all')}
@@ -1444,7 +1444,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                               openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!, dateLocale)}`);
                             }}
                             disabled={sendingReply || !inlineReply.trim()}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] px-3 py-2 type-caption font-bold text-white disabled:opacity-40"
                           >
                             {sendingReply ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1463,15 +1463,15 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500">
               <Send className="w-12 h-12 text-slate-700 mb-3" />
-              <p className="text-sm font-medium text-slate-400">{t('Pick an email from the list')}</p>
-              <p className="text-xs mt-1 max-w-sm">
+              <p className="type-card-description font-medium text-slate-400">{t('Pick an email from the list')}</p>
+              <p className="type-card-description mt-1 max-w-sm">
                 {t('Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.')}
               </p>
               <button
                 type="button"
                 onClick={openNewEmail}
                 disabled={!providerConnected}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 type-ui font-semibold text-white"
               >
                 <PenSquare className="w-4 h-4" />
                 {t('Compose')}
@@ -1511,12 +1511,12 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <button
                 type="button"
                 onClick={() => setShowShortcutsModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="text-slate-400 hover:text-white type-ui"
               >
                 ✕
               </button>
             </div>
-            <div className="space-y-2.5 text-xs text-slate-300">
+            <div className="space-y-2.5 type-caption text-slate-300">
               <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
                 <span>Compose new email</span>
                 <kbd className="px-2 py-0.5 rounded bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--brand-blue-300)] font-mono font-bold">C</kbd>
@@ -1545,7 +1545,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             <button
               type="button"
               onClick={() => setShowShortcutsModal(false)}
-              className="w-full py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white font-bold rounded-xl text-xs transition-all"
+              className="w-full py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white font-bold rounded-xl type-caption transition-all"
             >
               Got it
             </button>

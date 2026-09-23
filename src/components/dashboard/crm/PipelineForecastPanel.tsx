@@ -86,7 +86,7 @@ export function PipelineForecastPanel() {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload as StageData;
     return (
-      <div className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs shadow-xl space-y-1">
+      <div className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 type-caption shadow-xl space-y-1">
         <p className="font-black text-white">{d.label}</p>
         <p className="text-slate-300">{d.deals} deal{d.deals !== 1 ? 's' : ''}</p>
         <p className="text-slate-400">Total value: <span className="text-white font-bold">${d.totalValue.toLocaleString()}</span></p>
@@ -101,40 +101,40 @@ export function PipelineForecastPanel() {
         <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
           <BarChart3 className="text-teal-400" size={20} /> Pipeline Revenue Forecast
         </h3>
-        <p className="text-xs text-slate-400 mt-0.5">Weighted by deal probability across all active stages</p>
+        <p className="type-card-description text-slate-400 mt-0.5">Weighted by deal probability across all active stages</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="ac-workspace-panel rounded-xl p-4">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+          <p className="type-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
             <DollarSign size={13} className="text-slate-500" /> Total Pipeline
           </p>
           <p className="text-2xl font-black text-white mt-2">${totalPipeline.toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-1">Gross value, all active deals</p>
+          <p className="type-card-description text-slate-500 mt-1">Gross value, all active deals</p>
         </div>
         <div className="ac-workspace-panel rounded-xl p-4 border border-teal-500/20">
-          <p className="text-xs font-black uppercase tracking-widest text-teal-400 flex items-center gap-1.5">
+          <p className="type-caption font-black uppercase tracking-widest text-teal-400 flex items-center gap-1.5">
             <Target size={13} /> Weighted Forecast
           </p>
           <p className="text-2xl font-black text-teal-300 mt-2">${Math.round(weightedForecast).toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-1">Expected revenue by probability</p>
+          <p className="type-card-description text-slate-500 mt-1">Expected revenue by probability</p>
         </div>
       </div>
 
       {loading ? (
         <div className="ac-workspace-panel rounded-xl p-8 flex items-center justify-center min-h-[280px]">
-          <p className="text-slate-500 text-sm animate-pulse">Loading pipeline data...</p>
+          <p className="text-slate-500 type-card-description animate-pulse">Loading pipeline data...</p>
         </div>
       ) : (
         <>
           <div className="ac-workspace-panel rounded-xl p-4 sm:p-6">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Weighted Value by Stage</p>
+            <p className="type-caption font-black uppercase tracking-widest text-slate-400 mb-4">Weighted Value by Stage</p>
             <div className="min-h-[240px]">
               <WrapChart height={240}>
                 <BarChart data={stages} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="weightedValue" radius={[6, 6, 0, 0]}>
                     {stages.map(s => <Cell key={s.stage} fill={s.color} />)}
@@ -146,16 +146,16 @@ export function PipelineForecastPanel() {
 
           <div className="ac-workspace-panel rounded-xl overflow-hidden">
             <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
-              <p className="text-xs font-black uppercase tracking-widest text-white">Stage Breakdown</p>
+              <p className="type-caption font-black uppercase tracking-widest text-white">Stage Breakdown</p>
             </div>
             <div className="divide-y divide-white/5">
               {stages.map(s => (
                 <div key={s.stage} className="px-5 py-3 flex items-center gap-4">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                  <span className="text-sm text-slate-300 flex-1">{s.label}</span>
-                  <span className="text-xs text-slate-500">{s.deals} deals</span>
-                  <span className="text-sm font-bold text-white w-28 text-right">${s.totalValue.toLocaleString()}</span>
-                  <span className="text-sm font-black text-teal-300 w-28 text-right">${Math.round(s.weightedValue).toLocaleString()}</span>
+                  <span className="type-ui text-slate-300 flex-1">{s.label}</span>
+                  <span className="type-caption text-slate-500">{s.deals} deals</span>
+                  <span className="type-ui font-bold text-white w-28 text-right">${s.totalValue.toLocaleString()}</span>
+                  <span className="type-ui font-black text-teal-300 w-28 text-right">${Math.round(s.weightedValue).toLocaleString()}</span>
                 </div>
               ))}
             </div>

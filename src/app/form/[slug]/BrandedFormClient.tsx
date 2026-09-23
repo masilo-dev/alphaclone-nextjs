@@ -51,7 +51,7 @@ export default function BrandedFormClient({
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
         <div>
           <p className="text-red-600 font-semibold">{error || 'Form unavailable'}</p>
-          <p className="text-slate-500 text-sm mt-2">Check the link or contact the business owner.</p>
+          <p className="text-slate-500 type-card-description mt-2">Check the link or contact the business owner.</p>
         </div>
       </div>
     );

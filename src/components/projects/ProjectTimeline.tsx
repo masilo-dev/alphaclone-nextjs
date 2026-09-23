@@ -105,8 +105,8 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
             <h4 className="text-lg font-semibold text-white">Project Progress</h4>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-400">Completion</span>
-            <span className="text-sm font-medium text-teal-400">{project.progress}%</span>
+            <span className="type-ui text-slate-400">Completion</span>
+            <span className="type-ui font-medium text-teal-400">{project.progress}%</span>
           </div>
         </div>
         
@@ -118,9 +118,9 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-slate-500">Started</span>
-          <span className="text-xs text-slate-500">In Progress</span>
-          <span className="text-xs text-slate-500">Complete</span>
+          <span className="type-caption text-slate-500">Started</span>
+          <span className="type-caption text-slate-500">In Progress</span>
+          <span className="type-caption text-slate-500">Complete</span>
         </div>
       </div>
 
@@ -159,19 +159,19 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                       {stage.name}
                     </h5>
                     {stage.date && (
-                      <span className="text-xs text-slate-400">
+                      <span className="type-caption text-slate-400">
                         {new Date(stage.date).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                   
                   {stage.description && (
-                    <p className="text-sm text-slate-400 mb-2">{stage.description}</p>
+                    <p className="type-card-description text-slate-400 mb-2">{stage.description}</p>
                   )}
                   
                   <div className="flex items-center gap-2">
                     <span className={`
-                      text-xs px-2 py-1 rounded-full
+                      type-caption px-2 py-1 rounded-full
                       ${stage.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                         stage.status === 'active' ? 'bg-teal-500/20 text-teal-400' :
                         'bg-slate-600/20 text-slate-400'}
@@ -180,13 +180,13 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                     </span>
                     
                     {stage.status === 'active' && (
-                      <span className="text-xs text-teal-400 animate-pulse">
+                      <span className="type-caption text-teal-400 animate-pulse">
                         Currently in progress
                       </span>
                     )}
                     
                     {stage.status === 'pending' && (
-                      <span className="text-xs text-slate-500 group-hover:text-teal-400 transition-colors">
+                      <span className="type-caption text-slate-500 group-hover:text-teal-400 transition-colors">
                         Click to start
                       </span>
                     )}
@@ -198,10 +198,10 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
             <div className="text-center py-8 bg-slate-700/30 rounded-xl border border-dashed border-slate-600 ml-6">
               <Calendar className="w-10 h-10 text-slate-500 mx-auto mb-3" />
               <h5 className="text-lg font-medium text-white mb-2">No Stages Defined</h5>
-              <p className="text-slate-400 text-sm">This project doesn't have any stages yet.</p>
+              <p className="text-slate-400 type-card-description">This project doesn't have any stages yet.</p>
               <button
                 onClick={() => onStageUpdate?.('new', 'create')}
-                className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black text-sm font-medium rounded-lg transition-colors"
+                className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black type-ui font-medium rounded-lg transition-colors"
               >
                 + Add First Stage
               </button>
@@ -217,7 +217,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
             <Play className="w-5 h-5 text-teal-500" />
             <h4 className="text-lg font-semibold text-white">Next Steps</h4>
           </div>
-          <span className="text-sm text-slate-400">
+          <span className="type-ui text-slate-400">
             {project.next_steps.length} actions pending
           </span>
         </div>
@@ -229,7 +229,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
             <p className="text-slate-400">No immediate next steps. Great progress!</p>
             <button
               onClick={() => handleStepAction('new', 'create')}
-              className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black text-sm font-medium rounded-lg transition-colors"
+              className="mt-4 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black type-ui font-medium rounded-lg transition-colors"
             >
               + Add Next Step
             </button>
@@ -245,14 +245,14 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h5 className="font-medium text-white">{step.title}</h5>
-                      <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(step.priority)}`}>
+                      <span className={`type-caption px-2 py-1 rounded-full border ${getPriorityColor(step.priority)}`}>
                         {step.priority}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-slate-400 mb-3">{step.description}</p>
+                    <p className="type-card-description text-slate-400 mb-3">{step.description}</p>
                     
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 type-caption text-slate-500">
                       {step.assignee && (
                         <div className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
@@ -278,7 +278,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                     
                     <button
                       onClick={() => handleStepAction(step.id, 'start')}
-                      className="px-3 py-1 bg-teal-500 hover:bg-teal-400 text-black text-sm font-medium rounded transition-colors"
+                      className="px-3 py-1 bg-teal-500 hover:bg-teal-400 text-black type-ui font-medium rounded transition-colors"
                     >
                       Start
                     </button>
@@ -288,7 +288,7 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                 {/* Expanded Details */}
                 {expandedStep === step.id && (
                   <div className="mt-4 pt-4 border-t border-slate-600">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 type-ui">
                       <div>
                         <span className="text-slate-500">Estimated Time:</span>
                         <span className="ml-2 text-slate-300">2-3 hours</span>
@@ -310,19 +310,19 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
                     <div className="mt-4 flex gap-2">
                       <button
                         onClick={() => handleStepAction(step.id, 'complete')}
-                        className="px-3 py-1 bg-green-500 hover:bg-green-400 text-white text-sm font-medium rounded transition-colors"
+                        className="px-3 py-1 bg-green-500 hover:bg-green-400 text-white type-ui font-medium rounded transition-colors"
                       >
                         Mark Complete
                       </button>
                       <button
                         onClick={() => handleStepAction(step.id, 'defer')}
-                        className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white text-sm font-medium rounded transition-colors"
+                        className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white type-ui font-medium rounded transition-colors"
                       >
                         Defer
                       </button>
                       <button
                         onClick={() => handleStepAction(step.id, 'assign')}
-                        className="px-3 py-1 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded transition-colors"
+                        className="px-3 py-1 bg-blue-500 hover:bg-blue-400 text-white type-ui font-medium rounded transition-colors"
                       >
                         Assign
                       </button>
@@ -338,14 +338,14 @@ const ProjectTimeline: React.FC<ProjectTimelineProps> = ({
       {/* Quick Actions */}
       <div className="border-t border-slate-700 pt-6 mt-6">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-slate-400">
+          <div className="type-ui text-slate-400">
             Last updated: {new Date().toLocaleDateString()}
           </div>
           <div className="flex gap-2">
-            <button className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white text-sm font-medium rounded transition-colors">
+            <button className="px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white type-ui font-medium rounded transition-colors">
               Export Timeline
             </button>
-            <button className="px-3 py-1 bg-teal-500 hover:bg-teal-400 text-black text-sm font-medium rounded transition-colors">
+            <button className="px-3 py-1 bg-teal-500 hover:bg-teal-400 text-black type-ui font-medium rounded transition-colors">
               Schedule Review
             </button>
           </div>

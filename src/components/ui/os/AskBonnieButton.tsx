@@ -29,7 +29,7 @@ export function AskBonnieButton({
       onClick={() => drawer.openDrawer({ mode, contexts })}
       className={cn(
         compact
-          ? 'inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] text-xs font-semibold text-[var(--brand-violet-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]'
+          ? 'inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] type-caption font-semibold text-[var(--brand-violet-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]'
           : WORKSPACE.action.bonnie,
         className
       )}

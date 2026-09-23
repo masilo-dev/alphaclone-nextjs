@@ -186,7 +186,7 @@ const ServicesPage: React.FC = () => {
                 <section className="relative flex flex-col items-center justify-center py-16 px-4">
                     <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn">
-                            <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] text-xs font-bold uppercase tracking-wider">
+                            <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] type-caption font-bold uppercase tracking-wider">
                                 <div className="w-2 h-2 rounded-full bg-[#0878f9]" />
                                 <span>The Bottom Line</span>
                             </div>
@@ -237,28 +237,28 @@ const ServicesPage: React.FC = () => {
                                                     <service.icon className="w-6 h-6 text-white" />
                                                 </div>
                                                 {service.badge && (
-                                                    <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] text-xs font-semibold">
+                                                    <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] type-caption font-semibold">
                                                         {service.badge}
                                                     </span>
                                                 )}
                                             </div>
                                             <h3 className="text-2xl font-bold font-marketing-heading text-[#07152f] mb-1 tracking-tight">{service.title}</h3>
-                                            <p className="text-[#0878f9] text-sm font-semibold mb-3">{service.subtitle}</p>
+                                            <p className="text-[#0878f9] type-card-description font-semibold mb-3">{service.subtitle}</p>
                                             <p className="text-[#33445e] leading-relaxed mb-3">{service.description}</p>
-                                            <p className="text-[#52627b] leading-relaxed text-sm">{service.extendedDescription}</p>
+                                            <p className="text-[#52627b] leading-relaxed type-card-description">{service.extendedDescription}</p>
                                             <div className="mt-6 p-4 bg-[#edf6ff] border border-[#d0e4ff] rounded-xl">
                                                 <div className="flex items-center gap-2">
                                                     <TrendingUp className="w-4 h-4 text-[#0878f9] flex-shrink-0" />
-                                                    <span className="text-[#075fc7] text-sm font-semibold">{service.impact}</span>
+                                                    <span className="text-[#075fc7] type-ui font-semibold">{service.impact}</span>
                                                 </div>
                                             </div>
                                         </div>
                                         {/* Right: Features */}
                                         <div>
-                                            <h4 className="text-xs font-bold text-[#76849a] uppercase tracking-wider mb-4">Capabilities</h4>
+                                            <h4 className="type-caption font-bold text-[#76849a] uppercase tracking-wider mb-4">Capabilities</h4>
                                             <div className="space-y-3">
                                                 {service.features.map((f, fi) => (
-                                                    <p key={fi} className="text-[#33445e] text-sm leading-relaxed border-l-2 border-[#d0e4ff] pl-3">
+                                                    <p key={fi} className="text-[#33445e] type-card-description leading-relaxed border-l-2 border-[#d0e4ff] pl-3">
                                                         {f}
                                                     </p>
                                                 ))}
@@ -325,7 +325,7 @@ const ServicesPage: React.FC = () => {
                                     <div className="p-6 rounded-2xl bg-white border border-[#dfe6ef] shadow-sm h-full">
                                         <item.icon className="w-8 h-8 text-[#0878f9] mb-4" />
                                         <h3 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{item.title}</h3>
-                                        <p className="text-[#52627b] text-sm leading-relaxed">{item.desc}</p>
+                                        <p className="text-[#52627b] type-card-description leading-relaxed">{item.desc}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -348,7 +348,7 @@ const ServicesPage: React.FC = () => {
                                 <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
-                            <p className="mt-6 text-[#76849a] text-xs font-bold uppercase tracking-wider">
+                            <p className="mt-6 text-[#76849a] type-caption font-bold uppercase tracking-wider">
                                 {MARKETING_PRICING.startingPriceLine} · See pricing for current details
                             </p>
                         </AnimateIn>

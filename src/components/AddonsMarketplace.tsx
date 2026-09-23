@@ -99,7 +99,7 @@ export function AddonsMarketplace() {
                                     <Check className="h-5 w-5 text-green-600 mr-3" />
                                     <div>
                                         <div className="font-medium text-gray-900">{addon.addon_name}</div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="type-ui text-gray-600">
                                             {addon.usage_remaining
                                                 ? `${addon.usage_remaining} / ${addon.quantity} remaining`
                                                 : 'Active'}
@@ -111,7 +111,7 @@ export function AddonsMarketplace() {
                                         {subscriptionService.formatPrice(addon.price_cents)}
                                     </div>
                                     {addon.billing_cycle !== 'one_time' && (
-                                        <div className="text-sm text-gray-600">per {addon.billing_cycle}</div>
+                                        <div className="type-ui text-gray-600">per {addon.billing_cycle}</div>
                                     )}
                                 </div>
                             </div>
@@ -145,7 +145,7 @@ export function AddonsMarketplace() {
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">{addon.name}</h3>
 
                             {/* Description */}
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="type-card-description text-gray-600 mb-4">
                                 {addon.type === 'storage' && 'Extra storage space for your files and documents'}
                                 {addon.type === 'ai_requests' && 'Additional AI-powered features and requests'}
                                 {addon.type === 'video_minutes' && 'More video call minutes for your team'}
@@ -156,7 +156,7 @@ export function AddonsMarketplace() {
                             {/* Quantity */}
                             <div className="text-2xl font-bold text-gray-900 mb-1">
                                 {addon.quantity.toLocaleString()}
-                                <span className="text-sm font-normal text-gray-600 ml-1">
+                                <span className="type-ui font-normal text-gray-600 ml-1">
                                     {addon.type === 'storage' && 'MB'}
                                     {addon.type === 'ai_requests' && 'requests'}
                                     {addon.type === 'video_minutes' && 'minutes'}
@@ -166,7 +166,7 @@ export function AddonsMarketplace() {
                             </div>
 
                             {/* Price */}
-                            <div className="text-sm text-gray-600 mb-4">
+                            <div className="type-ui text-gray-600 mb-4">
                                 {subscriptionService.formatPrice(addon.priceCents)}
                                 {('billingCycle' in addon && addon.billingCycle === 'monthly') && ` / monthly`}
                             </div>
@@ -191,7 +191,7 @@ export function AddonsMarketplace() {
             </div>
 
             {/* Help Text */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 type-ui text-blue-800">
                 <strong>Need help?</strong> Add-ons are charged immediately and can be used until depleted. For recurring
                 add-ons, you'll be charged monthly and can cancel anytime. Contact support for custom add-on packages.
             </div>

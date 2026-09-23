@@ -66,8 +66,8 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
         <div className="flex items-center gap-2 min-w-0">
           <BookOpen className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-white">Bonnie Research</h3>
-            <p className="text-[11px] text-slate-500 truncate">
+            <h3 className="type-ui font-semibold text-white">Bonnie Research</h3>
+            <p className="type-card-description text-slate-500 truncate">
               Continuous OSS + architecture evaluation for the agentic OS
             </p>
           </div>
@@ -76,7 +76,7 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
           type="button"
           onClick={refresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:text-white disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 type-ui font-semibold text-slate-300 hover:text-white disabled:opacity-50"
         >
           {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Rescore
@@ -85,20 +85,20 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
 
       <div className="p-4 space-y-4 max-h-[420px] overflow-y-auto">
         {loading ? (
-          <p className="text-xs text-slate-500 flex items-center gap-2">
+          <p className="type-card-description text-slate-500 flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading research briefing…
           </p>
         ) : error ? (
-          <p className="text-xs text-rose-400">{error}</p>
+          <p className="type-card-description text-rose-400">{error}</p>
         ) : briefing ? (
           <>
             <div className="rounded-lg border border-teal-500/20 bg-teal-500/5 p-3 space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+              <p className="type-caption font-semibold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
                 <Brain className="w-3 h-3" /> Priority for AlphaClone
               </p>
               <ul className="space-y-1.5">
                 {briefing.priorities.map((item) => (
-                  <li key={item} className="text-xs text-slate-300 leading-relaxed">
+                  <li key={item} className="type-caption text-slate-300 leading-relaxed">
                     {item}
                   </li>
                 ))}
@@ -112,20 +112,20 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
                   className="rounded-xl border border-white/5 bg-slate-950/50 p-3 space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-white">{finding.name}</p>
+                    <p className="type-card-description font-semibold text-white">{finding.name}</p>
                     <span
-                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${recommendationStyles[finding.recommendation]}`}
+                      className={`shrink-0 rounded-full border px-2 py-0.5 type-caption font-bold uppercase tracking-wider ${recommendationStyles[finding.recommendation]}`}
                     >
                       {finding.recommendation}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">{finding.summary}</p>
-                  <p className="text-[11px] text-slate-500">{finding.nextAction}</p>
+                  <p className="type-card-description text-slate-400">{finding.summary}</p>
+                  <p className="type-card-description text-slate-500">{finding.nextAction}</p>
                 </div>
               ))}
             </div>
 
-            <p className="text-[10px] text-slate-600">
+            <p className="type-card-description text-slate-600">
               Updated {new Date(briefing.generatedAt).toLocaleString()} · Never clone — extract and improve
             </p>
           </>

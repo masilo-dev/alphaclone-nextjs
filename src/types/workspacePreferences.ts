@@ -32,7 +32,7 @@ export const DEFAULT_EXECUTIVE_KPI_GOALS: ExecutiveKpiGoals = {
 /** Tenant-scoped dashboard home layout preference (stored in business_settings.settings). */
 export type DashboardHomeLayout = 'operating_system' | 'attention_first';
 
-export const DEFAULT_DASHBOARD_HOME_LAYOUT: DashboardHomeLayout = 'operating_system';
+export const DEFAULT_DASHBOARD_HOME_LAYOUT: DashboardHomeLayout = 'attention_first';
 
 export interface WorkspacePreferencesResponse {
   periodClose: PeriodClosePreferences;

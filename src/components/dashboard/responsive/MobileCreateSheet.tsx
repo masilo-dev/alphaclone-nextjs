@@ -72,7 +72,7 @@ export function MobileCreateSheet({ open, onClose, userRole, onNavigate }: Mobil
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--ac-accent)_12%,transparent)] text-[var(--ac-accent)]">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
-                <span className="mt-3 text-sm font-semibold text-[var(--text-primary)]">{action.label}</span>
+                <span className="mt-3 type-ui font-semibold text-[var(--text-primary)]">{action.label}</span>
               </button>
             );
           })}

@@ -24,20 +24,20 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
           <Sparkles className="h-5 w-5" aria-hidden="true" />
         </div>
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-blue-400,#91B5FF)]">
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,#91B5FF)]">
             Welcome to AlphaClone
           </p>
           <h3 className="mt-2 text-2xl font-bold tracking-tight text-white">
             Welcome, {firstName}
           </h3>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+          <p className="mx-auto mt-3 max-w-md type-card-description leading-relaxed text-slate-400">
             You do not need to set up everything today. Choose one useful business outcome and AlphaClone will take you to the right starting point.
           </p>
         </div>
 
         <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4 text-left">
-          <p className="text-sm font-semibold text-white">Start with what matters now</p>
-          <p className="mt-1 text-sm leading-relaxed text-slate-400">
+          <p className="type-card-description font-semibold text-white">Start with what matters now</p>
+          <p className="mt-1 type-card-description leading-relaxed text-slate-400">
             For example: get more local customers, post to social media, manage enquiries, send a promotion, or create an invoice.
           </p>
         </div>

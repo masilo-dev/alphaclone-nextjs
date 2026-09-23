@@ -73,7 +73,7 @@ export function CommunicationComposer({
     >
       <div className="space-y-4 pt-2">
         {(relatedCustomer || relatedRecord) && (
-          <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-xs text-[var(--ws-text-secondary)] space-y-1">
+          <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-secondary)] space-y-1">
             {relatedCustomer ? (
               <p>
                 <span className="text-[var(--ws-text-muted)]">Customer </span>
@@ -102,7 +102,7 @@ export function CommunicationComposer({
               aria-selected={channel === item}
               onClick={() => setChannel(item)}
               className={cn(
-                'px-3 min-h-8 rounded-[8px] text-xs font-semibold transition-colors',
+                'px-3 min-h-8 rounded-[8px] type-caption font-semibold transition-colors',
                 channel === item
                   ? 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-primary)] shadow-sm'
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
@@ -114,7 +114,7 @@ export function CommunicationComposer({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-[var(--ws-text-muted)]">
+          <p className="type-card-description text-[var(--ws-text-muted)]">
             Activity can be tracked on the related customer timeline.
           </p>
           {onAskBonnie ? (
@@ -128,10 +128,10 @@ export function CommunicationComposer({
           <div className="ac-composer-body">{children}</div>
         ) : (
           <div className="rounded-[14px] border border-[var(--ws-border)] p-6 text-center">
-            <p className="text-sm font-semibold text-[var(--ws-text-primary)]">
+            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">
               {CHANNEL_LABEL[channel]}
             </p>
-            <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+            <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">
               Connect this channel in Settings to compose from here. Your existing integrations stay
               unchanged.
             </p>

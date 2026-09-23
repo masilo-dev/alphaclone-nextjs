@@ -50,7 +50,7 @@ export const DeletionOverlay: React.FC = () => {
                 </div>
 
                 {error && (
-                    <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm italic text-red-500">
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 type-ui italic text-red-500">
                         {error}
                     </div>
                 )}
@@ -80,7 +80,7 @@ export const DeletionOverlay: React.FC = () => {
                     </button>
                 </div>
 
-                <p className="text-xs text-slate-500 italic">
+                <p className="type-card-description text-slate-500 italic">
                     If you prefer to continue with deletion, your data will be permanently removed after the 30-day period.
                     For immediate assistance, contact support.
                 </p>

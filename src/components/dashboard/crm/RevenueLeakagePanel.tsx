@@ -149,7 +149,7 @@ export function RevenueLeakagePanel({
         return (
             <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl border border-white/5 bg-slate-900/40">
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
-                <span className="text-xs text-slate-500">Scanning revenue chain…</span>
+                <span className="type-caption text-slate-500">Scanning revenue chain…</span>
             </div>
         );
     }
@@ -158,9 +158,9 @@ export function RevenueLeakagePanel({
         <div className="space-y-3 mb-4">
             <div className="rounded-xl border border-white/5 bg-slate-900/50 px-4 py-3">
                 <div className="mb-1">
-                    <p className="text-sm font-bold text-white">{heading}</p>
+                    <p className="type-card-description font-bold text-white">{heading}</p>
                     {subheading && (
-                        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{subheading}</p>
+                        <p className="mt-1 type-card-description leading-relaxed text-slate-500">{subheading}</p>
                     )}
                 </div>
                 {health != null && networkNodes.length > 0 && (

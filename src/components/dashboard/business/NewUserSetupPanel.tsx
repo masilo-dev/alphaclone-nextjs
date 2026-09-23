@@ -51,13 +51,13 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ac-accent)]">
+          <p className="type-caption font-semibold uppercase tracking-label text-[var(--ac-accent)]">
             Start here
           </p>
-          <h2 className="text-[17px] font-semibold text-white tracking-tight mt-1">
+          <h2 className="text-lg font-semibold text-white tracking-tight mt-1">
             Welcome, {firstName} — choose one first win
           </h2>
-          <p className="text-[13px] text-[var(--ws-text-secondary)] mt-1 max-w-xl">
+          <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 max-w-xl">
             You do not need to set up everything today. Pick the action that will help your business most right now.
           </p>
         </div>
@@ -84,18 +84,18 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
               className="group text-left p-4 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] hover:border-[var(--ac-accent)]/40 hover:bg-[var(--ac-accent-muted)] transition-colors"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--ws-text-tertiary)]">
+                <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-tertiary)]">
                   Step {item.step}
                 </span>
                 <Icon className="w-4 h-4 text-[var(--ac-accent)] ml-auto" />
               </div>
-              <p className="text-[14px] font-semibold text-white group-hover:text-[var(--ac-accent-hover)]">
+              <p className="type-card-description font-semibold text-white group-hover:text-[var(--ac-accent-hover)]">
                 {item.title}
               </p>
-              <p className="text-[12px] text-[var(--ws-text-secondary)] mt-1 leading-relaxed">
+              <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 leading-relaxed">
                 {item.description}
               </p>
-              <span className="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold text-[var(--ac-accent)]">
+              <span className="inline-flex items-center gap-1 mt-3 type-ui font-semibold text-[var(--ac-accent)]">
                 Open
                 <ChevronRight className="w-3.5 h-3.5" />
               </span>
@@ -108,18 +108,18 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
         <button
           type="button"
           onClick={() => router.push('/dashboard/help')}
-          className="ac-workspace-action-btn text-[11px]"
+          className="ac-workspace-action-btn type-ui"
         >
           Platform guide
         </button>
         <button
           type="button"
           onClick={() => router.push('/guide')}
-          className="ac-workspace-action-btn text-[11px]"
+          className="ac-workspace-action-btn type-ui"
         >
           Setup walkthrough
         </button>
-        <span className="text-[11px] text-[var(--ws-text-tertiary)] inline-flex items-center gap-1">
+        <span className="type-ui text-[var(--ws-text-tertiary)] inline-flex items-center gap-1">
           <CheckCircle2 className="w-3.5 h-3.5" />
           Full access active
         </span>

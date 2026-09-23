@@ -23,12 +23,12 @@ function ActionRow({ item, featured }: { item: RankedRecommendation; featured?: 
           : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]'
       )}
     >
-      <p className="text-[12.5px] font-semibold text-[var(--ws-text-primary)] leading-snug">{item.title}</p>
-      <p className="mt-0.5 text-[11px] text-[var(--ws-text-secondary)] leading-snug">{item.reason}</p>
+      <p className="type-card-description font-semibold text-[var(--ws-text-primary)] leading-snug">{item.title}</p>
+      <p className="mt-0.5 type-card-description text-[var(--ws-text-secondary)] leading-snug">{item.reason}</p>
       <Link
         href={item.href}
         className={cn(
-          'inline-block mt-2 text-[11px] font-semibold',
+          'inline-block mt-2 type-ui font-semibold',
           featured ? 'text-teal-700 hover:text-teal-600 dark:text-teal-300 dark:hover:text-teal-200' : 'text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300'
         )}
       >
@@ -55,7 +55,7 @@ export function BonnieRankedActions({
     <div className={cn('ac-workspace-panel rounded-xl p-4 space-y-3', className)}>
       <div className="flex items-center gap-2">
         <Bot className="h-4 w-4 text-teal-600 dark:text-teal-400" aria-hidden />
-        <h3 className="text-[13px] font-bold text-[var(--ws-text-primary)]">Bonnie recommends</h3>
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Bonnie recommends</h3>
       </div>
       <ActionRow item={primary} featured />
       {rest.length > 0 ? (

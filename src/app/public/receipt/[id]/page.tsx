@@ -64,15 +64,15 @@ export default function PublicReceiptPage() {
           </div>
           <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 text-sm">Receipt</span>
-              <span className="font-mono text-sm text-slate-300">#{receiptNumber}</span>
+              <span className="text-slate-400 type-ui">Receipt</span>
+              <span className="font-mono type-ui text-slate-300">#{receiptNumber}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 text-sm">From</span>
+              <span className="text-slate-400 type-ui">From</span>
               <span className="text-white font-medium">{clientName}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 text-sm">Date</span>
+              <span className="text-slate-400 type-ui">Date</span>
               <span className="text-white">
                 {paidAt ? new Date(String(paidAt)).toLocaleDateString() : '—'}
               </span>
@@ -87,7 +87,7 @@ export default function PublicReceiptPage() {
             </Button>
           </div>
         </Card>
-        <p className="text-center text-slate-500 text-xs mt-6 flex items-center justify-center gap-1">
+        <p className="text-center text-slate-500 type-card-description mt-6 flex items-center justify-center gap-1">
           <Receipt className="w-3 h-3" aria-hidden="true" />
           Secure receipt from {branding.name}
         </p>

@@ -336,14 +336,14 @@ export default function EnhancedVideoCall({
                   {participant.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm">{participant.name}</span>
+              <span className="type-ui">{participant.name}</span>
             </div>
           )}
         </div>
 
         {/* Participant info overlay */}
         <div className="absolute bottom-2 left-2 flex items-center space-x-2 bg-black bg-opacity-50 px-2 py-1 rounded">
-          <span className="text-white text-xs">{participant.name}</span>
+          <span className="text-white type-caption">{participant.name}</span>
           {!participant.audio && (
             <MicOff className="w-3 h-3 text-red-400" />
           )}
@@ -390,7 +390,7 @@ export default function EnhancedVideoCall({
         }}
       >
         {/* Screen share indicator */}
-        <div className="absolute top-4 left-4 flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+        <div className="absolute top-4 left-4 flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded-full type-ui">
           <Monitor className="w-4 h-4" />
           <span>{screenShareParticipant.user_name || 'Someone'} is sharing their screen</span>
         </div>
@@ -439,7 +439,7 @@ export default function EnhancedVideoCall({
           <Video className="w-6 h-6 text-blue-500" />
           <span className="text-white font-semibold">Video Call</span>
           {isMinimized && (
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-400 type-ui">
               {participants.length + 1} participants
             </span>
           )}
@@ -554,8 +554,8 @@ export default function EnhancedVideoCall({
                       "p-2 rounded-lg",
                       msg.isOwn ? "bg-blue-600 ml-8" : "bg-gray-700 mr-8"
                     )}>
-                      <div className="text-xs text-gray-300 mb-1">{msg.sender}</div>
-                      <div className="text-white text-sm">{msg.text}</div>
+                      <div className="type-caption text-gray-300 mb-1">{msg.sender}</div>
+                      <div className="text-white type-ui">{msg.text}</div>
                     </div>
                   ))}
                 </div>
@@ -590,7 +590,7 @@ export default function EnhancedVideoCall({
                   {localParticipant && (
                     <div className="flex items-center space-x-3 text-white">
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                        <span className="text-sm">{localParticipant.name.charAt(0)}</span>
+                        <span className="type-ui">{localParticipant.name.charAt(0)}</span>
                       </div>
                       <span>{localParticipant.name} (You)</span>
                     </div>
@@ -598,7 +598,7 @@ export default function EnhancedVideoCall({
                   {participants.map((participant) => (
                     <div key={participant.id} className="flex items-center space-x-3 text-white">
                       <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                        <span className="text-sm">{participant.name.charAt(0)}</span>
+                        <span className="type-ui">{participant.name.charAt(0)}</span>
                       </div>
                       <span>{participant.name}</span>
                       {participant.screen && <Monitor className="w-4 h-4 text-green-400" />}
@@ -614,7 +614,7 @@ export default function EnhancedVideoCall({
         <div className="flex items-center justify-center h-full">
           <div className="text-center text-white">
             <Video className="w-8 h-8 mx-auto mb-2" />
-            <p className="text-sm">In call with {participants.length} others</p>
+            <p className="type-card-description">In call with {participants.length} others</p>
             <div className="flex justify-center space-x-2 mt-3">
               <button
                 onClick={toggleAudio}

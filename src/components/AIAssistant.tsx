@@ -210,8 +210,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
               <Bot className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-100 text-sm">Alpha Assistant</h3>
-              <p className="text-xs text-slate-400">Powered by Claude & GPT-4</p>
+              <h3 className="font-semibold text-slate-100 type-ui">Alpha Assistant</h3>
+              <p className="type-card-description text-slate-400">Powered by Claude & GPT-4</p>
             </div>
           </div>
           {!embedded && (
@@ -234,7 +234,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
             <button
               key={m.id}
               onClick={() => setMode(m.id as AI_MODE)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-medium whitespace-nowrap transition-colors
                 ${mode === m.id
                   ? m.id === 'email'
                     ? 'bg-blue-600 text-white'
@@ -250,7 +250,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
 
         {/* Email mode hint */}
         {mode === 'email' && (
-          <div className="px-4 py-2 bg-blue-950/40 border-b border-blue-900/40 text-[11px] text-blue-300">
+          <div className="px-4 py-2 bg-blue-950/40 border-b border-blue-900/40 type-ui text-blue-300">
             Describe the email you need. Alpha will draft it and you can send it directly.
           </div>
         )}
@@ -263,27 +263,27 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
                 <div className="max-w-[90%] w-full bg-slate-800 border border-blue-800/60 rounded-2xl rounded-bl-none overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2 bg-blue-900/30 border-b border-blue-800/40">
                     <Mail className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-[11px] font-medium text-blue-300 uppercase tracking-wide">Email Draft</span>
+                    <span className="type-caption font-medium text-blue-300 uppercase tracking-wide">Email Draft</span>
                   </div>
                   <div className="p-3 space-y-2">
                     {msg.emailDraft.to && (
-                      <div className="text-xs text-slate-400">
+                      <div className="type-caption text-slate-400">
                         <span className="text-slate-500">To:</span>{' '}
                         <span className="text-slate-200">{msg.emailDraft.to}</span>
                       </div>
                     )}
-                    <div className="text-xs">
+                    <div className="type-caption">
                       <span className="text-slate-500">Subject:</span>{' '}
                       <span className="text-slate-100 font-medium">{msg.emailDraft.subject}</span>
                     </div>
-                    <div className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap border-t border-slate-700 pt-2 max-h-36 overflow-y-auto">
+                    <div className="type-caption text-slate-300 leading-relaxed whitespace-pre-wrap border-t border-slate-700 pt-2 max-h-36 overflow-y-auto">
                       {msg.emailDraft.body}
                     </div>
                   </div>
                   <div className="px-3 pb-3">
                     <button
                       onClick={() => setComposeDraft(msg.emailDraft!)}
-                      className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 type-caption bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors"
                     >
                       <ExternalLink className="w-3 h-3" />
                       Open in Composer
@@ -293,7 +293,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
               ) : (
                 <div
                   className={`
-                    max-w-[85%] rounded-2xl p-3 text-sm leading-relaxed whitespace-pre-wrap
+                    max-w-[85%] rounded-2xl p-3 type-ui leading-relaxed whitespace-pre-wrap
                     ${msg.role === 'user'
                       ? 'bg-teal-600 text-white rounded-br-none'
                       : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-none'}
@@ -308,7 +308,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
             <div className="flex justify-start">
               <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-bl-none p-4 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
-                <span className="text-xs text-slate-400">
+                <span className="type-caption text-slate-400">
                   {mode === 'thinking' ? 'Deep Thinking...' : mode === 'email' ? 'Drafting email...' : 'Processing...'}
                 </span>
               </div>
@@ -364,7 +364,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
                   ? 'Describe the email, e.g. "Write an outreach to Sarah at Acme about our pricing"'
                   : 'Ask Alpha anything...'
               }
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-teal-500 pr-12"
+              className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 type-ui text-slate-200 focus:outline-none focus:border-teal-500 pr-12"
             />
             <button
               onClick={handleSend}

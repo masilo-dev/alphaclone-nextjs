@@ -299,7 +299,7 @@ export default function MessengerInbox() {
                                 placeholder="Search conversations..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/5 border border-white/5 rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 text-sm"
+                                className="w-full bg-white/5 border border-white/5 rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 type-ui"
                             />
                         </div>
                     </div>
@@ -338,20 +338,20 @@ export default function MessengerInbox() {
                                                 {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className={`font-bold text-sm truncate max-w-[140px] ${!conv.is_read ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                <h3 className={`font-bold type-ui truncate max-w-[140px] ${!conv.is_read ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
                                                     {conv.contacts?.full_name || `Customer ${conv.sender_id.substring(0, 4)}`}
                                                 </h3>
                                                 <div className="flex items-center gap-1">
                                                     <div className={`w-1.5 h-1.5 ${conv.metadata?.platform === 'instagram' ? 'bg-pink-500' : 'bg-green-500'} rounded-full`} />
-                                                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
+                                                    <span className="type-caption font-semibold text-gray-600 uppercase tracking-wide">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-semibold text-gray-600 uppercase">
+                                        <span className="type-caption font-semibold text-gray-600 uppercase">
                                             {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
-                                    <p className={`text-xs truncate ${!conv.is_read ? 'text-blue-200 font-semibold' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                                    <p className={`type-card-description truncate ${!conv.is_read ? 'text-blue-200 font-semibold' : 'text-gray-500 group-hover:text-gray-400'}`}>
                                         {conv.last_message_preview}
                                     </p>
                                     
@@ -388,13 +388,13 @@ export default function MessengerInbox() {
                                         <div>
                                             <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-xs ${activeConv?.metadata?.platform === 'instagram' ? 'text-teal-400' : 'text-teal-400'} font-semibold uppercase tracking-[0.1em]`}>
+                                                <span className={`type-caption ${activeConv?.metadata?.platform === 'instagram' ? 'text-teal-400' : 'text-teal-400'} font-semibold uppercase tracking-caps`}>
                                                     {activeConv?.metadata?.platform === 'instagram' ? 'Instagram Direct' : 'Facebook Messenger'}
                                                 </span>
                                                 {activeConv?.contact_id && (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded-md border border-green-500/20">
                                                         <CheckCircle2 size={10} />
-                                                        <span className="text-xs font-semibold uppercase">CRM Linked</span>
+                                                        <span className="type-caption font-semibold uppercase">CRM Linked</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -415,7 +415,7 @@ export default function MessengerInbox() {
                                 {msgLoading ? (
                                     <div className="flex flex-col items-center justify-center py-40 gap-3 opacity-20">
                                         <Loader2 className="animate-spin text-blue-500" size={32} />
-                                        <span className="text-xs font-semibold uppercase tracking-wide">Loading Analytics</span>
+                                        <span className="type-caption font-semibold uppercase tracking-wide">Loading Analytics</span>
                                     </div>
                                 ) : (
                                     <>
@@ -428,13 +428,13 @@ export default function MessengerInbox() {
                                                     key={msg.id}
                                                     className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                                 >
-                                                    <div className={`max-w-[70%] p-4 rounded-lg text-sm ${
+                                                    <div className={`max-w-[70%] p-4 rounded-lg type-ui ${
                                                         isMe 
                                                         ? 'bg-teal-600 text-white rounded-br-none shadow-lg shadow-teal-600/20' 
                                                         : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
-                                                        <div className={`text-xs mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
+                                                        <div className={`type-caption mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
@@ -452,7 +452,7 @@ export default function MessengerInbox() {
                                         <button 
                                             onClick={handleAiSuggest}
                                             disabled={aiGenerating || msgLoading}
-                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
+                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-semibold uppercase tracking-wide type-caption disabled:opacity-50"
                                         >
                                             {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Bot size={12} />}
                                             <span>Smart Reply</span>
@@ -465,7 +465,7 @@ export default function MessengerInbox() {
                                             placeholder="Write a message..."
                                             value={replyText}
                                             onChange={e => setReplyText(e.target.value)}
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all text-sm pr-16"
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all type-ui pr-16"
                                         />
                                         <button 
                                             disabled={sending || !replyText.trim()}
@@ -482,7 +482,7 @@ export default function MessengerInbox() {
                             <button
                                 type="button"
                                 onClick={() => setIsMobileMenuOpen(true)}
-                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 type-ui font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
                                 aria-label="Open conversations"
                             >
                                 <Menu size={18} />
@@ -492,14 +492,14 @@ export default function MessengerInbox() {
                                 <MessageSquare size={40} className="text-gray-700" />
                             </div>
                             <h3 className="text-xl font-semibold text-gray-400 uppercase tracking-wide mb-2">Messenger Command</h3>
-                            <p className="text-xs text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
+                            <p className="type-caption text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
                             
                             <div className="mt-12 p-6 bg-teal-600/5 rounded-lg border border-teal-500/10 max-w-sm">
                                 <div className="flex items-center gap-2 mb-3 text-teal-400">
                                     <ShieldCheck size={16} />
-                                    <span className="text-xs font-semibold uppercase tracking-wide">Enterprise Shield</span>
+                                    <span className="type-caption font-semibold uppercase tracking-wide">Enterprise Shield</span>
                                 </div>
-                                <p className="text-xs text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
+                                <p className="type-caption text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
                                     Communication is end-to-end reliable. 
                                     Responses are tracked within the AlphaClone CRM for 360-degree customer intelligence.
                                 </p>

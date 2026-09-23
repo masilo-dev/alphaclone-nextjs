@@ -54,10 +54,10 @@ export default async function BlogPage() {
                             <Link href={`/blog/${article.slug}`} key={article.id} className="group">
                                 <article className="glass-card h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-teal-500/20 flex flex-col">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <span className="px-3 py-1 text-xs font-semibold bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
+                                        <span className="px-3 py-1 type-caption font-semibold bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
                                             {article.category}
                                         </span>
-                                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                                        <span className="type-caption text-slate-500 flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
                                             {new Date(article.created_at).toLocaleDateString()}
                                         </span>
@@ -67,11 +67,11 @@ export default async function BlogPage() {
                                         {article.title}
                                     </h2>
 
-                                    <p className="text-slate-400 text-sm mb-6 line-clamp-3 flex-grow">
+                                    <p className="text-slate-400 type-card-description mb-6 line-clamp-3 flex-grow">
                                         {article.meta_description}
                                     </p>
 
-                                    <div className="flex items-center text-teal-400 text-sm font-medium mt-auto group-hover:translate-x-1 transition-transform">
+                                    <div className="flex items-center text-teal-400 type-ui font-medium mt-auto group-hover:translate-x-1 transition-transform">
                                         Read Article <ArrowRight className="w-4 h-4 ml-2" />
                                     </div>
                                 </article>

@@ -30,23 +30,23 @@ function LegalLayout({
                <div className="mkt-icon-wrap">
                   <Icon className="w-5 h-5" aria-hidden="true" />
                </div>
-               <span className="text-[var(--marketing-accent-hover)] text-sm font-semibold tracking-wide">Legal</span>
+               <span className="text-[var(--marketing-accent-hover)] type-caption font-semibold tracking-wide">Legal</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-[var(--marketing-text-primary)] mb-3">{title}</h1>
             <p className="text-[var(--marketing-text-secondary)] mb-2">{subtitle}</p>
             <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-[var(--marketing-border)]">
-               <span className="text-xs text-[var(--marketing-text-muted)]">Last updated: {lastUpdated}</span>
-               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
-               <span className="text-xs text-[var(--marketing-text-muted)]">{COMPANY_LEGAL.legalName}</span>
-               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
-               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-[var(--marketing-accent-hover)] hover:underline flex items-center gap-1">
+               <span className="type-caption text-[var(--marketing-text-muted)]">Last updated: {lastUpdated}</span>
+               <span className="type-caption text-[var(--marketing-text-muted)]">•</span>
+               <span className="type-caption text-[var(--marketing-text-muted)]">{COMPANY_LEGAL.legalName}</span>
+               <span className="type-caption text-[var(--marketing-text-muted)]">•</span>
+               <a href="mailto:legal@alphaclonesystems.com" className="type-ui text-[var(--marketing-accent-hover)] hover:underline flex items-center gap-1">
                   <Mail className="w-3 h-3" aria-hidden="true" /> legal@alphaclonesystems.com
                </a>
             </div>
             <div className="prose-legal space-y-12">
                {children}
             </div>
-            <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 text-xs text-[var(--marketing-text-muted)]">
+            <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 type-caption text-[var(--marketing-text-muted)]">
                <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Privacy Policy</Link>
                <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Terms of Service</Link>
                <Link href="/cookie-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
@@ -64,7 +64,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
             <ChevronRight className="w-5 h-5 text-teal-500 flex-shrink-0" />
             {title}
          </h2>
-         <div className="pl-7 space-y-4 text-slate-400 leading-relaxed text-sm">
+         <div className="pl-7 space-y-4 text-slate-400 leading-relaxed type-ui">
             {children}
          </div>
       </section>
@@ -74,7 +74,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 function Sub({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <div>
-         <h3 className="text-white font-semibold mb-2 text-sm">{title}</h3>
+         <h3 className="text-white font-semibold mb-2 type-ui">{title}</h3>
          <div className="text-slate-400 leading-relaxed">{children}</div>
       </div>
    );
@@ -84,7 +84,7 @@ function BulletList({ items }: { items: string[] }) {
    return (
       <ul className="space-y-1.5 ml-4">
          {items.map((item, i) => (
-            <li key={i} className="flex gap-2 text-slate-400 text-sm">
+            <li key={i} className="flex gap-2 text-slate-400 type-ui">
                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 flex-shrink-0" />
                {item}
             </li>
@@ -99,7 +99,7 @@ function InfoBox({ children, variant = 'info' }: { children: React.ReactNode; va
       : 'bg-teal-500/5 border-teal-500/20 text-teal-300';
    const Icon = variant === 'warn' ? AlertTriangle : Shield;
    return (
-      <div className={`p-4 rounded-xl border ${styles} flex gap-3 text-xs leading-relaxed`}>
+      <div className={`p-4 rounded-xl border ${styles} flex gap-3 type-caption leading-relaxed`}>
          <Icon className="w-4 h-4 flex-shrink-0 mt-0.5" />
          <div>{children}</div>
       </div>
@@ -126,7 +126,7 @@ export function PrivacyPolicy() {
             <p>
                The data controller responsible for your personal information is:
             </p>
-            <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
+            <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 type-ui not-italic">
                <p><strong className="text-white">{COMPANY_LEGAL.legalName}</strong></p>
                <p className="text-slate-300">{formatLegalAddress()}</p>
                <p className="text-slate-400">{COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}</p>
@@ -223,8 +223,8 @@ export function PrivacyPolicy() {
                   { basis: 'Consent (Art. 6(1)(a) GDPR)', desc: 'Non-essential cookies (analytics, marketing), Gmail API access, and marketing communications. You may withdraw consent at any time.' },
                ].map((item, i) => (
                   <div key={i} className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800">
-                     <p className="text-white font-semibold text-xs mb-1">{item.basis}</p>
-                     <p className="text-slate-400 text-xs">{item.desc}</p>
+                     <p className="text-white font-semibold type-card-description mb-1">{item.basis}</p>
+                     <p className="text-slate-400 type-card-description">{item.desc}</p>
                   </div>
                ))}
             </div>
@@ -247,7 +247,7 @@ export function PrivacyPolicy() {
          <Section id="data-sharing" title="5. Data Sharing & Third Parties">
             <p>We do not sell, rent, or trade your personal data. We share data only with the following service providers, strictly for the purpose of delivering our service:</p>
             <div className="mt-4 overflow-x-auto min-w-0">
-               <table className="w-full min-w-[480px] text-xs border-collapse">
+               <table className="w-full min-w-[480px] type-caption border-collapse">
                   <thead>
                      <tr className="border-b border-slate-700">
                         <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Provider</th>
@@ -310,8 +310,8 @@ export function PrivacyPolicy() {
                   { right: 'Right to Non-Discrimination', desc: 'You will not receive discriminatory treatment for exercising your privacy rights (CCPA).' },
                ].map((item, i) => (
                   <div key={i} className="p-3 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
-                     <p className="text-white font-semibold text-xs mb-1">{item.right}</p>
-                     <p className="text-slate-500 text-xs">{item.desc}</p>
+                     <p className="text-white font-semibold type-card-description mb-1">{item.right}</p>
+                     <p className="text-slate-500 type-card-description">{item.desc}</p>
                   </div>
                ))}
             </div>
@@ -331,8 +331,8 @@ export function PrivacyPolicy() {
                'Zero-knowledge architecture for financial data (your accountant sees only what you grant)',
             ]} />
             <div className="mt-4 p-4 border border-teal-500/20 bg-teal-500/5 rounded-xl">
-               <h4 className="text-teal-300 text-sm font-semibold mb-2">Data Breach Notification Policy</h4>
-               <p className="text-slate-400 text-xs leading-relaxed">
+               <h4 className="text-teal-300 type-ui font-semibold mb-2">Data Breach Notification Policy</h4>
+               <p className="text-slate-400 type-card-description leading-relaxed">
                   In the event of a security breach that poses a high risk to the rights and freedoms of individuals (e.g., unauthorized access to unencrypted personal data), AlphaClone Systems will notify all affected users and relevant supervisory authorities without undue delay, and in any event within 72 hours of becoming aware of the breach. Notifications will include the nature of the breach, potential consequences, and the mitigation measures taken.
                </p>
             </div>
@@ -353,7 +353,7 @@ export function PrivacyPolicy() {
 
          <Section id="contact" title="12. Contact Us">
             <p>For privacy-related enquiries, data subject rights requests, or complaints:</p>
-            <div className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm mt-3">
+            <div className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 type-ui mt-3">
                <p><strong className="text-white">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                <p><strong className="text-white">Legal Department:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                <p><strong className="text-white">General Support:</strong> <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
@@ -621,7 +621,7 @@ const cookieCategories = [
 function CookieCategoryTable({ cookies }: { cookies: typeof cookieCategories[0]['cookies'] }) {
    return (
       <div className="mt-3 overflow-x-auto min-w-0">
-         <table className="w-full min-w-[520px] text-xs border-collapse">
+         <table className="w-full min-w-[520px] type-caption border-collapse">
             <thead>
                <tr className="border-b border-slate-700/50">
                   <th className="text-left py-2 pr-3 text-slate-400 font-semibold w-1/3">Cookie Name</th>
@@ -633,7 +633,7 @@ function CookieCategoryTable({ cookies }: { cookies: typeof cookieCategories[0][
             <tbody className="divide-y divide-slate-800/30">
                {cookies.map((c, i) => (
                   <tr key={i}>
-                     <td className="py-2 pr-3 font-mono text-teal-400 text-xs">{c.name}</td>
+                     <td className="py-2 pr-3 font-mono text-teal-400 type-table-cell">{c.name}</td>
                      <td className="py-2 pr-3 text-slate-400">{c.purpose}</td>
                      <td className="py-2 pr-3 text-slate-500">{c.duration}</td>
                      <td className="py-2 text-slate-500">{c.party}</td>
@@ -672,8 +672,8 @@ export function CookiePolicy() {
                {cookieCategories.map((cat, i) => (
                   <div key={i} className={`p-3 rounded-xl border text-center ${cat.surfaceClass}`}>
                      <cat.icon className={`w-4 h-4 mx-auto mb-2 ${cat.iconClass}`} />
-                     <p className={`text-xs font-semibold ${cat.labelClass}`}>{cat.name}</p>
-                     {cat.required && <p className="text-xs text-slate-500 mt-1">Always Active</p>}
+                     <p className={`type-card-description font-semibold ${cat.labelClass}`}>{cat.name}</p>
+                     {cat.required && <p className="type-card-description text-slate-500 mt-1">Always Active</p>}
                   </div>
                ))}
             </div>
@@ -695,19 +695,19 @@ export function CookiePolicy() {
                            <cat.icon className={`w-5 h-5 ${cat.iconClass}`} />
                            <div>
                               <div className="flex items-center gap-2">
-                                 <span className="text-white font-semibold text-sm">{cat.name}</span>
+                                 <span className="text-white font-semibold type-ui">{cat.name}</span>
                                  {cat.required && (
-                                    <span className="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
+                                    <span className="type-caption bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
                                  )}
                               </div>
-                              <p className="text-slate-500 text-xs mt-0.5">{cat.cookies.length} cookie{cat.cookies.length > 1 ? 's' : ''}</p>
+                              <p className="text-slate-500 type-card-description mt-0.5">{cat.cookies.length} cookie{cat.cookies.length > 1 ? 's' : ''}</p>
                            </div>
                         </div>
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expanded === i ? 'rotate-180' : ''}`} />
                      </button>
                      {expanded === i && (
                         <div id={`cookie-category-${i}`} className="px-5 pb-5 border-t border-slate-800/50">
-                           <p className="text-slate-400 text-xs mt-4 mb-4 leading-relaxed">{cat.desc}</p>
+                           <p className="text-slate-400 type-card-description mt-4 mb-4 leading-relaxed">{cat.desc}</p>
                            <CookieCategoryTable cookies={cat.cookies} />
                         </div>
                      )}
@@ -730,7 +730,7 @@ export function CookiePolicy() {
                      { name: 'Edge', url: 'https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09' },
                      { name: 'Brave', url: 'https://support.brave.com/hc/en-us/articles/360022806212-How-do-I-use-Shields-while-browsing' },
                   ].map((b, i) => (
-                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-teal-400 hover:underline p-2 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
+                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 type-ui text-teal-400 hover:underline p-2 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
                         {b.name} Settings <ExternalLink className="w-3 h-3" />
                      </a>
                   ))}
@@ -785,7 +785,7 @@ export function SLA() {
                     'Authentication and account management services',
                     'Email delivery (transactional) via our platform',
                 ]} />
-                <p className="mt-3">Monthly uptime percentage is calculated as: <span className="text-white font-mono text-xs">((total minutes in month − downtime minutes) / total minutes in month) × 100</span>. Scheduled maintenance windows do not count as downtime if announced ≥48 hours in advance.</p>
+                <p className="mt-3">Monthly uptime percentage is calculated as: <span className="text-white font-mono type-card-description">((total minutes in month − downtime minutes) / total minutes in month) × 100</span>. Scheduled maintenance windows do not count as downtime if announced ≥48 hours in advance.</p>
             </Section>
 
             <Section id="definitions" title="2. Definitions">
@@ -797,8 +797,8 @@ export function SLA() {
                         { term: 'Service Credit', def: 'A pro-rated credit applied to your next billing cycle as a remedy for verified downtime exceeding the SLA threshold. Credits are non-transferable and have no cash value.' },
                     ].map((item, i) => (
                         <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
-                            <p className="text-white font-semibold text-xs mb-1">{item.term}</p>
-                            <p className="text-slate-400 text-xs">{item.def}</p>
+                            <p className="text-white font-semibold type-card-description mb-1">{item.term}</p>
+                            <p className="text-slate-400 type-card-description">{item.def}</p>
                         </div>
                     ))}
                 </div>
@@ -807,7 +807,7 @@ export function SLA() {
             <Section id="support-tiers" title="3. Support Response Times">
                 <p>Support response times are measured from the time a ticket is received during business hours (09:00–18:00 UTC, Monday–Friday), unless otherwise stated for your plan tier.</p>
                 <div className="mt-4 overflow-x-auto min-w-0">
-                    <table className="w-full min-w-[480px] text-xs border-collapse">
+                    <table className="w-full min-w-[480px] type-caption border-collapse">
                         <thead>
                             <tr className="border-b border-slate-700">
                                 <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Priority</th>
@@ -835,13 +835,13 @@ export function SLA() {
                         </tbody>
                     </table>
                 </div>
-                <p className="mt-4 text-xs text-slate-500">Response time = time to first meaningful response, not time to resolution. Resolution times vary by issue complexity.</p>
+                <p className="mt-4 type-caption text-slate-500">Response time = time to first meaningful response, not time to resolution. Resolution times vary by issue complexity.</p>
             </Section>
 
             <Section id="service-credits" title="4. Service Credits">
                 <p>If monthly uptime falls below the thresholds below, you may request a service credit:</p>
                 <div className="mt-4 overflow-x-auto min-w-0">
-                    <table className="w-full min-w-[340px] text-xs border-collapse">
+                    <table className="w-full min-w-[340px] type-caption border-collapse">
                         <thead>
                             <tr className="border-b border-slate-700">
                                 <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Monthly Uptime</th>
@@ -912,8 +912,8 @@ export function DPA() {
                         { role: 'Alphaclone Systems, LLC (Data Processor)', def: 'AlphaClone processes personal data only on behalf of and according to the documented instructions of the Controller. AlphaClone acts as a Controller only for its own account administration data (billing, authentication).' },
                     ].map((item, i) => (
                         <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
-                            <p className="text-white font-semibold text-xs mb-1">{item.role}</p>
-                            <p className="text-slate-400 text-xs">{item.def}</p>
+                            <p className="text-white font-semibold type-card-description mb-1">{item.role}</p>
+                            <p className="text-slate-400 type-card-description">{item.def}</p>
                         </div>
                     ))}
                 </div>
@@ -921,7 +921,7 @@ export function DPA() {
 
             <Section id="processing-details" title="2. Processing Details">
                 <div className="mt-3 overflow-x-auto min-w-0">
-                    <table className="w-full min-w-[400px] text-xs border-collapse">
+                    <table className="w-full min-w-[400px] type-caption border-collapse">
                         <tbody className="divide-y divide-slate-800/50">
                             {[
                                 { k: 'Subject Matter', v: 'Operation of the AlphaClone Business OS on behalf of the Customer' },
@@ -957,7 +957,7 @@ export function DPA() {
             <Section id="subprocessors" title="4. Sub-processors">
                 <p>AlphaClone uses the following authorised sub-processors. All sub-processors are bound by data processing agreements no less protective than this DPA. The Customer grants general authorisation for AlphaClone to use these sub-processors.</p>
                 <div className="mt-4 overflow-x-auto min-w-0">
-                    <table className="w-full min-w-[520px] text-xs border-collapse">
+                    <table className="w-full min-w-[520px] type-caption border-collapse">
                         <thead>
                             <tr className="border-b border-slate-700">
                                 <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Sub-processor</th>
@@ -985,7 +985,7 @@ export function DPA() {
                         </tbody>
                     </table>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">AlphaClone will notify the Customer of any intended addition or replacement of sub-processors by updating this DPA and sending an email notification at least 14 days before the change takes effect. The Customer may object to a new sub-processor in writing within 14 days.</p>
+                <p className="mt-3 type-card-description text-slate-500">AlphaClone will notify the Customer of any intended addition or replacement of sub-processors by updating this DPA and sending an email notification at least 14 days before the change takes effect. The Customer may object to a new sub-processor in writing within 14 days.</p>
             </Section>
 
             <Section id="transfers" title="5. International Data Transfers">
@@ -1029,7 +1029,7 @@ export function DPA() {
 
             <Section id="contact-dpa" title="9. Contact &amp; DPA Requests">
                 <p>To request a signed copy of this DPA, or for any data processing queries:</p>
-                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 text-sm mt-3">
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 type-ui mt-3">
                     <p><strong className="text-white">Privacy &amp; DPA:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                     <p><strong className="text-white">Legal:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                 </div>
@@ -1066,8 +1066,8 @@ export function PrivacyChoices() {
                         { right: 'Right to Non-Discrimination', desc: 'We will not discriminate against you for exercising any of your CCPA rights.' },
                     ].map((item, i) => (
                         <div key={i} className="p-3 bg-white/[0.04] rounded-lg border border-slate-800">
-                            <p className="text-white font-semibold text-xs mb-1">{item.right}</p>
-                            <p className="text-slate-500 text-xs">{item.desc}</p>
+                            <p className="text-white font-semibold type-card-description mb-1">{item.right}</p>
+                            <p className="text-slate-500 type-card-description">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -1101,10 +1101,10 @@ export function PrivacyChoices() {
             </Section>
 
             <Section id="contact-privacy-choices" title="6. Contact">
-                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 text-sm mt-3">
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 type-ui mt-3">
                     <p><strong className="text-white">Privacy Requests:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                     <p><strong className="text-white">Subject line:</strong> CCPA Rights Request</p>
-                    <p className="text-slate-500 text-xs mt-2">We respond within 45 days. No discrimination will result from exercising your rights.</p>
+                    <p className="text-slate-500 type-card-description mt-2">We respond within 45 days. No discrimination will result from exercising your rights.</p>
                 </div>
             </Section>
         </LegalLayout>

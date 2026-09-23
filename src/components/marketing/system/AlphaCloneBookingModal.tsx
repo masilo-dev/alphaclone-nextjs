@@ -61,7 +61,7 @@ export default function AlphaCloneBookingModal() {
               <h2 id="booking-modal-title" className="text-base sm:text-lg font-bold text-slate-950 font-marketing-heading tracking-tight leading-tight truncate">
                 {title}
               </h2>
-              <p className="text-xs text-slate-500 line-clamp-1">{subtitle}</p>
+              <p className="type-card-description text-slate-500 line-clamp-1">{subtitle}</p>
             </div>
           </div>
 
@@ -70,7 +70,7 @@ export default function AlphaCloneBookingModal() {
               href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 transition-colors font-medium"
+              className="hidden md:inline-flex items-center gap-1.5 type-caption text-blue-600 hover:text-blue-700 transition-colors font-medium"
             >
               Open in new tab
               <ExternalLink className="w-3.5 h-3.5" />
@@ -86,7 +86,7 @@ export default function AlphaCloneBookingModal() {
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain p-0 sm:p-4 bg-white text-slate-800 min-h-0">
-          <div className="hidden sm:flex flex-wrap items-center justify-between gap-3 mb-3 px-4 pt-4 sm:px-0 sm:pt-0 text-xs text-slate-500">
+          <div className="hidden sm:flex flex-wrap items-center justify-between gap-3 mb-3 px-4 pt-4 sm:px-0 sm:pt-0 type-caption text-slate-500">
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5 font-medium text-slate-700">
                 <Clock className="w-3.5 h-3.5 text-blue-600" />
@@ -114,7 +114,7 @@ export default function AlphaCloneBookingModal() {
           />
         </div>
 
-        <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500 shrink-0">
+        <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between type-caption text-slate-500 shrink-0">
           <span>AlphaClone booking</span>
           <span className="hidden sm:inline">Press ESC to close</span>
         </div>

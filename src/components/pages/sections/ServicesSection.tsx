@@ -68,11 +68,11 @@ const ServicesSection: React.FC = () => {
                                 <service.icon className="w-7 h-7" />
                             </div>
                             <h3 className="text-2xl font-black mb-4 text-white tracking-tight">{service.title}</h3>
-                            <p className="text-slate-400 leading-relaxed text-sm flex-grow font-medium">
+                            <p className="text-slate-400 leading-relaxed type-card-description flex-grow font-medium">
                                 {service.description}
                             </p>
                             
-                            <div className="mt-8 flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
+                            <div className="mt-8 flex items-center gap-2 type-caption font-black text-slate-500 uppercase tracking-widest group-hover:text-teal-400 transition-colors">
                                 <span>Learn Protocol</span>
                                 <div className="h-[1px] w-8 bg-slate-800 group-hover:bg-teal-500 transition-all" />
                             </div>

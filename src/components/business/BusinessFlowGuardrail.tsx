@@ -97,10 +97,10 @@ export function BusinessFlowGuardrail({ context, className }: BusinessFlowGuardr
             <Bot className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] text-[var(--ws-text-secondary)]">{s.message}</p>
+            <p className="type-card-description text-[var(--ws-text-secondary)]">{s.message}</p>
             <Link
               href={s.href}
-              className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-medium text-teal-400 hover:text-teal-300"
+              className="inline-flex items-center gap-1 mt-1.5 type-ui font-medium text-teal-400 hover:text-teal-300"
             >
               {s.actionLabel}
               <ArrowRight className="w-3 h-3" aria-hidden="true" />

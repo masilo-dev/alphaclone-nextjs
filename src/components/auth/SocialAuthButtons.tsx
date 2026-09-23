@@ -43,11 +43,11 @@ export default function SocialAuthButtons({
   };
 
   const btnClass =
-    'h-10 flex-1 min-w-0 flex items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+    'h-10 flex-1 min-w-0 flex items-center justify-center gap-2 rounded-lg border type-ui font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <div className={className}>
-      <p className="text-[11px] text-center text-slate-400 mb-2">
+      <p className="type-card-description text-center text-slate-400 mb-2">
         Workspace created automatically — no form required
       </p>
       <div className="flex items-stretch gap-2">

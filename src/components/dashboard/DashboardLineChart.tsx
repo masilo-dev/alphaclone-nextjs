@@ -77,13 +77,13 @@ export function DashboardLineChart({
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 width={48}

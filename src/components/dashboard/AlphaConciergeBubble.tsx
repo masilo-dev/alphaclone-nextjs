@@ -67,7 +67,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                                             ? 'bg-indigo-600 text-white rounded-tr-none' 
                                             : 'bg-white/10 text-slate-100 rounded-tl-none border border-white/5'
                                     }`}>
-                                        <p className="text-sm">{msg.content}</p>
+                                        <p className="type-card-description">{msg.content}</p>
                                     </div>
                                 </div>
                             ))}
@@ -93,7 +93,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                     placeholder="Ask me anything..."
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                                 <button 
                                     onClick={handleSend}
@@ -118,7 +118,7 @@ export const AlphaConciergeBubble: React.FC = () => {
             >
                 {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
                 {!isOpen && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold">
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 type-caption font-bold">
                         1
                     </span>
                 )}

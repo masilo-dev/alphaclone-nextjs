@@ -273,7 +273,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 className="w-full bg-transparent border-none focus:ring-0 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-lg font-medium"
                             />
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-lg border border-slate-700">
-                                <span className="text-xs font-black text-slate-400">ESC</span>
+                                <span className="type-caption font-black text-slate-400">ESC</span>
                             </div>
                         </div>
 
@@ -284,14 +284,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                         <Sparkles className="w-6 h-6 text-slate-500" />
                                     </div>
                                     <p className="text-slate-400 font-medium">No results found for "{search}"</p>
-                                    <p className="text-slate-600 text-xs mt-1 uppercase tracking-widest font-bold">Try searching for finance, crm, or actions</p>
+                                    <p className="text-slate-600 type-caption mt-1 uppercase tracking-widest font-bold">Try searching for finance, crm, or actions</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4 py-2">
                                     {/* Recent Commands Section - only show when not searching */}
                                     {!search && recentCommands.length > 0 && (
                                         <div className="space-y-1">
-                                            <div className="px-3 py-1 text-xs font-black text-teal-500/50 uppercase tracking-[0.2em] flex items-center gap-2">
+                                            <div className="px-3 py-1 type-caption font-black text-teal-500/50 uppercase tracking-caps flex items-center gap-2">
                                                 <Clock className="w-3 h-3" />
                                                 Recent
                                             </div>
@@ -319,12 +319,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                             <div className="flex items-center gap-2">
                                                                 <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
                                                                 {cmd.shortcut && (
-                                                                    <span className="text-xs font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                    <span className="type-caption font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
                                                                         {cmd.shortcut}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-xs text-slate-500 truncate">{cmd.description}</p>
+                                                            <p className="type-card-description text-slate-500 truncate">{cmd.description}</p>
                                                         </div>
                                                         {isSelected && (
                                                             <ArrowRight className="w-4 h-4 text-teal-400 mr-2" />
@@ -342,7 +342,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
                                         return (
                                             <div key={category} className="space-y-1">
-                                                <div className="px-3 py-1 text-xs font-black text-teal-500/50 uppercase tracking-[0.2em]">
+                                                <div className="px-3 py-1 type-caption font-black text-teal-500/50 uppercase tracking-caps">
                                                     {category}
                                                 </div>
                                                 {catCmds.map((cmd) => {
@@ -371,12 +371,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                                 <div className="flex items-center gap-2">
                                                                     <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
                                                                     {cmd.shortcut && (
-                                                                        <span className="text-xs font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                        <span className="type-caption font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
                                                                             {cmd.shortcut}
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-xs text-slate-500 truncate">{cmd.description}</p>
+                                                                <p className="type-card-description text-slate-500 truncate">{cmd.description}</p>
                                                             </div>
                                                             {isSelected && (
                                                                 <ArrowRight className="w-4 h-4 text-teal-400 mr-2" />
@@ -394,19 +394,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">↑↓</div>
-                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">↑↓</div>
+                                    <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">/</div>
-                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Open search</span>
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">/</div>
+                                    <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Open search</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">ENTER</div>
-                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Select</span>
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">ENTER</div>
+                                    <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Select</span>
                                 </div>
                             </div>
-                                <div className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                <div className="type-caption text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Sparkles className="w-3 h-3 bg-gradient-to-r from-teal-500 to-orange-500 text-transparent bg-clip-text" />
                                     Quick Actions
                                 </div>

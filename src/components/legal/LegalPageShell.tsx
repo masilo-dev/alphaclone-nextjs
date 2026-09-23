@@ -28,19 +28,19 @@ export function LegalPageShell({
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-6">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-teal-400">{badge ?? 'Legal'}</p>
+                <p className="type-caption uppercase tracking-caps text-teal-400">{badge ?? 'Legal'}</p>
                 <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
-                <p className="mt-3 text-sm leading-6 text-slate-400">{intro}</p>
+                <p className="mt-3 type-card-description leading-6 text-slate-400">{intro}</p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">On this page</p>
+                <p className="type-caption font-semibold uppercase tracking-caps text-slate-500">On this page</p>
                 <ul className="mt-3 space-y-2">
                   {sections.map((section) => (
                     <li key={section.id}>
                       <a
                         href={`#${section.id}`}
-                        className="text-sm text-slate-300 transition-colors hover:text-teal-300"
+                        className="type-ui text-slate-300 transition-colors hover:text-teal-300"
                       >
                         {section.title}
                       </a>
@@ -53,12 +53,12 @@ export function LegalPageShell({
 
           <div>
             <div className="border-b border-slate-800 pb-6 lg:hidden">
-              <p className="text-xs uppercase tracking-[0.2em] text-teal-400">{badge ?? 'Legal'}</p>
+              <p className="type-caption uppercase tracking-caps text-teal-400">{badge ?? 'Legal'}</p>
               <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-400">{intro}</p>
+              <p className="mt-3 type-card-description leading-6 text-slate-400">{intro}</p>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <div className="mt-6 flex flex-wrap items-center gap-3 type-caption text-slate-500">
               <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1">
                 Last updated {lastUpdated}
               </span>

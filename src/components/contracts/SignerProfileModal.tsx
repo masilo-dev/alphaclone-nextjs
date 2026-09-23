@@ -98,7 +98,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                         <h2 id="signer-profile-title" className="text-white font-bold text-lg flex items-center gap-2">
                             <PenTool className="w-4 h-4 text-teal-400" /> {t('My signature & signer details')}
                         </h2>
-                        <p className="text-slate-400 text-sm mt-0.5">
+                        <p className="text-slate-400 type-card-description mt-0.5">
                             {t('Saved once, used on every contract: your details are pre-filled and you sign with one click.')}
                         </p>
                     </div>
@@ -109,18 +109,18 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
 
                 <div className="p-6 space-y-8">
                     <section className="space-y-3">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-teal-300 flex items-center gap-1.5">
+                        <h3 className="type-caption font-black uppercase tracking-widest text-teal-300 flex items-center gap-1.5">
                             <BookmarkCheck className="w-3.5 h-3.5" /> {t('Saved signature')}
                         </h3>
                         {draft.signature && !replacingSignature ? (
                             <div className="rounded-2xl border border-teal-500/30 bg-slate-950/40 p-5 flex flex-col items-center gap-3">
                                 <img src={draft.signature.dataUrl} alt={t('Saved signature')} className="h-20 object-contain bg-white px-4 py-2 rounded-xl" />
-                                <p className="text-sm font-semibold text-white font-mono">{draft.signature.fullName}</p>
+                                <p className="type-card-description font-semibold text-white font-mono">{draft.signature.fullName}</p>
                                 <div className="flex flex-wrap justify-center gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setReplacingSignature(true)}
-                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl type-caption font-bold transition-all flex items-center gap-1.5"
                                     >
                                         <PenTool className="w-3.5 h-3.5" /> {t('Replace signature')}
                                     </button>
@@ -128,7 +128,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                                         type="button"
                                         onClick={removeSignature}
                                         disabled={removingSignature}
-                                        className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-60"
+                                        className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl type-caption font-bold transition-all flex items-center gap-1.5 disabled:opacity-60"
                                     >
                                         {removingSignature ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />} {t('Remove')}
                                     </button>
@@ -136,7 +136,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                <p className="text-sm text-slate-400">
+                                <p className="type-card-description text-slate-400">
                                     {t('Draw your signature once. It is stored privately on your account and applied to contracts you sign.')}
                                 </p>
                                 <SignaturePad
@@ -146,7 +146,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                                     initialFullName={draft.signature?.fullName || draft.providerName}
                                 />
                                 {draft.signature && (
-                                    <button type="button" onClick={() => setReplacingSignature(false)} className="text-xs font-bold text-slate-400 hover:text-white">
+                                    <button type="button" onClick={() => setReplacingSignature(false)} className="type-ui font-bold text-slate-400 hover:text-white">
                                         {t('Keep current signature')}
                                     </button>
                                 )}
@@ -155,7 +155,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                     </section>
 
                     <section className="space-y-4">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-teal-300">{t('Service Provider (You)')}</h3>
+                        <h3 className="type-caption font-black uppercase tracking-widest text-teal-300">{t('Service Provider (You)')}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {PROVIDER_FIELDS.map((field) => (
                                 <div key={field.key} className={field.key === 'providerAddress' ? 'md:col-span-2' : ''}>
@@ -179,14 +179,14 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
                 </div>
 
                 <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row justify-end gap-2 border-t border-slate-800 bg-slate-900/95 px-6 py-4 backdrop-blur">
-                    <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold">
+                    <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-ui font-semibold">
                         {t('Close')}
                     </button>
                     <button
                         type="button"
                         onClick={saveDetails}
                         disabled={saving}
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
+                        className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl type-ui font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {t('Save signer details')}
                     </button>

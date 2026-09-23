@@ -234,17 +234,17 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                     </div>
 
                     <div className="space-y-2">
-                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em]">
+                        <h3 className="type-caption font-black text-slate-500 uppercase tracking-caps">
                             {isListening ? 'Neural Link Active' : isProcessing ? 'Processing Intel' : error ? 'Signal Disruption' : summary ? 'Analysis Complete' : 'Capture Verified'}
                         </h3>
                         {error ? (
                             <div className="flex items-center gap-2 text-rose-500 justify-center">
                                 <AlertCircle className="w-4 h-4" />
-                                <span className="text-xs font-bold">{error}</span>
+                                <span className="type-caption font-bold">{error}</span>
                             </div>
                         ) : summary ? (
                             <div className="text-left bg-slate-900/50 p-4 rounded-xl border border-white/10 max-h-60 overflow-y-auto">
-                                <p className="text-sm text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
+                                <p className="type-card-description text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
                                     {summary}
                                 </p>
                             </div>
@@ -262,14 +262,14 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                                 setIsActive(false);
                                 setSummary(null);
                             }}
-                            className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                            className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-2xl font-black type-caption uppercase tracking-widest transition-all"
                         >
                             {summary ? 'Close' : 'Abort'}
                         </button>
                         {!isListening && !isProcessing && transcript && !error && !summary && (
                             <button
                                 onClick={handleConfirm}
-                                className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-400 text-white rounded-2xl font-black type-caption uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Check className="w-4 h-4" /> Initialize
                             </button>
@@ -280,14 +280,14 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
                 <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-4">
                     <button
                         onClick={() => setIsContinuous(!isContinuous)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isContinuous ? 'bg-teal-500/20 border-teal-500/50 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all type-caption font-black uppercase tracking-widest ${isContinuous ? 'bg-teal-500/20 border-teal-500/50 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300'}`}
                     >
                         <RefreshCw className={`w-3 h-3 ${isContinuous ? 'animate-spin' : ''}`} />
                         Continuous Listening: {isContinuous ? 'ON' : 'OFF'}
                     </button>
                     <div className="flex items-center justify-center gap-2 overflow-hidden">
                         <Sparkles className="w-3 h-3 text-teal-500/50" />
-                        <span className="text-xs font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                        <span className="type-caption font-black text-slate-600 uppercase tracking-caps">Advanced Vocal Recognition v5.0</span>
                     </div>
                 </div>
             </div>

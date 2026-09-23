@@ -98,7 +98,7 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
         return (
             <div className="ac-workspace-panel rounded-lg p-6 h-[200px] flex flex-col items-center justify-center animate-pulse">
                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin mb-2" />
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Analyzing business data...</span>
+                <span className="type-caption font-bold text-slate-500 uppercase tracking-widest">Analyzing business data...</span>
             </div>
         );
     }
@@ -113,13 +113,13 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                         <Zap className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                        <h3 className="type-caption font-black text-slate-400 uppercase tracking-widest">
                             Outcome Engine
                         </h3>
-                        <p className="text-sm text-white font-semibold mt-0.5">Suggested next actions for this workspace</p>
+                        <p className="type-card-description text-white font-semibold mt-0.5">Suggested next actions for this workspace</p>
                     </div>
                 </div>
-                <Button variant="ghost" size="sm" className="h-9 px-4 text-xs uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
+                <Button variant="ghost" size="sm" className="h-9 px-4 type-caption uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
                     Refresh
                 </Button>
             </div>
@@ -149,7 +149,7 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                                 {insight.type === 'warning' ? <AlertTriangle className="w-4 h-4" /> : 
                                  insight.type === 'opportunity' ? <TrendingUp className="w-4 h-4" /> : 
                                  <Sparkles className="w-4 h-4" />}
-                                <span className="text-xs font-black uppercase tracking-wider">{insight.type}</span>
+                                <span className="type-caption font-black uppercase tracking-wider">{insight.type}</span>
                             </div>
                             <div className="flex -space-x-1">
                                 {[1, 2, 3].map(i => (
@@ -167,15 +167,15 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                                 <h4 className="text-lg font-bold text-white leading-tight group-hover:text-teal-300 transition-colors">
                                     {insight.title}
                                 </h4>
-                                <p className="text-sm text-slate-400 leading-relaxed mt-2">
+                                <p className="type-card-description text-slate-400 leading-relaxed mt-2">
                                     {insight.description}
                                 </p>
                             </div>
 
                             <div className="pt-2">
                                 <div className="flex justify-between items-center mb-1.5">
-                                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Confidence</span>
-                                    <span className="text-[11px] font-black text-teal-400 uppercase tracking-widest">
+                                    <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Confidence</span>
+                                    <span className="type-caption font-black text-teal-400 uppercase tracking-widest">
                                         {insight.priority} priority
                                     </span>
                                 </div>
@@ -191,7 +191,7 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
 
                         <Button 
                             className={cn(
-                                "w-full justify-between h-11 text-[12px] font-black uppercase tracking-[0.16em] transition-all relative overflow-hidden",
+                                "w-full justify-between h-11 type-caption font-black uppercase tracking-caps transition-all relative overflow-hidden",
                                 insight.type === 'warning' ? "bg-amber-500 hover:bg-amber-600 text-black" :
                                 insight.type === 'opportunity' ? "bg-violet-600 hover:bg-violet-700 text-white" :
                                 "bg-teal-600 hover:bg-teal-500 text-black"

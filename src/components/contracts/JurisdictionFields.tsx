@@ -3,8 +3,8 @@ import { EU_JURISDICTIONS } from '@/config/euJurisdictions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export const CONTRACT_INPUT_CLASS =
-    'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm';
-export const CONTRACT_LABEL_CLASS = 'block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5';
+    'w-full bg-slate-800/60 border border-slate-700 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all type-ui';
+export const CONTRACT_LABEL_CLASS = 'block type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1.5';
 
 const CUSTOM = '__custom__';
 
@@ -75,7 +75,7 @@ export const JurisdictionFields: React.FC<JurisdictionFieldsProps> = ({ jurisdic
                     onChange={(e) => onChange({ jurisdiction, governingLaw: e.target.value })}
                     placeholder={t('e.g. Laws of the State of Wyoming')}
                 />
-                {hint && <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">{hint}</p>}
+                {hint && <p className="mt-1.5 type-card-description text-slate-500 leading-relaxed">{hint}</p>}
             </div>
         </>
     );

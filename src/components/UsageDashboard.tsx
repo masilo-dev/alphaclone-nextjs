@@ -77,12 +77,12 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                     <h3 className="mb-2 text-lg font-semibold text-amber-100">Quota Alerts</h3>
                     <div className="space-y-2">
                         {alerts.map((alert) => (
-                            <div key={alert.id} className="flex items-center justify-between text-sm">
+                            <div key={alert.id} className="flex items-center justify-between type-ui">
                                 <span className="text-amber-50">
                                     {formatMetricName(alert.metric_name)}: {alert.current_value} / {alert.limit_value}
                                 </span>
                                 <span
-                                    className={`rounded px-2 py-1 text-xs font-medium ${
+                                    className={`rounded px-2 py-1 type-caption font-medium ${
                                         alert.alert_type === 'exceeded'
                                             ? 'bg-red-500/20 text-red-100'
                                             : 'bg-amber-500/20 text-amber-100'
@@ -95,7 +95,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                     </div>
                     <a
                         href="/dashboard/business/settings"
-                        className="mt-3 inline-block text-sm font-medium text-teal-300 hover:text-teal-200"
+                        className="mt-3 inline-block type-ui font-medium text-teal-300 hover:text-teal-200"
                     >
                         Review billing and quotas -&gt;
                     </a>
@@ -108,9 +108,9 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                     return (
                     <div key={metric.metric_name} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
                         <div className="mb-2 flex items-center justify-between">
-                            <h4 className="text-sm font-medium text-slate-200">{formatMetricName(metric.metric_name)}</h4>
+                            <h4 className="type-ui font-medium text-slate-200">{formatMetricName(metric.metric_name)}</h4>
                             {isUnlimited ? (
-                                <span className="text-xs font-semibold text-violet-300">Unlimited</span>
+                                <span className="type-caption font-semibold text-violet-300">Unlimited</span>
                             ) : (
                                 <span
                                     className={`h-2 w-2 rounded-full ${getStatusColor(metric.status)}`}
@@ -128,7 +128,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                             </div>
                         )}
 
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between type-ui">
                             <span className="text-slate-400">
                                 {isUnlimited
                                     ? `${metric.current_value.toLocaleString()} used today (analytics only)`
@@ -150,7 +150,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                         </div>
 
                         {!isUnlimited && (
-                            <div className="mt-2 text-xs text-slate-500">{getStatusText(metric.status)}</div>
+                            <div className="mt-2 type-caption text-slate-500">{getStatusText(metric.status)}</div>
                         )}
                     </div>
                     );

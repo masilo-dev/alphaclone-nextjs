@@ -31,10 +31,10 @@ export function TodayPanel({ items, className }: TodayPanelProps) {
   return (
     <aside className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <h2 className={WORKSPACE.typography.sectionTitle}>{t('Today')}</h2>
-      <p className="mt-1 text-sm text-[var(--ws-text-muted)]">{t('Meetings, tasks, and deadlines.')}</p>
+      <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{t('Meetings, tasks, and deadlines.')}</p>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--ws-text-secondary)]">{t('Your day is clear.')}</p>
+        <p className="mt-4 type-caption text-[var(--ws-text-secondary)]">{t('Your day is clear.')}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {items.slice(0, 8).map((item) => (
@@ -44,14 +44,14 @@ export function TodayPanel({ items, className }: TodayPanelProps) {
                 className="block rounded-[10px] px-2.5 py-2 hover:bg-[var(--ws-hover)] transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-[var(--ws-text-muted)]">
+                  <span className="type-caption font-medium uppercase tracking-wide text-[var(--ws-text-muted)]">
                     {KIND_LABEL[item.kind]}
                   </span>
                   {item.meta ? (
-                    <span className="text-[11px] text-[var(--ws-text-muted)] tabular-nums">{item.meta}</span>
+                    <span className="type-caption text-[var(--ws-text-muted)] tabular-nums">{item.meta}</span>
                   ) : null}
                 </div>
-                <p className="mt-0.5 text-sm font-medium text-[var(--ws-text-primary)] line-clamp-2">
+                <p className="mt-0.5 type-card-description font-medium text-[var(--ws-text-primary)] line-clamp-2">
                   {t(item.label)}
                 </p>
               </Link>

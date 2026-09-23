@@ -95,29 +95,29 @@ export default function AgentPlanViewer({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-widest text-teal-400/70">
+          <p className="type-caption font-black uppercase tracking-widest text-teal-400/70">
             Agent Plan
           </p>
           {planTitle && (
-            <p className="text-xs text-slate-300 truncate">{planTitle}</p>
+            <p className="type-card-description text-slate-300 truncate">{planTitle}</p>
           )}
         </div>
 
         {/* Progress pill */}
         <div className="flex items-center gap-1.5 shrink-0">
           {isRunning && (
-            <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-bold text-teal-300">
+            <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-teal-300">
               <Loader2 className="h-2.5 w-2.5 animate-spin" />
               Running
             </span>
           )}
           {!isRunning && failCount > 0 && (
-            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 type-ui font-bold text-rose-300">
               {failCount} failed
             </span>
           )}
           {!isRunning && failCount === 0 && (
-            <span className="text-[10px] text-slate-500">
+            <span className="type-ui text-slate-500">
               {doneCount}/{steps.length}
             </span>
           )}
@@ -164,7 +164,7 @@ export default function AgentPlanViewer({
                   className="flex items-start gap-2"
                 >
                   {/* Step number */}
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-700 text-[9px] font-black text-slate-500">
+                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-700 type-ui font-black text-slate-500">
                     {idx + 1}
                   </span>
 
@@ -175,17 +175,17 @@ export default function AgentPlanViewer({
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-xs leading-snug ${STATUS_LABEL_CLASS[step.status]}`}>
+                    <p className={`type-caption leading-snug ${STATUS_LABEL_CLASS[step.status]}`}>
                       {step.label}
                     </p>
                     {step.tool && (
-                      <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-600">
+                      <p className="mt-0.5 flex items-center gap-1 type-card-description text-slate-600">
                         <Wrench className="h-2.5 w-2.5" />
                         <span className="font-mono">{step.tool}</span>
                       </p>
                     )}
                     {step.detail && step.status !== 'done' && (
-                      <p className="mt-0.5 text-[10px] text-slate-500 leading-snug">
+                      <p className="mt-0.5 type-card-description text-slate-500 leading-snug">
                         {step.detail}
                       </p>
                     )}

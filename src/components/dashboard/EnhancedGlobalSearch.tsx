@@ -163,8 +163,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         className="object-contain"
                     />
                 </div>
-                <span className="hidden text-sm font-medium sm:inline">{t('Search anything...')}</span>
-                <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 text-xs text-slate-400 sm:inline-block">
+                <span className="hidden type-ui font-medium sm:inline">{t('Search anything...')}</span>
+                <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 type-caption text-slate-400 sm:inline-block">
                     {t('Search')}
                 </kbd>
             </button>
@@ -214,7 +214,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         <div className="p-4 border-b border-slate-800 bg-slate-900/50">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs text-slate-400 mb-2 block">Type</label>
+                                    <label className="type-label text-slate-400 mb-2 block">Type</label>
                                     <select
                                         multiple
                                         value={filters.type || []}
@@ -222,7 +222,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                             const values = Array.from(e.target.selectedOptions, opt => opt.value);
                                             setFilters({ ...filters, type: values as any });
                                         }}
-                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
                                     >
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
@@ -235,11 +235,11 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-slate-400 mb-2 block">Status</label>
+                                    <label className="type-caption text-slate-400 mb-2 block">Status</label>
                                     <input
                                         type="text"
                                         placeholder="Filter by status..."
-                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
                                         onChange={(e) => {
                                             const newFilters = { ...filters };
                                             if (e.target.value) {
@@ -258,13 +258,13 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     {/* Suggestions */}
                     {suggestions.length > 0 && !query && (
                         <div className="p-4 border-b border-slate-800">
-                            <p className="text-xs text-slate-400 mb-2">Suggestions</p>
+                            <p className="type-card-description text-slate-400 mb-2">Suggestions</p>
                             <div className="flex flex-wrap gap-2">
                                 {suggestions.map((suggestion, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleHistoryClick(suggestion)}
-                                        className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-sm hover:bg-slate-700 transition-colors"
+                                        className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg type-ui hover:bg-slate-700 transition-colors"
                                     >
                                         {suggestion}
                                     </button>
@@ -276,13 +276,13 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     {/* History */}
                     {history.length > 0 && !query && results.length === 0 && (
                         <div className="p-4 border-b border-slate-800">
-                            <p className="text-xs text-slate-400 mb-2">Recent Searches</p>
+                            <p className="type-card-description text-slate-400 mb-2">Recent Searches</p>
                             <div className="space-y-1">
                                 {history.map((historyItem, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleHistoryClick(historyItem)}
-                                        className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded-lg transition-colors"
+                                        className="w-full text-left px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 rounded-lg transition-colors"
                                     >
                                         {historyItem}
                                     </button>
@@ -304,14 +304,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             <div className="p-8 text-center text-slate-400">
                                 <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                 <p>No results found</p>
-                                <p className="text-xs mt-2">Try different keywords or adjust filters</p>
+                                <p className="type-card-description mt-2">Try different keywords or adjust filters</p>
                             </div>
                         )}
 
                         {!isSearching && results.length === 0 && !query && (
                             <div className="p-8 text-center text-slate-400">
-                                <p className="text-sm">Start typing to search...</p>
-                                <div className="mt-4 text-xs space-y-1">
+                                <p className="type-card-description">Start typing to search...</p>
+                                <div className="mt-4 type-caption space-y-1">
                                     <p>• Search across projects, messages, contracts, documents, invoices and campaigns</p>
                                     <p>• Use filters to narrow results</p>
                                     <p>• Press ⌘K anytime to search</p>
@@ -332,26 +332,26 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                     {getIcon(result.type)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-white font-medium text-sm truncate">
+                                    <p className="text-white font-medium type-card-description truncate">
                                         {result.title}
                                     </p>
                                     {result.subtitle && (
-                                        <p className="text-slate-400 text-xs mt-1 truncate">
+                                        <p className="text-slate-400 type-card-description mt-1 truncate">
                                             {result.subtitle}
                                         </p>
                                     )}
                                     {result.description && (
-                                        <p className="text-slate-500 text-xs mt-1 line-clamp-2">
+                                        <p className="text-slate-500 type-card-description mt-1 line-clamp-2">
                                             {result.description}
                                         </p>
                                     )}
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                    <span className="text-xs text-slate-500 uppercase">
+                                    <span className="type-caption text-slate-500 uppercase">
                                         {result.type}
                                     </span>
                                     {result.metadata && (
-                                        <span className="text-xs text-slate-600">
+                                        <span className="type-caption text-slate-600">
                                             {result.relevance}% match
                                         </span>
                                     )}
@@ -361,7 +361,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     </div>
 
                     {/* Footer */}
-                    <div className="p-3 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-slate-400 bg-slate-900/50">
+                    <div className="p-3 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 type-caption text-slate-400 bg-slate-900/50">
                         <div className="flex flex-wrap gap-3 sm:gap-4">
                             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded">↑↓</kbd> Navigate</span>
                             <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded">Enter</kbd> Select</span>

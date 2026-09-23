@@ -231,8 +231,8 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                 <ArrowDownCircle className="w-6 h-6" />
                             </div>
                             <div className="text-center">
-                                <span className={`block font-bold text-sm ${transactionType === 'received' ? 'text-white' : 'text-slate-400'}`}>Money received</span>
-                                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Income / Revenue</span>
+                                <span className={`block font-bold type-ui ${transactionType === 'received' ? 'text-white' : 'text-slate-400'}`}>Money received</span>
+                                <span className="type-caption text-slate-500 uppercase tracking-widest font-medium">Income / Revenue</span>
                             </div>
                         </button>
 
@@ -250,8 +250,8 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                 <ArrowUpCircle className="w-6 h-6" />
                             </div>
                             <div className="text-center">
-                                <span className={`block font-bold text-sm ${transactionType === 'spent' ? 'text-white' : 'text-slate-400'}`}>Money spent</span>
-                                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Expense / Cost</span>
+                                <span className={`block font-bold type-ui ${transactionType === 'spent' ? 'text-white' : 'text-slate-400'}`}>Money spent</span>
+                                <span className="type-caption text-slate-500 uppercase tracking-widest font-medium">Expense / Cost</span>
                             </div>
                         </button>
                     </div>
@@ -282,13 +282,13 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                     />
 
                     <div className="mt-4">
-                        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">
+                        <label className="block type-caption font-black text-slate-500 uppercase tracking-widest mb-2">
                             {transactionType === 'spent' ? 'Paid from account' : 'Deposit to account'} *
                         </label>
                         <select
                             value={selectedAssetAccountId}
                             onChange={(e) => setSelectedAssetAccountId(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
                         >
                             <option value="">Select cash/bank account...</option>
                             {accounts
@@ -306,7 +306,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                 <input 
                                     autoFocus
                                     placeholder="Bank/Cash Account Name (e.g. Chase Business)"
-                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none focus:border-teal-500"
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 type-caption text-white outline-none focus:border-teal-500"
                                     value={newAssetAccountName}
                                     onChange={(e) => setNewAssetAccountName(e.target.value)}
                                 />
@@ -319,7 +319,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                 {/* Entry Lines */}
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Transaction lines</h3>
+                        <h3 className="type-caption font-bold text-slate-500 uppercase tracking-widest">Transaction lines</h3>
                         <Button
                             variant="ghost"
                             size="sm"
@@ -338,7 +338,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                     <select
                                         value={line.accountId}
                                         onChange={(e) => updateLine(index, 'accountId', e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
                                     >
                                         <option value="">Select category...</option>
                                         {accounts
@@ -359,7 +359,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                             <input 
                                                 autoFocus
                                                 placeholder="Category Name"
-                                                className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-white"
+                                                className="flex-1 bg-slate-900 border border-slate-700 rounded-md px-2 py-1 type-caption text-white"
                                                 value={newAccountName}
                                                 onChange={(e) => setNewAccountName(e.target.value)}
                                             />
@@ -373,19 +373,19 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                         type="text"
                                         value={line.description}
                                         onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all"
                                         placeholder="Note (optional)..."
                                     />
                                 </div>
                                 <div className="flex-1 w-full flex items-center gap-2">
                                     <div className="relative flex-1">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-sm font-mono">$</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 type-ui font-mono">$</span>
                                         <input
                                             type="number"
                                             step="0.01"
                                             value={line.amount || ''}
                                             onChange={(e) => updateLine(index, 'amount', parseFloat(e.target.value) || 0)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 text-right focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 type-ui text-slate-200 placeholder-slate-600 text-right focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all font-mono"
                                             placeholder="0.00"
                                         />
                                     </div>
@@ -405,12 +405,12 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                     <div className={`p-4 rounded-xl border flex items-center justify-between transition-all ${totalAmount > 0 ? 'bg-teal-500/5 border-teal-500/20 text-teal-400' : 'bg-slate-800/50 border-slate-700/50 text-slate-500'}`}>
                         <div className="flex items-center gap-2">
                             {totalAmount > 0 ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                            <span className="text-sm font-bold uppercase tracking-tight">
+                            <span className="type-caption font-bold uppercase tracking-tight">
                                 {totalAmount > 0 ? 'Transaction balanced' : 'Enter amount'}
                             </span>
                         </div>
                         <div className="text-right">
-                            <span className="text-xs block uppercase tracking-widest font-bold opacity-60">Total Value</span>
+                            <span className="type-caption block uppercase tracking-widest font-bold opacity-60">Total Value</span>
                             <span className="text-xl font-mono font-bold text-white">${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>

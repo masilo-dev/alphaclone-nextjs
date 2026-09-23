@@ -39,11 +39,11 @@ export default function DeliveryProviderIndicator({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] text-slate-500 uppercase font-black tracking-widest block">
+      <label className="type-caption text-slate-500 uppercase font-black tracking-widest block">
         Delivery
       </label>
       <div className="flex items-center gap-2">
-        <span className="text-[12px] text-slate-300">
+        <span className="type-ui text-slate-300">
           {value === 'auto' ? (
             <>
               Automatic · <span className="text-teal-400">{resolvedLabel}</span>
@@ -56,7 +56,7 @@ export default function DeliveryProviderIndicator({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="text-[10px] text-slate-500 hover:text-slate-300 uppercase font-semibold tracking-wide inline-flex items-center gap-0.5"
+            className="type-caption text-slate-500 hover:text-slate-300 uppercase font-semibold tracking-wide inline-flex items-center gap-0.5"
           >
             Change
             <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? 'rotate-180' : ''}`} />
@@ -75,7 +75,7 @@ export default function DeliveryProviderIndicator({
                   onChange(id);
                   setExpanded(false);
                 }}
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors ${
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg type-ui font-semibold border transition-colors ${
                   selected
                     ? 'bg-teal-600/20 border-teal-500/40 text-teal-300'
                     : 'border-white/10 text-slate-400 hover:text-white hover:border-white/20'

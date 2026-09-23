@@ -27,8 +27,8 @@ export default function Page() {
 
       <section id="notice" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Processing notice</h2>
-        <p className="text-sm leading-7 text-slate-300">We send a confirmation email after submission and notify legal@alphaclonesystems.com. Requests are stored in our data_requests table for tracking and audit purposes.</p>
-        <p className="text-sm leading-7 text-slate-300">We process all requests within 30 days.</p>
+        <p className="type-card-description leading-7 text-slate-300">We send a confirmation email after submission and notify legal@alphaclonesystems.com. Requests are stored in our data_requests table for tracking and audit purposes.</p>
+        <p className="type-card-description leading-7 text-slate-300">We process all requests within 30 days.</p>
       </section>
     </LegalPageShell>
   );

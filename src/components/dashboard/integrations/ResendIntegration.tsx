@@ -297,7 +297,7 @@ export function ResendIntegration() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Resend Integration</h3>
-            <p className="text-sm text-slate-400">
+            <p className="type-card-description text-slate-400">
               {status.isConnected ? `Connected • Domain: ${status.domain}` : 'Connect your Resend account'}
             </p>
           </div>
@@ -330,7 +330,7 @@ export function ResendIntegration() {
       {/* Status */}
       {status.isConnected && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 type-ui">
             <CheckCircle className="w-4 h-4 text-purple-400" />
             <span className="text-purple-400">Connected</span>
             <span className="text-slate-500">•</span>
@@ -346,27 +346,27 @@ export function ResendIntegration() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-white mb-2">Send Test Email</h4>
+              <h4 className="type-ui font-medium text-white mb-2">Send Test Email</h4>
               <div className="space-y-2">
                 <input
                   type="email"
                   placeholder="Recipient email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <input
                   type="text"
                   placeholder="Subject"
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <textarea
                   placeholder="Message"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 resize-none"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500 resize-none"
                   rows={2}
                 />
                 <Button
@@ -382,11 +382,11 @@ export function ResendIntegration() {
             </div>
 
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-white mb-2">Verified Domains</h4>
+              <h4 className="type-ui font-medium text-white mb-2">Verified Domains</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {domains.length > 0 ? (
                   domains.slice(0, 3).map((domain) => (
-                    <div key={domain.id} className="flex items-center justify-between text-xs">
+                    <div key={domain.id} className="flex items-center justify-between type-caption">
                       <div className="flex items-center gap-2">
                         <Code className="w-3 h-3 text-purple-400" />
                         <span className="text-slate-400 truncate">{domain.name}</span>
@@ -401,7 +401,7 @@ export function ResendIntegration() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 text-xs">No domains verified</p>
+                  <p className="text-slate-500 type-card-description">No domains verified</p>
                 )}
               </div>
             </div>
@@ -437,8 +437,8 @@ export function ResendIntegration() {
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-white mb-1">{clientError.title}</h4>
-                <p className="text-sm text-slate-300 mb-2">{clientError.message}</p>
-                <p className="text-xs text-slate-400">{clientError.suggestion}</p>
+                <p className="type-card-description text-slate-300 mb-2">{clientError.message}</p>
+                <p className="type-card-description text-slate-400">{clientError.suggestion}</p>
               </div>
             </div>
           </div>
@@ -459,7 +459,7 @@ export function ResendIntegration() {
                   <h4 className="text-lg font-semibold text-white mb-4">Connect Resend</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-slate-300 mb-2">
                         API Key
                       </label>
                       <Input
@@ -471,7 +471,7 @@ export function ResendIntegration() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-slate-300 mb-2">
                         Sending Domain
                       </label>
                       <Input
@@ -507,11 +507,11 @@ export function ResendIntegration() {
               <>
                 <div>
                   <h4 className="text-lg font-semibold text-white mb-2">Connection Status</h4>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 type-ui">
                     <CheckCircle className="w-4 h-4 text-purple-400" />
                     <span className="text-purple-400">Connected to Resend</span>
                   </div>
-                  <div className="mt-4 space-y-2 text-sm text-slate-400">
+                  <div className="mt-4 space-y-2 type-ui text-slate-400">
                     <p>Domain: {status.domain}</p>
                     <p>Verified Domains: {domains.filter(d => d.status === 'verified').length}</p>
                   </div>

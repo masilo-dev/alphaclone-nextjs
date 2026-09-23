@@ -98,7 +98,7 @@ export default function CalComEmbed({
         <div className="cal-embed-fallback">
           <AlertCircle className="w-11 h-11 text-amber-400 mb-3" aria-hidden="true" />
           <h3 className="text-lg font-bold text-white mb-2">{copy.continue}</h3>
-          <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
+          <p className="type-card-description text-slate-400 max-w-md mb-6 leading-relaxed">
             {copy.failed}
           </p>
           <button
@@ -112,7 +112,7 @@ export default function CalComEmbed({
             href={resolvedUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl type-ui transition-colors"
           >
             <Calendar className="w-4 h-4" aria-hidden="true" />
             {copy.choose}
@@ -135,7 +135,7 @@ export default function CalComEmbed({
               ))}
             </div>
           </div>
-          <p className="text-sm text-slate-400">{copy.loading}</p>
+          <p className="type-card-description text-slate-400">{copy.loading}</p>
         </div>
       )}
 

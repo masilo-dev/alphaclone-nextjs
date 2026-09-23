@@ -93,7 +93,7 @@ export function OverviewChartCard({
               aria-selected={tab === item.id}
               onClick={() => setTab(item.id)}
               className={cn(
-                'px-3 min-h-8 rounded-[8px] text-xs font-semibold transition-colors duration-150',
+                'px-3 min-h-8 rounded-[8px] type-caption font-semibold transition-colors duration-150',
                 tab === item.id
                   ? 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-primary)] shadow-sm'
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
@@ -109,7 +109,7 @@ export function OverviewChartCard({
         {loading ? (
           <div className="h-full rounded-xl bg-[var(--ws-surface-tertiary)] ac-skeleton-pulse" />
         ) : data.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-sm text-[var(--ws-text-muted)]">
+          <div className="h-full flex items-center justify-center type-ui text-[var(--ws-text-muted)]">
             Not enough data yet for this view.
           </div>
         ) : tab === 'pipeline' ? (
@@ -119,13 +119,13 @@ export function OverviewChartCard({
                 <CartesianGrid stroke={GRID_STROKE} vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: AXIS_FILL, fontSize: 11 }}
+                  tick={{ fill: AXIS_FILL, fontSize: 'var(--type-caption-size)' }}
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  tick={{ fill: AXIS_FILL, fontSize: 11 }}
+                  tick={{ fill: AXIS_FILL, fontSize: 'var(--type-caption-size)' }}
                   axisLine={false}
                   tickLine={false}
                   width={44}
@@ -138,7 +138,7 @@ export function OverviewChartCard({
                     border: '1px solid rgba(148, 163, 184, 0.25)',
                     borderRadius: 10,
                     color: '#f8fafc',
-                    fontSize: 12,
+                    fontSize: 'var(--type-caption-size)',
                   }}
                   formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'pipeline' ? 'Deals' : 'Value']}
                 />
@@ -159,13 +159,13 @@ export function OverviewChartCard({
                 <CartesianGrid stroke={GRID_STROKE} vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: AXIS_FILL, fontSize: 11 }}
+                  tick={{ fill: AXIS_FILL, fontSize: 'var(--type-caption-size)' }}
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  tick={{ fill: AXIS_FILL, fontSize: 11 }}
+                  tick={{ fill: AXIS_FILL, fontSize: 'var(--type-caption-size)' }}
                   axisLine={false}
                   tickLine={false}
                   width={44}
@@ -177,7 +177,7 @@ export function OverviewChartCard({
                     border: '1px solid rgba(148, 163, 184, 0.25)',
                     borderRadius: 10,
                     color: '#f8fafc',
-                    fontSize: 12,
+                    fontSize: 'var(--type-caption-size)',
                   }}
                   formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'revenue' ? 'Revenue' : 'Completed']}
                 />

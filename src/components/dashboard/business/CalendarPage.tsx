@@ -422,7 +422,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 <div className="flex items-center justify-center min-h-[320px]">
                     <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-2 border-[var(--brand-violet-500)] border-t-transparent rounded-full animate-spin" />
-                        <span className="text-[var(--ws-text-muted)] text-sm">Loading calendar...</span>
+                        <span className="text-[var(--ws-text-muted)] type-ui">Loading calendar...</span>
                     </div>
                 </div>
             </div>
@@ -452,7 +452,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         </button>
                         <button
                             onClick={() => setCurrentDate(new Date())}
-                            className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors font-medium"
+                            className="px-3 py-1.5 type-caption bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors font-medium"
                         >
                             Today
                         </button>
@@ -471,7 +471,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
                     >
                         <Mail className="w-4 h-4" />
-                        <span className="text-sm font-medium">Google Calendar</span>
+                        <span className="type-ui font-medium">Google Calendar</span>
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
@@ -489,7 +489,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     <button
                         key={source}
                         onClick={() => toggleFilter(source)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${activeFilters.has(source)
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full type-caption font-medium border transition-all ${activeFilters.has(source)
                             ? `${config.bg} ${config.text} ${config.border}`
                             : 'bg-slate-900 text-slate-500 border-slate-700 opacity-50'
                             }`}
@@ -498,7 +498,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         {config.label}
                     </button>
                 ))}
-                <span className="flex items-center text-xs text-slate-500 ml-1">
+                <span className="flex items-center type-caption text-slate-500 ml-1">
                     {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} this month
                 </span>
             </div>
@@ -522,7 +522,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 {/* Day Headers */}
                 <div className="grid grid-cols-7 border-b border-slate-800">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="p-3 text-center text-sm font-semibold text-slate-400 border-r border-slate-800 last:border-r-0">
+                        <div key={day} className="p-3 text-center type-ui font-semibold text-slate-400 border-r border-slate-800 last:border-r-0">
                             {day}
                         </div>
                     ))}
@@ -549,7 +549,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                     setShowAddModal(true);
                                 }}
                             >
-                                <div className={`text-sm font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-slate-300'
+                                <div className={`type-ui font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-slate-300'
                                     }`}>
                                     {day}
                                 </div>
@@ -559,7 +559,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                         return (
                                             <div
                                                 key={event.id}
-                                                className={`text-xs px-2 py-1 rounded truncate ${cfg.bg} ${cfg.text} cursor-pointer hover:opacity-80`}
+                                                className={`type-caption px-2 py-1 rounded truncate ${cfg.bg} ${cfg.text} cursor-pointer hover:opacity-80`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedEvent(event);
@@ -570,7 +570,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                         );
                                     })}
                                     {dayEvents.length > 3 && (
-                                        <div className="text-xs text-slate-500 pl-1">
+                                        <div className="type-caption text-slate-500 pl-1">
                                             +{dayEvents.length - 3} more
                                         </div>
                                     )}
@@ -655,7 +655,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
 
     return (
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+            <h3 className="type-ui font-semibold text-slate-300 mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Upcoming
             </h3>
@@ -671,13 +671,13 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
                         >
                             <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-200 truncate">{event.title}</p>
-                                <p className="text-xs text-slate-500">
+                                <p className="type-card-description text-slate-200 truncate">{event.title}</p>
+                                <p className="type-card-description text-slate-500">
                                     {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     {event.startTime && ` · ${new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                 </p>
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} shrink-0`}>
+                            <span className={`type-caption px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} shrink-0`}>
                                 {cfg.label}
                             </span>
                         </button>
@@ -711,7 +711,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                             moduleId="calendar"
                             title={event.title}
                             status={
-                                <span className={`text-xs px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
+                                <span className={`type-caption px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
                                     {cfg.label}
                                 </span>
                             }
@@ -742,7 +742,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm text-slate-300">
+                    <div className="flex items-center gap-3 type-ui text-slate-300">
                         <CalendarIcon className="w-4 h-4 text-slate-500 shrink-0" />
                         <span>
                             {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
@@ -750,7 +750,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     </div>
 
                     {event.startTime && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <Clock className="w-4 h-4 text-slate-500 shrink-0" />
                             <span>
                                 {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -760,21 +760,21 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     )}
 
                     {event.clientName && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <UserIcon className="w-4 h-4 text-slate-500 shrink-0" />
                             <span>{event.clientName}</span>
                         </div>
                     )}
 
                     {event.clientEmail && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <Mail className="w-4 h-4 text-slate-500 shrink-0" />
                             <span>{event.clientEmail}</span>
                         </div>
                     )}
 
                     {event.value && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <TrendingUp className="w-4 h-4 text-slate-500 shrink-0" />
                             <span>
                                 {event.currency || 'USD'} {event.value.toLocaleString()} deal value
@@ -783,21 +783,21 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     )}
 
                     {event.priority && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <CheckSquare className="w-4 h-4 text-slate-500 shrink-0" />
                             <span className="capitalize">Priority: {event.priority}</span>
                         </div>
                     )}
 
                     {event.status && (
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <div className="flex items-center gap-3 type-ui text-slate-300">
                             <Briefcase className="w-4 h-4 text-slate-500 shrink-0" />
                             <span className="capitalize">Status: {event.status.replace(/_/g, ' ')}</span>
                         </div>
                     )}
 
                     {event.description && (
-                        <div className="mt-3 p-3 bg-slate-800/50 rounded-lg text-sm text-slate-400">
+                        <div className="mt-3 p-3 bg-slate-800/50 rounded-lg type-ui text-slate-400">
                             {event.description}
                         </div>
                     )}
@@ -807,7 +807,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'task' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/tasks')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
                             >
                                 View Task Details
                             </button>
@@ -815,7 +815,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'project' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/business/projects')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
                             >
                                 View Project Details
                             </button>
@@ -823,7 +823,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'deal' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/leads')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
                             >
                                 View Deal Details
                             </button>
@@ -832,7 +832,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => onEdit(event)}
-                                    className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors border border-slate-700"
+                                    className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
                                 >
                                     Edit Event
                                 </button>
@@ -841,7 +841,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                                         const eventId = event.id.replace('event-', '');
                                         onDelete(eventId);
                                     }}
-                                    className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-500/20"
+                                    className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 type-ui font-medium rounded-lg transition-colors border border-red-500/20"
                                 >
                                     Delete Event
                                 </button>
@@ -885,10 +885,10 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                     <span className="text-lg font-black leading-none">{day}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                    <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
-                                    {isToday && <span className="text-xs font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
+                                    {isToday && <span className="type-caption font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
                                 </div>
                             </div>
                             <button
@@ -910,10 +910,10 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                             className="w-full bg-slate-950/50 border border-white/5 p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-slate-800/50 transition-colors"
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm font-bold text-white mb-1 truncate">{event.title}</h4>
-                                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                <h4 className="type-ui font-bold text-white mb-1 truncate">{event.title}</h4>
+                                                <div className="flex items-center gap-2 type-caption text-slate-500">
                                                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                                                    <span className="uppercase tracking-wide text-xs">{cfg.label}</span>
+                                                    <span className="uppercase tracking-wide type-caption">{cfg.label}</span>
                                                     {event.startTime && (
                                                         <>
                                                             <div className="w-px h-3 bg-slate-700" />
@@ -981,7 +981,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-2">Event Title *</label>
+                        <label className="block type-label font-medium mb-2">Event Title *</label>
                         <input
                             type="text"
                             required
@@ -992,7 +992,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Description</label>
+                        <label className="block type-label font-medium mb-2">Description</label>
                         <textarea
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -1002,7 +1002,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Start Time *</label>
+                        <label className="block type-caption font-medium mb-2">Start Time *</label>
                         <input
                             type="datetime-local"
                             required
@@ -1013,7 +1013,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">End Time *</label>
+                        <label className="block type-caption font-medium mb-2">End Time *</label>
                         <input
                             type="datetime-local"
                             required
@@ -1024,7 +1024,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Event Type</label>
+                        <label className="block type-label font-medium mb-2">Event Type</label>
                         <select
                             value={formData.eventType}
                             onChange={e => setFormData({ ...formData, eventType: e.target.value })}

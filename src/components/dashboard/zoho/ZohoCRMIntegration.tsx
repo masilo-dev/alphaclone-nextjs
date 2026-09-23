@@ -93,7 +93,7 @@ export default function ZohoCRMIntegration() {
                     <h2 className="text-xl font-bold flex items-center gap-2">
                         <Database className="text-orange-500" /> Zoho CRM Synchronization
                     </h2>
-                    <p className="text-gray-400 text-sm mt-1">Keep your leads, contacts and deals synced automatically.</p>
+                    <p className="text-gray-400 type-card-description mt-1">Keep your leads, contacts and deals synced automatically.</p>
                 </div>
                 <button 
                     onClick={handleConnect}
@@ -109,7 +109,7 @@ export default function ZohoCRMIntegration() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold">Contacts & Leads</h3>
-                                <p className="text-gray-400 text-xs">Syncs full names, emails, and company info.</p>
+                                <p className="text-gray-400 type-card-description">Syncs full names, emails, and company info.</p>
                             </div>
                             <Layout className="text-blue-500 opacity-50" />
                         </div>
@@ -126,7 +126,7 @@ export default function ZohoCRMIntegration() {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="font-bold">Deals & Pipelines</h3>
-                                <p className="text-gray-400 text-xs">Syncs deal names, values, and stages.</p>
+                                <p className="text-gray-400 type-card-description">Syncs deal names, values, and stages.</p>
                             </div>
                             <RefreshCw className="text-green-500 opacity-50" size={20} />
                         </div>
@@ -145,12 +145,12 @@ export default function ZohoCRMIntegration() {
                         status.type === 'success' ? 'bg-green-600/10 border-green-600/20 text-green-400' : 'bg-red-600/10 border-red-600/20 text-red-400'
                     }`}>
                         {status.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                        <p className="text-sm font-medium">{status.message}</p>
+                        <p className="type-caption font-medium">{status.message}</p>
                     </div>
                 )}
             </div>
 
-            <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between text-xs text-gray-500">
+            <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between type-caption text-gray-500">
                 <p>
                     {connectionLoading
                         ? 'Checking Zoho connection...'

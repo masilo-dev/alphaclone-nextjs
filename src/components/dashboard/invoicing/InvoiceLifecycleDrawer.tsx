@@ -222,7 +222,7 @@ export function InvoiceLifecycleDrawer({
           <div className="flex-1 min-w-0 space-y-4">
           <section className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-bold text-white">Lifecycle</p>
+              <p className="type-card-description font-bold text-white">Lifecycle</p>
               {invoiceId && tenantId ? (
                 <AskBonnieButton
                   compact
@@ -249,7 +249,7 @@ export function InvoiceLifecycleDrawer({
                 <button
                   key={status}
                   onClick={() => void transition(status)}
-                  className={`rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${data.invoice.lifecycle_status === status ? "border-teal-400 bg-teal-500/15 text-teal-200" : "border-white/10 text-slate-400"}`}
+                  className={`rounded-full border px-2 py-1 type-caption font-bold uppercase ${data.invoice.lifecycle_status === status ? "border-teal-400 bg-teal-500/15 text-teal-200" : "border-white/10 text-slate-400"}`}
                 >
                   {status.replaceAll("_", " ")}
                 </button>
@@ -258,13 +258,13 @@ export function InvoiceLifecycleDrawer({
             <div className="mt-3 flex flex-wrap gap-2 border-t border-white/5 pt-3">
               <a
                 href={`/api/invoices/${encodeURIComponent(String(data.invoice.id))}/statement?tenantId=${encodeURIComponent(String(tenantId))}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-slate-300"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 type-ui font-bold text-slate-300"
               >
                 <Download className="h-3 w-3" /> Statement
               </a>
               <a
                 href={`/api/invoices/${encodeURIComponent(String(data.invoice.id))}/receipt?tenantId=${encodeURIComponent(String(tenantId))}`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 text-[10px] font-bold text-slate-300"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2 py-1 type-ui font-bold text-slate-300"
               >
                 <Download className="h-3 w-3" /> Receipt
               </a>
@@ -275,31 +275,31 @@ export function InvoiceLifecycleDrawer({
                   href={data.invoice.payment_link}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[10px] font-bold text-sky-300"
+                  className="inline-flex items-center gap-1.5 type-ui font-bold text-sky-300"
                 >
                   <ExternalLink className="h-3 w-3" /> Open payment link
                 </a>
                 <button
                   onClick={() => void verifyPaymentLink()}
-                  className="rounded-lg border border-teal-500/25 bg-teal-500/10 px-2 py-1 text-[10px] font-bold text-teal-200"
+                  className="rounded-lg border border-teal-500/25 bg-teal-500/10 px-2 py-1 type-ui font-bold text-teal-200"
                 >
                   Verify link
                 </button>
                 {data.invoice.payment_link_verified_at ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-300">
+                  <span className="inline-flex items-center gap-1 type-ui text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" /> Verified{" "}
                     {new Date(
                       data.invoice.payment_link_verified_at,
                     ).toLocaleString()}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-amber-300">
+                  <span className="type-ui text-amber-300">
                     Not verified
                   </span>
                 )}
               </div>
             ) : (
-              <p className="mt-3 border-t border-white/5 pt-3 text-[10px] text-slate-500">
+              <p className="mt-3 border-t border-white/5 pt-3 type-card-description text-slate-500">
                 No payment link configured.
               </p>
             )}
@@ -309,13 +309,13 @@ export function InvoiceLifecycleDrawer({
               <div className="flex justify-between">
                 <div className="flex items-center gap-2">
                   <CalendarClock className="h-4 w-4 text-sky-300" />
-                  <p className="text-xs font-bold text-white">
+                  <p className="type-card-description font-bold text-white">
                     Payment schedule
                   </p>
                 </div>
                 <button
                   onClick={() => setMode("installment")}
-                  className="text-[10px] font-bold text-teal-300"
+                  className="type-ui font-bold text-teal-300"
                 >
                   Add
                 </button>
@@ -324,7 +324,7 @@ export function InvoiceLifecycleDrawer({
                 data.schedules.map((row) => (
                   <div
                     key={row.id}
-                    className="mt-2 flex justify-between text-[11px]"
+                    className="mt-2 flex justify-between type-ui"
                   >
                     <span className="text-slate-300">
                       {row.sequence_number}. {row.label}
@@ -336,7 +336,7 @@ export function InvoiceLifecycleDrawer({
                   </div>
                 ))
               ) : (
-                <p className="mt-3 text-[11px] text-slate-500">
+                <p className="mt-3 type-card-description text-slate-500">
                   No installments configured.
                 </p>
               )}
@@ -345,13 +345,13 @@ export function InvoiceLifecycleDrawer({
               <div className="flex justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-violet-300" />
-                  <p className="text-xs font-bold text-white">
+                  <p className="type-card-description font-bold text-white">
                     Credits & adjustments
                   </p>
                 </div>
                 <button
                   onClick={() => setMode("adjustment")}
-                  className="text-[10px] font-bold text-teal-300"
+                  className="type-ui font-bold text-teal-300"
                 >
                   Add
                 </button>
@@ -360,7 +360,7 @@ export function InvoiceLifecycleDrawer({
                 data.adjustments.map((row) => (
                   <div
                     key={row.id}
-                    className="mt-2 flex justify-between text-[11px]"
+                    className="mt-2 flex justify-between type-ui"
                   >
                     <span className="text-slate-300">
                       {String(row.adjustment_type).replaceAll("_", " ")}
@@ -372,7 +372,7 @@ export function InvoiceLifecycleDrawer({
                   </div>
                 ))
               ) : (
-                <p className="mt-3 text-[11px] text-slate-500">
+                <p className="mt-3 type-card-description text-slate-500">
                   No adjustments.
                 </p>
               )}
@@ -381,20 +381,20 @@ export function InvoiceLifecycleDrawer({
           <section className={card}>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-300" />
-              <p className="text-xs font-bold text-white">
+              <p className="type-card-description font-bold text-white">
                 Revenue forecast & billing gaps
               </p>
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div>
-                <p className="text-[9px] font-black uppercase text-slate-500">
+                <p className="type-caption font-black uppercase text-slate-500">
                   Predicted payment
                 </p>
-                <p className="mt-1 text-xs font-bold text-white">
+                <p className="mt-1 type-card-description font-bold text-white">
                   {data.intelligence.paymentPrediction.predictedPaymentDate}
                 </p>
                 <p
-                  className={`text-[10px] ${data.intelligence.paymentPrediction.riskTier === "high" || data.intelligence.paymentPrediction.riskTier === "critical" ? "text-rose-300" : "text-slate-500"}`}
+                  className={`type-ui ${data.intelligence.paymentPrediction.riskTier === "high" || data.intelligence.paymentPrediction.riskTier === "critical" ? "text-rose-300" : "text-slate-500"}`}
                 >
                   {Math.round(
                     data.intelligence.paymentPrediction.paymentProbability *
@@ -406,10 +406,10 @@ export function InvoiceLifecycleDrawer({
               </div>
               {data.intelligence.cashFlowForecast.map((bucket) => (
                 <div key={bucket.days}>
-                  <p className="text-[9px] font-black uppercase text-slate-500">
+                  <p className="type-caption font-black uppercase text-slate-500">
                     Expected {bucket.days}d inflow
                   </p>
-                  <p className="mt-1 text-xs font-bold text-emerald-300">
+                  <p className="mt-1 type-card-description font-bold text-emerald-300">
                     {data.invoice.currency || "USD"}{" "}
                     {Math.round(bucket.expected).toLocaleString()}
                   </p>
@@ -418,11 +418,11 @@ export function InvoiceLifecycleDrawer({
             </div>
             {data.intelligence.unbilledSignedContracts.length ? (
               <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-2">
-                <p className="text-[10px] font-bold text-amber-200">
+                <p className="type-card-description font-bold text-amber-200">
                   {data.intelligence.unbilledSignedContracts.length} signed
                   contract(s) have no invoice
                 </p>
-                <p className="mt-1 text-[9px] text-slate-400">
+                <p className="mt-1 type-card-description text-slate-400">
                   {data.intelligence.unbilledSignedContracts
                     .slice(0, 4)
                     .map((contract) => contract.title)
@@ -430,7 +430,7 @@ export function InvoiceLifecycleDrawer({
                 </p>
               </div>
             ) : (
-              <p className="mt-3 text-[10px] text-emerald-300">
+              <p className="mt-3 type-card-description text-emerald-300">
                 No signed-contract billing gaps detected.
               </p>
             )}
@@ -439,13 +439,13 @@ export function InvoiceLifecycleDrawer({
             <div className="flex justify-between">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-300" />
-                <p className="text-xs font-bold text-white">
+                <p className="type-card-description font-bold text-white">
                   Disputes & collection notes
                 </p>
               </div>
               <button
                 onClick={() => setMode("dispute")}
-                className="text-[10px] font-bold text-teal-300"
+                className="type-ui font-bold text-teal-300"
               >
                 Open dispute
               </button>
@@ -453,10 +453,10 @@ export function InvoiceLifecycleDrawer({
             {data.disputes.length ? (
               data.disputes.map((row) => (
                 <div key={row.id} className="mt-2">
-                  <p className="text-[11px] font-semibold text-slate-300">
+                  <p className="type-card-description font-semibold text-slate-300">
                     {row.reason}
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="type-card-description text-slate-500">
                     {row.status}
                     {row.disputed_amount
                       ? ` · ${Number(row.disputed_amount).toLocaleString()}`
@@ -465,12 +465,12 @@ export function InvoiceLifecycleDrawer({
                 </div>
               ))
             ) : (
-              <p className="mt-3 text-[11px] text-slate-500">No disputes.</p>
+              <p className="mt-3 type-card-description text-slate-500">No disputes.</p>
             )}
           </section>
           {mode ? (
             <section className={`${card} border-teal-500/25`}>
-              <p className="text-xs font-bold text-white">
+              <p className="type-card-description font-bold text-white">
                 {mode === "installment"
                   ? "New installment"
                   : mode === "adjustment"
@@ -486,7 +486,7 @@ export function InvoiceLifecycleDrawer({
                         setForm({ ...form, label: e.target.value })
                       }
                       placeholder="Milestone or installment"
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                     />
                     <input
                       value={form.dueDate}
@@ -494,7 +494,7 @@ export function InvoiceLifecycleDrawer({
                         setForm({ ...form, dueDate: e.target.value })
                       }
                       type="date"
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                     />
                   </>
                 ) : mode === "adjustment" ? (
@@ -503,7 +503,7 @@ export function InvoiceLifecycleDrawer({
                     onChange={(e) =>
                       setForm({ ...form, adjustmentType: e.target.value })
                     }
-                    className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                    className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                   >
                     <option value="credit_note">Credit note</option>
                     <option value="discount">Discount</option>
@@ -519,7 +519,7 @@ export function InvoiceLifecycleDrawer({
                   min="0"
                   step="0.01"
                   placeholder="Amount"
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
                 {mode !== "installment" ? (
                   <textarea
@@ -528,19 +528,19 @@ export function InvoiceLifecycleDrawer({
                       setForm({ ...form, reason: e.target.value })
                     }
                     placeholder="Reason or collection notes"
-                    className="min-h-20 rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                    className="min-h-20 rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                   />
                 ) : null}
                 <div className="flex gap-2">
                   <button
                     onClick={() => void submit()}
-                    className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-bold text-white"
+                    className="rounded-lg bg-teal-600 px-3 py-2 type-caption font-bold text-white"
                   >
                     Save
                   </button>
                   <button
                     onClick={() => setMode(null)}
-                    className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300"
+                    className="rounded-lg bg-slate-800 px-3 py-2 type-caption font-bold text-slate-300"
                   >
                     Cancel
                   </button>
@@ -559,7 +559,7 @@ export function InvoiceLifecycleDrawer({
           ) : null}
         </div>
       ) : (
-        <p className="p-8 text-center text-sm text-slate-500">
+        <p className="p-8 text-center type-card-description text-slate-500">
           Invoice workspace unavailable.
         </p>
       )}

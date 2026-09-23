@@ -376,11 +376,15 @@ const Dashboard: React.FC<DashboardProps> = ({
           (window.navigator as Navigator & { standalone?: boolean }).standalone,
         );
       const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-      // Installed iPhone/iPad PWAs should use the touch shell even when an
-      // iPad reports a desktop-sized CSS viewport.
-      setSidebarOpen(window.innerWidth >= 1024 && !(standalone && touchDevice));
+      // Installed iPhone/iPad PWAs use the touch shell. On laptops the compact
+      // rail is the calmer default unless the user explicitly expanded it.
+      const storedSidebar = window.localStorage.getItem(`alphaclone:sidebar:${user.id}`);
+      const desktopExpanded = storedSidebar
+        ? storedSidebar === 'expanded'
+        : window.innerWidth >= 1280;
+      setSidebarOpen(desktopExpanded && !(standalone && touchDevice));
     }
-  }, []);
+  }, [user.id]);
 
   useEffect(() => {
     if (!isPlatformAdminRole(user.role)) return;
@@ -1771,7 +1775,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1786,7 +1790,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1801,7 +1805,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1816,7 +1820,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1831,7 +1835,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1846,7 +1850,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1861,7 +1865,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1876,7 +1880,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1891,7 +1895,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1906,7 +1910,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
             <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-400 type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -2299,9 +2303,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h2 className="text-lg font-bold text-white mb-2">
               This section is not available
             </h2>
-            <p className="text-sm text-slate-400 max-w-md mb-6">
+            <p className="type-card-description text-slate-400 max-w-md mb-6">
               The page{" "}
-              <span className="text-slate-300 font-mono text-xs">
+              <span className="text-slate-300 font-mono type-caption">
                 {activeTab}
               </span>{" "}
               could not be loaded for your account role.
@@ -2309,7 +2313,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold"
+              className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-ui font-semibold"
             >
               Back to dashboard
             </button>
@@ -2373,16 +2377,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       >
         <div className="space-y-6">
           <div className="text-center p-4 bg-slate-950 rounded-lg border border-slate-800">
-            <p className="text-slate-400 text-sm">Total Amount Due</p>
+            <p className="text-slate-400 type-card-description">Total Amount Due</p>
             <div className="text-2xl sm:text-3xl font-bold text-white">
               ${selectedInvoice?.amount.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="type-card-description text-slate-500 mt-1">
               Invoice #{selectedInvoice?.id.toUpperCase()}
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 type-ui text-slate-300">
             Card details are collected on Stripe&apos;s hosted checkout and
             never pass through AlphaClone.
           </div>
@@ -2397,7 +2401,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               : `Continue to pay $${selectedInvoice?.amount.toLocaleString()}`}
           </Button>
 
-          <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1">
+          <p className="text-center type-card-description text-slate-500 flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Payments are processed securely
             by Stripe Checkout
           </p>
@@ -2437,7 +2441,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h4 className="text-teal-400 font-bold mb-2 flex items-center gap-2">
                 <Layers className="w-4 h-4" /> Tech Stack
               </h4>
-              <div className="bg-slate-950 p-3 rounded-lg text-sm text-slate-300">
+              <div className="bg-slate-950 p-3 rounded-lg type-ui text-slate-300">
                 {architectData.techStack}
               </div>
             </div>
@@ -2448,7 +2452,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </h4>
               <div className="relative">
                 <textarea
-                  className="w-full h-32 bg-slate-950 text-slate-400 text-xs p-3 rounded-lg font-mono"
+                  className="w-full h-32 bg-slate-950 text-slate-400 type-caption p-3 rounded-lg font-mono"
                   readOnly
                   value={architectData.developmentPrompt}
                 />
@@ -2469,7 +2473,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h4 className="text-indigo-400 font-bold mb-2 flex items-center gap-2">
                 <Cpu className="w-4 h-4" /> Mermaid.js Architecture
               </h4>
-              <pre className="bg-slate-950 p-3 rounded-lg text-xs text-green-400 overflow-x-auto font-mono">
+              <pre className="bg-slate-950 p-3 rounded-lg type-caption text-green-400 overflow-x-auto font-mono">
                 {architectData.architectureDiagram}
               </pre>
             </div>
@@ -2501,7 +2505,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-slate-400">Project Name</label>
+            <label className="type-label text-slate-400">Project Name</label>
             <Input
               value={editForm.name || ""}
               onChange={(e) =>
@@ -2511,7 +2515,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-slate-400">Status</label>
+            <label className="type-caption text-slate-400">Status</label>
             <select
               className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
               value={editForm.status || "Pending"}
@@ -2530,7 +2534,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-slate-400 flex justify-between">
+            <label className="type-label text-slate-400 flex justify-between">
               <span>Progress</span>
               <span className="text-teal-400 font-bold">
                 {editForm.progress}%
@@ -2549,7 +2553,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm text-slate-400">Due Date</label>
+            <label className="type-label text-slate-400">Due Date</label>
             <Input
               type="date"
               value={editForm.dueDate || ""}
@@ -2634,7 +2638,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
-              <div className="ac-pwa-desktop-only hidden md:flex items-center shrink-0">
+              <div className="ac-pwa-desktop-only hidden 2xl:flex items-center shrink-0">
                 <MomentumHUD
                   score={dashboardStats?.momentumScore || 0}
                   streak={dashboardStats?.loginStreak || 0}
@@ -2648,7 +2652,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {activeMeetingCallId && (
                   <button
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
-                    className="ac-pwa-desktop-only hidden md:inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
+                    className="ac-pwa-desktop-only hidden xl:inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full type-caption font-semibold hover:bg-teal-500/20 transition-colors"
                     title="Return to active meeting"
                   >
                     <Video className="w-3.5 h-3.5" />
@@ -2656,23 +2660,23 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
-                  <div className="ac-pwa-desktop-only hidden md:flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                  <div className="ac-pwa-desktop-only hidden xl:flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full type-caption font-semibold animate-pulse border border-teal-500/30">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span className="hidden sm:inline">
                       {activeBgTasksCount} Task(s)
                     </span>
                   </div>
                 )}
-                <div data-tour="global-search" className="ac-pwa-desktop-only hidden md:block">
+                <div data-tour="global-search" className="ac-pwa-desktop-only hidden lg:block">
                   <EnhancedGlobalSearch user={user} onNavigate={router.push} />
                 </div>
-                <div className="ac-pwa-desktop-only hidden md:block">
+                <div className="ac-pwa-desktop-only hidden xl:block">
                   <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
                 </div>
-                <div data-tour="dashboard-language" className="ac-pwa-desktop-only hidden shrink-0 md:block">
+                <div data-tour="dashboard-language" className="ac-pwa-desktop-only hidden shrink-0 2xl:block">
                   <LanguageSwitcher />
                 </div>
-                <div className="ac-pwa-desktop-only hidden md:block"><ThemeToggle userId={user.id} /></div>
+                <div className="ac-pwa-desktop-only hidden xl:block"><ThemeToggle userId={user.id} /></div>
                 <button
                   type="button"
                   onClick={() => navigateToTab('/dashboard/bonnie')}
@@ -2681,7 +2685,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 >
                   <Bot className="h-5 w-5" aria-hidden="true" />
                 </button>
-                <div className="ac-pwa-desktop-only hidden md:block">
+                <div className="ac-pwa-desktop-only hidden xl:block">
                   <MissedCallsNotification
                     userId={user.id}
                     onCallBack={(callerId) => {
@@ -2747,7 +2751,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <button
         onClick={() => setTaskSchedulerOpen((prev) => !prev)}
         title="Task Scheduler"
-        className={`fixed bottom-24 md:bottom-8 right-5 z-[45] flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl transition-all active:scale-95 font-medium text-sm ${
+        className={`fixed bottom-24 md:bottom-8 right-5 z-[45] flex items-center gap-2 px-4 py-3 rounded-2xl shadow-2xl transition-all active:scale-95 font-medium type-ui ${
           taskSchedulerOpen
             ? "bg-violet-700 text-white shadow-violet-600/40"
             : "bg-violet-600 hover:bg-violet-500 text-white shadow-violet-600/30"
@@ -2783,10 +2787,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <Clock className="w-4 h-4 text-violet-400" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-white">
+                    <h2 className="type-ui font-semibold text-white">
                       Task Scheduler
                     </h2>
-                    <p className="text-xs text-slate-500">
+                    <p className="type-card-description text-slate-500">
                       Runs automatically on your schedule
                     </p>
                   </div>
@@ -2801,7 +2805,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 <React.Suspense
                   fallback={
-                    <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+                    <div className="flex items-center justify-center h-32 text-slate-500 type-ui">
                       Loading...
                     </div>
                   }

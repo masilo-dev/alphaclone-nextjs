@@ -33,7 +33,7 @@ function DiffLine({ label, before, after }: { label: string; before?: string; af
   const changed = before !== after;
   return (
     <Box borderWidth="1px" borderColor={BC.border} bg="gray.950" borderRadius={BC.controlRadius} p={2} fontSize="xs">
-      <Text mb={1} fontWeight="semibold" textTransform="uppercase" letterSpacing="wide" fontSize="10px" color={BC.subtle}>
+      <Text mb={1} fontWeight="semibold" textTransform="uppercase" letterSpacing="wide" fontSize="var(--type-caption-size)" color={BC.subtle}>
         {label}
       </Text>
       {changed && before ? (
@@ -125,7 +125,7 @@ export default function BonnieApprovalCard({
           Approval required
         </Text>
         {riskClass ? (
-          <Box as="span" borderRadius="sm" bg="gray.800" px={1.5} py={0.5} fontSize="10px" fontFamily="mono" color="gray.400">
+          <Box as="span" borderRadius="sm" bg="gray.800" px={1.5} py={0.5} fontSize="var(--type-caption-size)" fontFamily="mono" color="gray.400">
             {riskClass}
           </Box>
         ) : null}
@@ -133,7 +133,7 @@ export default function BonnieApprovalCard({
 
       <VStack align="stretch" spacing={2} fontSize="xs">
         <Box>
-          <Text fontSize="10px" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
+          <Text fontSize="var(--type-caption-size)" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
             What
           </Text>
           <Text mt={0.5} fontSize="sm" fontWeight="medium" color="whiteAlpha.900">
@@ -147,7 +147,7 @@ export default function BonnieApprovalCard({
           </Text>
         </Box>
         <Box>
-          <Text fontSize="10px" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
+          <Text fontSize="var(--type-caption-size)" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
             Why
           </Text>
           <Text mt={0.5} color="gray.300">
@@ -155,7 +155,7 @@ export default function BonnieApprovalCard({
           </Text>
         </Box>
         <Box>
-          <Text fontSize="10px" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
+          <Text fontSize="var(--type-caption-size)" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
             Impact
           </Text>
           <Text mt={0.5} color="gray.300">
@@ -163,7 +163,7 @@ export default function BonnieApprovalCard({
           </Text>
         </Box>
         <Box>
-          <Text fontSize="10px" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
+          <Text fontSize="var(--type-caption-size)" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color={BC.subtle}>
             Bonnie recommendation
           </Text>
           <Text mt={0.5} color="teal.200">
@@ -259,7 +259,7 @@ export default function BonnieApprovalCard({
         </Button>
       </HStack>
 
-      <Text mt={2} fontSize="10px" color="gray.600" fontFamily="mono">
+      <Text mt={2} fontSize="var(--type-caption-size)" color="gray.600" fontFamily="mono">
         ID: {approvalId.slice(0, 8)}…
       </Text>
     </Box>

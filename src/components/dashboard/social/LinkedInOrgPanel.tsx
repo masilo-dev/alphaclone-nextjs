@@ -93,12 +93,12 @@ export function LinkedInOrgPanel({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {onRefreshPages ? (
-            <button type="button" onClick={() => void onRefreshPages()} className="ac-workspace-action-btn text-[11px]">
+            <button type="button" onClick={() => void onRefreshPages()} className="ac-workspace-action-btn type-ui">
               <RefreshCw className="w-3.5 h-3.5" />
               Refresh pages
             </button>
           ) : null}
-          <button type="button" onClick={reconnect} className="ac-workspace-action-btn text-[11px]">
+          <button type="button" onClick={reconnect} className="ac-workspace-action-btn type-ui">
             <RefreshCw className="w-3.5 h-3.5" />
             Reconnect
           </button>
@@ -118,8 +118,8 @@ export function LinkedInOrgPanel({
         >
           <User className="w-4 h-4 text-[var(--ws-text-secondary)] shrink-0" />
           <div className="min-w-0">
-            <p className="text-[13px] font-medium text-white truncate">Personal profile</p>
-            <p className="text-[11px] text-[var(--ws-text-tertiary)]">Your member account</p>
+            <p className="type-card-description font-medium text-white truncate">Personal profile</p>
+            <p className="type-card-description text-[var(--ws-text-tertiary)]">Your member account</p>
           </div>
         </button>
 
@@ -141,10 +141,10 @@ export function LinkedInOrgPanel({
               <Building2 className="w-4 h-4 text-[#0A66C2] shrink-0" />
             )}
             <div className="min-w-0">
-              <p className="text-[13px] font-medium text-white truncate">
+              <p className="type-card-description font-medium text-white truncate">
                 {formatLinkedInCompanyPageLabel(page)}
               </p>
-              <p className="text-[11px] text-[var(--ws-text-tertiary)]">Organization</p>
+              <p className="type-card-description text-[var(--ws-text-tertiary)]">Organization</p>
             </div>
           </button>
         ))}
@@ -152,7 +152,7 @@ export function LinkedInOrgPanel({
 
       {companyPages.length === 0 ? (
         <div className="space-y-3">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-200 text-[12px]">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-200 type-ui">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <div className="space-y-2">
               <p className="font-medium">No company pages found from LinkedIn yet</p>
@@ -168,7 +168,7 @@ export function LinkedInOrgPanel({
                 </p>
               ) : null}
               {grantedScopes.length > 0 ? (
-                <p className="text-[10px] text-amber-100/70 break-words">
+                <p className="type-card-description text-amber-100/70 break-words">
                   Granted scopes: {grantedScopes.join(', ')}
                 </p>
               ) : null}
@@ -177,8 +177,8 @@ export function LinkedInOrgPanel({
 
           {onLinkCompanyPage ? (
             <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 space-y-2">
-              <p className="text-[12px] font-semibold text-white">Link page manually</p>
-              <p className="text-[11px] text-[var(--ws-text-tertiary)]">
+              <p className="type-card-description font-semibold text-white">Link page manually</p>
+              <p className="type-card-description text-[var(--ws-text-tertiary)]">
                 Paste your company URL (for example linkedin.com/company/your-page) if you already manage the Page.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -203,7 +203,7 @@ export function LinkedInOrgPanel({
       ) : null}
 
       {selectedOrgId && !hasOrganizationWriteScope ? (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-200 text-[12px]">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-200 type-ui">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <div>
             <p className="font-medium">Missing organization posting permission</p>

@@ -84,7 +84,7 @@ const InteractiveHeroPreview = () => {
                                 onClick={() => setActiveTab(item.label)}
                             >
                                 <item.icon className="w-5 h-5" />
-                                <span className="text-sm font-medium hidden lg:block">{item.label}</span>
+                                <span className="type-ui font-medium hidden lg:block">{item.label}</span>
                             </div>
                         ))}
                     </div>
@@ -96,7 +96,7 @@ const InteractiveHeroPreview = () => {
                     <div className="h-16 border-b border-slate-800/50 flex items-center justify-between px-6 bg-slate-950/20">
                         <div className="flex items-center gap-3 bg-slate-900/50 rounded-lg px-3 py-1.5 border border-slate-800">
                             <Search className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs text-slate-500 hidden sm:block">Search projects...</span>
+                            <span className="type-caption text-slate-500 hidden sm:block">Search projects...</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <Bell className="w-5 h-5 text-slate-400" />
@@ -117,14 +117,14 @@ const InteractiveHeroPreview = () => {
                         {/* Cards Row */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/50">
-                                <div className="text-xs text-slate-400 mb-1">Active Projects</div>
+                                <div className="type-caption text-slate-400 mb-1">Active Projects</div>
                                 <div className="text-2xl font-bold text-teal-400 flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5" />
                                     12
                                 </div>
                             </div>
                             <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/50">
-                                <div className="text-xs text-slate-400 mb-1">Q3 Forecast</div>
+                                <div className="type-caption text-slate-400 mb-1">Q3 Forecast</div>
                                 <div className="text-2xl font-bold text-blue-400">$64.2k</div>
                             </div>
                         </div>
@@ -144,9 +144,9 @@ const InteractiveHeroPreview = () => {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full bg-${proj.color}-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]`} />
-                                        <span className="text-sm font-medium text-slate-300">{proj.title}</span>
+                                        <span className="type-ui font-medium text-slate-300">{proj.title}</span>
                                     </div>
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
+                                    <span className={`type-caption font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
                                         {proj.status}
                                     </span>
                                 </motion.div>
@@ -164,14 +164,14 @@ const InteractiveHeroPreview = () => {
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                        <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
+                        <span className="type-caption font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
                     </div>
                     <div className="flex gap-1">
                         <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
                         <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
                     </div>
                 </div>
-                <div className="font-mono text-[11px] leading-relaxed">
+                <div className="font-mono type-ui leading-relaxed">
                     <span className="text-slate-500 mr-2">root@alphaclone:~$</span>
                     <span className="text-slate-200">{terminalLine}</span>
                     <span className="w-1.5 h-4 bg-teal-500 inline-block ml-1 animate-pulse align-middle" />

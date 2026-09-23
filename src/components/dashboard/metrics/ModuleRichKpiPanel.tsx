@@ -50,7 +50,7 @@ export function ModuleRichKpiPanel({
   if (error || !data) {
     return (
       <div className={cn('ac-workspace-panel p-6 text-center', className)}>
-        <p className="text-sm text-[var(--ws-text-secondary)]">Could not load module metrics</p>
+        <p className="type-caption text-[var(--ws-text-secondary)]">Could not load module metrics</p>
       </div>
     );
   }

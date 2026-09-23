@@ -142,19 +142,19 @@ export default function IngestionPanel() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">Lead Ingestion</h2>
-                    <p className="text-sm text-slate-400">Capture raw content → auto-detect intent → create leads</p>
+                    <p className="type-card-description text-slate-400">Capture raw content → auto-detect intent → create leads</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-400 hover:text-white transition-colors">
+                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl type-ui text-slate-400 hover:text-white transition-colors">
                         <RefreshCw className="w-3.5 h-3.5" /> Refresh
                     </button>
                     <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-colors">
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold type-ui transition-colors">
                         <Plus className="w-4 h-4" /> Ingest Content
                     </button>
                     {selectedLeadIds.length > 0 && (
                         <button onClick={() => setShowOutreachModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-teal-500/20">
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold type-ui transition-all shadow-lg shadow-teal-500/20">
                             <Sparkles className="w-4 h-4" /> Outreach ({selectedLeadIds.length})
                         </button>
                     )}
@@ -164,7 +164,7 @@ export default function IngestionPanel() {
             {/* Architecture note */}
             <div className="flex gap-3 p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                 <Zap className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                <div className="text-xs text-teal-300 space-y-1">
+                <div className="type-caption text-teal-300 space-y-1">
                     <p className="font-semibold">Ingestion Engine → Processing Engine → Workflow Engine</p>
                     <p className="text-teal-400">Paste any content (Facebook group post, chat message, ad comment). The engine detects keywords, scores intent 0–100, auto-creates a lead for HIGH/URGENT signals, and fires your active workflows.</p>
                     <p className="text-teal-500">API endpoint: <code className="text-teal-400">POST /api/engine/ingest</code> · Use webhooks for automated ingestion from any source.</p>
@@ -181,7 +181,7 @@ export default function IngestionPanel() {
                 ].map(s => (
                     <div key={s.label} className="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                        <p className="type-card-description text-slate-500 mt-0.5">{s.label}</p>
                     </div>
                 ))}
             </div>
@@ -196,9 +196,9 @@ export default function IngestionPanel() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source</label>
                             <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm">
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="manual">Manual</option>
                                 <option value="facebook_group">Facebook Group</option>
                                 <option value="facebook_lead">Facebook Lead</option>
@@ -209,41 +209,41 @@ export default function IngestionPanel() {
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Author / Name</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Author / Name</label>
                             <input value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
                                 placeholder="John Doe"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
                             <input value={form.author_contact} onChange={e => setForm(f => ({ ...f, author_contact: e.target.value }))}
                                 placeholder="john@example.com"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Content *</label>
+                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Content *</label>
                         <textarea value={form.raw_content} onChange={e => setForm(f => ({ ...f, raw_content: e.target.value }))}
                             rows={5}
                             placeholder="Paste content here — Facebook post, message, comment, ad response, etc.&#10;&#10;Example: 'Hi, I'm looking for a web developer urgently. Need a website for my restaurant. Budget $2000. DM me.'"
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm resize-none font-mono" />
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
                     </div>
 
                     <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source URL (optional)</label>
+                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source URL (optional)</label>
                         <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
                             placeholder="https://facebook.com/groups/..."
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                     </div>
 
                     <div className="flex gap-3">
                         <button onClick={handleSubmit} disabled={submitting}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-colors">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
                             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                             {submitting ? 'Processing...' : 'Process & Ingest'}
                         </button>
-                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-sm">Cancel</button>
+                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl type-ui">Cancel</button>
                     </div>
                 </div>
             )}
@@ -251,7 +251,7 @@ export default function IngestionPanel() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
                 <select value={intentFilter} onChange={e => setIntentFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
                     <option value="all">All Intents</option>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -260,13 +260,13 @@ export default function IngestionPanel() {
                     <option value="unknown">Unknown</option>
                 </select>
                 <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
                     <option value="all">All Sources</option>
                     {sources.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
                 {(intentFilter !== 'all' || sourceFilter !== 'all') && (
                     <button onClick={() => { setIntentFilter('all'); setSourceFilter('all'); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 hover:bg-red-500/20">
+                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-red-500/20">
                         <X className="w-3 h-3" /> Clear
                     </button>
                 )}
@@ -277,8 +277,8 @@ export default function IngestionPanel() {
                 <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
                     <Database className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                     <p className="text-slate-400 font-semibold">No ingestion events yet</p>
-                    <p className="text-slate-600 text-sm mt-1 mb-4">Click "Ingest Content" to manually capture a lead, or send data to <code className="text-teal-400">/api/engine/ingest</code></p>
-                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl text-sm font-semibold">
+                    <p className="text-slate-600 type-card-description mt-1 mb-4">Click "Ingest Content" to manually capture a lead, or send data to <code className="text-teal-400">/api/engine/ingest</code></p>
+                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-ui font-semibold">
                         Ingest First Content
                     </button>
                 </div>
@@ -310,31 +310,31 @@ export default function IngestionPanel() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                                            <span className="text-xs text-slate-500 capitalize">{event.source.replace('_', ' ')}</span>
-                                            {event.author_name && <span className="text-xs font-medium text-slate-300">{event.author_name}</span>}
-                                            {event.author_contact && <span className="text-xs text-slate-500">{event.author_contact}</span>}
+                                            <span className="type-caption text-slate-500 capitalize">{event.source.replace('_', ' ')}</span>
+                                            {event.author_name && <span className="type-caption font-medium text-slate-300">{event.author_name}</span>}
+                                            {event.author_contact && <span className="type-caption text-slate-500">{event.author_contact}</span>}
                                         </div>
-                                        <p className="text-sm text-slate-300 line-clamp-2">{event.raw_content}</p>
+                                        <p className="type-card-description text-slate-300 line-clamp-2">{event.raw_content}</p>
                                         {event.keywords_found?.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
                                                 {event.keywords_found.slice(0, 5).map(kw => (
-                                                    <span key={kw} className="text-xs px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-500">{kw}</span>
+                                                    <span key={kw} className="type-caption px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-500">{kw}</span>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold ${INTENT_STYLE[event.intent_label] || INTENT_STYLE.unknown}`}>
+                                    <span className={`type-caption px-2 py-0.5 rounded-full border font-semibold ${INTENT_STYLE[event.intent_label] || INTENT_STYLE.unknown}`}>
                                         {event.intent_label} · {event.intent_score}
                                     </span>
                                     <div className="flex items-center gap-2">
                                         {event.lead_id && (
-                                            <span className="text-xs px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded text-teal-400 flex items-center gap-1">
+                                            <span className="type-caption px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded text-teal-400 flex items-center gap-1">
                                                 <CheckCircle2 className="w-2.5 h-2.5" /> Lead
                                             </span>
                                         )}
-                                        <span className="text-xs text-slate-600">{new Date(event.created_at).toLocaleString()}</span>
+                                        <span className="type-caption text-slate-600">{new Date(event.created_at).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>

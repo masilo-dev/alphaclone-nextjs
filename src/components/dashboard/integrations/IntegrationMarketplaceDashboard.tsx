@@ -35,8 +35,8 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ComponentType<a
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
-    case 'connected':   return <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full border border-green-500/20">Connected</span>;
-    case 'available':   return <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-full border border-blue-500/20">Available</span>;
+    case 'connected':   return <span className="px-2 py-0.5 bg-green-500/10 text-green-400 type-caption rounded-full border border-green-500/20">Connected</span>;
+    case 'available':   return <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 type-caption rounded-full border border-blue-500/20">Available</span>;
     default:            return null;
   }
 }
@@ -72,19 +72,19 @@ function IntegrationCard({
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="font-semibold text-white text-sm">{integration.name}</h3>
+              <h3 className="font-semibold text-white type-ui">{integration.name}</h3>
               {integration.popular && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full text-xs text-orange-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full type-caption text-orange-400">
                   <Star className="w-2.5 h-2.5" /> Featured
                 </span>
               )}
               {integration.new && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-xs text-teal-400">
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full type-caption text-teal-400">
                   <Zap className="w-2.5 h-2.5" /> New
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">{integration.description}</p>
+            <p className="type-card-description text-slate-400 mt-0.5">{integration.description}</p>
           </div>
         </div>
         <StatusBadge status={integration.status} />
@@ -93,13 +93,13 @@ function IntegrationCard({
       {/* Features */}
       <div className="space-y-1.5 mb-4 flex-1">
         {integration.features.slice(0, 3).map((f, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
+          <div key={i} className="flex items-center gap-2 type-caption text-slate-400">
             <CheckCircle className="w-3 h-3 text-teal-400 flex-shrink-0" />
             <span>{f}</span>
           </div>
         ))}
         {integration.features.length > 3 && (
-          <p className="text-xs text-slate-500 pl-5">+{integration.features.length - 3} more</p>
+          <p className="type-card-description text-slate-500 pl-5">+{integration.features.length - 3} more</p>
         )}
       </div>
 
@@ -107,18 +107,18 @@ function IntegrationCard({
       <div className="pt-3 border-t border-slate-700/60 flex items-center gap-2">
         {isConnected ? (
           <>
-            <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={() => onDisconnect(integration.id)} disabled={isBusy}>
+            <Button size="sm" variant="secondary" className="flex-1 type-caption" onClick={() => onDisconnect(integration.id)} disabled={isBusy}>
               {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5 mr-1" />}
               Disconnect
             </Button>
-            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => onManage(integration.id)}>
+            <Button size="sm" variant="outline" className="flex-1 type-caption" onClick={() => onManage(integration.id)}>
               <Settings className="w-3.5 h-3.5 mr-1" /> Settings
             </Button>
           </>
         ) : (
           <Button
             size="sm"
-            className="flex-1 text-xs"
+            className="flex-1 type-caption"
             disabled={isBusy}
             onClick={() => onConnect(integration.id)}
           >
@@ -178,10 +178,10 @@ export function IntegrationMarketplaceDashboard() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Integration Marketplace</h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-400 type-card-description mt-1">
             Connect your tools to streamline your workflow.
             {connectedCount > 0 && (
-              <span className="ml-2 px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 text-xs font-semibold">
+              <span className="ml-2 px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 type-caption font-semibold">
                 {connectedCount} connected
               </span>
             )}
@@ -198,10 +198,10 @@ export function IntegrationMarketplaceDashboard() {
             placeholder="Search integrations…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-teal-500"
+            className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
           />
         </div>
-        <label className="flex items-center gap-2 text-sm text-slate-300 self-center cursor-pointer select-none">
+        <label className="flex items-center gap-2 type-label text-slate-300 self-center cursor-pointer select-none">
           <input
             type="checkbox"
             checked={showConnectedOnly}
@@ -221,7 +221,7 @@ export function IntegrationMarketplaceDashboard() {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-medium transition-all ${
                 active ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -249,10 +249,10 @@ export function IntegrationMarketplaceDashboard() {
       {filtered.length === 0 && (
         <div className="text-center py-14">
           <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">No integrations match your filters.</p>
+          <p className="text-slate-400 type-card-description">No integrations match your filters.</p>
           <button
             onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setShowConnectedOnly(false); }}
-            className="mt-3 text-teal-400 text-xs underline"
+            className="mt-3 text-teal-400 type-caption underline"
           >
             Clear filters
           </button>

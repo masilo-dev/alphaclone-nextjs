@@ -50,7 +50,7 @@ export function CashFlowStatement() {
       <h3 className="text-lg font-semibold text-white mb-4">Cash Flow Statement</h3>
       <div className="dashboard-panel-soft overflow-hidden">
         {rows.map((r) => (
-          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 text-sm gap-3">
+          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 type-ui gap-3">
             <span className="text-slate-200">{r.label}</span>
             {!r.tracked || r.amount == null ? (
               <span className="font-medium text-slate-500 text-right">Not tracked yet</span>
@@ -62,7 +62,7 @@ export function CashFlowStatement() {
           </div>
         ))}
       </div>
-      <p className="text-xs text-slate-300 mt-2">
+      <p className="type-card-description text-slate-300 mt-2">
         Operating cash flow is derived from the workspace P&amp;L plus invoice and receipt activity.
         Investing and financing activities are not tracked in the ledger yet, so they are shown as unavailable rather than zero.
       </p>

@@ -571,8 +571,8 @@ export function OutreachInbox() {
               <Inbox className="w-4 h-4 text-violet-300" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">Outreach conversation hub</p>
-              <p className="text-[11px] text-slate-400 truncate">
+              <p className="type-card-description font-bold text-white truncate">Outreach conversation hub</p>
+              <p className="type-card-description text-slate-400 truncate">
                 {loading ? 'Loading outbound threads…' : `${allThreads.length} contacts · ${events.length} events · sent, opened, clicked, replied`}
               </p>
             </div>
@@ -584,7 +584,7 @@ export function OutreachInbox() {
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder="Search by name or email…"
-                className="pl-8 h-8 text-xs bg-slate-950/70 border-white/10 focus:border-violet-400/40 placeholder:text-slate-500"
+                className="pl-8 h-8 type-caption bg-slate-950/70 border-white/10 focus:border-violet-400/40 placeholder:text-slate-500"
               />
             </div>
             <Button
@@ -600,7 +600,7 @@ export function OutreachInbox() {
             <Button
               size="sm"
               onClick={() => setComposerOpen(true)}
-              className="h-8 shrink-0 px-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-violet-500/20"
+              className="h-8 shrink-0 px-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-white type-caption font-bold shadow-lg shadow-violet-500/20"
             >
               <Sparkles className="w-3.5 h-3.5" />
               New message
@@ -611,7 +611,7 @@ export function OutreachInbox() {
         <div className="grid min-h-[34rem] grid-cols-12 divide-white/5 lg:h-[min(70vh,46rem)] lg:divide-x">
           {/* PANEL 1: Lists */}
           <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-white/5 bg-slate-950/30 p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
-            <p className="hidden px-2 pb-1 text-[10px] uppercase tracking-wider text-slate-500 lg:block">Lists</p>
+            <p className="hidden px-2 pb-1 type-caption uppercase tracking-wider text-slate-500 lg:block">Lists</p>
             {OUTREACH_LISTS.map(({ id, label, Icon, tone, description }) => {
               const active = activeList === id;
               const c = listCounts[id] || 0;
@@ -630,12 +630,12 @@ export function OutreachInbox() {
                 >
                   <span className="flex items-center gap-2 min-w-0">
                     <ListIcon className={`w-3.5 h-3.5 shrink-0 ${tone}`} />
-                    <span className={`text-xs truncate ${active ? 'text-white font-semibold' : 'text-slate-300'}`}>
+                    <span className={`type-caption truncate ${active ? 'text-white font-semibold' : 'text-slate-300'}`}>
                       {label}
                     </span>
                   </span>
                   <Badge variant="outline" className={[
-                    'text-[10px] px-1.5 py-0.5 h-4 min-w-[22px] justify-center',
+                    'type-ui px-1.5 py-0.5 h-4 min-w-[22px] justify-center',
                     active ? 'border-white/20 text-white' : 'border-white/5 text-slate-400',
                   ].join(' ')}>
                     {c}
@@ -647,7 +647,7 @@ export function OutreachInbox() {
 
           {/* PANEL 2: Threads list */}
           <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-slate-950/10 flex-col border-r border-white/5 lg:col-span-4`}>
-            <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500 border-b border-white/5 flex items-center justify-between">
+            <div className="px-3 py-2 type-caption uppercase tracking-wider text-slate-500 border-b border-white/5 flex items-center justify-between">
               <span>
                 {OUTREACH_LISTS.find(l => l.id === activeList)?.label}
                 {loading ? '…loading' : ` · ${filteredThreads.length}`}
@@ -669,13 +669,13 @@ export function OutreachInbox() {
                   <div className="mx-auto h-12 w-12 rounded-2xl border border-dashed border-white/10 bg-gradient-to-br from-violet-500/10 to-sky-500/10 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-violet-400" />
                   </div>
-                  <p className="text-sm font-semibold text-white">No threads yet in this list</p>
-                  <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                  <p className="type-card-description font-semibold text-white">No threads yet in this list</p>
+                  <p className="type-card-description text-slate-400 max-w-sm mx-auto leading-relaxed">
                     Run a campaign or send a one-off outreach message from the composer above.
                     Sent deliveries, opens, clicks, and replies will begin threading here automatically so you
                     know who you reached, who responded, and what's next.
                   </p>
-                  <ol className="max-w-sm mx-auto text-[11px] text-slate-400 space-y-1 text-left pl-4 list-decimal">
+                  <ol className="max-w-sm mx-auto type-ui text-slate-400 space-y-1 text-left pl-4 list-decimal">
                     <li>Go to <span className="text-violet-300">Campaign outreach</span> and build an email sequence.</li>
                     <li>Or click <span className="text-violet-300">New message</span> to send a one-off.</li>
                     <li>Watch replies land here grouped by contact; click <span className="text-emerald-300">Reply</span> to continue the conversation.</li>
@@ -700,15 +700,15 @@ export function OutreachInbox() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
-                                <p className={`text-xs font-semibold truncate ${active ? 'text-white' : 'text-slate-200'}`}>
+                                <p className={`type-card-description font-semibold truncate ${active ? 'text-white' : 'text-slate-200'}`}>
                                   {t.displayName}
                                 </p>
                                 {t.needsFollowUp ? (
-                                  <Badge variant="outline" className="bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 px-1.5 h-4 text-[10px] ml-1">Next</Badge>
+                                  <Badge variant="outline" className="bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-300 px-1.5 h-4 type-caption ml-1">Next</Badge>
                                 ) : null}
                               </div>
-                              <p className="text-[11px] text-slate-400 truncate">{t.email || t.normalizedRecipient}</p>
-                              <p className="text-[10.5px] text-slate-500 mt-0.5 line-clamp-1">
+                              <p className="type-card-description text-slate-400 truncate">{t.email || t.normalizedRecipient}</p>
+                              <p className="type-card-description text-slate-500 mt-0.5 line-clamp-1">
                                 {t.lastReplyAt
                                   ? `Replied ${formatTimestamp(t.lastReplyAt).relative}`
                                   : t.lastOutboundAt
@@ -716,7 +716,7 @@ export function OutreachInbox() {
                                   : `Activity ${formatTimestamp(t.lastActivityAt).relative}`}
                               </p>
                             </div>
-                            <div className="flex shrink-0 items-center gap-1 text-[10px] text-slate-400">
+                            <div className="flex shrink-0 items-center gap-1 type-ui text-slate-400">
                               {t.sentCount > 0 && <span className="px-1.5 py-0.5 rounded bg-slate-800/70">{t.sentCount}× sent</span>}
                               {t.repliedCount > 0 && <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">{t.repliedCount} reply</span>}
                             </div>
@@ -738,8 +738,8 @@ export function OutreachInbox() {
                   <div className="mx-auto h-14 w-14 rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-sky-500/10 to-violet-500/10 flex items-center justify-center">
                     <MailCheck className="w-6 h-6 text-sky-300" />
                   </div>
-                  <p className="text-sm font-semibold text-white">Pick a thread on the left</p>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="type-card-description font-semibold text-white">Pick a thread on the left</p>
+                  <p className="type-card-description text-slate-400 leading-relaxed">
                     Everything outreach — sends, opens, clicks, replies — is grouped per contact.
                     Jump into Replied or Needs next step to continue conversations like a Gmail-style inbox,
                     with one-off sending powered by the same delivery providers already connected.
@@ -752,14 +752,14 @@ export function OutreachInbox() {
                   <button
                     type="button"
                     onClick={() => setMobilePane('threads')}
-                    className="mb-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs text-slate-300 lg:hidden"
+                    className="mb-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 type-caption text-slate-300 lg:hidden"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Threads
                   </button>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-bold text-white truncate">{activeThread.displayName}</p>
+                        <p className="type-card-description font-bold text-white truncate">{activeThread.displayName}</p>
                         <Badge variant="outline" className={CLASS_META[activeThread.classification].badge}>
                           {CLASS_META[activeThread.classification].label}
                         </Badge>
@@ -769,7 +769,7 @@ export function OutreachInbox() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">
+                      <p className="type-card-description text-slate-400 mt-0.5 truncate">
                         {activeThread.email || activeThread.normalizedRecipient}
                       </p>
                     </div>
@@ -777,7 +777,7 @@ export function OutreachInbox() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-2.5 rounded-lg border border-teal-500/30 text-teal-300 hover:text-teal-200 text-xs"
+                        className="h-8 px-2.5 rounded-lg border border-teal-500/30 text-teal-300 hover:text-teal-200 type-caption"
                         onClick={() => {
                           const query = activeThread.email || activeThread.normalizedRecipient;
                           router.push(`/dashboard/contacts?search=${encodeURIComponent(query)}`);
@@ -790,7 +790,7 @@ export function OutreachInbox() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-2.5 rounded-lg border border-white/10 text-slate-300 hover:text-white text-xs"
+                        className="h-8 px-2.5 rounded-lg border border-white/10 text-slate-300 hover:text-white type-caption"
                         onClick={() => openComposerForThread(activeThread)}
                       >
                         <Reply className="w-3.5 h-3.5" />
@@ -807,7 +807,7 @@ export function OutreachInbox() {
                       </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 type-ui">
                     <div className="rounded-lg bg-slate-950/50 border border-white/5 px-2.5 py-1.5">
                       <p className="text-slate-500">Sent</p>
                       <p className="text-slate-100 font-bold">{activeThread.sentCount}</p>
@@ -878,31 +878,31 @@ export function OutreachInbox() {
                               <Icon className={`w-3.5 h-3.5 shrink-0 ${isReply ? 'text-emerald-300' : 'text-slate-300'}`} />
                               <Badge variant="outline" className={pill}>{label}</Badge>
                               {showProviderBadge ? (
-                                <Badge variant="outline" className={prov!.className + ' text-[10px] px-1.5 h-4'}>
+                                <Badge variant="outline" className={prov!.className + ' type-caption px-1.5 h-4'}>
                                   via {prov!.label}
                                 </Badge>
                               ) : null}
                               {replyProv && isReply ? (
-                                <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-300 text-[10px] px-1.5 h-4">
+                                <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-300 type-caption px-1.5 h-4">
                                   from {replyProv.includes('@') ? replyProv : replyProv}
                                 </Badge>
                               ) : null}
-                              {subtitle && <p className="text-[11px] text-slate-400 truncate">{subtitle}</p>}
+                              {subtitle && <p className="type-card-description text-slate-400 truncate">{subtitle}</p>}
                             </div>
                             <span
-                              className="text-[10.5px] text-slate-500 whitespace-nowrap"
+                              className="type-ui text-slate-500 whitespace-nowrap"
                               title={ts.absolute}
                             >
                               {ts.relative} · <span className="tabular-nums text-slate-400">{ts.absolute}</span>
                             </span>
                           </div>
                           {replyText ? (
-                            <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed rounded-lg bg-slate-950/70 border border-white/5 p-2.5">
+                            <p className="type-card-description text-slate-300 whitespace-pre-wrap leading-relaxed rounded-lg bg-slate-950/70 border border-white/5 p-2.5">
                               {replyText.length > 2000 ? `${replyText.slice(0, 2000)}…` : replyText}
                             </p>
                           ) : null}
                           {!replyText && SENT_TYPES.has(et) && sentBody ? (
-                            <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed rounded-lg bg-slate-950/70 border border-white/5 p-2.5">
+                            <p className="type-card-description text-slate-300 whitespace-pre-wrap leading-relaxed rounded-lg bg-slate-950/70 border border-white/5 p-2.5">
                               {sentBody.length > 4000 ? `${sentBody.slice(0, 4000)}…` : sentBody}
                             </p>
                           ) : null}
@@ -927,8 +927,8 @@ export function OutreachInbox() {
                   <Send className="w-3.5 h-3.5 text-emerald-300" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">New outreach message</p>
-                  <p className="text-[11px] text-slate-400">Sending uses the same connected delivery providers already configured.</p>
+                  <p className="type-card-description font-bold text-white">New outreach message</p>
+                  <p className="type-card-description text-slate-400">Sending uses the same connected delivery providers already configured.</p>
                 </div>
               </div>
               <Button
@@ -943,15 +943,15 @@ export function OutreachInbox() {
             <div className="p-4 space-y-3">
               <div className="grid grid-cols-12 gap-2">
                 <div className="col-span-8 space-y-2">
-                  <label className="block text-[11px] font-semibold text-slate-300">To</label>
-                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950 border-slate-700 text-white text-xs h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
+                  <label className="block type-ui font-semibold text-slate-300">To</label>
+                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950 border-slate-700 text-white type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
                 </div>
                 <div className="col-span-4 space-y-2">
-                  <label className="block text-[11px] font-semibold text-slate-300">Dispatch via</label>
+                  <label className="block type-ui font-semibold text-slate-300">Dispatch via</label>
                   <select
                     value={composeProvider}
                     onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 type-caption text-white focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
                   >
                     <option value="auto">Auto (Best deliverability)</option>
                     {(connectedProviders.length ? connectedProviders : [
@@ -967,19 +967,19 @@ export function OutreachInbox() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="block text-[11px] font-semibold text-slate-300">Subject</label>
-                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950 border-slate-700 text-white text-xs h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
+                <label className="block type-ui font-semibold text-slate-300">Subject</label>
+                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950 border-slate-700 text-white type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <label className="block text-[11px] font-semibold text-slate-300">Message</label>
+                  <label className="block type-ui font-semibold text-slate-300">Message</label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleAiDraft}
                     disabled={drafting || !composeTo.trim()}
-                    className="h-8 border border-violet-400/30 px-2.5 text-xs text-violet-200 hover:bg-violet-500/20"
+                    className="h-8 border border-violet-400/30 px-2.5 type-caption text-violet-200 hover:bg-violet-500/20"
                   >
                     {drafting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
                     {drafting ? 'Drafting...' : 'AI draft'}
@@ -989,22 +989,22 @@ export function OutreachInbox() {
                   value={composeBody}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}
                   rows={9}
-                  className="bg-slate-950 border-slate-700 text-white text-xs leading-relaxed focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500"
+                  className="bg-slate-950 border-slate-700 text-white type-caption leading-relaxed focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500"
                   placeholder="Hi [first name],…"
                 />
               </div>
               <div className="flex items-center justify-between pt-1">
-                <p className="text-[11px] text-slate-500 max-w-sm">
+                <p className="type-card-description text-slate-500 max-w-sm">
                   After sending, the delivery event will appear in the contact thread above. Any incoming reply from this address threads back here automatically.
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={() => setComposerOpen(false)} className="h-9 px-3 rounded-lg border border-white/10 text-slate-300 hover:text-white text-xs">
+                  <Button variant="ghost" onClick={() => setComposerOpen(false)} className="h-9 px-3 rounded-lg border border-white/10 text-slate-300 hover:text-white type-caption">
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSend}
                     disabled={sending || !composeTo.trim() || !composeSubject.trim() || !composeBody.trim()}
-                    className="h-9 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                    className="h-9 px-4 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 type-caption font-black shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                   >
                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
                     {sending ? 'Sending…' : 'Send message'}

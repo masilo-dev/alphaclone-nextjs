@@ -101,9 +101,9 @@ export function OverdueReminderPanel() {
           <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
             <Bell className="text-orange-400" size={20} /> Overdue Reminders
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">Send email or WhatsApp nudges to overdue clients</p>
+          <p className="type-card-description text-slate-400 mt-0.5">Send email or WhatsApp nudges to overdue clients</p>
         </div>
-        <button onClick={load} className="text-xs text-slate-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg">
+        <button onClick={load} className="type-ui text-slate-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg">
           Refresh
         </button>
       </div>
@@ -118,12 +118,12 @@ export function OverdueReminderPanel() {
         <div className="ac-workspace-panel rounded-xl p-10 text-center">
           <CheckCircle2 className="text-emerald-400 mx-auto mb-3" size={36} />
           <p className="text-slate-300 font-semibold">No overdue invoices!</p>
-          <p className="text-slate-500 text-sm mt-1">All accounts are current.</p>
+          <p className="text-slate-500 type-card-description mt-1">All accounts are current.</p>
         </div>
       ) : (
         <div className="ac-workspace-panel rounded-xl overflow-hidden">
           <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
-            <p className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
+            <p className="type-caption font-black uppercase tracking-widest text-white flex items-center gap-2">
               <AlertTriangle size={14} className="text-orange-400" />
               {items.length} clients need a reminder
             </p>
@@ -133,16 +133,16 @@ export function OverdueReminderPanel() {
               <div key={item.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-white/[0.02] transition-all">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-white truncate">{item.client_name}</p>
-                    <span className={`text-[10px] font-black uppercase ${severityColor(item.daysOverdue)}`}>
+                    <p className="type-card-description font-bold text-white truncate">{item.client_name}</p>
+                    <span className={`type-caption font-black uppercase ${severityColor(item.daysOverdue)}`}>
                       {item.daysOverdue}d overdue
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="type-card-description text-slate-400 mt-0.5">
                     Invoice #{item.invoice_number} · ${item.total_amount.toLocaleString()} · Due {new Date(item.due_date).toLocaleDateString()}
                   </p>
                   {item.lastReminderSent && (
-                    <p className="text-[10px] text-slate-500 mt-0.5">
+                    <p className="type-card-description text-slate-500 mt-0.5">
                       Last reminder: {new Date(item.lastReminderSent).toLocaleDateString()}
                     </p>
                   )}
@@ -151,7 +151,7 @@ export function OverdueReminderPanel() {
                   <button
                     onClick={() => sendReminder(item, 'email')}
                     disabled={sending === item.id + 'email' || !item.client_email}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-bold hover:bg-indigo-500/25 disabled:opacity-40 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 rounded-lg type-caption font-bold hover:bg-indigo-500/25 disabled:opacity-40 transition-all"
                   >
                     <Mail size={13} />
                     {sending === item.id + 'email' ? 'Sending...' : 'Email'}
@@ -159,7 +159,7 @@ export function OverdueReminderPanel() {
                   <button
                     onClick={() => sendReminder(item, 'whatsapp')}
                     disabled={sending === item.id + 'whatsapp'}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold hover:bg-emerald-500/25 disabled:opacity-40 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-lg type-caption font-bold hover:bg-emerald-500/25 disabled:opacity-40 transition-all"
                   >
                     <MessageCircle size={13} />
                     WhatsApp

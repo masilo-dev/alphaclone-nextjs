@@ -48,9 +48,9 @@ export default function LeadFinderBeginnerGuide() {
         className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-slate-800/40 transition-colors"
       >
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-white">Beginner path · A → E</p>
+          <p className="type-card-description font-semibold text-white">Beginner path · A → E</p>
           {!open ? (
-            <p className="text-[11px] text-slate-500 truncate">
+            <p className="type-card-description text-slate-500 truncate">
               Niche → location → scrape → qualify → CRM
             </p>
           ) : null}
@@ -70,13 +70,13 @@ export default function LeadFinderBeginnerGuide() {
               className="rounded-md border border-slate-800 bg-slate-950/60 px-2.5 py-2"
             >
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-teal-600/20 text-teal-300 text-[10px] font-bold">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-teal-600/20 text-teal-300 type-ui font-bold">
                   {step.letter}
                 </span>
                 <step.Icon className="w-3 h-3 text-slate-400" />
               </div>
-              <p className="text-[11px] font-semibold text-white leading-tight">{step.title}</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{step.body}</p>
+              <p className="type-card-description font-semibold text-white leading-tight">{step.title}</p>
+              <p className="type-card-description text-slate-500 mt-0.5 leading-snug">{step.body}</p>
             </li>
           ))}
         </ol>

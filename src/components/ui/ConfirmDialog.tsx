@@ -58,7 +58,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
       >
         <div className="flex flex-col gap-5">
           {options?.description ? (
-            <p className="text-sm text-[var(--text-secondary)]">{options.description}</p>
+            <p className="type-caption text-[var(--text-secondary)]">{options.description}</p>
           ) : null}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
             <Button type="button" variant="outline" onClick={() => close(false)}>

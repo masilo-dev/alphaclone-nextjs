@@ -70,7 +70,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ amount, currency, on
             {errorMessage && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg flex items-center gap-2">
                     <AlertCircle className="w-5 h-5" />
-                    <span className="text-sm">{errorMessage}</span>
+                    <span className="type-ui">{errorMessage}</span>
                 </div>
             )}
 

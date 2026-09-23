@@ -260,19 +260,19 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-4">
-                    <div className="text-sm text-slate-400 mb-1">Total Leads</div>
+                    <div className="type-ui text-slate-400 mb-1">Total Leads</div>
                     <div className="text-2xl font-bold text-white">{leads.length}</div>
                 </Card>
                 <Card className="p-4">
-                    <div className="text-sm text-slate-400 mb-1">Pipeline Value</div>
+                    <div className="type-ui text-slate-400 mb-1">Pipeline Value</div>
                     <div className="text-2xl font-bold text-white">${(totalValue / 1000).toFixed(1)}k</div>
                 </Card>
                 <Card className="p-4">
-                    <div className="text-sm text-slate-400 mb-1">Won Deals</div>
+                    <div className="type-ui text-slate-400 mb-1">Won Deals</div>
                     <div className="text-2xl font-bold text-green-400">${(wonValue / 1000).toFixed(1)}k</div>
                 </Card>
                 <Card className="p-4">
-                    <div className="text-sm text-slate-400 mb-1">Conversion Rate</div>
+                    <div className="type-ui text-slate-400 mb-1">Conversion Rate</div>
                     <div className="text-2xl font-bold text-white">
                         {leads.length > 0 ? ((leads.filter(l => l.stage === 'won').length / leads.length) * 100).toFixed(0) : 0}%
                     </div>
@@ -294,7 +294,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                 <div className="flex items-center gap-2">
                                     <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
                                     <h3 className="font-semibold text-white">{stage.label}</h3>
-                                    <span className="text-xs text-slate-500">({stage.count})</span>
+                                    <span className="type-caption text-slate-500">({stage.count})</span>
                                 </div>
                             </div>
                         </div>
@@ -316,10 +316,10 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-white text-sm mb-1 group-hover:text-teal-400 transition-colors">
+                                                <h4 className="font-semibold text-white type-ui mb-1 group-hover:text-teal-400 transition-colors">
                                                     {lead.businessName}
                                                 </h4>
-                                                <p className="text-xs text-slate-500">{lead.industry}</p>
+                                                <p className="type-card-description text-slate-500">{lead.industry}</p>
                                             </div>
                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
@@ -341,13 +341,13 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
 
                                         <div className="space-y-2 mb-3">
                                             {lead.email && (
-                                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                <div className="flex items-center gap-2 type-caption text-slate-400">
                                                     <Mail className="w-3 h-3 flex-shrink-0" />
                                                     <span className="truncate">{lead.email}</span>
                                                 </div>
                                             )}
                                             {lead.phone && (
-                                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                <div className="flex items-center gap-2 type-caption text-slate-400">
                                                     <Phone className="w-3 h-3 flex-shrink-0" />
                                                     <span>{lead.phone}</span>
                                                 </div>
@@ -356,11 +356,11 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
 
                                         {lead.value && (
                                             <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                                                <div className="flex items-center gap-1 text-xs text-slate-400">
+                                                <div className="flex items-center gap-1 type-caption text-slate-400">
                                                     <DollarSign className="w-3 h-3" />
                                                     <span className="font-semibold text-white">${(lead.value / 1000).toFixed(1)}k</span>
                                                 </div>
-                                                <div className="flex items-center gap-1 text-xs text-slate-500">
+                                                <div className="flex items-center gap-1 type-caption text-slate-500">
                                                     <Calendar className="w-3 h-3" />
                                                     <span>{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '-'}</span>
                                                 </div>
@@ -369,7 +369,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
 
                                         {lead.notes && (
                                             <div className="mt-2 pt-2 border-t border-slate-800">
-                                                <p className="text-xs text-slate-400 line-clamp-2">{lead.notes}</p>
+                                                <p className="type-card-description text-slate-400 line-clamp-2">{lead.notes}</p>
                                             </div>
                                         )}
                                     </div>
@@ -378,7 +378,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             {/* Empty State */}
                             {leads.filter((lead) => lead.stage === stage.id).length === 0 && (
                                 <div className="p-8 text-center border-2 border-dashed border-slate-800 rounded-lg bg-slate-900/30">
-                                    <p className="text-xs text-slate-500">Drag leads here or click + to add</p>
+                                    <p className="type-card-description text-slate-500">Drag leads here or click + to add</p>
                                 </div>
                             )}
                         </div>
@@ -437,7 +437,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             />
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block type-label font-medium text-slate-300 mb-2">
                                     Stage
                                 </label>
                                 <select
@@ -466,7 +466,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 Notes
                             </label>
                             <textarea

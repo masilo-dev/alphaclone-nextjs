@@ -16,11 +16,11 @@ export function DocumentQualityPanel({ input, className }: DocumentQualityPanelP
   return (
     <div className={`ac-workspace-panel p-3 ${className || ''}`}>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
+        <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
           {HUMAN_LABELS.documentQualityScore}
         </span>
         <span
-          className={`text-[13px] font-bold ${
+          className={`type-ui font-bold ${
             result.score >= 80 ? 'text-emerald-400' : result.score >= 50 ? 'text-amber-400' : 'text-red-400'
           }`}
         >
@@ -28,12 +28,12 @@ export function DocumentQualityPanel({ input, className }: DocumentQualityPanelP
         </span>
       </div>
       {result.canSend ? (
-        <p className="text-[12px] text-emerald-400 flex items-center gap-1.5">
+        <p className="type-card-description text-emerald-400 flex items-center gap-1.5">
           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
           Ready to send
         </p>
       ) : (
-        <p className="text-[12px] text-amber-400 flex items-center gap-1.5">
+        <p className="type-card-description text-amber-400 flex items-center gap-1.5">
           <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
           Fix critical issues before sending
         </p>
@@ -41,7 +41,7 @@ export function DocumentQualityPanel({ input, className }: DocumentQualityPanelP
       {result.issues.length > 0 ? (
         <ul className="mt-2 space-y-1">
           {result.issues.map((issue) => (
-            <li key={issue.id} className="text-[11px] text-[var(--ws-text-secondary)] flex items-start gap-1.5">
+            <li key={issue.id} className="type-ui text-[var(--ws-text-secondary)] flex items-start gap-1.5">
               {issue.severity === 'critical' ? (
                 <AlertTriangle className="w-3 h-3 text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
               ) : (

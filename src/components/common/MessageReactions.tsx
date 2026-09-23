@@ -53,7 +53,7 @@ export default function MessageReactions({
             onClick={() => handleReaction(emoji)}
             title={label}
             className={cn(
-              "flex items-center space-x-1 px-2 py-1 rounded-full text-xs transition-colors",
+              "flex items-center space-x-1 px-2 py-1 rounded-full type-caption transition-colors",
               isActive
                 ? "bg-blue-100 text-blue-700 border border-blue-200"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
@@ -86,7 +86,7 @@ export default function MessageReactions({
                 e.stopPropagation();
                 handleReaction(emoji);
               }}
-              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded text-sm"
+              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded type-ui"
             >
               {emoji}
             </button>

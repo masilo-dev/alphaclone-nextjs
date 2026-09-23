@@ -49,7 +49,7 @@ function PipelineBar({
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs">
+      <div className="flex justify-between type-caption">
         <span className="text-slate-400">{label}</span>
         <span className="text-slate-300 font-medium tabular-nums">
           {value.toLocaleString()} ({pct}%)
@@ -112,14 +112,14 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
     return (
       <div className={panelClass}>
         <DashboardPanelHeader title="System analytics" subtitle="Could not load analytics" />
-        <p className="text-xs text-rose-400 flex items-center gap-1.5">
+        <p className="type-card-description text-rose-400 flex items-center gap-1.5">
           <AlertCircle className="w-3.5 h-3.5" />
           {error || 'Unknown error'}
         </p>
         <button
           type="button"
           onClick={() => void load()}
-          className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1"
+          className="type-caption text-teal-400 hover:text-teal-300 flex items-center gap-1"
         >
           <RefreshCw className="w-3 h-3" /> Retry
         </button>
@@ -159,14 +159,14 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* EMPTY QUEUE: 0 leads → tell user exactly what to press below */}
       {hasNoPipelineData && (
         <div className="rounded-xl border border-dashed border-slate-800 bg-gradient-to-br from-teal-500/10 to-violet-500/10 p-4 space-y-2.5">
-          <p className="text-sm font-bold text-white flex items-center gap-2">
+          <p className="type-card-description font-bold text-white flex items-center gap-2">
           <Zap className="w-4 h-4 text-teal-400" /> No leads in the queue yet
           </p>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="type-card-description text-slate-400 leading-relaxed">
           Run a <span className="font-semibold text-teal-400">Lead Finder campaign</span> below to start discovering prospects.
           Scrape an ICP search, enrich it'll flow through here as they hit the CRM and become outreach.
           </p>
-          <ol className="space-y-1 text-[11px] text-slate-400 pl-1">
+          <ol className="space-y-1 type-ui text-slate-400 pl-1">
             <li>Step 1: Pick an ideal customer profile (city, industry, keywords)</li>
             <li>Step 2: Run the scraper; watch discovery → enrichment → scoring → CRM.</li>
             <li>Step 3: Open a grade A/B leads arrive; then outreach here.</li>
@@ -176,7 +176,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
 
       {/* Pipeline funnel */}
       <div className="space-y-2.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+        <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
           <Activity className="w-3 h-3" /> Pipeline
         </p>
         <PipelineBar
@@ -208,12 +208,12 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Grade breakdown */}
       {gradeTotal > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Lead grades</p>
+          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500">Lead grades</p>
           <div className="grid grid-cols-4 gap-2">
             {(['A', 'B', 'C', 'D'] as const).map((g) => (
               <div key={g} className="rounded-lg border border-slate-800 bg-slate-900/50 px-2 py-1.5 text-center">
                 <div className="text-lg font-bold text-white tabular-nums">{stats.leads.byGrade[g] ?? 0}</div>
-                <div className="text-[10px] text-slate-500">Grade {g}</div>
+                <div className="type-ui text-slate-500">Grade {g}</div>
               </div>
             ))}
           </div>
@@ -223,12 +223,12 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Data sources */}
       {topSources.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
             <Database className="w-3 h-3" /> Sources
           </p>
           <div className="space-y-1">
             {topSources.map(([source, count]) => (
-              <div key={source} className="flex justify-between text-xs">
+              <div key={source} className="flex justify-between type-caption">
                 <span className="text-slate-400 capitalize">{source.replace(/_/g, ' ')}</span>
                 <span className="text-slate-200 tabular-nums">{count}</span>
               </div>
@@ -239,10 +239,10 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
 
       {/* System health */}
       <div className="space-y-2 pt-2 border-t border-slate-800/80">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+        <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
           <Server className="w-3 h-3" /> Infrastructure
         </p>
-        <ul className="space-y-1.5 text-xs">
+        <ul className="space-y-1.5 type-caption">
           <li className="flex items-center gap-2 text-slate-300">
             <StatusDot ok={stats.system.leadSearch === 'in-process' || stats.system.leadSearch === 'external'} />
             <Zap className="w-3 h-3 text-slate-500" />
@@ -293,12 +293,12 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Recent runs */}
       {stats.recentRuns.length > 0 && !compact && (
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Recent runs</p>
+          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500">Recent runs</p>
           <div className="space-y-1.5 max-h-36 overflow-y-auto">
             {stats.recentRuns.slice(0, 5).map((run) => (
               <div
                 key={run.id}
-                className="flex items-center justify-between gap-2 text-xs rounded-lg border border-slate-800 px-2 py-1.5"
+                className="flex items-center justify-between gap-2 type-caption rounded-lg border border-slate-800 px-2 py-1.5"
               >
                 <span className="text-slate-400 truncate">
                   {STEP_LABELS[run.currentStep] || run.currentStep}

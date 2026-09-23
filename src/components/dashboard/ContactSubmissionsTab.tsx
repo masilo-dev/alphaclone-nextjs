@@ -99,7 +99,7 @@ const ContactSubmissionsTab: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-white">Contact Submissions</h2>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1">Messages from your contact form</p>
+                    <p className="text-slate-400 type-card-description sm:text-sm mt-1">Messages from your contact form</p>
                 </div>
                 <div className="flex gap-2 overflow-x-auto ios-scroll pb-1">
                     {['all', 'new', 'read', 'replied'].map((status) => (
@@ -107,7 +107,7 @@ const ContactSubmissionsTab: React.FC = () => {
                             key={status}
                             type="button"
                             onClick={() => setFilter(status as typeof filter)}
-                            className={`min-h-11 px-4 py-2 rounded-lg text-sm font-medium capitalize whitespace-nowrap ${
+                            className={`min-h-11 px-4 py-2 rounded-lg type-ui font-medium capitalize whitespace-nowrap ${
                                 filter === status ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                         >
@@ -137,13 +137,13 @@ const ContactSubmissionsTab: React.FC = () => {
                     onRowClick={setSelected}
                     renderExpanded={(submission) => (
                         <div className="space-y-4">
-                            <p className="text-sm text-slate-300 whitespace-pre-wrap">{submission.message}</p>
+                            <p className="type-card-description text-slate-300 whitespace-pre-wrap">{submission.message}</p>
                             <div className="flex flex-wrap gap-2">
                                 {submission.status !== 'read' && (
                                     <button
                                         type="button"
                                         onClick={() => handleStatusChange(submission.id, submission.source, 'read')}
-                                        className="min-h-11 px-3 py-2 bg-yellow-500/10 text-yellow-400 rounded-lg text-sm font-medium"
+                                        className="min-h-11 px-3 py-2 bg-yellow-500/10 text-yellow-400 rounded-lg type-ui font-medium"
                                     >
                                         Mark as Read
                                     </button>
@@ -152,7 +152,7 @@ const ContactSubmissionsTab: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleStatusChange(submission.id, submission.source, 'replied')}
-                                        className="min-h-11 px-3 py-2 bg-green-500/10 text-green-400 rounded-lg text-sm font-medium"
+                                        className="min-h-11 px-3 py-2 bg-green-500/10 text-green-400 rounded-lg type-ui font-medium"
                                     >
                                         Mark as Replied
                                     </button>
@@ -160,7 +160,7 @@ const ContactSubmissionsTab: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => router.push(buildMailComposeUrl(submission.email, `Re: ${submission.formTitle || 'your message'}`))}
-                                    className="min-h-11 px-3 py-2 bg-teal-500/10 text-teal-400 rounded-lg text-sm font-medium"
+                                    className="min-h-11 px-3 py-2 bg-teal-500/10 text-teal-400 rounded-lg type-ui font-medium"
                                 >
                                     Reply in Mail
                                 </button>
@@ -179,15 +179,15 @@ const ContactSubmissionsTab: React.FC = () => {
                 {selected ? (
                     <div className="space-y-4 pb-6">
                         <StatusBadge variant={inboxStatusVariant(selected.status)}>{selected.status}</StatusBadge>
-                        <p className="text-sm text-slate-300 whitespace-pre-wrap">{selected.message}</p>
+                        <p className="type-card-description text-slate-300 whitespace-pre-wrap">{selected.message}</p>
                         <div className="flex flex-wrap gap-2">
                             {selected.status !== 'read' && (
-                                <button type="button" onClick={() => { handleStatusChange(selected.id, selected.source, 'read'); setSelected(null); }} className="min-h-11 px-3 rounded-lg bg-yellow-500/10 text-yellow-400 text-sm">Mark read</button>
+                                <button type="button" onClick={() => { handleStatusChange(selected.id, selected.source, 'read'); setSelected(null); }} className="min-h-11 px-3 rounded-lg bg-yellow-500/10 text-yellow-400 type-caption">Mark read</button>
                             )}
                             {selected.status !== 'replied' && (
-                                <button type="button" onClick={() => { handleStatusChange(selected.id, selected.source, 'replied'); setSelected(null); }} className="min-h-11 px-3 rounded-lg bg-green-500/10 text-green-400 text-sm">Mark replied</button>
+                                <button type="button" onClick={() => { handleStatusChange(selected.id, selected.source, 'replied'); setSelected(null); }} className="min-h-11 px-3 rounded-lg bg-green-500/10 text-green-400 type-caption">Mark replied</button>
                             )}
-                            <button type="button" onClick={() => router.push(buildMailComposeUrl(selected.email, `Re: ${selected.formTitle || 'your message'}`))} className="min-h-11 px-3 rounded-lg bg-teal-500/10 text-teal-400 text-sm">Reply in Mail</button>
+                            <button type="button" onClick={() => router.push(buildMailComposeUrl(selected.email, `Re: ${selected.formTitle || 'your message'}`))} className="min-h-11 px-3 rounded-lg bg-teal-500/10 text-teal-400 type-ui">Reply in Mail</button>
                         </div>
                     </div>
                 ) : null}

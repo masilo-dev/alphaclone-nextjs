@@ -23,7 +23,7 @@ export function BonnieInsightCard({
   const action = href ? (
     <Link
       href={href}
-      className="text-sm font-semibold text-[var(--brand-violet-500)] hover:text-[var(--brand-violet-400)]"
+      className="type-ui font-semibold text-[var(--brand-violet-500)] hover:text-[var(--brand-violet-400)]"
     >
       {actionLabel}
     </Link>
@@ -31,7 +31,7 @@ export function BonnieInsightCard({
     <button
       type="button"
       onClick={onAction}
-      className="text-sm font-semibold text-[var(--brand-violet-500)] hover:text-[var(--brand-violet-400)]"
+      className="type-ui font-semibold text-[var(--brand-violet-500)] hover:text-[var(--brand-violet-400)]"
     >
       {actionLabel}
     </button>
@@ -45,8 +45,8 @@ export function BonnieInsightCard({
         <IconBonnie size={18} variant="duotone" decorative />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-[var(--brand-violet-500)] mb-1">Bonnie insight</p>
-        <p className="text-sm text-[var(--ws-text-primary)]">{message}</p>
+        <p className="type-card-description font-semibold text-[var(--brand-violet-500)] mb-1">Bonnie insight</p>
+        <p className="type-card-description text-[var(--ws-text-primary)]">{message}</p>
         {action ? <div className="mt-2">{action}</div> : null}
       </div>
     </aside>

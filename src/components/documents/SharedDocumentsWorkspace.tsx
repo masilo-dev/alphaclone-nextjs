@@ -207,7 +207,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             key={key}
             href={`/dashboard/business/documents${key ? `/${key}` : ''}`}
             aria-current={activeSection === key ? 'page' : undefined}
-            className={`min-h-11 shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${
+            className={`min-h-11 shrink-0 rounded-lg px-3 py-2 type-ui font-medium ${
               activeSection === key
                 ? 'bg-teal-500/15 text-teal-300'
                 : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -232,7 +232,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               ] as Array<[string, string | number]>
             ).map(([label, value]) => (
               <div key={label} className="ac-workspace-panel rounded-xl p-4">
-                <p className="text-xs text-slate-400">{t(label)}</p>
+                <p className="type-card-description text-slate-400">{t(label)}</p>
                 <p className="mt-1 text-xl font-semibold text-white">{value}</p>
               </div>
             ))}
@@ -242,52 +242,52 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
         {activeSection === 'settings' && (
           <section className="ac-workspace-panel rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white">{t('Document workspace settings')}</h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 type-card-description text-slate-400">
               {t('Brand identity and retention defaults used by Document OS and the shared catalog.')}
             </p>
             {loading ? (
-              <p className="mt-6 text-sm text-slate-500">Loading settings…</p>
+              <p className="mt-6 type-card-description text-slate-500">Loading settings…</p>
             ) : (
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Legal business name</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Legal business name</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.legal_business_name || 'Not configured'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Trading name</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Trading name</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.trading_name || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Business email</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Business email</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.business_email || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Jurisdiction</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Jurisdiction</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.jurisdiction || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Default currency</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Default currency</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.default_currency || 'USD'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Default confidentiality</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Default confidentiality</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.default_confidentiality || 'internal'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs uppercase text-slate-500">Retention default</dt>
-                  <dd className="mt-1 text-sm text-white">
+                  <dt className="type-caption uppercase text-slate-500">Retention default</dt>
+                  <dd className="mt-1 type-ui text-white">
                     {settings?.retention_default_days || 2555} days
                   </dd>
                 </div>
@@ -306,7 +306,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('Search name, number, description…')}
-                  className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-slate-950/40 pl-9 pr-3 text-sm text-white focus:border-teal-500 focus:outline-none"
+                  className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-slate-950/40 pl-9 pr-3 type-ui text-white focus:border-teal-500 focus:outline-none"
                 />
               </label>
               <button
@@ -332,7 +332,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 onSubmit={createDocument}
                 className="ac-workspace-panel flex flex-wrap items-end gap-3 rounded-xl p-4"
               >
-                <label className="min-w-[240px] flex-1 text-sm text-slate-300">
+                <label className="min-w-[240px] flex-1 type-label text-slate-300">
                   Document name
                   <input
                     autoFocus
@@ -378,7 +378,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               <div className="ac-workspace-panel rounded-xl p-10 text-center">
                 <Upload className="mx-auto h-8 w-8 text-slate-500" />
                 <h2 className="mt-3 font-semibold text-white">No documents found</h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 type-card-description text-slate-400">
                   {activeSection
                     ? `${t('No records in')} ${t(sectionLabel).toLowerCase()} ${t('yet')}.`
                     : 'Upload a file or create a document draft to get started.'}
@@ -390,11 +390,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                   <article key={d.id} className="ac-workspace-panel rounded-xl p-4">
                     <FileText className="h-7 w-7 text-teal-400" />
                     <h2 className="mt-3 truncate font-semibold text-white">{d.name}</h2>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 type-card-description text-slate-400">
                       {d.document_type || 'General file'} · v{d.version || 1}
                       {d.source === 'doc_os' ? ' · Doc OS' : ''}
                     </p>
-                    <span className="mt-3 inline-block rounded-full bg-white/5 px-2 py-1 text-xs text-slate-300">
+                    <span className="mt-3 inline-block rounded-full bg-white/5 px-2 py-1 type-caption text-slate-300">
                       {d.status}
                     </span>
                   </article>
@@ -402,8 +402,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-[var(--ws-border)]">
-                <table className="w-full min-w-[850px] text-left text-sm">
-                  <thead className="bg-white/[0.03] text-xs uppercase text-slate-400">
+                <table className="w-full min-w-[850px] text-left type-ui">
+                  <thead className="bg-white/[0.03] type-caption uppercase text-slate-400">
                     <tr>
                       <th className="p-3">{t('Name')}</th>
                       <th className="p-3">{t('Type')}</th>
@@ -424,7 +424,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                         <td className="p-3 font-medium text-white">
                           {d.name}
                           {d.source === 'doc_os' ? (
-                            <span className="ml-2 rounded bg-violet-500/10 px-1.5 py-0.5 text-[10px] uppercase text-violet-300">
+                            <span className="ml-2 rounded bg-violet-500/10 px-1.5 py-0.5 type-caption uppercase text-violet-300">
                               Doc OS
                             </span>
                           ) : null}
@@ -442,7 +442,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 </table>
               </div>
             )}
-            <p className="text-xs text-slate-500">
+            <p className="type-card-description text-slate-500">
               {total} tenant-scoped document{total === 1 ? '' : 's'}
             </p>
           </>

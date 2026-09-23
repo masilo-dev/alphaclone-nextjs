@@ -80,7 +80,7 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
             <div className="absolute top-8 left-0 w-full px-8 flex justify-center items-center z-10">
                 <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-5 py-2 border border-indigo-500/30 rounded-full">
                     <Scale className="w-5 h-5 text-indigo-400" />
-                    <span className="text-white font-serif tracking-widest text-sm uppercase">Legal AI Core Active</span>
+                    <span className="text-white font-marketing-heading tracking-widest type-caption uppercase">Legal AI Core Active</span>
                 </div>
             </div>
 
@@ -162,7 +162,7 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
                         >
                             <CurrentIcon className="w-8 h-8 text-indigo-400 mb-3" />
                             <h3 className="text-xl md:text-2xl font-bold text-white tracking-wide">{phases[phase].title}</h3>
-                            <p className="text-slate-400 mt-2 text-sm md:text-base font-medium">{phases[phase].subtitle}</p>
+                            <p className="text-slate-400 mt-2 type-card-description md:text-base font-medium">{phases[phase].subtitle}</p>
                         </motion.div>
                     </AnimatePresence>
                 </div>

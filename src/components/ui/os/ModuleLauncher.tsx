@@ -35,7 +35,7 @@ export function ModuleLauncher({
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <div className="flex items-center justify-between mb-4">
         <h2 className={WORKSPACE.typography.sectionTitle}>{t(title)}</h2>
-        <span className="text-xs text-[var(--ws-text-muted)]">{visible.length} {t('visible')}</span>
+        <span className="type-caption text-[var(--ws-text-muted)]">{visible.length} {t('visible')}</span>
       </div>
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {visible.map((item) => {
@@ -57,10 +57,10 @@ export function ModuleLauncher({
                   <Icon size={18} variant="duotone" decorative />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-[var(--ws-text-primary)]">
+                  <span className="block type-ui font-semibold text-[var(--ws-text-primary)]">
                     {t(identity.label)}
                   </span>
-                  <span className="block text-xs text-[var(--ws-text-muted)] truncate">
+                  <span className="block type-caption text-[var(--ws-text-muted)] truncate">
                     {item.summary || t(item.purpose)}
                   </span>
                 </span>

@@ -63,10 +63,10 @@ export default function BonnieRuntimePanel({ tenantId, onSelectRun }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="type-caption font-semibold uppercase tracking-caps text-slate-400">
             Durable runs
           </p>
-          <p className="text-xs text-slate-500">Survives refresh, logout, and deploys</p>
+          <p className="type-card-description text-slate-500">Survives refresh, logout, and deploys</p>
         </div>
         <button
           type="button"
@@ -79,7 +79,7 @@ export default function BonnieRuntimePanel({ tenantId, onSelectRun }: Props) {
       </div>
 
       {runs.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-800">
+        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 type-card-description text-slate-500 dark:border-slate-800">
           No durable runs yet. Ask Bonnie for a multi-step objective with durable mode enabled.
         </p>
       ) : (
@@ -94,10 +94,10 @@ export default function BonnieRuntimePanel({ tenantId, onSelectRun }: Props) {
                 <div className="flex items-start gap-2">
                   <GitBranch className="mt-0.5 h-3.5 w-3.5 text-teal-600" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="truncate type-card-description font-medium text-slate-800 dark:text-slate-100">
                       {run.title}
                     </p>
-                    <p className="text-[11px] capitalize text-slate-500">
+                    <p className="type-card-description capitalize text-slate-500">
                       {run.status.replace(/_/g, ' ')} · {Math.round(Number(run.progress_pct) || 0)}%
                     </p>
                     <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -115,18 +115,18 @@ export default function BonnieRuntimePanel({ tenantId, onSelectRun }: Props) {
       )}
 
       {detailLoading && (
-        <p className="text-xs text-slate-500">Loading graph…</p>
+        <p className="type-card-description text-slate-500">Loading graph…</p>
       )}
 
       {selected?.progress && (
         <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
+          <div className="mb-2 flex items-center gap-1.5 type-caption font-semibold text-slate-700 dark:text-slate-200">
             <Activity className="h-3.5 w-3.5" /> Activity
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300">{selected.progress.summary}</p>
+          <p className="type-card-description text-slate-600 dark:text-slate-300">{selected.progress.summary}</p>
           <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto">
             {(selected.graph?.tasks || []).map((t: any) => (
-              <li key={t.id} className="text-[11px] text-slate-500">
+              <li key={t.id} className="type-ui text-slate-500">
                 <span className="font-medium text-slate-700 dark:text-slate-200">{t.title}</span>
                 {' · '}
                 {String(t.status || '').replace(/_/g, ' ')}

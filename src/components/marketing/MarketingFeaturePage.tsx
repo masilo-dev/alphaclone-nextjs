@@ -37,7 +37,7 @@ export default function MarketingFeaturePage({ title, description, bullets, comp
                 <span className="mkt-icon-wrap mb-4" aria-hidden="true">
                   <span className="h-2.5 w-2.5 rounded-full bg-[var(--marketing-accent-hover)]" />
                 </span>
-                <p className="text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                <p className="type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
                   {bullet}
                 </p>
               </div>
@@ -54,7 +54,7 @@ export default function MarketingFeaturePage({ title, description, bullets, comp
             description="A concise view of where the marketing workflow fits inside the broader operating workspace."
           />
           <div className="overflow-x-auto rounded-[var(--marketing-radius-lg)] border border-[var(--marketing-border)]">
-            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
+            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] type-ui">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)]">
                   <th className="p-4 text-left font-semibold text-[var(--marketing-text-primary)]">Feature</th>

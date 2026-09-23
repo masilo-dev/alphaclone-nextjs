@@ -26,7 +26,7 @@ const CTASection: React.FC = () => {
                         </button>
                     </Link>
                 </div>
-                <p className="mt-10 text-xs font-black text-slate-500 uppercase tracking-[0.3em]">
+                <p className="mt-10 type-caption font-black text-slate-500 uppercase tracking-caps">
                     No Credit Card Required • Clear Trial Terms • Cancel Anytime
                 </p>
             </div>

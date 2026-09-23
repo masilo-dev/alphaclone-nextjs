@@ -131,9 +131,9 @@ export default function HubShell({
             />
           )}
           <div className="min-w-0">
-            <h1 className="text-sm font-bold tracking-tight text-[var(--ws-text-primary)]">{t(title)}</h1>
+            <h1 className="type-caption font-bold tracking-tight text-[var(--ws-text-primary)]">{t(title)}</h1>
             {description ? (
-              <p className="hidden text-xs text-[var(--ws-text-muted)] lg:block">{t(description)}</p>
+              <p className="hidden type-card-description text-[var(--ws-text-muted)] lg:block">{t(description)}</p>
             ) : null}
           </div>
           <div className="ml-auto flex items-center gap-1.5">
@@ -143,7 +143,7 @@ export default function HubShell({
                 onClick={() => setOverviewOpen((open) => !open)}
                 aria-expanded={overviewOpen}
                 aria-controls="module-overview"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2 text-[11px] font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2 type-ui font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
               >
                 <Info className="h-3.5 w-3.5" aria-hidden />
                 <span className="hidden sm:inline">{t('Overview')}</span>

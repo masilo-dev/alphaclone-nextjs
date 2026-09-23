@@ -19,12 +19,12 @@ export function StatusPills({
       <DashboardPanelHeader title={title} subtitle={subtitle} />
       <div className="flex flex-wrap gap-2 content-start">
         {items.length === 0 ? (
-          <span className="text-sm text-slate-500">No health data</span>
+          <span className="type-ui text-slate-500">No health data</span>
         ) : (
           items.map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full type-caption font-medium"
               style={{ backgroundColor: `${item.color}22`, color: item.color }}
             >
               {item.label}

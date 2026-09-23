@@ -461,7 +461,7 @@ export default function DeepDeskView() {
                   placeholder="Search tickets..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="!pl-9 !rounded-md !bg-slate-900 !border-slate-700 !text-xs"
+                  className="!pl-9 !rounded-md !bg-slate-900 !border-slate-700 !type-caption"
                 />
               </Box>
 
@@ -495,7 +495,7 @@ export default function DeepDeskView() {
                       value={fbLeadQuery}
                       onChange={(e) => setFbLeadQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
-                      className="!text-xs !rounded-md"
+                      className="!type-caption !rounded-md"
                     />
                     <Button
                       size="sm"
@@ -530,7 +530,7 @@ export default function DeepDeskView() {
                             lead.company ||
                             'Lead'}
                         </Text>
-                        <Text fontSize="10px" color={AC.subtle} noOfLines={1}>
+                        <Text fontSize="var(--type-caption-size)" color={AC.subtle} noOfLines={1}>
                           {lead.email || lead.phone || lead.campaign_name || 'Facebook'}
                         </Text>
                       </VStack>
@@ -541,7 +541,7 @@ export default function DeepDeskView() {
 
               <HStack spacing={2} align="end">
                 <Box flex={1}>
-                  <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={1}>
+                  <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={1}>
                     Status
                   </Text>
                   <Select
@@ -562,7 +562,7 @@ export default function DeepDeskView() {
                   </Select>
                 </Box>
                 <Box flex={1}>
-                  <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={1}>
+                  <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={1}>
                     Priority
                   </Text>
                   <Select
@@ -618,7 +618,7 @@ export default function DeepDeskView() {
                         onClick={() => setSelectedTicket(t)}
                       >
                         <Flex justify="space-between" align="center" mb={1.5} gap={2}>
-                          <Text fontSize="10px" fontWeight="semibold" color={AC.subtle}>
+                          <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle}>
                             #{t.id.slice(0, 8)}
                           </Text>
                           <StatusBadge variant={ticketStatusVariant(t.status)}>
@@ -628,7 +628,7 @@ export default function DeepDeskView() {
                         <Text fontSize="xs" fontWeight="semibold" color="white" noOfLines={1} mb={1}>
                           {t.title}
                         </Text>
-                        <Text fontSize="11px" color={AC.muted} noOfLines={2} mb={2}>
+                        <Text fontSize="var(--type-caption-size)" color={AC.muted} noOfLines={2} mb={2}>
                           {t.description}
                         </Text>
                         <Flex
@@ -645,7 +645,7 @@ export default function DeepDeskView() {
                           {sla && (
                             <HStack
                               spacing={1}
-                              fontSize="10px"
+                              fontSize="var(--type-caption-size)"
                               color={sla.breached ? 'rose.400' : 'amber.400'}
                             >
                               <Clock size={10} />
@@ -766,12 +766,12 @@ export default function DeepDeskView() {
                                 <Text fontSize="xs" fontWeight="semibold" color="white">
                                   {selectedTicket.source_name || 'Client'}
                                 </Text>
-                                <Text fontSize="10px" color={AC.subtle}>
+                                <Text fontSize="var(--type-caption-size)" color={AC.subtle}>
                                   Submitted via {selectedTicket.source}
                                 </Text>
                               </Box>
                             </HStack>
-                            <Text fontSize="10px" color={AC.subtle}>
+                            <Text fontSize="var(--type-caption-size)" color={AC.subtle}>
                               {new Date(selectedTicket.created_at).toLocaleString()}
                             </Text>
                           </Flex>
@@ -805,7 +805,7 @@ export default function DeepDeskView() {
                                       <StatusBadge variant="warning">Internal note</StatusBadge>
                                     ) : null}
                                   </HStack>
-                                  <Text fontSize="10px" color={AC.subtle}>
+                                  <Text fontSize="var(--type-caption-size)" color={AC.subtle}>
                                     {new Date(c.created_at).toLocaleString()}
                                   </Text>
                                 </Flex>
@@ -896,7 +896,7 @@ export default function DeepDeskView() {
                               <Flex justify="space-between" mb={2} gap={2}>
                                 <HStack spacing={1} color="teal.300">
                                   <Bot size={14} />
-                                  <Text fontSize="10px" fontWeight="semibold">
+                                  <Text fontSize="var(--type-caption-size)" fontWeight="semibold">
                                     Suggested draft
                                   </Text>
                                 </HStack>
@@ -974,12 +974,12 @@ export default function DeepDeskView() {
                     overflowY="auto"
                     flexShrink={0}
                   >
-                    <Text fontSize="11px" fontWeight="semibold" color={AC.subtle} textTransform="uppercase" letterSpacing="0.06em">
+                    <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} textTransform="uppercase" letterSpacing="0.06em">
                       Properties
                     </Text>
 
                     <Box>
-                      <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={1}>
+                      <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={1}>
                         Priority
                       </Text>
                       <Select
@@ -996,7 +996,7 @@ export default function DeepDeskView() {
                     </Box>
 
                     <Box>
-                      <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={1}>
+                      <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={1}>
                         Source
                       </Text>
                       <Box
@@ -1010,14 +1010,14 @@ export default function DeepDeskView() {
                         <Text fontSize="xs" fontWeight="semibold" color="white" textTransform="capitalize">
                           {selectedTicket.source}
                         </Text>
-                        <Text fontSize="10px" color={AC.subtle}>
+                        <Text fontSize="var(--type-caption-size)" color={AC.subtle}>
                           {selectedTicket.source_name || 'N/A'}
                         </Text>
                       </Box>
                     </Box>
 
                     <Box>
-                      <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={1}>
+                      <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={1}>
                         Created
                       </Text>
                       <Box
@@ -1047,7 +1047,7 @@ export default function DeepDeskView() {
                           {slaLive ? slaLive.label : 'SLA tracking'}
                         </Text>
                       </HStack>
-                      <Text fontSize="11px" color={AC.muted}>
+                      <Text fontSize="var(--type-caption-size)" color={AC.muted}>
                         {selectedTicket.sla_due_at
                           ? `Due ${new Date(selectedTicket.sla_due_at).toLocaleString()}`
                           : 'No SLA deadline set on this ticket.'}
@@ -1055,7 +1055,7 @@ export default function DeepDeskView() {
                     </Box>
 
                     <Box pt={2} borderTopWidth="1px" borderColor={AC.border}>
-                      <Text fontSize="10px" fontWeight="semibold" color={AC.subtle} mb={2}>
+                      <Text fontSize="var(--type-caption-size)" fontWeight="semibold" color={AC.subtle} mb={2}>
                         Assist
                       </Text>
                       <Button
@@ -1172,7 +1172,7 @@ export default function DeepDeskView() {
                 value={newCustomerEmail}
                 onChange={(e) => setNewCustomerEmail(e.target.value)}
               />
-              <Text fontSize="10px" color={AC.subtle} mt={1}>
+              <Text fontSize="var(--type-caption-size)" color={AC.subtle} mt={1}>
                 Sends confirmation, status changes, and public replies to this address.
               </Text>
             </Box>

@@ -94,7 +94,7 @@ export default function LeadFinderStreetViews({ lead, allLeads = [] }: Props) {
             <Text fontSize="sm" fontWeight="semibold" color="white" noOfLines={1}>
               Free location views
             </Text>
-            <Badge colorScheme="teal" variant="subtle" fontSize="10px">
+            <Badge colorScheme="teal" variant="subtle" fontSize="var(--type-caption-size)">
               $0
             </Badge>
           </HStack>

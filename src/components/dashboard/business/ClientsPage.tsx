@@ -346,7 +346,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('unified')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
                         directoryView === 'unified' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
@@ -355,7 +355,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('sales')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
                         directoryView === 'sales' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
@@ -364,14 +364,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('email')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
                         directoryView === 'email' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
                     Email list
                 </button>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="type-card-description text-slate-500 leading-relaxed">
                 {directoryView === 'unified'
                     ? 'Merged CRM + sales directory. Search and deep links resolve here first.'
                     : directoryView === 'sales'
@@ -634,7 +634,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             <button
                 type="button"
                 onClick={toggleSelectAllFiltered}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white"
+                className="inline-flex items-center gap-2 type-caption font-semibold text-slate-400 hover:text-white"
             >
                 {allFilteredClientsSelected ? (
                     <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
@@ -647,7 +647,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <button
                     type="button"
                     onClick={() => setSelectedClientIds([])}
-                    className="text-xs text-slate-500 hover:text-slate-300"
+                    className="type-caption text-slate-500 hover:text-slate-300"
                 >
                     Clear ({selectedClientIds.length})
                 </button>
@@ -708,7 +708,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     const crmSectionFallback = (
         <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-slate-800 bg-slate-900/50">
-            <div className="text-slate-400 text-sm font-medium">Loading...</div>
+            <div className="text-slate-400 type-ui font-medium">Loading...</div>
         </div>
     );
 
@@ -800,7 +800,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Customers</h2>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">CRM</p>
+                            <p className="text-slate-500 type-caption font-bold uppercase tracking-wide">CRM</p>
                         </div>
                     </div>
                     <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -821,12 +821,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {filteredClients.map(client => (
                         <div key={client.id} className="p-3 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white text-xs">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white type-caption">
                                     {(client.name || '?').charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-sm">{client.name}</h3>
-                                    <p className="text-xs text-slate-400">{client.email || client.phone || 'No contact'}</p>
+                                    <h3 className="font-bold text-white type-ui">{client.name}</h3>
+                                    <p className="type-card-description text-slate-400">{client.email || client.phone || 'No contact'}</p>
                                 </div>
                             </div>
                             <Badge variant={client.salesStage === 'customer' ? 'success' : 'blue'}>
@@ -863,7 +863,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">Pipeline</p>
+                        <p className="text-slate-500 type-caption font-bold uppercase tracking-wide">Pipeline</p>
                     </div>
                 </div>
                 <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -977,11 +977,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input type="text" placeholder="Search contacts..."
                                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui"
                             />
                         </div>
                         <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl text-sm text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]">
+                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]">
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1027,12 +1027,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
                                     {/* Avatar */}
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-[var(--brand-blue-500)] to-[var(--brand-blue-700)]'} flex items-center justify-center font-bold text-white text-xs relative`}>
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-[var(--brand-blue-500)] to-[var(--brand-blue-700)]'} flex items-center justify-center font-bold text-white type-caption relative`}>
                                         {initials}
                                         <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
                                     </div>
                                     {/* Name truncated to ~8 chars */}
-                                    <p className="text-xs font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
+                                    <p className="type-card-description font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
                                         {(client.name || '').split(' ')[0]}
                                     </p>
                                     </button>
@@ -1052,7 +1052,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 text-xs text-slate-500 border-t border-slate-800/50 pt-2">
+                    <div className="flex items-center gap-4 type-caption text-slate-500 border-t border-slate-800/50 pt-2">
                         {[['cyan-400','Lead'],['blue-400','Prospect'],['emerald-400','Customer'],['rose-400','Lost']].map(([color, label]) => (
                             <span key={label} className="flex items-center gap-1">
                                 <span className={`w-2 h-2 rounded-full bg-${color}`} />{label}
@@ -1073,13 +1073,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 placeholder="Search contacts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui"
                             />
                         </div>
                         <select
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] transition-all text-sm"
+                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] transition-all type-ui"
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
@@ -1132,7 +1132,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     placeholder="Search clients..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm font-medium"
+                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui font-medium"
                                 />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
@@ -1146,7 +1146,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <button
                                         key={stage.value}
                                         onClick={() => setSelectedStage(stage.value)}
-                                        className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
+                                        className={`h-8 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border ${
                                             selectedStage === stage.value
                                                 ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
                                                 : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
@@ -1171,12 +1171,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
-                                className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
+                                className="type-caption font-semibold uppercase tracking-wide text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
                             {selectedClientIds.length >= 500 && (
-                                <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
+                                <span className="type-caption font-semibold text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
                             )}
                         </div>
 
@@ -1206,14 +1206,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             }}
                                             className="w-4 h-4 rounded border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--brand-blue-600)] focus:ring-[var(--brand-blue-500)]/20"
                                         />
-                                        <div className="w-9 h-9 rounded-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] flex items-center justify-center font-semibold text-[var(--ws-text-secondary)] text-xs shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] flex items-center justify-center font-semibold text-[var(--ws-text-secondary)] type-caption shrink-0">
                                             {(client.name || '?').charAt(0)}
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
+                                        <h3 className="font-bold text-white type-ui truncate">{client.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--brand-blue-400)] uppercase">
+                                            <span className="px-2 py-0.5 rounded-full type-caption font-bold tracking-tight bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--brand-blue-400)] uppercase">
                                                 {client.salesStage}
                                             </span>
                                         </div>
@@ -1228,7 +1228,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         size="sm"
                                         onClick={handleLoadMore}
                                         isLoading={loading}
-                                        className="text-[var(--brand-blue-500)] hover:text-[var(--brand-blue-400)] font-bold uppercase tracking-wide text-xs"
+                                        className="text-[var(--brand-blue-500)] hover:text-[var(--brand-blue-400)] font-bold uppercase tracking-wide type-caption"
                                     >
                                         Load More Contacts
                                     </Button>
@@ -1242,7 +1242,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         {selectedClient ? (
                             <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
                                 <div className="lg:hidden flex items-center justify-between p-4 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-10 shrink-0">
-                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] text-sm font-medium">
+                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] type-ui font-medium">
                                         <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
@@ -1313,7 +1313,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <div className="flex border-b border-[var(--ws-border)] mb-4 overflow-x-auto [scrollbar-width:none]">
                                         <button
                                             onClick={() => setActiveTab('timeline')}
-                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'timeline'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -1323,7 +1323,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('notes')}
-                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'notes'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -1333,7 +1333,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('invoices')}
-                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'invoices'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -1343,7 +1343,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('properties')}
-                                            className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'properties'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -1366,14 +1366,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <div className="space-y-4">
                                                 {/* Add Note Form */}
                                                 <form onSubmit={handleAddNote} className="ac-workspace-panel rounded-lg p-4 space-y-3">
-                                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
+                                                    <h3 className="type-caption font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
                                                     <div>
                                                         <Input
                                                             type="text"
                                                             placeholder="Note Title (e.g. Call feedback, Meeting summary)"
                                                             value={newNoteTitle}
                                                             onChange={(e) => setNewNoteTitle(e.target.value)}
-                                                            className="text-white placeholder-slate-500 text-sm"
+                                                            className="text-white placeholder-slate-500 type-ui"
                                                             required
                                                         />
                                                     </div>
@@ -1382,7 +1382,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
+                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1412,12 +1412,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
                                                             <div key={note.id} className="ac-workspace-panel rounded-lg p-3">
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <h4 className="text-xs font-bold text-[var(--brand-blue-400)]">{note.title}</h4>
-                                                                    <span className="text-[10px] text-slate-500 font-mono">
+                                                                    <h4 className="type-card-title font-bold text-[var(--brand-blue-400)]">{note.title}</h4>
+                                                                    <span className="type-ui text-slate-500 font-mono">
                                                                         {new Date(note.created_at).toLocaleDateString()}
                                                                     </span>
                                                                 </div>
-                                                                <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{note.description}</p>
+                                                                <p className="type-card-description text-slate-300 leading-relaxed whitespace-pre-wrap">{note.description}</p>
                                                             </div>
                                                         ))
                                                     )}
@@ -1443,14 +1443,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <div>
                                                                     <div className="flex items-center gap-2">
                                                                         <Receipt className={`w-4 h-4 ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`} />
-                                                                        <h4 className="text-sm font-bold text-slate-200">${inv.metadata?.amount?.toLocaleString() || '0.00'}</h4>
+                                                                        <h4 className="type-caption font-bold text-slate-200">${inv.metadata?.amount?.toLocaleString() || '0.00'}</h4>
                                                                         <Badge variant={isPaid ? 'success' : 'warning'}>
                                                                             {status.toUpperCase()}
                                                                         </Badge>
                                                                     </div>
-                                                                    <p className="text-xs text-slate-400 mt-1">{inv.description}</p>
+                                                                    <p className="type-card-description text-slate-400 mt-1">{inv.description}</p>
                                                                     {inv.metadata?.due_date && (
-                                                                        <span className="text-[10px] text-slate-500 block mt-1 font-mono">Due: {new Date(inv.metadata.due_date).toLocaleDateString()}</span>
+                                                                        <span className="type-caption text-slate-500 block mt-1 font-mono">Due: {new Date(inv.metadata.due_date).toLocaleDateString()}</span>
                                                                     )}
                                                                 </div>
                                                                 {inv.metadata?.invoice_id && (
@@ -1488,8 +1488,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <div className="space-y-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="text-xs text-slate-400 mb-1">Email</p>
-                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                        <p className="type-card-description text-slate-400 mb-1">Email</p>
+                                                        <div className="flex items-center gap-2 text-white type-ui">
                                                             <Mail className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             {selectedClient.email ? (
                                                                 <button
@@ -1508,39 +1508,39 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         </div>
                                                     </div>
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="text-xs text-slate-400 mb-1">Phone</p>
-                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                        <p className="type-card-description text-slate-400 mb-1">Phone</p>
+                                                        <div className="flex items-center gap-2 text-white type-ui">
                                                             <Phone className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                                         </div>
                                                     </div>
                                                     {selectedClient.industry && (
                                                         <div className="ac-workspace-panel rounded-lg p-4">
-                                                            <p className="text-xs text-slate-400 mb-1">Industry</p>
-                                                            <p className="text-white text-sm font-semibold">{selectedClient.industry}</p>
+                                                            <p className="type-card-description text-slate-400 mb-1">Industry</p>
+                                                            <p className="text-white type-card-description font-semibold">{selectedClient.industry}</p>
                                                         </div>
                                                     )}
                                                     {selectedClient.location && (
                                                         <div className="ac-workspace-panel rounded-lg p-4">
-                                                            <p className="text-xs text-slate-400 mb-1">Location</p>
-                                                            <p className="text-white text-sm font-semibold">{selectedClient.location}</p>
+                                                            <p className="type-card-description text-slate-400 mb-1">Location</p>
+                                                            <p className="text-white type-card-description font-semibold">{selectedClient.location}</p>
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 {selectedClient.description && (
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="text-xs text-slate-400 mb-2">Description</p>
-                                                        <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
+                                                        <p className="type-card-description text-slate-400 mb-2">Description</p>
+                                                        <p className="text-white type-card-description leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
                                                     </div>
                                                 )}
 
                                                 {selectedClient.customFields && Object.keys(selectedClient.customFields).length > 0 && (
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="text-xs text-slate-400 mb-3">Custom Fields</p>
+                                                        <p className="type-card-description text-slate-400 mb-3">Custom Fields</p>
                                                         <div className="space-y-2">
                                                             {Object.entries(selectedClient.customFields).map(([key, val]) => (
-                                                                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-800/40 text-xs">
+                                                                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-800/40 type-caption">
                                                                     <span className="text-slate-400 font-bold uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
                                                                     <span className="text-slate-200 font-semibold">{String(val)}</span>
                                                                 </div>
@@ -1554,7 +1554,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                     {/* Quick Actions Footer */}
                                     <div className="mt-auto bg-[var(--ws-toolbar)] pt-6 border-t border-[var(--ws-border)]">
-                                        <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
+                                        <h3 className="type-caption font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
                                             <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
@@ -1808,7 +1808,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                     </div>
                     <div className="min-w-0">
                         <h3 className="font-semibold text-white truncate" title={client.name}>{client.name}</h3>
-                        {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
+                        {client.industry && <p className="type-card-description text-slate-400 truncate">{client.industry}</p>}
                     </div>
                 </div>
 
@@ -1841,19 +1841,19 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
 
             <div className="space-y-2 mb-4 flex-1">
                 {client.email && (
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 type-ui text-slate-400">
                         <Mail className="w-4 h-4 shrink-0" />
                         <span className="truncate" title={client.email}>{client.email}</span>
                     </div>
                 )}
                 {client.phone && (
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 type-ui text-slate-400">
                         <Phone className="w-4 h-4 shrink-0" />
                         <span className="truncate">{client.phone}</span>
                     </div>
                 )}
                 {client.metadata?.last_contacted_at && (
-                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-blue-500)]/70 mt-3">
+                    <div className="flex items-center gap-2 type-caption font-semibold uppercase tracking-wide text-[var(--brand-blue-500)]/70 mt-3">
                         <MessageSquare className="w-3 h-3" />
                         <span>Last Contacted: {formatDistanceToNow(new Date(client.metadata.last_contacted_at), { addSuffix: true })}</span>
                     </div>
@@ -1866,7 +1866,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                         {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
                     </Badge>
                     {client.value > 0 && (
-                        <span className="text-sm font-semibold text-[var(--brand-blue-400)]">
+                        <span className="type-ui font-semibold text-[var(--brand-blue-400)]">
                             ${client.value.toLocaleString()}
                         </span>
                     )}
@@ -1935,7 +1935,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                        <label className="block text-sm font-medium text-slate-300">Target Stage</label>
+                        <label className="block type-label font-medium text-slate-300">Target Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
@@ -2031,7 +2031,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                        <label className="block text-sm font-medium text-slate-300">Sales Stage</label>
+                        <label className="block type-label font-medium text-slate-300">Sales Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
@@ -2136,10 +2136,10 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                         <p className="text-lg font-medium mb-2">
                             {isDragActive ? 'Drop file here' : 'Drag & drop file here'}
                         </p>
-                        <p className="text-sm text-slate-400 mb-4">
+                        <p className="type-card-description text-slate-400 mb-4">
                             or click to browse
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="type-card-description text-slate-500">
                             Supports: Excel (.xlsx, .xls), CSV, PDF, Word (.doc, .docx)
                         </p>
                         {importing && <p className="mt-4 text-[var(--brand-blue-400)]">Importing...</p>}
@@ -2153,8 +2153,8 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                             {importedClients.map((client, index) => (
                                 <div key={index} className="bg-slate-800/50 p-3 rounded-lg">
                                     <p className="font-medium">{client.name || 'No name'}</p>
-                                    <p className="text-sm text-slate-400">{client.email || 'No email'}</p>
-                                    {client.phone && <p className="text-sm text-slate-400">{client.phone}</p>}
+                                    <p className="type-card-description text-slate-400">{client.email || 'No email'}</p>
+                                    {client.phone && <p className="type-card-description text-slate-400">{client.phone}</p>}
                                 </div>
                             ))}
                         </div>
@@ -2234,7 +2234,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
         <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Initialize Project Proposal" size="wide">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="p-4 bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/20 rounded-xl mb-4">
-                    <p className="text-sm text-[var(--brand-blue-200)]">
+                    <p className="type-card-description text-[var(--brand-blue-200)]">
                         Initializing a formal proposal for <strong>{client.name}</strong>. This creates a pending project in your pipeline.
                     </p>
                 </div>
@@ -2248,7 +2248,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="block text-sm font-medium text-slate-300">Project Category</label>
+                        <label className="block type-label font-medium text-slate-300">Project Category</label>
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -2352,7 +2352,7 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
         <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Create Invoice" size="wide">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="p-3 bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/20 rounded-xl">
-                    <p className="text-sm text-[var(--brand-blue-200)]">
+                    <p className="type-card-description text-[var(--brand-blue-200)]">
                         Creating invoice for <strong>{client.name}</strong>
                         {client.email && <span className="text-[var(--brand-blue-400)]"> · {client.email}</span>}
                     </p>

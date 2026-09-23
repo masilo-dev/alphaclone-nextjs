@@ -105,7 +105,7 @@ export function ExpenseCategoryChart() {
     if (!active || !payload?.length) return null;
     const item = payload[0].payload as CategoryTotal;
     return (
-      <div className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs shadow-xl">
+      <div className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 type-caption shadow-xl">
         <p className="font-bold text-white">{item.category}</p>
         <p className="text-emerald-400">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         <p className="text-slate-400">{item.percentage}% of total</p>
@@ -121,7 +121,7 @@ export function ExpenseCategoryChart() {
             <TrendingDown className="text-rose-400" size={20} />
             Expense Breakdown
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="type-card-description text-slate-400 mt-0.5">
             Total: <span className="text-rose-300 font-bold">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </p>
         </div>
@@ -130,7 +130,7 @@ export function ExpenseCategoryChart() {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
             >
               {p === 'month' ? 'MTD' : p === 'quarter' ? 'QTD' : 'YTD'}
             </button>
@@ -148,13 +148,13 @@ export function ExpenseCategoryChart() {
 
       {loading ? (
         <div className="ac-workspace-panel rounded-xl p-8 flex items-center justify-center min-h-[320px]">
-          <div className="text-slate-500 text-sm animate-pulse">Loading expense data...</div>
+          <div className="text-slate-500 type-ui animate-pulse">Loading expense data...</div>
         </div>
       ) : data.length === 0 ? (
         <div className="ac-workspace-panel rounded-xl p-8 flex flex-col items-center justify-center min-h-[280px] text-center">
           <TrendingDown className="text-slate-600 mb-3" size={40} />
           <p className="text-slate-400 font-semibold">No expense data for this period</p>
-          <p className="text-slate-500 text-sm mt-1">Record journal entries or upload receipts to see your spending breakdown.</p>
+          <p className="text-slate-500 type-card-description mt-1">Record journal entries or upload receipts to see your spending breakdown.</p>
         </div>
       ) : (
         <div className="ac-workspace-panel rounded-xl p-4 sm:p-6">
@@ -177,11 +177,11 @@ export function ExpenseCategoryChart() {
                   <div key={item.category} className="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="text-sm text-slate-300 truncate">{item.category}</span>
+                      <span className="type-ui text-slate-300 truncate">{item.category}</span>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-sm font-bold text-white">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
-                      <span className="text-xs text-slate-500 ml-2">{item.percentage}%</span>
+                      <span className="type-ui font-bold text-white">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                      <span className="type-caption text-slate-500 ml-2">{item.percentage}%</span>
                     </div>
                   </div>
                 ))}
@@ -192,8 +192,8 @@ export function ExpenseCategoryChart() {
               <WrapChart height={300}>
                 <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
-                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                  <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} angle={-35} textAnchor="end" interval={0} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {data.map((entry) => (

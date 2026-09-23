@@ -221,18 +221,18 @@ const BusinessPerformanceDashboard: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#adebb3]" />
-                <span className="text-xs text-[#c0c0c0]">Revenue</span>
+                <span className="type-caption text-[#c0c0c0]">Revenue</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#00f0ff]" />
-                <span className="text-xs text-[#c0c0c0]">Projects</span>
+                <span className="type-caption text-[#c0c0c0]">Projects</span>
               </div>
             </div>
           </div>
           
           <div className="mb-8">
              <h3 className="text-xl font-bold text-[#f5f5f5] mb-1">Revenue Momentum</h3>
-             <p className="text-sm text-[#94a3b8]">Trailing 30-day performance snapshot.</p>
+             <p className="type-card-description text-[#94a3b8]">Trailing 30-day performance snapshot.</p>
           </div>
 
           <div className="h-[350px] w-full">
@@ -293,13 +293,13 @@ const BusinessPerformanceDashboard: React.FC = () => {
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">
+                    <p className="type-card-description font-bold text-[#f5f5f5]">
                       Revenue momentum{' '}
                       {data?.revenue?.trend == null
                         ? 'unavailable'
                         : `${data.revenue.trend >= 0 ? '+' : ''}${Number(data.revenue.trend).toFixed(1)}%`}
                     </p>
-                    <p className="text-xs text-[#94a3b8] mt-1">
+                    <p className="type-card-description text-[#94a3b8] mt-1">
                       Based on paid revenue for the selected analytics period versus the prior period.
                     </p>
                   </div>
@@ -312,8 +312,8 @@ const BusinessPerformanceDashboard: React.FC = () => {
                     <AlertCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">Pipeline health</p>
-                    <p className="text-xs text-[#94a3b8] mt-1">
+                    <p className="type-card-description font-bold text-[#f5f5f5]">Pipeline health</p>
+                    <p className="type-card-description text-[#94a3b8] mt-1">
                       Review deals and follow-ups in Sales for stagnant opportunities. Counts are not estimated on this panel.
                     </p>
                   </div>
@@ -326,11 +326,11 @@ const BusinessPerformanceDashboard: React.FC = () => {
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">
+                    <p className="type-card-description font-bold text-[#f5f5f5]">
                       Automation runs:{' '}
                       {Number(data?.businessOS?.automation?.totalRuns ?? 0).toLocaleString()}
                     </p>
-                    <p className="text-xs text-[#94a3b8] mt-1">
+                    <p className="type-card-description text-[#94a3b8] mt-1">
                       Success rate:{' '}
                       {Number(data?.businessOS?.automation?.successRate ?? 0).toFixed(0)}% from recorded workflow runs.
                     </p>
@@ -349,7 +349,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
             <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#c0c0c0]" /> Recent Events
             </h3>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
+            <p className="type-card-description text-[#94a3b8] leading-relaxed">
               No recent workspace events are available for this period. Activity from deals, invoices,
               automations, and leads will appear here once recorded in your tenant.
             </p>

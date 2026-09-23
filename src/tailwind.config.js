@@ -62,18 +62,8 @@ export default {
                 },
             },
             fontFamily: {
-                sans: [
-                    'Segoe UI',          // Microsoft modern
-                    'Inter',            // Current primary
-                    'Calibri',          // Microsoft documents
-                    'system-ui',
-                    '-apple-system',
-                    'BlinkMacSystemFont',
-                    'Roboto',
-                    'Helvetica Neue',
-                    'Arial',
-                    'sans-serif'
-                ],
+                sans: ['var(--font-ui)'],
+                brand: ['var(--font-brand)'],
                 serif: [
                     'Cambria',          // Microsoft serif
                     'Georgia',
@@ -90,14 +80,14 @@ export default {
             },
             // STRICT APP TYPOGRAPHY SCALE
             fontSize: {
-                xs: ['0.75rem', '1rem'],       // 12px / 16px - For captions, tiny details
-                sm: ['0.781rem', '1.125rem'],  // ~12.5px / 18px - Small text
-                base: ['0.875rem', '1.3125rem'],// 14px / 21px - Your compact Gmail-like body standard
-                md: ['1rem', '1.5rem'],        // 16px / 24px - Standard input/form text (Prevents iOS zoom)
-                lg: ['1.125rem', '1.75rem'],   // 18px / 28px
-                xl: ['1.375rem', '1.875rem'],  // 22px / 30px - Section headers
-                '2xl': ['1.5rem', '2rem'],     // 24px / 32px
-                '3xl': ['2rem', '2.5rem'],     // 32px / 40px - Hero headers
+                xs: ['var(--text-xs)', 'var(--leading-ui)'],
+                sm: ['var(--text-sm)', 'var(--leading-ui)'],
+                base: ['var(--text-base)', 'var(--leading-body)'],
+                md: ['var(--text-base)', 'var(--leading-body)'],
+                lg: ['var(--text-lg)', 'var(--leading-body)'],
+                xl: ['var(--text-xl)', 'var(--leading-ui)'],
+                '2xl': ['var(--text-2xl)', 'var(--leading-heading)'],
+                '3xl': ['var(--text-3xl)', 'var(--leading-heading)'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-out',

@@ -162,7 +162,7 @@ export default function InteractiveWorkflowStory() {
     <div className="w-full py-10">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-12 px-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs sm:text-sm font-medium mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 type-caption sm:text-sm font-medium mb-4">
           <ClipboardCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
           <span>The Connected Business Story</span>
         </div>
@@ -172,7 +172,7 @@ export default function InteractiveWorkflowStory() {
             One Continuous Flow.
           </span>
         </h2>
-        <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+        <p className="text-slate-300 type-card-description sm:text-base leading-relaxed max-w-2xl mx-auto">
           Instead of running your business across 6 disconnected tools and copy-pasting data manually, AlphaClone executes your entire operational pipeline inside one connected backbone.
         </p>
       </div>
@@ -194,12 +194,12 @@ export default function InteractiveWorkflowStory() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                  <span className={`type-ui font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-800 text-slate-400'}`}>
                     STEP {node.number}
                   </span>
                   {isSelected && <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>}
                 </div>
-                <p className="text-xs font-bold text-white truncate">{node.stage}</p>
+                <p className="type-card-description font-bold text-white truncate">{node.stage}</p>
               </button>
             );
           })}
@@ -211,17 +211,17 @@ export default function InteractiveWorkflowStory() {
             {/* Left Narrative Description */}
             <div className="lg:col-span-6 space-y-5">
               <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${activeNode.accent}`}>
+                <span className={`px-3 py-1 rounded-full type-caption font-mono font-bold border ${activeNode.accent}`}>
                   STEP {activeNode.number} OF 06
                 </span>
-                <span className="text-xs text-slate-400 font-medium">Automatic Hand-off</span>
+                <span className="type-caption text-slate-400 font-medium">Automatic Hand-off</span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white font-marketing-heading">
                   {activeNode.title}
                 </h3>
-                <p className="text-slate-300 text-sm sm:text-base leading-relaxed mt-2">
+                <p className="text-slate-300 type-card-description sm:text-base leading-relaxed mt-2">
                   {activeNode.description}
                 </p>
               </div>
@@ -231,16 +231,16 @@ export default function InteractiveWorkflowStory() {
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
                   <Workflow className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">System Trigger</p>
-                    <p className="text-xs text-slate-400">{activeNode.trigger}</p>
+                    <p className="type-card-description font-semibold text-slate-200">System Trigger</p>
+                    <p className="type-card-description text-slate-400">{activeNode.trigger}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-teal-950/30 border border-teal-800/40">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-teal-300">Automated Outcome</p>
-                    <p className="text-xs text-teal-200/80">{activeNode.automatedResult}</p>
+                    <p className="type-card-description font-semibold text-teal-300">Automated Outcome</p>
+                    <p className="type-card-description text-teal-200/80">{activeNode.automatedResult}</p>
                   </div>
                 </div>
               </div>
@@ -249,14 +249,14 @@ export default function InteractiveWorkflowStory() {
               <div className="flex items-center gap-4 pt-4">
                 <button
                   onClick={() => setActiveStepIndex((prev) => (prev + 1) % FLOW_NODES.length)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-2 border border-slate-700"
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white type-caption font-semibold transition-colors flex items-center gap-2 border border-slate-700"
                 >
                   <span>Next Flow Step</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <Link
                   href="/auth/login?register=true&plan=starter"
-                  className="text-xs text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
+                  className="type-caption text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
                 >
                   Test this full flow live →
                 </Link>
@@ -276,11 +276,11 @@ export default function InteractiveWorkflowStory() {
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-                    <span className="ml-2 font-mono text-[11px] text-teal-400 font-semibold">
+                    <span className="ml-2 font-mono type-ui text-teal-400 font-semibold">
                       {activeNode.previewSnippet.badge}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 type-ui font-mono border border-emerald-500/20">
                     REAL-TIME SYNC
                   </span>
                 </div>
@@ -293,7 +293,7 @@ export default function InteractiveWorkflowStory() {
                 {/* Details Table */}
                 <div className="space-y-2 mb-4">
                   {activeNode.previewSnippet.details.map((d) => (
-                    <div key={d.label} className="flex justify-between items-center text-xs p-2 rounded bg-slate-900/60 border border-slate-800/60">
+                    <div key={d.label} className="flex justify-between items-center type-caption p-2 rounded bg-slate-900/60 border border-slate-800/60">
                       <span className="text-slate-400 font-medium">{d.label}:</span>
                       <span className="text-slate-200 font-semibold font-mono">{d.value}</span>
                     </div>
@@ -302,7 +302,7 @@ export default function InteractiveWorkflowStory() {
 
                 {/* Footnote */}
                 {activeNode.previewSnippet.codeOrNote && (
-                  <div className="p-2.5 rounded bg-slate-900 border border-teal-500/30 text-[11px] font-mono text-teal-300">
+                  <div className="p-2.5 rounded bg-slate-900 border border-teal-500/30 type-ui font-mono text-teal-300">
                     {activeNode.previewSnippet.codeOrNote}
                   </div>
                 )}

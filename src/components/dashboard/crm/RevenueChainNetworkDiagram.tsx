@@ -76,10 +76,10 @@ export function RevenueChainNetworkDiagram({
                     })}
 
                     <circle cx="160" cy="160" r="52" className="fill-slate-900/80 stroke-white/10" strokeWidth="1" />
-                    <text x="160" y="152" textAnchor="middle" className="fill-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+                    <text x="160" y="152" textAnchor="middle" className="fill-slate-400 type-caption font-bold uppercase tracking-caps">
                         Health
                     </text>
-                    <text x="160" y="178" textAnchor="middle" className="fill-teal-300 text-[22px] font-black">
+                    <text x="160" y="178" textAnchor="middle" className="fill-teal-300 text-2xl font-black">
                         {healthScore}%
                     </text>
 
@@ -112,7 +112,7 @@ export function RevenueChainNetworkDiagram({
                                     x={entry.x}
                                     y={entry.y - 4}
                                     textAnchor="middle"
-                                    className={`${styles.text} text-[9px] font-bold uppercase tracking-wide`}
+                                    className={`${styles.text} type-caption font-bold uppercase tracking-wide`}
                                 >
                                     {entry.node.shortLabel}
                                 </text>
@@ -120,7 +120,7 @@ export function RevenueChainNetworkDiagram({
                                     x={entry.x}
                                     y={entry.y + 10}
                                     textAnchor="middle"
-                                    className="fill-white text-[11px] font-black tabular-nums"
+                                    className="fill-white type-ui font-black tabular-nums"
                                 >
                                     {entry.node.volume}
                                 </text>
@@ -137,7 +137,7 @@ export function RevenueChainNetworkDiagram({
                                             x={entry.x + 18}
                                             y={entry.y - 14.5}
                                             textAnchor="middle"
-                                            className="fill-white text-[8px] font-black"
+                                            className="fill-white type-ui font-black"
                                         >
                                             {entry.node.leakCount > 9 ? '9+' : entry.node.leakCount}
                                         </text>
@@ -150,7 +150,7 @@ export function RevenueChainNetworkDiagram({
             </div>
 
             {urgentCount > 0 && (
-                <p className="text-center text-[10px] text-amber-400/90">
+                <p className="text-center type-card-description text-amber-400/90">
                     {urgentCount} urgent leak{urgentCount === 1 ? '' : 's'} — click a highlighted node to fix.
                 </p>
             )}
@@ -159,8 +159,8 @@ export function RevenueChainNetworkDiagram({
                 <div className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <p className="text-xs font-semibold text-white">{activeNode.label}</p>
-                            <p className="mt-0.5 text-[10px] text-slate-500 tabular-nums">
+                            <p className="type-card-description font-semibold text-white">{activeNode.label}</p>
+                            <p className="mt-0.5 type-card-description text-slate-500 tabular-nums">
                                 {activeNode.volume} in pipeline
                                 {activeNode.leakCount > 0 ? ` · ${activeNode.leakCount} issue${activeNode.leakCount === 1 ? '' : 's'}` : ''}
                             </p>
@@ -168,17 +168,17 @@ export function RevenueChainNetworkDiagram({
                         <button
                             type="button"
                             onClick={() => router.push(activeNode.href)}
-                            className="shrink-0 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-teal-300 hover:bg-teal-500/20"
+                            className="shrink-0 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 type-caption font-bold uppercase tracking-wide text-teal-300 hover:bg-teal-500/20"
                         >
                             {activeNode.actionLabel || 'Open'} →
                         </button>
                     </div>
                     {activeNode.detail && (
-                        <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{activeNode.detail}</p>
+                        <p className="mt-2 type-card-description leading-relaxed text-slate-400">{activeNode.detail}</p>
                     )}
                 </div>
             ) : (
-                <p className="text-center text-[10px] text-slate-500">
+                <p className="text-center type-card-description text-slate-500">
                     Click any node to jump to that step in your revenue chain.
                 </p>
             )}

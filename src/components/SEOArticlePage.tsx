@@ -113,7 +113,7 @@ const SEOArticlePage: React.FC = () => {
             <div className="min-h-screen bg-slate-950">
                 <article className="max-w-4xl mx-auto px-6 py-16">
                     {/* Breadcrumb */}
-                    <nav className="text-sm text-slate-400 mb-8">
+                    <nav className="type-ui text-slate-400 mb-8">
                         <a href="/" className="hover:text-teal-400">Home</a>
                         <span className="mx-2">/</span>
                         <a href="/blog" className="hover:text-teal-400">Blog</a>
@@ -124,11 +124,11 @@ const SEOArticlePage: React.FC = () => {
                     {/* Article Header */}
                     <header className="mb-12">
                         <div className="flex gap-2 mb-4">
-                            <span className="px-3 py-1 bg-teal-500/20 text-teal-400 text-sm rounded-full">
+                            <span className="px-3 py-1 bg-teal-500/20 text-teal-400 type-ui rounded-full">
                                 {article.category}
                             </span>
                             {article.tags.map(tag => (
-                                <span key={tag} className="px-3 py-1 bg-slate-800 text-slate-300 text-sm rounded-full">
+                                <span key={tag} className="px-3 py-1 bg-slate-800 text-slate-300 type-ui rounded-full">
                                     {tag}
                                 </span>
                             ))}
@@ -138,7 +138,7 @@ const SEOArticlePage: React.FC = () => {
                             {article.title}
                         </h1>
 
-                        <div className="flex items-center gap-4 text-slate-400 text-sm">
+                        <div className="flex items-center gap-4 text-slate-400 type-ui">
                             <span>{new Date(article.created_at).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',

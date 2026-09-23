@@ -71,7 +71,7 @@ function WelcomeGateContent() {
                 <div className="text-center mb-12">
                     <Image src={LOGO_URL} alt="AlphaClone" width={64} height={64} className="mx-auto mb-6" priority />
                     <h1 className="text-2xl font-black text-white tracking-tight">SECURITY HANDSHAKE</h1>
-                    <p className="text-slate-500 text-sm mt-2 uppercase tracking-widest font-semibold">AlphaClone Infrastructure Gate</p>
+                    <p className="text-slate-500 type-caption mt-2 uppercase tracking-widest font-semibold">AlphaClone Infrastructure Gate</p>
                 </div>
 
                 <div className="bg-slate-900/50 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
@@ -92,7 +92,7 @@ function WelcomeGateContent() {
                                 </div>
                                 
                                 <h2 className="text-xl font-bold text-white mb-2 text-center">Verifying Credentials</h2>
-                                <p className="text-slate-400 text-sm text-center mb-8">Establishing an encrypted session with the Command Center...</p>
+                                <p className="text-slate-400 type-card-description text-center mb-8">Establishing an encrypted session with the Command Center...</p>
 
                                 <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2">
                                     <motion.div 
@@ -102,7 +102,7 @@ function WelcomeGateContent() {
                                         transition={{ duration: 0.5 }}
                                     />
                                 </div>
-                                <div className="flex justify-between w-full text-[10px] font-bold text-slate-600 uppercase tracking-tighter">
+                                <div className="flex justify-between w-full type-caption font-bold text-slate-600 uppercase tracking-tighter">
                                     <span>Syncing Pulse</span>
                                     <span>{progress}%</span>
                                 </div>
@@ -120,7 +120,7 @@ function WelcomeGateContent() {
                                     <CheckCircle className="w-10 h-10 text-teal-400" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-white mb-2">Access Granted</h2>
-                                <p className="text-slate-400 text-center text-sm mb-6">Security protocols passed. Provisioning your dashboard environment...</p>
+                                <p className="text-slate-400 text-center type-card-description mb-6">Security protocols passed. Provisioning your dashboard environment...</p>
                                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                             </motion.div>
                         )}
@@ -136,7 +136,7 @@ function WelcomeGateContent() {
                                     <AlertCircle className="w-10 h-10" />
                                 </div>
                                 <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
-                                <p className="text-rose-400 text-center text-sm mb-8">{error || 'The security token has expired or is invalid.'}</p>
+                                <p className="text-rose-400 text-center type-card-description mb-8">{error || 'The security token has expired or is invalid.'}</p>
                                 
                                 <Button 
                                     onClick={() => router.push('/auth/login')}
@@ -150,7 +150,7 @@ function WelcomeGateContent() {
                 </div>
 
                 <div className="mt-8 text-center">
-                    <p className="text-slate-600 text-[10px] uppercase tracking-[0.3em] font-bold">Encrypted End-to-End &bull; Session Managed</p>
+                    <p className="text-slate-600 type-caption uppercase tracking-caps font-bold">Encrypted End-to-End &bull; Session Managed</p>
                 </div>
             </motion.div>
         </div>

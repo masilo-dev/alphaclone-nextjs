@@ -42,7 +42,7 @@ export default function ModuleJumpSelect({
             const href = e.target.value;
             if (href) onNavigate(href);
           }}
-          className="w-full appearance-none rounded-xl bg-slate-900 border border-slate-700 text-sm font-semibold text-slate-200 pl-3 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500/40"
+          className="w-full appearance-none rounded-xl bg-slate-900 border border-slate-700 type-ui font-semibold text-slate-200 pl-3 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500/40"
         >
           <option value="" disabled>
             {label}

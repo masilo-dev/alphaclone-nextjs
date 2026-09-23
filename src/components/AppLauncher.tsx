@@ -78,8 +78,8 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
       />
 
       {/* Top Status Bar (Native Feel) */}
-      <div className="relative z-20 flex justify-between items-center px-4 sm:px-6 pt-2 pb-2 text-[11px] sm:text-[12px] font-bold tracking-tight">
-        <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 tracking-[0.04em] truncate max-w-[55%]">
+      <div className="relative z-20 flex justify-between items-center px-4 sm:px-6 pt-2 pb-2 type-caption sm:text-xs font-bold tracking-tight">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/5 px-2 sm:px-3 py-1 rounded-full border border-white/10 tracking-label truncate max-w-[55%]">
           <Image src="/logo.png" alt="" width={18} height={18} className="rounded-md shrink-0" />
           <span className="truncate">{APP_SHORT_NAME}</span>
         </div>
@@ -87,7 +87,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           <Signal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <div className="flex items-center gap-0.5 sm:gap-1">
-            <span className="text-[10px] sm:text-xs">88%</span>
+            <span className="type-ui sm:text-xs">88%</span>
             <Battery className="w-3 h-3 sm:w-4 sm:h-4 rotate-90" />
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           <h1 className="text-7xl sm:text-8xl font-thin tracking-tighter drop-shadow-2xl">
             {formattedTime}
           </h1>
-          <p className="text-sm sm:text-base font-medium text-teal-400/90 mt-2 drop-shadow-lg tracking-wide text-center px-4">
+          <p className="type-caption sm:text-base font-medium text-teal-400/90 mt-2 drop-shadow-lg tracking-wide text-center px-4">
             {APP_TAGLINE}
           </p>
         </motion.div>
@@ -115,7 +115,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
-          className="text-xs text-slate-500 mb-6"
+          className="type-caption text-slate-500 mb-6"
         >
           {formattedDate}
         </motion.p>
@@ -132,10 +132,10 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             className="w-full h-10 bg-white/10 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center gap-2 text-white/50 cursor-pointer hover:bg-white/15 transition-all group"
           >
             <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium">Search systems</span>
+            <span className="type-ui font-medium">Search systems</span>
             <div className="hidden sm:flex items-center gap-1 ml-4 py-0.5 px-2 bg-white/5 rounded border border-white/10">
               <Command className="w-2.5 h-2.5" />
-              <span className="text-xs">K</span>
+              <span className="type-caption">K</span>
             </div>
           </div>
         </motion.div>
@@ -160,7 +160,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
                 <app.icon className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white drop-shadow-md z-10" />
               </div>
-              <span className="text-[10px] sm:text-xs md:text-[12px] font-bold text-white/90 drop-shadow-md text-center truncate max-w-full">
+              <span className="type-ui sm:text-xs md:text-sm font-bold text-white/90 drop-shadow-md text-center truncate max-w-full">
                 {app.name}
               </span>
             </motion.div>
@@ -214,10 +214,10 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
                 />
               </div>
               <div className="p-4 flex flex-col gap-2">
-                <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
+                <p className="type-caption uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
                 {['Open CRM', 'Check mail', 'Start a call', 'View clients'].map((action) => (
                    <div key={action} className="p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between group transition-colors">
-                     <span className="text-sm font-medium">{action}</span>
+                     <span className="type-ui font-medium">{action}</span>
                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />
                    </div>
                 ))}

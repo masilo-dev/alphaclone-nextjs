@@ -198,15 +198,15 @@ export function EmailOutreachComposer() {
           <div className="flex items-center gap-2 min-w-0">
             <Users className="w-4 h-4 text-teal-400 shrink-0" />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">Tenant contacts</p>
-              <p className="text-[11px] text-slate-500">{selectedEmails.size} selected</p>
+              <p className="type-card-description font-semibold text-white truncate">Tenant contacts</p>
+              <p className="type-card-description text-slate-500">{selectedEmails.size} selected</p>
             </div>
           </div>
           {filtered.length > 0 && (
             <button
               type="button"
               onClick={toggleSelectAll}
-              className="text-[11px] font-bold text-teal-400 hover:text-teal-300 px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20"
+              className="type-ui font-bold text-teal-400 hover:text-teal-300 px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20"
             >
               {selectedEmails.size >= filtered.length ? 'Deselect all' : 'Select all'}
             </button>
@@ -217,16 +217,16 @@ export function EmailOutreachComposer() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+            className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 type-ui text-white outline-none focus:border-teal-500/40"
           />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-1.5 space-y-0.5">
           {loading ? (
-            <p className="text-xs text-slate-500 p-3 flex items-center gap-2">
+            <p className="type-card-description text-slate-500 p-3 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading…
             </p>
           ) : filtered.length === 0 ? (
-            <p className="text-xs text-slate-500 p-3">No contacts with email found.</p>
+            <p className="type-card-description text-slate-500 p-3">No contacts with email found.</p>
           ) : (
             filtered.map((c) => {
               const selected = selectedEmails.has(c.email);
@@ -246,9 +246,9 @@ export function EmailOutreachComposer() {
                     <Square className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
                   )}
                   <span className="min-w-0">
-                    <span className="block text-sm text-white truncate">{c.name}</span>
-                    <span className="block text-[11px] text-slate-500 truncate">{c.email}</span>
-                    <span className="block text-[10px] text-slate-600 uppercase tracking-wider mt-0.5">
+                    <span className="block type-ui text-white truncate">{c.name}</span>
+                    <span className="block type-ui text-slate-500 truncate">{c.email}</span>
+                    <span className="block type-caption text-slate-600 uppercase tracking-wider mt-0.5">
                       {c.source}
                       {c.stage ? ` · ${c.stage}` : ''}
                     </span>
@@ -264,12 +264,12 @@ export function EmailOutreachComposer() {
         <div className="px-3 py-2.5 border-b border-white/5 flex flex-wrap items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-teal-400" />
-            <p className="text-sm font-semibold text-white">Email outreaches</p>
+            <p className="type-card-description font-semibold text-white">Email outreaches</p>
           </div>
           <button
             type="button"
             onClick={addStep}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 type-ui font-bold text-slate-300 hover:text-white"
           >
             <Plus className="w-3.5 h-3.5" /> Add outreach
           </button>
@@ -282,7 +282,7 @@ export function EmailOutreachComposer() {
                 type="button"
                 onClick={() => setActiveStepId(step.id)}
                 className={cn(
-                  'rounded-lg px-3 py-1.5 text-[12px] font-medium',
+                  'rounded-lg px-3 py-1.5 type-ui font-medium',
                   activeStepId === step.id
                     ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30'
                     : 'text-slate-400 hover:bg-white/5 border border-transparent'
@@ -306,40 +306,40 @@ export function EmailOutreachComposer() {
 
         <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
               Direct Recipients (Optional Manual Emails)
             </label>
             <input
               value={manualEmailsInput}
               onChange={(e) => setManualEmailsInput(e.target.value)}
               placeholder="Or type emails manually: e.g. john@acme.com, sarah@company.org"
-              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 text-xs text-white outline-none focus:border-teal-500/40 placeholder:text-slate-600"
+              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 type-caption text-white outline-none focus:border-teal-500/40 placeholder:text-slate-600"
             />
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
               Subject
             </label>
             <input
               value={activeStep.subject}
               onChange={(e) => updateActiveStep({ subject: e.target.value })}
               placeholder="Outreach subject"
-              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-teal-500/40"
+              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 type-ui text-white outline-none focus:border-teal-500/40"
             />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
               Message
             </label>
             <textarea
               value={activeStep.body}
               onChange={(e) => updateActiveStep({ body: e.target.value })}
               placeholder="Write this outreach… (no auto greeting)"
-              className="w-full h-[180px] max-h-[220px] rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-teal-500/40 resize-none overflow-y-auto"
+              className="w-full h-[180px] max-h-[220px] rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 type-ui text-white outline-none focus:border-teal-500/40 resize-none overflow-y-auto"
             />
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="type-card-description text-slate-500">
             Sending to {recipients.length} contact{recipients.length === 1 ? '' : 's'} · {activeStep.label}
           </p>
         </div>
@@ -348,7 +348,7 @@ export function EmailOutreachComposer() {
           <button
             type="button"
             onClick={openCompose}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2.5 text-xs font-bold text-white"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2.5 type-caption font-bold text-white"
           >
             <Send className="w-3.5 h-3.5" />
             Send {activeStep.label}

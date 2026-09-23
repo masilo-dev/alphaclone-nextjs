@@ -64,7 +64,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                     </div>
                 </div>
 
-            <p className="text-slate-400 text-sm mb-6 leading-relaxed flex-1">
+            <p className="text-slate-400 type-card-description mb-6 leading-relaxed flex-1">
                 {service.summary}
             </p>
 
@@ -77,10 +77,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                         className="overflow-hidden"
                     >
                         <div className="pt-6 border-t border-slate-800/50 mt-2 space-y-4">
-                            <div className="text-xs text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
+                            <div className="type-caption text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
                             <ul className="space-y-3 pb-4">
                                 {service.details.map((detail, idx) => (
-                                    <li key={idx} className="flex items-start text-sm text-slate-300">
+                                    <li key={idx} className="flex items-start type-ui text-slate-300">
                                         <CheckCircle2 className="w-4 h-4 text-teal-400 mr-2 flex-shrink-0 mt-0.5" />
                                         <span>{detail}</span>
                                     </li>
@@ -100,7 +100,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
 
             <button
                 onClick={() => setExpanded(!expanded)}
-                className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-800 text-sm font-bold text-slate-300 transition-all button-fill-hover group/btn"
+                className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-800 type-ui font-bold text-slate-300 transition-all button-fill-hover group/btn"
             >
                 <span className="relative z-10 flex items-center gap-2">
                     {expanded ? 'Collapse Details' : 'View Full Specifications'}

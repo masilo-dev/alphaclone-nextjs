@@ -57,7 +57,7 @@ function StatusBadge({ status }: { status: KpiStatus }) {
   };
   return (
     <span className={cn(
-      'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide uppercase',
+      'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md type-caption font-bold tracking-wide uppercase',
       styles.bg, styles.text, styles.border, 'border',
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', styles.dot)} />
@@ -121,7 +121,7 @@ function PaceReadout({ vm }: { vm: FullKpiViewModel }) {
   const ahead = vm.currentPace >= (vm.requiredPace || 0);
   const styles = getSemanticStyles(ahead ? 'success' : 'warning');
   return (
-    <div className={cn('mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[10.5px]', styles.text)}>
+    <div className={cn('mt-2 flex flex-wrap gap-x-3 gap-y-0.5 type-ui', styles.text)}>
       {vm.daysRemaining != null && <span>{vm.daysRemaining}d left</span>}
       {vm.currentPace != null && <span>Current: {vm.currentPace.toLocaleString()}/d</span>}
       {vm.requiredPace != null && <span>Need: {vm.requiredPace.toLocaleString()}/d</span>}
@@ -195,13 +195,13 @@ export function IntelligentKpiCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className={cn('font-medium text-[var(--ws-text-secondary)] truncate', isInstalledMobileCompanion ? 'text-[11px]' : 'text-[13px]')}>{t(vm.label)}</p>
+            <p className={cn('type-card-description font-medium text-[var(--ws-text-secondary)] truncate')}>{t(vm.label)}</p>
             <StatusBadge status={vm.status} />
           </div>
           <p
             className={cn(
               'mt-1.5 font-bold tabular-nums tracking-tight text-[var(--ws-text-primary)]',
-              isInstalledMobileCompanion ? 'text-[1.125rem]' : compact ? 'text-[1.25rem]' : 'text-[1.6rem] sm:text-[1.75rem]',
+              isInstalledMobileCompanion ? 'text-lg' : compact ? 'text-xl' : 'text-3xl sm:text-3xl',
             )}
           >
             {displayValue ?? vm.valueFormatted}
@@ -224,17 +224,17 @@ export function IntelligentKpiCard({
               <div className="flex items-center gap-2 flex-wrap">
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10.5px] font-bold tabular-nums',
+                    'inline-flex items-center gap-1 px-1.5 py-0.5 rounded type-ui font-bold tabular-nums',
                     deltaSem.bg, deltaSem.text, deltaSem.border, 'border',
                   )}
                 >
                   <TrendIcon trend={vm.trend} />
                   {t(vm.formattedDelta).replace('flat trend', t('flat trend'))}
                 </span>
-                <span className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</span>
+                <span className="type-ui text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</span>
               </div>
             ) : (
-              <p className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</p>
             )}
             <PaceReadout vm={vm} />
           </div>
@@ -244,7 +244,7 @@ export function IntelligentKpiCard({
         {(target != null || showNarrative) && !compact ? (
           <div className="mt-3 pt-3 border-t border-white/[0.04]">
             {target != null ? (
-              <div className="flex items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center justify-between gap-2 type-ui">
                 <div className="flex items-center gap-1 text-[var(--ws-text-muted)]">
                   <Target className="w-3 h-3" />
                   <span>Target</span>
@@ -264,7 +264,7 @@ export function IntelligentKpiCard({
             {showNarrative ? (
               <div className="mt-3">
                 {expanded ? (
-                  <div className={cn('rounded-lg p-2.5 text-[12px] leading-relaxed', sem.bg, sem.text)}>
+                  <div className={cn('rounded-lg p-2.5 type-ui leading-relaxed', sem.bg, sem.text)}>
                     <div className="flex items-start gap-2">
                       <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                       <p className="min-w-0">{vm.contextNarrative}</p>
@@ -277,7 +277,7 @@ export function IntelligentKpiCard({
                       e.stopPropagation();
                       setExpanded(true);
                     }}
-                    className="flex items-center gap-1 text-[10.5px] font-medium text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] transition-colors"
+                    className="flex items-center gap-1 type-ui font-medium text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] transition-colors"
                   >
                     <Sparkles className="w-3 h-3" />
                     Why this matters

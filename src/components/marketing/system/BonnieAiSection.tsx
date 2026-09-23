@@ -58,7 +58,7 @@ export default function BonnieAiSection() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header Banner */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 type-caption sm:text-sm font-medium mb-4">
             <ClipboardCheck className="w-4 h-4 text-cyan-600" aria-hidden="true" />
             <span>Workspace-Aware Intelligence</span>
           </div>
@@ -68,7 +68,7 @@ export default function BonnieAiSection() {
               An Extra Operator for Your Team.
             </span>
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-300 type-card-description sm:text-base leading-relaxed">
             Most SaaS AI is a generic chat box floating in a browser tab with zero knowledge of your actual business.
             Bonnie AI connects directly to your workspace memory via <strong className="text-white">Model Context Protocol (MCP)</strong> to execute real work safely.
           </p>
@@ -81,7 +81,7 @@ export default function BonnieAiSection() {
               <Database className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">1. Grounded in Your Data</h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
               Bonnie AI reads your workspace records—client timelines, contract terms, active tasks, and billing states—so answers are always specific to your business.
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function BonnieAiSection() {
               <Braces className="w-5 h-5" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">2. Powered by MCP</h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
               Using Model Context Protocol, Bonnie AI invokes built-in platform actions safely—drafting proposals, scheduling tasks, and preparing invoice runs.
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function BonnieAiSection() {
               <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">3. Human-in-the-Loop</h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
               You remain in full control. Critical actions like sending contracts or charging client cards require your explicit review and approval before execution.
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function BonnieAiSection() {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono">Interactive Demonstration</span>
+              <span className="type-caption font-bold text-cyan-400 uppercase tracking-wider font-mono">Interactive Demonstration</span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
                 See How Bonnie AI & MCP Execute Operational Prompts
               </h3>
@@ -121,7 +121,7 @@ export default function BonnieAiSection() {
                 <button
                   key={ex.id}
                   onClick={() => selectExample(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg type-caption font-semibold transition-all ${
                     activeExampleIndex === idx
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
                       : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-white'
@@ -134,14 +134,14 @@ export default function BonnieAiSection() {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3">
-            <p className="text-xs text-slate-300">
+            <p className="type-card-description text-slate-300">
               Product walkthrough using sample workspace data. Sign in to run Bonnie against your real records.
             </p>
             <button
               type="button"
               onClick={() => setDemoStage(1)}
               disabled={demoStage > 0 && demoStage < 3}
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-500 px-4 text-xs font-bold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-500 px-4 type-caption font-bold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-70"
             >
               {demoStage > 0 && demoStage < 3 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {demoStage === 0 ? 'Run the flow' : demoStage === 3 ? 'Run again' : 'Bonnie is working'}
@@ -152,42 +152,42 @@ export default function BonnieAiSection() {
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-5 font-mono space-y-4">
             {/* User Input Prompt */}
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 1 ? 'opacity-100' : 'opacity-45'}`}>
-              <div className="flex items-center justify-between text-xs text-slate-400">
+              <div className="flex items-center justify-between type-caption text-slate-400">
                 <span className="flex items-center gap-1.5 text-teal-400">
                   <Terminal className="w-3.5 h-3.5" />
                   <span>PLAIN-ENGLISH USER INSTRUCTION:</span>
                 </span>
-                <span className="text-[10px] text-slate-500">OPERATOR PROMPT</span>
+                <span className="type-ui text-slate-500">OPERATOR PROMPT</span>
               </div>
-              <p className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-100 leading-relaxed font-sans">
+              <p className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 type-card-description sm:text-sm text-slate-100 leading-relaxed font-sans">
                 "{activeEx.prompt}"
               </p>
             </div>
 
             {/* MCP Execution Signal */}
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 2 ? 'opacity-100' : 'opacity-30'}`}>
-              <div className="flex items-center justify-between text-xs text-cyan-400">
+              <div className="flex items-center justify-between type-caption text-cyan-400">
                 <span className="flex items-center gap-1.5">
                   <Braces className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>MCP PROTOCOL TOOL INVOCATION:</span>
                 </span>
-                <span className="text-[10px] text-cyan-500">SECURE DISPATCH</span>
+                <span className="type-ui text-cyan-500">SECURE DISPATCH</span>
               </div>
-              <p className="p-2.5 rounded-lg bg-slate-900 border border-cyan-900/40 text-[11px] sm:text-xs text-cyan-300 font-mono">
+              <p className="p-2.5 rounded-lg bg-slate-900 border border-cyan-900/40 type-card-description sm:text-sm text-cyan-300 font-mono">
                 → {activeEx.mcpToolCall}
               </p>
             </div>
 
             {/* Workspace Result */}
             <div className={`space-y-1.5 pt-1 transition-opacity ${demoStage >= 3 ? 'opacity-100' : 'opacity-30'}`}>
-              <div className="flex items-center justify-between text-xs text-emerald-400">
+              <div className="flex items-center justify-between type-caption text-emerald-400">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>EXECUTED WORKSPACE OUTCOME:</span>
                 </span>
-                <span className="text-[10px] text-emerald-500">REAL-TIME UPDATED</span>
+                <span className="type-caption text-emerald-500">REAL-TIME UPDATED</span>
               </div>
-              <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 text-xs sm:text-sm text-emerald-200 leading-relaxed font-sans">
+              <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 type-card-description sm:text-sm text-emerald-200 leading-relaxed font-sans">
                 ✓ {activeEx.workspaceResult}
               </p>
             </div>

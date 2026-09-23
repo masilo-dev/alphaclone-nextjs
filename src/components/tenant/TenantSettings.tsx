@@ -115,7 +115,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Business Name
             </label>
             {isEditing && isAdmin ? (
@@ -131,7 +131,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Business URL
             </label>
             <div className="flex items-center gap-2">
@@ -139,13 +139,13 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                 {tenant.slug}.alphaclone.com
               </code>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="type-card-description text-slate-500 mt-1">
               URL cannot be changed after creation
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Billing Email
             </label>
             {isEditing && isAdmin ? (
@@ -159,13 +159,13 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
             ) : (
               <p className="text-white">{billingEmail || 'Same as admin email'}</p>
             )}
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="type-card-description text-slate-500 mt-1">
               Invoices and payment receipts will be sent here
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Description
             </label>
             {isEditing && isAdmin ? (
@@ -350,7 +350,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
             </button>
           </div>
 
-          <p className="text-xs text-slate-500 mt-2">
+          <p className="type-card-description text-slate-500 mt-2">
             They'll receive an email invitation to join your business
           </p>
         </div>
@@ -379,12 +379,12 @@ function TeamSettings({ tenant, isAdmin }: any) {
                   </div>
                   <div>
                     <div className="text-white font-medium">{member.user?.name || 'Unknown'}</div>
-                    <div className="text-sm text-slate-400">{member.user?.email}</div>
+                    <div className="type-ui text-slate-400">{member.user?.email}</div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.role === 'admin'
+                  <span className={`px-3 py-1 rounded-full type-caption font-medium ${member.role === 'admin'
                     ? 'bg-purple-500/20 text-purple-300'
                     : member.role === 'member'
                       ? 'bg-blue-500/20 text-blue-300'
@@ -481,7 +481,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
             <div className="flex items-center gap-3">
               <div className="text-2xl font-bold text-white capitalize">{currentPlan}</div>
               {isCanceled && (
-                <span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-xs rounded-full border border-amber-500/20">
+                <span className="px-2 py-1 bg-amber-500/10 text-amber-500 type-caption rounded-full border border-amber-500/20">
                   Cancels at period end
                 </span>
               )}
@@ -521,7 +521,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
           )}
         </div>
 
-        <div className="text-sm text-slate-400 border-t border-slate-700 pt-4 mt-4">
+        <div className="type-ui text-slate-400 border-t border-slate-700 pt-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-slate-500 mb-1">Billing Status</p>
@@ -549,10 +549,10 @@ function BillingSettings({ tenant, isAdmin }: any) {
               </div>
               <div>
                 <p className="text-white font-medium">Stripe Secure Payment</p>
-                <p className="text-xs text-slate-400">Managed via Stripe</p>
+                <p className="type-card-description text-slate-400">Managed via Stripe</p>
               </div>
             </div>
-            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm disabled:opacity-50">
+            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors type-ui disabled:opacity-50">
               {loadingAction === 'portal' ? 'Opening…' : 'Update Card'}
             </button>
           </div>
@@ -590,7 +590,7 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Logo URL
             </label>
             <input
@@ -604,7 +604,7 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-slate-300 mb-2">
               Brand Color
             </label>
             <div className="flex items-center gap-3">

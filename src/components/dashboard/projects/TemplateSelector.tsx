@@ -50,7 +50,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Layout className="w-4 h-4 text-teal-400" />
-                <h4 className="text-sm font-semibold text-white">Project Lifecycle Template</h4>
+                <h4 className="type-ui font-semibold text-white">Project Lifecycle Template</h4>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -61,8 +61,8 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                             : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                         }`}
                 >
-                    <div className="font-medium text-sm">Blank Project</div>
-                    <div className="text-xs opacity-60">Manual milestone management</div>
+                    <div className="font-medium type-ui">Blank Project</div>
+                    <div className="type-caption opacity-60">Manual milestone management</div>
                 </button>
 
                 {templates.map(template => (
@@ -74,8 +74,8 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                                 : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                             }`}
                     >
-                        <div className="font-medium text-sm">{template.name}</div>
-                        <div className="text-xs opacity-60 truncate">{template.description || 'Standard lifecycle'}</div>
+                        <div className="font-medium type-ui">{template.name}</div>
+                        <div className="type-caption opacity-60 truncate">{template.description || 'Standard lifecycle'}</div>
                     </button>
                 ))}
             </div>
@@ -83,12 +83,12 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
             {selectedTemplateId && (
                 <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-800 animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-medium text-slate-500">Template Phases</span>
+                        <span className="type-caption font-medium text-slate-500">Template Phases</span>
                         {isLoadingPhases && <Loader2 className="w-3 h-3 animate-spin" />}
                     </div>
 
                     {phases.length === 0 && !isLoadingPhases ? (
-                        <div className="text-xs text-slate-600 italic">No phases defined for this template.</div>
+                        <div className="type-caption text-slate-600 italic">No phases defined for this template.</div>
                     ) : (
                         <div className="space-y-2">
                             {phases.map((phase, idx) => (
@@ -97,8 +97,8 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                                         <CheckCircle className="w-3.5 h-3.5 text-teal-500" />
                                     </div>
                                     <div>
-                                        <div className="text-xs text-white font-medium">{phase.name}</div>
-                                        {phase.description && <div className="text-xs text-slate-500">{phase.description}</div>}
+                                        <div className="type-caption text-white font-medium">{phase.name}</div>
+                                        {phase.description && <div className="type-caption text-slate-500">{phase.description}</div>}
                                     </div>
                                 </div>
                             ))}
@@ -107,7 +107,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
 
                     <div className="mt-4 flex items-center gap-2 p-2 bg-blue-500/5 rounded border border-blue-500/20">
                         <Info className="w-3 h-3 text-blue-400" />
-                        <p className="text-xs text-blue-300">Applying this template will automatically create all phases as project milestones.</p>
+                        <p className="type-card-description text-blue-300">Applying this template will automatically create all phases as project milestones.</p>
                     </div>
                 </div>
             )}

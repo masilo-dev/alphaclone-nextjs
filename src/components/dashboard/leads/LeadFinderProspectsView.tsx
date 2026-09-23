@@ -239,14 +239,14 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             <Text fontSize="sm" fontWeight="semibold" color="var(--ws-text-primary)">
               Search command
             </Text>
-            <Badge colorScheme="teal" variant="subtle" fontSize="10px">
+            <Badge colorScheme="teal" variant="subtle" fontSize="var(--type-caption-size)">
               Phone or email required
             </Badge>
           </HStack>
 
           <Grid templateColumns={{ base: '1fr', md: '1fr 1fr', xl: '1.2fr 1.2fr 0.8fr 0.85fr auto' }} gap={2.5}>
             <FormControl>
-              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
+              <FormLabel fontSize="var(--type-form-label-size)" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
                 Niche
               </FormLabel>
               <InputGroup size="sm">
@@ -269,7 +269,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
+              <FormLabel fontSize="var(--type-form-label-size)" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
                 Location
               </FormLabel>
               <InputGroup size="sm">
@@ -292,7 +292,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
+              <FormLabel fontSize="var(--type-form-label-size)" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
                 Reach
               </FormLabel>
               <InputGroup size="sm">
@@ -319,7 +319,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
+              <FormLabel fontSize="var(--type-form-label-size)" textTransform="uppercase" letterSpacing="wide" color="var(--ws-text-secondary)" mb={1}>
                 Language
               </FormLabel>
               <Select

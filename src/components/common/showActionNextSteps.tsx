@@ -117,10 +117,10 @@ export function celebrateWinRitual(args: {
                 )}
                 <div className="relative flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        <p className={leveledUp ? 'text-base font-black text-amber-300 tracking-wide' : 'text-sm font-bold text-emerald-300'}>
+                        <p className={leveledUp ? 'text-base font-black text-amber-300 tracking-wide' : 'type-caption font-bold text-emerald-300'}>
                             {headline}
                         </p>
-                        <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-1 leading-snug">{subhead}</p>
+                        <p className="type-caption text-[var(--text-secondary)] dark:text-slate-300 mt-1 leading-snug">{subhead}</p>
                         <div className="mt-2 h-1.5 rounded-full bg-[var(--surface-hover)] dark:bg-slate-800 overflow-hidden">
                             <div
                                 className={
@@ -131,7 +131,7 @@ export function celebrateWinRitual(args: {
                                 style={{ width: `${after.pct}%` }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[10px] text-[var(--text-muted)] dark:text-slate-500 tabular-nums">
+                        <p className="mt-1.5 type-card-description text-[var(--text-muted)] dark:text-slate-500 tabular-nums">
                             Level {after.level} · {after.xp.toLocaleString()} XP · next at {after.next.toLocaleString()}
                         </p>
                     </div>
@@ -400,11 +400,11 @@ export function showActionNextSteps(
                 role="status"
                 className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-[var(--border-default)] bg-[var(--surface-elevated)] dark:border-slate-500 dark:bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
-                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 type-caption font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
-                <p className="text-sm font-bold text-[var(--text-primary)] dark:text-white leading-snug mt-2">{pack.headline}</p>
-                <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">{pack.detail}</p>
+                <p className="type-card-description font-bold text-[var(--text-primary)] dark:text-white leading-snug mt-2">{pack.headline}</p>
+                <p className="type-caption text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">{pack.detail}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
                     {pack.links.map((l, index) => {
                         const isPrimary = (pack.primaryLinkIndex ?? 0) === index;
@@ -418,8 +418,8 @@ export function showActionNextSteps(
                             }}
                             className={
                                 isPrimary
-                                    ? 'text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors'
-                                    : 'text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:border-white/10 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 transition-colors'
+                                    ? 'type-ui font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors'
+                                    : 'type-ui font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:border-white/10 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 transition-colors'
                             }
                         >
                             {l.label}
@@ -430,7 +430,7 @@ export function showActionNextSteps(
                 <button
                     type="button"
                     onClick={() => toast.dismiss(tid.id)}
-                    className="mt-3 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-3 type-caption text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>
@@ -453,13 +453,13 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 aria-labelledby="inv-next-title"
                 className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-teal-500/40 bg-[var(--surface-elevated)] dark:bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
-                <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
+                <div className="inline-flex items-center rounded-full px-2 py-0.5 type-caption font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
-                <p id="inv-next-title" className="text-sm font-bold text-[var(--text-primary)] dark:text-white leading-snug">
+                <p id="inv-next-title" className="type-card-description font-bold text-[var(--text-primary)] dark:text-white leading-snug">
                     {uiTranslate(lang, 'Invoice saved')}
                 </p>
-                <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">
+                <p className="type-caption text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">
                     {uiTranslate(
                         lang,
                         'Did you already send this to the client (email, SMS, portal, or handoff)?'
@@ -478,7 +478,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             );
                             showActionNextSteps('after_invoice_sent', navigate);
                         }}
-                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors"
+                        className="type-ui font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors"
                     >
                         {uiTranslate(lang, 'Yes, sent')}
                     </button>
@@ -488,7 +488,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             toast.dismiss(t.id);
                             showActionNextSteps('invoice_not_sent_yet', navigate);
                         }}
-                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white transition-colors"
+                        className="type-ui font-semibold px-2.5 py-1.5 rounded-lg bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white transition-colors"
                     >
                         {uiTranslate(lang, 'Not yet')}
                     </button>
@@ -500,7 +500,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             navigate('/dashboard/business/billing');
                             toast.dismiss(t.id);
                         }}
-                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
+                        className="type-ui font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
                     >
                         {uiTranslate(lang, 'Open Billing')}
                     </button>
@@ -510,7 +510,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             navigate('/dashboard/business/messages');
                             toast.dismiss(t.id);
                         }}
-                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
+                        className="type-ui font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
                     >
                         {uiTranslate(lang, 'Messages')}
                     </button>
@@ -518,7 +518,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 <button
                     type="button"
                     onClick={() => toast.dismiss(t.id)}
-                    className="mt-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-2 type-caption text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>

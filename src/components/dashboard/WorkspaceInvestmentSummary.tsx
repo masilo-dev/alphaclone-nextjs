@@ -19,7 +19,7 @@ interface WorkspaceInvestmentSummaryProps {
 function CountRow({ label, value }: { label: string; value: number }) {
   if (value <= 0) return null;
   return (
-    <div className="flex items-center justify-between gap-2 text-[12.5px]">
+    <div className="flex items-center justify-between gap-2 type-ui">
       <span className="text-[var(--ws-text-secondary)]">{label}</span>
       <span className="font-bold tabular-nums text-[var(--ws-text-primary)]">{value.toLocaleString()}</span>
     </div>
@@ -29,11 +29,11 @@ function CountRow({ label, value }: { label: string; value: number }) {
 function HintRow({ hint }: { hint: ContinuityHint }) {
   return (
     <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5">
-      <p className="text-[12px] text-[var(--ws-text-secondary)] leading-snug">{hint.message}</p>
+      <p className="type-card-description text-[var(--ws-text-secondary)] leading-snug">{hint.message}</p>
       {hint.href && hint.actionLabel ? (
         <Link
           href={hint.href}
-          className="inline-block mt-2 text-[11px] font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
+          className="inline-block mt-2 type-ui font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
         >
           {hint.actionLabel} →
         </Link>
@@ -67,10 +67,10 @@ export function WorkspaceInvestmentSummary({
   return (
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5 space-y-3', className)} aria-label="Workspace value">
       <div>
-        <p className="text-[11px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
+        <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
           Your workspace contains
         </p>
-        <p className="text-[11px] text-[var(--ws-text-tertiary)] mt-0.5">
+        <p className="type-card-description text-[var(--ws-text-tertiary)] mt-0.5">
           Business intelligence you have built — export and ownership stay yours.
         </p>
       </div>
@@ -87,7 +87,7 @@ export function WorkspaceInvestmentSummary({
 
       {hints.length > 0 ? (
         <div className="space-y-2 pt-1 border-t border-[var(--ws-border)]">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Continue where you left off</p>
+          <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Continue where you left off</p>
           {hints.map((hint) => (
             <HintRow key={hint.id} hint={hint} />
           ))}

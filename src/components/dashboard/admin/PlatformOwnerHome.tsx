@@ -171,9 +171,9 @@ export default function PlatformOwnerHome() {
       {user?.id ? <PlatformExecutionWelcome userId={user.id} surface="platform" /> : null}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-teal-400/80">Platform owner</p>
+          <p className="type-caption font-black uppercase tracking-caps text-teal-400/80">Platform owner</p>
           <h1 className="text-2xl font-black text-white tracking-tight mt-1">Command Center</h1>
-          <p className="text-sm text-slate-400 mt-1 max-w-xl">
+          <p className="type-card-description text-slate-400 mt-1 max-w-xl">
             Oversee tenants, production health, ops logs, missing service keys, and pre-customer review from one desk.
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function PlatformOwnerHome() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -203,10 +203,10 @@ export default function PlatformOwnerHome() {
               <KeyRound className="h-4 w-4 text-amber-300" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-black text-amber-100 uppercase tracking-widest">
+              <h2 className="type-caption font-black text-amber-100 uppercase tracking-widest">
                 Missing or optional keys
               </h2>
-              <p className="text-xs text-amber-100/70 mt-1">
+              <p className="type-card-description text-amber-100/70 mt-1">
                 These are not silent anymore — configure them in Railway / deployment env, then refresh. Tenant OAuth
                 apps still connect per workspace; platform keys power shared services.
               </p>
@@ -214,7 +214,7 @@ export default function PlatformOwnerHome() {
                 {missingKeys.map((item) => (
                   <span
                     key={item.key}
-                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 text-[11px] font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {item.label}
                   </span>
@@ -222,7 +222,7 @@ export default function PlatformOwnerHome() {
                 {healthGaps.map((gap) => (
                   <span
                     key={gap}
-                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 text-[11px] font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {gap}
                   </span>
@@ -230,7 +230,7 @@ export default function PlatformOwnerHome() {
               </div>
               <Link
                 href="/dashboard/admin/settings"
-                className="inline-block mt-3 text-xs font-bold text-teal-300 hover:text-teal-200"
+                className="inline-block mt-3 type-caption font-bold text-teal-300 hover:text-teal-200"
               >
                 Open Global Settings →
               </Link>
@@ -241,7 +241,7 @@ export default function PlatformOwnerHome() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 text-[11px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
             <HeartPulse className="h-3.5 w-3.5" /> Health
           </div>
           <p className={`mt-2 text-xl font-black ${healthStatus === 'healthy' ? 'text-emerald-400' : 'text-amber-300'}`}>
@@ -249,13 +249,13 @@ export default function PlatformOwnerHome() {
           </p>
         </div>
         <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 text-[11px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
             <Building2 className="h-3.5 w-3.5" /> Active tenants
           </div>
           <p className="mt-2 text-xl font-black text-white">{loading ? '—' : activeTenants || tenants.length}</p>
         </div>
         <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 text-[11px] font-black uppercase tracking-widest">
+          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
             <AlertTriangle className="h-3.5 w-3.5" /> Recent signals
           </div>
           <p className="mt-2 text-xl font-black text-white">{recentErrors.length}</p>
@@ -274,8 +274,8 @@ export default function PlatformOwnerHome() {
                 <item.icon className="h-5 w-5 text-teal-300" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white group-hover:text-teal-200">{item.label}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
+                <p className="type-card-description font-bold text-white group-hover:text-teal-200">{item.label}</p>
+                <p className="type-card-description text-slate-500 mt-0.5">{item.description}</p>
               </div>
             </div>
           </Link>
@@ -284,35 +284,35 @@ export default function PlatformOwnerHome() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-          <h2 className="text-sm font-black text-white uppercase tracking-widest mb-3">Latest tenants</h2>
+          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Latest tenants</h2>
           {tenants.length === 0 ? (
-            <p className="text-sm text-slate-500">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
+            <p className="type-card-description text-slate-500">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
           ) : (
             <ul className="space-y-2">
               {tenants.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
+                <li key={t.id} className="flex items-center justify-between gap-2 type-ui">
                   <span className="text-slate-200 font-medium truncate">{t.name}</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <span className="type-caption font-black uppercase tracking-widest text-slate-500">
                     {t.status || t.subscription || '—'}
                   </span>
                 </li>
               ))}
             </ul>
           )}
-          <Link href="/dashboard/admin/tenants" className="inline-block mt-4 text-xs font-bold text-teal-400 hover:text-teal-300">
+          <Link href="/dashboard/admin/tenants" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-teal-300">
             Open tenant manager →
           </Link>
         </section>
 
         <section className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-          <h2 className="text-sm font-black text-white uppercase tracking-widest mb-3">Ops log snapshot</h2>
+          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Ops log snapshot</h2>
           {recentErrors.length === 0 ? (
-            <p className="text-sm text-slate-500">{loading ? 'Loading…' : 'No recent error signals.'}</p>
+            <p className="type-card-description text-slate-500">{loading ? 'Loading…' : 'No recent error signals.'}</p>
           ) : (
             <ul className="space-y-2">
               {recentErrors.map((row, idx) => (
-                <li key={row.id || idx} className="text-sm text-slate-300 border-b border-white/5 pb-2 last:border-0">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400/80 mr-2">
+                <li key={row.id || idx} className="type-ui text-slate-300 border-b border-white/5 pb-2 last:border-0">
+                  <span className="type-caption font-black uppercase tracking-widest text-amber-400/80 mr-2">
                     {row.severity || 'info'}
                   </span>
                   {row.message}
@@ -320,7 +320,7 @@ export default function PlatformOwnerHome() {
               ))}
             </ul>
           )}
-          <Link href="/dashboard/admin/operations" className="inline-block mt-4 text-xs font-bold text-teal-400 hover:text-teal-300">
+          <Link href="/dashboard/admin/operations" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-teal-300">
             Open operations console →
           </Link>
         </section>

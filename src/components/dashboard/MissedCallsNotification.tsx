@@ -48,7 +48,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                         <PhoneMissed className="w-5 h-5 text-red-400" />
                         <div>
                             <p className="font-medium text-white">Missed Call</p>
-                            <p className="text-sm text-slate-400">From {newMissedCall.caller_name || 'Unknown'}</p>
+                            <p className="type-card-description text-slate-400">From {newMissedCall.caller_name || 'Unknown'}</p>
                         </div>
                         <Button
                             size="sm"
@@ -95,7 +95,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
             >
                 <PhoneMissed className="w-5 h-5 text-red-400" />
                 {unseenCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white type-caption font-bold rounded-full flex items-center justify-center">
                         {unseenCount > 9 ? '9+' : unseenCount}
                     </span>
                 )}
@@ -138,10 +138,10 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                                 <p className="font-medium text-white">
                                                     {call.caller_name || 'Unknown'}
                                                 </p>
-                                                <p className="text-xs text-slate-400">
+                                                <p className="type-card-description text-slate-400">
                                                     {new Date(call.attempted_at).toLocaleString()}
                                                 </p>
-                                                <p className="text-xs text-slate-500 capitalize">
+                                                <p className="type-card-description text-slate-500 capitalize">
                                                     {call.call_type} call
                                                 </p>
                                             </div>

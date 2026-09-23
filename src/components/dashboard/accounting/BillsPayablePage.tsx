@@ -60,7 +60,7 @@ export default function BillsPayablePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {aging.slice(0, 4).map((a, i) => (
             <div key={i} className="bg-slate-900 border border-white/5 rounded-xl p-3">
-              <div className="text-xs text-slate-500">{a.bucket || 'Bucket'}</div>
+              <div className="type-caption text-slate-500">{a.bucket || 'Bucket'}</div>
               <div className="text-lg font-bold text-violet-400">${Number(a.amount || 0).toLocaleString()}</div>
             </div>
           ))}
@@ -80,7 +80,7 @@ export default function BillsPayablePage() {
         <div className="ac-workspace-panel rounded-lg min-h-[240px] flex items-center justify-center">
           <div className="flex items-center gap-3 text-slate-400">
             <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
-            <span className="text-sm font-medium">Loading bills payable...</span>
+            <span className="type-ui font-medium">Loading bills payable...</span>
           </div>
         </div>
       ) : error ? (
@@ -106,12 +106,12 @@ export default function BillsPayablePage() {
           {filtered.map((b) => (
             <div key={b.id} className="px-4 py-3 flex justify-between items-center">
               <div>
-                <div className="text-sm font-bold text-white">{b.vendor_name || 'Vendor'}</div>
-                <div className="text-xs text-slate-500">Due {b.due_date || '—'}</div>
+                <div className="type-ui font-bold text-white">{b.vendor_name || 'Vendor'}</div>
+                <div className="type-caption text-slate-500">Due {b.due_date || '—'}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-teal-400">${Number(b.total || 0).toLocaleString()}</div>
-                <div className="text-xs text-slate-500 capitalize">{b.status}</div>
+                <div className="type-ui font-bold text-teal-400">${Number(b.total || 0).toLocaleString()}</div>
+                <div className="type-caption text-slate-500 capitalize">{b.status}</div>
               </div>
             </div>
           ))}

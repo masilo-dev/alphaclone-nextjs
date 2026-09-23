@@ -166,7 +166,7 @@ export default function WhatsAppIntegration() {
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
-        <p className="text-sm text-slate-400">Loading WhatsApp settings...</p>
+        <p className="type-card-description text-slate-400">Loading WhatsApp settings...</p>
       </div>
     );
   }
@@ -183,22 +183,22 @@ export default function WhatsAppIntegration() {
             <MessageCircle className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+            <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
             <h2 className="text-lg font-bold text-white">WhatsApp Integration</h2>
-            <p className="text-sm text-slate-400">
+            <p className="type-card-description text-slate-400">
               Choose Meta Cloud API or Zernio routing for your WhatsApp inbox.
             </p>
           </div>
         </div>
         {activeIntegration && (
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-semibold">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 type-ui font-semibold">
             <CheckCircle2 className="w-4 h-4" /> Connected
           </span>
         )}
       </div>
 
       {!metaConfigured && (
-        <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-sm">
+        <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 type-ui">
           Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Railway environment variables to fully secure your inbound webhooks.
         </div>
       )}
@@ -207,11 +207,11 @@ export default function WhatsAppIntegration() {
         {activeIntegration ? (
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-slate-950/45 border border-white/5 space-y-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="type-ui font-bold text-white flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Active Integration: {activeIntegration.alias}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-400">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 type-caption text-slate-400">
                 <div>
                   <span className="block text-slate-500">Provider</span>
                   <code className="text-slate-300 font-mono">{String(activeIntegration.provider || activeIntegration.metadata?.provider || 'meta')}</code>
@@ -261,12 +261,12 @@ export default function WhatsAppIntegration() {
         ) : (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+              <h3 className="type-ui font-bold text-slate-200 flex items-center gap-1.5">
                 <HelpCircle className="w-4 h-4 text-emerald-400" />
                 Connection Steps
               </h3>
               {provider === 'meta' ? (
-                <ol className="text-sm text-slate-400 space-y-2 list-decimal list-inside">
+                <ol className="type-ui text-slate-400 space-y-2 list-decimal list-inside">
                   <li>
                     Log in to the{' '}
                     <a
@@ -285,7 +285,7 @@ export default function WhatsAppIntegration() {
                   <li>Enter the values below to connect.</li>
                 </ol>
               ) : (
-                <ol className="text-sm text-slate-400 space-y-2 list-decimal list-inside">
+                <ol className="type-ui text-slate-400 space-y-2 list-decimal list-inside">
                   <li>Save your WhatsApp account ID in <strong>Settings → Zernio</strong>.</li>
                   <li>Make sure the Zernio WhatsApp inbox is enabled for this tenant.</li>
                   <li>Choose a display name, then connect this tenant to Zernio routing.</li>
@@ -296,11 +296,11 @@ export default function WhatsAppIntegration() {
             <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h4 className="type-ui font-bold text-white flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     1-Click Meta Automatic Connect
                   </h4>
-                  <p className="text-xs text-slate-300 mt-0.5">
+                  <p className="type-card-description text-slate-300 mt-0.5">
                     Log in with your Meta account to connect your WhatsApp Business lines automatically without manual keys.
                   </p>
                 </div>
@@ -309,7 +309,7 @@ export default function WhatsAppIntegration() {
                     if (!currentTenant?.id) return;
                     window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}`;
                   }}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 text-xs flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 type-caption flex items-center gap-2"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Log in with Meta
@@ -328,11 +328,11 @@ export default function WhatsAppIntegration() {
                       : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2 text-sm font-bold text-white">
+                  <div className="flex items-center gap-2 type-ui font-bold text-white">
                     <Settings2 className="w-4 h-4 text-emerald-400" />
                     Meta Cloud API
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">Use your own WhatsApp Business App and token.</p>
+                  <p className="mt-1 type-card-description text-slate-400">Use your own WhatsApp Business App and token.</p>
                 </button>
                 <button
                   type="button"
@@ -343,64 +343,64 @@ export default function WhatsAppIntegration() {
                       : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2 text-sm font-bold text-white">
+                  <div className="flex items-center gap-2 type-ui font-bold text-white">
                     <Settings2 className="w-4 h-4 text-violet-400" />
                     Zernio Routing
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">Use the tenant's Zernio WhatsApp account.</p>
+                  <p className="mt-1 type-card-description text-slate-400">Use the tenant's Zernio WhatsApp account.</p>
                 </button>
               </div>
 
               {provider === 'meta' ? (
                 <>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">WhatsApp Business Account (WABA) ID</label>
+                    <label className="block type-label font-semibold text-slate-400 mb-1.5">WhatsApp Business Account (WABA) ID</label>
                     <input
                       type="text"
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
                       placeholder="e.g. 104857285918239"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">Phone Number ID</label>
+                    <label className="block type-label font-semibold text-slate-400 mb-1.5">Phone Number ID</label>
                     <input
                       type="text"
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
                       placeholder="e.g. 109827364528192"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">Meta Access Token</label>
+                    <label className="block type-caption font-semibold text-slate-400 mb-1.5">Meta Access Token</label>
                     <input
                       type="password"
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="EAABw..."
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-slate-300">
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 type-ui text-slate-300">
                   Zernio uses the WhatsApp account ID saved in <code className="text-violet-300">tenant.settings.zernio.whatsappAccountId</code>.
                   No Meta token or phone number ID is needed here.
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Display Name / Alias (Optional)</label>
+                <label className="block type-label font-semibold text-slate-400 mb-1.5">Display Name / Alias (Optional)</label>
                 <input
                   type="text"
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="e.g. Primary Support Line"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                 />
               </div>
 

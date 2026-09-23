@@ -50,9 +50,9 @@ export function ModuleHeader({
             <h1 className={WORKSPACE.typography.pageTitle}>{title ?? identity.label}</h1>
           </div>
           {description ? (
-            <p className="mt-1 text-sm text-[var(--ws-text-secondary)] max-w-2xl">{description}</p>
+            <p className="mt-1 type-caption text-[var(--ws-text-secondary)] max-w-2xl">{description}</p>
           ) : (
-            <p className="mt-1 text-sm text-[var(--ws-text-muted)]">{identity.meaning}</p>
+            <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{identity.meaning}</p>
           )}
         </div>
       </div>

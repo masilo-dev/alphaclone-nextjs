@@ -164,8 +164,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors"
             >
                 <Search className="w-4 h-4" />
-                <span className="text-sm">Search...</span>
-                <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-900 border border-slate-700 rounded">
+                <span className="type-ui">Search...</span>
+                <kbd className="hidden sm:inline-block px-2 py-0.5 type-caption bg-slate-900 border border-slate-700 rounded">
                     ⌘K
                 </kbd>
             </button>
@@ -208,7 +208,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                     <button
                                         key={filter}
                                         onClick={() => setTypeFilter(filter)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
+                                        className={`px-3 py-1.5 rounded-lg type-caption font-medium capitalize transition-all ${
                                             typeFilter === filter
                                                 ? 'bg-blue-600 text-white'
                                                 : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
@@ -229,8 +229,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                 )}
                                 {results.length === 0 && !query && (
                                     <div className="p-8 text-center text-slate-400">
-                                        <p className="text-sm">Start typing to search...</p>
-                                        <div className="mt-4 text-xs space-y-1">
+                                        <p className="type-card-description">Start typing to search...</p>
+                                        <div className="mt-4 type-caption space-y-1">
                                             <p>• Search projects by name or description</p>
                                             <p>• Find messages by content</p>
                                             <p>• Locate invoices by ID or amount</p>
@@ -250,16 +250,16 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                             {getIcon(result.type)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white font-medium text-sm truncate">
+                                            <p className="text-white font-medium type-card-description truncate">
                                                 {result.title}
                                             </p>
                                             {result.subtitle && (
-                                                <p className="text-slate-400 text-xs mt-1 truncate">
+                                                <p className="text-slate-400 type-card-description mt-1 truncate">
                                                     {result.subtitle}
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="text-xs text-slate-500 uppercase">
+                                        <span className="type-caption text-slate-500 uppercase">
                                             {result.type}
                                         </span>
                                     </button>
@@ -267,7 +267,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                             </div>
 
                             {/* Footer */}
-                            <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                            <div className="p-3 border-t border-slate-800 flex items-center justify-between type-caption text-slate-400">
                                 <div className="flex gap-4">
                                     <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">↑↓</kbd> Navigate</span>
                                     <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">Enter</kbd> Select</span>

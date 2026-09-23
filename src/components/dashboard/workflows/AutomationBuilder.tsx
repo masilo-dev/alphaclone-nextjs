@@ -31,7 +31,7 @@ const TriggerNode = ({ data }: { data: { label: string; description: string } })
       <Zap className="w-4 h-4 text-indigo-100" />
       {data.label}
     </div>
-    <div className="text-xs text-indigo-100 opacity-80">{data.description}</div>
+    <div className="type-caption text-indigo-100 opacity-80">{data.description}</div>
     <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-indigo-400 border-2 border-white shadow-md cursor-crosshair" />
   </div>
 );
@@ -65,13 +65,13 @@ const ActionNode = ({ data }: { data: { label: string; description: string; type
   return (
     <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
       <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
-      <div className="flex items-center gap-2 font-bold text-sm mb-1 min-w-0">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-xs font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
+      <div className="flex items-center gap-2 font-bold type-ui mb-1 min-w-0">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 type-caption font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
           {abbr}
         </span>
         <span className="truncate">{data.label}</span>
       </div>
-      <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">{data.description}</div>
+      <div className="type-ui text-slate-500 dark:text-slate-400 leading-tight">{data.description}</div>
       <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
     </div>
   );
@@ -552,7 +552,7 @@ export default function AutomationBuilder() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-11 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-11 rounded-lg type-caption sm:text-sm font-bold transition-all shrink-0 ${
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
@@ -575,7 +575,7 @@ export default function AutomationBuilder() {
                         type="button"
                         onClick={() => applyComplexity(tier)}
                         title={preset.description}
-                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                        className={`px-2.5 py-1.5 rounded-lg type-ui font-bold transition-all ${
                           active
                             ? tier === 'recommended'
                               ? 'bg-teal-600 text-white shadow-sm'
@@ -589,12 +589,12 @@ export default function AutomationBuilder() {
                   })}
                 </div>
                 <div className="hidden md:block text-right min-w-0">
-                    <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
-                    <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">
+                    <div className="type-ui font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
+                    <div className="type-caption text-slate-500 uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
                     </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs ring-2 ring-indigo-500/20 shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold type-caption ring-2 ring-indigo-500/20 shadow-lg">
                     {userId ? 'A' : '?'}
                 </div>
             </div>
@@ -618,7 +618,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex gap-2">
                 <button 
                   onClick={handleNew}
-                  className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition flex items-center gap-2 text-sm font-medium"
+                  className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition flex items-center gap-2 type-ui font-medium"
                 >
                   <Plus className="w-4 h-4" /> New
                 </button>
@@ -629,18 +629,18 @@ export default function AutomationBuilder() {
                           setShowLoadMenu(!showLoadMenu);
                           if (!showLoadMenu) fetchWorkflows(userId);
                         }}
-                        className="flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition text-sm font-medium"
+                        className="flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition type-ui font-medium"
                     >
                         <RefreshCw className="w-4 h-4" /> Load
                     </button>
                     {showLoadMenu && (
                         <div className="absolute top-full mt-2 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 w-[280px]">
-                            <div className="p-3 border-b border-slate-100 dark:border-slate-700 font-bold text-xs uppercase tracking-wider text-slate-500">
+                            <div className="p-3 border-b border-slate-100 dark:border-slate-700 font-bold type-caption uppercase tracking-wider text-slate-500">
                                 Saved Automations
                             </div>
                             <div className="max-h-[300px] overflow-y-auto">
                                 {savedWorkflows.length === 0 ? (
-                                    <div className="p-4 text-center text-slate-400 text-xs italic">No saved workflows found</div>
+                                    <div className="p-4 text-center text-slate-400 type-caption italic">No saved workflows found</div>
                                 ) : (
                                     savedWorkflows.map(wf => (
                                         <button
@@ -648,8 +648,8 @@ export default function AutomationBuilder() {
                                             onClick={() => loadWorkflow(wf)}
                                             className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition"
                                         >
-                                            <div className="text-sm font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
-                                            <div className="text-xs text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
+                                            <div className="type-ui font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
+                                            <div className="type-caption text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
                                         </button>
                                     ))
                                 )}
@@ -661,7 +661,7 @@ export default function AutomationBuilder() {
                 <div className="relative">
                     <button 
                         onClick={() => setShowActionMenu(!showActionMenu)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition text-sm font-bold"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition type-ui font-bold"
                     >
                         <Plus className="w-4 h-4" /> Add Action
                     </button>
@@ -672,7 +672,7 @@ export default function AutomationBuilder() {
                                     <button
                                         key={cat.id}
                                         onClick={() => setActiveCategory(cat.id)}
-                                        className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                                        className={`px-2.5 py-1 rounded-lg type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                             activeCategory === cat.id
                                                 ? 'bg-indigo-500 text-white shadow'
                                                 : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -693,8 +693,8 @@ export default function AutomationBuilder() {
                                             {NODE_STYLES[template.type]?.icon || '⚡'}
                                         </span>
                                         <div className="min-w-0">
-                                            <div className="font-semibold text-xs text-slate-900 dark:text-white truncate">{template.label}</div>
-                                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
+                                            <div className="font-semibold type-caption text-slate-900 dark:text-white truncate">{template.label}</div>
+                                            <div className="type-caption text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
                                         </div>
                                     </button>
                                 ))}
@@ -754,7 +754,7 @@ export default function AutomationBuilder() {
 
         {/* Footer info */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-            <Panel position="bottom-left" className="pointer-events-auto flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-600 shadow-none dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400">
+            <Panel position="bottom-left" className="pointer-events-auto flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 type-caption text-blue-600 shadow-none dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400">
                 <Settings className="w-3 h-3" />
                 Drag handles to connect actions. No code required.
             </Panel>
@@ -803,19 +803,19 @@ export default function AutomationBuilder() {
                     <ResponsiveTableMobile className="space-y-3">
                         {executions.map((ex) => (
                             <MobileDataCard key={ex.id} className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                <p className="text-sm font-medium text-slate-900 dark:text-slate-200">
+                                <p className="type-card-description font-medium text-slate-900 dark:text-slate-200">
                                     {new Date(ex.executed_at).toLocaleString()}
                                 </p>
                                 {ex.status === 'completed' ? (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 type-caption font-black uppercase">
                                         <CheckCircle2 className="w-3 h-3" /> Completed
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 type-caption font-black uppercase">
                                         <XCircle className="w-3 h-3" /> {ex.status}
                                     </span>
                                 )}
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                <p className="type-card-description text-slate-500 dark:text-slate-400">
                                     {ex.error_message || 'Workflow executed successfully.'}
                                 </p>
                             </MobileDataCard>
@@ -825,29 +825,29 @@ export default function AutomationBuilder() {
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Execution Date</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Status</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">Details</th>
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Execution Date</th>
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Status</th>
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Details</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {executions.map(ex => (
                                     <tr key={ex.id} className="border-b border-slate-50 dark:border-slate-800 last:border-0">
-                                        <td className="px-6 py-5 text-sm font-medium text-slate-900 dark:text-slate-200">
+                                        <td className="px-6 py-5 type-table-cell font-medium text-slate-900 dark:text-slate-200">
                                             {new Date(ex.executed_at).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-5">
                                             {ex.status === 'completed' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 type-caption font-black uppercase tracking-wider">
                                                     <CheckCircle2 className="w-3 h-3" /> Completed
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 type-caption font-black uppercase tracking-wider">
                                                     <XCircle className="w-3 h-3" /> {ex.status}
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-5 text-sm text-slate-500 dark:text-slate-400">
+                                        <td className="px-6 py-5 type-table-cell text-slate-500 dark:text-slate-400">
                                             {ex.error_message || 'Workflow executed successfully.'}
                                         </td>
                                     </tr>
@@ -886,15 +886,15 @@ export default function AutomationBuilder() {
                                 </span>
                                 <div className="pr-12">
                                     <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
-                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4">
+                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 type-caption font-bold uppercase tracking-widest mb-4">
                                         {template.category}
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                    <p className="type-card-description text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                                         {template.description}
                                     </p>
                                 </div>
                                 <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                    <span className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                                    <span className="type-caption font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                                         {template.definition.steps.length} Steps
                                     </span>
                                     <Plus className="w-5 h-5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />

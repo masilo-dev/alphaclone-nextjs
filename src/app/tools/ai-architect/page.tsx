@@ -70,14 +70,14 @@ export default function AIArchitectPage() {
                       required
                     />
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-slate-300">Target Persona</label>
+                      <label className="block type-label font-medium text-slate-300">Target Persona</label>
                       <div className="flex gap-4">
                         {['Freelancer', 'Agency', 'Startup'].map((type) => (
                           <button
                             key={type}
                             type="button"
                             onClick={() => setFormData({ ...formData, businessType: type })}
-                            className={`flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 text-sm font-bold ${
+                            className={`flex-1 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 type-ui font-bold ${
                               formData.businessType === type
                                 ? 'bg-teal-500 border-teal-500 text-slate-950 shadow-lg shadow-teal-500/20'
                                 : 'bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-600'
@@ -126,7 +126,7 @@ export default function AIArchitectPage() {
               </div>
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-bold text-white tracking-tight">ARCHITECTING SYSTEMS...</h2>
-                <p className="text-slate-500 font-mono text-sm animate-pulse">ALPHACLONE CORE ENGINE INITIALIZING • MAPPING WORKFLOWS</p>
+                <p className="text-slate-500 font-mono type-card-description animate-pulse">ALPHACLONE CORE ENGINE INITIALIZING • MAPPING WORKFLOWS</p>
               </div>
             </motion.div>
           )}
@@ -139,7 +139,7 @@ export default function AIArchitectPage() {
               className="space-y-12"
             >
               <div className="text-center space-y-4">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-bold mb-4">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 type-ui font-bold mb-4">
                   <CheckCircle2 className="w-4 h-4" /> BLUEPRINT READY
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white">
@@ -154,7 +154,7 @@ export default function AIArchitectPage() {
                     <Database className="w-6 h-6" />
                     <h3 className="font-black tracking-tight">UNIFIED CRM</h3>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed">{blueprint.blueprint.crm}</p>
+                  <p className="type-card-description text-slate-400 leading-relaxed">{blueprint.blueprint.crm}</p>
                 </Card>
 
                 <Card className="p-6 space-y-4 border-blue-500/10">
@@ -162,7 +162,7 @@ export default function AIArchitectPage() {
                     <Zap className="w-6 h-6" />
                     <h3 className="font-black tracking-tight">AI SALES AGENTS</h3>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed">{blueprint.blueprint.aiAgents}</p>
+                  <p className="type-card-description text-slate-400 leading-relaxed">{blueprint.blueprint.aiAgents}</p>
                 </Card>
 
                 <Card className="p-6 space-y-4 border-indigo-500/10">
@@ -172,7 +172,7 @@ export default function AIArchitectPage() {
                   </div>
                   <ul className="space-y-3">
                     {blueprint.blueprint.automations.map((a, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                      <li key={i} className="flex items-center gap-2 type-ui text-slate-300">
                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         {a}
                       </li>
@@ -185,7 +185,7 @@ export default function AIArchitectPage() {
                     <Shield className="w-6 h-6" />
                     <h3 className="font-black tracking-tight">SECURE BILLING</h3>
                   </div>
-                  <p className="text-sm text-slate-400 leading-relaxed">{blueprint.blueprint.billing}</p>
+                  <p className="type-card-description text-slate-400 leading-relaxed">{blueprint.blueprint.billing}</p>
                 </Card>
               </div>
 

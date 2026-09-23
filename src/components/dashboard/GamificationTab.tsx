@@ -40,21 +40,21 @@ export default function GamificationTab() {
   );
 
   if (error) {
-    return <div className="m-5 rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-200">{error}</div>;
+    return <div className="m-5 rounded-xl border border-red-500/30 bg-red-500/10 p-5 type-ui text-red-200">{error}</div>;
   }
   if (!data) {
-    return <div className="p-8 text-center text-sm text-slate-400">Loading workspace achievements…</div>;
+    return <div className="p-8 text-center type-ui text-slate-400">Loading workspace achievements…</div>;
   }
 
   return (
     <div className="ac-scroll-full space-y-5 p-4 pb-24">
       <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-5">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-purple-300">
+        <div className="flex items-center gap-2 type-caption font-bold uppercase tracking-caps text-purple-300">
           <Activity className="h-4 w-4" />
           Business outcomes
         </div>
         <h1 className="mt-2 text-2xl font-bold text-white">Achievements</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <p className="mt-1 type-card-description text-slate-400">
           Only measurable business results count here: deals won, invoices paid, leads converted, and automation completed.
         </p>
       </div>
@@ -68,15 +68,15 @@ export default function GamificationTab() {
           <div key={label} className="rounded-2xl border border-white/10 bg-slate-900 p-4">
             <Icon className="mb-3 h-5 w-5 text-purple-400" />
             <div className="text-xl font-bold text-white">{value}</div>
-            <div className="text-xs text-slate-500">{label}</div>
+            <div className="type-caption text-slate-500">{label}</div>
           </div>
         ))}
       </div>
 
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Badges</h2>
-          <span className="text-xs text-slate-500">{earned}/{data.badges.length} earned</span>
+          <h2 className="type-caption font-bold uppercase tracking-wider text-slate-300">Badges</h2>
+          <span className="type-caption text-slate-500">{earned}/{data.badges.length} earned</span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {data.badges.map((badge) => (
@@ -85,24 +85,24 @@ export default function GamificationTab() {
               className={`rounded-2xl border p-4 text-center ${badge.earned ? 'border-purple-500/30 bg-purple-500/10' : 'border-white/5 bg-slate-900 opacity-55'}`}
             >
               <div className={`text-3xl ${badge.earned ? '' : 'grayscale'}`}>{badge.icon}</div>
-              <div className="mt-2 text-sm font-semibold text-white">{badge.name}</div>
-              <div className="mt-1 text-xs text-slate-500">{badge.description}</div>
+              <div className="mt-2 type-caption font-semibold text-white">{badge.name}</div>
+              <div className="mt-1 type-caption text-slate-500">{badge.description}</div>
             </div>
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-300">Recent scored activity</h2>
+        <h2 className="mb-3 type-caption font-bold uppercase tracking-wider text-slate-300">Recent scored activity</h2>
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           {meaningfulHistory.length ? (
             meaningfulHistory.map((item) => (
               <div key={item.id} className="flex items-center gap-3 border-b border-white/5 px-4 py-3 last:border-0">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-slate-200">{item.action}</div>
-                  <div className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleString()}</div>
+                  <div className="truncate type-ui text-slate-200">{item.action}</div>
+                  <div className="type-caption text-slate-500">{new Date(item.createdAt).toLocaleString()}</div>
                 </div>
-                <span className="text-sm font-bold text-emerald-400">+{item.xp}</span>
+                <span className="type-ui font-bold text-emerald-400">+{item.xp}</span>
               </div>
             ))
           ) : (

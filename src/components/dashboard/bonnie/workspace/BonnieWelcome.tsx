@@ -71,7 +71,7 @@ export default function BonnieWelcome({ workspaceName, suggestions, onSelect }: 
         >
           <Brain size={16} aria-hidden />
         </Box>
-        <Text fontSize="11px" fontWeight="semibold" textTransform="uppercase" letterSpacing="0.12em" color="teal.300">
+        <Text fontSize="var(--type-caption-size)" fontWeight="semibold" textTransform="uppercase" letterSpacing="0.12em" color="teal.300">
           {workspaceName || 'Your workspace'} · Bonnie
         </Text>
         <Heading size="md" color="white" letterSpacing="-0.02em" fontWeight="semibold">
@@ -119,7 +119,7 @@ export default function BonnieWelcome({ workspaceName, suggestions, onSelect }: 
                 <Text fontSize="xs" fontWeight="semibold" color="white">
                   {item.title}
                 </Text>
-                <Text fontSize="11px" color="gray.500" lineHeight="tall" fontWeight="normal">
+                <Text fontSize="var(--type-caption-size)" color="gray.500" lineHeight="tall" fontWeight="normal">
                   {item.description}
                 </Text>
               </VStack>

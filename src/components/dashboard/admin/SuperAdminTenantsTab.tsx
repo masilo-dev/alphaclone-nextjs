@@ -92,12 +92,12 @@ const SuperAdminTenantsTab: React.FC = () => {
             sortValue: (t) => t.name,
             accessor: (t) => (
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold type-caption text-white shrink-0">
                         {t.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <span className="text-[13px] font-bold text-white block truncate">{t.name}</span>
-                        <span className="text-[11px] text-slate-500">ID: {t.id.substring(0, 8)}…</span>
+                        <span className="type-ui font-bold text-white block truncate">{t.name}</span>
+                        <span className="type-ui text-slate-500">ID: {t.id.substring(0, 8)}…</span>
                     </div>
                 </div>
             ),
@@ -134,14 +134,14 @@ const SuperAdminTenantsTab: React.FC = () => {
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleViewLogs(t.id); }}
-                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5"
+                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 type-caption font-bold hover:bg-white/5"
                     >
                         <Eye className="w-3.5 h-3.5 inline" /> Logs
                     </button>
                     <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleToggleStatus(t); }}
-                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5"
+                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 type-caption font-bold hover:bg-white/5"
                         title={t.status === 'suspended' ? 'Reactivate tenant' : 'Suspend tenant'}
                     >
                         {t.status === 'suspended'
@@ -177,7 +177,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                                 <Building2 className="w-6 h-6 text-teal-400" />
                                 Platform Overview
                             </h2>
-                            <p className="text-slate-400 text-sm">Manage all tenants on the platform</p>
+                            <p className="text-slate-400 type-card-description">Manage all tenants on the platform</p>
                         </div>
                     </div>
                 )}
@@ -189,7 +189,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                             placeholder="Search tenants..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500/50"
+                            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-teal-500/50"
                         />
                     </div>
                 )}
@@ -223,7 +223,7 @@ const SuperAdminTenantsTab: React.FC = () => {
             >
                 <div className="space-y-3 pb-6">
                     {tenantLogs.length === 0 ? (
-                        <p className="text-sm text-slate-500 py-8 text-center">No security logs found for this tenant.</p>
+                        <p className="type-card-description text-slate-500 py-8 text-center">No security logs found for this tenant.</p>
                     ) : (
                         tenantLogs.map((log) => (
                             <div key={log.id} className="bg-slate-900/60 border border-white/5 rounded-xl p-4">
@@ -231,18 +231,18 @@ const SuperAdminTenantsTab: React.FC = () => {
                                     <StatusBadge variant={log.severity === 'critical' ? 'error' : log.severity === 'warning' ? 'warning' : 'info'}>
                                         {log.eventType}
                                     </StatusBadge>
-                                    <span className="text-xs text-slate-500 shrink-0">
+                                    <span className="type-caption text-slate-500 shrink-0">
                                         {new Date(log.createdAt).toLocaleString()}
                                     </span>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                                <div className="flex flex-wrap items-center gap-3 type-ui text-slate-300">
                                     <span className="inline-flex items-center gap-1.5 font-mono">
                                         <MapPin className="w-3.5 h-3.5 text-teal-400" />
                                         {log.ipAddress}
                                     </span>
                                     {log.location && <span className="text-slate-400">{log.location}</span>}
                                     {log.deviceInfo && (
-                                        <span className="text-slate-500 text-xs">
+                                        <span className="text-slate-500 type-caption">
                                             {log.deviceInfo.browser} on {log.deviceInfo.os}
                                         </span>
                                     )}

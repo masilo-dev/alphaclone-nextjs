@@ -68,7 +68,7 @@ const DealCard: React.FC<{
       className="dashboard-panel-soft p-4 space-y-3 hover:border-teal-500/30 transition-colors group"
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-bold text-white truncate flex-1">{deal.name}</h4>
+        <h4 className="type-ui font-bold text-white truncate flex-1">{deal.name}</h4>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(deal)}
@@ -85,7 +85,7 @@ const DealCard: React.FC<{
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex items-center gap-2 type-caption text-slate-400">
         <DollarSign className="w-3.5 h-3.5 text-teal-400" />
         <span className="font-bold text-white">${deal.value.toLocaleString()}</span>
         <span className="text-slate-600">•</span>
@@ -94,14 +94,14 @@ const DealCard: React.FC<{
       </div>
 
       {deal.expected_close_date && (
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-1.5 type-caption text-slate-500">
           <Calendar className="w-3 h-3" />
           <span>Close: {new Date(deal.expected_close_date).toLocaleDateString()}</span>
         </div>
       )}
 
       {deal.contact_name && (
-        <div className="text-xs text-slate-500 truncate">
+        <div className="type-caption text-slate-500 truncate">
           Contact: {deal.contact_name}
         </div>
       )}
@@ -110,7 +110,7 @@ const DealCard: React.FC<{
         {canMoveBack && (
           <button
             onClick={() => onMove(deal.id, STAGE_ORDER[currentIndex - 1])}
-            className="flex-1 py-1.5 text-[10px] font-bold text-slate-400 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors"
+            className="flex-1 py-1.5 type-ui font-bold text-slate-400 bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors"
           >
             ← Back
           </button>
@@ -118,7 +118,7 @@ const DealCard: React.FC<{
         {canMoveForward && (
           <button
             onClick={() => onMove(deal.id, STAGE_ORDER[currentIndex + 1])}
-            className="flex-1 py-1.5 text-[10px] font-bold text-teal-400 bg-teal-500/10 rounded-lg hover:bg-teal-500/20 transition-colors"
+            className="flex-1 py-1.5 type-ui font-bold text-teal-400 bg-teal-500/10 rounded-lg hover:bg-teal-500/20 transition-colors"
           >
             Forward →
           </button>
@@ -184,7 +184,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="dashboard-panel w-full max-w-md overflow-hidden shadow-2xl">
         <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">
+          <h3 className="type-ui font-bold text-white">
             {initialDeal ? 'Edit Deal' : 'Create Deal'}
           </h3>
           <button onClick={onClose} className="p-1 rounded bg-slate-800 text-slate-400 hover:text-white">
@@ -194,28 +194,28 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
 
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Deal Name *</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Deal Name *</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Acme Corp - Q4 Contract"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Value ($)</label>
+              <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Value ($)</label>
               <input
                 type="number"
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="25000"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Probability (%)</label>
+              <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Probability (%)</label>
               <input
                 type="number"
                 min="0"
@@ -223,17 +223,17 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
                 value={probability}
                 onChange={e => setProbability(e.target.value)}
                 placeholder="50"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Stage</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Stage</label>
             <select
               value={stage}
               onChange={e => setStage(e.target.value as Deal['stage'])}
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-slate-300 focus:outline-none focus:border-teal-500/50"
             >
               {STAGES.map(s => (
                 <option key={s.key} value={s.key}>{s.label}</option>
@@ -242,44 +242,44 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expected Close Date</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Expected Close Date</label>
             <input
               type="date"
               value={expectedCloseDate}
               onChange={e => setExpectedCloseDate(e.target.value)}
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact Name</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Contact Name</label>
             <input
               value={contactName}
               onChange={e => setContactName(e.target.value)}
               placeholder="e.g. John Smith"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact Email</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Contact Email</label>
             <input
               type="email"
               value={contactEmail}
               onChange={e => setContactEmail(e.target.value)}
               placeholder="john@acme.com"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notes</label>
+            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Notes</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any additional context..."
               rows={3}
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50 resize-none"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50 resize-none"
             />
           </div>
         </div>
@@ -287,13 +287,13 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
         <div className="p-4 border-t border-white/5 bg-slate-950/40 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 py-2 text-xs font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
+            className="flex-1 py-2 type-caption font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2 text-xs font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/10"
+            className="flex-1 py-2 type-caption font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/10"
           >
             {initialDeal ? 'Update Deal' : 'Create Deal'}
           </button>
@@ -434,7 +434,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-white">Deal Pipeline</h2>
-          <p className="text-xs text-slate-400">
+          <p className="type-card-description text-slate-400">
             {filteredDeals.length} deals · ${totalPipelineValue.toLocaleString()} total value
           </p>
         </div>
@@ -443,7 +443,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
             setEditingDeal(null);
             setIsFormOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-slate-950 rounded-xl text-xs font-bold hover:bg-teal-400 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-slate-950 rounded-xl type-caption font-bold hover:bg-teal-400 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Deal
@@ -457,7 +457,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Search deals..."
-          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50"
+          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-2.5 type-ui text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50"
         />
       </div>
 
@@ -478,13 +478,13 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
           {groupedDeals.map(stage => (
             <div key={stage.key} className="min-w-[200px] space-y-2">
               {/* Stage Header */}
-              <div className={`px-3 py-2 rounded-lg text-xs font-bold ${stage.color}`}>
+              <div className={`px-3 py-2 rounded-lg type-caption font-bold ${stage.color}`}>
                 <div className="flex items-center justify-between">
                   <span>{stage.label}</span>
                   <span className="text-slate-500">{stage.deals.length}</span>
                 </div>
                 {stage.deals.length > 0 && (
-                  <div className="text-[10px] text-slate-400 mt-1">
+                  <div className="type-ui text-slate-400 mt-1">
                     ${stage.totalValue.toLocaleString()}
                   </div>
                 )}
@@ -507,7 +507,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
               </AnimatePresence>
 
               {stage.deals.length === 0 && (
-                <div className="text-center py-8 text-slate-600 text-xs border border-dashed border-slate-700/50 rounded-xl">
+                <div className="text-center py-8 text-slate-600 type-caption border border-dashed border-slate-700/50 rounded-xl">
                   No deals
                 </div>
               )}

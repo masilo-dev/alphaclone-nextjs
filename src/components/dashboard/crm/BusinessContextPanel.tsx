@@ -39,7 +39,7 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
 
   if (loading) {
     return (
-      <aside className={`rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-slate-400 text-sm ${className}`}>
+      <aside className={`rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-slate-400 type-ui ${className}`}>
         Loading business context…
       </aside>
     );
@@ -47,7 +47,7 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
 
   if (error || !data) {
     return (
-      <aside className={`rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-red-400 text-sm ${className}`}>
+      <aside className={`rounded-xl border border-slate-800 bg-[#0f172a] p-4 text-red-400 type-ui ${className}`}>
         {error || 'Context unavailable'}
       </aside>
     );
@@ -65,17 +65,17 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
   return (
     <aside className={`rounded-xl border border-cyan-900/30 bg-[#0f172a] text-slate-200 ${className}`}>
       <div className="border-b border-slate-800 px-4 py-3">
-        <p className="text-xs uppercase tracking-wide text-cyan-400">Business Context</p>
+        <p className="type-caption uppercase tracking-wide text-cyan-400">Business Context</p>
         <h3 className="text-lg font-semibold text-white truncate">{name}</h3>
         {data.outreach_status !== 'N/A' ? (
-          <p className="text-xs text-slate-400 mt-1">Outreach: {data.outreach_status}</p>
+          <p className="type-caption text-slate-400 mt-1">Outreach: {data.outreach_status}</p>
         ) : null}
       </div>
 
       {data.needs_attention.length > 0 && (
         <div className="px-4 py-3 border-b border-slate-800 bg-amber-950/20">
-          <p className="text-xs font-semibold text-amber-400 uppercase mb-1">Needs Attention</p>
-          <ul className="text-sm space-y-1">
+          <p className="type-caption font-semibold text-amber-400 uppercase mb-1">Needs Attention</p>
+          <ul className="type-ui space-y-1">
             {data.needs_attention.map((item) => (
               <li key={item}>• {item}</li>
             ))}
@@ -84,22 +84,22 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
       )}
 
       <div className="px-4 py-3 border-b border-slate-800">
-        <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Recent Activity</p>
+        <p className="type-caption font-semibold text-slate-400 uppercase mb-2">Recent Activity</p>
         <ul className="space-y-2 max-h-64 overflow-y-auto">
           {data.timeline.slice(0, 5).map((item) => (
-            <li key={item.id} className="text-sm">
+            <li key={item.id} className="type-ui">
               <p className="text-white font-medium">{item.title}</p>
-              <p className="text-xs text-slate-500">{item.source_label} · {new Date(item.timestamp).toLocaleString()}</p>
+              <p className="type-caption text-slate-500">{item.source_label} · {new Date(item.timestamp).toLocaleString()}</p>
             </li>
           ))}
-          {!data.timeline.length && <li className="text-xs text-slate-500">No activity yet</li>}
+          {!data.timeline.length && <li className="type-caption text-slate-500">No activity yet</li>}
         </ul>
       </div>
 
       {Object.keys(data.relationships).length > 0 && (
         <div className="px-4 py-3 border-b border-slate-800">
-          <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Relationships</p>
-          <ul className="text-xs space-y-1 text-slate-400">
+          <p className="type-caption font-semibold text-slate-400 uppercase mb-2">Relationships</p>
+          <ul className="type-caption space-y-1 text-slate-400">
             {Object.entries(data.relationships).map(([key, value]) => {
               const count = Array.isArray(value) ? value.length : value ? 1 : 0;
               if (!count) return null;
@@ -114,8 +114,8 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
       )}
 
       <div className="px-4 py-3">
-        <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Next Action</p>
-        <p className="text-sm text-slate-300">{data.next_action}</p>
+        <p className="type-caption font-semibold text-slate-400 uppercase mb-1">Next Action</p>
+        <p className="type-card-description text-slate-300">{data.next_action}</p>
       </div>
     </aside>
   );

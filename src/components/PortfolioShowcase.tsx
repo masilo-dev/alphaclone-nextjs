@@ -114,7 +114,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                             >
                                 {/* Featured Badge */}
                                 {project.featured && (
-                                    <div className="absolute top-4 right-4 z-10 bg-teal-500 text-slate-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                    <div className="absolute top-4 right-4 z-10 bg-teal-500 text-slate-950 type-caption font-black px-3 py-1 rounded-full uppercase tracking-widest">
                                         Featured
                                     </div>
                                 )}
@@ -141,7 +141,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
 
                                 {/* Content */}
                                 <div className="p-8">
-                                    <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 text-xs font-bold rounded-full mb-4 uppercase tracking-widest">
+                                    <span className="inline-block px-3 py-1 bg-teal-500/10 text-teal-400 type-caption font-bold rounded-full mb-4 uppercase tracking-widest">
                                         {category}
                                     </span>
 
@@ -149,7 +149,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                         {title}
                                     </h3>
 
-                                    <p className="text-slate-400 text-sm mb-6 line-clamp-2 leading-relaxed">
+                                    <p className="text-slate-400 type-card-description mb-6 line-clamp-2 leading-relaxed">
                                         {description}
                                     </p>
 
@@ -157,7 +157,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                         {technologies.slice(0, 3).map((tech: string, i: number) => (
                                             <span
                                                 key={i}
-                                                className="px-2 py-1 bg-slate-800/50 text-slate-400 text-xs font-bold rounded border border-slate-700"
+                                                className="px-2 py-1 bg-slate-800/50 text-slate-400 type-caption font-bold rounded border border-slate-700"
                                             >
                                                 {tech}
                                             </span>
@@ -168,7 +168,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                         href={url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 text-white font-bold text-sm group-hover:text-teal-400 transition-all uppercase tracking-widest"
+                                        className="inline-flex items-center gap-2 text-white font-bold type-caption group-hover:text-teal-400 transition-all uppercase tracking-widest"
                                     >
                                         Visit Project
                                         <ExternalLink className="w-4 h-4" />

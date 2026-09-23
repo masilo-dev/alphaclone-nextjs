@@ -451,11 +451,11 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                 )}
                             </div>
 
-                            <p className="text-slate-400 text-sm line-clamp-3">{project.description}</p>
+                            <p className="text-slate-400 type-card-description line-clamp-3">{project.description}</p>
 
                             <div className="flex items-center gap-2 pt-2">
                                 <Tag className="w-4 h-4 text-teal-400" />
-                                <span className="text-sm text-teal-400 font-medium">{project.category}</span>
+                                <span className="type-ui text-teal-400 font-medium">{project.category}</span>
                             </div>
                         </div>
                     </div>
@@ -479,7 +479,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                     <div className="space-y-4">
                         {/* Image Upload Section */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 Project Image
                             </label>
                             <div className="space-y-3">
@@ -535,7 +535,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Project Name */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 Project Name *
                             </label>
                             <Input
@@ -548,7 +548,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Category */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 Category *
                             </label>
                             <select
@@ -566,7 +566,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Description */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 Description
                             </label>
                             <textarea
@@ -580,7 +580,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* External URL */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-slate-300 mb-2">
                                 External URL
                             </label>
                             <Input

@@ -111,7 +111,7 @@ export default function LegalHubPage() {
               className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-5 hover:border-cyan-400/40 transition-colors"
             >
               <h2 className="text-lg font-bold text-cyan-200 mb-2">{page.title}</h2>
-              <p className="text-sm text-slate-300">{page.description}</p>
+              <p className="type-card-description text-slate-300">{page.description}</p>
             </Link>
           ))}
         </div>

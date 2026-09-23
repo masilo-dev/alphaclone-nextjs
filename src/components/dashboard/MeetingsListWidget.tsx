@@ -146,11 +146,11 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <h4 className="font-bold text-white text-base sm:text-lg truncate">{m.title}</h4>
                                         <MeetingProviderBadge meeting={m} />
-                                        <span className="px-2 py-0.5 rounded text-xs sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
+                                        <span className="px-2 py-0.5 rounded type-caption sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
                                             LIVE
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400 flex-wrap">
+                                    <div className="flex items-center gap-3 sm:gap-4 type-caption sm:text-sm text-slate-400 flex-wrap">
                                         <span className="flex items-center gap-1">
                                             <Users className="w-3 h-3" />
                                             <span className="whitespace-nowrap">{(m.participants || []).length} participant{(m.participants || []).length !== 1 ? 's' : ''}</span>
@@ -163,7 +163,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                         )}
                                     </div>
                                 </div>
-                                <Button size="sm" onClick={() => handleJoinMeeting(m)} className="bg-red-600 hover:bg-red-500 text-xs sm:text-sm px-3 py-2 h-auto w-full md:w-auto">
+                                <Button size="sm" onClick={() => handleJoinMeeting(m)} className="bg-red-600 hover:bg-red-500 type-caption sm:text-sm px-3 py-2 h-auto w-full md:w-auto">
                                     <Video className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                                     <span className="whitespace-nowrap">Join Now</span>
                                 </Button>
@@ -177,7 +177,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
             {/* Past Meetings */}
             {past.length > 0 && (
                 <div className="pt-8 border-t border-slate-800">
-                    <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Past Meetings</h4>
+                    <h4 className="type-caption font-bold text-slate-500 uppercase tracking-widest mb-4">Past Meetings</h4>
                     <div className="space-y-2 opacity-60">
                         {past.slice(0, 5).map(m => (
                             <Card key={m.id} className="flex items-center justify-between p-3 bg-slate-900/30">
@@ -186,16 +186,16 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                         }`}></div>
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="text-sm text-slate-300">{m.title}</p>
+                                            <p className="type-card-description text-slate-300">{m.title}</p>
                                             <MeetingProviderBadge meeting={m} />
                                         </div>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="type-card-description text-slate-500">
                                             {m.ended_at && new Date(m.ended_at).toLocaleString()}
                                             {m.duration_seconds && ` • ${Math.round(m.duration_seconds / 60)} minutes`}
                                         </p>
                                     </div>
                                 </div>
-                                <span className={`px-2 py-1 rounded text-xs ${m.status === 'ended'
+                                <span className={`px-2 py-1 rounded type-caption ${m.status === 'ended'
                                     ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                                     : 'bg-red-500/10 text-red-400 border border-red-500/20'
                                     }`}>

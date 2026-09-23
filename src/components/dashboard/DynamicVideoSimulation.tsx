@@ -162,9 +162,9 @@ const DynamicVideoSimulation = () => {
                         >
                             <div className="flex gap-2 items-center mb-2">
                                 <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                                <span className="text-xs text-teal-400 font-mono uppercase">AI Agent Active</span>
+                                <span className="type-caption text-teal-400 font-mono uppercase">AI Agent Active</span>
                             </div>
-                            <div className="text-xs text-slate-300 font-mono">
+                            <div className="type-caption text-slate-300 font-mono">
                                 {"Generating marketing assets..."}
                                 <motion.span
                                     animate={{ opacity: [0, 1, 0] }}
@@ -202,7 +202,7 @@ const DynamicVideoSimulation = () => {
                 >
                     <div className="flex gap-2 mb-4">
                         {currentScene.tags.map((tag, i) => (
-                            <span key={i} className="px-3 py-1 bg-teal-500/20 text-teal-400 text-xs font-bold rounded-full uppercase tracking-widest border border-teal-500/30">
+                            <span key={i} className="px-3 py-1 bg-teal-500/20 text-teal-400 type-caption font-bold rounded-full uppercase tracking-widest border border-teal-500/30">
                                 {tag}
                             </span>
                         ))}
@@ -221,7 +221,7 @@ const DynamicVideoSimulation = () => {
                 <motion.div
                     animate={{ opacity: [0.4, 0.8, 0.4] }}
                     transition={{ duration: 4, repeat: Infinity }}
-                    className="text-teal-400/80 text-xs font-mono uppercase tracking-[0.2em] text-center"
+                    className="text-teal-400/80 type-caption font-mono uppercase tracking-caps text-center"
                 >
                     {isPlaying ? `>>> SEQUENCING NODE 0${currentScene.id} // ${currentScene.title.toUpperCase()} // EXECUTION: ACTIVE` : ">>> SYSTEM READY. STANDBY FOR MISSION BRIEF_"}
                 </motion.div>
@@ -259,7 +259,7 @@ const DynamicVideoSimulation = () => {
                             >
                                 <RotateCcw className="w-5 h-5" />
                             </button>
-                            <div className="text-white/40 font-mono text-xs hidden md:block">
+                            <div className="text-white/40 font-mono type-caption hidden md:block">
                                 SCENE {currentSceneIndex + 1} / {scenes.length}
                             </div>
                         </div>

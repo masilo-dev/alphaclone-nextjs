@@ -72,7 +72,7 @@ export function KpiCard({
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{label}</p>
+          <p className="type-card-description font-medium text-[var(--ws-text-secondary)] truncate">{label}</p>
           {loading ? (
             <div className="mt-2 h-8 w-28 rounded bg-[var(--ws-surface-tertiary)] ac-skeleton-pulse" />
           ) : (
@@ -101,7 +101,7 @@ export function KpiCard({
           {changePercent != null ? (
             <p
               className={cn(
-                'text-xs font-medium tabular-nums',
+                'type-caption font-medium tabular-nums',
                 positive ? 'text-[var(--success-text)]' : 'text-[var(--error-text)]'
               )}
             >
@@ -111,7 +111,7 @@ export function KpiCard({
               ) : null}
             </p>
           ) : period ? (
-            <p className="text-xs text-[var(--ws-text-muted)]">{period}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">{period}</p>
           ) : null}
         </div>
         {trend?.length ? <MiniTrend values={trend} positive={positive} /> : null}

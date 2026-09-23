@@ -138,7 +138,7 @@ export default function XIntegrationTab() {
         <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 min-h-[320px] flex items-center justify-center">
           <div className="flex items-center justify-center gap-3 text-slate-400">
             <RefreshCw className="w-5 h-5 animate-spin" />
-            <span className="text-sm font-medium">Loading X workspace...</span>
+            <span className="type-ui font-medium">Loading X workspace...</span>
           </div>
         </div>
       </div>
@@ -151,13 +151,13 @@ export default function XIntegrationTab() {
         <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-10 text-center`}>
           <Twitter className="w-12 h-12 text-sky-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Connect X (Twitter)</h1>
-          <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
+          <p className="text-slate-400 type-card-description mb-6 max-w-md mx-auto">
             Authorize your X account to publish posts and read public profile data from your workspace.
           </p>
           <div className="inline-flex flex-wrap items-center justify-center gap-2 mb-6">
-            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">Posting access</span>
-            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">Public profile data</span>
-            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 text-xs text-slate-300">No DMs</span>
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 type-caption text-slate-300">Posting access</span>
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 type-caption text-slate-300">Public profile data</span>
+            <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-950 type-caption text-slate-300">No DMs</span>
           </div>
           <button
             type="button"
@@ -167,7 +167,7 @@ export default function XIntegrationTab() {
             <Link2 className="w-5 h-5" />
             Connect X Account
           </button>
-          <p className="text-slate-500 text-xs mt-4 max-w-md mx-auto">
+          <p className="text-slate-500 type-card-description mt-4 max-w-md mx-auto">
             The connection requests the minimum permissions needed for posting, reading public account data, and keeping your session active.
           </p>
         </div>
@@ -185,7 +185,7 @@ export default function XIntegrationTab() {
             </div>
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold text-white truncate">@{integration.x_username}</h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 type-card-description">
                 Connected {connectedAt ? `since ${connectedAt.toLocaleDateString()}` : 'to post and read your timeline'}
               </p>
             </div>
@@ -214,22 +214,22 @@ export default function XIntegrationTab() {
 
         <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
-            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Workspace</div>
-            <div className="mt-1 text-sm text-slate-200 truncate">{currentTenant?.name || 'Current workspace'}</div>
+            <div className="type-caption font-bold uppercase tracking-widest text-slate-500">Workspace</div>
+            <div className="mt-1 type-ui text-slate-200 truncate">{currentTenant?.name || 'Current workspace'}</div>
           </div>
           <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
-            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Posts Loaded</div>
-            <div className="mt-1 text-sm text-slate-200">{tweets.length}</div>
+            <div className="type-caption font-bold uppercase tracking-widest text-slate-500">Posts Loaded</div>
+            <div className="mt-1 type-ui text-slate-200">{tweets.length}</div>
           </div>
           <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
-            <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Account ID</div>
-            <div className="mt-1 text-sm text-slate-200 truncate">{integration.x_user_id}</div>
+            <div className="type-caption font-bold uppercase tracking-widest text-slate-500">Account ID</div>
+            <div className="mt-1 type-ui text-slate-200 truncate">{integration.x_user_id}</div>
           </div>
         </div>
       </div>
 
       {creditsDepleted && (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 type-ui text-amber-100">
           Your X developer account has no API credits left. Timeline and posting are paused until you add credits at{' '}
           <a href="https://developer.x.com" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
             developer.x.com
@@ -240,8 +240,8 @@ export default function XIntegrationTab() {
 
       <form onSubmit={handlePost} className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-5 space-y-4`}>
         <div className="flex items-center justify-between">
-          <div className="text-sm font-bold text-white">Compose</div>
-          <div className={`text-xs font-semibold ${remainingChars < 20 ? 'text-amber-300' : 'text-slate-400'}`}>
+          <div className="type-ui font-bold text-white">Compose</div>
+          <div className={`type-caption font-semibold ${remainingChars < 20 ? 'text-amber-300' : 'text-slate-400'}`}>
             {remainingChars} left
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function XIntegrationTab() {
           placeholder="Write a post..."
           maxLength={280}
           rows={4}
-          className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-white text-sm resize-none focus:outline-none focus:border-sky-500"
+          className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-white type-ui resize-none focus:outline-none focus:border-sky-500"
         />
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
@@ -264,7 +264,7 @@ export default function XIntegrationTab() {
           <button
             type="submit"
             disabled={posting || !postText.trim()}
-            className="inline-flex items-center gap-2 h-10 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold text-sm shrink-0"
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold type-ui shrink-0"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Post
@@ -274,17 +274,17 @@ export default function XIntegrationTab() {
 
       <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} overflow-hidden`}>
         <div className="px-5 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="type-caption font-bold text-slate-500 uppercase tracking-wider">
             Recent posts
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="type-caption text-slate-500">
             {loadingTweets ? 'Loading…' : `${tweets.length} items`}
           </div>
         </div>
         {loadingTweets ? (
-          <div className="p-8 text-center text-slate-500 text-sm">Loading...</div>
+          <div className="p-8 text-center text-slate-500 type-ui">Loading...</div>
         ) : tweets.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 text-sm">No posts yet.</div>
+          <div className="p-8 text-center text-slate-500 type-ui">No posts yet.</div>
         ) : (
           tweets.map((t) => (
             <div key={t.id} className="px-5 py-4 border-b border-slate-800 last:border-b-0">
@@ -292,7 +292,7 @@ export default function XIntegrationTab() {
                 <div className="w-9 h-9 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
                   <Twitter className="w-4 h-4 text-sky-400" />
                 </div>
-                <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{t.text}</p>
+                <p className="type-card-description text-slate-200 whitespace-pre-wrap leading-relaxed">{t.text}</p>
               </div>
             </div>
           ))

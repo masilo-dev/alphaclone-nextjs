@@ -190,7 +190,7 @@ export default function ExecutiveDashboard() {
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
                   <Icon className={`w-4 h-4 ${text}`} />
                 </div>
-                <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-full ${
+                <span className={`type-ui font-black px-1.5 py-0.5 rounded-full ${
                   isUp
                     ? 'bg-emerald-500/15 text-emerald-400'
                     : 'bg-red-500/15 text-red-400'
@@ -200,9 +200,9 @@ export default function ExecutiveDashboard() {
               </div>
 
               <div className="mb-1">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{kpi.label}</div>
+                <div className="type-caption font-bold text-slate-500 uppercase tracking-wider mb-0.5">{kpi.label}</div>
                 <div className="text-xl font-black text-white">{kpi.value}</div>
-                <div className="text-[11px] text-slate-500 mt-0.5">{kpi.comparisonText}</div>
+                <div className="type-ui text-slate-500 mt-0.5">{kpi.comparisonText}</div>
               </div>
 
               {progress !== null && (
@@ -213,7 +213,7 @@ export default function ExecutiveDashboard() {
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-                  <div className="text-[10px] text-slate-600 font-bold">{progress}% of goal</div>
+                  <div className="type-ui text-slate-600 font-bold">{progress}% of goal</div>
                 </div>
               )}
 
@@ -226,9 +226,9 @@ export default function ExecutiveDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-bold text-white">Performance Goals Configuration</h3>
+            <h3 className="type-ui font-bold text-white">Performance Goals Configuration</h3>
             {!canEditGoals && (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="type-caption font-bold uppercase tracking-wider text-slate-500">
                 View only
               </span>
             )}
@@ -236,7 +236,7 @@ export default function ExecutiveDashboard() {
           <div className="space-y-4">
             {(['revenue', 'clients', 'projects'] as const).map((key) => (
               <div key={key} className="space-y-1.5">
-                <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex justify-between type-caption font-bold text-slate-500 uppercase tracking-wider">
                   <span>Target {key}</span>
                   <span className="text-white font-black">{goals[key].toLocaleString()}</span>
                 </div>
@@ -257,7 +257,7 @@ export default function ExecutiveDashboard() {
         </div>
 
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white">Success Rate</h3>
+          <h3 className="type-ui font-bold text-white">Success Rate</h3>
           <div className="flex flex-col items-center justify-center py-6 space-y-3">
              <div className="relative w-32 h-32">
                 <svg className="w-full h-full transform -rotate-90">
@@ -271,10 +271,10 @@ export default function ExecutiveDashboard() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                    <span className="text-2xl font-black text-white">{stats.performance.onTimeDelivery}%</span>
-                   <span className="text-[9px] text-slate-500 font-bold uppercase">On-Time</span>
+                   <span className="type-caption text-slate-500 font-bold uppercase">On-Time</span>
                 </div>
              </div>
-             <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+             <p className="type-card-description text-slate-400 text-center leading-relaxed">
                System efficiency based on project milestones and automated checkpoints.
              </p>
           </div>

@@ -168,7 +168,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
     return (
         <div className="space-y-6 animate-fade-in">
             {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-sm text-red-400 flex items-center gap-2">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 type-ui text-red-400 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4" />
                     {error}
                     <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
@@ -217,15 +217,15 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                                 <div className="flex-1 pb-4">
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-white font-medium">{milestone.name}</h4>
-                                        <span className="text-sm text-slate-400">
+                                        <span className="type-ui text-slate-400">
                                             {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
                                         </span>
                                     </div>
                                     {milestone.description && (
-                                        <p className="text-slate-400 text-sm mt-1">{milestone.description}</p>
+                                        <p className="text-slate-400 type-card-description mt-1">{milestone.description}</p>
                                     )}
                                     {milestone.completed && milestone.completedAt && (
-                                        <p className="text-xs text-teal-400 mt-1">
+                                        <p className="type-card-description text-teal-400 mt-1">
                                             Completed on {format(new Date(milestone.completedAt), 'MMM dd, yyyy')}
                                         </p>
                                     )}
@@ -255,7 +255,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                                     <FileText className="w-5 h-5 text-slate-400" />
                                     <div>
                                         <p className="text-white font-medium">{deliverable.name}</p>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="type-card-description text-slate-400">
                                             {format(new Date(deliverable.uploadedAt), 'MMM dd, yyyy')}
                                             {deliverable.size && ` • ${(deliverable.size / 1024).toFixed(1)} KB`}
                                         </p>
@@ -282,7 +282,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                         <h3 className="text-xl font-bold text-white mb-4">Project Feedback</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm text-slate-400 mb-2">Rating</label>
+                                <label className="block type-label text-slate-400 mb-2">Rating</label>
                                 <div className="flex gap-2">
                                     {[1, 2, 3, 4, 5].map((rating) => (
                                         <button
@@ -299,7 +299,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm text-slate-400 mb-2">Comments</label>
+                                <label className="block type-label text-slate-400 mb-2">Comments</label>
                                 <textarea
                                     value={feedback.comment}
                                     onChange={(e) => setFeedback({ ...feedback, comment: e.target.value })}

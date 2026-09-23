@@ -18,7 +18,7 @@ export default function MarketingPricingToggle({ value, onChange, className }: M
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="annual">Annual</TabsTrigger>
         </TabsList>
-        <p className="text-xs font-medium text-teal-400/90">
+        <p className="type-card-description font-medium text-teal-400/90">
           Save up to 20% with annual billing
         </p>
       </div>

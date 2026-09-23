@@ -137,7 +137,7 @@ export default function AvailabilityEditor() {
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
                         <Clock className="w-5 h-5 text-teal-500" /> Weekly Hours
                     </h2>
-                    <p className="text-sm text-slate-400">Set your standard availability.</p>
+                    <p className="type-card-description text-slate-400">Set your standard availability.</p>
                 </div>
                 <button
                     onClick={saveSchedule}
@@ -160,7 +160,7 @@ export default function AvailabilityEditor() {
                                 >
                                     {day.active && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                                 </button>
-                                <span className={`font-bold uppercase tracking-wider text-xs ${day.active ? 'text-white' : 'text-slate-500'}`}>
+                                <span className={`font-bold uppercase tracking-wider type-caption ${day.active ? 'text-white' : 'text-slate-500'}`}>
                                     {DAY_LABELS[dayKey]}
                                 </span>
                             </div>
@@ -175,24 +175,24 @@ export default function AvailabilityEditor() {
                                                     type="time"
                                                     value={slot.start}
                                                     onChange={e => updateSlot(dayKey, idx, 'start', e.target.value)}
-                                                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
+                                                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
                                                 />
-                                                <span className="text-slate-500 text-xs">-</span>
+                                                <span className="text-slate-500 type-caption">-</span>
                                                 <input
                                                     type="time"
                                                     value={slot.end}
                                                     onChange={e => updateSlot(dayKey, idx, 'end', e.target.value)}
-                                                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
+                                                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
                                                 />
                                                 <button type="button" onClick={() => removeSlot(dayKey, idx)} className="p-2 text-slate-500 hover:text-rose-400" aria-label={`Remove ${DAY_LABELS[dayKey]} time slot`}>
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         ))}
-                                        {day.slots.length < 8 && <button type="button" onClick={() => addSlot(dayKey)} className="self-start text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add hours</button>}
+                                        {day.slots.length < 8 && <button type="button" onClick={() => addSlot(dayKey)} className="self-start type-ui text-teal-400 hover:text-teal-300 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add hours</button>}
                                     </div>
                                 ) : (
-                                    <span className="text-sm text-slate-600 font-medium italic">Unavailable</span>
+                                    <span className="type-ui text-slate-600 font-medium italic">Unavailable</span>
                                 )}
                             </div>
                         </div>

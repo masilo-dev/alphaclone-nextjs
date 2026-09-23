@@ -92,49 +92,49 @@ export function InvoiceAgingReport() {
   return (
     <section className="space-y-6" aria-labelledby="invoice-aging-heading">
       <div>
-        <h3 id="invoice-aging-heading" className="flex items-center gap-2 text-[18px] font-semibold leading-[26px] tracking-tight text-[var(--ws-text-primary)]">
+        <h3 id="invoice-aging-heading" className="flex items-center gap-2 text-lg font-semibold leading-ui tracking-tight text-[var(--ws-text-primary)]">
           <Clock className="text-[var(--warning)]" size={20} aria-hidden="true" /> Invoice Aging Report
         </h3>
-        <p className="mt-0.5 text-xs text-[var(--ws-text-secondary)]">Accounts receivable breakdown by age of unpaid balance</p>
+        <p className="mt-0.5 type-caption text-[var(--ws-text-secondary)]">Accounts receivable breakdown by age of unpaid balance</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="ac-workspace-panel p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]">
+          <p className="flex items-center gap-1.5 type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]">
             <FileText size={13} aria-hidden="true" /> Outstanding Invoices
           </p>
-          <p className="mt-2 text-[28px] font-bold leading-[34px] text-[var(--ws-text-primary)]">{invoiceCount}</p>
-          <p className="mt-1 text-[11px] text-[var(--ws-text-tertiary)]">Pending payment</p>
+          <p className="mt-2 text-3xl font-bold leading-body text-[var(--ws-text-primary)]">{invoiceCount}</p>
+          <p className="mt-1 type-card-description text-[var(--ws-text-tertiary)]">Pending payment</p>
         </div>
         <div className="ac-workspace-panel border-[color-mix(in_srgb,var(--warning)_28%,var(--ws-border))] p-4">
-          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--warning)]">
+          <p className="flex items-center gap-1.5 type-caption font-semibold uppercase tracking-label text-[var(--warning)]">
             <DollarSign size={13} aria-hidden="true" /> Total Receivables
           </p>
-          <p className="mt-2 text-[28px] font-bold leading-[34px] text-[var(--warning)]">${totalOverdue.toLocaleString()}</p>
-          <p className="mt-1 text-[11px] text-[var(--ws-text-tertiary)]">Uncollected revenue</p>
+          <p className="mt-2 text-3xl font-bold leading-body text-[var(--warning)]">${totalOverdue.toLocaleString()}</p>
+          <p className="mt-1 type-card-description text-[var(--ws-text-tertiary)]">Uncollected revenue</p>
         </div>
       </div>
 
       {loading ? (
         <div className="ac-workspace-panel flex min-h-[280px] items-center justify-center p-8" role="status">
-          <p className="animate-pulse text-sm text-[var(--ws-text-secondary)]">Computing aging report...</p>
+          <p className="animate-pulse type-caption text-[var(--ws-text-secondary)]">Computing aging report...</p>
         </div>
       ) : (
         <>
           <div className="ac-workspace-panel p-4 sm:p-6">
-            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]">Receivables by Age</p>
+            <p className="mb-4 type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]">Receivables by Age</p>
             <div className="min-h-[240px]">
               <WrapChart height={240}>
                 <BarChart data={buckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.16)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#8491A6', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#8491A6', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                  <XAxis dataKey="label" tick={{ fill: '#8491A6', fontSize: 'var(--type-caption-size)' }} />
+                  <YAxis tick={{ fill: '#8491A6', fontSize: 'var(--type-caption-size)' }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip
                     content={({ active, payload }: any) => {
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload as AgingBucket;
                       return (
-                        <div className="ac-workspace-panel space-y-1 px-3 py-2 text-xs shadow-xl">
+                        <div className="ac-workspace-panel space-y-1 px-3 py-2 type-caption shadow-xl">
                           <p className="font-semibold text-[var(--ws-text-primary)]">{d.label}</p>
                           <p className="text-[var(--ws-text-secondary)]">{d.count} invoice{d.count !== 1 ? 's' : ''}</p>
                           <p className="font-semibold text-[var(--warning)]">${d.totalAmount.toLocaleString()}</p>
@@ -152,15 +152,15 @@ export function InvoiceAgingReport() {
 
           <div className="ac-workspace-panel overflow-hidden p-0">
             <div className="border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-5 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-primary)]">Aging Buckets</p>
+              <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-primary)]">Aging Buckets</p>
             </div>
             <div className="divide-y divide-[var(--ws-border)]">
               {buckets.map(b => (
                 <div key={b.range} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-[var(--ws-hover)]">
                   <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: b.color }} />
-                  <span className="flex-1 text-sm text-[var(--ws-text-secondary)]">{b.label}</span>
-                  <span className="text-xs text-[var(--ws-text-tertiary)]">{b.count} invoices</span>
-                  <span className="w-28 text-right text-sm font-semibold text-[var(--warning)]">${b.totalAmount.toLocaleString()}</span>
+                  <span className="flex-1 type-caption text-[var(--ws-text-secondary)]">{b.label}</span>
+                  <span className="type-caption text-[var(--ws-text-tertiary)]">{b.count} invoices</span>
+                  <span className="w-28 text-right type-ui font-semibold text-[var(--warning)]">${b.totalAmount.toLocaleString()}</span>
                 </div>
               ))}
             </div>

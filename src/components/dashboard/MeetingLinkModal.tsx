@@ -49,7 +49,7 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                             </div>
                             <div>
                                 <h2 className="text-lg sm:text-2xl font-bold text-white">Meeting Ready</h2>
-                                <p className="text-xs sm:text-sm text-gray-400">Copy link to invite</p>
+                                <p className="type-card-description sm:text-sm text-gray-400">Copy link to invite</p>
                             </div>
                         </div>
                         <button
@@ -65,18 +65,18 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                 <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                     {/* Meeting Link Display */}
                     <div>
-                        <label className="block text-xs sm:text-sm font-bold text-white mb-2">
+                        <label className="block type-label sm:text-sm font-bold text-white mb-2">
                             Share This Link
                         </label>
                         <div className="bg-gray-800/50 border-2 border-teal-500/30 rounded-lg p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                             <div className="flex-1 overflow-hidden bg-gray-900/50 rounded px-2 py-1.5 sm:bg-transparent sm:p-0">
-                                <p className="text-teal-400 font-mono text-sm break-all select-all">
+                                <p className="text-teal-400 font-mono type-card-description break-all select-all">
                                     {meetingLink}
                                 </p>
                             </div>
                             <Button
                                 onClick={handleCopyLink}
-                                className="bg-teal-600 hover:bg-teal-500 shrink-0 text-sm font-semibold h-10 sm:h-auto"
+                                className="bg-teal-600 hover:bg-teal-500 shrink-0 type-ui font-semibold h-10 sm:h-auto"
                             >
                                 {copied ? (
                                     <>
@@ -98,25 +98,25 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
                             <div className="flex items-center gap-1.5 text-gray-400 mb-1">
                                 <Users className="w-3.5 h-3.5" />
-                                <span className="text-xs sm:text-xs uppercase tracking-wider">Max</span>
+                                <span className="type-caption sm:text-xs uppercase tracking-wider">Max</span>
                             </div>
                             <p className="text-base sm:text-xl font-bold text-white">10 people</p>
                         </div>
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
                             <div className="flex items-center gap-1.5 text-gray-400 mb-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                <span className="text-xs sm:text-xs uppercase tracking-wider">Room ID</span>
+                                <span className="type-caption sm:text-xs uppercase tracking-wider">Room ID</span>
                             </div>
-                            <p className="text-xs sm:text-sm font-mono text-white truncate">{roomName}</p>
+                            <p className="type-card-description sm:text-sm font-mono text-white truncate">{roomName}</p>
                         </div>
                     </div>
 
                     {/* Simple Instructions */}
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 sm:p-4">
-                        <p className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                        <p className="text-white font-semibold mb-1 type-card-description sm:text-sm">
                             How to Use:
                         </p>
-                        <ul className="text-xs sm:text-sm text-gray-300 space-y-0.5 sm:space-y-1 pl-1">
+                        <ul className="type-caption sm:text-sm text-gray-300 space-y-0.5 sm:space-y-1 pl-1">
                             <li>• Share the link above</li>
                             <li>• Anyone can join (no login)</li>
                         </ul>

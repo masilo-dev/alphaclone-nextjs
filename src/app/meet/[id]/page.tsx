@@ -107,7 +107,7 @@ export default function MeetPage() {
                         <Loader2 className="w-16 h-16 text-teal-500 animate-spin relative z-10" />
                     </div>
                     <h2 className="text-xl font-medium tracking-wide">Securing Connection...</h2>
-                    <p className="text-slate-500 text-sm flex items-center gap-2">
+                    <p className="text-slate-500 type-card-description flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4" />
                         Verifying meeting status
                     </p>
@@ -150,14 +150,14 @@ export default function MeetPage() {
                         <h2 className="text-2xl font-bold text-white mb-2">
                             {meetingIdOrSlug.length < 20 ? `${meetingIdOrSlug}'s Office` : 'Join Secure Meeting'}
                         </h2>
-                        <p className="text-slate-400 text-sm">
+                        <p className="text-slate-400 type-card-description">
                             {requiresPin ? 'Enter your name and the meeting code provided by the host.' : 'Enter your name before joining the secure meeting.'}
                         </p>
                     </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">Your Name</label>
+                            <label className="block type-label font-medium text-slate-300 mb-1">Your Name</label>
                             <input
                                 type="text"
                                 value={guestName}
@@ -170,7 +170,7 @@ export default function MeetPage() {
 
                         {requiresPin && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Code</label>
+                                <label className="block type-label font-medium text-slate-300 mb-1">Meeting Code</label>
                                 <input
                                     type="text"
                                     value={inputPin}
@@ -184,7 +184,7 @@ export default function MeetPage() {
                         )}
 
                         {pinError && (
-                            <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                            <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 type-ui">
                                 {pinError}
                             </div>
                         )}

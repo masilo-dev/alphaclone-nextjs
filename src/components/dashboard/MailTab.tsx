@@ -16,7 +16,7 @@ const MailTab: React.FC<MailTabProps> = () => {
       fallback={
         <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
           <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-          <p className="text-sm text-slate-400">Loading AlphaClone Comms Workspace…</p>
+          <p className="type-card-description text-slate-400">Loading AlphaClone Comms Workspace…</p>
         </div>
       }
     >

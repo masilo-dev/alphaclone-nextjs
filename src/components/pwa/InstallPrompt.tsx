@@ -64,7 +64,7 @@ const InstallPrompt: React.FC = () => {
                     </div>
                     <div>
                         <h3 className="text-white font-semibold">Install AlphaClone</h3>
-                        <p className="text-sm text-slate-400">Add to your home screen for quick access</p>
+                        <p className="type-card-description text-slate-400">Add to your home screen for quick access</p>
                     </div>
                 </div>
                 <button

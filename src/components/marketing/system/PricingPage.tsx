@@ -94,7 +94,7 @@ function RenderCell({ val }: { val: string | boolean }) {
     return val ? (
       <AlphaIcon name="check" variant="trust" size="md" title="Included" decorative={false} className="mx-auto text-[var(--marketing-accent-hover)]" />
     ) : (
-      <span className="text-[var(--marketing-text-muted)] font-mono text-sm" aria-label="Not included">
+      <span className="text-[var(--marketing-text-muted)] font-mono type-ui" aria-label="Not included">
         —
       </span>
     );
@@ -158,7 +158,7 @@ export default function PricingPage() {
                   <div>
                     {plan.badge ? (
                       <div className="mb-3 flex justify-between items-center">
-                        <span className="rounded-full bg-[var(--marketing-accent)] px-3 py-1 text-xs font-bold text-white tracking-wide uppercase">
+                        <span className="rounded-full bg-[var(--marketing-accent)] px-3 py-1 type-caption font-bold text-white tracking-wide uppercase">
                           {plan.badge}
                         </span>
                       </div>
@@ -167,7 +167,7 @@ export default function PricingPage() {
                     )}
 
                     <h2 className="text-2xl font-bold text-[var(--marketing-text-primary)]">{plan.name}</h2>
-                    <p className="mt-2 text-xs text-[var(--marketing-text-secondary)] leading-relaxed min-h-[40px]">
+                    <p className="mt-2 type-caption text-[var(--marketing-text-secondary)] leading-relaxed min-h-[40px]">
                       {plan.tagline}
                     </p>
 
@@ -177,12 +177,12 @@ export default function PricingPage() {
                             <span className="text-4xl font-extrabold text-[var(--marketing-text-primary)]">
                               ${displayPrice}
                             </span>
-                            <span className="ml-1 text-sm font-medium text-[var(--marketing-text-muted)]">
+                            <span className="ml-1 type-ui font-medium text-[var(--marketing-text-muted)]">
                               {priceSuffix}
                             </span>
                         </>
                       </div>
-                      <p className="mt-2 text-xs text-[var(--marketing-text-muted)]">
+                      <p className="mt-2 type-card-description text-[var(--marketing-text-muted)]">
                         {plan.id === 'enterprise'
                           ? `$${displayPrice}${priceSuffix} · no AlphaClone usage ceiling`
                           : billingPeriod === 'annual'
@@ -193,7 +193,7 @@ export default function PricingPage() {
 
                     <ul className="mt-6 space-y-3">
                       {plan.features.map((feature) => (
-                        <li key={feature} className="flex gap-2.5 text-xs text-[var(--marketing-text-secondary)]">
+                        <li key={feature} className="flex gap-2.5 type-caption text-[var(--marketing-text-secondary)]">
                           <AlphaIcon name="check" variant="trust" size="sm" className="mt-0.5 shrink-0 text-[var(--marketing-accent-hover)]" />
                           <span>{feature}</span>
                         </li>
@@ -205,7 +205,7 @@ export default function PricingPage() {
                     <Link
                       href={plan.ctaLink}
                       onClick={() => handlePlanClick(plan.id, plan.name)}
-                      className={`mkt-btn w-full text-center text-sm font-semibold py-3 rounded-xl transition-all ${
+                      className={`mkt-btn w-full text-center type-ui font-semibold py-3 rounded-xl transition-all ${
                         plan.highlight
                           ? 'mkt-btn-primary bg-[var(--marketing-accent)] text-white hover:bg-[var(--marketing-accent-hover)] shadow-md'
                           : 'mkt-btn-secondary border border-[var(--marketing-border)] text-[var(--marketing-text-primary)] hover:bg-[var(--marketing-surface-hover)]'
@@ -218,7 +218,7 @@ export default function PricingPage() {
               );
             })}
           </div>
-          <p className="mt-6 text-center text-xs text-[var(--marketing-text-muted)] max-w-4xl mx-auto leading-relaxed">
+          <p className="mt-6 text-center type-card-description text-[var(--marketing-text-muted)] max-w-4xl mx-auto leading-relaxed">
             *Enterprise execution remains subject to external provider API restrictions, anti-spam rules, and platform safety safeguards.
           </p>
         </MarketingContainer>
@@ -233,7 +233,7 @@ export default function PricingPage() {
           />
 
           <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm" role="region" aria-label="AlphaClone plan comparison" tabIndex={0}>
-            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
+            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] type-ui">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]">
                   <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">Execution Capability</th>
@@ -246,7 +246,7 @@ export default function PricingPage() {
                 {detailedComparison.map((cat) => (
                   <tr key={cat.category} className="border-b border-[var(--marketing-border)]">
                     <td colSpan={4} className="p-0">
-                      <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
+                      <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 type-caption font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
                         {cat.category}
                       </div>
                       <table className="w-full">

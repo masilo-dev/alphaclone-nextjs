@@ -136,12 +136,12 @@ const BottomNav: React.FC<BottomNavProps> = ({
                   />
                   </span>
                   {showBadge ? (
-                    <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-[var(--error-500)] px-1 text-[9px] font-bold leading-4 text-white">
+                    <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-[var(--error-500)] px-1 type-ui font-bold leading-4 text-white">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   ) : null}
                 </div>
-                <span className={`max-w-[4.75rem] truncate text-[10px] leading-3 ${isActive ? 'font-semibold text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}>
+                <span className={`max-w-[4.75rem] truncate type-ui leading-3 ${isActive ? 'font-semibold text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}>
                   {t(item.label)}
                 </span>
               </button>

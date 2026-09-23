@@ -93,7 +93,7 @@ export function TaxSummaryPanel() {
     label: string; value: string; color?: string; large?: boolean;
   }) => (
     <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-      <span className={`${large ? 'text-sm font-black uppercase tracking-wider' : 'text-sm'} text-slate-300`}>{label}</span>
+      <span className={`${large ? 'type-caption font-black uppercase tracking-wider' : 'type-caption'} text-slate-300`}>{label}</span>
       <span className={`font-black ${large ? 'text-xl' : 'text-base'} font-mono ${color}`}>{value}</span>
     </div>
   );
@@ -106,21 +106,21 @@ export function TaxSummaryPanel() {
             <Calculator className="text-emerald-400" size={20} />
             Tax Summary
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">Estimated tax liability based on P&L data</p>
+          <p className="type-card-description text-slate-400 mt-0.5">Estimated tax liability based on P&L data</p>
         </div>
         <div className="flex items-center gap-2">
           {(['month', 'quarter', 'year'] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
             >
               {p === 'month' ? 'MTD' : p === 'quarter' ? 'QTD' : 'YTD'}
             </button>
           ))}
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 type-caption font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
           >
             <FileDown size={14} />
             Export
@@ -131,7 +131,7 @@ export function TaxSummaryPanel() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Tax Rate Selector */}
         <div className="ac-workspace-panel rounded-xl p-5 space-y-3">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+          <p className="type-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
             <Percent size={14} /> Tax Rate
           </p>
           <div className="space-y-2">
@@ -139,7 +139,7 @@ export function TaxSummaryPanel() {
               <button
                 key={preset.label}
                 onClick={() => setSelectedPreset(i)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-all ${selectedPreset === i ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
+                className={`w-full text-left px-3 py-2 rounded-lg type-caption font-bold transition-all ${selectedPreset === i ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
               >
                 {preset.label}
                 {preset.rate > 0 && <span className="float-right text-slate-500">{(preset.rate * 100).toFixed(0)}%</span>}
@@ -154,17 +154,17 @@ export function TaxSummaryPanel() {
                 max="99"
                 value={customRate}
                 onChange={e => setCustomRate(e.target.value)}
-                className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500/40"
                 placeholder="Rate %"
               />
-              <span className="text-slate-400 text-sm font-bold">%</span>
+              <span className="text-slate-400 type-ui font-bold">%</span>
             </div>
           )}
         </div>
 
         {/* Summary Panel */}
         <div className="lg:col-span-2 ac-workspace-panel rounded-xl p-5 space-y-1">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 mb-4">
+          <p className="type-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 mb-4">
             <ShieldCheck size={14} className="text-emerald-400" /> Tax Computation
           </p>
           {loading ? (
@@ -193,8 +193,8 @@ export function TaxSummaryPanel() {
               </div>
 
               <div className="mt-4 rounded-xl bg-amber-500/5 border border-amber-500/20 p-3">
-                <p className="text-[10px] text-amber-300 font-bold uppercase tracking-widest">⚠ Estimation Notice</p>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="type-caption text-amber-300 font-bold uppercase tracking-widest">⚠ Estimation Notice</p>
+                <p className="type-card-description text-slate-400 mt-1">
                   This is an estimate based on your posted journal entries. Consult a certified accountant for official tax filing. Deductions and credits are not factored in.
                 </p>
               </div>

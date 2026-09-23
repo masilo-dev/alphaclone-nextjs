@@ -97,7 +97,7 @@ export default function AllInOnePlatformShowcase() {
     <div className="w-full my-12 text-slate-100 select-none">
       {/* Header Banner */}
       <div className="text-center max-w-4xl mx-auto px-4 mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs sm:text-sm font-medium mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 type-caption sm:text-sm font-medium mb-4">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
@@ -110,7 +110,7 @@ export default function AllInOnePlatformShowcase() {
             All in One Intelligent Platform.
           </span>
         </h2>
-        <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto">
+        <p className="text-slate-300 type-card-description sm:text-base max-w-2xl mx-auto">
           CRM, Projects, Finance, Marketing, Documents & more — connect via MCP
           and automate your entire operational workflow.
         </p>
@@ -150,20 +150,20 @@ export default function AllInOnePlatformShowcase() {
 
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center">
             <div className="p-3 sm:p-4">
-              <p className="text-xs text-slate-400 font-medium">Connect Favorite Tools</p>
-              <p className="text-sm font-semibold text-teal-300 mt-1">ChatGPT, Claude, Manus & Gmail</p>
+              <p className="type-card-description text-slate-400 font-medium">Connect Favorite Tools</p>
+              <p className="type-card-description font-semibold text-teal-300 mt-1">ChatGPT, Claude, Manus & Gmail</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="text-xs text-slate-400 font-medium">Model Context Protocol</p>
-              <p className="text-sm font-semibold text-emerald-300 mt-1">Secure Real-Time Action</p>
+              <p className="type-card-description text-slate-400 font-medium">Model Context Protocol</p>
+              <p className="type-caption font-semibold text-emerald-300 mt-1">Secure Real-Time Action</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="text-xs text-slate-400 font-medium">Publish Everywhere</p>
-              <p className="text-sm font-semibold text-cyan-300 mt-1">Meta, LinkedIn, Zoho & Brevo</p>
+              <p className="type-card-description text-slate-400 font-medium">Publish Everywhere</p>
+              <p className="type-caption font-semibold text-cyan-300 mt-1">Meta, LinkedIn, Zoho & Brevo</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="text-xs text-slate-400 font-medium">Platform Power</p>
-              <p className="text-sm font-semibold text-amber-300 mt-1">489 Tools Exposable via MCP</p>
+              <p className="type-card-description text-slate-400 font-medium">Platform Power</p>
+              <p className="type-card-description font-semibold text-amber-300 mt-1">489 Tools Exposable via MCP</p>
             </div>
           </div>
         </div>
@@ -174,14 +174,14 @@ export default function AllInOnePlatformShowcase() {
         <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+              <span className="type-caption font-bold uppercase tracking-wider text-teal-400">
                 Complete End-To-End Business Flow
               </span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
                 From Lead to Cash in Under 60 Seconds
               </h3>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-2 type-caption text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               <span>Zero Context Switching Required</span>
             </div>
@@ -203,7 +203,7 @@ export default function AllInOnePlatformShowcase() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-950 border ${isSelected ? "border-teal-500/50 text-teal-300" : "border-slate-800 text-slate-400"}`}
+                      className={`type-caption font-mono font-bold px-2 py-0.5 rounded bg-slate-950 border ${isSelected ? "border-teal-500/50 text-teal-300" : "border-slate-800 text-slate-400"}`}
                     >
                       {s.step}
                     </span>
@@ -211,10 +211,10 @@ export default function AllInOnePlatformShowcase() {
                       className={`w-2 h-2 rounded-full bg-gradient-to-r ${s.color}`}
                     ></span>
                   </div>
-                  <h4 className="font-bold text-white text-sm mb-1">
+                  <h4 className="font-bold text-white type-ui mb-1">
                     {s.title}
                   </h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="type-card-description text-slate-400 leading-relaxed">
                     {s.desc}
                   </p>
                 </button>
@@ -230,24 +230,24 @@ export default function AllInOnePlatformShowcase() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-teal-400 uppercase font-mono">
+                  <span className="type-caption font-bold text-teal-400 uppercase font-mono">
                     Step {WORKFLOW_STEPS[activeStep].step} Spotlight
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="type-caption text-slate-400">
                     • Automated Action
                   </span>
                 </div>
                 <h5 className="text-base font-bold text-white mt-0.5">
                   {WORKFLOW_STEPS[activeStep].title}
                 </h5>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                <p className="type-card-description sm:text-sm text-slate-300 mt-1">
                   {WORKFLOW_STEPS[activeStep].desc}
                 </p>
               </div>
             </div>
             <Link
               href="/auth/login?register=true&plan=free"
-              className="shrink-0 px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white font-semibold text-xs sm:text-sm transition-colors shadow-md shadow-teal-900/40"
+              className="shrink-0 px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white font-semibold type-caption sm:text-sm transition-colors shadow-md shadow-teal-900/40"
             >
               Test This Workflow Free →
             </Link>
@@ -261,7 +261,7 @@ export default function AllInOnePlatformShowcase() {
           <h3 className="text-xl sm:text-3xl font-bold text-white font-marketing-heading">
             Representative Ways Service Businesses Work
           </h3>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="type-card-description text-slate-400 mt-2">
             Illustrative workflows for small teams and solo operators—not verified
             customer results or performance guarantees.
           </p>
@@ -279,15 +279,15 @@ export default function AllInOnePlatformShowcase() {
               }`}
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                <span className="px-3 py-1 rounded-full type-caption font-bold bg-teal-500/10 text-teal-300 border border-teal-500/30">
                   {sc.role}
                 </span>
-                <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded">
+                <span className="type-caption font-mono font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded">
                   {sc.metric}
                 </span>
               </div>
               <div className="mb-3">
-                <p className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold mb-1 uppercase tracking-wider">
+                <p className="flex items-center gap-1 type-caption text-rose-400 font-semibold mb-1 uppercase tracking-wider">
                   <svg
                     width="10"
                     height="10"
@@ -304,12 +304,12 @@ export default function AllInOnePlatformShowcase() {
                   </svg>
                   Old Way:
                 </p>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="type-card-description text-slate-400 leading-relaxed">
                   {sc.challenge}
                 </p>
               </div>
               <div>
-                <p className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
+                <p className="flex items-center gap-1 type-caption text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
                   <svg
                     width="10"
                     height="10"
@@ -327,7 +327,7 @@ export default function AllInOnePlatformShowcase() {
                   </svg>
                   AlphaClone Way:
                 </p>
-                <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                <p className="type-card-description text-slate-200 leading-relaxed font-medium">
                   {sc.solution}
                 </p>
               </div>

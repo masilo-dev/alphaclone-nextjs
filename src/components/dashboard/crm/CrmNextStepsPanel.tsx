@@ -27,9 +27,9 @@ export function CrmNextStepsPanel({
                     <ListChecks className="w-4 h-4 text-teal-400" aria-hidden />
                 </div>
                 <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-white tracking-tight">{heading}</h2>
+                    <h2 className="type-caption font-bold text-white tracking-tight">{heading}</h2>
                     {subheading ? (
-                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{subheading}</p>
+                        <p className="type-card-description text-slate-400 mt-0.5 leading-relaxed">{subheading}</p>
                     ) : null}
                 </div>
             </div>
@@ -46,15 +46,15 @@ export function CrmNextStepsPanel({
                             key={item.id}
                             className={`rounded-lg border px-3 py-2.5 ${border}`}
                         >
-                            <p className="text-sm font-semibold text-slate-100 leading-snug">{item.title}</p>
-                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.detail}</p>
+                            <p className="type-card-description font-semibold text-slate-100 leading-snug">{item.title}</p>
+                            <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{item.detail}</p>
                             {(item.actionLabel && item.href) || (item.actionLabel && item.onAction) ? (
                                 <div className="mt-2">
                                     {item.onAction ? (
                                         <button
                                             type="button"
                                             onClick={item.onAction}
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-teal-300 transition-colors"
                                         >
                                             {item.actionLabel}
                                             <ArrowRight className="w-3.5 h-3.5" aria-hidden />
@@ -62,7 +62,7 @@ export function CrmNextStepsPanel({
                                     ) : item.href ? (
                                         <Link
                                             href={item.href}
-                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-teal-300 transition-colors"
                                         >
                                             {item.actionLabel}
                                             <ArrowRight className="w-3.5 h-3.5" aria-hidden />

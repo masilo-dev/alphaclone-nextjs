@@ -83,13 +83,13 @@ export default function LaunchActivationChecklist() {
   return (
     <div className="mb-4 rounded-xl border border-teal-500/25 bg-teal-500/8 p-4">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-teal-300">First-session activation checklist</h3>
-        <span className="text-xs text-slate-300">
+        <h3 className="type-ui font-semibold text-teal-300">First-session activation checklist</h3>
+        <span className="type-caption text-slate-300">
           {completion.done}/{completion.total} complete
         </span>
       </div>
       {nextRecommended && (
-        <p className="mb-3 text-sm text-slate-300">
+        <p className="mb-3 type-card-description text-slate-300">
           Best next step: <span className="font-semibold text-white">{nextRecommended.label}</span>
         </p>
       )}
@@ -105,7 +105,7 @@ export default function LaunchActivationChecklist() {
               onClick={() => router.push(item.href)}
               className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-slate-900/40"
             >
-              <span className="flex items-center gap-2 text-sm text-slate-200">
+              <span className="flex items-center gap-2 type-ui text-slate-200">
                 {done ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Circle className="h-4 w-4 text-slate-500" />}
                 {item.label}
               </span>

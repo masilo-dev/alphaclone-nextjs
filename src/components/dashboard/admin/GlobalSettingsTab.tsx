@@ -138,7 +138,7 @@ const GlobalSettingsTab: React.FC = () => {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-2">
                         <div className="min-w-0">
                             <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
-                            <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                            <p className="text-slate-400 mt-1 type-caption sm:text-xs font-medium uppercase tracking-wider">
                                 Super admin
                             </p>
                         </div>
@@ -157,7 +157,7 @@ const GlobalSettingsTab: React.FC = () => {
             {loadError && (
                 <div
                     role="alert"
-                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-100/95 leading-relaxed"
+                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 type-caption text-red-100/95 leading-relaxed"
                 >
                     {loadError}
                 </div>
@@ -166,7 +166,7 @@ const GlobalSettingsTab: React.FC = () => {
             {!loadError && !loading && (
                 <div
                     role="status"
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-300 leading-relaxed"
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 type-caption text-slate-300 leading-relaxed"
                 >
                     Global settings are stored in the database and apply platform-wide. Tenant-level options remain under
                     Settings in each workspace. On small screens, pick a section below, then scroll the panel.
@@ -186,7 +186,7 @@ const GlobalSettingsTab: React.FC = () => {
                             key={section.id}
                             onClick={() => setActiveSection(section.id)}
                             aria-current={activeSection === section.id ? 'true' : undefined}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl type-caption sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
                                 ? 'bg-indigo-600 border border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
                                 : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                                 }`}
@@ -225,7 +225,7 @@ const GlobalSettingsTab: React.FC = () => {
                                         validate={(v) => v.trim() && !/^https?:\/\/.+/.test(v.trim()) ? 'Enter a valid URL (https://…)' : undefined}
                                     />
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-300">Logo Assets</label>
+                                        <label className="type-label font-medium text-slate-300">Logo Assets</label>
                                         <div className="flex items-start gap-4">
                                             <div className="w-16 h-16 shrink-0 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
                                                 {branding.logoUrl ? <img src={branding.logoUrl} alt="Platform logo preview" className="h-full w-full object-contain" /> : <Globe className="w-8 h-8 text-indigo-500" />}
@@ -320,7 +320,7 @@ const GlobalSettingsTab: React.FC = () => {
                         {activeSection === 'integrations' && !envStatus && (
                             <div className="space-y-6">
                                 <SectionHeader title="Global Integrations" description="Load settings to see integration status" />
-                                <p className="text-sm text-slate-400">Integration status is unavailable until settings load successfully.</p>
+                                <p className="type-caption text-slate-400">Integration status is unavailable until settings load successfully.</p>
                             </div>
                         )}
 
@@ -330,8 +330,8 @@ const GlobalSettingsTab: React.FC = () => {
                                 <div className="space-y-4">
                                     <div className="p-4 bg-slate-900 rounded-2xl border border-white/5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="text-sm font-bold text-white">Global 2FA Enforcement</h4>
-                                            <p className="text-xs text-slate-400">Require 2FA for Super Admins and Tenant Admins when enforced by policy.</p>
+                                            <h4 className="type-ui font-bold text-white">Global 2FA Enforcement</h4>
+                                            <p className="type-card-description text-slate-400">Require 2FA for Super Admins and Tenant Admins when enforced by policy.</p>
                                         </div>
                                         <Toggle
                                             checked={!!sec.enforce2faTenantAdmins}
@@ -341,8 +341,8 @@ const GlobalSettingsTab: React.FC = () => {
                                     </div>
                                     <div className="p-4 bg-slate-900 rounded-2xl border border-white/5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="text-sm font-bold text-white">New User Registration</h4>
-                                            <p className="text-xs text-slate-400">Allow users to sign up without an invite when your auth flow permits it.</p>
+                                            <h4 className="type-ui font-bold text-white">New User Registration</h4>
+                                            <p className="type-card-description text-slate-400">Allow users to sign up without an invite when your auth flow permits it.</p>
                                         </div>
                                         <Toggle
                                             checked={sec.openRegistration !== false}
@@ -352,8 +352,8 @@ const GlobalSettingsTab: React.FC = () => {
                                     </div>
                                     <div className="p-4 bg-slate-900/50 rounded-2xl border border-red-500/20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="text-sm font-bold text-red-400">Maintenance Mode</h4>
-                                            <p className="text-xs text-slate-400">Mark the platform as in maintenance (enforcement depends on app middleware).</p>
+                                            <h4 className="type-ui font-bold text-red-400">Maintenance Mode</h4>
+                                            <p className="type-card-description text-slate-400">Mark the platform as in maintenance (enforcement depends on app middleware).</p>
                                         </div>
                                         <Toggle
                                             checked={!!sec.maintenanceMode}
@@ -399,7 +399,7 @@ const GlobalSettingsTab: React.FC = () => {
                         {activeSection === 'ai' && !envStatus && (
                             <div className="space-y-6">
                                 <SectionHeader title="AI Service Configuration" description="Load settings to see configuration status" />
-                                <p className="text-sm text-slate-400">AI environment status is unavailable until settings load successfully.</p>
+                                <p className="type-caption text-slate-400">AI environment status is unavailable until settings load successfully.</p>
                             </div>
                         )}
 
@@ -419,13 +419,13 @@ const GlobalSettingsTab: React.FC = () => {
                                             onClick={() => window.open(support.docsUrl?.trim() || '/docs', '_blank')}
                                         >
                                             <FileText className="w-6 h-6 text-slate-400 mb-3 group-hover:text-teal-400 transition-colors" />
-                                            <h5 className="text-sm font-bold text-white mb-1">Full Documentation</h5>
-                                            <p className="text-xs text-slate-500">Open documentation in a new tab.</p>
+                                            <h5 className="type-ui font-bold text-white mb-1">Full Documentation</h5>
+                                            <p className="type-card-description text-slate-500">Open documentation in a new tab.</p>
                                         </Card>
                                         <Card className="p-4 bg-slate-900 border-white/5 hover:border-blue-500/30 transition-all">
                                             <Bell className="w-6 h-6 text-slate-400 mb-3" />
-                                            <h5 className="text-sm font-bold text-white mb-1">System Updates</h5>
-                                            <p className="text-xs text-slate-500">View recent logs and upcoming feature releases.</p>
+                                            <h5 className="type-ui font-bold text-white mb-1">System Updates</h5>
+                                            <p className="type-card-description text-slate-500">View recent logs and upcoming feature releases.</p>
                                         </Card>
                                     </div>
                                 </div>
@@ -442,7 +442,7 @@ const GlobalSettingsTab: React.FC = () => {
 const SectionHeader = ({ title, description }: { title: string; description: string }) => (
     <div className="mb-6">
         <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
-        <p className="text-slate-400 text-xs">{description}</p>
+        <p className="text-slate-400 type-card-description">{description}</p>
     </div>
 );
 
@@ -462,16 +462,16 @@ const IntegrationItem = ({
         <div className="p-4 bg-slate-900/50 rounded-2xl border border-white/5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h4 className="text-sm font-bold text-white">{name}</h4>
+                    <h4 className="type-ui font-bold text-white">{name}</h4>
                     <div
-                        className={`px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
+                        className={`px-2 py-0.5 rounded-full type-caption font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
                             }`}
                     >
                         {status}
                     </div>
                 </div>
-                <p className="text-xs text-slate-400">{description}</p>
-                <p className="text-xs text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
+                <p className="type-card-description text-slate-400">{description}</p>
+                <p className="type-caption text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
             </div>
             <Button type="button" variant="outline" size="sm" className="w-full md:w-auto shrink-0" disabled title="Configure via environment variables">
                 Configure

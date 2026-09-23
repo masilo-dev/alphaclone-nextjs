@@ -35,7 +35,7 @@ export default function EmojiPicker({ onEmojiSelect, onClose }: EmojiPickerProps
   return (
     <div ref={pickerRef} className="absolute bottom-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 w-80 z-50">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Select Emoji</h3>
+        <h3 className="type-ui font-semibold text-gray-900">Select Emoji</h3>
         <button
           onClick={onClose}
           className="p-1 text-gray-500 hover:text-gray-700 rounded"
@@ -49,7 +49,7 @@ export default function EmojiPicker({ onEmojiSelect, onClose }: EmojiPickerProps
           <button
             key={category}
             onClick={() => setSelectedCategory(category as keyof typeof EMOJI_CATEGORIES)}
-            className={`px-2 py-1 text-xs rounded ${
+            className={`px-2 py-1 type-caption rounded ${
               selectedCategory === category
                 ? 'bg-blue-100 text-blue-700'
                 : 'text-gray-600 hover:bg-gray-100'

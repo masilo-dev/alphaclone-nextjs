@@ -171,7 +171,7 @@ export default function ResendIntegration() {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-zinc-400 mx-auto mb-3" />
-                <p className="text-sm text-slate-400">Verifying Resend connection...</p>
+                <p className="type-card-description text-slate-400">Verifying Resend connection...</p>
             </div>
         );
     }
@@ -188,17 +188,17 @@ export default function ResendIntegration() {
                         <Send className="w-6 h-6 text-zinc-400" />
                     </div>
                     <div>
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Resend Email</h2>
                             {status === 'connected' && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
                                     Connected
                                 </span>
                             )}
                         </div>
-                        <p className="text-sm text-slate-400">Connect your Resend account to send clean, fast emails from your domain.</p>
+                        <p className="type-card-description text-slate-400">Connect your Resend account to send clean, fast emails from your domain.</p>
                     </div>
                 </div>
                 {status === 'connected' && (
@@ -217,36 +217,36 @@ export default function ResendIntegration() {
             <form onSubmit={handleSave} className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">API Key</label>
+                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">API Key</label>
                         <div className="relative">
                             <input
                                 type="password"
                                 value={config.apiKey}
                                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                                 placeholder="re_xxxxxxxxxxxxxxxxxxx"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-zinc-500/40"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 type-ui text-white outline-none focus:border-zinc-500/40"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Verified Sender Email</label>
+                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Verified Sender Email</label>
                         <input
                             type="email"
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="hello@yourdomain.com"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Sender Name</label>
+                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Sender Name</label>
                         <input
                             type="text"
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Company Name"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
                         />
                     </div>
                 </div>
@@ -260,21 +260,21 @@ export default function ResendIntegration() {
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Settings' : 'Connect Resend'}
                     </Button>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <p className="type-card-description text-slate-500 flex items-center gap-1">
                         <Lock className="w-3 h-3" />
                         Encrypted storage ensures your API keys are private.
                     </p>
                 </div>
                 {status === 'connected' && (
                     <div className="pt-2 border-t border-white/5">
-                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Send Test Email</p>
+                        <p className="type-caption font-black text-slate-500 uppercase tracking-widest mb-2">Send Test Email</p>
                         <div className="flex flex-col md:flex-row gap-3">
                             <input
                                 type="email"
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
                             />
                             <Button
                                 type="button"

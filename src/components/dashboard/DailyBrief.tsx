@@ -113,7 +113,7 @@ export default function DailyBrief() {
 
               {/* Today's Focus Card */}
               <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2 text-blue-400 uppercase text-[10px] font-black tracking-widest">
+                <div className="flex items-center gap-2 mb-2 text-blue-400 uppercase type-caption font-black tracking-widest">
                   <Target className="w-3 h-3" />
                   Today's Main Objective
                 </div>
@@ -128,9 +128,9 @@ export default function DailyBrief() {
               <div className="space-y-4">
                 {content.alerts.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Immediate Attention</p>
+                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">Immediate Attention</p>
                     {content.alerts.map((alert, i) => (
-                      <div key={i} className="flex items-start gap-3 text-sm text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
+                      <div key={i} className="flex items-start gap-3 type-ui text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                         <p>{alert}</p>
                       </div>
@@ -140,9 +140,9 @@ export default function DailyBrief() {
 
                 {content.wins.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Positive Momentum</p>
+                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">Positive Momentum</p>
                     {content.wins.map((win, i) => (
-                      <div key={i} className="flex items-start gap-3 text-sm text-green-400 bg-green-500/5 p-2 rounded-lg border border-green-500/10">
+                      <div key={i} className="flex items-start gap-3 type-ui text-green-400 bg-green-500/5 p-2 rounded-lg border border-green-500/10">
                         <Trophy className="w-4 h-4 mt-0.5 shrink-0" />
                         <p>{win}</p>
                       </div>
@@ -152,7 +152,7 @@ export default function DailyBrief() {
               </div>
 
               <div className="pt-2 border-t border-white/5">
-                <p className="text-sm italic text-slate-400 flex items-center gap-2">
+                <p className="type-card-description italic text-slate-400 flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                   {content.closing}
                 </p>
@@ -164,7 +164,7 @@ export default function DailyBrief() {
           <div className="bg-slate-900/50 px-6 py-3 border-t border-white/5 flex justify-end">
             <button 
               onClick={() => setIsOpen(false)}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 group"
+              className="type-caption font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 group"
             >
               Let's go to work
               <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5" />

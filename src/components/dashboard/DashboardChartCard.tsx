@@ -45,7 +45,7 @@ export function DashboardChartCard({
       />
       <div className="mb-3 flex items-start justify-between gap-3">
         {title ? <DashboardPanelHeader title={t(title)} subtitle={subtitle ? t(subtitle) : subtitle} /> : <div />}
-        <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2 text-[10px] font-black uppercase tracking-widest text-slate-300">
+        <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-white/10 bg-white/[0.04] px-2 type-caption font-black uppercase tracking-widest text-slate-300">
           <span className="mr-1.5 h-1.5 w-1.5 rounded-full" style={{ background: accentColor }} aria-hidden />
           {t(badge)}
         </span>

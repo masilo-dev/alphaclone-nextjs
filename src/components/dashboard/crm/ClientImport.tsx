@@ -109,10 +109,10 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
                         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-3">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-10 h-10 text-teal-400 mb-3" />
-                                <p className="mb-2 text-sm text-slate-300">
+                                <p className="mb-2 type-card-description text-slate-300">
                                     <span className="font-semibold text-teal-400">Click to upload</span> or drag and drop
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="type-card-description text-slate-500">
                                     CSV, XLS or XLSX (Max 100MB)
                                 </p>
                             </div>
@@ -124,8 +124,8 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
                                     <FileText className="w-5 h-5 text-emerald-500" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-medium text-white max-w-[200px] truncate">{file.name}</p>
-                                    <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                    <p className="type-card-description font-medium text-white max-w-[200px] truncate">{file.name}</p>
+                                    <p className="type-card-description text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
                                 </div>
                             </div>
                             <button
@@ -140,7 +140,7 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
 
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex gap-3">
                     <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0" />
-                    <div className="text-sm text-blue-300">
+                    <div className="type-ui text-blue-300">
                         <p className="font-bold mb-1">CSV Format Required</p>
                         <p>Your file should have columns: Name, Email, Phone, Company, Stage, Value.</p>
                     </div>

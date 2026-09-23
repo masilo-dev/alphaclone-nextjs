@@ -22,7 +22,7 @@ function RelatedFeatureCard({ label, href }: { label: string; href: string }) {
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
         {label}
       </h3>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+      <p className="mt-2 type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
         {matchingFeature?.outcome ?? 'Explore how this capability connects with the rest of AlphaClone.'}
       </p>
     </Link>

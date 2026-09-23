@@ -163,7 +163,7 @@ export function UpgradePrompt({
                         <TrendingUp className="h-5 w-5 mr-2" />
                         <span className="font-semibold">{message}</span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="type-card-description text-gray-600">
                         Upgrade to <strong>{suggestedTier}</strong> for more seats, storage, requests, or contract capacity.
                     </p>
                 </div>
@@ -217,7 +217,7 @@ export function UpgradePrompt({
                                 }`}
                         >
                             Annual
-                            <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                            <span className="ml-2 type-caption bg-green-100 text-green-700 px-2 py-1 rounded-full">
                                 Save {savings.savingsPercent}%
                             </span>
                         </button>
@@ -232,7 +232,7 @@ export function UpgradePrompt({
                             <span className="text-xl text-gray-500 font-normal">/mo</span>
                         </div>
                         {billingCycle === 'annual' && (
-                            <div className="text-sm text-gray-600">
+                            <div className="type-ui text-gray-600">
                                 Billed annually • Save {subscriptionService.formatPrice(savings.savingsCents)}
                             </div>
                         )}
@@ -259,7 +259,7 @@ export function UpgradePrompt({
                         Upgrade to {suggestedTier.charAt(0).toUpperCase() + suggestedTier.slice(1)}
                     </button>
 
-                    <p className="text-center text-sm text-gray-500 mt-4">
+                    <p className="text-center type-card-description text-gray-500 mt-4">
                         No commitment. Cancel anytime.
                     </p>
                 </div>

@@ -94,8 +94,8 @@ export default function PwaInstallPrompt() {
             <Download className="h-5 w-5 text-[var(--ac-accent)]" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">{t('Install AlphaClone')}</p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+            <p className="type-card-description font-semibold text-[var(--text-primary)]">{t('Install AlphaClone')}</p>
+            <p className="mt-1 type-caption leading-relaxed text-[var(--text-secondary)]">
               {canNativeInstall
                 ? t('Access your business from anywhere. AlphaClone opens like an app with the mobile Companion experience.')
                 : ('standalone' in window.navigator
@@ -108,7 +108,7 @@ export default function PwaInstallPrompt() {
                   type="button"
                   onClick={handleInstall}
                   disabled={installing}
-                  className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 text-xs font-semibold text-white active:scale-[0.98] disabled:opacity-60"
+                  className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 type-caption font-semibold text-white active:scale-[0.98] disabled:opacity-60"
                 >
                   {installing ? t('Installing…') : t('Install AlphaClone')}
                 </button>
@@ -116,7 +116,7 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="min-h-11 rounded-[12px] border border-[var(--border-default)] px-4 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+                className="min-h-11 rounded-[12px] border border-[var(--border-default)] px-4 type-caption font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
               >
                 {canNativeInstall ? t('Not now') : t('Got it')}
               </button>

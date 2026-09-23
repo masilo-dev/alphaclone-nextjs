@@ -80,7 +80,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                 <button
                     onClick={() => setIsAdding(true)}
                     disabled={isAdding}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 text-teal-400 rounded-lg hover:bg-teal-500/20 transition-colors text-sm disabled:opacity-50"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 text-teal-400 rounded-lg hover:bg-teal-500/20 transition-colors type-ui disabled:opacity-50"
                 >
                     <Plus className="w-4 h-4" />
                     Add Phase
@@ -90,46 +90,46 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
             {isAdding && (
                 <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-3 animate-fade-in">
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Phase Name</label>
+                        <label className="type-label text-slate-500 block mb-1">Phase Name</label>
                         <input
                             type="text"
                             value={newMilestone.name}
                             onChange={(e) => setNewMilestone({ ...newMilestone, name: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
                             placeholder="e.g. Design Approval"
                             autoFocus
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Description (Optional)</label>
+                        <label className="type-label text-slate-500 block mb-1">Description (Optional)</label>
                         <input
                             type="text"
                             value={newMilestone.description}
                             onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
                             placeholder="Details about this phase..."
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 block mb-1">Due Date (Optional)</label>
+                        <label className="type-label text-slate-500 block mb-1">Due Date (Optional)</label>
                         <input
                             type="date"
                             value={newMilestone.dueDate}
                             onChange={(e) => setNewMilestone({ ...newMilestone, dueDate: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             onClick={() => setIsAdding(false)}
-                            className="px-3 py-1.5 text-slate-400 hover:text-white text-sm"
+                            className="px-3 py-1.5 text-slate-400 hover:text-white type-ui"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleCreate}
                             disabled={!newMilestone.name.trim()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-sm disabled:opacity-50"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg type-ui disabled:opacity-50"
                         >
                             <Save className="w-3 h-3" />
                             Save Phase
@@ -169,7 +169,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                                         {milestone.name}
                                     </div>
                                     {(milestone.description || milestone.dueDate) && (
-                                        <div className="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                                        <div className="flex items-center gap-3 type-caption text-slate-500 mt-0.5">
                                             {milestone.dueDate && (
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />

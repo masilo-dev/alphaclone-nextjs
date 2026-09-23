@@ -60,17 +60,17 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
     >
       <Sparkles className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" aria-hidden="true" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-violet-200">
+        <p className="type-card-description font-bold text-violet-200">
           {drafts.length} AI draft{drafts.length === 1 ? '' : 's'} ready for review
         </p>
-        <p className="text-[11px] text-slate-400 mt-1 truncate">
+        <p className="type-card-description text-slate-400 mt-1 truncate">
           Latest: reply to {latest.from || latest.fromEmail} — {latest.subject || '(no subject)'}
         </p>
         <div className="flex gap-2 mt-2">
           <button
             type="button"
             onClick={() => onOpenDraft?.(latest)}
-            className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white"
+            className="type-caption font-bold uppercase px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white"
           >
             Review draft
           </button>
@@ -80,7 +80,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
               setDismissed(true);
               toast('Open Drafts folder to review AI replies anytime.');
             }}
-            className="text-[10px] font-semibold text-slate-400 hover:text-white"
+            className="type-ui font-semibold text-slate-400 hover:text-white"
           >
             Dismiss
           </button>

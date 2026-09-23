@@ -50,11 +50,11 @@ export default function FaqPage() {
           <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
             Why teams use AlphaClone
           </h2>
-          <p className="text-sm text-[#76849a] mb-6">
+          <p className="type-card-description text-[#76849a] mb-6">
             Outcomes, fit, setup, and trust — the questions buyers ask first.
           </p>
           <MarketingFaqAccordion items={FAQ_BUYER_ITEMS} />
-          <p className="mt-6 text-sm text-[#52627b]">
+          <p className="mt-6 type-card-description text-[#52627b]">
             See workflow stories by team type on{' '}
             <Link href="/results" className="text-[#075fc7] hover:text-[#0878f9] font-semibold underline underline-offset-2">
               /results
@@ -67,19 +67,19 @@ export default function FaqPage() {
           <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
             Features &amp; comparisons
           </h2>
-          <p className="text-sm text-[#76849a] mb-6">
+          <p className="type-card-description text-[#76849a] mb-6">
             Integrations, modules, and how AlphaClone maps to tools you may already use.
           </p>
           <MarketingFaqAccordion items={FAQ_PRODUCT_ITEMS} />
         </section>
 
         <div className="rounded-2xl border border-[#dfe6ef] bg-[#f7f9fc] p-8 text-center">
-          <p className="text-sm text-[#33445e] mb-5 font-medium">
+          <p className="type-card-description text-[#33445e] mb-5 font-medium">
             Still deciding? Review the plans or book a demo using a real lead-to-invoice workflow.
           </p>
           <Link
             href="/auth/login?register=true&type=business&plan=starter"
-            className="inline-flex px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm text-sm"
+            className="inline-flex px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm type-ui"
           >
             Get started
           </Link>

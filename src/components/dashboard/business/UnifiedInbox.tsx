@@ -62,7 +62,7 @@ function UnifiedInboxContent({
           aria-controls="inbox-mailbox-panel"
           id="inbox-tab-mailbox"
           onClick={() => setTab('mailbox')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg type-caption font-bold transition-all ${
             activeTab === 'mailbox'
               ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
               : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
@@ -78,7 +78,7 @@ function UnifiedInboxContent({
           aria-controls="inbox-channels-panel"
           id="inbox-tab-channels"
           onClick={() => setTab('channels')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg type-caption font-bold transition-all ${
             activeTab === 'channels'
               ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
               : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
@@ -91,7 +91,7 @@ function UnifiedInboxContent({
       ) : null}
 
       {!hideTabSwitcher ? (
-      <p className="text-[11px] text-slate-500 px-1">
+      <p className="type-card-description text-slate-500 px-1">
         {activeTab === 'mailbox'
           ? 'Read and send from your connected Outlook or Zoho mailbox. Choose Brevo, SendGrid, or Resend when you compose.'
           : 'WhatsApp, social, and synced email activity in one feed — with AI draft replies you approve before sending.'}
@@ -129,7 +129,7 @@ export default function UnifiedInbox(props: UnifiedInboxProps) {
       fallback={
         <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
           <Loader2 className="w-10 h-10 text-[var(--brand-blue-500)] animate-spin" aria-hidden="true" />
-          <p className="text-sm text-slate-400">Loading inbox…</p>
+          <p className="type-card-description text-slate-400">Loading inbox…</p>
         </div>
       }
     >

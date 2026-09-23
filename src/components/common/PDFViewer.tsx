@@ -187,8 +187,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-teal-400" />
           <div>
-            <h3 className="text-sm font-semibold text-white">{fileName}</h3>
-            <p className="text-xs text-slate-400">PDF Document</p>
+            <h3 className="type-ui font-semibold text-white">{fileName}</h3>
+            <p className="type-card-description text-slate-400">PDF Document</p>
           </div>
         </div>
         
@@ -203,7 +203,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             <ZoomOut className="w-4 h-4" />
           </Button>
           
-          <span className="text-sm text-slate-400 min-w-[50px] text-center">
+          <span className="type-ui text-slate-400 min-w-[50px] text-center">
             {Math.round(scale * 100)}%
           </span>
           
@@ -301,7 +301,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
       {/* Footer with additional controls */}
       <div className="flex items-center justify-between p-3 bg-slate-700/50 border-t border-slate-700">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
+        <div className="flex items-center gap-2 type-ui text-slate-400">
           <span>Page {currentPage} of {totalPages}</span>
         </div>
         

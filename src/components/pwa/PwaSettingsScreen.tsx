@@ -78,8 +78,8 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
             <Smartphone className="w-6 h-6 text-teal-400" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white">AlphaClone</p>
-            <p className="text-xs text-white/45 mt-0.5">
+            <p className="type-card-description font-semibold text-white">AlphaClone</p>
+            <p className="type-card-description text-white/45 mt-0.5">
               {isPWA ? 'Installed app' : 'Mobile mode'} · {preview.map((p) => p.label).join(' · ')}
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
         })}
       </NativeSection>
 
-      <p className="px-6 pb-8 text-[11px] text-white/35 leading-relaxed">
+      <p className="px-6 pb-8 type-card-description text-white/35 leading-relaxed">
         Pick up to five destinations for your bottom bar. More opens the full menu.
       </p>
     </NativeScreen>

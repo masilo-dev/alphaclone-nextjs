@@ -33,8 +33,8 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "h-8 px-3 text-xs min-h-11",
-    md: "h-10 px-4 py-2 text-sm min-h-11",
+    sm: "h-8 px-3 type-caption min-h-11",
+    md: "h-10 px-4 py-2 type-ui min-h-11",
     lg: "h-12 px-6 text-base min-h-11",
   };
 
@@ -86,7 +86,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
   };
 
   return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full type-ui font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
       {children}
     </span>
   );
@@ -151,12 +151,12 @@ export const Input: React.FC<InputProps> = ({
     !error && hint ? hintId : null,
   ].filter(Boolean).join(' ') || undefined;
 
-  const sharedClass = `w-full bg-[var(--surface-primary)] border ${error ? 'border-[var(--danger)]' : 'border-[var(--border-default)]'} rounded-[10px] px-3 py-2 text-sm leading-normal text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--interactive-secondary)] transition-colors ${icon ? 'pl-10' : ''} ${className}`;
+  const sharedClass = `w-full bg-[var(--surface-primary)] border ${error ? 'border-[var(--danger)]' : 'border-[var(--border-default)]'} rounded-[10px] px-3 py-2 type-caption leading-normal text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--interactive-secondary)] transition-colors ${icon ? 'pl-10' : ''} ${className}`;
 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={fieldId} className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
+        <label htmlFor={fieldId} className="block type-caption font-medium text-[var(--text-secondary)] mb-1">{label}</label>
       )}
       <div className="relative group">
         {icon && (
@@ -186,9 +186,9 @@ export const Input: React.FC<InputProps> = ({
           />
         )}
       </div>
-      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--danger)]">{error}</p>}
+      {error && <p id={errorId} role="alert" className="mt-1 type-card-description text-[var(--danger)]">{error}</p>}
       {!error && hint && (
-        <p id={hintId} className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
+        <p id={hintId} className="mt-1 type-card-description text-[var(--text-muted)]">{hint}</p>
       )}
     </div>
   );
@@ -322,13 +322,13 @@ export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = 
 };
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`flex h-full w-full items-center justify-center rounded-full bg-[var(--ws-surface-secondary,#1B1E2B)] text-[var(--ws-text-muted,#a8b0c2)] border border-[var(--ws-border)] text-xs font-semibold ${className}`} {...props} />
+  <div className={`flex h-full w-full items-center justify-center rounded-full bg-[var(--ws-surface-secondary,#1B1E2B)] text-[var(--ws-text-muted,#a8b0c2)] border border-[var(--ws-border)] type-caption font-semibold ${className}`} {...props} />
 );
 
 // --- Table (enterprise: sticky header, alternating rows via ac-data-table) ---
 export const Table: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className = '', ...props }) => (
   <div className="relative w-full overflow-x-auto ac-scroll-full">
-    <table className={`ac-data-table w-full caption-bottom text-sm text-left ${className}`} {...props} />
+    <table className={`ac-data-table w-full caption-bottom type-ui text-left ${className}`} {...props} />
   </div>
 );
 
@@ -345,11 +345,11 @@ export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ 
 );
 
 export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <th className={`h-11 px-4 text-left align-middle font-semibold text-xs tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+  <th className={`h-11 px-4 text-left align-middle font-semibold type-caption tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
 
 export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <td className={`px-4 py-3 align-middle text-sm text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+  <td className={`px-4 py-3 align-middle type-table-cell text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
 
 // --- Dropdown ---
@@ -397,7 +397,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
                   item.onClick();
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+                className={`w-full flex items-center gap-2 px-3 py-2 type-ui font-medium rounded-lg transition-all duration-150 ${
                   item.variant === 'danger'
                     ? 'text-red-400 hover:bg-red-500/10'
                     : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'

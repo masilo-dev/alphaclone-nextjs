@@ -172,14 +172,14 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
               <Activity className="w-5 h-5" />
               <div>
                 <h4 className="font-medium">Overall Status: {overallStatus.status.toUpperCase()}</h4>
-                <p className="text-sm opacity-80">
+                <p className="type-card-description opacity-80">
                   {overallStatus.workingIntegrations}/{overallStatus.totalIntegrations} working • {overallStatus.averagePercentage}% average
                 </p>
               </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold">{overallStatus.averagePercentage}%</div>
-              <div className="text-sm opacity-80">Functional</div>
+              <div className="type-ui opacity-80">Functional</div>
             </div>
           </div>
         </div>
@@ -197,7 +197,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                     {integration.name}
                     {getStatusIcon(integration.status)}
                   </h4>
-                  <p className={`text-sm ${getStatusColor(integration.status)}`}>
+                  <p className={`type-caption ${getStatusColor(integration.status)}`}>
                     {integration.status.replace('_', ' ').toUpperCase()}
                   </p>
                 </div>
@@ -206,7 +206,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                 <div className={`text-2xl font-bold ${getStatusColor(integration.status)}`}>
                   {integration.percentage}%
                 </div>
-                <div className="text-sm text-slate-400">Functional</div>
+                <div className="type-ui text-slate-400">Functional</div>
               </div>
             </div>
 
@@ -228,8 +228,8 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             {/* Issues */}
             {integration.issues.length > 0 && (
               <div className="mb-3">
-                <h5 className="text-sm font-medium text-amber-400 mb-1">Issues:</h5>
-                <ul className="text-sm text-slate-300 space-y-1">
+                <h5 className="type-ui font-medium text-amber-400 mb-1">Issues:</h5>
+                <ul className="type-ui text-slate-300 space-y-1">
                   {integration.issues.map((issue, index) => (
                     <li key={index} className="flex items-center gap-2">
                       <AlertCircle className="w-3 h-3 text-amber-500" />
@@ -241,7 +241,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             )}
 
             {(integration.reconnectRequired || integration.actions.some((a) => /reconnect/i.test(a))) && (
-              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 type-ui text-amber-200">
                 Token may be expired or missing. Reconnect this integration in Settings → Integrations.
               </div>
             )}
@@ -249,13 +249,13 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             {/* Actions */}
             {integration.actions.length > 0 && (
               <div className="mb-3">
-                <h5 className="text-sm font-medium text-blue-400 mb-1">Recommended Actions:</h5>
+                <h5 className="type-ui font-medium text-blue-400 mb-1">Recommended Actions:</h5>
                 <div className="space-y-2">
                   {integration.actions.map((action, index) => (
                     <button
                       key={index}
                       onClick={() => onIntegrationAction?.(integration.type, action)}
-                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm text-white transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded type-ui text-white transition-colors flex items-center gap-2"
                     >
                       <Zap className="w-3 h-3" />
                       {action}
@@ -266,7 +266,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             )}
 
             {/* Last Checked */}
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center justify-between type-caption text-slate-500">
               <span>Last checked: {new Date(integration.lastChecked).toLocaleString()}</span>
               {integration.connected ? (
                 <span className="text-green-500">Connected</span>
@@ -285,25 +285,25 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             <div className="text-2xl font-bold text-green-500">
               {integrations.filter(i => i.status === 'working').length}
             </div>
-            <div className="text-sm text-slate-400">Working</div>
+            <div className="type-ui text-slate-400">Working</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-amber-500">
               {integrations.filter(i => i.status === 'needs_attention').length}
             </div>
-            <div className="text-sm text-slate-400">Needs Attention</div>
+            <div className="type-ui text-slate-400">Needs Attention</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-slate-500">
               {integrations.filter(i => i.status === 'not_connected').length}
             </div>
-            <div className="text-sm text-slate-400">Not Connected</div>
+            <div className="type-ui text-slate-400">Not Connected</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-red-500">
               {integrations.filter(i => i.status === 'error').length}
             </div>
-            <div className="text-sm text-slate-400">Errors</div>
+            <div className="type-ui text-slate-400">Errors</div>
           </div>
         </div>
       </div>

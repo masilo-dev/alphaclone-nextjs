@@ -33,7 +33,7 @@ export function CRMActionChips({ items, className }: { items: CRMActionChipItem[
             onClick={item.onClick}
             disabled={item.disabled}
             className={cn(
-              'inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all active:scale-95 disabled:opacity-50',
+              'inline-flex min-h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 type-ui font-bold transition-all active:scale-95 disabled:opacity-50',
               TONE_STYLES[item.tone || 'slate']
             )}
           >

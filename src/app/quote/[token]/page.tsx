@@ -170,7 +170,7 @@ export default function PublicQuotePage() {
                     )}
                         <div>
                             <h1 className="text-xl font-bold text-white">Quote {quote.quoteNumber}</h1>
-                            <p className="text-sm text-slate-400">{quote.name} · {branding.name}</p>
+                            <p className="type-card-description text-slate-400">{quote.name} · {branding.name}</p>
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -178,14 +178,14 @@ export default function PublicQuotePage() {
                             href={pdfUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-bold text-slate-200 hover:border-teal-500/50 hover:text-white"
+                            className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui font-bold text-slate-200 hover:border-teal-500/50 hover:text-white"
                         >
                             View PDF
                         </a>
                         <a
                             href={pdfUrl}
                             download
-                            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-4 py-2 text-sm font-black text-black hover:bg-teal-400"
+                            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-4 py-2 type-ui font-black text-black hover:bg-teal-400"
                         >
                             Download PDF
                         </a>
@@ -195,17 +195,17 @@ export default function PublicQuotePage() {
                 <div className="p-6 sm:p-8 space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Status</div>
+                            <div className="type-caption uppercase tracking-widest text-slate-500">Status</div>
                             <div className="mt-1 text-lg font-bold text-white capitalize">{quote.status}</div>
                         </div>
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Total</div>
+                            <div className="type-caption uppercase tracking-widest text-slate-500">Total</div>
                             <div className="mt-1 text-lg font-bold text-teal-400">
                                 {Number(quote.totalAmount).toFixed(2)} {quote.currency || 'USD'}
                             </div>
                         </div>
                         <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="text-[10px] uppercase tracking-widest text-slate-500">Valid until</div>
+                            <div className="type-caption uppercase tracking-widest text-slate-500">Valid until</div>
                             <div className="mt-1 text-lg font-bold text-white">
                                 {quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : 'Open'}
                             </div>
@@ -215,7 +215,7 @@ export default function PublicQuotePage() {
                     {previewInput ? <DocumentPreview input={previewInput} /> : null}
 
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full type-ui">
                             <thead>
                                 <tr className="text-left text-slate-500 border-b border-slate-800">
                                     <th className="py-2 pr-4">Item</th>
@@ -229,7 +229,7 @@ export default function PublicQuotePage() {
                                     <tr key={i} className="border-b border-slate-800/50">
                                         <td className="py-3 pr-4">
                                             <div className="font-medium text-white">{item.productName}</div>
-                                            {item.description && <div className="text-xs text-slate-500">{item.description}</div>}
+                                            {item.description && <div className="type-caption text-slate-500">{item.description}</div>}
                                         </td>
                                         <td className="py-3 pr-4 text-right">{item.quantity}</td>
                                         <td className="py-3 pr-4 text-right">{Number(item.unitPrice).toFixed(2)}</td>
@@ -244,10 +244,10 @@ export default function PublicQuotePage() {
                         Total: {Number(quote.totalAmount).toFixed(2)} {quote.currency || 'USD'}
                     </div>
                     {quote.validUntil && (
-                        <p className="text-sm text-slate-500">Valid until {new Date(quote.validUntil).toLocaleDateString()}</p>
+                        <p className="type-card-description text-slate-500">Valid until {new Date(quote.validUntil).toLocaleDateString()}</p>
                     )}
                     {quote.termsAndConditions && (
-                        <div className="text-xs text-slate-500 border-t border-slate-800 pt-4 whitespace-pre-wrap">
+                        <div className="type-caption text-slate-500 border-t border-slate-800 pt-4 whitespace-pre-wrap">
                             {quote.termsAndConditions}
                         </div>
                     )}
@@ -275,29 +275,29 @@ export default function PublicQuotePage() {
                 ) : (
                     <div className="p-6 border-t border-slate-800 space-y-4 bg-slate-950/40">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Your name (required to accept)</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Your name (required to accept)</label>
                             <input
                                 type="text"
                                 value={acceptedBy}
                                 onChange={(e) => setAcceptedBy(e.target.value)}
                                 placeholder="Full name"
-                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white"
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Signature (required to accept)</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Signature (required to accept)</label>
                             <SignaturePad
                                 onSave={(dataUrl) => setSignatureUrl(dataUrl)}
                                 onClear={() => setSignatureUrl(null)}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Note (optional)</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Note (optional)</label>
                             <textarea
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 placeholder="Questions, requested changes, or reason for declining..."
-                                className="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                                className="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white resize-none"
                             />
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">

@@ -228,7 +228,7 @@ export default function AccountingDashboard() {
             <div className="relative space-y-6 max-w-7xl mx-auto pb-24 ac-scroll-full ac-enterprise-module px-2 sm:px-6">
                 <div className="ac-workspace-panel rounded-lg p-8 flex flex-col justify-center items-center min-h-[320px] text-slate-300 gap-4">
                     <Activity className="w-12 h-12 animate-pulse text-emerald-400" />
-                    <p className="font-medium uppercase tracking-widest text-xs">Syncing Ledger...</p>
+                    <p className="font-medium uppercase tracking-widest type-caption">Syncing Ledger...</p>
                 </div>
             </div>
         );
@@ -245,12 +245,12 @@ export default function AccountingDashboard() {
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-white uppercase tracking-tight">Activate your finance workspace</h3>
-                            <p className="text-slate-300 text-sm mt-1 max-w-md">Your account structure is still empty. Load the standard business chart so revenue, expenses, and cashflow start flowing into the workspace.</p>
+                            <p className="text-slate-300 type-card-description mt-1 max-w-md">Your account structure is still empty. Load the standard business chart so revenue, expenses, and cashflow start flowing into the workspace.</p>
                         </div>
                     </div>
                     <button 
                         onClick={handleInitializeAccounts}
-                        className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-emerald-400 active:scale-95 transition-all"
+                        className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase type-caption rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-emerald-400 active:scale-95 transition-all"
                     >
                         Load Starter Accounts
                     </button>
@@ -262,14 +262,14 @@ export default function AccountingDashboard() {
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Finance Hub</h1>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Professional Edition</span>
+                        <span className="type-caption font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Professional Edition</span>
                         <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Live Books</span>
+                        <span className="type-caption font-bold text-slate-300 uppercase tracking-widest">Live Books</span>
                     </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     {isMobile ? (
-                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> New Entry</button>
+                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white type-caption font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> New Entry</button>
                     ) : (
                         <>
                             <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-white/5 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
@@ -297,7 +297,7 @@ export default function AccountingDashboard() {
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-emerald-400 text-white bg-emerald-500/5' : 'border-transparent text-slate-400'}`}
+                        className={`px-6 py-4 type-caption font-black uppercase tracking-caps whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-emerald-400 text-white bg-emerald-500/5' : 'border-transparent text-slate-400'}`}
                     >
                         {tab.label}
                     </button>
@@ -331,14 +331,14 @@ export default function AccountingDashboard() {
                     {/* Responsive Ledger List */}
                     <div className="ac-workspace-panel rounded-lg overflow-hidden">
                         <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-toolbar)]">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-emerald-400" /> Recent Finance Activity</h3>
+                            <h3 className="type-caption font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-emerald-400" /> Recent Finance Activity</h3>
                         </div>
                         <div className="divide-y divide-white/5">
                             {stats.recentTransactions.map(tx => (
                                 <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-black text-white truncate">{tx.description}</p>
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
+                                        <p className="type-card-description font-black text-white truncate">{tx.description}</p>
+                                        <p className="type-caption text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
                                     </div>
                                     <div className={`text-right font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-400'}`}>
                                         {tx.type === 'income' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -355,17 +355,17 @@ export default function AccountingDashboard() {
                     <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Statement of Profit & Loss</h2>
                     <div className="space-y-8">
                         <div>
-                            <div className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-emerald-500/20 pb-2">Operating Revenue</div>
-                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-slate-300">Gross Sales</span><span className="text-sm font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
-                            <div className="flex justify-between items-center py-4 mt-2 bg-emerald-500/10 px-4 rounded-xl border border-emerald-500/20"><span className="text-xs font-black uppercase text-emerald-400">Gross Margin</span><span className="text-lg font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
+                            <div className="type-caption font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-emerald-500/20 pb-2">Operating Revenue</div>
+                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-slate-300">Gross Sales</span><span className="type-ui font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
+                            <div className="flex justify-between items-center py-4 mt-2 bg-emerald-500/10 px-4 rounded-xl border border-emerald-500/20"><span className="type-caption font-black uppercase text-emerald-400">Gross Margin</span><span className="text-lg font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
                         </div>
                         <div>
-                            <div className="text-xs font-black text-rose-400 uppercase tracking-widest mb-4 border-b border-rose-500/20 pb-2">Operating Expenses</div>
-                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-slate-300">G&A Expenses</span><span className="text-sm font-black text-rose-300">${stats.totalExpenses.toLocaleString()}</span></div>
+                            <div className="type-caption font-black text-rose-400 uppercase tracking-widest mb-4 border-b border-rose-500/20 pb-2">Operating Expenses</div>
+                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-slate-300">G&A Expenses</span><span className="type-ui font-black text-rose-300">${stats.totalExpenses.toLocaleString()}</span></div>
                         </div>
                         <div className="pt-6 border-t border-white/5">
                             <div className="p-6 bg-white/[0.03] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <span className="text-xs font-black uppercase tracking-widest text-gray-500">Net Operational Result</span>
+                                <span className="type-caption font-black uppercase tracking-widest text-gray-500">Net Operational Result</span>
                                 <span className={`text-3xl font-black ${stats.totalRevenue >= stats.totalExpenses ? 'text-emerald-400' : 'text-rose-400'}`}>${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span>
                             </div>
                         </div>
@@ -378,7 +378,7 @@ export default function AccountingDashboard() {
                     <div className="flex justify-end">
                         <button
                             onClick={() => setOcrModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-lg shadow-teal-500/20"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl type-caption font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-lg shadow-teal-500/20"
                         >
                             Scan Receipt OCR
                         </button>
@@ -421,9 +421,9 @@ export default function AccountingDashboard() {
                 <div className="space-y-6 animate-in fade-in duration-300">
                     <Card className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} overflow-hidden`}>
                         <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-toolbar)]">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-emerald-400" /> Pending & Recent Receipts</h3>
+                            <h3 className="type-caption font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-emerald-400" /> Pending & Recent Receipts</h3>
                             <div className="flex gap-2">
-                                <Button size="sm" variant="ghost" className="text-xs text-slate-300"><Filter size={14} className="mr-1" /> Filter</Button>
+                                <Button size="sm" variant="ghost" className="type-caption text-slate-300"><Filter size={14} className="mr-1" /> Filter</Button>
                                 <Button size="sm" className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}>
                                     <Upload size={14} className="mr-1" /> Add Receipt
                                 </Button>
@@ -445,11 +445,11 @@ export default function AccountingDashboard() {
                                                 <Receipt size={20} />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-black text-white truncate">{receipt.description}</p>
+                                                <p className="type-card-description font-black text-white truncate">{receipt.description}</p>
                                                 <div className="flex items-center gap-3 mt-1">
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
+                                                    <span className="type-caption font-black text-slate-500 uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
                                                     <div className="w-1 h-1 rounded-full bg-slate-800" />
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>{receipt.status}</span>
+                                                    <span className={`type-caption font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>{receipt.status}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -461,7 +461,7 @@ export default function AccountingDashboard() {
                                                 <Button size="sm" onClick={() => handleMarkPaid(receipt.id)} className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30">Mark Paid</Button>
                                             )}
                                             {receipt.status === 'paid' && (
-                                                <div className="text-teal-500 flex items-center gap-1 text-xs font-black uppercase"><CheckCircle2 size={14} /> Recorded</div>
+                                                <div className="text-teal-500 flex items-center gap-1 type-caption font-black uppercase"><CheckCircle2 size={14} /> Recorded</div>
                                             )}
                                         </div>
                                     </div>
@@ -488,8 +488,8 @@ export default function AccountingDashboard() {
             {/* Mobile Action Bar */}
             {isMobile && (
                 <div className="sticky bottom-0 p-4 bg-[var(--ws-toolbar)]/95 backdrop-blur-md border-t border-[var(--ws-border)] z-20 flex gap-2 native-bottom-bar">
-                    <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Add Receipt</button>
-                    <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> New Slip</button>
+                    <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white type-caption font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Add Receipt</button>
+                    <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white type-caption font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> New Slip</button>
                 </div>
             )}
         </div>

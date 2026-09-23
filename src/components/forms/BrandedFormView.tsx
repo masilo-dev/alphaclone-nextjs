@@ -122,9 +122,9 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
               {tenant.name.charAt(0)}
             </div>
           )}
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">{tenant.name}</p>
+          <p className="type-caption font-bold uppercase tracking-widest text-slate-500 mb-1">{tenant.name}</p>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{form.title}</h1>
-          {form.description && <p className="text-slate-600 mt-2 text-sm leading-relaxed">{form.description}</p>}
+          {form.description && <p className="text-slate-600 mt-2 type-card-description leading-relaxed">{form.description}</p>}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-3xl border border-slate-200 shadow-lg p-6 md:p-8 space-y-4">
@@ -132,7 +132,7 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
 
           {fields.map((field) => (
             <div key={field.id} className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+              <label className="type-caption font-bold text-slate-600 uppercase tracking-wide">
                 {field.label}{field.required ? ' *' : ''}
               </label>
               {field.type === 'textarea' ? (
@@ -140,12 +140,12 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
                   {...register(field.id)}
                   placeholder={field.placeholder}
                   rows={4}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2 resize-y"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 type-ui outline-none focus:ring-2 resize-y"
                 />
               ) : field.type === 'select' ? (
                 <select
                   {...register(field.id)}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white outline-none"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 type-ui bg-white outline-none"
                 >
                   <option value="">Select...</option>
                   {(field.options || []).map((opt) => (
@@ -157,11 +157,11 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
                   type={field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
                   {...register(field.id)}
                   placeholder={field.placeholder}
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring-2"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 type-ui outline-none focus:ring-2"
                 />
               )}
               {fieldErrors[field.id] && (
-                <p className="text-xs text-red-600">{fieldErrors[field.id]}</p>
+                <p className="type-card-description text-red-600">{fieldErrors[field.id]}</p>
               )}
             </div>
           ))}
@@ -176,19 +176,19 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
             />
           )}
 
-          {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
+          {error && <p className="type-card-description text-red-600 font-medium">{error}</p>}
 
           <button
             type="submit"
             disabled={isSubmitting || (turnstileEnabled && !turnstileToken)}
-            className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 transition-transform active:scale-[0.98]"
+            className="w-full py-3.5 rounded-xl text-white font-bold type-ui flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 transition-transform active:scale-[0.98]"
             style={{ backgroundColor: accent }}
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {isSubmitting ? 'Sending...' : 'Submit'}
           </button>
 
-          <p className="text-center text-[10px] text-slate-400 pt-1">Powered by AlphaClone</p>
+          <p className="text-center type-card-description text-slate-400 pt-1">Powered by AlphaClone</p>
         </form>
       </div>
     </div>

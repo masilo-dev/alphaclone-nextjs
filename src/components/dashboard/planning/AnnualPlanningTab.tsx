@@ -47,21 +47,21 @@ export default function AnnualPlanningTab() {
       header={
         <div className="px-1 pb-2">
           <h1 className="text-lg font-semibold text-white">Annual Planning · {year}</h1>
-          <p className="text-sm text-slate-400">Yearly rollup from sales goals and quarterly targets</p>
+          <p className="type-card-description text-slate-400">Yearly rollup from sales goals and quarterly targets</p>
         </div>
       }
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Annual target</p>
+          <p className="type-caption text-slate-500 uppercase tracking-wide">Annual target</p>
           <p className="text-xl font-black text-white mt-1">{format(annualTarget)}</p>
         </div>
         <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Actual YTD</p>
+          <p className="type-caption text-slate-500 uppercase tracking-wide">Actual YTD</p>
           <p className="text-xl font-black text-teal-400 mt-1">{format(annualActual)}</p>
         </div>
         <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
-          <p className="text-xs text-slate-500 uppercase tracking-wide">Progress</p>
+          <p className="type-caption text-slate-500 uppercase tracking-wide">Progress</p>
           <p className="text-xl font-black text-emerald-400 mt-1">{pct}%</p>
         </div>
       </div>
@@ -71,10 +71,10 @@ export default function AnnualPlanningTab() {
           <div key={q} className="bg-slate-900 border border-white/5 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <CalendarRange className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-bold text-white">{q} {year}</span>
+              <span className="type-ui font-bold text-white">{q} {year}</span>
             </div>
-            <p className="text-xs text-slate-500">{count} goal{count === 1 ? '' : 's'}</p>
-            <p className="text-sm text-slate-300 mt-2">{format(actual)} / {format(target)}</p>
+            <p className="type-card-description text-slate-500">{count} goal{count === 1 ? '' : 's'}</p>
+            <p className="type-card-description text-slate-300 mt-2">{format(actual)} / {format(target)}</p>
             <div className="mt-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
               <div
                 className="h-full bg-teal-500 rounded-full"
@@ -86,7 +86,7 @@ export default function AnnualPlanningTab() {
       </div>
 
       {!loading && goals.length === 0 && (
-        <p className="text-sm text-slate-500 px-1">
+        <p className="type-card-description text-slate-500 px-1">
           No goals for {year}. Add goals in{' '}
           <a href="/dashboard/goals" className="text-teal-400 hover:underline">Goals & Targets</a>.
         </p>

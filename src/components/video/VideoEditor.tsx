@@ -168,7 +168,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                     </div>
                     <div>
                         <h2 className="text-base font-bold text-white">Video Studio</h2>
-                        <p className="text-xs text-slate-500 uppercase tracking-widest font-black">Open-Source Engine</p>
+                        <p className="type-caption text-slate-500 uppercase tracking-widest font-black">Open-Source Engine</p>
                     </div>
                 </div>
                 <button onClick={onCancel} className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors">
@@ -197,14 +197,14 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
             <div className="p-6 bg-slate-950/80 border-t border-white/5 space-y-6">
                 {/* Timeline Sliders */}
                 <div className="space-y-4">
-                    <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <div className="flex justify-between type-caption font-bold text-slate-500 uppercase tracking-wider">
                         <span>Timeline Control</span>
                         <span className="text-teal-400">{formatTime(startTime)} - {formatTime(endTime)}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">START POINT</label>
+                            <label className="type-label text-slate-400">START POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -220,7 +220,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs text-slate-400">END POINT</label>
+                            <label className="type-label text-slate-400">END POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -263,7 +263,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             <div className="bg-slate-900 border border-teal-500/30 rounded-2xl p-3 flex items-center gap-4">
                                 <Loader2 className="w-4 h-4 text-teal-400 animate-spin shrink-0" />
                                 <div className="flex-1">
-                                    <div className="flex justify-between text-xs text-slate-400 mb-1 font-bold">
+                                    <div className="flex justify-between type-caption text-slate-400 mb-1 font-bold">
                                         <span>PROCESSING VIDEO</span>
                                         <span>{progress}%</span>
                                     </div>
@@ -278,7 +278,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                         ) : (
                             <Button 
                                 onClick={handleProcess}
-                                className="w-full py-6 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(20,184,166,0.3)] rounded-2xl"
+                                className="w-full py-6 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black type-caption uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(20,184,166,0.3)] rounded-2xl"
                             >
                                 <Scissors className="w-4 h-4 mr-2" />
                                 Render Edits

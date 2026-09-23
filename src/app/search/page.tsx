@@ -49,7 +49,7 @@ export default async function Page({
       <main className="min-h-screen bg-slate-950 text-slate-200 pt-20">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-semibold text-white">Search AlphaClone</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+          <p className="mt-3 max-w-2xl type-card-description leading-7 text-slate-400">
             Find product pages, onboarding help, and legal notices from one place.
           </p>
 
@@ -60,7 +60,7 @@ export default async function Page({
               placeholder="Search pages..."
               className="min-w-0 flex-1 rounded-lg border border-slate-800 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-teal-500"
             />
-            <button type="submit" className="rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-teal-400">
+            <button type="submit" className="rounded-lg bg-teal-500 px-4 py-3 type-ui font-semibold text-slate-950 hover:bg-teal-400">
               Search
             </button>
           </form>
@@ -72,9 +72,9 @@ export default async function Page({
                 href={page.href}
                 className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 transition-colors hover:border-teal-500/30"
               >
-                <p className="text-xs uppercase tracking-[0.2em] text-teal-400">{page.href}</p>
+                <p className="type-caption uppercase tracking-caps text-teal-400">{page.href}</p>
                 <h2 className="mt-2 text-xl font-semibold text-white">{page.title}</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-400">{page.description}</p>
+                <p className="mt-2 type-card-description leading-7 text-slate-400">{page.description}</p>
               </Link>
             ))}
           </div>

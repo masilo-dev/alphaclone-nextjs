@@ -36,7 +36,7 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-xs font-bold uppercase tracking-wider text-teal-300 hover:bg-slate-800 hover:text-teal-200 transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 type-caption font-bold uppercase tracking-wider text-teal-300 hover:bg-slate-800 hover:text-teal-200 transition-colors"
       >
         <UserPlus className="w-3.5 h-3.5" />
         Pick contact
@@ -51,7 +51,7 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search CRM contacts..."
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-slate-500 focus:outline-none"
+              className="flex-1 bg-transparent type-ui text-white placeholder:text-slate-500 focus:outline-none"
               autoFocus
             />
             <button type="button" onClick={() => setOpen(false)} className="text-slate-500 hover:text-white">
@@ -60,9 +60,9 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
           </div>
           <div className="max-h-56 overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <p className="p-3 text-xs text-slate-500">Loading contacts...</p>
+              <p className="p-3 type-card-description text-slate-500">Loading contacts...</p>
             ) : withEmail.length === 0 ? (
-              <p className="p-3 text-xs text-slate-500">No contacts with email found.</p>
+              <p className="p-3 type-card-description text-slate-500">No contacts with email found.</p>
             ) : (
               withEmail.map((c) => (
                 <button
@@ -75,8 +75,8 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
                   }}
                   className="w-full text-left px-3 py-2.5 hover:bg-slate-800 border-b border-slate-800/50 last:border-0"
                 >
-                  <div className="text-sm font-medium text-white truncate">{c.name || 'Unnamed'}</div>
-                  <div className="text-xs text-slate-400 truncate">{c.email}</div>
+                  <div className="type-ui font-medium text-white truncate">{c.name || 'Unnamed'}</div>
+                  <div className="type-caption text-slate-400 truncate">{c.email}</div>
                 </button>
               ))
             )}

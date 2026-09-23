@@ -117,7 +117,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                         {variant === 'stage' && (
                             <>
                                 <p className="text-white font-semibold text-lg">{displayName}</p>
-                                <p className="text-slate-500 text-sm mt-1">Camera is off</p>
+                                <p className="text-slate-500 type-card-description mt-1">Camera is off</p>
                             </>
                         )}
                     </div>
@@ -133,7 +133,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                             <div className={`w-2 h-2 rounded-full ${!isAudioOff ? 'bg-teal-500 animate-pulse' : 'bg-red-500'}`} />
-                            <span className="text-white text-sm font-semibold tracking-wide shadow-black drop-shadow-md">
+                            <span className="text-white type-caption font-semibold tracking-wide shadow-black drop-shadow-md">
                                 {displayName} {isLocal && '(You)'}
                             </span>
                         </div>
@@ -157,7 +157,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                     <div className="bg-black/60 backdrop-blur-md rounded px-1.5 py-0.5 flex items-center gap-1 border border-white/10">
                         {isAudioOff && <MicOff className="w-2.5 h-2.5 text-red-400" />}
                         {isVideoOff && <VideoOff className="w-2.5 h-2.5 text-red-400" />}
-                        <span className="text-xs font-bold text-white uppercase truncate max-w-[50px]">{displayName}</span>
+                        <span className="type-caption font-bold text-white uppercase truncate max-w-[50px]">{displayName}</span>
                     </div>
                 </div>
             )}
@@ -165,7 +165,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
             {/* Local indicator */}
             {isLocal && (
                 <div className="absolute top-4 left-4 bg-teal-500/90 backdrop-blur-md px-3 py-1 rounded-lg shadow-lg shadow-teal-900/20 border border-teal-400/20">
-                    <span className="text-white text-xs font-bold tracking-wider uppercase">You</span>
+                    <span className="text-white type-caption font-bold tracking-wider uppercase">You</span>
                 </div>
             )}
         </div>

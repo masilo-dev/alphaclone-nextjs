@@ -316,7 +316,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
             <div className="space-y-4">
                 {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Send via</label>
+                    <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Send via</label>
                     <div className="flex flex-wrap gap-2 p-1 bg-[var(--ws-surface-secondary)] rounded-[10px] border border-[var(--ws-border)]">
                         {availableProviders.map((p) => {
                             if (!p) return null;
@@ -334,7 +334,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 }}
                                 disabled={loadingProvider}
                                 title={connected ? `Send with ${providerLabels[p]}` : `Connect ${providerLabels[p]} in Settings`}
-                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] text-xs font-semibold transition-all ${
+                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] type-caption font-semibold transition-all ${
                                     selectedProvider === p && connected
                                     ? 'bg-[var(--brand-blue-500)] text-white shadow-sm' 
                                     : connected
@@ -350,7 +350,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                         })}
                     </div>
                     {!loadingProvider && !availableProviders.some((p) => p && providerStatus[p]) && (
-                        <p className="text-xs text-amber-400">
+                        <p className="type-card-description text-amber-400">
                             No email provider connected. Go to Settings → Integrations and connect Microsoft 365 or Zoho Mail.
                         </p>
                     )}
@@ -359,7 +359,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                 {/* Recipient selector — hidden when locked to a deal/quote recipient */}
                 {!recipient && (
                 <div ref={pickerRef}>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Recipient</label>
+                    <label className="block type-label font-medium text-slate-300 mb-2">Recipient</label>
                     <div className="relative">
                         <button
                             type="button"
@@ -372,11 +372,11 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             <div className="flex-1 min-w-0">
                                 {selectedClient ? (
                                     <>
-                                        <p className="text-white font-medium text-sm truncate">{selectedClient.name}</p>
-                                        <p className="text-slate-400 text-xs truncate">{selectedClient.email}</p>
+                                        <p className="text-white font-medium type-card-description truncate">{selectedClient.name}</p>
+                                        <p className="text-slate-400 type-card-description truncate">{selectedClient.email}</p>
                                     </>
                                 ) : (
-                                    <p className="text-slate-400 text-sm">Select a client from your directory...</p>
+                                    <p className="text-slate-400 type-card-description">Select a client from your directory...</p>
                                 )}
                             </div>
                             <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform shrink-0 ${showPicker ? 'rotate-180' : ''}`} />
@@ -393,13 +393,13 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-[var(--brand-blue-500)]/50 transition-all"
+                                            className="w-full bg-slate-900 text-white type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-[var(--brand-blue-500)]/50 transition-all"
                                         />
                                     </div>
                                 </div>
                                 <div className="max-h-52 overflow-y-auto">
                                     {filteredContacts.length === 0 ? (
-                                        <p className="text-slate-500 text-xs text-center py-4">No clients with email found</p>
+                                        <p className="text-slate-500 type-card-description text-center py-4">No clients with email found</p>
                                     ) : filteredContacts.map(contact => (
                                         <button
                                             key={contact.id}
@@ -415,10 +415,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                                 <User className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-white text-xs font-medium truncate">{contact.name}</p>
-                                                <p className="text-slate-400 text-xs truncate">{contact.email}</p>
+                                                <p className="text-white type-card-description font-medium truncate">{contact.name}</p>
+                                                <p className="text-slate-400 type-card-description truncate">{contact.email}</p>
                                             </div>
-                                            <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
+                                            <span className={`type-caption px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
                                                 contact.salesStage === 'customer' ? 'bg-emerald-500/20 text-emerald-400' :
                                                 contact.salesStage === 'lead' ? 'bg-amber-500/20 text-amber-400' :
                                                 'bg-sky-500/20 text-sky-400'
@@ -430,7 +430,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                         )}
                     </div>
                     {selectedClient && !selectedClient.email && (
-                        <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
+                        <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 type-caption">
                             This client has no email address. Please update their profile.
                         </div>
                     )}
@@ -441,8 +441,8 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                     <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-active)] p-3 flex items-center gap-3">
                         <Mail className="w-4 h-4 text-[var(--brand-blue-500)] shrink-0" />
                         <div>
-                            <p className="text-sm font-semibold text-[var(--ws-text-primary)]">{recipient.name}</p>
-                            <p className="text-xs text-[var(--ws-text-muted)]">{recipient.email}</p>
+                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{recipient.name}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">{recipient.email}</p>
                         </div>
                     </div>
                 )}
@@ -467,12 +467,12 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
 
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
-                            <label className="text-sm font-medium text-slate-300">Message</label>
+                            <label className="type-label font-medium text-slate-300">Message</label>
                             <button
                                 type="button"
                                 onClick={handleGenerateWithAI}
                                 disabled={aiGenerating || !selectedClient || loadingProvider}
-                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-[8px] border border-[var(--ws-border)] text-[var(--brand-violet-500)] hover:bg-[var(--ws-hover)] transition-all disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 type-caption px-2.5 py-1.5 rounded-[8px] border border-[var(--ws-border)] text-[var(--brand-violet-500)] hover:bg-[var(--ws-hover)] transition-all disabled:opacity-50"
                             >
                                 {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                 Bonnie draft
@@ -483,13 +483,13 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="Type your message here..."
                             disabled={!selectedClient?.email || loadingProvider}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] p-3 rounded-[12px] text-[var(--ws-text-primary)] text-sm focus:outline-none focus:border-[var(--brand-blue-500)] transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] p-3 rounded-[12px] text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-[var(--brand-blue-500)] transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
                         />
                     </div>
                 </div>
 
                 <div className="border-t border-[var(--ws-border)] pt-4 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-[var(--ws-text-muted)] text-xs flex items-center gap-2">
+                    <div className="text-[var(--ws-text-muted)] type-caption flex items-center gap-2">
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : selectedProvider ? (

@@ -19,12 +19,12 @@ export default function ExecutionSessionPage() {
   return (
     <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
       <div className="max-w-4xl mx-auto px-4 py-20 pt-32">
-        <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 text-sm">
+        <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 type-ui">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
         </Link>
 
-        <p className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-3">The AlphaClone Execution Session</p>
+        <p className="type-caption font-semibold uppercase tracking-widest text-teal-400 mb-3">The AlphaClone Execution Session</p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-marketing-heading mb-6 leading-tight">
           Map one workflow. See whether AlphaClone can execute it reliably.
         </h1>
@@ -39,7 +39,7 @@ export default function ExecutionSessionPage() {
 
         <section className="mb-14 rounded-2xl border border-slate-700/60 bg-slate-900/50 p-6 sm:p-8">
           <h2 className="text-xl font-bold mb-2">What we cover (45–60 minutes)</h2>
-          <p className="text-slate-400 text-sm mb-6">Free diagnostic available for a shorter fit check on request.</p>
+          <p className="text-slate-400 type-card-description mb-6">Free diagnostic available for a shorter fit check on request.</p>
           <ul className="space-y-5">
             {SESSION_STEPS.map(({ icon: Icon, title, body }) => (
               <li key={title} className="flex gap-4">
@@ -48,7 +48,7 @@ export default function ExecutionSessionPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white">{title}</h3>
-                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">{body}</p>
+                  <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{body}</p>
                 </div>
               </li>
             ))}
@@ -58,7 +58,7 @@ export default function ExecutionSessionPage() {
         <section className="mb-14">
           <h2 className="text-xl font-bold mb-4">Example anchor workflow: {ANCHOR_WORKFLOW.title}</h2>
           <p className="text-slate-300 mb-4">{ANCHOR_WORKFLOW.summary}</p>
-          <ol className="list-decimal list-inside space-y-2 text-slate-400 text-sm">
+          <ol className="list-decimal list-inside space-y-2 text-slate-400 type-ui">
             {ANCHOR_WORKFLOW.steps.map((step) => (
               <li key={step}>{step}</li>
             ))}
@@ -68,7 +68,7 @@ export default function ExecutionSessionPage() {
         <section className="mb-14 grid sm:grid-cols-2 gap-6">
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5">
             <h3 className="font-semibold text-emerald-300 mb-2">Good fit when</h3>
-            <ul className="text-sm text-slate-300 space-y-2 list-disc list-inside">
+            <ul className="type-ui text-slate-300 space-y-2 list-disc list-inside">
               <li>You coordinate leads, delivery, and billing across several tools</li>
               <li>You can connect at least one email or payment integration</li>
               <li>You want control — approvals before client-facing actions</li>
@@ -76,7 +76,7 @@ export default function ExecutionSessionPage() {
           </div>
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
             <h3 className="font-semibold text-amber-300 mb-2">We may defer when</h3>
-            <ul className="text-sm text-slate-300 space-y-2 list-disc list-inside">
+            <ul className="type-ui text-slate-300 space-y-2 list-disc list-inside">
               <li>You need channels we mark as coming soon (e.g. WhatsApp-primary ops)</li>
               <li>You require guaranteed revenue, leads, or full unattended automation</li>
               <li>No repeating workflow exists yet to map</li>
@@ -85,7 +85,7 @@ export default function ExecutionSessionPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-6 text-center">
-          <p className="text-slate-600 text-sm mb-4">{MARKETING_PRICING.startingPriceLine} · See pricing for current plan details</p>
+          <p className="text-slate-600 type-card-description mb-4">{MARKETING_PRICING.startingPriceLine} · See pricing for current plan details</p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <PrimaryCTA href={DEMO_HREF}>Book execution session</PrimaryCTA>
             <SecondaryCTA href="/how-it-works">See how execution works</SecondaryCTA>

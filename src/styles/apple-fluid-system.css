@@ -41,19 +41,19 @@
 .ac-business-root h1,
 .ac-business-root h2,
 .ac-business-root [data-page-title] {
-  letter-spacing: -0.025em;
+  letter-spacing: var(--tracking-display);
   text-wrap: balance;
 }
 
 .ac-business-root h3,
 .ac-business-root h4 {
-  letter-spacing: -0.012em;
+  letter-spacing: var(--tracking-display);
 }
 
 .ac-business-root label,
 .ac-business-root caption,
 .ac-business-root [data-caption] {
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-label);
 }
 
 /* Keep content panels solid/readable. Depth belongs primarily to chrome. */
@@ -241,13 +241,13 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 }
 
 .marketing-theme h1 {
-  letter-spacing: -0.04em;
-  line-height: 1.05;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-tight);
   text-wrap: balance;
 }
 
 .marketing-theme h2 {
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-display);
   text-wrap: balance;
 }
 

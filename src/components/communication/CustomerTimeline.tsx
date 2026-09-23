@@ -74,7 +74,7 @@ export function CustomerTimeline({ clientId, className, maxItems = 50, onOpenCom
   }
 
   if (error) {
-    return <p className="text-[12px] text-red-400 p-4">{error}</p>;
+    return <p className="type-card-description text-red-400 p-4">{error}</p>;
   }
 
   if (activities.length === 0) {
@@ -106,11 +106,11 @@ export function CustomerTimeline({ clientId, className, maxItems = 50, onOpenCom
               <Icon className="w-3.5 h-3.5 text-teal-400" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-[var(--ws-text-primary)] truncate">{activity.title}</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{activity.title}</p>
               {showDescription ? (
-                <p className="text-[11px] text-[var(--ws-text-tertiary)] line-clamp-2 mt-0.5">{cleanDescription}</p>
+                <p className="type-card-description text-[var(--ws-text-tertiary)] line-clamp-2 mt-0.5">{cleanDescription}</p>
               ) : null}
-              <p className="text-[10px] text-[var(--ws-text-tertiary)] mt-1">
+              <p className="type-card-description text-[var(--ws-text-tertiary)] mt-1">
                 {new Date(activity.created_at).toLocaleString(undefined, {
                   month: 'short',
                   day: 'numeric',

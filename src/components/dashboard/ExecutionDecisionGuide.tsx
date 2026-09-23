@@ -47,10 +47,10 @@ export function ExecutionDecisionGuide({
     <section className={cn('ac-workspace-panel rounded-lg p-3', className)} aria-label={t(title)}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{t(title)}</p>
-          <p className="mt-0.5 text-xs leading-5 text-slate-400">{t(description)}</p>
+          <p className="type-caption font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{t(title)}</p>
+          <p className="mt-0.5 type-card-description leading-5 text-slate-400">{t(description)}</p>
         </div>
-        <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
+        <div className="flex flex-wrap gap-2 type-caption font-bold uppercase tracking-wider">
           {(['success', 'running', 'warning', 'danger'] as SemanticStatus[]).map((status) => {
             const style = SEMANTIC_STATUS_STYLES[status];
             return (
@@ -70,7 +70,7 @@ export function ExecutionDecisionGuide({
           const content = (
             <>
               <div className="flex items-center justify-between gap-3">
-                <span className={cn('inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest', style.text)}>
+                <span className={cn('inline-flex items-center gap-2 type-caption font-black uppercase tracking-widest', style.text)}>
                   <span className={cn('flex h-7 w-7 items-center justify-center rounded-full border', style.badge)}>
                     <StepIcon status={status} />
                   </span>
@@ -78,8 +78,8 @@ export function ExecutionDecisionGuide({
                 </span>
                 {step.href ? <ChevronRight className="h-4 w-4 text-slate-500" aria-hidden /> : null}
               </div>
-              <h3 className="mt-2 text-[13px] font-semibold text-white">{t(step.title)}</h3>
-              <p className="mt-0.5 text-xs leading-5 text-slate-400">{t(step.description)}</p>
+              <h3 className="mt-2 type-ui font-semibold text-white">{t(step.title)}</h3>
+              <p className="mt-0.5 type-card-description leading-5 text-slate-400">{t(step.description)}</p>
             </>
           );
 

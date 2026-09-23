@@ -90,7 +90,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
             className="absolute top-0 bottom-0 border-l border-slate-700/30"
             style={{ left: i * COLUMN_WIDTH }}
           >
-            <span className="text-xs text-slate-500 p-1 block bg-slate-800/80 rounded mt-1 ml-1">
+            <span className="type-caption text-slate-500 p-1 block bg-slate-800/80 rounded mt-1 ml-1">
               {date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </span>
           </div>
@@ -147,9 +147,9 @@ export const GanttChart: React.FC<GanttChartProps> = ({ tasks, edges }) => {
               style={{ left: x, top: y, width: 200 }}
               whileHover={{ scale: 1.02, x: x + 2 }}
             >
-              <div className="truncate text-sm font-medium">{task.title}</div>
+              <div className="truncate type-ui font-medium">{task.title}</div>
               <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-xs uppercase font-bold px-1.5 py-0.5 rounded bg-black/40">
+                <span className="type-caption uppercase font-bold px-1.5 py-0.5 rounded bg-black/40">
                   {task.status}
                 </span>
               </div>

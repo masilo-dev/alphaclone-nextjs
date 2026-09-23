@@ -835,7 +835,7 @@ Return only the comment text.`;
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <h2 className="text-xl font-bold text-white">Social Media Composer</h2>
-                    <p className="text-sm text-slate-400">Create, schedule and publish posts with images & video</p>
+                    <p className="type-card-description text-slate-400">Create, schedule and publish posts with images & video</p>
                 </div>
                 <div className="flex w-full gap-2 sm:w-auto">
                     <button 
@@ -849,12 +849,12 @@ Return only the comment text.`;
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-social' });
                         }}
-                        className="flex min-h-10 flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5 sm:flex-none"
+                        className="flex min-h-10 flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl type-caption font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5 sm:flex-none"
                     >
                         <Sparkles className="w-4 h-4" />
                         Nexus Audit
                     </button>
-                    <button onClick={loadData} className="flex min-h-10 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white sm:flex-none">
+                    <button onClick={loadData} className="flex min-h-10 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-slate-400 hover:text-white sm:flex-none">
                         <RefreshCw className="w-3 h-3" /> Refresh
                     </button>
                 </div>
@@ -864,7 +864,7 @@ Return only the comment text.`;
             <div className="flex max-w-full gap-1 overflow-x-auto p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit scrollbar-none">
                 {(['compose', 'posts', 'media'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
                         {tab === 'compose' ? 'Composer' : tab === 'posts' ? `Posts (${posts.length})` : `Media (${mediaAssets.length})`}
                     </button>
                 ))}
@@ -877,20 +877,20 @@ Return only the comment text.`;
                     <div className="lg:col-span-2 space-y-4">
                         {posts.some((p) => p.status === 'failed') && (
                             <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
-                                <p className="text-xs font-semibold text-amber-300 mb-2">
+                                <p className="type-card-description font-semibold text-amber-300 mb-2">
                                     Some posts failed to publish. Review the error and retry.
                                 </p>
                                 <div className="space-y-2">
                                     {posts.filter((p) => p.status === 'failed').slice(0, 2).map((post) => (
                                         <div key={post.id} className="flex items-start justify-between gap-3 rounded-lg bg-slate-900/40 p-2">
                                             <div>
-                                                <p className="text-xs text-slate-200 line-clamp-2">{post.caption}</p>
-                                                <p className="text-[11px] text-rose-300 mt-1">{post.error_message || 'Unknown publish error'}</p>
+                                                <p className="type-card-description text-slate-200 line-clamp-2">{post.caption}</p>
+                                                <p className="type-card-description text-rose-300 mt-1">{post.error_message || 'Unknown publish error'}</p>
                                             </div>
                                             <button
                                                 onClick={() => handleRetryPost(post)}
                                                 disabled={retryingPostId === post.id}
-                                                className="shrink-0 rounded-lg border border-amber-500/40 px-2.5 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50"
+                                                className="shrink-0 rounded-lg border border-amber-500/40 px-2.5 py-1 type-caption font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50"
                                             >
                                                 {retryingPostId === post.id ? 'Retrying...' : 'Retry'}
                                             </button>
@@ -902,12 +902,12 @@ Return only the comment text.`;
                         {/* Caption */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Caption *</label>
+                                <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Caption *</label>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={startVoiceInput}
                                         title={isListening ? 'Stop recording' : 'Voice-type your caption (Chrome/Edge)'}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-xs font-semibold transition-all ${
+                                        className={`flex items-center gap-1.5 px-2.5 py-1 border rounded-lg type-caption font-semibold transition-all ${
                                             isListening
                                                 ? 'bg-red-500/20 border-red-500/40 text-red-400 animate-pulse'
                                                 : 'bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-slate-400 hover:text-white'
@@ -918,7 +918,7 @@ Return only the comment text.`;
                                     </button>
                                     <button
                                         onClick={() => setShowAiPanel(v => !v)}
-                                        className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                                        className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg type-caption font-semibold transition-colors"
                                     >
                                         <Sparkles className="w-3 h-3" /> AI Write
                                     </button>
@@ -928,19 +928,19 @@ Return only the comment text.`;
                             {/* AI Panel */}
                             {showAiPanel && (
                                 <div className="mb-3 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
-                                    <p className="text-xs font-semibold text-violet-300">AI Caption Generator</p>
+                                    <p className="type-card-description font-semibold text-violet-300">AI Caption Generator</p>
                                     <input
                                         value={aiTopic}
                                         onChange={e => setAiTopic(e.target.value)}
                                         placeholder="What is this post about? e.g. 'summer sale, 30% off all services'"
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 type-ui"
                                     />
                                     <div className="flex gap-2 flex-wrap">
                                         {(['engaging', 'professional', 'casual', 'promotional'] as const).map(t => (
                                             <button
                                                 key={t}
                                                 onClick={() => setAiTone(t)}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold capitalize transition-all ${
+                                                className={`px-2.5 py-1 rounded-lg type-caption font-semibold capitalize transition-all ${
                                                     aiTone === t ? 'bg-violet-500 text-white' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
                                                 }`}
                                             >
@@ -957,7 +957,7 @@ Return only the comment text.`;
                                             <button
                                                 key={item.id}
                                                 onClick={() => setAiContentType(item.id as typeof aiContentType)}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                className={`px-2.5 py-1 rounded-lg type-caption font-semibold transition-all ${
                                                     aiContentType === item.id ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
                                                 }`}
                                             >
@@ -967,13 +967,13 @@ Return only the comment text.`;
                                     </div>
                                     {recentPosts.length > 0 && (
                                         <div className="space-y-2 rounded-lg border border-violet-500/20 bg-slate-900/40 p-2.5">
-                                            <p className="text-xs text-violet-200">
+                                            <p className="type-card-description text-violet-200">
                                                 Recent posts found in the last {recentTopicWindowDays} days: {recentPosts.length}
                                             </p>
                                             <div className="flex flex-wrap gap-1.5">
                                                 <button
                                                     onClick={() => setTopicDirection('same')}
-                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                    className={`px-2.5 py-1 rounded-lg type-caption font-semibold transition-all ${
                                                         topicDirection === 'same'
                                                             ? 'bg-violet-500 text-white'
                                                             : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
@@ -983,7 +983,7 @@ Return only the comment text.`;
                                                 </button>
                                                 <button
                                                     onClick={() => setTopicDirection('change')}
-                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                    className={`px-2.5 py-1 rounded-lg type-caption font-semibold transition-all ${
                                                         topicDirection === 'change'
                                                             ? 'bg-teal-500 text-slate-950'
                                                             : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
@@ -993,7 +993,7 @@ Return only the comment text.`;
                                                 </button>
                                             </div>
                                             {recentTopicHints.length > 0 && (
-                                                <p className="text-[11px] text-slate-400">
+                                                <p className="type-card-description text-slate-400">
                                                     Recent topic hints: {recentTopicHints.slice(0, 3).join(' | ')}
                                                 </p>
                                             )}
@@ -1002,7 +1002,7 @@ Return only the comment text.`;
                                     <button
                                         onClick={generateWithAI}
                                         disabled={aiGenerating || !aiTopic.trim() || (recentPosts.length > 0 && !topicDirection)}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg type-caption font-semibold transition-colors"
                                     >
                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                         {aiGenerating
@@ -1023,7 +1023,7 @@ Return only the comment text.`;
                                 placeholder="Write your post caption here, or use AI Write above..."
                                 className="w-full min-h-[180px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-base text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-y"
                             />
-                            <p className={`text-xs text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>
+                            <p className={`type-card-description text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>
                                 {charCount.toLocaleString()} chars
                             </p>
                         </div>
@@ -1031,16 +1031,16 @@ Return only the comment text.`;
                         {/* Media selection */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Media (images / video)</label>
+                                <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Media (images / video)</label>
                                 <div className="flex gap-2 flex-wrap">
                                     <button onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
-                                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
+                                        className="flex items-center gap-1.5 type-caption px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
                                         {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
                                         Upload
                                     </button>
                                     <button onClick={() => setShowMediaPicker(!showMediaPicker)}
-                                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
+                                        className="flex items-center gap-1.5 type-caption px-3 py-1.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-lg transition-colors">
                                         <ImageIcon className="w-3 h-3" /> Library
                                     </button>
                                     <button
@@ -1048,7 +1048,7 @@ Return only the comment text.`;
                                             setShowAiImagePanel(v => !v);
                                             if (showAiImagePanel) { setAiGeneratedImageUrl(null); setAiImagePrompt(''); }
                                         }}
-                                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 border rounded-lg transition-all ${
+                                        className={`flex items-center gap-1.5 type-caption px-3 py-1.5 border rounded-lg transition-all ${
                                             showAiImagePanel
                                                 ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
                                                 : 'bg-slate-700 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white'
@@ -1065,8 +1065,8 @@ Return only the comment text.`;
                                 <div className="mt-3 p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-xl space-y-3">
                                     <div className="flex items-center gap-2">
                                         <Wand2 className="w-4 h-4 text-indigo-400" />
-                                        <p className="text-xs font-semibold text-indigo-300">AI Image Generator (DALL-E 3)</p>
-                                        <span className="ml-auto text-xs text-slate-500 italic">Images are temporary unless attached</span>
+                                        <p className="type-card-description font-semibold text-indigo-300">AI Image Generator (DALL-E 3)</p>
+                                        <span className="ml-auto type-caption text-slate-500 italic">Images are temporary unless attached</span>
                                     </div>
 
                                     <textarea
@@ -1074,16 +1074,16 @@ Return only the comment text.`;
                                         onChange={e => setAiImagePrompt(e.target.value)}
                                         placeholder="Describe the image, e.g. 'A professional team meeting in a modern office, warm lighting, photorealistic'"
                                         rows={2}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 type-ui resize-none"
                                     />
 
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs text-slate-500">Size:</span>
+                                        <span className="type-caption text-slate-500">Size:</span>
                                         {([['1024x1024', 'Square'], ['1792x1024', 'Landscape'], ['1024x1792', 'Portrait']] as const).map(([val, label]) => (
                                             <button
                                                 key={val}
                                                 onClick={() => setAiImageSize(val)}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                className={`px-2.5 py-1 rounded-lg type-caption font-semibold transition-all ${
                                                     aiImageSize === val
                                                         ? 'bg-indigo-500 text-white'
                                                         : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
@@ -1095,7 +1095,7 @@ Return only the comment text.`;
                                         <button
                                             onClick={generateAIImage}
                                             disabled={aiImageGenerating || !aiImagePrompt.trim()}
-                                            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg type-caption font-semibold transition-colors"
                                         >
                                             {aiImageGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                                             {aiImageGenerating ? 'Generating...' : 'Generate'}
@@ -1114,14 +1114,14 @@ Return only the comment text.`;
                                                 <button
                                                     onClick={attachAIGeneratedImage}
                                                     disabled={attachingImage}
-                                                    className="flex items-center gap-2 px-3 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white rounded-lg text-xs font-bold transition-colors"
+                                                    className="flex items-center gap-2 px-3 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white rounded-lg type-caption font-bold transition-colors"
                                                 >
                                                     {attachingImage ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                                                     {attachingImage ? 'Attaching...' : 'Attach to Post'}
                                                 </button>
                                                 <button
                                                     onClick={() => { setAiGeneratedImageUrl(null); setAiImagePrompt(''); }}
-                                                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-colors"
+                                                    className="flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg type-caption font-semibold transition-colors"
                                                 >
                                                     <X className="w-3 h-3" /> Discard
                                                 </button>
@@ -1129,7 +1129,7 @@ Return only the comment text.`;
                                                     href={aiGeneratedImageUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition-colors"
+                                                    className="ml-auto flex items-center gap-1.5 px-3 py-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 rounded-lg type-caption transition-colors"
                                                 >
                                                     <Eye className="w-3 h-3" /> Full Size
                                                 </a>
@@ -1162,7 +1162,7 @@ Return only the comment text.`;
                             {showMediaPicker && (
                                 <div className="border border-slate-700 rounded-xl p-3 bg-slate-900/50 max-h-60 overflow-y-auto">
                                     {mediaAssets.length === 0 ? (
-                                        <p className="text-slate-500 text-xs text-center py-4">No media uploaded yet</p>
+                                        <p className="text-slate-500 type-card-description text-center py-4">No media uploaded yet</p>
                                     ) : (
                                         <div className="grid grid-cols-4 gap-2">
                                             {mediaAssets.map(asset => (
@@ -1190,10 +1190,10 @@ Return only the comment text.`;
 
                         {/* Hashtags */}
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Hashtags</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Hashtags</label>
                             <div className="flex flex-wrap gap-1.5 mb-2">
                                 {hashtags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 border border-blue-500/30 text-blue-400 rounded-full text-xs">
+                                    <span key={tag} className="flex items-center gap-1 px-2 py-0.5 bg-blue-500/15 border border-blue-500/30 text-blue-400 rounded-full type-caption">
                                         #{tag}
                                         <button onClick={() => setHashtags(prev => prev.filter(h => h !== tag))} className="hover:text-red-400">
                                             <X className="w-2.5 h-2.5" />
@@ -1206,25 +1206,25 @@ Return only the comment text.`;
                                 onChange={e => setHashtagInput(e.target.value)}
                                 onKeyDown={handleAddHashtag}
                                 placeholder="Type hashtag + Enter (no # needed)"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm"
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui"
                             />
                         </div>
 
                         {/* Link */}
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Link (optional)</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Link (optional)</label>
                             <div className="relative">
                                 <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                                 <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
                                     placeholder="https://yourwebsite.com"
-                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                             </div>
                         </div>
 
                         {/* Video editing note */}
                         <div className="flex gap-3 p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                             <Film className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                            <div className="text-xs text-teal-300">
+                            <div className="type-caption text-teal-300">
                                 <p className="font-semibold mb-0.5">Cloud Video Editor Active</p>
                                 <p className="text-teal-400">You can now trim and edit your videos directly in AlphaClone using our open-source processing engine. Click "Edit" on any video in your library.</p>
                             </div>
@@ -1235,23 +1235,23 @@ Return only the comment text.`;
                     <div className="space-y-5">
                         {/* Preview */}
                         <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Preview</p>
+                            <p className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-3">Preview</p>
                             <div className="bg-slate-800 rounded-xl p-3">
                                 {selectedMedia[0] && (
                                     selectedMediaTypes[0] === 'video'
                                         ? <div className="w-full aspect-video bg-slate-900 rounded-lg flex items-center justify-center mb-3"><Film className="w-8 h-8 text-slate-600" /></div>
                                         : <img src={selectedMedia[0]} alt="" className="w-full rounded-lg mb-3 object-cover max-h-48" />
                                 )}
-                                <p className="text-sm text-white whitespace-pre-line line-clamp-4">{caption || <span className="text-slate-600 italic">Your caption will appear here...</span>}</p>
+                                <p className="type-card-description text-white whitespace-pre-line line-clamp-4">{caption || <span className="text-slate-600 italic">Your caption will appear here...</span>}</p>
                                 {hashtags.length > 0 && (
-                                    <p className="text-xs text-blue-400 mt-2">{hashtags.map(h => `#${h}`).join(' ')}</p>
+                                    <p className="type-card-description text-blue-400 mt-2">{hashtags.map(h => `#${h}`).join(' ')}</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Platforms */}
                         <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Platforms</p>
+                            <p className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-3">Platforms</p>
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
                                 { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4 text-sky-400" /> },
@@ -1262,18 +1262,18 @@ Return only the comment text.`;
                                     <input type="checkbox" checked={platforms.includes(p.id)} disabled={p.disabled} onChange={() => togglePlatform(p.id)}
                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
                                     {p.icon}
-                                    <span className={`text-sm ${p.disabled ? 'text-slate-500' : 'text-slate-300'}`}>{p.label}</span>
+                                    <span className={`type-ui ${p.disabled ? 'text-slate-500' : 'text-slate-300'}`}>{p.label}</span>
                                 </label>
                             ))}
 
                             {platforms.includes('twitter') && !xIntegration && (
                                 <div className="mt-3 space-y-2">
-                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                    <p className="type-card-description text-amber-400 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" /> Connect X Account first
                                     </p>
                                     <button
                                         onClick={() => window.location.href = '/api/auth/x'}
-                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-colors"
+                                        className="w-full px-3 py-2 type-caption font-semibold rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-colors"
                                     >
                                         Connect X
                                     </button>
@@ -1283,36 +1283,36 @@ Return only the comment text.`;
                             {platforms.includes('twitter') && xIntegration && (
                                 <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs text-emerald-400 font-bold">X Connected</span>
-                                        <span className="text-xs text-slate-400">@{xIntegration.x_username}</span>
+                                        <span className="type-caption text-emerald-400 font-bold">X Connected</span>
+                                        <span className="type-caption text-slate-400">@{xIntegration.x_username}</span>
                                     </div>
                                 </div>
                             )}
 
                             {platforms.includes('facebook') && fbPages.length > 0 && (
                                 <div className="mt-3">
-                                    <label className="text-xs text-slate-500 mb-1 block">Page</label>
+                                    <label className="type-label text-slate-500 mb-1 block">Page</label>
                                     <select value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)}
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-teal-500">
+                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:border-teal-500">
                                         {fbPages.map(p => <option key={p.page_id} value={p.page_id}>{p.page_name}</option>)}
                                     </select>
                                 </div>
                             )}
 
                             {platforms.includes('facebook') && fbPages.length === 0 && (
-                                <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                                <p className="type-card-description text-amber-400 mt-2 flex items-center gap-1">
                                     <AlertTriangle className="w-3 h-3" /> Connect Facebook first
                                 </p>
                             )}
 
                             {platforms.includes('linkedin') && linkedinIntegrations.length === 0 && (
                                 <div className="mt-3 space-y-2">
-                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                    <p className="type-card-description text-amber-400 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" /> Connect LinkedIn first
                                     </p>
                                     <button
                                         onClick={handleConnectLinkedIn}
-                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                        className="w-full px-3 py-2 type-caption font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
                                     >
                                         Connect LinkedIn
                                     </button>
@@ -1321,12 +1321,12 @@ Return only the comment text.`;
 
                             {platforms.includes('linkedin') && linkedinIntegrations.length > 0 && (
                                 <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-2.5">
-                                    <p className="text-xs font-semibold text-sky-300 mb-2">LinkedIn Scopes</p>
-                                    <label className="text-xs text-slate-500 mb-1 block">LinkedIn Account</label>
+                                    <p className="type-card-description font-semibold text-sky-300 mb-2">LinkedIn Scopes</p>
+                                    <label className="type-label text-slate-500 mb-1 block">LinkedIn Account</label>
                                     <select
                                         value={selectedLinkedInMemberId}
                                         onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
-                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-sky-500"
+                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:border-sky-500"
                                     >
                                         {linkedinIntegrations.map((row) => (
                                             <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
@@ -1335,39 +1335,39 @@ Return only the comment text.`;
                                         ))}
                                     </select>
                                     {selectedLinkedInMemberId && (
-                                        <p className="text-[11px] text-sky-300 mb-2">Active account: {selectedLinkedInMemberId}</p>
+                                        <p className="type-card-description text-sky-300 mb-2">Active account: {selectedLinkedInMemberId}</p>
                                     )}
                                     {!isSelectedLinkedInActive && (
-                                        <p className="text-xs text-amber-300 mb-2">
+                                        <p className="type-card-description text-amber-300 mb-2">
                                             Selected account is inactive. Reconnect to activate.
                                         </p>
                                     )}
                                     <button
                                         onClick={handleConnectLinkedIn}
-                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                        className="w-full mb-2 px-3 py-2 type-caption font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
                                     >
                                         Reconnect LinkedIn With Write Scope
                                     </button>
                                     <button
                                         onClick={handleDisconnectLinkedIn}
-                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25 transition-colors"
+                                        className="w-full mb-2 px-3 py-2 type-caption font-semibold rounded-lg bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25 transition-colors"
                                     >
                                         Disconnect LinkedIn
                                     </button>
                                     {(!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope) && (
-                                        <p className="text-xs text-amber-300 mb-2">
+                                        <p className="type-card-description text-amber-300 mb-2">
                                             Missing write scope `w_member_social`. Reconnect and approve posting permissions.
                                         </p>
                                     )}
                                     <div className="flex flex-wrap gap-1.5">
                                         {(linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
                                             (linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
-                                                <span key={scope} className="text-xs px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
+                                                <span key={scope} className="type-caption px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
                                                     {scope}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="text-xs text-slate-400">No scopes reported by provider metadata.</span>
+                                            <span className="type-caption text-slate-400">No scopes reported by provider metadata.</span>
                                         )}
                                     </div>
                                 </div>
@@ -1376,25 +1376,25 @@ Return only the comment text.`;
 
                         {/* Schedule */}
                         <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Schedule</p>
+                            <p className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-3">Schedule</p>
                             <div className="mb-3">
                                 <AIOutputDisclaimer type="social" />
                             </div>
                             <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm mb-3" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui mb-3" />
 
                             <div className="flex flex-col gap-2">
                                 <button
                                     onClick={() => handleSubmit(true)}
                                     disabled={submitting || (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope))}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-colors">
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
                                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     Post Now
                                 </button>
                                 <button
                                     onClick={() => handleSubmit(false)}
                                     disabled={submitting || !scheduledAt || (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope))}
-                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-40 border border-blue-500/30 text-blue-400 rounded-xl font-semibold text-sm transition-colors">
+                                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-40 border border-blue-500/30 text-blue-400 rounded-xl font-semibold type-ui transition-colors">
                                     <Calendar className="w-4 h-4" />
                                     Schedule Post
                                 </button>
@@ -1407,7 +1407,7 @@ Return only the comment text.`;
                                     });
                                     const d = await res.json();
                                     if (d.success) { toast.success('Saved as draft'); loadData(); setActiveTab('posts'); }
-                                }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-xl text-sm transition-colors">
+                                }} className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-xl type-ui transition-colors">
                                     Save as Draft
                                 </button>
                             </div>
@@ -1422,37 +1422,37 @@ Return only the comment text.`;
                     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-2">
                         {(['all', 'scheduled', 'published', 'failed', 'cancelled'] as const).map((filter) => {
                             const count = filter === 'all' ? posts.length : posts.filter((post) => post.status === filter).length;
-                            return <button key={filter} type="button" onClick={() => setPostFilter(filter)} className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize ${postFilter === filter ? 'bg-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{filter} <span className="ml-1 opacity-70">{count}</span></button>;
+                            return <button key={filter} type="button" onClick={() => setPostFilter(filter)} className={`rounded-lg px-3 py-2 type-ui font-semibold capitalize ${postFilter === filter ? 'bg-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{filter} <span className="ml-1 opacity-70">{count}</span></button>;
                         })}
                     </div>
                     {posts.length === 0 ? (
                         <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
                             <Send className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                             <p className="text-slate-400 font-semibold">No posts yet</p>
-                            <button onClick={() => setActiveTab('compose')} className="mt-3 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl text-sm font-semibold">Compose your first post</button>
+                            <button onClick={() => setActiveTab('compose')} className="mt-3 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-ui font-semibold">Compose your first post</button>
                         </div>
                     ) : visiblePosts.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-700 py-12 text-center text-sm text-slate-400">No {postFilter} posts yet.</div>
+                        <div className="rounded-2xl border border-dashed border-slate-700 py-12 text-center type-ui text-slate-400">No {postFilter} posts yet.</div>
                     ) : visiblePosts.map(post => (
                         <div key={post.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLE[post.status] || STATUS_STYLE.draft}`}>
+                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${STATUS_STYLE[post.status] || STATUS_STYLE.draft}`}>
                                             {post.status}
                                         </span>
                                         {post.platforms.map(p => (
-                                            <span key={p} className="flex items-center gap-1 text-xs px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-slate-400">
+                                            <span key={p} className="flex items-center gap-1 type-caption px-2 py-0.5 bg-slate-800 border border-slate-700 rounded-full text-slate-400">
                                                 {PLATFORM_ICONS[p]}{p}
                                             </span>
                                         ))}
                                         {post.scheduled_at && (
-                                            <span className="text-xs text-blue-400 flex items-center gap-1">
+                                            <span className="type-caption text-blue-400 flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />{new Date(post.scheduled_at).toLocaleString()}
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-slate-300 line-clamp-3 whitespace-pre-line">{post.caption}</p>
+                                    <p className="type-card-description text-slate-300 line-clamp-3 whitespace-pre-line">{post.caption}</p>
                                     {post.media_urls?.length > 0 && (
                                         <div className="flex gap-2 mt-2">
                                             {post.media_urls.slice(0, 3).map((url, i) => (
@@ -1460,16 +1460,16 @@ Return only the comment text.`;
                                                     ? <div key={url} className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center"><Film className="w-4 h-4 text-slate-500" /></div>
                                                     : <img key={url} src={url} alt="" className="w-12 h-12 object-cover rounded-lg" />
                                             ))}
-                                            {post.media_urls.length > 3 && <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-xs text-slate-400">+{post.media_urls.length - 3}</div>}
+                                            {post.media_urls.length > 3 && <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center type-caption text-slate-400">+{post.media_urls.length - 3}</div>}
                                         </div>
                                     )}
                                     {post.error_message && (
-                                        <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{post.error_message}</p>
+                                        <p className="type-card-description text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{post.error_message}</p>
                                     )}
                                     {post.facebook_post_id && (
                                         <div className="mt-2 space-y-2">
                                             <a href={`https://facebook.com/${post.facebook_post_id}`} target="_blank" rel="noopener noreferrer"
-                                                className="text-xs text-blue-400 hover:underline flex items-center gap-1">
+                                                className="type-caption text-blue-400 hover:underline flex items-center gap-1">
                                                 <ExternalLink className="w-3 h-3" /> View on Facebook
                                             </a>
                                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
@@ -1477,19 +1477,19 @@ Return only the comment text.`;
                                                     value={facebookCommentByPost[post.id] || ''}
                                                     onChange={(e) => setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
                                                     placeholder="Write a Facebook comment..."
-                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-caption text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                                                 />
                                                 <button
                                                     onClick={() => handleFacebookComment(post)}
                                                     disabled={!!facebookActionLoading[post.id]}
-                                                    className="px-3 py-2 text-xs rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 disabled:opacity-50"
+                                                    className="px-3 py-2 type-caption rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 disabled:opacity-50"
                                                 >
                                                     {facebookActionLoading[post.id] ? 'Posting...' : 'Comment'}
                                                 </button>
                                                 <button
                                                     onClick={() => generateQuickReply(post, 'facebook')}
                                                     disabled={!!aiQuickReplyLoading[`facebook-${post.id}`]}
-                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                    className="px-3 py-2 type-caption rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
                                                 >
                                                     {aiQuickReplyLoading[`facebook-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
                                                 </button>
@@ -1502,7 +1502,7 @@ Return only the comment text.`;
                                                 href={`https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}/`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-xs text-sky-400 hover:underline flex items-center gap-1"
+                                                className="type-caption text-sky-400 hover:underline flex items-center gap-1"
                                             >
                                                 <ExternalLink className="w-3 h-3" /> View on LinkedIn
                                             </a>
@@ -1511,19 +1511,19 @@ Return only the comment text.`;
                                                     value={linkedinCommentByPost[post.id] || ''}
                                                     onChange={(e) => setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
                                                     placeholder="Write a LinkedIn comment..."
-                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-caption text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
                                                 />
                                                 <button
                                                     onClick={() => handleLinkedInComment(post)}
                                                     disabled={!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`comment-${post.id}`]}
-                                                    className="px-3 py-2 text-xs rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+                                                    className="px-3 py-2 type-caption rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
                                                 >
                                                     {linkedinActionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
                                                 </button>
                                                 <button
                                                     onClick={() => generateQuickReply(post, 'linkedin')}
                                                     disabled={!!aiQuickReplyLoading[`linkedin-${post.id}`]}
-                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                    className="px-3 py-2 type-caption rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
                                                 >
                                                     {aiQuickReplyLoading[`linkedin-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
                                                 </button>
@@ -1531,7 +1531,7 @@ Return only the comment text.`;
                                                     <select
                                                         value={linkedinReactionByPost[post.id] || 'LIKE'}
                                                         onChange={(e) => setLinkedinReactionByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                                                        className="px-2 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                                                        className="px-2 py-2 bg-slate-800 border border-slate-700 rounded-lg type-caption text-white focus:outline-none focus:border-sky-500"
                                                     >
                                                         {['LIKE', 'PRAISE', 'APPRECIATION', 'EMPATHY', 'INTEREST', 'MAYBE'].map((value) => (
                                                             <option key={value} value={value}>{value}</option>
@@ -1540,7 +1540,7 @@ Return only the comment text.`;
                                                     <button
                                                         onClick={() => handleLinkedInReaction(post)}
                                                         disabled={!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`reaction-${post.id}`]}
-                                                        className="px-3 py-2 text-xs rounded-lg bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                                                        className="px-3 py-2 type-caption rounded-lg bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
                                                     >
                                                         {linkedinActionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
                                                     </button>
@@ -1551,7 +1551,7 @@ Return only the comment text.`;
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
                                     {post.status === 'scheduled' && (
-                                        <button onClick={() => handleCancelPost(post)} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/20">Cancel</button>
+                                        <button onClick={() => handleCancelPost(post)} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 type-ui font-semibold text-amber-200 hover:bg-amber-500/20">Cancel</button>
                                     )}
                                     <button onClick={() => handleDeletePost(post.id)}
                                         className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
@@ -1568,9 +1568,9 @@ Return only the comment text.`;
             {activeTab === 'media' && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-slate-400">{mediaAssets.length} assets in library</p>
+                        <p className="type-card-description text-slate-400">{mediaAssets.length} assets in library</p>
                         <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm">
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui">
                             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                             Upload
                         </button>
@@ -1581,7 +1581,7 @@ Return only the comment text.`;
                         <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
                             <ImageIcon className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                             <p className="text-slate-400 font-semibold">No media yet</p>
-                            <p className="text-slate-600 text-sm mt-1">Upload images and videos to use in your posts.</p>
+                            <p className="text-slate-600 type-card-description mt-1">Upload images and videos to use in your posts.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -1590,7 +1590,7 @@ Return only the comment text.`;
                                     {asset.asset_type === 'video' ? (
                                         <div className="aspect-square bg-slate-800 flex flex-col items-center justify-center gap-1">
                                             <Film className="w-8 h-8 text-slate-500" />
-                                            <span className="text-xs text-slate-600">{asset.duration_secs ? `${Math.round(asset.duration_secs)}s` : 'Video'}</span>
+                                            <span className="type-caption text-slate-600">{asset.duration_secs ? `${Math.round(asset.duration_secs)}s` : 'Video'}</span>
                                         </div>
                                     ) : (
                                         <img src={asset.public_url} alt={asset.file_name} className="w-full aspect-square object-cover" />
@@ -1610,8 +1610,8 @@ Return only the comment text.`;
                                         </button>
                                     </div>
                                     <div className="p-2">
-                                        <p className="text-xs text-slate-500 truncate">{asset.file_name}</p>
-                                        <p className="text-xs text-slate-700">{(asset.file_size_bytes / 1024).toFixed(0)} KB</p>
+                                        <p className="type-card-description text-slate-500 truncate">{asset.file_name}</p>
+                                        <p className="type-card-description text-slate-700">{(asset.file_size_bytes / 1024).toFixed(0)} KB</p>
                                     </div>
                                 </div>
                             ))}

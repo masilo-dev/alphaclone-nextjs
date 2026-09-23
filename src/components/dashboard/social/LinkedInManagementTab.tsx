@@ -920,13 +920,13 @@ ${parentContext}Return only the comment text.`;
       {/* AI Controls */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Tone</label>
+          <label className="type-caption font-bold text-slate-500 uppercase tracking-widest">Tone</label>
           <div className="flex flex-wrap gap-1.5">
             {(['Professional', 'Engaging', 'Casual', 'Promotional'] as const).map((tone) => (
               <button
                 key={tone}
                 onClick={() => setAiTone(tone.toLowerCase() as any)}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                   aiTone === tone.toLowerCase() 
                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
@@ -939,11 +939,11 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Format</label>
+          <label className="type-caption font-bold text-slate-500 uppercase tracking-widest">Format</label>
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setAiContentType('linkedin_post')}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                 aiContentType === 'linkedin_post' 
                   ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
@@ -953,7 +953,7 @@ ${parentContext}Return only the comment text.`;
             </button>
             <button
               onClick={() => setAiContentType('linkedin_article')}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+              className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                 aiContentType === 'linkedin_article' 
                   ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
@@ -964,14 +964,14 @@ ${parentContext}Return only the comment text.`;
             <button
               onClick={handleGenerateViralHook}
               disabled={isViralGenerating || !aiTopic.trim()}
-              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-rose-500/30 transition-all disabled:opacity-30"
+              className="px-3 py-2 rounded-xl type-caption font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-rose-500/30 transition-all disabled:opacity-30"
             >
               {isViralGenerating ? '...' : 'Viral hook'}
             </button>
             <button
               onClick={handleGenerateLinkedInContent}
               disabled={aiGenerating || !aiTopic.trim()}
-              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30"
+              className="px-3 py-2 rounded-xl type-caption font-bold bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-all disabled:opacity-30"
             >
               {aiGenerating ? '...' : 'Standard AI'}
             </button>
@@ -1008,7 +1008,7 @@ ${parentContext}Return only the comment text.`;
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-xs font-bold text-white">
+                  <p className="type-card-description font-bold text-white">
                     {selectedLinkedInOrganizationId
                       ? formatLinkedInCompanyPageLabel(
                           companyPages.find((p) => p.id === selectedLinkedInOrganizationId) || {
@@ -1019,9 +1019,9 @@ ${parentContext}Return only the comment text.`;
                         )
                       : linkedInProfileLabel}
                   </p>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Preview</span>
+                  <span className="type-caption text-slate-500 font-bold uppercase tracking-widest">Preview</span>
                 </div>
-                <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap break-words">
+                <p className="mt-2 type-card-description text-slate-300 whitespace-pre-wrap break-words">
                   {composeCaption}
                 </p>
               </div>
@@ -1035,7 +1035,7 @@ ${parentContext}Return only the comment text.`;
               value={composeLinkUrl}
               onChange={(e) => setComposeLinkUrl(e.target.value)}
               placeholder="Link URL (option)"
-              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 type-ui text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
             />
           </div>
           <div className="relative">
@@ -1043,7 +1043,7 @@ ${parentContext}Return only the comment text.`;
               value={composeImageUrl}
               onChange={(e) => setComposeImageUrl(e.target.value)}
               placeholder="Media URL (option)"
-              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 type-ui text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
             />
           </div>
         </div>
@@ -1054,13 +1054,13 @@ ${parentContext}Return only the comment text.`;
               type="datetime-local"
               value={composeScheduledAt}
               onChange={(e) => setComposeScheduledAt(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:border-teal-500 focus:outline-none [color-scheme:dark]"
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 type-ui text-white focus:border-teal-500 focus:outline-none [color-scheme:dark]"
             />
           </div>
           <button
             onClick={() => handleSubmitLinkedInPost(false)}
             disabled={composeSubmitting || !composeScheduledAt || !canComposeLinkedIn}
-            className="px-6 py-3 rounded-xl text-sm font-bold bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-20 transition-all flex items-center justify-center gap-2"
+            className="px-6 py-3 rounded-xl type-ui font-bold bg-white text-slate-950 hover:bg-slate-100 disabled:opacity-20 transition-all flex items-center justify-center gap-2"
           >
             <Calendar className="w-4 h-4" />
             Schedule
@@ -1071,7 +1071,7 @@ ${parentContext}Return only the comment text.`;
           <button
             onClick={() => handleSubmitLinkedInPost(true)}
             disabled={composeSubmitting || !canComposeLinkedIn}
-            className="w-full py-4 rounded-xl text-sm font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl type-ui font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {composeSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {composeSubmitting ? 'Publishing...' : 'Publish now'}
@@ -1082,7 +1082,7 @@ ${parentContext}Return only the comment text.`;
            <select
             value={selectedLinkedInOrganizationId}
             onChange={(e) => setSelectedLinkedInOrganizationId(e.target.value)}
-            className="w-full bg-transparent py-2 text-xs font-bold text-slate-500 uppercase tracking-widest focus:outline-none cursor-pointer hover:text-slate-300 transition-colors"
+            className="w-full bg-transparent py-2 type-caption font-bold text-slate-500 uppercase tracking-widest focus:outline-none cursor-pointer hover:text-slate-300 transition-colors"
           >
             <option value="" className="bg-slate-900">Personal Profile</option>
             {companyPages.map((page) => (
@@ -1101,7 +1101,7 @@ ${parentContext}Return only the comment text.`;
       <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom pb-24 lg:pb-6">
         <div className="flex-1 flex h-64 items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-          <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
+          <p className="type-card-description text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
         </div>
       </div>
     );
@@ -1114,36 +1114,36 @@ ${parentContext}Return only the comment text.`;
         <button
           onClick={() => (isMobile ? setShowComposeSheet(true) : document.getElementById('compose-section')?.scrollIntoView({ behavior: 'smooth' }))}
           disabled={!canComposeLinkedIn}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold disabled:opacity-40 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-caption font-bold disabled:opacity-40 transition-colors"
         >
           <Send className="w-4 h-4" /> Post Now
         </button>
         <button
           onClick={() => router.push('/dashboard/business/campaigns')}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 type-caption font-bold hover:bg-slate-700 transition-colors"
         >
           <MessageCircle className="w-4 h-4" /> Outreach
         </button>
         <button
           onClick={() => router.push('/dashboard/crm')}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 type-caption font-bold hover:bg-slate-700 transition-colors"
         >
           <ThumbsUp className="w-4 h-4" /> CRM Leads
         </button>
         <button
           onClick={loadData}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold hover:bg-slate-700 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 type-caption font-bold hover:bg-slate-700 transition-colors"
         >
           <RefreshCw className="w-4 h-4" /> Sync
         </button>
       </div>
 
       {linkedInTokenExpiryWarning && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-sm">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 type-ui">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p>{linkedInTokenExpiryWarning}</p>
-            <button onClick={handleConnectLinkedIn} className="mt-2 text-xs font-bold underline hover:text-white">
+            <button onClick={handleConnectLinkedIn} className="mt-2 type-ui font-bold underline hover:text-white">
               Reconnect LinkedIn (includes LinkedIn login + 2FA if enabled)
             </button>
           </div>
@@ -1151,17 +1151,17 @@ ${parentContext}Return only the comment text.`;
       )}
 
       {linkedInOrgStatusMessage && (
-        <div className="flex items-start gap-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+        <div className="flex items-start gap-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 type-ui text-sky-100">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" />
           <div className="flex-1 space-y-2">
             <p className="font-semibold text-white">Profile connected, page posting still unavailable</p>
-            <p className="text-xs leading-relaxed text-sky-100/80">{linkedInOrgStatusMessage}</p>
+            <p className="type-caption leading-relaxed text-sky-100/80">{linkedInOrgStatusMessage}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void handleRefreshCompanyPages()}
                 disabled={refreshingCompanyPages || !hasOrganizationReadScope}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 type-caption font-bold text-white hover:bg-sky-500 disabled:opacity-50"
               >
                 {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refresh company pages
@@ -1169,7 +1169,7 @@ ${parentContext}Return only the comment text.`;
               <button
                 type="button"
                 onClick={handleConnectLinkedIn}
-                className="rounded-lg border border-sky-400/20 px-3 py-1.5 text-xs font-bold text-sky-100 hover:bg-sky-500/10"
+                className="rounded-lg border border-sky-400/20 px-3 py-1.5 type-caption font-bold text-sky-100 hover:bg-sky-500/10"
               >
                 Reconnect LinkedIn
               </button>
@@ -1179,11 +1179,11 @@ ${parentContext}Return only the comment text.`;
       )}
 
       {selectedIntegration?.is_active && companyPages.length === 0 && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-200 text-sm">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-200 type-ui">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
           <div className="flex-1 space-y-2">
             <p className="font-semibold text-white">Company page not listed</p>
-            <p className="text-slate-400 text-xs leading-relaxed">
+            <p className="text-slate-400 type-card-description leading-relaxed">
               AlphaClone only shows LinkedIn company pages returned by LinkedIn&apos;s API for your account.
               {!hasOrganizationReadScope
                 ? ' Your current connection is missing organization permissions — reconnect and approve company page access.'
@@ -1194,7 +1194,7 @@ ${parentContext}Return only the comment text.`;
                 type="button"
                 onClick={() => void handleRefreshCompanyPages()}
                 disabled={refreshingCompanyPages}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 type-caption font-bold text-white hover:bg-teal-500 disabled:opacity-50"
               >
                 {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refresh company pages
@@ -1202,7 +1202,7 @@ ${parentContext}Return only the comment text.`;
               <button
                 type="button"
                 onClick={handleConnectLinkedIn}
-                className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700"
+                className="rounded-lg border border-slate-600 px-3 py-1.5 type-caption font-bold text-slate-200 hover:bg-slate-700"
               >
                 Reconnect LinkedIn
               </button>
@@ -1213,18 +1213,18 @@ ${parentContext}Return only the comment text.`;
 
       {/* ── Capability Status Grid & Lead Sync Reconnect Banner ──────────────── */}
       {selectedIntegration?.is_active && !hasLeadGenScopeFlag && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 type-ui text-amber-200">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
           <div className="flex-1 space-y-1.5">
             <p className="font-semibold text-white">Lead Sync: Permission Required</p>
-            <p className="text-xs leading-relaxed text-amber-200/80">
+            <p className="type-card-description leading-relaxed text-amber-200/80">
               Your connected LinkedIn account is missing <code className="bg-slate-900/60 px-1 py-0.5 rounded text-amber-300">r_ads_leadgen_automation</code> / <code className="bg-slate-900/60 px-1 py-0.5 rounded text-amber-300">r_marketing_leadgen_automation</code>.
               LinkedIn cannot automatically push Lead Gen form responses to AlphaClone until reconnected.
             </p>
             <button
               type="button"
               onClick={handleConnectLinkedIn}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-teal-500 transition-colors shadow-sm"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 type-caption font-bold text-white hover:bg-teal-500 transition-colors shadow-sm"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Reconnect LinkedIn (Upgrade Permissions)
             </button>
@@ -1236,12 +1236,12 @@ ${parentContext}Return only the comment text.`;
       {selectedIntegration?.is_active && (
         <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">LinkedIn Capability Matrix</h3>
-            <span className="text-[11px] text-slate-500">Live OAuth Token Permissions</span>
+            <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">LinkedIn Capability Matrix</h3>
+            <span className="type-ui text-slate-500">Live OAuth Token Permissions</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
             <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">Personal Post</span>
+              <span className="type-ui text-slate-400 font-medium">Personal Post</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasPersonalPublishingFlag ? 'success' : 'warning'}>
                   {hasPersonalPublishingFlag ? 'Active' : 'Permission Required'}
@@ -1249,7 +1249,7 @@ ${parentContext}Return only the comment text.`;
               </div>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">Company Post</span>
+              <span className="type-ui text-slate-400 font-medium">Company Post</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasOrgPublishingFlag ? 'success' : 'warning'}>
                   {hasOrgPublishingFlag ? 'Active' : 'Permission Required'}
@@ -1257,7 +1257,7 @@ ${parentContext}Return only the comment text.`;
               </div>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">Engagement</span>
+              <span className="type-ui text-slate-400 font-medium">Engagement</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasPersonalPublishingFlag || hasOrganizationReadScope ? 'success' : 'warning'}>
                   {hasPersonalPublishingFlag || hasOrganizationReadScope ? 'Active' : 'Permission Required'}
@@ -1265,7 +1265,7 @@ ${parentContext}Return only the comment text.`;
               </div>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
-              <span className="text-[11px] text-slate-400 font-medium">Lead Gen Sync</span>
+              <span className="type-ui text-slate-400 font-medium">Lead Gen Sync</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasLeadGenScopeFlag ? 'success' : 'warning'}>
                   {hasLeadGenScopeFlag ? 'Active' : 'Permission Required'}
@@ -1273,7 +1273,7 @@ ${parentContext}Return only the comment text.`;
               </div>
             </div>
             <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between col-span-2 sm:col-span-1">
-              <span className="text-[11px] text-slate-400 font-medium">Ads Reporting</span>
+              <span className="type-ui text-slate-400 font-medium">Ads Reporting</span>
               <div className="mt-1.5">
                 <StandardStatusBadge variant={hasAdsReportingScopeFlag ? 'success' : 'warning'}>
                   {hasAdsReportingScopeFlag ? 'Active' : 'Permission Required'}
@@ -1289,60 +1289,60 @@ ${parentContext}Return only the comment text.`;
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-teal-400" />
-            <h3 className="text-sm font-bold text-white tracking-tight">LinkedIn Customer Acquisition Pipeline & ROI</h3>
+            <h3 className="type-caption font-bold text-white tracking-tight">LinkedIn Customer Acquisition Pipeline & ROI</h3>
           </div>
-          <span className="text-xs font-semibold text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
+          <span className="type-caption font-semibold text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
             Ad Spend → Lead → CRM → Revenue
           </span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 pt-1">
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400">Synced Leads</p>
+            <p className="type-card-description font-semibold text-slate-400">Synced Leads</p>
             <p className="text-lg font-extrabold text-white mt-1">
               {pipelineMetrics?.totalLeads ?? 0}
             </p>
-            <span className="text-[10px] text-teal-400">Strict Idempotency</span>
+            <span className="type-ui text-teal-400">Strict Idempotency</span>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400">Ad Spend</p>
+            <p className="type-card-description font-semibold text-slate-400">Ad Spend</p>
             <p className="text-lg font-extrabold text-white mt-1">
               {pipelineMetrics?.formatted?.adSpend || '$0'}
             </p>
-            <span className="text-[10px] text-slate-500">Read-Only Analytics</span>
+            <span className="type-ui text-slate-500">Read-Only Analytics</span>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400">Cost Per Lead (CPL)</p>
+            <p className="type-card-description font-semibold text-slate-400">Cost Per Lead (CPL)</p>
             <p className="text-lg font-extrabold text-teal-300 mt-1">
               {pipelineMetrics?.formatted?.costPerLead || 'Insufficient data'}
             </p>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400">Customers Won</p>
+            <p className="type-card-description font-semibold text-slate-400">Customers Won</p>
             <p className="text-lg font-extrabold text-white mt-1">
               {pipelineMetrics?.totalCustomers ?? 0}
             </p>
-            <span className="text-[10px] text-slate-400">
+            <span className="type-ui text-slate-400">
               Conv: {pipelineMetrics?.formatted?.leadToCustomerRate || 'Insufficient data'}
             </span>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
-            <p className="text-[11px] font-semibold text-slate-400">Attributed Revenue</p>
+            <p className="type-card-description font-semibold text-slate-400">Attributed Revenue</p>
             <p className="text-lg font-extrabold text-teal-400 mt-1">
               {pipelineMetrics?.formatted?.totalRevenue || '$0'}
             </p>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60 col-span-2 sm:col-span-1">
-            <p className="text-[11px] font-semibold text-slate-400">ROAS / CAC</p>
+            <p className="type-card-description font-semibold text-slate-400">ROAS / CAC</p>
             <p className="text-lg font-extrabold text-teal-300 mt-1">
               {pipelineMetrics?.formatted?.roas !== 'Insufficient data' ? pipelineMetrics?.formatted?.roas : pipelineMetrics?.formatted?.cac}
             </p>
-            <span className="text-[10px] text-slate-500">Pipeline Value: {pipelineMetrics?.formatted?.expectedPipelineValue || '$0'}</span>
+            <span className="type-ui text-slate-500">Pipeline Value: {pipelineMetrics?.formatted?.expectedPipelineValue || '$0'}</span>
           </div>
         </div>
       </div>
@@ -1357,7 +1357,7 @@ ${parentContext}Return only the comment text.`;
             <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-              <p className="text-xs text-slate-400 font-medium truncate max-w-[220px] sm:max-w-none">
+              <p className="type-card-description text-slate-400 font-medium truncate max-w-[220px] sm:max-w-none">
                 {selectedIntegration?.is_active
                   ? selectedLinkedInOrganizationId
                     ? `Company page · ${linkedInPostingAsLabel}`
@@ -1376,7 +1376,7 @@ ${parentContext}Return only the comment text.`;
                 setSelectedLinkedInMemberId(e.target.value);
                 setSelectedLinkedInOrganizationId('');
               }}
-              className="h-11 rounded-lg bg-slate-800 border border-slate-700 px-3 text-xs font-semibold text-slate-200 hover:border-slate-600 focus:outline-none max-w-[240px]"
+              className="h-11 rounded-lg bg-slate-800 border border-slate-700 px-3 type-caption font-semibold text-slate-200 hover:border-slate-600 focus:outline-none max-w-[240px]"
             >
               {integrations.map((row) => (
                 <option key={row.linkedin_member_id} value={row.linkedin_member_id} className="bg-slate-900">
@@ -1388,7 +1388,7 @@ ${parentContext}Return only the comment text.`;
           {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
-              className="px-4 py-2.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
+              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors shadow-lg shadow-red-900/20"
             >
               Connect
             </button>
@@ -1396,14 +1396,14 @@ ${parentContext}Return only the comment text.`;
           {selectedIntegration?.is_active && (
             <button
               onClick={handleDisconnectLinkedIn}
-              className="px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
             >
               Disconnect
             </button>
           )}
           <button
             onClick={loadData}
-            className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+            className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg type-caption font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             <span className="hidden sm:inline">Refresh</span>
@@ -1416,7 +1416,7 @@ ${parentContext}Return only the comment text.`;
                 el?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            className="hidden sm:flex px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-950 hover:bg-white transition-all items-center gap-2"
+            className="hidden sm:flex px-4 py-2.5 rounded-lg type-caption font-semibold bg-slate-100 text-slate-950 hover:bg-white transition-all items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             New post
@@ -1440,7 +1440,7 @@ ${parentContext}Return only the comment text.`;
       />
 
       {schemaWarning && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 type-caption text-amber-200 flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
           {schemaWarning}
         </div>
@@ -1452,8 +1452,8 @@ ${parentContext}Return only the comment text.`;
         {/* ── Left Column: Queue ─────────────────────────────────────── */}
         <div className="space-y-4">
           <div className="px-1">
-            <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <h3 className="type-caption font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
+            <p className="type-card-description text-slate-500 mt-1">
               {selectedLinkedInOrganizationId
                 ? `Posts for ${linkedInPostingAsLabel}`
                 : `Posts for ${linkedInProfileLabel}`}
@@ -1466,12 +1466,12 @@ ${parentContext}Return only the comment text.`;
                 <AlertTriangle className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-amber-200">
+                <p className="type-card-description font-semibold text-amber-200">
                   {duplicateCount === 1 
                     ? '2 posts with identical content detected — review before publishing' 
                     : `${duplicateCount * 2} posts with duplicate content detected`}
                 </p>
-                <p className="text-xs text-amber-400/80 mt-0.5">Duplicates are flagged in your queue below.</p>
+                <p className="type-card-description text-amber-400/80 mt-0.5">Duplicates are flagged in your queue below.</p>
               </div>
             </div>
           )}
@@ -1481,7 +1481,7 @@ ${parentContext}Return only the comment text.`;
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-5 py-3 rounded-full text-xs font-bold transition-all border whitespace-nowrap min-w-fit ${
+                className={`px-5 py-3 rounded-full type-caption font-bold transition-all border whitespace-nowrap min-w-fit ${
                   statusFilter === status
                     ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'
@@ -1496,7 +1496,7 @@ ${parentContext}Return only the comment text.`;
             {filteredPosts.length === 0 ? (
               <div className="py-20 text-center">
                 <Linkedin className="w-12 h-12 text-slate-700 mx-auto mb-4 opacity-20" />
-                <p className="text-slate-500 text-sm">No LinkedIn posts for selected filter.</p>
+                <p className="text-slate-500 type-card-description">No LinkedIn posts for selected filter.</p>
               </div>
             ) : (
               filteredPosts.map((post) => {
@@ -1509,7 +1509,7 @@ ${parentContext}Return only the comment text.`;
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                       <div className="flex flex-row sm:flex-col gap-2 shrink-0">
                         {isDup && (
-                          <span className="text-xs font-bold px-3 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-tighter">
+                          <span className="type-caption font-bold px-3 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-tighter">
                             Duplicate
                           </span>
                         )}
@@ -1519,10 +1519,10 @@ ${parentContext}Return only the comment text.`;
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-relaxed break-words whitespace-pre-line ${isDup ? 'text-slate-100' : 'text-slate-300'} mb-2`}>
+                        <p className={`type-card-description font-medium leading-relaxed break-words whitespace-pre-line ${isDup ? 'text-slate-100' : 'text-slate-300'} mb-2`}>
                           {post.caption}
                         </p>
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
+                        <div className="flex flex-wrap items-center gap-3 type-caption text-slate-500 font-medium">
                           <span>{new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                           <span className="opacity-30 hidden sm:inline">—</span>
                           <span>{new Date(post.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
@@ -1564,7 +1564,7 @@ ${parentContext}Return only the comment text.`;
 
                     {/* Quick Engagement Stats */}
                     {(engagementByPost[post.id] || (commentsByPost[post.id]?.length > 0)) && (
-                      <div className="mt-4 flex items-center gap-6 text-xs text-slate-500 font-bold uppercase tracking-widest sm:pl-[100px]">
+                      <div className="mt-4 flex items-center gap-6 type-caption text-slate-500 font-bold uppercase tracking-widest sm:pl-[100px]">
                         <span className="flex items-center gap-2">
                           <ThumbsUp className="w-4 h-4 text-slate-600" />
                           {engagementByPost[post.id]?.likesCount ?? 0} Likes
@@ -1580,25 +1580,25 @@ ${parentContext}Return only the comment text.`;
                     {commentsByPost[post.id] && (
                       <div className="mt-6 sm:pl-[100px] space-y-4 animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Recent Comments</p>
-                          <button onClick={() => setCommentsByPost(prev => { const n = {...prev}; delete n[post.id]; return n; })} className="text-xs text-slate-600 hover:text-slate-400 px-2 py-1">Close</button>
+                          <p className="type-caption font-bold text-slate-400 uppercase tracking-widest">Recent Comments</p>
+                          <button onClick={() => setCommentsByPost(prev => { const n = {...prev}; delete n[post.id]; return n; })} className="type-ui text-slate-600 hover:text-slate-400 px-2 py-1">Close</button>
                         </div>
                         {commentsByPost[post.id].length === 0 ? (
-                          <p className="text-sm text-slate-600 italic">No comments found.</p>
+                          <p className="type-card-description text-slate-600 italic">No comments found.</p>
                         ) : (
                           commentsByPost[post.id].slice(0, 5).map(c => (
                             <div key={c.commentUrn} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.05] space-y-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-teal-400">{c.actor || 'LinkedIn User'}</span>
-                                <span className="text-xs text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
+                                <span className="type-caption font-bold text-teal-400">{c.actor || 'LinkedIn User'}</span>
+                                <span className="type-caption text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
                               </div>
-                              <p className="text-sm text-slate-300 leading-relaxed">{c.text}</p>
+                              <p className="type-card-description text-slate-300 leading-relaxed">{c.text}</p>
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   type="button"
                                   onClick={() => captureCommentLead(post, c)}
                                   disabled={capturingLead[c.commentUrn]}
-                                  className="h-9 px-3 rounded-lg bg-violet-600/80 text-white text-xs font-bold hover:bg-violet-500 disabled:opacity-50"
+                                  className="h-9 px-3 rounded-lg bg-violet-600/80 text-white type-caption font-bold hover:bg-violet-500 disabled:opacity-50"
                                 >
                                   {capturingLead[c.commentUrn] ? 'Adding…' : 'Add as Lead'}
                                 </button>
@@ -1612,7 +1612,7 @@ ${parentContext}Return only the comment text.`;
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}
-                                  className="h-11 px-4 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-500 transition-colors"
+                                  className="h-11 px-4 rounded-xl bg-teal-600 text-white type-caption font-bold hover:bg-teal-500 transition-colors"
                                 >
                                   Reply
                                 </button>
@@ -1634,14 +1634,14 @@ ${parentContext}Return only the comment text.`;
           <div id="compose-section" className="space-y-4 lg:sticky lg:top-6">
             <div className="px-1 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <h3 className="type-caption font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
+                <p className="type-card-description text-slate-500 mt-1">
                   Post as {selectedLinkedInOrganizationId ? 'company' : 'personal profile'}
                 </p>
               </div>
               <div className="px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-                <span className="text-xs font-bold text-teal-300 uppercase tracking-tighter">AI draft</span>
+                <span className="type-caption font-bold text-teal-300 uppercase tracking-tighter">AI draft</span>
               </div>
             </div>
 

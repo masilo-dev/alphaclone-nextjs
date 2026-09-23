@@ -288,8 +288,8 @@ export function PlaywrightIntegration() {
         </div>
         <div className="flex-1">
           <h4 className="font-semibold text-white mb-1">{error.title}</h4>
-          <p className="text-sm text-slate-300 mb-2">{error.message}</p>
-          <p className="text-xs text-slate-400">{error.suggestion}</p>
+          <p className="type-card-description text-slate-300 mb-2">{error.message}</p>
+          <p className="type-card-description text-slate-400">{error.suggestion}</p>
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ export function PlaywrightIntegration() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Lead Discovery Tool</h3>
-            <p className="text-sm text-slate-400">
+            <p className="type-card-description text-slate-400">
               {status.isConnected ? 
                 `Active • ${status.totalLeadsFound || 0} leads found` : 
                 'Find business leads from any website'
@@ -332,7 +332,7 @@ export function PlaywrightIntegration() {
       {/* Status */}
       {status.isConnected && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 type-ui">
             <CheckCircle className="w-4 h-4 text-green-400" />
             <span className="text-green-400">Lead Discovery Active</span>
             <span className="text-slate-500">•</span>
@@ -348,14 +348,14 @@ export function PlaywrightIntegration() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-white mb-2">Quick Lead Search</h4>
+              <h4 className="type-ui font-medium text-white mb-2">Quick Lead Search</h4>
               <div className="space-y-2">
                 <input
                   type="url"
                   placeholder="https://example.com"
                   value={scrapingUrl}
                   onChange={(e) => setScrapingUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <Button
                   size="sm"
@@ -370,11 +370,11 @@ export function PlaywrightIntegration() {
             </div>
 
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-white mb-2">Recent Searches</h4>
+              <h4 className="type-ui font-medium text-white mb-2">Recent Searches</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {jobs.length > 0 ? (
                   jobs.slice(0, 3).map((job) => (
-                    <div key={job.id} className="flex items-center justify-between text-xs">
+                    <div key={job.id} className="flex items-center justify-between type-caption">
                       <div className="flex items-center gap-2">
                         {getJobStatusIcon(job.status)}
                         <span className="text-slate-400 truncate max-w-[120px]">{job.url}</span>
@@ -388,7 +388,7 @@ export function PlaywrightIntegration() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 text-xs">No recent searches</p>
+                  <p className="text-slate-500 type-card-description">No recent searches</p>
                 )}
               </div>
             </div>
@@ -413,25 +413,25 @@ export function PlaywrightIntegration() {
           <div className="space-y-6">
             <div>
               <h4 className="text-lg font-semibold text-white mb-2">About Lead Discovery</h4>
-              <p className="text-sm text-slate-300 mb-4">
+              <p className="type-card-description text-slate-300 mb-4">
                 Our intelligent tool searches websites for business leads, contact information, and company details. 
                 All errors are translated into clear, helpful messages.
               </p>
               
               <div className="space-y-3">
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-3 type-ui">
                   <Target className="w-4 h-4 text-orange-400" />
                   <span className="text-slate-300">Finds business contact information</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-3 type-ui">
                   <Users className="w-4 h-4 text-orange-400" />
                   <span className="text-slate-300">Discovers company details and services</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-3 type-ui">
                   <Globe className="w-4 h-4 text-orange-400" />
                   <span className="text-slate-300">Works with any public website</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-3 type-ui">
                   <AlertCircle className="w-4 h-4 text-blue-400" />
                   <span className="text-slate-300">Clear error messages for any issues</span>
                 </div>

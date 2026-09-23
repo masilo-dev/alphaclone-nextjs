@@ -105,8 +105,8 @@ function Shell({
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-[15px] font-semibold leading-tight">{portal.branding.name}</p>
-                            <p className="truncate text-xs text-[color:var(--ws-text-tertiary)]">Client workspace</p>
+                            <p className="truncate type-card-description font-semibold leading-tight">{portal.branding.name}</p>
+                            <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">Client workspace</p>
                         </div>
                     </div>
 
@@ -122,7 +122,7 @@ function Shell({
                                     <li key={item.id}>
                                         <button
                                             onClick={() => setActiveTab(item.id)}
-                                            className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                                            className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 type-ui transition-colors ${
                                                 isActive
                                                     ? 'bg-[color-mix(in_srgb,var(--brand-teal)_18%,var(--ws-panel))] text-[color:var(--brand-teal)] font-medium'
                                                     : 'text-[color:var(--ws-text-secondary)] hover:bg-[color:var(--ws-panel-hover)] hover:text-[color:var(--ws-text-primary)]'
@@ -131,7 +131,7 @@ function Shell({
                                             <Icon className="h-4.5 w-4.5 shrink-0" />
                                             <span className="flex-1 text-left">{item.label}</span>
                                             {typeof badge === 'number' && badge > 0 ? (
-                                                <span className={`inline-flex min-w-[20px] h-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold ${
+                                                <span className={`inline-flex min-w-[20px] h-5 items-center justify-center rounded-full px-1.5 type-ui font-semibold ${
                                                     isActive
                                                         ? 'bg-[color-mix(in_srgb,var(--brand-teal)_28%,transparent)] text-[color:var(--brand-teal)]'
                                                         : 'bg-[color-mix(in_srgb,var(--warning)_20%,transparent)] text-[color:var(--warning)]'
@@ -147,15 +147,15 @@ function Shell({
 
                     <div className="border-t border-white/[0.06] p-4">
                         <div className="flex items-center gap-3">
-                            <div className="grid h-9 w-9 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand-blue-500)_20%,var(--ws-panel))] text-[color:var(--brand-blue-400)] text-sm font-semibold">
+                            <div className="grid h-9 w-9 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand-blue-500)_20%,var(--ws-panel))] text-[color:var(--brand-blue-400)] type-ui font-semibold">
                                 {String(portal.client.name || 'C').charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium">{portal.client.name}</p>
-                                <p className="truncate text-xs text-[color:var(--ws-text-tertiary)]">{portal.client.email || 'Client account'}</p>
+                                <p className="truncate type-card-description font-medium">{portal.client.name}</p>
+                                <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">{portal.client.email || 'Client account'}</p>
                             </div>
                         </div>
-                        <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-panel)] px-3 py-2 text-[11px] text-[color:var(--ws-text-tertiary)] border border-[color:var(--ws-border)]">
+                        <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-panel)] px-3 py-2 type-ui text-[color:var(--ws-text-tertiary)] border border-[color:var(--ws-border)]">
                             <ShieldCheck className="h-3.5 w-3.5 text-[color:var(--success)]" />
                             <span>Private · secure connection</span>
                         </div>
@@ -180,32 +180,32 @@ function Shell({
                                 {portal.branding.logoUrl ? (
                                     <img src={portal.branding.logoUrl} alt="" className="h-7 w-7 rounded-lg object-contain" />
                                 ) : (
-                                    <div className="grid h-7 w-7 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] text-xs font-black">
+                                    <div className="grid h-7 w-7 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] type-caption font-black">
                                         {String(portal.branding.name || 'A').charAt(0).toUpperCase()}
                                     </div>
                                 )}
                                 <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold leading-tight">{portal.branding.name}</p>
-                                    <p className="truncate text-[11px] text-[color:var(--ws-text-tertiary)]">Client workspace</p>
+                                    <p className="truncate type-card-description font-semibold leading-tight">{portal.branding.name}</p>
+                                    <p className="truncate type-card-description text-[color:var(--ws-text-tertiary)]">Client workspace</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="hidden md:flex min-w-0 flex-col">
-                            <p className="text-[15px] font-semibold leading-tight text-[color:var(--ws-text-primary)]">
+                            <p className="type-card-description font-semibold leading-tight text-[color:var(--ws-text-primary)]">
                                 {NAV.find((n) => n.id === activeTab)?.label ?? 'Overview'}
                             </p>
-                            <p className="text-xs text-[color:var(--ws-text-tertiary)]">
+                            <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
                                 Welcome back, {portal.client.name.split(' ')[0]}
                             </p>
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
-                            <div className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-[color:var(--ws-text-tertiary)] bg-[color:var(--ws-panel)] border border-[color:var(--ws-border)]">
+                            <div className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 type-ui font-medium text-[color:var(--ws-text-tertiary)] bg-[color:var(--ws-panel)] border border-[color:var(--ws-border)]">
                                 <Bell className="h-3.5 w-3.5 text-[color:var(--warning)]" />
                                 {counts.approvals + counts.invoices} items need your attention
                             </div>
-                            <div className="hidden sm:grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand-blue-500)_20%,var(--ws-panel))] text-[color:var(--brand-blue-400)] text-xs font-semibold border border-[color:var(--ws-border)]">
+                            <div className="hidden sm:grid h-8 w-8 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand-blue-500)_20%,var(--ws-panel))] text-[color:var(--brand-blue-400)] type-caption font-semibold border border-[color:var(--ws-border)]">
                                 {String(portal.client.name || 'C').charAt(0).toUpperCase()}
                             </div>
                         </div>
@@ -218,7 +218,7 @@ function Shell({
                         </div>
 
                         <footer className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 lg:px-8 border-t border-transparent">
-                            <p className="text-center text-xs text-[color:var(--text-muted)]">
+                            <p className="text-center type-card-description text-[color:var(--text-muted)]">
                                 <span className="inline-flex items-center gap-1.5">
                                     <ShieldCheck className="h-3.5 w-3.5" />
                                     Secured by AlphaClone · private client workspace
@@ -244,7 +244,7 @@ function Shell({
                                             }`}
                                         >
                                             <Icon className="h-5 w-5" />
-                                            <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+                                            <span className="type-ui font-medium leading-tight">{item.label}</span>
                                         </button>
                                     </li>
                                 );
@@ -260,10 +260,10 @@ function Shell({
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
                     <div className="absolute left-0 top-0 bottom-0 w-[82%] max-w-xs bg-[color:var(--ws-sidebar)] text-[color:var(--ws-text-primary)] shadow-2xl border-r border-[color:var(--ws-border)] overflow-y-auto">
                         <div className="flex h-14 items-center gap-3 px-4 border-b border-white/[0.06]">
-                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] text-sm font-black">
+                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_22%,var(--ws-panel))] text-[color:var(--brand-teal)] type-ui font-black">
                                 {String(portal.branding.name || 'A').charAt(0).toUpperCase()}
                             </div>
-                            <p className="truncate text-sm font-semibold flex-1">{portal.branding.name}</p>
+                            <p className="truncate type-card-description font-semibold flex-1">{portal.branding.name}</p>
                             <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close navigation"
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/5">
                                 <X className="h-4 w-4" />
@@ -277,7 +277,7 @@ function Shell({
                                     <li key={item.id}>
                                         <button
                                             onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${
+                                            className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 type-ui ${
                                                 isActive
                                                     ? 'bg-[color-mix(in_srgb,var(--brand-teal)_18%,var(--ws-panel))] text-[color:var(--brand-teal)] font-medium'
                                                     : 'text-[color:var(--ws-text-secondary)]'
@@ -291,8 +291,8 @@ function Shell({
                             })}
                         </ul>
                         <div className="p-4 mt-2 border-t border-white/[0.06]">
-                            <p className="text-xs text-[color:var(--ws-text-tertiary)]">Signed in as</p>
-                            <p className="text-sm font-medium mt-0.5">{portal.client.name}</p>
+                            <p className="type-card-description text-[color:var(--ws-text-tertiary)]">Signed in as</p>
+                            <p className="type-card-description font-medium mt-0.5">{portal.client.name}</p>
                         </div>
                     </div>
                 </div>
@@ -309,9 +309,9 @@ function StatCard({ label, value, hint, accent, icon: Icon }: { label: string; v
                     {Icon ? <Icon className="h-4.5 w-4.5 text-[color:var(--ws-text-tertiary)]" style={{ color: accent }} /> : null}
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{label}</p>
+                    <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">{label}</p>
                     <p className="mt-1 text-2xl font-bold tracking-tight" style={{ color: accent }}>{value}</p>
-                    {hint ? <p className="mt-1 text-xs text-[color:var(--ws-text-tertiary)]">{hint}</p> : null}
+                    {hint ? <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">{hint}</p> : null}
                 </div>
             </div>
         </div>
@@ -327,7 +327,7 @@ function EmptyState({ title, description, icon: Icon }: { title: string; descrip
                 </div>
             ) : null}
             <h3 className="text-base font-semibold text-[color:var(--ws-text-primary)]">{title}</h3>
-            <p className="mt-1.5 text-sm text-[color:var(--ws-text-tertiary)] max-w-md mx-auto">{description}</p>
+            <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-md mx-auto">{description}</p>
         </div>
     );
 }
@@ -361,8 +361,8 @@ function ErrorState({ message }: { message: string }) {
                     <AlertTriangle className="h-6 w-6" />
                 </div>
                 <h1 className="text-lg font-bold text-[color:var(--ws-text-primary)]">Workspace unavailable</h1>
-                <p className="mt-2 text-sm text-[color:var(--ws-text-secondary)]">{message}</p>
-                <p className="mt-4 text-xs text-[color:var(--ws-text-tertiary)]">
+                <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)]">{message}</p>
+                <p className="mt-4 type-card-description text-[color:var(--ws-text-tertiary)]">
                     If you received this link from {''}
                     <span className="font-medium">your service provider</span>, please verify the URL or contact them for a new access link.
                 </p>
@@ -556,7 +556,7 @@ export default function ClientPortalPage() {
             <div className="space-y-6 md:space-y-8">
                 {/* Toast */}
                 {toast ? (
-                    <div className={`sticky top-16 z-20 mx-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur ${
+                    <div className={`sticky top-16 z-20 mx-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 type-ui shadow-lg backdrop-blur ${
                         toast.type === 'success'
                             ? 'border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_92%,var(--ws-panel))] text-[color:var(--success-text,var(--success))]'
                             : 'border-[color-mix(in_srgb,var(--error)_30%,transparent)] bg-[color-mix(in_srgb,var(--error)_92%,var(--ws-panel))] text-[color:var(--error)]'
@@ -574,7 +574,7 @@ export default function ClientPortalPage() {
 
                 {/* Error banner (non-fatal — when there's also data) */}
                 {error && portal ? (
-                    <div role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,var(--ws-panel))] p-4 text-sm">
+                    <div role="alert" className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,var(--ws-panel))] p-4 type-ui">
                         <div className="flex gap-3">
                             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-[color:var(--warning)]" />
                             <p className="text-[color:var(--ws-text-primary)]">{error}</p>
@@ -587,12 +587,12 @@ export default function ClientPortalPage() {
                     <div className="rounded-2xl border border-[color:var(--ws-border)] bg-gradient-to-br from-[color:var(--ws-panel)] to-[color:var(--ws-surface-secondary)] p-5 md:p-7 lg:p-8 shadow-[color:var(--ws-card-shadow)]">
                         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                             <div className="min-w-0 max-w-2xl">
-                                <p className="text-xs font-semibold uppercase tracking-wider text-[color:var(--brand-teal)]">Good to see you</p>
+                                <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--brand-teal)]">Good to see you</p>
                                 <h1 className="mt-1.5 text-2xl md:text-3xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">
                                     Hi, {portal.client.name.split(' ')[0]}{''}
                                     <span className="text-[color:var(--ws-text-tertiary)]">.</span>
                                 </h1>
-                                <p className="mt-2.5 text-sm md:text-[15px] leading-relaxed text-[color:var(--ws-text-secondary)]">
+                                <p className="mt-2.5 type-caption md:text-sm leading-relaxed text-[color:var(--ws-text-secondary)]">
                                     Here's your shared workspace with <span className="font-medium text-[color:var(--ws-text-primary)]">{portal.branding.name}</span>.
                                     Review outstanding items, track project progress, view invoices, and message the team — all in one secure place.
                                 </p>
@@ -602,8 +602,8 @@ export default function ClientPortalPage() {
                                     <ShieldCheck className="h-5.5 w-5.5" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-semibold text-[color:var(--ws-text-primary)]">Verified access</p>
-                                    <p className="text-xs text-[color:var(--ws-text-tertiary)]">Secure · encrypted · private</p>
+                                    <p className="type-card-description font-semibold text-[color:var(--ws-text-primary)]">Verified access</p>
+                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)]">Secure · encrypted · private</p>
                                 </div>
                             </div>
                         </div>
@@ -622,7 +622,7 @@ export default function ClientPortalPage() {
                                 </div>
                                 <div>
                                     <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{meta.label}</h1>
-                                    <p className="text-sm text-[color:var(--ws-text-tertiary)]">
+                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
                                         Shared with <span className="font-medium">{portal.branding.name}</span>
                                     </p>
                                 </div>
@@ -637,9 +637,9 @@ export default function ClientPortalPage() {
                         <section aria-labelledby="portal-guide-heading" className="rounded-2xl border border-[color-mix(in_srgb,var(--brand-teal)_28%,var(--ws-border))] bg-[color-mix(in_srgb,var(--brand-teal)_6%,var(--ws-panel))] p-5 md:p-6">
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="max-w-2xl">
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-teal)]">Your shared workspace</p>
+                                    <p className="type-caption font-bold uppercase tracking-caps text-[color:var(--brand-teal)]">Your shared workspace</p>
                                     <h2 id="portal-guide-heading" className="mt-1 text-lg font-semibold text-[color:var(--ws-text-primary)]">Here is what you can do next</h2>
-                                    <p className="mt-1.5 text-sm leading-relaxed text-[color:var(--ws-text-secondary)]">Use this workspace to review what your provider shares, respond to requests, and keep project, billing, and communication in one place.</p>
+                                    <p className="mt-1.5 type-caption leading-relaxed text-[color:var(--ws-text-secondary)]">Use this workspace to review what your provider shares, respond to requests, and keep project, billing, and communication in one place.</p>
                                 </div>
                                 <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[34rem]">
                                     {[
@@ -648,9 +648,9 @@ export default function ClientPortalPage() {
                                         { tab: 'messages' as Tab, step: '3', title: 'Stay aligned', text: 'Message your project team' },
                                     ].map((item) => (
                                         <button key={item.tab} type="button" onClick={() => setActiveTab(item.tab)} className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-3 text-left transition-colors hover:border-[color:var(--brand-teal)]/50 hover:bg-[color:var(--ws-panel-hover)]">
-                                            <span className="text-[10px] font-bold text-[color:var(--brand-teal)]">STEP {item.step}</span>
-                                            <span className="mt-1 block text-xs font-semibold text-[color:var(--ws-text-primary)]">{item.title}</span>
-                                            <span className="mt-0.5 block text-[11px] leading-relaxed text-[color:var(--ws-text-tertiary)]">{item.text}</span>
+                                            <span className="type-caption font-bold text-[color:var(--brand-teal)]">STEP {item.step}</span>
+                                            <span className="mt-1 block type-caption font-semibold text-[color:var(--ws-text-primary)]">{item.title}</span>
+                                            <span className="mt-0.5 block type-ui leading-relaxed text-[color:var(--ws-text-tertiary)]">{item.text}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -697,7 +697,7 @@ export default function ClientPortalPage() {
                                         Needs your attention
                                     </h2>
                                 </div>
-                                <span className="text-xs text-[color:var(--ws-text-tertiary)]">
+                                <span className="type-caption text-[color:var(--ws-text-tertiary)]">
                                     {portal.approvals.length} item{portal.approvals.length === 1 ? '' : 's'}
                                 </span>
                             </header>
@@ -710,24 +710,24 @@ export default function ClientPortalPage() {
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <p className="font-semibold text-[color:var(--ws-text-primary)]">{a.title}</p>
-                                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(a.status)}`}>
+                                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(a.status)}`}>
                                                                 <Clock className="h-3 w-3" />
                                                                 {a.approvalType}
                                                             </span>
                                                         </div>
-                                                        <p className="mt-1 text-xs text-[color:var(--ws-text-tertiary)]">
+                                                        <p className="mt-1 type-card-description text-[color:var(--ws-text-tertiary)]">
                                                             <span className="font-medium text-[color:var(--ws-text-secondary)]">{a.projectName}</span>
                                                             {' · '}approval request
                                                         </p>
                                                         {a.description ? (
-                                                            <p className="mt-2 text-sm text-[color:var(--ws-text-secondary)] leading-relaxed">{a.description}</p>
+                                                            <p className="mt-2 type-caption text-[color:var(--ws-text-secondary)] leading-relaxed">{a.description}</p>
                                                         ) : null}
                                                     </div>
                                                     <div className="flex shrink-0 items-center gap-2">
                                                         <button
                                                             onClick={() => decideApproval(a.id, 'changes_requested')}
                                                             disabled={deciding === a.id}
-                                                            className="inline-flex items-center justify-center rounded-lg border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-panel)] hover:bg-[color:var(--ws-panel-hover)] px-3.5 py-2 text-xs md:text-sm font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center rounded-lg border border-[color:var(--ws-border-strong)] bg-[color:var(--ws-panel)] hover:bg-[color:var(--ws-panel-hover)] px-3.5 py-2 type-caption md:text-sm font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50"
                                                         >
                                                             {deciding === a.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
                                                             Request changes
@@ -735,7 +735,7 @@ export default function ClientPortalPage() {
                                                         <button
                                                             onClick={() => decideApproval(a.id, 'approved')}
                                                             disabled={deciding === a.id}
-                                                            className="inline-flex items-center justify-center rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-3.5 py-2 text-xs md:text-sm font-semibold text-white disabled:opacity-50"
+                                                            className="inline-flex items-center justify-center rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-3.5 py-2 type-caption md:text-sm font-semibold text-white disabled:opacity-50"
                                                         >
                                                             {deciding === a.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
                                                             Approve
@@ -761,7 +761,7 @@ export default function ClientPortalPage() {
                             <section aria-labelledby="activity-heading" className="rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-[color:var(--ws-card-shadow)]">
                                 <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-6 md:py-5 border-b border-[color:var(--ws-border)]">
                                     <h2 id="activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Recent activity</h2>
-                                    <span className="text-xs text-[color:var(--ws-text-tertiary)]">Last 30 days</span>
+                                    <span className="type-caption text-[color:var(--ws-text-tertiary)]">Last 30 days</span>
                                 </header>
                                 <div className="p-4 md:p-5 max-h-[420px] overflow-y-auto">
                                     {portal.activity.length > 0 ? (
@@ -770,12 +770,12 @@ export default function ClientPortalPage() {
                                                 <li key={event.id} className="ml-5 pb-5 last:pb-0">
                                                     <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-[color:var(--brand-teal)] ring-4 ring-[color:var(--ws-panel)]" />
                                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                                                        <p className="text-sm font-medium capitalize text-[color:var(--ws-text-primary)]">{event.title}</p>
+                                                        <p className="type-card-description font-medium capitalize text-[color:var(--ws-text-primary)]">{event.title}</p>
                                                     </div>
                                                     {event.projectName ? (
-                                                        <p className="text-xs text-[color:var(--ws-text-tertiary)] mt-0.5">{event.projectName}</p>
+                                                        <p className="type-card-description text-[color:var(--ws-text-tertiary)] mt-0.5">{event.projectName}</p>
                                                     ) : null}
-                                                    <time className="mt-1 inline-block text-[11px] text-[color:var(--ws-text-tertiary)]">{formatDate(event.createdAt)}</time>
+                                                    <time className="mt-1 inline-block type-caption text-[color:var(--ws-text-tertiary)]">{formatDate(event.createdAt)}</time>
                                                 </li>
                                             ))}
                                         </ol>
@@ -814,10 +814,10 @@ export default function ClientPortalPage() {
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-1">
-                                                        <p className="font-semibold text-sm text-[color:var(--ws-text-primary)]">{item.label}</p>
+                                                        <p className="font-semibold type-card-description text-[color:var(--ws-text-primary)]">{item.label}</p>
                                                         <ArrowUpRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 translate-y-1 group-hover:opacity-70 group-hover:translate-x-0 group-hover:translate-y-0 transition" />
                                                     </div>
-                                                    <p className="text-xs text-[color:var(--ws-text-tertiary)] mt-0.5">{item.hint}</p>
+                                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)] mt-0.5">{item.hint}</p>
                                                 </div>
                                             </button>
                                         );
@@ -837,7 +837,7 @@ export default function ClientPortalPage() {
                                         Workspace activity
                                     </h2>
                                 </div>
-                                <span className="text-xs text-[color:var(--ws-text-tertiary)]">
+                                <span className="type-caption text-[color:var(--ws-text-tertiary)]">
                                     {workspaceActivity.length} recent item{workspaceActivity.length === 1 ? '' : 's'}
                                 </span>
                             </header>
@@ -851,21 +851,21 @@ export default function ClientPortalPage() {
                                             >
                                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-medium text-[color:var(--ws-text-primary)] line-clamp-3">
+                                                        <p className="type-card-description font-medium text-[color:var(--ws-text-primary)] line-clamp-3">
                                                             {item.summary}
                                                         </p>
                                                         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                                             {item.actor_display_name ? (
-                                                                <span className="inline-flex items-center text-[11px] text-[color:var(--ws-text-tertiary)]">
+                                                                <span className="inline-flex items-center type-ui text-[color:var(--ws-text-tertiary)]">
                                                                     {item.actor_display_name}
                                                                 </span>
                                                             ) : null}
-                                                            <time className="inline-block text-[11px] text-[color:var(--ws-text-tertiary)] tabular-nums">
+                                                            <time className="inline-block type-caption text-[color:var(--ws-text-tertiary)] tabular-nums">
                                                                 {formatDateTime(item.created_at)}
                                                             </time>
                                                         </div>
                                                     </div>
-                                                    <span className={`inline-flex shrink-0 items-center self-start gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(item.event_type)}`}>
+                                                    <span className={`inline-flex shrink-0 items-center self-start gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(item.event_type)}`}>
                                                         <Activity className="h-3 w-3" />
                                                         {item.event_type.split('.').pop() || item.event_type}
                                                     </span>
@@ -896,12 +896,12 @@ export default function ClientPortalPage() {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h3 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">{p.name}</h3>
-                                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${statusBadgeClass(p.status)}`}>
+                                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 type-caption font-medium ${statusBadgeClass(p.status)}`}>
                                             {p.stage || p.status}
                                         </span>
                                     </div>
                                     <div className="mt-4 max-w-lg">
-                                        <div className="flex items-center justify-between text-[11px] font-medium text-[color:var(--ws-text-tertiary)] mb-1.5">
+                                        <div className="flex items-center justify-between type-ui font-medium text-[color:var(--ws-text-tertiary)] mb-1.5">
                                             <span>Progress</span>
                                             <span>{p.progress}%</span>
                                         </div>
@@ -916,7 +916,7 @@ export default function ClientPortalPage() {
                                 <div className="shrink-0 sm:text-right">
                                     <a
                                         href={p.viewUrl}
-                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 text-xs md:text-sm font-semibold text-[color:var(--ws-text-primary)]"
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
                                         Open project
                                         <ArrowUpRight className="h-3.5 w-3.5" />
@@ -937,18 +937,18 @@ export default function ClientPortalPage() {
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Invoice</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Invoice</p>
                                         <p className="mt-0.5 text-base font-semibold text-[color:var(--ws-text-primary)]">{i.invoiceNumber}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Due date</p>
-                                        <p className="mt-0.5 text-sm text-[color:var(--ws-text-primary)]">{formatDate(i.dueDate)}</p>
-                                        <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(i.status)}`}>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Due date</p>
+                                        <p className="mt-0.5 type-card-description text-[color:var(--ws-text-primary)]">{formatDate(i.dueDate)}</p>
+                                        <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(i.status)}`}>
                                             {i.status.replace('_', ' ')}
                                         </p>
                                     </div>
                                     <div className="sm:text-right">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount due</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount due</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(i.total)}</p>
                                     </div>
                                 </div>
@@ -956,17 +956,17 @@ export default function ClientPortalPage() {
                                     {i.status !== 'paid' && i.payUrl ? (
                                         <a
                                             href={i.payUrl}
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 text-xs md:text-sm font-semibold text-white"
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-caption md:text-sm font-semibold text-white"
                                         >
                                             Pay invoice
                                             <ArrowUpRight className="h-3.5 w-3.5" />
                                         </a>
                                     ) : i.status !== 'paid' ? (
-                                        <span className="inline-flex items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3.5 py-2 text-xs font-medium text-[color:var(--ws-text-secondary)]">
+                                        <span className="inline-flex items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3.5 py-2 type-caption font-medium text-[color:var(--ws-text-secondary)]">
                                             Payment link will appear when ready
                                         </span>
                                     ) : (
-                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[color:var(--success)] px-3.5 py-2 text-xs font-semibold border border-[color-mix(in_srgb,var(--success)_24%,transparent)]">
+                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[color:var(--success)] px-3.5 py-2 type-caption font-semibold border border-[color-mix(in_srgb,var(--success)_24%,transparent)]">
                                             <CheckCircle2 className="h-3.5 w-3.5" /> Paid
                                         </span>
                                     )}
@@ -986,19 +986,19 @@ export default function ClientPortalPage() {
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Quote</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Quote</p>
                                         <p className="mt-0.5 text-base font-semibold text-[color:var(--ws-text-primary)]">{q.quoteNumber}</p>
-                                        <p className="mt-0.5 text-sm text-[color:var(--ws-text-secondary)]">{q.name}</p>
+                                        <p className="mt-0.5 type-caption text-[color:var(--ws-text-secondary)]">{q.name}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Valid until</p>
-                                        <p className="mt-0.5 text-sm text-[color:var(--ws-text-primary)]">{q.validUntil ? formatDate(q.validUntil) : '—'}</p>
-                                        <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(q.status)}`}>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Valid until</p>
+                                        <p className="mt-0.5 type-card-description text-[color:var(--ws-text-primary)]">{q.validUntil ? formatDate(q.validUntil) : '—'}</p>
+                                        <p className={`mt-0.5 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(q.status)}`}>
                                             {q.status}
                                         </p>
                                     </div>
                                     <div className="sm:text-right">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount</p>
+                                        <p className="type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(q.totalAmount)}</p>
                                     </div>
                                 </div>
@@ -1008,7 +1008,7 @@ export default function ClientPortalPage() {
                                             href={q.viewUrl}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 text-xs md:text-sm font-semibold text-[color:var(--ws-text-primary)]"
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                         >
                                             Review quote <ArrowUpRight className="h-3.5 w-3.5" />
                                         </a>
@@ -1030,11 +1030,11 @@ export default function ClientPortalPage() {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <h3 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">{c.title}</h3>
-                                        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${statusBadgeClass(c.status)}`}>
+                                        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 type-caption font-medium ${statusBadgeClass(c.status)}`}>
                                             {c.status.replace(/_/g, ' ')}
                                         </span>
                                     </div>
-                                    <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[color:var(--ws-text-tertiary)]">
+                                    <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 type-caption text-[color:var(--ws-text-tertiary)]">
                                         {c.contractNumber ? <span>Contract no. <span className="font-medium text-[color:var(--ws-text-secondary)]">{c.contractNumber}</span></span> : null}
                                         <span>Last updated <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(c.updatedAt)}</span></span>
                                     </div>
@@ -1043,12 +1043,12 @@ export default function ClientPortalPage() {
                                     {c.actionUrl ? (
                                         <a
                                             href={c.actionUrl}
-                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 text-xs md:text-sm font-semibold text-white"
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-caption md:text-sm font-semibold text-white"
                                         >
                                             Review & sign <ArrowUpRight className="h-3.5 w-3.5" />
                                         </a>
                                     ) : (
-                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)] px-3.5 py-2 text-xs font-medium text-[color:var(--ws-text-tertiary)]">
+                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)] px-3.5 py-2 type-caption font-medium text-[color:var(--ws-text-tertiary)]">
                                             <CheckCircle2 className="h-3.5 w-3.5" /> No action required
                                         </span>
                                     )}
@@ -1072,17 +1072,17 @@ export default function ClientPortalPage() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="text-base font-semibold text-[color:var(--ws-text-primary)]">{d.name}</p>
-                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-[color:var(--ws-text-tertiary)]">
+                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 type-caption text-[color:var(--ws-text-tertiary)]">
                                             <span>Type: <span className="font-medium text-[color:var(--ws-text-secondary)]">{d.documentType}</span></span>
                                             <span>Updated: <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(d.updatedAt)}</span></span>
-                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${statusBadgeClass(d.status)}`}>{d.status}</span>
+                                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-medium ${statusBadgeClass(d.status)}`}>{d.status}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="shrink-0 sm:text-right">
                                     <button
                                         onClick={() => setDocumentPreview({ name: d.name, url: d.viewUrl })}
-                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 text-xs md:text-sm font-semibold text-[color:var(--ws-text-primary)]"
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
                                         Preview
                                     </button>
@@ -1102,7 +1102,7 @@ export default function ClientPortalPage() {
                                 </div>
                                 <div>
                                     <h2 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Messages</h2>
-                                    <p className="text-xs text-[color:var(--ws-text-tertiary)]">
+                                    <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
                                         {portal.projects.length ? 'Reply within the context of a project' : 'Create a project first to enable messages'}
                                     </p>
                                 </div>
@@ -1110,13 +1110,13 @@ export default function ClientPortalPage() {
                         </header>
 
                         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)]">
-                            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1.5">
+                            <label className="block type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1.5">
                                 Project context
                             </label>
                             <select
                                 value={projectId}
                                 onChange={(event) => setProjectId(event.target.value)}
-                                className="w-full max-w-md rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3 py-2 text-sm text-[color:var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)]"
+                                className="w-full max-w-md rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3 py-2 type-ui text-[color:var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)]"
                                 disabled={!portal.projects.length}
                             >
                                 {portal.projects.length ? (
@@ -1143,12 +1143,12 @@ export default function ClientPortalPage() {
                                                     : 'rounded-bl-md bg-[color:var(--ws-panel)] border border-[color:var(--ws-border)] text-[color:var(--ws-text-primary)]'
                                             }`}
                                         >
-                                            <div className="mb-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[color:var(--ws-text-tertiary)]">
+                                            <div className="mb-1.5 flex flex-wrap gap-x-3 gap-y-0.5 type-ui text-[color:var(--ws-text-tertiary)]">
                                                 <span className="font-medium text-[color:var(--ws-text-secondary)]">{item.author_name}</span>
                                                 <span>· {item.projectName}</span>
                                                 <time className="ml-auto">{formatDateTime(item.created_at)}</time>
                                             </div>
-                                            <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{item.content}</p>
+                                            <p className="type-card-description leading-relaxed whitespace-pre-wrap break-words">{item.content}</p>
                                         </div>
                                     </div>
                                 ))
@@ -1159,7 +1159,7 @@ export default function ClientPortalPage() {
                                             <MessageSquare className="h-6 w-6" />
                                         </div>
                                         <h3 className="font-semibold text-[color:var(--ws-text-primary)]">No messages yet</h3>
-                                        <p className="mt-1.5 text-sm text-[color:var(--ws-text-tertiary)] max-w-sm mx-auto">
+                                        <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-sm mx-auto">
                                             Send a message to get a conversation started. Replies from the team will appear right here.
                                         </p>
                                     </div>
@@ -1172,18 +1172,18 @@ export default function ClientPortalPage() {
                                 value={message}
                                 onChange={(event) => setMessage(event.target.value)}
                                 placeholder={projectId ? 'Write a message to your team…' : 'Choose a project above to start messaging'}
-                                className="w-full rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-4 py-3 text-sm text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)] resize-none"
+                                className="w-full rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-4 py-3 type-caption text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)] resize-none"
                                 rows={3}
                                 disabled={!projectId}
                             />
                             <div className="flex items-center justify-end gap-2">
-                                <p className="mr-auto text-[11px] text-[color:var(--ws-text-tertiary)]">
+                                <p className="mr-auto type-card-description text-[color:var(--ws-text-tertiary)]">
                                     {message.length > 0 ? `${message.length}/10000` : 'Messages are recorded in your shared project timeline'}
                                 </p>
                                 <button
                                     type="submit"
                                     disabled={!message.trim() || !projectId || sending}
-                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-ui font-semibold text-white disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                                     Send message
@@ -1209,14 +1209,14 @@ export default function ClientPortalPage() {
                                 <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] text-[color:var(--ws-text-tertiary)]">
                                     <FileText className="h-4 w-4" />
                                 </div>
-                                <p className="truncate text-sm font-semibold text-[color:var(--ws-text-primary)]">{documentPreview.name}</p>
+                                <p className="truncate type-card-description font-semibold text-[color:var(--ws-text-primary)]">{documentPreview.name}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <a
                                     href={documentPreview.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border)] px-3 py-1.5 text-xs font-semibold text-[color:var(--ws-text-primary)]"
+                                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border)] px-3 py-1.5 type-caption font-semibold text-[color:var(--ws-text-primary)]"
                                 >
                                     Open separately <ArrowUpRight className="h-3.5 w-3.5" />
                                 </a>

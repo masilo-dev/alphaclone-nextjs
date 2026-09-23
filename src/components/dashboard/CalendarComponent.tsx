@@ -561,7 +561,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     .calendar-dark-theme .fc-col-header-cell {
                         background: #1e293b;
                         color: #94a3b8;
-                        font-weight: 600;
+                        font-weight: var(--weight-semibold);
                         padding: 12px 8px;
                         border-color: #334155;
                     }
@@ -577,7 +577,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     .calendar-dark-theme .fc-daygrid-day-number {
                         color: #e2e8f0;
                         padding: 8px;
-                        font-weight: 500;
+                        font-weight: var(--weight-medium);
                     }
 
                     .calendar-dark-theme .fc-day-today {
@@ -587,7 +587,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-day-today .fc-daygrid-day-number {
                         color: #14b8a6;
-                        font-weight: 700;
+                        font-weight: var(--weight-bold);
                     }
 
                     .calendar-dark-theme .fc-button {
@@ -595,7 +595,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         border-color: #334155;
                         color: #e2e8f0;
                         text-transform: capitalize;
-                        font-weight: 500;
+                        font-weight: var(--weight-medium);
                         padding: 8px 16px;
                     }
 
@@ -616,25 +616,25 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-toolbar-title {
                         color: #f1f5f9;
-                        font-size: 1.15rem; /* ~18px Max */
-                        font-weight: 700;
+                        font-size: var(--text-lg); /* ~18px Max */
+                        font-weight: var(--weight-bold);
                     }
 
                     /* STRICT TYPOGRAPHY OVERRIDES */
                     .calendar-dark-theme .fc-event-title,
                     .calendar-dark-theme .fc-event-time {
-                        font-size: 12px !important;
-                        font-weight: 500;
+                        font-size: var(--type-caption-size) !important;
+                        font-weight: var(--weight-medium);
                     }
                     
                     .calendar-dark-theme .fc-col-header-cell-cushion {
-                        font-size: 13px !important; 
+                        font-size: var(--type-ui-size) !important;
                         text-transform: uppercase;
                         letter-spacing: 0.5px;
                     }
 
                     .calendar-dark-theme .fc-timegrid-slot-label-cushion {
-                        font-size: 12px !important;
+                        font-size: var(--type-caption-size) !important;
                     }
 
                     /* Hide specific views on mobile via CSS as backup */
@@ -643,7 +643,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             display: none !important;
                         }
                         .fc-toolbar-title {
-                            font-size: 1rem !important;
+                            font-size: var(--type-body-size) !important;
                         }
                     }
 
@@ -651,8 +651,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         border: none;
                         padding: 4px 8px;
                         border-radius: 4px;
-                        font-size: 0.875rem;
-                        font-weight: 500;
+                        font-size: var(--type-ui-size);
+                        font-weight: var(--weight-medium);
                         cursor: pointer;
                         transition: all 0.2s;
                     }
@@ -673,7 +673,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-timegrid-slot-label {
                         color: #94a3b8;
-                        font-size: 0.875rem;
+                        font-size: var(--type-ui-size);
                     }
 
                     .calendar-dark-theme .fc-day-other .fc-daygrid-day-number {
@@ -686,7 +686,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-more-link {
                         color: #14b8a6;
-                        font-weight: 600;
+                        font-weight: var(--weight-semibold);
                     }
                 `}</style>
                 <FullCalendar
@@ -738,12 +738,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-red-300 font-semibold mb-1">Overlapping Event</p>
-                                <p className="text-slate-400 text-sm">
+                                <p className="text-slate-400 type-card-description">
                                     Your new event conflicts with an existing event:
                                 </p>
                                 <div className="mt-2 p-2 bg-slate-900/50 rounded">
                                     <p className="text-white font-medium">{conflictWarning.title}</p>
-                                    <p className="text-slate-400 text-xs">
+                                    <p className="text-slate-400 type-card-description">
                                         {format(new Date(conflictWarning.start_time), 'MMM d, h:mm a')} - {format(new Date(conflictWarning.end_time), 'h:mm a')}
                                     </p>
                                 </div>
@@ -798,7 +798,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 <h4 className="text-2xl font-bold text-white mb-3">{selectedEvent.title}</h4>
                                 <div className="flex items-center gap-2">
                                     <div
-                                        className="px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2"
+                                        className="px-3 py-1 rounded-full type-ui font-semibold flex items-center gap-2"
                                         style={{
                                             backgroundColor: `${getEventColor(selectedEvent.type, selectedEvent)}20`,
                                             color: getEventColor(selectedEvent.type, selectedEvent)
@@ -828,12 +828,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 if (qa) {
                                     return (
                                         <div className="space-y-4">
-                                            <div className="text-sm font-semibold text-slate-300 border-b border-slate-700 pb-2">Questions & Answers</div>
+                                            <div className="type-ui font-semibold text-slate-300 border-b border-slate-700 pb-2">Questions & Answers</div>
                                             <div className="grid gap-3">
                                                 {qa.map((item, idx) => (
                                                     <div key={idx} className="bg-slate-900/50 p-3 rounded border border-slate-800">
-                                                        <div className="text-xs font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
-                                                        <div className="text-slate-300 text-sm whitespace-pre-wrap">{item.answer}</div>
+                                                        <div className="type-caption font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
+                                                        <div className="text-slate-300 type-ui whitespace-pre-wrap">{item.answer}</div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -843,7 +843,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                                 return (
                                     <div>
-                                        <div className="text-sm font-semibold text-slate-300 mb-2">Description</div>
+                                        <div className="type-ui font-semibold text-slate-300 mb-2">Description</div>
                                         <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
                                     </div>
                                 );
@@ -852,13 +852,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             {/* Time Details */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                                    <div className="text-xs font-semibold text-slate-400 mb-1">Start Time</div>
+                                    <div className="type-caption font-semibold text-slate-400 mb-1">Start Time</div>
                                     <div className="text-white font-semibold">
                                         {format(new Date(selectedEvent.start_time), 'PPp')}
                                     </div>
                                 </div>
                                 <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                                    <div className="text-xs font-semibold text-slate-400 mb-1">End Time</div>
+                                    <div className="type-caption font-semibold text-slate-400 mb-1">End Time</div>
                                     <div className="text-white font-semibold">
                                         {format(new Date(selectedEvent.end_time), 'PPp')}
                                     </div>
@@ -950,7 +950,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             />
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                                <label className="block type-label font-medium text-slate-300 mb-2">Description</label>
                                 <textarea
                                     value={newEvent.description}
                                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
@@ -978,7 +978,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Event Type</label>
+                                <label className="block type-label font-medium text-slate-300 mb-2">Event Type</label>
                                 <select
                                     value={newEvent.type}
                                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
@@ -1002,14 +1002,14 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             {/* Custom Questions Section */}
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-sm font-medium text-slate-300">Intake Questions (Q&A)</label>
+                                    <label className="type-label font-medium text-slate-300">Intake Questions (Q&A)</label>
                                     <button
                                         type="button"
                                         onClick={() => setNewEvent({
                                             ...newEvent,
                                             questions: [...(newEvent as any).questions, { id: Date.now().toString(), text: '' }]
                                         })}
-                                        className="text-xs text-teal-400 hover:text-teal-300 font-semibold"
+                                        className="type-caption text-teal-400 hover:text-teal-300 font-semibold"
                                     >
                                         + Add Question
                                     </button>
@@ -1024,7 +1024,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                                 setNewEvent({ ...newEvent, questions: newQs } as any);
                                             }}
                                             placeholder={`Question ${idx + 1}`}
-                                            className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-teal-500"
+                                            className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:border-teal-500"
                                         />
                                         {(newEvent as any).questions.length > 1 && (
                                             <button

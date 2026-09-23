@@ -113,11 +113,11 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                         required
                     />
                     <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+                        <label className="block type-label font-semibold text-slate-400 mb-1">Category</label>
                         <select
                             value={formData.category}
                             onChange={(e: any) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg type-ui text-slate-300 focus:outline-none focus:border-teal-500"
                         >
                             <option value="Consulting">Consulting</option>
                             <option value="Development">Development</option>

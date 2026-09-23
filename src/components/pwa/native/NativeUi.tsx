@@ -72,8 +72,8 @@ export function NativeListTile({
         <div className={bareIcon ? 'shrink-0' : 'native-list-icon shrink-0'}>{icon}</div>
       ) : null}
       <div className="flex-1 min-w-0">
-        <div className="text-[15px] font-medium text-white/95 truncate">{title}</div>
-        {subtitle ? <div className="text-xs text-white/45 mt-0.5 truncate">{subtitle}</div> : null}
+        <div className="type-ui font-medium text-white/95 truncate">{title}</div>
+        {subtitle ? <div className="type-caption text-white/45 mt-0.5 truncate">{subtitle}</div> : null}
       </div>
       {trailing ? <div className="shrink-0">{trailing}</div> : null}
     </Tag>

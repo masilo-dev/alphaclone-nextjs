@@ -869,7 +869,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
         <div className="flex-shrink-0 flex items-center gap-2 px-4 pt-4 pb-2 border-b border-slate-700">
           <button
             onClick={() => setAdminView("messages")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl type-ui font-semibold transition-all ${
               adminView === "messages"
                 ? "bg-teal-500/20 text-teal-400 border border-teal-500/30"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -879,7 +879,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
           </button>
           <button
             onClick={() => setAdminView("campaigns")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl type-ui font-semibold transition-all ${
               adminView === "campaigns"
                 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -927,7 +927,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       <MessageSquare className="w-5 h-5 text-teal-400" />{" "}
                       Messages
                     </h3>
-                    <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                    <p className="type-card-description text-slate-500 mt-1 leading-snug">
                       Pick a contact — chat, WhatsApp, and SMS in one thread.
                     </p>
                     <button
@@ -941,13 +941,13 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                   <div className="mt-4 flex bg-slate-800/50 p-1 rounded-xl border border-white/5">
                     <button
                       onClick={() => setSidebarTab("chats")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${sidebarTab === "chats" ? "bg-teal-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "chats" ? "bg-teal-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
                     >
                       <MessageSquare className="w-3.5 h-3.5" /> Recent
                     </button>
                     <button
                       onClick={() => setSidebarTab("contacts")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all ${sidebarTab === "contacts" ? "bg-teal-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "contacts" ? "bg-teal-500 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
                     >
                       <Users className="w-3.5 h-3.5" /> Contacts
                     </button>
@@ -955,7 +955,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                   <div className="relative mt-4">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     <input
-                      className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
+                      className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-4 py-2 type-ui text-white focus:outline-none focus:border-teal-500"
                       placeholder={
                         sidebarTab === "chats"
                           ? "Search chats..."
@@ -1010,11 +1010,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4
-                            className={`text-sm font-medium truncate ${selectedClient?.id === client.id ? "text-white" : "text-slate-300"}`}
+                            className={`type-ui font-medium truncate ${selectedClient?.id === client.id ? "text-white" : "text-slate-300"}`}
                           >
                             {client.name}
                           </h4>
-                          <p className="text-xs text-slate-400 truncate">
+                          <p className="type-card-description text-slate-400 truncate">
                             {client.email}
                           </p>
                         </div>
@@ -1025,7 +1025,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       {isLoadingCRM ? (
                         <div className="flex flex-col items-center justify-center p-8 text-slate-400 gap-3">
                           <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
-                          <p className="text-sm">Loading contacts...</p>
+                          <p className="type-card-description">Loading contacts...</p>
                         </div>
                       ) : (
                         crmClients
@@ -1053,19 +1053,19 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                               }}
                               className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-slate-700 hover:bg-slate-800/50 ${selectedCRMContact?.id === contact.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
                             >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold type-ui">
                                 {(contact.name || "?").charAt(0)}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-medium text-slate-300 truncate">
+                                <h4 className="type-ui font-medium text-slate-300 truncate">
                                   {contact.name}
                                 </h4>
-                                <p className="text-xs text-slate-400 truncate">
+                                <p className="type-card-description text-slate-400 truncate">
                                   {contact.email || "No email"}
                                 </p>
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium">
+                                <span className="type-ui px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium">
                                   CRM
                                 </span>
                               </div>
@@ -1095,18 +1095,18 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           <ArrowLeft className="w-5 h-5" />
                         </button>
                       )}
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold type-ui">
                         {selectedCRMContact.name.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="text-white font-bold text-sm">
+                        <h3 className="text-white font-bold type-ui">
                           {selectedCRMContact.name}
                         </h3>
-                        <p className="text-xs text-slate-400">
+                        <p className="type-card-description text-slate-400">
                           {selectedCRMContact.email || "CRM Contact"}
                         </p>
                       </div>
-                      <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30 font-semibold">
+                      <span className="ml-auto type-ui px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30 font-semibold">
                         All channels
                       </span>
                     </div>
@@ -1119,7 +1119,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         <button
                           key={id}
                           onClick={() => setActiveChannel(id)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+                          className={`px-3 py-1.5 type-caption font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
                             activeChannel === id
                               ? "text-teal-400 border-teal-400 bg-teal-500/10"
                               : "text-slate-400 border-transparent hover:text-white hover:bg-slate-800"
@@ -1174,7 +1174,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 {selectedClient.name}
                               </span>
                               {isRecipientTyping && (
-                                <span className="text-xs text-teal-400 font-normal animate-pulse">
+                                <span className="type-caption text-teal-400 font-normal animate-pulse">
                                   typing...
                                 </span>
                               )}
@@ -1198,7 +1198,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="truncate">AlphaClone Admin</span>
-                            <span className="text-xs text-slate-400 font-medium">
+                            <span className="type-caption text-slate-400 font-medium">
                               {adminPresence === "online"
                                 ? "Typically replies in minutes"
                                 : "Back soon"}
@@ -1228,7 +1228,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           id: "nexus-support",
                         });
                       }}
-                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-lg text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-lg type-caption font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
                     >
                       <Bot className="w-3.5 h-3.5" />
                       Nexus Triage
@@ -1240,7 +1240,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full type-caption font-bold transition-all ${
                           autoReplyEnabled
                             ? "bg-teal-500 text-white shadow-lg shadow-teal-500/30"
                             : "bg-slate-800 text-slate-400 hover:text-white border border-white/10"
@@ -1255,7 +1255,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       <button
                         onClick={handleSummarizeConversation}
                         disabled={isSummarizing || visibleMessages.length === 0}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full type-caption font-bold transition-all ${
                           isSummarizing
                             ? "bg-purple-500/50 text-white"
                             : "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
@@ -1294,7 +1294,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <Wand2 className="w-4 h-4 text-purple-400" />
-                              <span className="text-sm font-semibold text-purple-400">
+                              <span className="type-ui font-semibold text-purple-400">
                                 AI Summary
                               </span>
                             </div>
@@ -1305,7 +1305,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                               <X className="w-4 h-4" />
                             </button>
                           </div>
-                          <p className="text-sm text-slate-300">
+                          <p className="type-card-description text-slate-300">
                             {conversationSummary}
                           </p>
                         </div>
@@ -1352,7 +1352,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                 <div
                                   className={`flex ${isOwn ? "justify-end" : "justify-start"} mb-0.5 px-2`}
                                 >
-                                  <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                  <span className="type-ui text-slate-500 flex items-center gap-1">
                                     {channelBadge}{" "}
                                     <span className="capitalize">
                                       {channelSource}
@@ -1373,7 +1373,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
                       {/* Typing Indicator for Recipient in Chat Area */}
                       {isRecipientTyping && (
-                        <div className="flex items-center gap-2 mt-2 ml-4 text-slate-500 text-xs">
+                        <div className="flex items-center gap-2 mt-2 ml-4 text-slate-500 type-caption">
                           <div className="flex gap-1 bg-slate-800 p-2 rounded-xl rounded-tl-none">
                             <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
                             <span className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
@@ -1505,7 +1505,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       </div>
 
                       <textarea
-                        className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:bg-slate-700 transition-all hover:bg-slate-700 resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
+                        className="flex-1 min-w-0 bg-slate-800 border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 type-ui text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:bg-slate-700 transition-all hover:bg-slate-700 resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
                         placeholder="Type your message..."
                         rows={1}
                         value={newMessage}

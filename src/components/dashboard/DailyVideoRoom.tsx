@@ -185,7 +185,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
                         <p className="text-white text-xl font-medium mb-2">Joining meeting...</p>
-                        <p className="text-slate-400 text-sm">Please wait while we connect you</p>
+                        <p className="text-slate-400 type-card-description">Please wait while we connect you</p>
                     </div>
                 </div>
             )}
@@ -200,7 +200,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     {!isJoining && participantCount === 1 && (
                         <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
                             <div className="w-2 h-2 bg-teal-500 rounded-full" />
-                            <span className="text-sm font-medium text-teal-100">Waiting for others to join...</span>
+                            <span className="type-ui font-medium text-teal-100">Waiting for others to join...</span>
                         </div>
                     )}
 

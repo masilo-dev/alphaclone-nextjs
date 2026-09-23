@@ -49,13 +49,13 @@ export default function RecordPageShell({
               )}
               <h1 className="text-lg font-bold text-white truncate">{name}</h1>
             </div>
-            {subtitle && <p className="text-xs text-slate-400 mt-1 truncate">{subtitle}</p>}
+            {subtitle && <p className="type-card-description text-slate-400 mt-1 truncate">{subtitle}</p>}
             {badges.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {badges.map((b) => (
                   <span
                     key={b.label}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${b.className ?? 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}
+                    className={`type-ui font-bold px-2 py-0.5 rounded-full border ${b.className ?? 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}
                   >
                     {b.label}
                   </span>
@@ -67,7 +67,7 @@ export default function RecordPageShell({
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-800 border border-white/5 text-xs font-bold text-slate-300 hover:text-white hover:border-teal-500/30 transition-colors"
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-800 border border-white/5 type-caption font-bold text-slate-300 hover:text-white hover:border-teal-500/30 transition-colors"
               >
                 <Edit className="w-3.5 h-3.5" />
                 Edit
@@ -83,7 +83,7 @@ export default function RecordPageShell({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex-shrink-0 px-3 py-2 text-xs font-bold rounded-lg transition-colors ${
+              className={`flex-shrink-0 px-3 py-2 type-caption font-bold rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-teal-500/15 text-teal-400 border border-teal-500/30'
                   : 'text-slate-400 hover:text-white'

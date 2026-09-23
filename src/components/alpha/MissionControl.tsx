@@ -24,11 +24,11 @@ export default function MissionControl({ missions }: { missions: MissionControlM
             <Activity className={`w-6 h-6 ${running ? 'animate-pulse' : ''}`} />
           </div>
           <div>
-            <h2 className="text-lg font-bold tracking-[0.2em] uppercase">Mission operations</h2>
-            <span className="flex items-center gap-1 text-xs text-[#00FFD1]/60"><Shield className="w-3 h-3" /> Tenant-isolated durable execution history</span>
+            <h2 className="text-lg font-bold tracking-caps uppercase">Mission operations</h2>
+            <span className="flex items-center gap-1 type-caption text-[#00FFD1]/60"><Shield className="w-3 h-3" /> Tenant-isolated durable execution history</span>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-center text-xs">
+        <div className="grid grid-cols-3 gap-3 text-center type-caption">
           <div className="border border-cyan-400/20 bg-cyan-400/5 px-4 py-2"><div className="text-lg text-white">{running}</div>Running</div>
           <div className="border border-emerald-400/20 bg-emerald-400/5 px-4 py-2"><div className="text-lg text-white">{completed}</div>Completed</div>
           <div className="border border-red-400/20 bg-red-400/5 px-4 py-2"><div className="text-lg text-white">{failed}</div>Failed</div>
@@ -48,12 +48,12 @@ export default function MissionControl({ missions }: { missions: MissionControlM
               <article key={mission.id} className="border border-[#00FFD1]/10 bg-[#001720] p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-xs font-bold text-white">{mission.description}</div>
-                    <div className="mt-1 text-[10px] opacity-40">{mission.id}</div>
+                    <div className="type-caption font-bold text-white">{mission.description}</div>
+                    <div className="mt-1 type-ui opacity-40">{mission.id}</div>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] uppercase"><StatusIcon className="h-3 w-3" />{mission.status}</span>
+                  <span className="flex items-center gap-1 type-caption uppercase"><StatusIcon className="h-3 w-3" />{mission.status}</span>
                 </div>
-                <div className="max-h-40 space-y-1 overflow-y-auto border-t border-[#00FFD1]/10 pt-3 text-[10px] text-[#00FFD1]/65">
+                <div className="max-h-40 space-y-1 overflow-y-auto border-t border-[#00FFD1]/10 pt-3 type-ui text-[#00FFD1]/65">
                   {mission.logs.slice(-8).map((log, index) => <div key={`${mission.id}-${index}`}>{log}</div>)}
                 </div>
               </article>

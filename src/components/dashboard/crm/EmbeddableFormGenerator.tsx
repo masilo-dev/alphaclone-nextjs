@@ -58,24 +58,24 @@ document.getElementById('alphaclone-form-started').value = String(Date.now());
             <Globe size={16} />
           </div>
           <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">Embeddable Lead Form Generator</h4>
-            <p className="text-[11px] text-slate-400">Embed this HTML snippet on any external website</p>
+            <h4 className="type-caption font-black text-white uppercase tracking-wider">Embeddable Lead Form Generator</h4>
+            <p className="type-card-description text-slate-400">Embed this HTML snippet on any external website</p>
           </div>
         </div>
         <button
           onClick={handleCopy}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-md shadow-teal-500/10"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-md shadow-teal-500/10"
         >
           <Copy size={13} /> Copy Snippet
         </button>
       </div>
 
-      <p className="text-xs text-slate-300 leading-relaxed">
+      <p className="type-card-description text-slate-300 leading-relaxed">
         Copy and paste the HTML snippet below into your website, landing page, or WordPress site. Submissions stream instantly into your AlphaClone CRM leads board.
       </p>
 
       <div className="relative">
-        <pre className="p-4 bg-slate-950 border border-white/10 rounded-xl text-[11px] text-teal-300 font-mono overflow-x-auto max-h-48">
+        <pre className="p-4 bg-slate-950 border border-white/10 rounded-xl type-ui text-teal-300 font-mono overflow-x-auto max-h-48">
           {embedCode}
         </pre>
       </div>

@@ -142,7 +142,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4">
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-                <p className="text-slate-400 text-sm font-medium animate-pulse">Syncing with Grid Node...</p>
+                <p className="text-slate-400 type-card-description font-medium animate-pulse">Syncing with Grid Node...</p>
             </div>
         );
     }
@@ -156,10 +156,10 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                         <Users className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-white">Shared Notes</h3>
+                        <h3 className="type-ui font-semibold text-white">Shared Notes</h3>
                         <div className="flex items-center gap-2">
                             <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            <span className="text-xs text-slate-500">
+                            <span className="type-caption text-slate-500">
                                 {cursors.length > 0 ? `${cursors.length + 1} people viewing` : 'Only you'}
                             </span>
                         </div>
@@ -191,7 +191,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     ref={editorRef}
                     defaultValue={document?.content}
                     onChange={handleContentChange}
-                    className="w-full h-full p-8 bg-transparent text-slate-300 font-mono text-sm leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
+                    className="w-full h-full p-8 bg-transparent text-slate-300 font-mono type-ui leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
                     placeholder="Start typing your notes..."
                 />
 
@@ -200,14 +200,14 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     {cursors.map((cursor, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-xs font-black text-white shadow-xl"
+                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center type-caption font-black text-white shadow-xl"
                             title={cursor.userName}
                             style={{ borderColor: cursor.color }}
                         >
                             {cursor.userName.charAt(0)}
                         </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center text-xs font-black text-white shadow-xl z-10" title="You">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center type-caption font-black text-white shadow-xl z-10" title="You">
                         {userName.charAt(0)}
                     </div>
                 </div>
@@ -217,7 +217,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-slate-900/20 px-6 py-2 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-slate-900/20 px-6 py-2 type-caption text-slate-600">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 <span>Auto-saving</span>
             </div>

@@ -85,9 +85,9 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
           <div className="flex items-center justify-between gap-3 border-b border-[var(--ws-border)] p-4">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-semibold text-white">In-app alerts</span>
+              <span className="type-ui font-semibold text-white">In-app alerts</span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">
+                <span className="type-ui font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">
                   {unreadCount} unread
                 </span>
               )}
@@ -97,7 +97,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
                 <button
                   key={key}
                   onClick={() => setFilter(key)}
-                  className={`text-xs px-3 py-1 rounded-lg border ${
+                  className={`type-caption px-3 py-1 rounded-lg border ${
                     filter === key
                       ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
                       : 'border-white/5 text-slate-400'
@@ -127,16 +127,16 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
                   className={`p-4 flex gap-3 ${n.read ? 'opacity-70' : 'bg-teal-500/5'}`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white">{n.title}</p>
-                    {n.message && <p className="text-sm text-slate-400 mt-1">{n.message}</p>}
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="type-card-description font-medium text-white">{n.title}</p>
+                    {n.message && <p className="type-card-description text-slate-400 mt-1">{n.message}</p>}
+                    <p className="type-card-description text-slate-500 mt-2">
                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                     </p>
                   </div>
                   {!n.read && (
                     <button
                       onClick={() => notificationService.markAsRead(n.id).then(loadData)}
-                      className="text-xs text-teal-400 shrink-0"
+                      className="type-caption text-teal-400 shrink-0"
                     >
                       Mark read
                     </button>
@@ -151,18 +151,18 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
           <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Smartphone className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-semibold text-white">Alert preferences</span>
+              <span className="type-ui font-semibold text-white">Alert preferences</span>
             </div>
             {pushSupported ? (
               <button
                 onClick={() => subscribeToPush()}
                 className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 text-left transition-colors hover:bg-slate-950"
               >
-                <p className="text-sm text-white">{isSubscribed ? 'Push enabled' : 'Enable push notifications'}</p>
-                <p className="text-xs text-slate-500 mt-1">Browser alerts for invoices, deals, and tasks</p>
+                <p className="type-card-description text-white">{isSubscribed ? 'Push enabled' : 'Enable push notifications'}</p>
+                <p className="type-card-description text-slate-500 mt-1">Browser alerts for invoices, deals, and tasks</p>
               </button>
             ) : (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex items-center gap-2 type-ui text-slate-500">
                 <BellOff className="w-4 h-4" />
                 Push not supported in this browser
               </div>
@@ -172,7 +172,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
           <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-semibold text-white">Business activity timeline</span>
+              <span className="type-ui font-semibold text-white">Business activity timeline</span>
             </div>
             <ActivityFeed items={activity} title="" subtitle="" />
           </div>

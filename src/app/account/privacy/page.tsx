@@ -126,9 +126,9 @@ export default function PrivacyCenterPage() {
     <main className="min-h-screen bg-slate-950 text-slate-200">
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.25em] text-teal-400">Account Privacy</p>
+          <p className="type-caption uppercase tracking-caps text-teal-400">Account Privacy</p>
           <h1 className="mt-2 text-4xl font-semibold text-white">Privacy & Consent Center</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-400">
+          <p className="mt-3 max-w-3xl type-card-description leading-7 text-slate-400">
             Review what AlphaClone stores, manage your communication preferences, GDPR consent, and trigger export or deletion flows
             from one place.
           </p>
@@ -137,7 +137,7 @@ export default function PrivacyCenterPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
             <h2 className="text-lg font-semibold text-white">Your data summary</h2>
-            <div className="mt-4 space-y-2 text-sm text-slate-300">
+            <div className="mt-4 space-y-2 type-ui text-slate-300">
               <p>Account created: {user ? 'Available in profile data' : 'Sign in required'}</p>
               <p>Stored data: profile, CRM data, emails sent, invoices, and contracts.</p>
               <p>Email providers: Zoho, Outlook, Gmail, SendGrid, Resend, Brevo</p>
@@ -147,7 +147,7 @@ export default function PrivacyCenterPage() {
                 type="button"
                 onClick={exportData}
                 disabled={exporting || !user}
-                className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {exporting ? 'Preparing export...' : 'Export my data'}
               </button>
@@ -156,7 +156,7 @@ export default function PrivacyCenterPage() {
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
             <h2 className="text-lg font-semibold text-white">Communication preferences</h2>
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="mt-4 space-y-3 type-ui">
               <ToggleRow label="Transactional emails" checked disabled description="Required for receipts, security alerts, and account notifications." />
               <ToggleRow label="Product updates / changelog" checked={prefs.product_updates} onToggle={() => setPrefs((prev) => ({ ...prev, product_updates: !prev.product_updates }))} description="Optional product updates and release notes." />
               <ToggleRow label="Marketing emails" checked={prefs.marketing} onToggle={() => setPrefs((prev) => ({ ...prev, marketing: !prev.marketing }))} description="Promotional emails and announcements." />
@@ -169,14 +169,14 @@ export default function PrivacyCenterPage() {
                 type="button"
                 onClick={savePrefs}
                 disabled={saving || !user}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-white px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? 'Saving...' : 'Save preferences'}
               </button>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+                className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800"
               >
                 Cookie settings
               </button>
@@ -185,17 +185,17 @@ export default function PrivacyCenterPage() {
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
             <h2 className="text-lg font-semibold text-white">Data requests</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-400">
+            <p className="mt-3 type-card-description leading-7 text-slate-400">
               Use the legal request flow to delete your account, or export your data from this page.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/legal/data-request?type=delete" className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">
+              <Link href="/legal/data-request?type=delete" className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800">
                 Delete my account
               </Link>
               <button
                 type="button"
                 onClick={exportData}
-                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+                className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800"
               >
                 Export my data
               </button>
@@ -208,13 +208,13 @@ export default function PrivacyCenterPage() {
               {connectedApps.map((app) => (
                 <div key={app.label} className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-white">{app.label}</p>
-                    <p className="text-xs text-slate-500">{app.connected ? 'Connected' : 'Not connected'}</p>
+                    <p className="type-card-description font-medium text-white">{app.label}</p>
+                    <p className="type-card-description text-slate-500">{app.connected ? 'Connected' : 'Not connected'}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => revokeApp(app.label)}
-                    className="rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10"
+                    className="rounded-lg border border-rose-500/30 px-3 py-1.5 type-caption font-semibold text-rose-300 hover:bg-rose-500/10"
                   >
                     Revoke
                   </button>
@@ -224,7 +224,7 @@ export default function PrivacyCenterPage() {
           </section>
         </div>
 
-        {status && <p className="mt-6 text-sm text-slate-300">{status}</p>}
+        {status && <p className="mt-6 type-caption text-slate-300">{status}</p>}
       </section>
     </main>
   );
@@ -247,13 +247,13 @@ function ToggleRow({
     <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
       <div>
         <p className="font-medium text-white">{label}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+        <p className="mt-1 type-card-description leading-5 text-slate-500">{description}</p>
       </div>
       <button
         type="button"
         onClick={disabled ? undefined : onToggle}
         disabled={disabled}
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${checked ? 'bg-teal-500/15 text-teal-300' : 'bg-slate-800 text-slate-400'} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
+        className={`rounded-full px-3 py-1 type-caption font-semibold ${checked ? 'bg-teal-500/15 text-teal-300' : 'bg-slate-800 text-slate-400'} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
       >
         {checked ? 'On' : 'Off'}
       </button>

@@ -42,7 +42,7 @@ export default function ListViewToolbar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
+            className="flex-1 bg-transparent type-ui text-white outline-none placeholder:text-slate-600"
           />
           {search && (
             <button onClick={() => onSearchChange('')} className="text-slate-500 hover:text-white">
@@ -77,7 +77,7 @@ export default function ListViewToolbar({
             <button
               key={f.value}
               onClick={() => onFilterChange(f.value)}
-              className={`flex-shrink-0 h-8 px-3 rounded-full text-xs font-bold border transition-all ${
+              className={`flex-shrink-0 h-8 px-3 rounded-full type-caption font-bold border transition-all ${
                 activeFilter === f.value
                   ? 'bg-teal-500 text-white border-teal-500'
                   : 'bg-slate-900 text-slate-400 border-white/5 hover:border-teal-500/30'

@@ -71,11 +71,11 @@ export default function DeliverabilityPanel() {
     <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-4">
       <div className="flex items-center gap-2">
         <ShieldAlert className="w-5 h-5 text-teal-400" />
-        <h3 className="text-sm font-bold text-white">Deliverability</h3>
+        <h3 className="type-ui font-bold text-white">Deliverability</h3>
       </div>
       <PlatformKpiGrid items={kpiItems} skeletonCount={4} />
       {bounceRate > 2 && (
-        <p className="text-xs text-amber-400">Bounce rate above 2% — review list hygiene and sender domain.</p>
+        <p className="type-card-description text-amber-400">Bounce rate above 2% — review list hygiene and sender domain.</p>
       )}
     </div>
   );

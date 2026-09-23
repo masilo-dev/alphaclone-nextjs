@@ -26,7 +26,7 @@ export const LegacyAccessBanner: React.FC = () => {
 
   return (
     <div className="border-b border-violet-500/20 bg-violet-600/10 px-4 py-2.5 backdrop-blur-md">
-      <div className="flex items-center gap-3 text-sm font-medium text-violet-100">
+      <div className="flex items-center gap-3 type-ui font-medium text-violet-100">
         <Shield className="h-4 w-4 shrink-0 text-violet-300" />
         <span>Legacy access active until {formatted} — no daily action limits during this period.</span>
       </div>

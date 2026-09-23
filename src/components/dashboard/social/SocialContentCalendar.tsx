@@ -96,7 +96,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="text-xs font-bold text-slate-200">{title}</p>
+        <p className="type-card-description font-bold text-slate-200">{title}</p>
         <button
           type="button"
           onClick={() => shift(1)}
@@ -107,7 +107,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+      <div className="grid grid-cols-7 gap-1 type-caption font-bold uppercase tracking-wider text-slate-500">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
           <div key={d} className="text-center py-1">
             {d}
@@ -130,21 +130,21 @@ export function SocialContentCalendar<T extends CalendarPost>({
                   : 'border-white/5 bg-slate-900/40'
               } ${mode === 'month' && !inMonth ? 'opacity-40' : ''}`}
             >
-              <p className="text-[10px] font-bold text-slate-400 mb-1">{day.getDate()}</p>
+              <p className="type-card-description font-bold text-slate-400 mb-1">{day.getDate()}</p>
               <div className="space-y-0.5">
                 {dayPosts.slice(0, mode === 'week' ? 4 : 2).map((post) => (
                   <button
                     key={post.id}
                     type="button"
                     onClick={() => onSelectPost(post)}
-                    className="w-full text-left text-[9px] leading-tight truncate rounded px-1 py-0.5 bg-teal-500/15 text-teal-200 hover:bg-teal-500/25"
+                    className="w-full text-left type-ui leading-tight truncate rounded px-1 py-0.5 bg-teal-500/15 text-teal-200 hover:bg-teal-500/25"
                     title={post.caption || 'Post'}
                   >
                     {(post.caption || 'Post').slice(0, 28)}
                   </button>
                 ))}
                 {dayPosts.length > (mode === 'week' ? 4 : 2) ? (
-                  <p className="text-[9px] text-slate-500">+{dayPosts.length - (mode === 'week' ? 4 : 2)} more</p>
+                  <p className="type-card-description text-slate-500">+{dayPosts.length - (mode === 'week' ? 4 : 2)} more</p>
                 ) : null}
               </div>
             </div>

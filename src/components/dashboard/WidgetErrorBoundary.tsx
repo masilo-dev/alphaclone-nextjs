@@ -62,17 +62,17 @@ export class WidgetErrorBoundary extends Component<Props, State> {
                     <h3 className="text-white font-medium mb-2">
                         {this.props.title ? `${this.props.title} failed` : 'Widget failed to load'}
                     </h3>
-                    <p className="text-sm text-slate-400 text-center mb-2 max-w-md">
+                    <p className="type-card-description text-slate-400 text-center mb-2 max-w-md">
                         {this.state.error?.message || 'An unexpected error occurred'}
                     </p>
                     {(this.state.error?.message?.includes('310') || this.state.error?.message?.includes('re-render')) && (
-                        <p className="text-xs text-yellow-400 text-center mb-4 max-w-md">
+                        <p className="type-card-description text-yellow-400 text-center mb-4 max-w-md">
                             💡 Try: Hard refresh (Ctrl+Shift+R) to clear cache
                         </p>
                     )}
                     <button
                         onClick={this.handleRetry}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs rounded transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white type-caption rounded transition-colors"
                     >
                         <RefreshCw className="w-3 h-3" />
                         Retry

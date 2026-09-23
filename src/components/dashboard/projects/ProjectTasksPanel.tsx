@@ -78,8 +78,8 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Delivery tasks</span>
-        <span className="text-[11px] text-slate-500">
+        <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Delivery tasks</span>
+        <span className="type-ui text-slate-500">
           {done.length}/{tasks.length} done
         </span>
       </div>
@@ -89,12 +89,12 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task for this project…"
-          className="flex-1 min-w-0 px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-0 px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <button
           type="submit"
           disabled={creating || !newTitle.trim()}
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white text-xs font-bold"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white type-caption font-bold"
         >
           {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           Add
@@ -105,7 +105,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
         {loading ? (
           [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-slate-900/60 rounded animate-pulse" />)
         ) : tasks.length === 0 ? (
-          <p className="text-xs text-slate-500 py-2 text-center">No tasks yet — add work items to track delivery.</p>
+          <p className="type-card-description text-slate-500 py-2 text-center">No tasks yet — add work items to track delivery.</p>
         ) : (
           <>
             {open.map((task) => (
@@ -116,7 +116,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
                 className="w-full flex items-start gap-2 py-1.5 text-left group"
               >
                 <Circle className="w-4 h-4 mt-0.5 shrink-0 text-slate-500 group-hover:text-[var(--brand-blue-400)]" />
-                <span className="text-sm text-slate-200 leading-snug">{task.title}</span>
+                <span className="type-ui text-slate-200 leading-snug">{task.title}</span>
               </button>
             ))}
             {done.map((task) => (
@@ -127,7 +127,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
                 className="w-full flex items-start gap-2 py-1.5 text-left group"
               >
                 <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
-                <span className="text-sm text-slate-500 line-through leading-snug">{task.title}</span>
+                <span className="type-ui text-slate-500 line-through leading-snug">{task.title}</span>
               </button>
             ))}
           </>
@@ -137,7 +137,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
       {tasks.length > 0 ? (
         <a
           href={`/dashboard/tasks?project=${encodeURIComponent(projectId)}`}
-          className="inline-block text-[11px] font-semibold text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)]"
+          className="inline-block type-ui font-semibold text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)]"
         >
           Open full task board →
         </a>

@@ -69,7 +69,7 @@ function VideoTileView({
             />
             <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
                 {isScreenShare && <Monitor className="w-3.5 h-3.5 text-emerald-300" />}
-                <span className="text-xs font-semibold text-white">{label}</span>
+                <span className="type-caption font-semibold text-white">{label}</span>
             </div>
         </div>
     );
@@ -345,7 +345,7 @@ export default function LiveKitStage({
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">
                         <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-white/90">
+                        <span className="type-caption sm:text-xs font-black uppercase tracking-caps text-white/90">
                             {formatElapsed(secondsElapsed)}
                         </span>
                     </div>
@@ -353,11 +353,11 @@ export default function LiveKitStage({
                 <div className="flex items-center gap-2 pointer-events-auto">
                     <div className="hidden sm:flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 backdrop-blur-md">
                         <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                        <span className="text-xs font-black uppercase text-emerald-100">Secure room</span>
+                        <span className="type-caption font-black uppercase text-emerald-100">Secure room</span>
                     </div>
                     <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-2.5 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
                         <Wifi className="w-4 h-4 text-teal-300" />
-                        <span className="text-[10px] sm:text-xs font-semibold text-white/80 capitalize hidden sm:inline">
+                        <span className="type-ui sm:text-xs font-semibold text-white/80 capitalize hidden sm:inline">
                             {connectionState} · {connectionQuality}
                         </span>
                     </div>
@@ -486,7 +486,7 @@ function ControlBtn({
             >
                 <Icon className="w-5 h-5" />
             </span>
-            <span className="text-[10px] sm:text-xs font-medium text-slate-400">{label}</span>
+            <span className="type-ui sm:text-xs font-medium text-slate-400">{label}</span>
         </button>
     );
 }

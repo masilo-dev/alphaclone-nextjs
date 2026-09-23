@@ -29,7 +29,7 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-bold">Booking & Calendly</h2>
-                            <p className="text-slate-400 text-xs sm:text-sm">Configure your automated booking system</p>
+                            <p className="text-slate-400 type-card-description sm:text-sm">Configure your automated booking system</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg -mr-2 sm:mr-0">
@@ -46,7 +46,7 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                 <div className="p-6 border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-xl flex justify-end shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white text-sm font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                        className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
                     >
                         CLOSE
                     </button>

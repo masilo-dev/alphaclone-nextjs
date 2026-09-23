@@ -310,7 +310,7 @@ export function OnboardingWizard() {
                                 <p className="text-lg text-gray-700 mb-6">
                                     Welcome. Let's get your account set up so you can start managing your business operations from one command center.
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="type-card-description text-gray-500">
                                     You can skip optional setup and return later.
                                 </p>
                             </div>
@@ -320,7 +320,7 @@ export function OnboardingWizard() {
                         {currentStep === 1 && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Full Name *
                                     </label>
                                     <input
@@ -334,7 +334,7 @@ export function OnboardingWizard() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Company Name
                                     </label>
                                     <input
@@ -348,7 +348,7 @@ export function OnboardingWizard() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Your Role
                                     </label>
                                     <select
@@ -367,7 +367,7 @@ export function OnboardingWizard() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Phone Number
                                     </label>
                                     <input
@@ -386,7 +386,7 @@ export function OnboardingWizard() {
                         {/* Team invitations step */}
                         {currentStep === 2 && (
                             <div className="space-y-4">
-                                <p className="text-sm text-gray-600 mb-4">
+                                <p className="type-card-description text-gray-600 mb-4">
                                     Invite team members to collaborate (optional)
                                 </p>
                                 {teamInvites.map((email, index) => (
@@ -406,7 +406,7 @@ export function OnboardingWizard() {
                                 ))}
                                 <button
                                     onClick={() => setTeamInvites([...teamInvites, ''])}
-                                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                    className="type-ui text-blue-600 hover:text-blue-700 font-medium"
                                 >
                                     + Add another
                                 </button>
@@ -417,7 +417,7 @@ export function OnboardingWizard() {
                         {currentStep === 3 && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Project Name *
                                     </label>
                                     <input
@@ -431,7 +431,7 @@ export function OnboardingWizard() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block type-label font-medium text-gray-700 mb-1">
                                         Description (optional)
                                     </label>
                                     <textarea

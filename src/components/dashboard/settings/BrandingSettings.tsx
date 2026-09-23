@@ -95,7 +95,7 @@ const BrandingSettings = () => {
 
                     {/* Logo */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Organization Logo</label>
+                        <label className="block type-label font-medium text-slate-400 mb-2">Organization Logo</label>
                         <div className="flex items-center gap-4">
                             <div className="w-24 h-24 rounded-2xl bg-slate-950/50 border border-white/10 flex items-center justify-center overflow-hidden relative group">
                                 {isUploading ? (
@@ -128,7 +128,7 @@ const BrandingSettings = () => {
                                 />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 mt-2">Recommended: PNG or SVG, max 2MB.</p>
+                                <p className="type-card-description text-slate-500 mt-2">Recommended: PNG or SVG, max 2MB.</p>
                             </div>
                         </div>
                     </div>
@@ -136,7 +136,7 @@ const BrandingSettings = () => {
                     {/* Colors */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Primary Color</label>
+                            <label className="block type-label font-medium text-slate-400 mb-2">Primary Color</label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
@@ -148,12 +148,12 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_primary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_primary: e.target.value })}
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Secondary Color</label>
+                            <label className="block type-caption font-medium text-slate-400 mb-2">Secondary Color</label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
@@ -165,7 +165,7 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_secondary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_secondary: e.target.value })}
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white"
+                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
                                 />
                             </div>
                         </div>
@@ -179,37 +179,37 @@ const BrandingSettings = () => {
                     </h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">Legal Business Name</label>
+                            <label className="block type-label font-medium text-slate-400 mb-1">Legal Business Name</label>
                             <input
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
-                                className={`w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 placeholder="Legal Entity Name"
                                 disabled={!!currentTenant?.legal_name}
                             />
                             {currentTenant?.legal_name && (
-                                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 italic">
+                                <p className="type-card-description text-slate-500 mt-1 flex items-center gap-1 italic">
                                     <Building className="w-3 h-3" /> Business identity is locked. Contact support to change.
                                 </p>
                             )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">Tax ID / VAT Number</label>
+                            <label className="block type-label font-medium text-slate-400 mb-1">Tax ID / VAT Number</label>
                             <input
                                 type="text"
                                 value={branding.tax_id}
                                 onChange={(e) => setBranding({ ...branding, tax_id: e.target.value })}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500/50 outline-none"
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none"
                                 placeholder="e.g. US-123456789"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">Business Address</label>
+                            <label className="block type-label font-medium text-slate-400 mb-1">Business Address</label>
                             <textarea
                                 value={branding.business_address}
                                 onChange={(e) => setBranding({ ...branding, business_address: e.target.value })}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500/50 outline-none min-h-[100px]"
+                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none min-h-[100px]"
                                 placeholder="Full registered address..."
                             />
                         </div>
@@ -226,8 +226,8 @@ const BrandingSettings = () => {
 
             {/* Live Preview */}
             <div className="sticky top-6 h-fit">
-                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Document Preview</h3>
-                <div className="bg-white rounded-lg shadow-xl overflow-hidden aspect-[210/297] w-full max-w-md mx-auto relative text-slate-900 text-xs leading-relaxed">
+                <h3 className="type-caption font-bold text-slate-500 uppercase tracking-widest mb-4">Document Preview</h3>
+                <div className="bg-white rounded-lg shadow-xl overflow-hidden aspect-[210/297] w-full max-w-md mx-auto relative text-slate-900 type-caption leading-relaxed">
                     {/* Header Background */}
                     <div className="h-4 w-full" style={{ backgroundColor: branding.brand_color_primary }}></div>
 
@@ -263,8 +263,8 @@ const BrandingSettings = () => {
                         {/* Separator */}
                         <div className="h-0.5 w-full mb-6 opacity-20" style={{ backgroundColor: branding.brand_color_secondary }}></div>
 
-                        <div className="space-y-3 text-xs text-slate-600 border border-dashed border-slate-200 rounded-lg p-4 bg-white/80">
-                            <p className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Sample line items (preview only)</p>
+                        <div className="space-y-3 type-caption text-slate-600 border border-dashed border-slate-200 rounded-lg p-4 bg-white/80">
+                            <p className="type-caption uppercase tracking-wide text-slate-400 font-semibold">Sample line items (preview only)</p>
                             <div className="flex justify-between border-b border-slate-100 pb-2">
                                 <span>Service description</span>
                                 <span className="font-mono">0.00</span>
@@ -281,7 +281,7 @@ const BrandingSettings = () => {
 
                         {/* Footer Preview */}
                         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 bg-slate-50">
-                            <div className="text-center text-xs text-slate-400">
+                            <div className="text-center type-caption text-slate-400">
                                 {branding.legal_name} • {branding.tax_id && `Tax ID: ${branding.tax_id}`}
                                 <div className="mt-1 font-medium text-slate-300">Generated by AlphaClone Systems</div>
                             </div>

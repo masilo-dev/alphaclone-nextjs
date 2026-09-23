@@ -35,12 +35,12 @@ export function AttentionPanel({
   return (
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <h2 className={WORKSPACE.typography.sectionTitle}>{t('Needs attention')}</h2>
-      <p className="mt-1 text-sm text-[var(--ws-text-muted)]">
+      <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
         {t('Actionable items that should be handled next.')}
       </p>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--ws-text-secondary)]">{t(emptyMessage)}</p>
+        <p className="mt-4 type-caption text-[var(--ws-text-secondary)]">{t(emptyMessage)}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {items.slice(0, 6).map((item) => (
@@ -59,14 +59,14 @@ export function AttentionPanel({
                 )}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[var(--ws-text-primary)]">{t(item.reason)}</p>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[var(--ws-text-muted)]">
+                  <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{t(item.reason)}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 type-caption text-[var(--ws-text-muted)]">
                     {item.record ? <span>{t(item.record)}</span> : null}
                     {item.owner ? <span>{t('Owner')}: {item.owner}</span> : null}
                     {item.dueDate ? <span>{t('Due')} {item.dueDate}</span> : null}
                   </div>
                   {item.actionLabel ? (
-                    <p className="mt-1.5 text-xs font-semibold text-[var(--brand-blue-500)]">
+                    <p className="mt-1.5 type-card-description font-semibold text-[var(--brand-blue-500)]">
                       {t(item.actionLabel)}
                     </p>
                   ) : null}

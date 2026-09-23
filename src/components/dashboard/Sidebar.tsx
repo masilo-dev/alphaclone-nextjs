@@ -1,16 +1,16 @@
 'use client';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     LogOut, ChevronDown, ChevronRight, ShieldAlert, Activity, Loader2,
-    Sun, Moon, X, Zap, Sparkles
+    Sun, Moon, X, Sparkles, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useBackgroundTasks } from '@/contexts/BackgroundTaskContext';
+import { motion } from 'framer-motion';
 import type { AcThemeMode } from '@/lib/applyAcTheme';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
@@ -78,23 +78,12 @@ const Sidebar = React.memo<SidebarProps>(({
 
     // Auto-expand parent if a child's href matches activeTab
     useEffect(() => {
-        const autoExpand: Record<string, boolean> = {};
-        navItems?.forEach((item: any) => {
-            if (item.subItems?.some((sub: any) => activeTab.startsWith(sub.href.split('?')[0]))) {
-                autoExpand[item.label] = true;
-            }
-        });
-        setExpanded((prev) => {
-            let changed = false;
-            const next = { ...prev };
-            for (const [label, value] of Object.entries(autoExpand)) {
-                if (value && !prev[label]) {
-                    next[label] = true;
-                    changed = true;
-                }
-            }
-            return changed ? next : prev;
-        });
+        const activeParent = navItems?.find((item: any) =>
+            item.subItems?.some((sub: any) => activeTab.startsWith(sub.href.split('?')[0])),
+        );
+        if (activeParent) {
+            setExpanded((prev) => prev[activeParent.label] ? prev : { [activeParent.label]: true });
+        }
     }, [activeTab, navItems]);
 
     const handleTheme = useCallback((next: AcThemeMode) => {
@@ -128,35 +117,8 @@ const Sidebar = React.memo<SidebarProps>(({
         user.role === 'tenant_admin' ? '/dashboard/business/settings' : '/dashboard/settings';
 
     const toggleExpanded = useCallback((label: string) => {
-        setExpanded(prev => {
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-            if (isMobile) {
-                // On mobile, close others when opening one
-                return prev[label] ? {} : { [label]: true };
-            }
-            return { ...prev, [label]: !prev[label] };
-        });
+        setExpanded(prev => prev[label] ? {} : { [label]: true });
     }, []);
-
-    const jumpNavOptions = useMemo(() => {
-        const out: { label: string; href: string }[] = [];
-        for (const item of navItems || []) {
-            if (item.href && item.href !== '#') {
-                out.push({ label: t(item.label), href: item.href });
-            }
-            if (item.subItems?.length) {
-                for (const sub of item.subItems) {
-                    if (sub.href) {
-                        out.push({ label: `${t(item.label)}: ${t(sub.label)}`, href: sub.href });
-                    }
-                }
-            }
-        }
-        if (isPlatformAdminRole(user.role)) {
-            out.push({ label: t('Operations console'), href: '/dashboard/admin/operations' });
-        }
-        return out;
-    }, [navItems, t, user.role]);
 
     // ── Safe to early-return after all hooks ──────────────────────────────
     if (forceHidden) return null;
@@ -183,48 +145,44 @@ const Sidebar = React.memo<SidebarProps>(({
             <aside data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
                 fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
                 flex flex-col transition-all duration-200 overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-[240px] pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-12'}
+                ${sidebarOpen ? 'translate-x-0 w-56 pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-14'}
             `}>
 
                 {/* ── Logo ── */}
-                <div className={`${WORKSPACE.sidebar.logoHeight} flex items-center px-3 border-b border-[var(--ws-border)] shrink-0`}>
-                    <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+                <div className={`${WORKSPACE.sidebar.logoHeight} flex items-center justify-between gap-2 px-3 border-b border-[var(--ws-border)] shrink-0`}>
+                    <div className={`${sidebarOpen ? 'flex' : 'hidden'} items-center gap-2.5 overflow-hidden min-w-0`}>
                         <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
                             className="rounded-md object-contain flex-shrink-0" />
-                        <span className={`font-semibold text-white text-[13px] tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                        <span className={`font-semibold text-white type-ui tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             {t('Alphaclone Systems')}
                         </span>
                     </div>
-                </div>
-
-                {sidebarOpen && (
-                    <div className="ac-pwa-touch-only md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
-                        <label htmlFor="ac-sidebar-jump" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                            {t('Jump to page')}
-                        </label>
-                        <select
-                            id="ac-sidebar-jump"
-                            className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-tertiary,#1C283B)] border border-[var(--ws-border)] text-md text-[var(--ws-text-primary,#F4F7FC)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500,#356AF4)]"
-                            defaultValue=""
-                            onChange={(e) => {
-                                const href = e.target.value;
-                                if (href) {
-                                    navigate(href);
-                                    (e.target as HTMLSelectElement).value = '';
-                                }
-                            }}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const next = !sidebarOpen;
+                            setSidebarOpen(next);
+                            if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                                window.localStorage.setItem(`alphaclone:sidebar:${user.id}`, next ? 'expanded' : 'collapsed');
+                            }
+                        }}
+                        aria-label={t(sidebarOpen ? 'Collapse navigation' : 'Expand navigation')}
+                        title={t(sidebarOpen ? 'Collapse navigation' : 'Expand navigation')}
+                        className="ac-pwa-desktop-only hidden h-9 w-9 shrink-0 items-center justify-center rounded-[var(--ws-radius)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] md:inline-flex"
+                    >
+                        {sidebarOpen ? <PanelLeftClose className="h-4 w-4" aria-hidden /> : <PanelLeftOpen className="h-4 w-4" aria-hidden />}
+                    </button>
+                    {sidebarOpen ? (
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(false)}
+                            aria-label={t('Close navigation menu')}
+                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--ws-radius)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] md:hidden"
                         >
-                            <option value="" disabled>
-                                {t('Select destination')}
-                            </option>
-                            {jumpNavOptions.map((opt) => (
-                                <option key={`${opt.href}-${opt.label}`} value={opt.href}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                            <X className="h-5 w-5" aria-hidden />
+                        </button>
+                    ) : null}
+                </div>
 
                 {/* ── Nav ── */}
 
@@ -261,7 +219,15 @@ const Sidebar = React.memo<SidebarProps>(({
                                     onClick={() => {
                                         if (item.comingSoon) return;
                                         if (hasChildren) {
-                                            toggleExpanded(item.label);
+                                            if (!sidebarOpen) {
+                                                setSidebarOpen(true);
+                                                setExpanded({ [item.label]: true });
+                                                if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                                                    window.localStorage.setItem(`alphaclone:sidebar:${user.id}`, 'expanded');
+                                                }
+                                            } else {
+                                                toggleExpanded(item.label);
+                                            }
                                             // Also navigate to the parent page
                                             if (item.href !== '#') navigate(item.href);
                                         } else {
@@ -269,6 +235,8 @@ const Sidebar = React.memo<SidebarProps>(({
                                         }
                                     }}
                                     title={!sidebarOpen ? t(item.label) : undefined}
+                                    aria-expanded={hasChildren ? isExpanded && sidebarOpen : undefined}
+                                    aria-current={active && !hasChildren ? 'page' : undefined}
                                     className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
                                 >
                                     {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-[var(--ws-text-tertiary)] group-hover:text-white'}`} />}
@@ -276,7 +244,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
-                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-tighter bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded-md">
+                                            <span className="ml-2 px-1.5 py-0.5 type-caption font-semibold uppercase tracking-tighter bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded-md">
                                                 {t('Soon')}
                                             </span>
                                         )}
@@ -284,7 +252,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                                     {/* Unread badge */}
                                     {(item.href === '/dashboard/messages' || item.href === '/dashboard/business/messages') && unreadMessageCount > 0 && (
-                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 type-caption font-bold text-white bg-red-500 rounded-full">
                                             {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                                         </span>
                                     )}
@@ -314,13 +282,14 @@ const Sidebar = React.memo<SidebarProps>(({
                                                         if (sub.comingSoon) return;
                                                         navigate(sub.href);
                                                     }}
+                                                    aria-current={subActive ? 'page' : undefined}
                                                     className={`${WORKSPACE.nav.subItem} ${subActive ? WORKSPACE.nav.subItemActive : ''} gap-2`}
                                                 >
                                                     {SubIcon && <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />}
                                                     <span className="whitespace-nowrap">
                                                         {t(sub.label)}
                                                         {sub.comingSoon && (
-                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-semibold uppercase bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded">{t('Soon')}</span>
+                                                            <span className="ml-1.5 px-1 py-0.5 type-caption font-semibold uppercase bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded">{t('Soon')}</span>
                                                         )}
                                                     </span>
                                                 </button>
@@ -336,18 +305,18 @@ const Sidebar = React.memo<SidebarProps>(({
                 {/* ── Bottom bar ── */}
                 <div className="p-2 border-t border-[var(--ws-border)] mt-auto shrink-0">
 
-                    {/* Operations HUD (Integrated) */}
+                    {/* Background work stays available without permanently filling the sidebar. */}
                     {tasks.length > 0 && sidebarOpen && (
-                        <div className="mb-4 border border-[var(--ws-border)] bg-[var(--ws-active)] rounded-[14px] overflow-hidden">
-                            <div className="px-3 py-2 bg-[var(--ws-hover)] border-b border-[var(--ws-border)] flex items-center justify-between">
+                        <details className="group mb-2 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-surface)]">
+                            <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]">
                                 <div className="flex items-center gap-2">
                                     <Activity className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
-                                    <span className="text-xs font-semibold uppercase tracking-widest text-[var(--brand-blue-400)]">{t('Operations')}</span>
+                                    <span className="type-ui font-medium text-[var(--ws-text-secondary)]">{t('Background work')}</span>
                                 </div>
-                                <span className="px-1.5 py-0.5 rounded-md bg-[var(--ws-active)] text-xs font-bold text-[var(--brand-blue-300,#91B5FF)]">
+                                <span className="rounded-full bg-[var(--ws-hover)] px-2 py-0.5 type-caption font-semibold text-[var(--brand-blue-300,#91B5FF)]">
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
-                            </div>
+                            </summary>
                             <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
                                 {tasks.map((task) => (
                                     <div key={task.id} className="p-2 rounded-lg bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] flex flex-col gap-1.5">
@@ -360,7 +329,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 ) : (
                                                     <Activity className="w-3 h-3 text-[var(--error-text,#FF9097)]" />
                                                 )}
-                                                <span className="text-xs font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
+                                                <span className="type-caption font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
                                                 <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-[var(--ws-hover)] rounded">
@@ -380,7 +349,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </details>
                     )}
 
                     {/* Collapsed simple indicator */}
@@ -408,7 +377,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <button
                             type="button"
                             onClick={onStartTour}
-                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 text-xs font-semibold text-[var(--ws-text-secondary)] transition hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
+                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] transition hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
                         >
                             <Sparkles className="h-3.5 w-3.5" />
                             {t('Platform tour')}
@@ -435,15 +404,15 @@ const Sidebar = React.memo<SidebarProps>(({
                                 sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
                             }`}
                         >
-                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white type-ui flex-shrink-0">
                                 {initials}
                             </span>
                             {sidebarOpen && (
                                 <span className="flex-1 min-w-0 text-left">
-                                    <span className="block text-sm font-semibold text-white truncate leading-tight">
+                                    <span className="block type-ui font-semibold text-white truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </span>
-                                    <span className="block text-xs text-[var(--ws-text-muted)] truncate capitalize">{user.role || t('member')}</span>
+                                    <span className="block type-caption text-[var(--ws-text-muted)] truncate capitalize">{user.role || t('member')}</span>
                                 </span>
                             )}
                         </button>

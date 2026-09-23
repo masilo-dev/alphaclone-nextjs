@@ -159,8 +159,8 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortValue: (r) => r.tenant_name,
         accessor: (r) => (
           <div className="min-w-0">
-            <span className="text-[13px] font-bold text-white block truncate">{r.tenant_name}</span>
-            <span className="text-[10px] text-slate-500 font-mono">{r.tenant_id.substring(0, 12)}…</span>
+            <span className="type-ui font-bold text-white block truncate">{r.tenant_name}</span>
+            <span className="type-ui text-slate-500 font-mono">{r.tenant_id.substring(0, 12)}…</span>
           </div>
         ),
       },
@@ -170,7 +170,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.subscription_plan || '',
         accessor: (r) => (
-          <span className="capitalize font-semibold text-slate-200 text-xs">
+          <span className="capitalize font-semibold text-slate-200 type-caption">
             {r.subscription_plan || 'free'}
           </span>
         ),
@@ -199,7 +199,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
           const amount = PLAN_MRR[r.subscription_plan || ''] || 0;
           const isActive = r.subscription_status === 'active' || r.subscription_status === 'trial';
           return (
-            <span className={`font-mono text-xs font-bold ${isActive && amount > 0 ? 'text-teal-300' : 'text-slate-500'}`}>
+            <span className={`font-mono type-caption font-bold ${isActive && amount > 0 ? 'text-teal-300' : 'text-slate-500'}`}>
               {isActive && amount > 0 ? `$${amount}` : '—'}
             </span>
           );
@@ -211,7 +211,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.total_mcp_calls_today,
         accessor: (r) => (
-          <span className="font-mono text-xs text-slate-300">{r.total_mcp_calls_today ?? 0}</span>
+          <span className="font-mono type-caption text-slate-300">{r.total_mcp_calls_today ?? 0}</span>
         ),
       },
       {
@@ -220,7 +220,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.total_leads_today,
         accessor: (r) => (
-          <span className="font-mono text-xs text-slate-300">{r.total_leads_today ?? 0}</span>
+          <span className="font-mono type-caption text-slate-300">{r.total_leads_today ?? 0}</span>
         ),
       },
       {
@@ -228,14 +228,14 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         header: 'Period Ends',
         accessor: (r) =>
           r.current_period_end ? (
-            <span className="text-xs text-slate-400">
+            <span className="type-caption text-slate-400">
               {new Date(r.current_period_end).toLocaleDateString()}
               {r.cancel_at_period_end && (
-                <span className="ml-1.5 text-amber-400 text-[10px] font-bold">(cancels)</span>
+                <span className="ml-1.5 text-amber-400 type-ui font-bold">(cancels)</span>
               )}
             </span>
           ) : (
-            <span className="text-xs text-slate-600">—</span>
+            <span className="type-caption text-slate-600">—</span>
           ),
       },
       {
@@ -248,13 +248,13 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-xs text-teal-400 hover:text-teal-300 font-mono"
+              className="inline-flex items-center gap-1 type-caption text-teal-400 hover:text-teal-300 font-mono"
             >
               {r.stripe_customer_id.substring(0, 14)}…
               <ExternalLink className="h-3 w-3 shrink-0" />
             </a>
           ) : (
-            <span className="text-xs text-slate-600">no customer</span>
+            <span className="type-caption text-slate-600">no customer</span>
           ),
       },
     ],
@@ -271,7 +271,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
                 <CreditCard className="w-6 h-6 text-teal-400" />
                 Subscriptions &amp; Billing
               </h2>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 type-card-description">
                 Real-time subscription state, Stripe IDs, and daily usage per tenant
               </p>
             </div>
@@ -279,7 +279,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               type="button"
               onClick={() => void load()}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50 self-start"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50 self-start"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -294,7 +294,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               placeholder="Search tenant, plan, or status…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
         }

@@ -50,7 +50,7 @@ export default function DifferentiationMatrix() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 type-caption sm:text-sm font-medium mb-4">
             <Layers className="w-4 h-4 text-emerald-400" />
             <span>Why Switching Makes Sense</span>
           </div>
@@ -60,7 +60,7 @@ export default function DifferentiationMatrix() {
               AlphaClone
             </span>
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-300 type-card-description sm:text-base leading-relaxed">
             Stop forcing your team to bridge disconnected software with spreadsheets and manual updates. See how AlphaClone compares to the traditional fragmented SaaS stack.
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function DifferentiationMatrix() {
         {/* Comparison Table */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl overflow-hidden backdrop-blur-md">
           {/* Table Header */}
-          <div className="grid grid-cols-1 md:grid-cols-12 bg-slate-950 border-b border-slate-800 p-4 sm:p-6 text-xs sm:text-sm font-bold uppercase tracking-wider">
+          <div className="grid grid-cols-1 md:grid-cols-12 bg-slate-950 border-b border-slate-800 p-4 sm:p-6 type-caption sm:text-xs font-bold uppercase tracking-wider">
             <div className="md:col-span-3 text-slate-400">Operational Capability</div>
             <div className="md:col-span-4 text-rose-400 flex items-center gap-2 mt-2 md:mt-0">
               <XCircle className="w-4 h-4 shrink-0" />
@@ -90,14 +90,14 @@ export default function DifferentiationMatrix() {
                 }`}
               >
                 <div className="md:col-span-3">
-                  <span className="text-sm font-bold text-white font-marketing-heading">{row.category}</span>
+                  <span className="type-ui font-bold text-white font-marketing-heading">{row.category}</span>
                 </div>
-                <div className="md:col-span-4 p-3.5 rounded-xl bg-rose-950/20 border border-rose-900/30 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  <p className="text-rose-400 font-semibold mb-1 text-[11px] uppercase tracking-wider">The Old Siloed Way</p>
+                <div className="md:col-span-4 p-3.5 rounded-xl bg-rose-950/20 border border-rose-900/30 type-caption sm:text-sm text-slate-300 leading-relaxed">
+                  <p className="text-rose-400 font-semibold mb-1 type-caption uppercase tracking-wider">The Old Siloed Way</p>
                   {row.disconnectedWay}
                 </div>
-                <div className="md:col-span-5 p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-xs sm:text-sm text-slate-100 font-medium leading-relaxed shadow-sm">
-                  <p className="text-emerald-400 font-semibold mb-1 text-[11px] uppercase tracking-wider">The AlphaClone Way</p>
+                <div className="md:col-span-5 p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-800/40 type-caption sm:text-sm text-slate-100 font-medium leading-relaxed shadow-sm">
+                  <p className="text-emerald-400 font-semibold mb-1 type-caption uppercase tracking-wider">The AlphaClone Way</p>
                   {row.alphaCloneWay}
                 </div>
               </div>
@@ -106,13 +106,13 @@ export default function DifferentiationMatrix() {
 
           {/* Table Bottom Callout */}
           <div className="p-6 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-300">
+            <div className="flex items-center gap-3 type-caption sm:text-sm text-slate-300">
               <Shield className="w-5 h-5 text-teal-400 shrink-0" />
               <span>Replace HubSpot, DocuSign, QuickBooks, Harvest & Zoom with 1 unified platform.</span>
             </div>
             <Link
               href="/auth/login?register=true&plan=starter"
-              className="shrink-0 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm transition-colors shadow-lg shadow-teal-950"
+              className="shrink-0 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold type-caption sm:text-sm transition-colors shadow-lg shadow-teal-950"
             >
               Get Started →
             </Link>

@@ -302,12 +302,12 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-semibold text-purple-400">Conversation Memory</span>
-                            <span className="text-xs text-slate-500">({conversationHistory.length} messages)</span>
+                            <span className="type-ui font-semibold text-purple-400">Conversation Memory</span>
+                            <span className="type-caption text-slate-500">({conversationHistory.length} messages)</span>
                         </div>
                         <button
                             onClick={clearConversationHistory}
-                            className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+                            className="type-caption text-slate-500 hover:text-red-400 transition-colors"
                         >
                             Clear
                         </button>
@@ -316,17 +316,17 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         {conversationHistory.slice(-10).map((msg, idx) => (
                             <div
                                 key={idx}
-                                className={`p-2 rounded-lg text-sm ${
+                                className={`p-2 rounded-lg type-ui ${
                                     msg.type === 'user'
                                         ? 'bg-teal-500/10 border border-teal-500/20 text-teal-300'
                                         : 'bg-purple-500/10 border border-purple-500/20 text-purple-300'
                                 }`}
                             >
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-semibold uppercase">
+                                    <span className="type-caption font-semibold uppercase">
                                         {msg.type === 'user' ? 'You' : 'AI'}
                                     </span>
-                                    <span className="text-xs text-slate-500">
+                                    <span className="type-caption text-slate-500">
                                         {new Date(msg.timestamp).toLocaleTimeString()}
                                     </span>
                                 </div>
@@ -351,7 +351,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
                     {/* Prompt Input */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-slate-300 mb-2">
                             {activeTab === 'content' ? 'What do you want to write?' : 'Describe what you want to generate'}
                         </label>
                         <textarea
@@ -370,7 +370,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {/* Options */}
                     {activeTab === 'logo' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Style</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Style</label>
                             <select
                                 value={style}
                                 onChange={(e) => setStyle(e.target.value as any)}
@@ -386,7 +386,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
                     {activeTab === 'image' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Size</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Size</label>
                             <select
                                 value={imageSize}
                                 onChange={(e) => setImageSize(e.target.value as any)}
@@ -402,7 +402,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {activeTab === 'content' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Content Type</label>
+                                <label className="block type-label font-medium text-slate-300 mb-2">Content Type</label>
                                 <select
                                     value={contentType}
                                     onChange={(e) => setContentType(e.target.value as any)}
@@ -415,7 +415,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">AI Model</label>
+                                <label className="block type-label font-medium text-slate-300 mb-2">AI Model</label>
                                 <select
                                     value={selectedModel}
                                     onChange={(e) => setSelectedModel(e.target.value)}
@@ -427,7 +427,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="type-card-description text-slate-500 mt-1">
                                     {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
                                 </p>
                             </div>
@@ -456,13 +456,13 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {/* Result Display */}
                     {generatedResult && (
                         <div className="p-6 bg-slate-800/50 rounded-lg border border-teal-500/30">
-                            <div className="text-sm font-semibold text-teal-400 mb-4">Generated Result</div>
+                            <div className="type-ui font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
                                     <div className="mb-3">
                                         <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
                                     </div>
-                                    <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg">
+                                    <pre className="whitespace-pre-wrap text-slate-300 type-ui leading-relaxed bg-slate-900/50 p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>
                                 </div>
@@ -556,7 +556,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 {/* Asset Info */}
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                                        <span className={`px-2 py-0.5 type-caption font-semibold rounded-full ${
                                             asset.asset_type === 'logo' ? 'bg-purple-500/10 text-purple-400' :
                                             asset.asset_type === 'image' ? 'bg-blue-500/10 text-blue-400' :
                                             'bg-green-500/10 text-green-400'
@@ -564,8 +564,8 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             {asset.asset_type}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-400 line-clamp-2 mb-2">{asset.prompt}</p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="type-card-description text-slate-400 line-clamp-2 mb-2">{asset.prompt}</p>
+                                    <p className="type-card-description text-slate-500">
                                         {new Date(asset.created_at).toLocaleDateString()}
                                     </p>
                                 </div>
@@ -594,7 +594,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         </div>
                     ) : (
                         <div className="prose prose-invert max-w-none">
-                            <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
+                            <pre className="whitespace-pre-wrap text-slate-300 type-ui leading-relaxed bg-slate-900/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
                                 {previewModal.content}
                             </pre>
                         </div>

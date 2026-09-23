@@ -161,7 +161,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-white">{stats.totalLogs || 0}</div>
-                                <div className="text-xs text-blue-400">Total Activity Logs</div>
+                                <div className="type-caption text-blue-400">Total Activity Logs</div>
                             </div>
                         </div>
                     </Card>
@@ -173,7 +173,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-white">{stats.activeSessions || 0}</div>
-                                <div className="text-xs text-green-400">Active Sessions</div>
+                                <div className="type-caption text-green-400">Active Sessions</div>
                             </div>
                         </div>
                     </Card>
@@ -185,7 +185,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-white">{stats.suspiciousLogs || 0}</div>
-                                <div className="text-xs text-red-400">Suspicious Activity</div>
+                                <div className="type-caption text-red-400">Suspicious Activity</div>
                             </div>
                         </div>
                     </Card>
@@ -197,7 +197,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                             <div>
                                 <div className="text-2xl font-bold text-white">{stats.unresolvedAlerts || 0}</div>
-                                <div className="text-xs text-yellow-400">Unresolved Alerts</div>
+                                <div className="type-caption text-yellow-400">Unresolved Alerts</div>
                             </div>
                         </div>
                     </Card>
@@ -210,7 +210,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                     <button
                         key={String(tab)}
                         onClick={() => setActiveTab(tab as any)}
-                        className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab
+                        className={`px-4 py-2 type-ui font-medium transition-colors whitespace-nowrap ${activeTab === tab
                             ? 'text-teal-400 border-b-2 border-teal-400'
                             : 'text-slate-400 hover:text-white'
                             }`}
@@ -239,21 +239,21 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                     }`}
                             >
                                 <div className="flex items-center gap-4 flex-1">
-                                    <div className="flex items-center gap-2 text-slate-400 text-xs">
+                                    <div className="flex items-center gap-2 text-slate-400 type-caption">
                                         {getDeviceIcon(log.device_type)}
                                         <span className="font-mono">{new Date(log.created_at).toLocaleString()}</span>
                                     </div>
                                     <div className="flex-1">
                                         <div className="text-white font-medium">{log.action}</div>
                                         {isPlatformAdminRole(user.role) && log.profiles && (
-                                            <div className="text-xs text-slate-500">{log.profiles.email}</div>
+                                            <div className="type-caption text-slate-500">{log.profiles.email}</div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                                    <div className="flex items-center gap-2 type-caption text-slate-400">
                                         <MapPin className="w-3 h-3" />
                                         <span>{log.city}, {log.country}</span>
                                     </div>
-                                    <div className="text-xs text-slate-500 font-mono">{log.ip_address}</div>
+                                    <div className="type-caption text-slate-500 font-mono">{log.ip_address}</div>
                                 </div>
                                 {log.is_suspicious && (
                                     <Badge variant="error" className="ml-4">Suspicious</Badge>
@@ -283,11 +283,11 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                         {isPlatformAdminRole(user.role) && session.profiles && (
                                             <div className="text-white font-medium">{session.profiles.email}</div>
                                         )}
-                                        <div className="text-xs text-slate-400">
+                                        <div className="type-caption text-slate-400">
                                             {getDeviceIcon(session.device_info?.deviceType)} {session.device_info?.browser}
                                         </div>
                                     </div>
-                                    <div className="text-xs text-slate-400">
+                                    <div className="type-caption text-slate-400">
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             <span>{new Date(session.login_time).toLocaleString()}</span>
@@ -298,11 +298,11 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="text-xs text-slate-500">
+                                    <div className="type-caption text-slate-500">
                                         <MapPin className="w-3 h-3 inline mr-1" />
                                         {session.city}, {session.country}
                                     </div>
-                                    <div className="text-xs text-slate-600 font-mono">{session.ip_address}</div>
+                                    <div className="type-caption text-slate-600 font-mono">{session.ip_address}</div>
                                 </div>
                                 {session.is_active && (
                                     <Badge variant="success">Active</Badge>
@@ -330,14 +330,14 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
                                             <ShieldAlert className="w-4 h-4" />
-                                            <span className="font-bold text-sm uppercase">{alert.alert_type.replace('_', ' ')}</span>
+                                            <span className="font-bold type-caption uppercase">{alert.alert_type.replace('_', ' ')}</span>
                                             <Badge className={getSeverityColor(alert.severity)}>{alert.severity}</Badge>
                                         </div>
-                                        <p className="text-sm mb-2">{alert.description}</p>
+                                        <p className="type-card-description mb-2">{alert.description}</p>
                                         {isPlatformAdminRole(user.role) && alert.profiles && (
-                                            <div className="text-xs opacity-75">User: {alert.profiles.email}</div>
+                                            <div className="type-caption opacity-75">User: {alert.profiles.email}</div>
                                         )}
-                                        <div className="text-xs opacity-75 mt-1">
+                                        <div className="type-caption opacity-75 mt-1">
                                             {new Date(alert.created_at).toLocaleString()}
                                         </div>
                                     </div>
@@ -376,9 +376,9 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-white font-medium">{login.email}</span>
-                                        <Badge variant="error" className="text-xs">{login.failure_reason}</Badge>
+                                        <Badge variant="error" className="type-caption">{login.failure_reason}</Badge>
                                     </div>
-                                    <div className="flex items-center gap-4 text-xs text-slate-400">
+                                    <div className="flex items-center gap-4 type-caption text-slate-400">
                                         <div className="flex items-center gap-1">
                                             <span className="font-mono">{login.ip_address}</span>
                                         </div>
@@ -392,7 +392,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-xs text-slate-500 text-right">
+                                <div className="type-caption text-slate-500 text-right">
                                     {new Date(login.created_at).toLocaleString()}
                                 </div>
                             </div>
@@ -419,12 +419,12 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                         <Badge className="bg-slate-700 text-slate-300">{error.error_type}</Badge>
                                         <Badge variant="error">{error.severity}</Badge>
                                     </div>
-                                    <span className="text-xs text-slate-500">{new Date(error.created_at).toLocaleString()}</span>
+                                    <span className="type-caption text-slate-500">{new Date(error.created_at).toLocaleString()}</span>
                                 </div>
 
-                                <p className="text-red-400 text-sm font-mono break-all mb-2">{error.error_message}</p>
+                                <p className="text-red-400 type-card-description font-mono break-all mb-2">{error.error_message}</p>
 
-                                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                                <div className="grid grid-cols-2 gap-4 type-caption text-slate-500">
                                     {error.endpoint && (
                                         <div>Endpoint: <span className="text-slate-400">{error.endpoint}</span></div>
                                     )}
@@ -458,11 +458,11 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                     <Globe className="w-5 h-5 text-red-500" />
                                     <div>
                                         <div className="text-white font-medium">{country.country_name}</div>
-                                        <div className="text-xs text-slate-400">{country.reason}</div>
+                                        <div className="type-caption text-slate-400">{country.reason}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-mono text-slate-500">{country.country_code}</span>
+                                    <span className="type-caption font-mono text-slate-500">{country.country_code}</span>
                                     <Badge variant="error">Blocked</Badge>
                                 </div>
                             </div>

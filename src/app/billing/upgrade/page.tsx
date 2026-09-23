@@ -119,7 +119,7 @@ export default function UpgradePage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm font-bold mb-6"
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 type-ui font-bold mb-6"
                     >
                         <Star className="w-4 h-4" />
                         <span>Ready to unleash AlphaClone?</span>
@@ -179,7 +179,7 @@ export default function UpgradePage() {
                                             <Icon className={`w-6 h-6 text-${config.color}-400`} />
                                         </div>
                                         {planId === 'pro' && (
-                                            <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest">
+                                            <span className="px-3 py-1 rounded-full bg-indigo-500 text-white type-caption font-black uppercase tracking-widest">
                                                 More Capacity
                                             </span>
                                         )}
@@ -187,7 +187,7 @@ export default function UpgradePage() {
 
                                     <div className="mb-8">
                                         <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">{planId}</h3>
-                                        <p className="text-slate-400 text-sm leading-relaxed min-h-[40px]">
+                                        <p className="text-slate-400 type-card-description leading-relaxed min-h-[40px]">
                                             {pricing.description}
                                         </p>
                                     </div>
@@ -197,7 +197,7 @@ export default function UpgradePage() {
                                             <span className="text-4xl font-black text-white">${pricing.monthly}</span>
                                             <span className="text-slate-500 font-bold">/mo</span>
                                         </div>
-                                        <div className="text-teal-500/80 text-xs font-bold mt-1">
+                                        <div className="text-teal-500/80 type-caption font-bold mt-1">
                                             or ${pricing.yearly} billed annually (Save 20%)
                                         </div>
                                     </div>
@@ -205,7 +205,7 @@ export default function UpgradePage() {
                                     {/* Features */}
                                     <ul className="space-y-4 mb-10 flex-1">
                                         {pricing.featureList.map((feature, fIdx) => (
-                                            <li key={fIdx} className="flex items-start gap-3 text-sm text-slate-300">
+                                            <li key={fIdx} className="flex items-start gap-3 type-ui text-slate-300">
                                                 <div className={`mt-0.5 w-5 h-5 rounded-full bg-${config.color}-500/10 flex items-center justify-center shrink-0`}>
                                                     <Check className={`w-3 h-3 text-${config.color}-400`} />
                                                 </div>
@@ -239,7 +239,7 @@ export default function UpgradePage() {
                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
                                 Selected: {selectedPlan ? selectedPlan.toUpperCase() : 'Choose a plan'}
                             </h4>
-                            <p className="text-slate-400 text-sm">
+                            <p className="text-slate-400 type-card-description">
                                 No long term contracts. Switch or cancel any time. 
                                 Securely processed via Stripe.
                             </p>
@@ -265,7 +265,7 @@ export default function UpgradePage() {
                                         }}
                                     />
                                     {turnstileError && (
-                                        <p className="text-[11px] text-amber-400 text-center">
+                                        <p className="type-card-description text-amber-400 text-center">
                                             Security check unavailable. Please refresh and try again.
                                         </p>
                                     )}
@@ -286,7 +286,7 @@ export default function UpgradePage() {
 
                 {/* Trust Section */}
                 <div className="mt-16 text-center">
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mb-6">Secured by industry leaders</p>
+                    <p className="text-slate-500 type-caption font-bold uppercase tracking-caps mb-6">Secured by industry leaders</p>
                     <div className="flex flex-wrap justify-center items-center gap-8 opacity-40 grayscale contrast-125">
                         <span className="text-xl font-black italic">STRIPE</span>
                         <span className="text-xl font-black italic">VISA</span>

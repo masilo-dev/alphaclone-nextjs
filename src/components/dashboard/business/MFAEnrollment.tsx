@@ -138,12 +138,12 @@ export default function MFAEnrollment() {
                         <h4 className="font-bold text-white flex items-center gap-2">
                             Two-Factor Authentication (2FA)
                             {isEnrolled && (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-bold uppercase tracking-wider">
+                                <span className="type-caption px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-bold uppercase tracking-wider">
                                     Enabled
                                 </span>
                             )}
                         </h4>
-                        <p className="text-sm text-slate-400">
+                        <p className="type-card-description text-slate-400">
                             {isEnrolled
                                 ? 'Your account is secured with a TOTP authenticator app.'
                                 : 'Protect your account by requiring a code from your authenticator app.'}
@@ -154,7 +154,7 @@ export default function MFAEnrollment() {
                 {isEnrolled ? (
                     <button
                         onClick={unenroll}
-                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-sm font-bold transition-colors"
+                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg type-ui font-bold transition-colors"
                     >
                         Disable 2FA
                     </button>
@@ -163,7 +163,7 @@ export default function MFAEnrollment() {
                         <Button
                             onClick={startEnrollment}
                             isLoading={enrolling}
-                            className="bg-teal-600 hover:bg-teal-500 text-white text-sm"
+                            className="bg-teal-600 hover:bg-teal-500 text-white type-ui"
                         >
                             <Shield className="w-4 h-4 mr-2" />
                             Enable 2FA
@@ -176,7 +176,7 @@ export default function MFAEnrollment() {
                 <div className="mt-6 pt-6 border-t border-slate-700 animate-fade-in text-slate-400">
                     <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
                         <h5 className="font-bold text-white mb-2 text-lg">Set up Authenticator App</h5>
-                        <p className="text-sm text-slate-400 mb-6">
+                        <p className="type-card-description text-slate-400 mb-6">
                             1. Open your authenticator app (e.g., Google Authenticator, Authy, or 1Password).<br />
                             2. Scan the QR code below or enter the setup key manually.
                         </p>
@@ -192,20 +192,20 @@ export default function MFAEnrollment() {
 
                             <div className="flex-1 w-full space-y-5">
                                 <div>
-                                    <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Setup Key (Manual Entry)</label>
-                                    <div className="flex bg-slate-800 rounded-lg p-3 text-sm font-mono text-teal-400 border border-slate-700 mt-1">
+                                    <label className="type-caption text-slate-500 font-medium uppercase tracking-wider">Setup Key (Manual Entry)</label>
+                                    <div className="flex bg-slate-800 rounded-lg p-3 type-ui font-mono text-teal-400 border border-slate-700 mt-1">
                                         {secret}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="text-xs text-slate-500 font-medium uppercase tracking-wider">Verification Code</label>
+                                    <label className="type-caption text-slate-500 font-medium uppercase tracking-wider">Verification Code</label>
                                     <div className="flex gap-3 mt-1">
                                         <Input
                                             value={verificationCode}
                                             onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                                             placeholder="123456"
-                                            className="font-mono tracking-[0.5em] text-center text-xl h-14 bg-slate-800 border-slate-700 text-white focus:border-teal-500"
+                                            className="font-mono tracking-caps text-center text-xl h-14 bg-slate-800 border-slate-700 text-white focus:border-teal-500"
                                         />
                                         <Button
                                             onClick={verifyEnrollment}
@@ -216,7 +216,7 @@ export default function MFAEnrollment() {
                                             Verify & Save
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-2 italic">Enter the 6-digit code generated by your app to verify setup.</p>
+                                    <p className="type-card-description text-slate-500 mt-2 italic">Enter the 6-digit code generated by your app to verify setup.</p>
                                 </div>
                             </div>
                         </div>

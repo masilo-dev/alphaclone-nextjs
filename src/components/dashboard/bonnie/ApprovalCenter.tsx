@@ -59,7 +59,7 @@ function RiskBadge({ risk }: { risk?: string }) {
   const cls = RISK_STYLES[key] ?? RISK_STYLES.medium;
   const Icon = RISK_ICONS[key] ?? RISK_ICONS.medium;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest ${cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-black uppercase tracking-widest ${cls}`}>
       {Icon}
       {risk || 'low'} risk
     </span>
@@ -88,7 +88,7 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
 
   if (!editableKeys.length) {
     return (
-      <p className="text-[11px] text-slate-500 italic">No editable fields in this payload.</p>
+      <p className="type-card-description text-slate-500 italic">No editable fields in this payload.</p>
     );
   }
 
@@ -96,7 +96,7 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
     <div className="space-y-2">
       {editableKeys.map((key) => (
         <div key={key}>
-          <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          <label className="mb-0.5 block type-caption font-bold uppercase tracking-widest text-slate-500">
             {key}
           </label>
           {typeof localArgs[key] === 'string' && String(localArgs[key]).length > 80 ? (
@@ -104,14 +104,14 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
               rows={3}
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-[11px] text-slate-200 focus:border-teal-500 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 type-ui text-slate-200 focus:border-teal-500 focus:outline-none"
             />
           ) : (
             <input
               type="text"
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-[11px] text-slate-200 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 type-ui text-slate-200 focus:border-teal-500 focus:outline-none"
             />
           )}
         </div>
@@ -133,12 +133,12 @@ function EditHistoryTimeline({ history }: { history: EditHistoryEntry[] }) {
   if (!history.length) return null;
   return (
     <div className="mt-3 space-y-2">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+      <p className="type-caption font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
         <History className="h-3 w-3" /> Edit history ({history.length})
       </p>
       <div className="space-y-1.5 border-l-2 border-slate-800 pl-3">
         {history.map((entry, i) => (
-          <div key={i} className="text-[10px] text-slate-500">
+          <div key={i} className="type-ui text-slate-500">
             <span className="text-slate-400 font-semibold">
               {entry.action ? entry.action.replace(/_/g, ' ') : 'Edited'}
             </span>{' '}
@@ -230,35 +230,35 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             {approval.toolName && (
-              <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[11px] text-slate-300 border border-slate-700/60">
+              <span className="rounded bg-slate-800 px-2 py-0.5 font-mono type-ui text-slate-300 border border-slate-700/60">
                 {approval.toolName}
               </span>
             )}
             <RiskBadge risk={approval.riskLevel} />
             {hasEdits && (
-              <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[10px] font-bold text-teal-300">
+              <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-teal-300">
                 Edited
               </span>
             )}
             {editHistory.length > 0 && (
-              <span className="text-[10px] text-slate-600 flex items-center gap-0.5">
+              <span className="type-ui text-slate-600 flex items-center gap-0.5">
                 <History className="h-2.5 w-2.5" /> {editHistory.length} edit{editHistory.length !== 1 ? 's' : ''}
               </span>
             )}
             {approval.createdAt && (
-              <span className="ml-auto text-[10px] text-slate-600">
+              <span className="ml-auto type-ui text-slate-600">
                 {new Date(approval.createdAt).toLocaleTimeString()}
               </span>
             )}
           </div>
 
           {approval.reason && (
-            <p className="mt-1 text-sm text-slate-300 leading-snug">
+            <p className="mt-1 type-card-description text-slate-300 leading-snug">
               {approval.reason}
             </p>
           )}
 
-          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-slate-950/50 p-2.5 text-[11px] text-slate-400">
+          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-slate-950/50 p-2.5 type-ui text-slate-400">
             <p>
               <span className="font-bold uppercase tracking-wider text-slate-500">What:</span>{' '}
               {approval.toolName
@@ -284,7 +284,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           </div>
 
           {target && (
-            <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
+            <p className="mt-1 flex items-center gap-1 type-card-description text-slate-500">
               <Wrench className="h-3 w-3 shrink-0" />
               Target:&nbsp;
               <span className="font-mono text-slate-400 truncate">{target}</span>
@@ -292,7 +292,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           )}
 
           {isHighRisk && !canApprove && (
-            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-1.5 text-[11px] text-rose-300">
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-1.5 type-ui text-rose-300">
               <Lock className="h-3 w-3 shrink-0" />
               Only workspace admins can approve high-risk actions. Contact your workspace owner.
             </div>
@@ -325,20 +325,20 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
               {/* Draft preview or raw payload */}
               {!editing && draft && (
                 <div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-slate-500">
                     Content preview
                   </p>
-                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 text-[11px] text-slate-300 whitespace-pre-wrap custom-scrollbar">
+                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 type-ui text-slate-300 whitespace-pre-wrap custom-scrollbar">
                     {draft}
                   </pre>
                 </div>
               )}
               {!editing && !draft && approval.payload && Object.keys(approval.payload).length > 0 && (
                 <div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-slate-500">
                     Raw payload
                   </p>
-                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 text-[11px] text-slate-400 custom-scrollbar">
+                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 type-ui text-slate-400 custom-scrollbar">
                     {JSON.stringify(approval.payload, null, 2)}
                   </pre>
                 </div>
@@ -347,7 +347,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
               {/* Inline editor */}
               {editing && (
                 <div>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                  <p className="mb-2 type-caption font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
                     <Pencil className="h-3 w-3" /> Edit arguments
                   </p>
                   <InlineArgEditor
@@ -362,7 +362,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
                 <button
                   type="button"
                   onClick={() => setEditing((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-[11px] text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 type-ui text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
                 >
                   <Pencil className="h-3 w-3" />
                   {editing ? 'Preview' : 'Edit arguments'}
@@ -379,17 +379,17 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       {/* Action bar */}
       <div className="flex items-center gap-2 border-t border-slate-800 bg-slate-950/50 px-4 py-2.5">
         {confirming === 'approve' && (
-          <p className="mr-auto text-xs text-emerald-300 font-semibold animate-pulse">
+          <p className="mr-auto type-card-description text-emerald-300 font-semibold animate-pulse">
             Click again to confirm approval →
           </p>
         )}
         {confirming === 'reject' && (
-          <p className="mr-auto text-xs text-rose-300 font-semibold animate-pulse">
+          <p className="mr-auto type-card-description text-rose-300 font-semibold animate-pulse">
             Click again to confirm rejection →
           </p>
         )}
         {!confirming && (
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-600 mr-auto">
+          <div className="flex items-center gap-1.5 type-ui text-slate-600 mr-auto">
             <Clock className="h-3 w-3" />
             Awaiting decision
           </div>
@@ -399,7 +399,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           type="button"
           disabled={isProcessing}
           onClick={handleReject}
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 type-caption font-semibold transition-colors disabled:opacity-50 ${
             confirming === 'reject'
               ? 'bg-rose-600 text-white'
               : 'border border-rose-500/30 text-rose-400 hover:bg-rose-500/10'
@@ -416,7 +416,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           disabled={isProcessing || !canApprove}
           onClick={handleApprove}
           title={!canApprove ? 'Admin approval required for high-risk actions' : undefined}
-          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 type-caption font-semibold transition-colors disabled:opacity-50 ${
             confirming === 'approve'
               ? 'bg-emerald-600 text-white'
               : !canApprove
@@ -501,12 +501,12 @@ export default function ApprovalCenter() {
               Approval Center
             </h1>
             {pendingCount > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-black text-slate-950">
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 type-ui font-black text-slate-950">
                 {pendingCount}
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 ml-10">
+          <p className="type-card-description text-slate-500 ml-10">
             Review and authorise Bonnie&apos;s pending actions. High-risk actions require admin approval.
           </p>
         </div>
@@ -515,7 +515,7 @@ export default function ApprovalCenter() {
           type="button"
           onClick={() => refresh()}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-400 hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption text-slate-400 hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -524,7 +524,7 @@ export default function ApprovalCenter() {
 
       {/* Error state */}
       {error && pendingApprovals.length === 0 && (
-        <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+        <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 type-ui text-rose-200">
           {error}. Database may be temporarily unavailable — try Refresh in a minute.
         </div>
       )}
@@ -533,7 +533,7 @@ export default function ApprovalCenter() {
       {loading && pendingApprovals.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-slate-600">
           <Loader2 className="h-8 w-8 animate-spin mb-3" />
-          <p className="text-sm">Loading approvals…</p>
+          <p className="type-card-description">Loading approvals…</p>
         </div>
       )}
 
@@ -547,8 +547,8 @@ export default function ApprovalCenter() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-slate-800 bg-slate-900">
             <Inbox className="h-7 w-7 text-slate-600" />
           </div>
-          <h3 className="text-sm font-bold text-slate-400">No pending approvals</h3>
-          <p className="mt-1 text-xs text-slate-600 max-w-xs">
+          <h3 className="type-ui font-bold text-slate-400">No pending approvals</h3>
+          <p className="mt-1 type-card-description text-slate-600 max-w-xs">
             Bonnie will ask for your sign-off here whenever an action carries medium-or-higher risk.
             High-risk actions require a workspace admin.
           </p>

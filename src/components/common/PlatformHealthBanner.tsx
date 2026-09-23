@@ -38,7 +38,7 @@ export default function PlatformHealthBanner() {
   if (!degraded || dismissed) return null;
 
   return (
-    <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-200 backdrop-blur-md transition-all">
+    <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-2.5 type-caption text-amber-200 backdrop-blur-md transition-all">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />

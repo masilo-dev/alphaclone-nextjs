@@ -152,12 +152,12 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
             <div className="space-y-6">
                 {!extractedData ? (
                     <>
-                        <div className="text-center text-slate-300 text-sm">
+                        <div className="text-center text-slate-300 type-ui">
                             Upload a photo or scanned copy of a receipt. Our AI will automatically extract the date, vendor/description, and amount.
                         </div>
 
                         {error && (
-                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 type-ui">
                                 {error}
                             </div>
                         )}
@@ -167,8 +167,8 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                 <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 transition-colors">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                         <Camera className="w-10 h-10 text-emerald-400 mb-3" />
-                                        <p className="mb-2 text-sm text-slate-300"><span className="font-semibold text-emerald-400">Click to upload</span> or drag and drop</p>
-                                        <p className="text-xs text-slate-400">PNG, JPG or JPEG (MAX. 5MB)</p>
+                                        <p className="mb-2 type-card-description text-slate-300"><span className="font-semibold text-emerald-400">Click to upload</span> or drag and drop</p>
+                                        <p className="type-card-description text-slate-400">PNG, JPG or JPEG (MAX. 5MB)</p>
                                     </div>
                                     <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 </label>
@@ -210,11 +210,11 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                             <Receipt className="w-6 h-6 text-emerald-400 shrink-0 mt-1" />
                             <div>
                                 <h4 className="text-white font-medium mb-1">Receipt Analyzed Successfully</h4>
-                                <p className="text-sm text-slate-300 mb-4">Please review the extracted data before saving.</p>
+                                <p className="type-card-description text-slate-300 mb-4">Please review the extracted data before saving.</p>
 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description / Vendor</label>
+                                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description / Vendor</label>
                                         <Input
                                             value={extractedData.description || ''}
                                             onChange={(e) => setExtractedData({ ...extractedData, description: e.target.value })}
@@ -223,7 +223,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Date</label>
+                                            <label className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Date</label>
                                             <Input
                                                 type="date"
                                                 value={extractedData.date || ''}
@@ -232,7 +232,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Amount</label>
+                                            <label className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Amount</label>
                                             <Input
                                                 type="number"
                                                 step="0.01"
@@ -243,11 +243,11 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category / Expense Account</label>
+                                        <label className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category / Expense Account</label>
                                         <select
                                             value={selectedAccountId}
                                             onChange={(e) => setSelectedAccountId(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
                                         >
                                             <option value="">Select account...</option>
                                             {accounts
@@ -262,7 +262,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
 
                                     <div className="pt-4 border-t border-slate-800">
                                         <div className="flex items-center justify-between mb-4">
-                                            <span className="text-sm font-bold text-white">Already Paid?</span>
+                                            <span className="type-ui font-bold text-white">Already Paid?</span>
                                             <button 
                                                 onClick={() => setIsPaid(!isPaid)}
                                                 className={`w-12 h-6 rounded-full transition-colors relative ${isPaid ? 'bg-teal-500' : 'bg-slate-700'}`}
@@ -273,11 +273,11 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
 
                                         {isPaid && (
                                             <div>
-                                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Paid from account</label>
+                                                <label className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Paid from account</label>
                                                 <select
                                                     value={selectedAssetAccountId}
                                                     onChange={(e) => setSelectedAssetAccountId(e.target.value)}
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 type-ui text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer"
                                                 >
                                                     <option value="">Select cash/bank account...</option>
                                                     {accounts

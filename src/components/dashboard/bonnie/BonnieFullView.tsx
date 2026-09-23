@@ -440,7 +440,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
               {activeConversation?.title || 'Bonnie workspace'}
             </Heading>
             <Flex alignItems="center" gap={1.5} flexWrap="wrap">
-              <Text fontSize="10px" color="gray.500" noOfLines={1}>
+              <Text fontSize="var(--type-caption-size)" color="gray.500" noOfLines={1}>
                 {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Executes tools
                 {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
                 {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
@@ -454,7 +454,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                 px={1.5}
                 py={0.5}
                 borderRadius="6px"
-                fontSize="10px"
+                fontSize="var(--type-caption-size)"
                 fontWeight="700"
                 letterSpacing="0.02em"
                 color={conversationModuleTag ? 'white' : 'gray.500'}

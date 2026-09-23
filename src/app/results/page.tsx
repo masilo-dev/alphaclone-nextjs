@@ -31,7 +31,7 @@ export default function ResultsPage() {
               description="Each story follows the same structure: the problem, what changed in the workflow, and the business outcome."
               as="h1"
             />
-            <p className="mx-auto max-w-3xl rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] bg-[var(--marketing-surface)] px-4 py-3 text-center text-sm text-[var(--marketing-text-muted)]">
+            <p className="mx-auto max-w-3xl rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] bg-[var(--marketing-surface)] px-4 py-3 text-center type-card-description text-[var(--marketing-text-muted)]">
               Stories on this page are representative workflow composites — not verified customer
               metrics. Request a live demo for audited outcomes from your segment.
             </p>
@@ -52,57 +52,57 @@ export default function ResultsPage() {
                       <h2 className="text-xl font-semibold text-[var(--marketing-text-primary)]">
                         {study.persona}
                       </h2>
-                      <p className="text-sm text-[var(--marketing-text-muted)]">{study.industry}</p>
+                      <p className="type-card-description text-[var(--marketing-text-muted)]">{study.industry}</p>
                     </div>
                     {study.representative ? (
-                      <span className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                      <span className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] px-3 py-1 type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                         Representative scenario
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                  <p className="type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                     Stack replaced
                   </p>
-                  <p className="mt-1 text-sm font-medium text-[var(--marketing-accent-hover)]">
+                  <p className="mt-1 type-card-description font-medium text-[var(--marketing-accent-hover)]">
                     {study.stackReplaced}
                   </p>
 
                   <div className="mt-6 grid gap-5 md:grid-cols-3">
                     <div className="mkt-surface p-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                      <p className="mb-2 type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                         Problem
                       </p>
-                      <p className="text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                      <p className="type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
                         {study.problem}
                       </p>
                     </div>
                     <div className="mkt-surface p-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                      <p className="mb-2 type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                         What changed
                       </p>
-                      <p className="text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                      <p className="type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
                         {study.whatChanged}
                       </p>
                     </div>
                     <div className="mkt-surface p-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                      <p className="mb-2 type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                         Outcome
                       </p>
-                      <p className="text-sm font-medium leading-relaxed text-[var(--marketing-text-primary)]">
+                      <p className="type-card-description font-medium leading-relaxed text-[var(--marketing-text-primary)]">
                         &ldquo;{study.outcome}&rdquo;
                       </p>
                     </div>
                   </div>
 
-                  <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
+                  <p className="mt-6 type-caption font-semibold uppercase tracking-wide text-[var(--marketing-text-muted)]">
                     Capabilities used
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {study.modulesUsed.map((moduleName) => (
                       <span
                         key={moduleName}
-                        className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] px-3 py-1 text-xs text-[var(--marketing-text-secondary)]"
+                        className="rounded-full border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] px-3 py-1 type-caption text-[var(--marketing-text-secondary)]"
                       >
                         {moduleName}
                       </span>

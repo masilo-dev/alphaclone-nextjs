@@ -48,7 +48,7 @@ function healthStatusLabel(color: string): string {
 
 function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn('text-[11px] font-black uppercase tracking-widest text-slate-400', className)}>
+    <p className={cn('type-caption font-black uppercase tracking-widest text-slate-400', className)}>
       {children}
     </p>
   );
@@ -103,7 +103,7 @@ export function ModuleKpiRichSections({
             {healthItems.map((pill) => (
               <span
                 key={pill.label}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-3 py-1.5 text-[11px] font-semibold text-slate-200"
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-3 py-1.5 type-ui font-semibold text-slate-200"
               >
                 <span
                   className="h-2 w-2 rounded-full shrink-0"

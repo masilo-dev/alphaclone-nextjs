@@ -30,7 +30,7 @@ export default function BlockNoteEditorWrapper({
                 .blocknote-pages-wrapper .bn-editor {
                     background: transparent !important;
                     color: #e2e8f0 !important;
-                    font-size: 15px;
+                    font-size: var(--type-body-size);
                     line-height: 1.7;
                     max-width: 720px;
                     margin: 0 auto;
@@ -46,9 +46,9 @@ export default function BlockNoteEditorWrapper({
                 .blocknote-pages-wrapper .bn-block-content li {
                     color: #e2e8f0 !important;
                 }
-                .blocknote-pages-wrapper .bn-block-content h1 { font-size: 1.75rem; font-weight: 700; }
-                .blocknote-pages-wrapper .bn-block-content h2 { font-size: 1.375rem; font-weight: 600; }
-                .blocknote-pages-wrapper .bn-block-content h3 { font-size: 1.125rem; font-weight: 600; }
+                .blocknote-pages-wrapper .bn-block-content h1 { font-size: var(--text-3xl); font-weight: var(--weight-bold); }
+                .blocknote-pages-wrapper .bn-block-content h2 { font-size: var(--text-2xl); font-weight: var(--weight-semibold); }
+                .blocknote-pages-wrapper .bn-block-content h3 { font-size: var(--text-lg); font-weight: var(--weight-semibold); }
                 .blocknote-pages-wrapper [contenteditable]::before {
                     color: #475569 !important;
                 }

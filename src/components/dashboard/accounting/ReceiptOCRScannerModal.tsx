@@ -68,8 +68,8 @@ export function ReceiptOCRScannerModal({
               <Scan size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-black text-white uppercase tracking-wider">Smart Receipt OCR Scanner</h3>
-              <p className="text-xs text-slate-400">Upload receipt image to auto-extract expense details</p>
+              <h3 className="type-caption font-black text-white uppercase tracking-wider">Smart Receipt OCR Scanner</h3>
+              <p className="type-card-description text-slate-400">Upload receipt image to auto-extract expense details</p>
             </div>
           </div>
           <button
@@ -97,8 +97,8 @@ export function ReceiptOCRScannerModal({
               <div className="w-12 h-12 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center mx-auto text-slate-400 group-hover:text-teal-400 group-hover:scale-110 transition-all">
                 <Upload size={22} />
               </div>
-              <p className="text-xs font-bold text-white mt-3">Click or Drag Receipt Photo Here</p>
-              <p className="text-[11px] text-slate-500 mt-1">Supports PNG, JPG, JPEG up to 10MB</p>
+              <p className="type-card-description font-bold text-white mt-3">Click or Drag Receipt Photo Here</p>
+              <p className="type-card-description text-slate-500 mt-1">Supports PNG, JPG, JPEG up to 10MB</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -108,7 +108,7 @@ export function ReceiptOCRScannerModal({
                 {scanning && (
                   <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center text-teal-400 space-y-2">
                     <Scan size={28} className="animate-bounce" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Scanning Receipt OCR...</span>
+                    <span className="type-caption font-bold uppercase tracking-wider">Scanning Receipt OCR...</span>
                   </div>
                 )}
               </div>
@@ -117,56 +117,56 @@ export function ReceiptOCRScannerModal({
               <div className="space-y-3">
                 {parsedData ? (
                   <>
-                    <div className="flex items-center justify-between text-[11px] text-teal-400 bg-teal-500/10 px-3 py-1 rounded-lg border border-teal-500/20 font-bold">
+                    <div className="flex items-center justify-between type-ui text-teal-400 bg-teal-500/10 px-3 py-1 rounded-lg border border-teal-500/20 font-bold">
                       <span className="flex items-center gap-1"><Sparkles size={12} /> Confidence Score</span>
                       <span>{parsedData.confidenceScore}% Match</span>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Vendor Name
                       </label>
                       <input
                         type="text"
                         value={parsedData.vendorName}
                         onChange={(e) => setParsedData({ ...parsedData, vendorName: e.target.value })}
-                        className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
                           Amount ($)
                         </label>
                         <input
                           type="number"
                           value={parsedData.totalAmount}
                           onChange={(e) => setParsedData({ ...parsedData, totalAmount: Number(e.target.value) })}
-                          className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
                           Date
                         </label>
                         <input
                           type="date"
                           value={parsedData.date}
                           onChange={(e) => setParsedData({ ...parsedData, date: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
                         Expense Category
                       </label>
                       <select
                         value={parsedData.category}
                         onChange={(e) => setParsedData({ ...parsedData, category: e.target.value as any })}
-                        className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
                       >
                         <option value="Software & Tools">Software & Tools</option>
                         <option value="Office & Supplies">Office & Supplies</option>
@@ -178,7 +178,7 @@ export function ReceiptOCRScannerModal({
                     </div>
                   </>
                 ) : (
-                  <div className="h-full flex items-center justify-center text-slate-500 text-xs italic">
+                  <div className="h-full flex items-center justify-center text-slate-500 type-caption italic">
                     Waiting for scanner completion...
                   </div>
                 )}
@@ -194,21 +194,21 @@ export function ReceiptOCRScannerModal({
               setImagePreview(null);
               setParsedData(null);
             }}
-            className="text-xs font-bold text-slate-400 hover:text-white transition-colors"
+            className="type-caption font-bold text-slate-400 hover:text-white transition-colors"
           >
             Reset Scanner
           </button>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white transition-colors"
+              className="px-4 py-2 type-caption font-bold text-slate-400 hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={!parsedData}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors disabled:opacity-50 shadow-lg shadow-teal-500/20"
+              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl type-caption font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors disabled:opacity-50 shadow-lg shadow-teal-500/20"
             >
               <Check size={14} /> Add to Accounting
             </button>

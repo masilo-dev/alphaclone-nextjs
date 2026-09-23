@@ -679,7 +679,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             lost: 'bg-red-500/10 text-red-500 border-red-500/20',
         };
         return (
-            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${colors[status.toLowerCase()] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
+            <span className={`px-2 py-0.5 rounded type-caption font-medium border ${colors[status.toLowerCase()] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
                 {status.toUpperCase()}
             </span>
         );
@@ -770,7 +770,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 <StatusBadge status={lead.status || 'New'} />
                                 {getStageBadge(lead.stage || 'lead')}
                                 {verificationBadge ? (
-                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${verificationBadge.className}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-bold uppercase border ${verificationBadge.className}`}>
                                         <CheckCircle2 className="w-3 h-3" />
                                         {verificationBadge.label}
                                         {lead.metadata?.verification?.score != null && (
@@ -779,7 +779,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     </span>
                                 ) : null}
                                 {lead.isVerified && !verificationBadge ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded type-caption font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                         <CheckCircle2 className="w-3 h-3" />
                                         VERIFIED
                                     </span>
@@ -822,14 +822,14 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                 {/* Header actions */}
                 <div className="px-3 sm:px-4 py-2 border-b border-slate-800 flex flex-col lg:flex-row justify-between items-start gap-2 bg-slate-900">
-                    <div className="min-w-0 text-xs text-slate-500 lg:pt-2">
+                    <div className="min-w-0 type-caption text-slate-500 lg:pt-2">
                         Quick actions for this lead
                     </div>
 
                     {/* Actions */}
                     <div className="w-full lg:w-auto flex flex-col items-start lg:items-end gap-1.5 rounded-lg border border-white/5 bg-slate-900/40 px-2 py-1.5">
                         <div className="self-start">
-                            <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+                            <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 type-caption font-bold uppercase tracking-caps text-slate-500">
                                 Quick actions
                             </span>
                         </div>
@@ -993,7 +993,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
-                            className={`py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
+                            className={`py-3 type-caption sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
                                 ? 'border-[var(--brand-blue-500)] text-white'
                                 : 'border-transparent text-slate-400 hover:text-slate-300'
                                 }`}
@@ -1008,7 +1008,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     <div className="min-w-0">
                     {showEditForm && (
                         <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
-                            <h3 className="text-sm font-semibold text-white mb-3">Edit lead details</h3>
+                            <h3 className="type-ui font-semibold text-white mb-3">Edit lead details</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Input
                                     label="Business name"
@@ -1041,7 +1041,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     onChange={(e) => setEditForm((f) => ({ ...f, source: e.target.value }))}
                                 />
                                 <div className="space-y-1.5">
-                                    <label className="block text-sm font-medium text-slate-300">Pipeline stage</label>
+                                    <label className="block type-label font-medium text-slate-300">Pipeline stage</label>
                                     <select
                                         value={editForm.stage}
                                         onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
@@ -1054,7 +1054,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <option value="won">Won</option>
                                         <option value="lost">Lost</option>
                                     </select>
-                                    <label className="block text-sm font-medium text-slate-300 mt-3">Reason for change</label>
+                                    <label className="block type-label font-medium text-slate-300 mt-3">Reason for change</label>
                                     <textarea
                                         value={stageChangeReason}
                                         onChange={(e) => setStageChangeReason(e.target.value)}
@@ -1077,10 +1077,10 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             <Card className="p-5 border-slate-800 bg-slate-900/40">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                                     <div>
-                                        <p className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1">Lead completeness</p>
+                                        <p className="type-caption uppercase tracking-wider text-slate-500 font-bold mb-1">Lead completeness</p>
                                         <div className="flex items-baseline gap-2">
                                             <span className={`text-3xl font-bold ${getScoreColor(leadScore)}`}>{leadScore}</span>
-                                            <span className="text-slate-500 text-sm">/ 100</span>
+                                            <span className="text-slate-500 type-ui">/ 100</span>
                                         </div>
                                     </div>
                                     <button
@@ -1090,8 +1090,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     >
                                         {nextAction.icon}
                                         <div className="text-left">
-                                            <p className="text-sm font-semibold text-white">{nextAction.action}</p>
-                                            <p className="text-[11px] text-slate-500">{nextAction.reason}</p>
+                                            <p className="type-card-description font-semibold text-white">{nextAction.action}</p>
+                                            <p className="type-card-description text-slate-500">{nextAction.reason}</p>
                                         </div>
                                     </button>
                                 </div>
@@ -1158,7 +1158,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                     {lead.website}
                                                 </a>
                                             ) : (
-                                                <span className="text-slate-500 italic text-sm">No website available</span>
+                                                <span className="text-slate-500 italic type-ui">No website available</span>
                                             )}
                                         </div>
                                     </div>
@@ -1168,10 +1168,10 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                 <MapPin className="w-4 h-4 text-amber-500" />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-xs text-slate-500 uppercase font-bold tracking-tighter mb-0.5">Address</span>
-                                                <span className="text-sm leading-relaxed whitespace-pre-wrap">{lead.location}</span>
+                                                <span className="type-caption text-slate-500 uppercase font-bold tracking-tighter mb-0.5">Address</span>
+                                                <span className="type-ui leading-relaxed whitespace-pre-wrap">{lead.location}</span>
                                                 {lead.isAddressValid && (
-                                                    <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
+                                                    <span className="type-caption text-emerald-400 flex items-center gap-1 mt-1 font-mono uppercase font-bold">
                                                         <CheckSquare className="w-2.5 h-2.5" /> Google Verified
                                                     </span>
                                                 )}
@@ -1189,7 +1189,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             AI Verification
                                         </h3>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-1">Trust Score</span>
+                                            <span className="type-caption text-slate-400 uppercase tracking-wider font-bold mb-1">Trust Score</span>
                                             <div className="text-2xl font-bold text-emerald-400">{lead.trustScore}%</div>
                                         </div>
                                     </div>
@@ -1204,7 +1204,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                         <div className="flex flex-col gap-3">
                                             <div className="p-3 bg-slate-900/50 rounded-lg border border-white/5">
-                                                <p className="text-sm text-slate-300 italic leading-relaxed">
+                                                <p className="type-card-description text-slate-300 italic leading-relaxed">
                                                     <span className="text-emerald-400 font-bold not-italic font-mono mr-2 uppercase tracking-tighter">Technical Audit:</span>
                                                     {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
                                                 </p>
@@ -1212,7 +1212,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                             {lead.sdrInsight && (
                                                 <div className="p-3 bg-[var(--brand-blue-500)]/5 rounded-lg border border-[var(--brand-blue-500)]/10">
-                                                    <p className="text-sm text-slate-200 leading-relaxed">
+                                                    <p className="type-card-description text-slate-200 leading-relaxed">
                                                         <span className="text-[var(--brand-blue-400)] font-bold font-mono mr-2 uppercase tracking-tighter">SDR Strategy:</span>
                                                         {lead.sdrInsight}
                                                     </p>
@@ -1220,7 +1220,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-widest font-bold">
+                                        <div className="flex items-center gap-2 type-caption text-slate-500 uppercase tracking-widest font-bold">
                                             <Zap className="w-3 h-3 text-yellow-500" />
                                             Authenticity Confirmed by AlphaClone Senior SDR
                                         </div>
@@ -1236,7 +1236,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             Conversion Intelligence
                                         </h3>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-xs text-slate-400 uppercase tracking-widest font-black mb-1">Response Probability</span>
+                                            <span className="type-caption text-slate-400 uppercase tracking-widest font-black mb-1">Response Probability</span>
                                             <div className="text-3xl font-black text-indigo-400">
                                                 {lead.responseProbability || lead.intelligenceScore || 0}%
                                             </div>
@@ -1252,8 +1252,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         </div>
                                         
                                         <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
-                                            <span className="text-xs font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
-                                            <p className="text-sm text-slate-300 leading-relaxed">
+                                            <span className="type-caption font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
+                                            <p className="type-card-description text-slate-300 leading-relaxed">
                                                 {lead.hookAnalysis || "The Sales Agent predicts a high response rate based on industry intent and pain point alignment. Use the pattern-interrupting hook below for maximum conversion."}
                                             </p>
                                         </div>
@@ -1266,7 +1266,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         AI Deep Research
                                     </h3>
                                     <div className="p-4 bg-slate-900 border border-white/5 rounded-lg">
-                                        <p className="text-slate-300 text-sm leading-relaxed">
+                                        <p className="text-slate-300 type-card-description leading-relaxed">
                                             {lead.notes || "No AI research available yet. Run research to gather market intelligence."}
                                         </p>
                                     </div>
@@ -1279,13 +1279,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             Strategic Hook
                                         </h3>
                                         <div className="p-4 bg-slate-900/50 rounded-lg border border-purple-500/20">
-                                            <p className="text-purple-200 text-sm font-medium italic">
+                                            <p className="text-purple-200 type-card-description font-medium italic">
                                                 "{lead.outreachHook}"
                                             </p>
                                         </div>
                                         {lead.strategy && (
                                             <div className="mt-3 flex items-center gap-2">
-                                                <Badge variant="neutral" className="bg-purple-500/20 border-purple-500/30 text-purple-300 text-xs py-0">
+                                                <Badge variant="neutral" className="bg-purple-500/20 border-purple-500/30 text-purple-300 type-caption py-0">
                                                     STRATEGY: {lead.strategy.replace('_', ' ')}
                                                 </Badge>
                                             </div>
@@ -1302,17 +1302,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <div className="grid grid-cols-1 gap-5">
                                             {lead.valueProposition && (
                                                 <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-lg">
-                                                    <span className="text-xs text-blue-400 uppercase font-bold tracking-widest block mb-1">Tailored Value Prop</span>
-                                                    <p className="text-sm text-slate-300 leading-relaxed">{lead.valueProposition}</p>
+                                                    <span className="type-caption text-blue-400 uppercase font-bold tracking-widest block mb-1">Tailored Value Prop</span>
+                                                    <p className="type-card-description text-slate-300 leading-relaxed">{lead.valueProposition}</p>
                                                 </div>
                                             )}
                                             
                                             {lead.techStack && lead.techStack.length > 0 && (
                                                 <div>
-                                                    <span className="text-xs text-slate-500 uppercase font-bold tracking-widest block mb-2">Tech Stack</span>
+                                                    <span className="type-caption text-slate-500 uppercase font-bold tracking-widest block mb-2">Tech Stack</span>
                                                     <div className="flex flex-wrap gap-2">
                                                         {lead.techStack.map((tech, i) => (
-                                                            <Badge key={i} variant="blue" className="bg-blue-500/10 border-blue-500/20 text-blue-400 font-mono text-xs">
+                                                            <Badge key={i} variant="blue" className="bg-blue-500/10 border-blue-500/20 text-blue-400 font-mono type-caption">
                                                                 {tech}
                                                             </Badge>
                                                         ))}
@@ -1322,10 +1322,10 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             
                                             {lead.painPoints && lead.painPoints.length > 0 && (
                                                 <div>
-                                                    <span className="text-xs text-slate-500 uppercase font-bold tracking-widest block mb-2">Pain Points</span>
+                                                    <span className="type-caption text-slate-500 uppercase font-bold tracking-widest block mb-2">Pain Points</span>
                                                     <div className="space-y-2">
                                                         {lead.painPoints.map((point, i) => (
-                                                            <div key={i} className="flex items-start gap-2 text-sm text-slate-300 bg-slate-900/50 p-2 rounded border border-white/5">
+                                                            <div key={i} className="flex items-start gap-2 type-ui text-slate-300 bg-slate-900/50 p-2 rounded border border-white/5">
                                                                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                                                 {point}
                                                             </div>
@@ -1344,7 +1344,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             Outreach Draft
                                         </h3>
                                         <div className="p-4 bg-slate-950 border border-slate-700/50 rounded-lg">
-                                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap italic">
+                                            <p className="text-slate-300 type-card-description leading-relaxed whitespace-pre-wrap italic">
                                                 "{lead.outreachMessage}"
                                             </p>
                                         </div>
@@ -1352,7 +1352,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                className="text-xs border-slate-700 hover:bg-slate-800"
+                                                className="type-caption border-slate-700 hover:bg-slate-800"
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(lead.outreachMessage || '');
                                                     toast.success('Draft copied to clipboard');
@@ -1382,7 +1382,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <Card key={deal.id} className="p-4 flex items-center justify-between gap-3 border-slate-800">
                                             <div>
                                                 <p className="font-medium text-white">{deal.name || deal.title}</p>
-                                                <p className="text-xs text-slate-500 capitalize">{deal.stage || deal.status}</p>
+                                                <p className="type-caption text-slate-500 capitalize">{deal.stage || deal.status}</p>
                                             </div>
                                             <Button
                                                 size="sm"
@@ -1456,7 +1456,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                 {task.title}
                                             </span>
                                             {task.dueDate && (
-                                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                <span className="type-caption text-slate-500 flex items-center gap-1">
                                                     <Clock className="w-3 h-3" />
                                                     {format(new Date(task.dueDate), 'MMM d')}
                                                 </span>
@@ -1525,12 +1525,12 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </Button>
                             </div>
                             <textarea
-                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-mono text-sm leading-relaxed"
+                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-mono type-ui leading-relaxed"
                                 placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
                                 value={leadNotes}
                                 onChange={(e) => setLeadNotes(e.target.value)}
                             />
-                            <div className="flex items-center gap-2 text-xs text-slate-500 italic mt-2">
+                            <div className="flex items-center gap-2 type-caption text-slate-500 italic mt-2">
                                 <Bot className="w-4 h-4 text-[var(--brand-blue-400)]" />
                                 <span>These notes are visible to all members of your team with access to this lead.</span>
                             </div>
@@ -1549,14 +1549,14 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <div className="glass-panel p-4 rounded-2xl border border-white/5">
                                             <div className="flex justify-between items-start mb-1">
                                                 <p className="font-medium text-white">{activity.description}</p>
-                                                <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
+                                                <span className="type-caption text-slate-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
                                             </div>
                                             {activity.metadata?.old_stage && (
-                                                <div className="space-y-2 mt-2 text-xs">
+                                                <div className="space-y-2 mt-2 type-caption">
                                                     <div className="flex items-center gap-2">
-                                                        <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
+                                                        <Badge variant="neutral" className="type-caption opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
                                                         <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                        <Badge variant="blue" className="text-xs text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                        <Badge variant="blue" className="type-caption text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
                                                     </div>
                                                     {activity.metadata.reason && (
                                                         <p className="text-slate-400 leading-relaxed">

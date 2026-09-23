@@ -95,7 +95,7 @@ const SecurityDashboard: React.FC = () => {
                 <form onSubmit={handleScan} className="max-w-3xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="flex-1 w-full">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Website URL to Scan</label>
+                            <label className="block type-label font-medium text-slate-300 mb-2">Website URL to Scan</label>
                             <div className="relative">
                                 <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
@@ -130,7 +130,7 @@ const SecurityDashboard: React.FC = () => {
                             {result.grade}
                         </div>
                         <div className="text-2xl font-bold text-white mb-2">{result.score}/100</div>
-                        <p className="text-slate-500 text-sm">Valid as of {result.timestamp.toLocaleTimeString()}</p>
+                        <p className="text-slate-500 type-caption">Valid as of {result.timestamp.toLocaleTimeString()}</p>
                     </Card>
 
                     {/* Detailed Checks */}
@@ -188,14 +188,14 @@ const SecurityDashboard: React.FC = () => {
                         <div className="overflow-x-auto min-w-0">
                             <table className="w-full min-w-[560px] text-left">
                                 <thead>
-                                    <tr className="text-slate-500 text-sm border-b border-slate-700">
+                                    <tr className="text-slate-500 type-ui border-b border-slate-700">
                                         <th className="pb-3 pr-4">URL</th>
                                         <th className="pb-3 px-4">Score</th>
                                         <th className="pb-3 px-4">Grade</th>
                                         <th className="pb-3 pl-4">Date</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-sm text-slate-300">
+                                <tbody className="type-ui text-slate-300">
                                     {scanHistory.map((scan) => (
                                         <tr key={scan.id} className="border-b border-slate-800/50 hover:bg-slate-700/20 cursor-pointer" onClick={() => {
                                             setResult({
@@ -262,14 +262,14 @@ const CheckCard: React.FC<{
                     </div>
                     <h4 className="font-bold text-lg text-white">{title}</h4>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${status === 'pass' ? 'bg-green-500 text-slate-900' :
+                <div className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider ${status === 'pass' ? 'bg-green-500 text-slate-900' :
                     status === 'fail' ? 'bg-red-500 text-white' :
                         'bg-yellow-500 text-slate-900'
                     }`}>
                     {status}
                 </div>
             </div>
-            <p className="text-slate-300 text-sm leading-relaxed">
+            <p className="text-slate-300 type-card-description leading-relaxed">
                 {details}
             </p>
         </div>

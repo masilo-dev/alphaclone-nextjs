@@ -101,12 +101,12 @@ export default function PlanAndUsageView({
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">{formattedPlanName} Plan</h2>
               {unlimited && (
-                <span className="px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                <span className="px-3 py-1 type-caption font-semibold rounded-full uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-500/30">
                   Unlimited
                 </span>
               )}
               <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider ${
+                className={`px-3 py-1 type-caption font-semibold rounded-full uppercase tracking-wider ${
                   subscriptionStatus === 'active'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     : subscriptionStatus === 'trial'
@@ -117,7 +117,7 @@ export default function PlanAndUsageView({
                 {subscriptionStatus}
               </span>
             </div>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 type-card-description text-slate-400">
               {unlimited
                 ? 'Unlimited plan — usage is tracked for analytics only, never capped by AlphaClone.'
                 : 'Daily limits reset at 00:00 UTC · Free = 50/day · Starter and Pro = 300/day per category'}
@@ -128,18 +128,18 @@ export default function PlanAndUsageView({
               <button
                 onClick={handleOpenPortal}
                 disabled={portalLoading}
-                className="px-4 py-2 text-sm font-medium bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition-all disabled:opacity-50"
+                className="px-4 py-2 type-ui font-medium bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition-all disabled:opacity-50"
               >
                 {portalLoading ? 'Opening Portal...' : 'Manage Billing'}
               </button>
             )}
-            <Link href="/pricing" className="px-4 py-2 text-sm font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg transition-all">
+            <Link href="/pricing" className="px-4 py-2 type-ui font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg transition-all">
               Compare Plans
             </Link>
           </div>
         </div>
         {currentPeriodEnd && (
-          <div className="mt-4 text-xs text-slate-400 flex items-center justify-between">
+          <div className="mt-4 type-caption text-slate-400 flex items-center justify-between">
             <span>
               {cancelAtPeriodEnd ? 'Cancels on:' : 'Renews on:'}{' '}
               {new Date(currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -153,14 +153,14 @@ export default function PlanAndUsageView({
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-xl font-bold text-white">Daily Usage</h3>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="type-card-description text-slate-400 mt-0.5">
               {unlimited ? 'Analytics only — no subscription ceiling' : 'Per action category · UTC daily window'}
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-slate-500 text-sm">Loading usage metrics...</div>
+          <div className="py-12 text-center text-slate-500 type-ui">Loading usage metrics...</div>
         ) : usageSummary ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {metricsToShow.map((key) => {
@@ -177,12 +177,12 @@ export default function PlanAndUsageView({
               return (
                 <div key={key} className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                    <span className="type-ui font-semibold text-slate-200 flex items-center gap-2">
                       <span>{meta.icon}</span>
                       <span>{meta.label}</span>
                     </span>
                     <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
+                      className={`type-caption font-bold px-2 py-0.5 rounded ${
                         isMetricUnlimited
                           ? 'bg-violet-500/20 text-violet-300'
                           : isMaxed
@@ -205,7 +205,7 @@ export default function PlanAndUsageView({
                       />
                     </div>
                   )}
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 text-xs text-slate-500">
+                  <div className="mt-4 pt-3 border-t border-slate-800/80 type-caption text-slate-500">
                     {isMetricUnlimited
                       ? `${metric.current.toLocaleString()} used today (analytics only)`
                       : `${metric.remaining} remaining today`}
@@ -215,7 +215,7 @@ export default function PlanAndUsageView({
             })}
           </div>
         ) : (
-          <div className="py-8 text-center text-slate-500 text-sm">Failed to load usage data.</div>
+          <div className="py-8 text-center text-slate-500 type-ui">Failed to load usage data.</div>
         )}
       </div>
 
@@ -240,7 +240,7 @@ export default function PlanAndUsageView({
                   <div className="flex justify-between items-center">
                     <h4 className="font-bold text-lg text-white">{plan.name}</h4>
                     {isCurrent && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
+                      <span className="type-ui font-bold px-2 py-0.5 bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
                         CURRENT
                       </span>
                     )}
@@ -251,26 +251,26 @@ export default function PlanAndUsageView({
                     ) : (
                       <>
                         ${plan.price}
-                        <span className="text-xs font-normal text-slate-400">/mo</span>
+                        <span className="type-caption font-normal text-slate-400">/mo</span>
                       </>
                     )}
                   </p>
-                  <p className="text-xs text-slate-400 mt-2 line-clamp-3">{plan.tagline}</p>
+                  <p className="type-card-description text-slate-400 mt-2 line-clamp-3">{plan.tagline}</p>
                 </div>
                 <div className="mt-6">
                   {isCurrent ? (
-                    <button disabled className="w-full py-2 text-xs font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
+                    <button disabled className="w-full py-2 type-ui font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
                       Active Plan
                     </button>
                   ) : plan.id === 'free' ? (
-                    <button disabled className="w-full py-2 text-xs font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
+                    <button disabled className="w-full py-2 type-ui font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
                       Free Tier
                     </button>
                   ) : (
                     <button
                       onClick={() => handleUpgrade(plan.id)}
                       disabled={checkoutLoading === plan.id}
-                      className="w-full py-2 text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all shadow-md disabled:opacity-50"
+                      className="w-full py-2 type-caption font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all shadow-md disabled:opacity-50"
                     >
                       {checkoutLoading === plan.id ? 'Loading...' : `Upgrade to ${plan.name}`}
                     </button>

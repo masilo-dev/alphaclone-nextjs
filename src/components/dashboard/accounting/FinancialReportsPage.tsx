@@ -144,34 +144,34 @@ export function FinancialReportsPage() {
                             <MobileDataCard key={account.accountCode} className="border-slate-700 bg-slate-800/80">
                                 <div className="flex justify-between gap-3">
                                     <div className="min-w-0">
-                                        <p className="text-xs text-slate-400 font-mono">{account.accountCode}</p>
-                                        <p className="text-sm font-medium text-white truncate">{account.accountName}</p>
+                                        <p className="type-card-description text-slate-400 font-mono">{account.accountCode}</p>
+                                        <p className="type-card-description font-medium text-white truncate">{account.accountName}</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm font-mono">
+                                <div className="grid grid-cols-2 gap-2 type-ui font-mono">
                                     <div>
-                                        <span className="text-xs text-slate-500 block">Debit</span>
+                                        <span className="type-caption text-slate-500 block">Debit</span>
                                         <span className="text-white">{account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '—'}</span>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-xs text-slate-500 block">Credit</span>
+                                        <span className="type-caption text-slate-500 block">Credit</span>
                                         <span className="text-white">{account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '—'}</span>
                                     </div>
                                 </div>
                             </MobileDataCard>
                         ))}
                         <MobileDataCard className="border-slate-600 bg-slate-900">
-                            <div className="grid grid-cols-2 gap-2 text-sm font-mono font-bold text-white">
+                            <div className="grid grid-cols-2 gap-2 type-ui font-mono font-bold text-white">
                                 <div>
-                                    <span className="text-xs text-slate-400 block font-sans font-normal">Total Debits</span>
+                                    <span className="type-caption text-slate-400 block font-sans font-normal">Total Debits</span>
                                     ${trialBalance.totalDebits.toFixed(2)}
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-xs text-slate-400 block font-sans font-normal">Total Credits</span>
+                                    <span className="type-caption text-slate-400 block font-sans font-normal">Total Credits</span>
                                     ${trialBalance.totalCredits.toFixed(2)}
                                 </div>
                             </div>
-                            <p className="text-center text-sm pt-1">
+                            <p className="text-center type-card-description pt-1">
                                 {trialBalance.isBalanced ? (
                                     <span className="text-green-400 font-semibold">✓ Books are balanced</span>
                                 ) : (
@@ -187,25 +187,25 @@ export function FinancialReportsPage() {
                         <table className="min-w-[560px] w-full divide-y divide-slate-700">
                             <thead className="bg-slate-900">
                                 <tr>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Account Code</th>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Account Name</th>
-                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Debit</th>
-                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Credit</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Account Code</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Account Name</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Debit</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Credit</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-slate-800 divide-y divide-slate-700">
                                 {trialBalance.accounts.map((account) => (
                                     <tr key={account.accountCode}>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-white">
                                             {account.accountCode}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-slate-200">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-slate-200">
                                             {account.accountName}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right font-mono text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-white">
                                             {account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '-'}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right font-mono text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-white">
                                             {account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '-'}
                                         </td>
                                     </tr>
@@ -214,10 +214,10 @@ export function FinancialReportsPage() {
                             <tfoot className="bg-slate-900 border-t-2 border-slate-600">
                                 <tr>
                                     <td colSpan={2} className="px-4 md:px-6 py-4 text-right font-bold text-white">TOTALS:</td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right font-mono font-bold text-white">
+                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-white">
                                         ${trialBalance.totalDebits.toFixed(2)}
                                     </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right font-mono font-bold text-white">
+                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-white">
                                         ${trialBalance.totalCredits.toFixed(2)}
                                     </td>
                                 </tr>
@@ -276,8 +276,8 @@ export function FinancialReportsPage() {
                             <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">ASSETS</h3>
                             {balanceSheet.assets.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                    <span className="text-sm text-slate-300">{account.accountName}</span>
-                                    <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui text-slate-300">{account.accountName}</span>
+                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-3 mt-2 border-t-2 border-slate-600 font-bold">
@@ -291,8 +291,8 @@ export function FinancialReportsPage() {
                             <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">LIABILITIES</h3>
                             {balanceSheet.liabilities.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                    <span className="text-sm text-slate-300">{account.accountName}</span>
-                                    <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui text-slate-300">{account.accountName}</span>
+                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-2 mt-2 font-semibold text-slate-200">
@@ -303,13 +303,13 @@ export function FinancialReportsPage() {
                             <h3 className="text-lg font-bold text-white mb-4 mt-6 border-b-2 border-slate-600 pb-2">EQUITY</h3>
                             {balanceSheet.equity.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                    <span className="text-sm text-slate-300">{account.accountName}</span>
-                                    <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui text-slate-300">{account.accountName}</span>
+                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-2 border-b border-slate-700">
-                                <span className="text-sm text-slate-300">Net Income (Current Period)</span>
-                                <span className="text-sm font-mono text-white">${balanceSheet.netIncome.toFixed(2)}</span>
+                                <span className="type-ui text-slate-300">Net Income (Current Period)</span>
+                                <span className="type-ui font-mono text-white">${balanceSheet.netIncome.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between py-2 mt-2 font-semibold text-slate-200">
                                 <span>Total Equity</span>
@@ -354,7 +354,7 @@ export function FinancialReportsPage() {
                         </div>
                         <div className="flex flex-wrap gap-3">
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Start Date</label>
+                                <label className="block type-label text-slate-400 mb-1">Start Date</label>
                                 <input
                                     type="date"
                                     value={plStartDate}
@@ -363,7 +363,7 @@ export function FinancialReportsPage() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">End Date</label>
+                                <label className="block type-label text-slate-400 mb-1">End Date</label>
                                 <input
                                     type="date"
                                     value={plEndDate}
@@ -385,17 +385,17 @@ export function FinancialReportsPage() {
                         <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">REVENUE</h3>
                         {profitLoss.revenue.map((account) => (
                             <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                <span className="text-sm text-slate-300">{account.accountName}</span>
-                                <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                <span className="type-ui text-slate-300">{account.accountName}</span>
+                                <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                             </div>
                         ))}
                         {profitLoss.otherIncome.length > 0 && (
                             <>
-                                <div className="mt-4 mb-2 text-sm font-semibold text-slate-300">Other Income:</div>
+                                <div className="mt-4 mb-2 type-ui font-semibold text-slate-300">Other Income:</div>
                                 {profitLoss.otherIncome.map((account) => (
                                     <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                        <span className="text-sm text-slate-300 pl-4">{account.accountName}</span>
-                                        <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                        <span className="type-ui text-slate-300 pl-4">{account.accountName}</span>
+                                        <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </>
@@ -411,17 +411,17 @@ export function FinancialReportsPage() {
                         <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">EXPENSES</h3>
                         {profitLoss.expenses.map((account) => (
                             <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                <span className="text-sm text-slate-300">{account.accountName}</span>
-                                <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                <span className="type-ui text-slate-300">{account.accountName}</span>
+                                <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                             </div>
                         ))}
                         {profitLoss.otherExpense.length > 0 && (
                             <>
-                                <div className="mt-4 mb-2 text-sm font-semibold text-slate-300">Other Expenses:</div>
+                                <div className="mt-4 mb-2 type-ui font-semibold text-slate-300">Other Expenses:</div>
                                 {profitLoss.otherExpense.map((account) => (
                                     <div key={account.accountId} className="flex justify-between py-2 border-b border-slate-700">
-                                        <span className="text-sm text-slate-300 pl-4">{account.accountName}</span>
-                                        <span className="text-sm font-mono text-white">${account.balance.toFixed(2)}</span>
+                                        <span className="type-ui text-slate-300 pl-4">{account.accountName}</span>
+                                        <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </>
@@ -440,7 +440,7 @@ export function FinancialReportsPage() {
                                 {profitLoss.netIncome >= 0 ? '+' : '-'}${Math.abs(profitLoss.netIncome).toFixed(2)}
                             </span>
                         </div>
-                        <p className="text-sm text-slate-300 text-center mt-2">
+                        <p className="type-card-description text-slate-300 text-center mt-2">
                             {profitLoss.netIncome >= 0 ? 'Profitable' : 'Operating at a loss'}
                         </p>
                     </div>

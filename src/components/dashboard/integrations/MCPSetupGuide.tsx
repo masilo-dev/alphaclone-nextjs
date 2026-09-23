@@ -134,9 +134,9 @@ function CopyableCredentialRow({
 }) {
   return (
     <div>
-      <p className="text-xs text-slate-500 uppercase font-bold mb-1">{label}</p>
+      <p className="type-caption text-slate-500 uppercase font-bold mb-1">{label}</p>
       <div className="flex items-center gap-2">
-        <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded break-all border border-slate-700/50">
+        <code className="flex-1 type-ui text-teal-300 bg-black/30 p-1.5 rounded break-all border border-slate-700/50">
           {value}
         </code>
         <button
@@ -169,12 +169,12 @@ function McpOAuthCredentialsPanel({
   return (
     <div className="mb-6 p-5 rounded-2xl bg-slate-800/60 border border-slate-700/80 space-y-4">
       <div>
-        <p className="text-sm font-bold text-white flex items-center gap-2">
+        <p className="type-card-description font-bold text-white flex items-center gap-2">
           <Shield className="w-4 h-4 text-teal-400" />
           {config.title}
         </p>
-        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{config.hint}</p>
-        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+        <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{config.hint}</p>
+        <p className="type-card-description text-slate-500 mt-2 leading-relaxed">
           <span className="text-slate-400 font-medium">Note:</span> Client ID identifies the AI app to AlphaClone — it is not your personal API key. Your personal connection key is shown in Step 2 below.
         </p>
       </div>
@@ -315,21 +315,21 @@ function McpBusinessPromptPlaybook({
           <Sparkles className="w-5 h-5 text-amber-400" />
           <h2 className="text-lg font-bold text-white">Business prompt playbook</h2>
         </div>
-        <p className="text-slate-400 text-sm leading-relaxed">
+        <p className="text-slate-400 type-card-description leading-relaxed">
           Copy these prompts into {agentLabel} after MCP is connected. Edit names, amounts, and dates for your business — the structure helps {agentLabel} use AlphaClone tools correctly.
         </p>
       </div>
 
       <div className="p-5 space-y-4 border-b border-slate-800/60">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-amber-400/90 mb-1">
+          <p className="type-caption font-bold uppercase tracking-wider text-amber-400/90 mb-1">
             Master instruction (paste once per session)
           </p>
-          <p className="text-xs text-slate-500 mb-3">
+          <p className="type-card-description text-slate-500 mb-3">
             Send this first so {agentLabel} knows how to work with your AlphaClone data.
           </p>
           <div className="relative">
-            <pre className="p-4 pr-12 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 text-xs leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
+            <pre className="p-4 pr-12 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 type-caption leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
               {MCP_MASTER_INSTRUCTION}
             </pre>
             <button
@@ -355,8 +355,8 @@ function McpBusinessPromptPlaybook({
                 className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-slate-800/30 transition-colors"
               >
                 <div>
-                  <p className="text-sm font-semibold text-white">{group.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{group.description}</p>
+                  <p className="type-card-description font-semibold text-white">{group.title}</p>
+                  <p className="type-card-description text-slate-500 mt-0.5">{group.description}</p>
                 </div>
                 <ChevronRight className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
               </button>
@@ -368,7 +368,7 @@ function McpBusinessPromptPlaybook({
                       className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/70 border border-slate-800"
                     >
                       <MessageSquare className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-                      <p className="flex-1 text-sm text-slate-300 leading-relaxed">{prompt}</p>
+                      <p className="flex-1 type-card-description text-slate-300 leading-relaxed">{prompt}</p>
                       <button
                         type="button"
                         onClick={() => onCopy(prompt, group.title)}
@@ -605,7 +605,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-4">
         <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-        <p className="text-slate-400 text-sm animate-pulse">Preparing your secure connection keys...</p>
+        <p className="text-slate-400 type-card-description animate-pulse">Preparing your secure connection keys...</p>
       </div>
     );
   }
@@ -634,7 +634,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : setupType === 'cursor' ? 'Cursor' : 'Grok'} AI to Your Account</h1>
-            <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
+            <p className="text-slate-400 type-card-description mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
 
@@ -642,31 +642,31 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <div className="flex gap-2 mb-8 bg-slate-900/50 p-1 rounded-xl w-fit border border-slate-800">
           <button
             onClick={() => setSetupType('claude')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Claude Desktop
           </button>
           <button
             onClick={() => setSetupType('manus')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'manus' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'manus' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Manus AI
           </button>
           <button
             onClick={() => setSetupType('grok')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Grok AI
           </button>
           <button
             onClick={() => setSetupType('chatgpt')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             ChatGPT
           </button>
           <button
             onClick={() => setSetupType('cursor')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Cursor
           </button>
@@ -678,11 +678,11 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
         {setupType === 'cursor' && (
           <div className="mb-6 p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 space-y-3">
-            <p className="text-slate-200 text-sm">
+            <p className="text-slate-200 type-card-description">
               In <strong>Cursor → Settings → MCP</strong>, click <strong>Add MCP server</strong> and paste the JSON from Step 4 below.
-              Your personal connection key (Step 2) goes in the <code className="text-teal-400 text-xs">Authorization</code> header.
+              Your personal connection key (Step 2) goes in the <code className="text-teal-400 type-caption">Authorization</code> header.
             </p>
-            <p className="text-slate-400 text-xs">
+            <p className="text-slate-400 type-card-description">
               Registered client ID: <code className="text-sky-300">cursor-connector</code> — full platform tool catalog (same executable surface as Claude and Manus).
             </p>
           </div>
@@ -690,14 +690,14 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
         {setupType === 'chatgpt' && (
           <div className="mb-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-            <p className="text-slate-200 text-sm">
+            <p className="text-slate-200 type-card-description">
               In ChatGPT, go to <strong>Settings → Connectors → MCP</strong> and add the <strong>MCP Server URL</strong> from the OAuth credentials box above.
               When ChatGPT asks you to sign in, approve access on AlphaClone — your workspace is attached automatically.
             </p>
-            <p className="text-slate-400 text-xs">
+            <p className="text-slate-400 type-card-description">
               Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (500+ tools).
             </p>
-            <p className="text-slate-500 text-xs leading-relaxed">
+            <p className="text-slate-500 type-card-description leading-relaxed">
               After connect, ChatGPT receives the <strong>full compact catalog</strong> (500+ tools) on the first sync — leads, email, image upload, LinkedIn/Facebook/Instagram publish, CRM, and finance tools are prioritized at the top. For images: ChatGPT must call <code className="text-teal-400">upload_media</code> first (base64 or data URL), then <code className="text-teal-400">publish_social_post</code> — local <code className="text-slate-500">/mnt/data</code> paths do not work. Paste the <strong>Master instruction</strong> below into ChatGPT once per session.
             </p>
           </div>
@@ -705,21 +705,21 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
         {setupType === 'claude' && (
           <div className="mb-6 p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-2">
-            <p className="text-slate-200 text-sm">
-              <strong>Claude.ai web connector:</strong> use the OAuth credentials above (Client ID + MCP Server URL). Remote MCP is added as a Custom Connector — not via a bare <code className="text-teal-400 text-xs">url</code> in Desktop settings.
+            <p className="text-slate-200 type-card-description">
+              <strong>Claude.ai web connector:</strong> use the OAuth credentials above (Client ID + MCP Server URL). Remote MCP is added as a Custom Connector — not via a bare <code className="text-teal-400 type-caption">url</code> in Desktop settings.
             </p>
-            <p className="text-slate-200 text-sm">
-              <strong>Claude Desktop:</strong> paste the <em>stdio</em> config from Step 4 into <code className="text-teal-400 text-xs">claude_desktop_config.json</code>. Desktop only accepts <code className="text-teal-400 text-xs">command</code>/<code className="text-teal-400 text-xs">args</code> (we bridge with <code className="text-teal-400 text-xs">mcp-remote</code>).
+            <p className="text-slate-200 type-card-description">
+              <strong>Claude Desktop:</strong> paste the <em>stdio</em> config from Step 4 into <code className="text-teal-400 type-caption">claude_desktop_config.json</code>. Desktop only accepts <code className="text-teal-400 type-caption">command</code>/<code className="text-teal-400 type-caption">args</code> (we bridge with <code className="text-teal-400 type-caption">mcp-remote</code>).
             </p>
-            <p className="text-slate-200 text-sm">
-              <strong>Claude Code:</strong> use the separate Claude Code snippet in Step 4 — it must include <code className="text-teal-400 text-xs">&quot;type&quot;: &quot;http&quot;</code>. A <code className="text-teal-400 text-xs">url</code> without <code className="text-teal-400 text-xs">type</code> is treated as stdio and fails.
+            <p className="text-slate-200 type-card-description">
+              <strong>Claude Code:</strong> use the separate Claude Code snippet in Step 4 — it must include <code className="text-teal-400 type-caption">&quot;type&quot;: &quot;http&quot;</code>. A <code className="text-teal-400 type-caption">url</code> without <code className="text-teal-400 type-caption">type</code> is treated as stdio and fails.
             </p>
           </div>
         )}
 
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
-          <p className="text-slate-200 text-sm leading-relaxed">
+          <p className="text-slate-200 type-card-description leading-relaxed">
             <span className="text-white font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
@@ -730,9 +730,9 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <div key={title} className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-4 h-4 text-teal-400" />
-                <span className="text-white text-sm font-semibold">{title}</span>
+                <span className="text-white type-ui font-semibold">{title}</span>
               </div>
-              <p className="text-slate-400 text-xs leading-relaxed">{desc}</p>
+              <p className="text-slate-400 type-card-description leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
@@ -741,8 +741,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20 mb-8">
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
-            <p className="text-slate-400 text-xs leading-relaxed">{agentLabel} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace. Workspace and user IDs are injected automatically — you never pass tenant_id or user_id manually.</p>
+            <p className="text-green-300 type-card-description font-semibold mb-1">Your data is safe</p>
+            <p className="text-slate-400 type-card-description leading-relaxed">{agentLabel} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace. Workspace and user IDs are injected automatically — you never pass tenant_id or user_id manually.</p>
           </div>
         </div>
       </div>
@@ -824,10 +824,10 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500 font-medium">STEP {displayNum}</span>
-                      {isDone && <span className="text-xs text-teal-400 font-semibold">✓ Done</span>}
+                      <span className="type-caption text-slate-500 font-medium">STEP {displayNum}</span>
+                      {isDone && <span className="type-caption text-teal-400 font-semibold">✓ Done</span>}
                     </div>
-                    <p className={`font-semibold text-sm mt-0.5 ${isDone ? 'text-teal-300' : 'text-white'}`}>{stepTitle}</p>
+                    <p className={`font-semibold type-card-description mt-0.5 ${isDone ? 'text-teal-300' : 'text-white'}`}>{stepTitle}</p>
                   </div>
                   <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
@@ -842,7 +842,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                       className="overflow-hidden"
                     >
                       <div className="px-5 pb-5 border-t border-slate-800/60">
-                        <p className="text-slate-300 text-sm leading-relaxed mt-4 mb-4">{stepBody}</p>
+                        <p className="text-slate-300 type-card-description leading-relaxed mt-4 mb-4">{stepBody}</p>
 
                         {/* Download action */}
                         {step.action && (
@@ -850,7 +850,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             href={actionUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white type-ui font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <Download className="w-4 h-4" />
                             {actionLabel}
@@ -861,11 +861,11 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* Copy key step */}
                         {step.isCopyStep && (
                           <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
-                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">
+                            <p className="type-caption text-slate-400 mb-2 font-medium uppercase tracking-wider">
                               {setupType === 'cursor' ? 'Your Connection Key' : 'Your Connection URL'}
                             </p>
                             <div className="flex items-center gap-3">
-                              <code className="flex-1 text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
+                              <code className="flex-1 text-teal-400 type-caption font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
                                 {connectionToken
                                   ? (setupType === 'cursor' ? connectionToken : connectionUrl)
                                   : keyNeedsRegenerate
@@ -891,18 +891,18 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-slate-700/50">
-                              <p className="text-xs text-slate-400 mb-2">
+                              <p className="type-card-description text-slate-400 mb-2">
                                 Need OAuth Client ID for a web connector? Copy from the <strong className="text-slate-300">OAuth credentials</strong> section at the top of this page.
                               </p>
                             </div>
 
                             <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
-                              <p className="text-xs text-slate-500 leading-relaxed">
+                              <p className="type-card-description text-slate-500 leading-relaxed">
                                 <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
                               </p>
                               <button
                                 onClick={handleRotateToken}
-                                className="text-xs uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                                className="type-caption uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
                               >
                                 <Lock className="w-3 h-3" />
                                 Regenerate Key
@@ -914,13 +914,13 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* File paths */}
                         {showSubSteps && (
                           <div className="space-y-2 mb-4">
-                            <p className="text-slate-400 text-xs font-medium mb-2">Where to find the file on your computer:</p>
+                            <p className="text-slate-400 type-card-description font-medium mb-2">Where to find the file on your computer:</p>
                             {step.subSteps.map(sub => (
                               <div key={sub.platform} className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
                                 <Monitor className="w-4 h-4 text-slate-400 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-slate-300 text-xs font-semibold">{sub.platform}: </span>
-                                  <code className="text-teal-400 text-xs font-mono">{sub.path}</code>
+                                  <span className="text-slate-300 type-caption font-semibold">{sub.platform}: </span>
+                                  <code className="text-teal-400 type-caption font-mono">{sub.path}</code>
                                 </div>
                                 <button
                                   onClick={() => copyText(sub.path, `${sub.platform} path`)}
@@ -930,7 +930,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 </button>
                               </div>
                             ))}
-                            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                            <p className="text-slate-500 type-card-description mt-2 leading-relaxed">
                               💡 <span className="text-slate-400">Tip:</span> If you can't find the file, choose File Explorer (Windows) or Finder (Mac), press the keyboard shortcut to go to a folder, and paste the path above.
                             </p>
                           </div>
@@ -942,16 +942,16 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             {showCursorConfigOnly ? (
                               <div>
                                 <div className="flex items-center justify-between mb-2">
-                                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Cursor — MCP server JSON:</p>
+                                  <p className="text-slate-400 type-caption font-medium uppercase tracking-wider">Cursor — MCP server JSON:</p>
                                   <button
                                     onClick={() => copyText(cursorMcpConfigJson, 'Cursor MCP config')}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white type-caption font-semibold transition-all"
                                   >
                                     <Copy className="w-3.5 h-3.5" />
                                     Copy Cursor config
                                   </button>
                                 </div>
-                                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-sky-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-sky-300 type-caption font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
                                   {cursorMcpConfigJson}
                                 </pre>
                               </div>
@@ -959,37 +959,37 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                               <>
                             <div>
                               <div className="flex items-center justify-between mb-2">
-                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
+                                <p className="text-slate-400 type-caption font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
                                 <button
                                   onClick={() => copyText(desktopConfigJson, 'Desktop config')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-all"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white type-caption font-semibold transition-all"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
                                   Copy Desktop
                                 </button>
                               </div>
-                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 type-caption font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
                                 {desktopConfigJson}
                               </pre>
-                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                              <p className="text-slate-500 type-card-description mt-2 leading-relaxed">
                                 Requires Node.js so <code className="text-slate-400">npx mcp-remote</code> can bridge Desktop&apos;s stdio-only config to our HTTP MCP endpoint. Open the file, replace its contents with this JSON, save, then restart Claude.
                               </p>
                             </div>
                             <div>
                               <div className="flex items-center justify-between mb-2">
-                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Code — .mcp.json or claude mcp add-json:</p>
+                                <p className="text-slate-400 type-caption font-medium uppercase tracking-wider">Claude Code — .mcp.json or claude mcp add-json:</p>
                                 <button
                                   onClick={() => copyText(claudeCodeConfigJson, 'Claude Code config')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white type-caption font-semibold transition-all"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
                                   Copy Claude Code
                                 </button>
                               </div>
-                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-indigo-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-indigo-300 type-caption font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
                                 {claudeCodeConfigJson}
                               </pre>
-                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                              <p className="text-slate-500 type-card-description mt-2 leading-relaxed">
                                 <code className="text-slate-400">&quot;type&quot;: &quot;http&quot;</code> is required. Prefer the Bearer header over putting the key in the URL. Prefer <code className="text-slate-400">${'{ALPHACLONE_MCP_KEY}'}</code> in shared configs so the secret is not committed.
                               </p>
                             </div>
@@ -1001,7 +1001,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* Test prompts */}
                         {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor') && step.number === 6)) && (
                           <div className="mb-4">
-                            <p className="text-slate-400 text-xs font-medium mb-3">
+                            <p className="text-slate-400 type-card-description font-medium mb-3">
                               Quick test — try saying these to {agentLabel}:
                             </p>
                             <div className="space-y-2">
@@ -1025,7 +1025,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                               ).map((prompt: string) => (
                                 <div key={prompt} className={`flex items-start gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : setupType === 'chatgpt' ? 'bg-emerald-500/10 border-emerald-500/20' : setupType === 'cursor' ? 'bg-sky-500/10 border-sky-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
                                   <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : setupType === 'chatgpt' ? 'text-emerald-400' : setupType === 'cursor' ? 'text-sky-400' : 'text-indigo-400'}`} />
-                                  <span className={`flex-1 text-sm font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : setupType === 'cursor' ? 'text-sky-300' : 'text-indigo-300'}`}>{prompt}</span>
+                                  <span className={`flex-1 type-ui font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : setupType === 'cursor' ? 'text-sky-300' : 'text-indigo-300'}`}>{prompt}</span>
                                   <button
                                     type="button"
                                     onClick={() => copyText(prompt, 'Test prompt')}
@@ -1037,7 +1037,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 </div>
                               ))}
                             </div>
-                            <p className="text-xs text-slate-500 mt-3">
+                            <p className="type-card-description text-slate-500 mt-3">
                               More prompts for daily workflows are in the <strong className="text-slate-400">Business prompt playbook</strong> section above.
                             </p>
                           </div>
@@ -1047,7 +1047,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {!isDone && (
                           <button
                             onClick={() => markDone(step.number)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-white type-ui font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <CheckCircle className="w-4 h-4" />
                             {step.number === SETUP_STEPS.length ? 'I\'m done!' : 'Done — next step'}
@@ -1073,7 +1073,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         >
           <div className="text-4xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
-          <p className="text-slate-300 text-sm leading-relaxed max-w-md mx-auto">
+          <p className="text-slate-300 type-card-description leading-relaxed max-w-md mx-auto">
             {agentLabel} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
           </p>
         </motion.div>
@@ -1083,9 +1083,9 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       <div className="mt-8 p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
         <div className="flex items-center gap-2 mb-3">
           <Info className="w-4 h-4 text-slate-400" />
-          <span className="text-white text-sm font-semibold">Need help?</span>
+          <span className="text-white type-ui font-semibold">Need help?</span>
         </div>
-        <p className="text-slate-400 text-sm leading-relaxed">
+        <p className="text-slate-400 type-card-description leading-relaxed">
           If something isn't working, just email us at{' '}
           <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a>{' '}
           and tell us which step you're stuck on. We'll sort it out for you — usually within a few hours.

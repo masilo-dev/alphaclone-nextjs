@@ -157,7 +157,7 @@ export function PipelineChart() {
                 borderColor: borderColor,
                 borderRadius: '8px',
                 color: textColor,
-                fontSize: '12px',
+                fontSize: 'var(--type-caption-size)',
               }}
               formatter={(value: any, name: any, props: any) => [
                 `$${value.toLocaleString()} (${props.payload.count} deals)`,

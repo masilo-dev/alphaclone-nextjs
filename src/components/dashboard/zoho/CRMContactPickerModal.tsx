@@ -90,7 +90,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white tracking-tight">Bulk CRM Selection</h2>
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
+                            <p className="type-caption font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -109,7 +109,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             placeholder="Search by name, email, or industry..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3 type-ui focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
                         />
                     </div>
                 </div>
@@ -119,14 +119,14 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
                             <Loader2 size={32} className="animate-spin text-teal-500" />
-                            <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">Loading Directory...</p>
+                            <p className="type-caption font-black uppercase tracking-caps text-teal-400">Loading Directory...</p>
                         </div>
                     ) : filteredLeads.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-40 italic">
                             <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mb-3 text-gray-500">
                                 <Search size={24} />
                             </div>
-                            <p className="text-sm text-gray-400">No contacts found with an email address.</p>
+                            <p className="type-card-description text-gray-400">No contacts found with an email address.</p>
                         </div>
                     ) : (
                         filteredLeads.map(lead => (
@@ -137,13 +137,13 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             >
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-white text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
-                                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <div className="flex items-center gap-3 type-caption text-gray-500">
                                         <div className="flex items-center gap-1.5 font-medium">
                                             <Mail size={12} className="text-teal-400/50" />
                                             {lead.email}
                                         </div>
                                         {lead.email && (
-                                          <div className="flex items-center gap-1 font-medium text-[10px] text-gray-600">
+                                          <div className="flex items-center gap-1 font-medium type-ui text-gray-600">
                                             <span>Send via: Zoho / Outlook / Gmail</span>
                                           </div>
                                         )}
@@ -165,16 +165,16 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
 
                 {/* Footer Actions */}
                 <div className="p-6 border-t border-white/5 bg-slate-950/50 flex items-center justify-between">
-                    <p className="text-xs font-bold text-gray-500">
+                    <p className="type-card-description font-bold text-gray-500">
                         {selectedEmails.size} recipients selected
                     </p>
                     <div className="flex gap-3">
-                        <button onClick={onClose} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 hover:text-white transition-all">
+                        <button onClick={onClose} className="px-6 py-2.5 rounded-xl type-ui font-bold text-gray-400 hover:text-white transition-all">
                             Cancel
                         </button>
                         <button 
                             onClick={handleConfirm}
-                            className="px-8 py-2.5 rounded-xl bg-teal-500 text-white text-sm font-black uppercase tracking-widest shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
+                            className="px-8 py-2.5 rounded-xl bg-teal-500 text-white type-caption font-black uppercase tracking-widest shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
                         >
                             Add Recipients
                         </button>

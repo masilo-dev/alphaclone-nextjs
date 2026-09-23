@@ -113,21 +113,21 @@ export class ErrorBoundary extends Component<Props, State> {
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-white">This screen crashed</h2>
-                                <p className="text-sm text-slate-400">Reload the page, or try again to return to the last stable view.</p>
+                                <p className="type-card-description text-slate-400">Reload the page, or try again to return to the last stable view.</p>
                             </div>
                         </div>
 
                         {this.state.error && (
                             <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <p className="text-sm font-mono text-red-300 mb-2">
+                                <p className="type-card-description font-mono text-red-300 mb-2">
                                     {this.state.error.message}
                                 </p>
                                 {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
                                     <details className="mt-2">
-                                        <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-400">
+                                        <summary className="type-ui text-slate-500 cursor-pointer hover:text-slate-400">
                                             Stack trace
                                         </summary>
-                                        <pre className="text-xs text-slate-600 mt-2 overflow-auto max-h-40">
+                                        <pre className="type-caption text-slate-600 mt-2 overflow-auto max-h-40">
                                             {this.state.errorInfo.componentStack}
                                         </pre>
                                     </details>
@@ -151,7 +151,7 @@ export class ErrorBoundary extends Component<Props, State> {
                             </button>
                         </div>
 
-                        <p className="text-xs text-slate-500 text-center mt-4">
+                        <p className="type-card-description text-slate-500 text-center mt-4">
                             If this problem persists, please contact support
                         </p>
                     </div>

@@ -82,7 +82,7 @@ export default function DeletedRecordsSection() {
           <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
         </div>
       ) : records.length === 0 ? (
-        <p className="text-xs text-slate-500 py-4 text-center">No deleted contacts or clients.</p>
+        <p className="type-card-description text-slate-500 py-4 text-center">No deleted contacts or clients.</p>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto">
           {records.map((record) => (
@@ -91,8 +91,8 @@ export default function DeletedRecordsSection() {
               className="flex items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-white/5"
             >
               <div className="min-w-0">
-                <p className="text-xs font-bold text-white truncate">{record.name}</p>
-                <p className="text-[10px] text-slate-500 truncate">
+                <p className="type-card-description font-bold text-white truncate">{record.name}</p>
+                <p className="type-card-description text-slate-500 truncate">
                   {record.email || 'No email'} · {record.type} ·{' '}
                   {new Date(record.deletedAt).toLocaleDateString()}
                 </p>

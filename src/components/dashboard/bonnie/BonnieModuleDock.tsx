@@ -125,7 +125,7 @@ export default function BonnieModuleDock() {
             <Text fontSize="xs" fontWeight="bold" color="teal.300">
               Bonnie AI
             </Text>
-            <Text fontSize="10px" color={BC.subtle} noOfLines={1}>
+            <Text fontSize="var(--type-caption-size)" color={BC.subtle} noOfLines={1}>
               {moduleHint.label}
             </Text>
           </Box>
@@ -137,7 +137,7 @@ export default function BonnieModuleDock() {
             bg="amber.500"
             px={2}
             py={0.5}
-            fontSize="10px"
+            fontSize="var(--type-caption-size)"
             fontWeight="bold"
             color="gray.950"
           >
@@ -191,7 +191,7 @@ export default function BonnieModuleDock() {
               bg="amber.500"
               px={2.5}
               py={1}
-              fontSize="10px"
+              fontSize="var(--type-caption-size)"
               fontWeight="bold"
               color="gray.950"
               flexShrink={0}

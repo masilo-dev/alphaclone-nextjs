@@ -46,7 +46,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                             <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">
                                 {title}
                             </h2>
-                            <p className="text-teal-400 font-mono text-xs uppercase tracking-[0.3em] mb-4">
+                            <p className="text-teal-400 font-mono type-caption uppercase tracking-caps mb-4">
                                 Achievement Unlocked
                             </p>
                             

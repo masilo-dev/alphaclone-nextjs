@@ -98,7 +98,7 @@ export default function MessageThread({
       {/* System Message */}
       {isSystemMessage && (
         <div className="flex justify-center my-4">
-          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+          <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full type-ui">
             {message.text}
           </div>
         </div>
@@ -127,14 +127,14 @@ export default function MessageThread({
               "flex items-center space-x-2 mb-1",
               isOwnMessage && "flex-row-reverse space-x-reverse"
             )}>
-              <span className="text-sm font-medium text-gray-900">
+              <span className="type-ui font-medium text-gray-900">
                 {message.sender_name}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="type-caption text-gray-500">
                 {formatTime(message.created_at)}
               </span>
               {message.edited_at && (
-                <span className="text-xs text-gray-400">(edited)</span>
+                <span className="type-caption text-gray-400">(edited)</span>
               )}
             </div>
 
@@ -150,7 +150,7 @@ export default function MessageThread({
               {/* Reply Preview */}
               {message.reply_to && (
                 <div className={cn(
-                  "mb-2 pb-2 border-l-2 pl-3 text-sm",
+                  "mb-2 pb-2 border-l-2 pl-3 type-ui",
                   isOwnMessage
                     ? "border-blue-400 text-blue-100"
                     : "border-gray-300 text-gray-600"
@@ -173,13 +173,13 @@ export default function MessageThread({
                   <div className="flex space-x-2">
                     <button
                       onClick={handleSaveEdit}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      className="px-3 py-1 bg-blue-600 text-white type-ui rounded hover:bg-blue-700"
                     >
                       Save
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+                      className="px-3 py-1 bg-gray-300 text-gray-700 type-ui rounded hover:bg-gray-400"
                     >
                       Cancel
                     </button>
@@ -204,7 +204,7 @@ export default function MessageThread({
                       onClick={() => window.open(attachment.url, '_blank')}
                     >
                       <Download className="w-4 h-4" />
-                      <span className="text-sm truncate">{attachment.name}</span>
+                      <span className="type-ui truncate">{attachment.name}</span>
                     </div>
                   ))}
                 </div>
@@ -213,7 +213,7 @@ export default function MessageThread({
               {/* Task/Gl Goal Indicator */}
               {isTaskMessage && (
                 <div className={cn(
-                  "mt-2 flex items-center space-x-1 text-xs",
+                  "mt-2 flex items-center space-x-1 type-caption",
                   isOwnMessage ? "text-blue-100" : "text-green-600"
                 )}>
                   <MessageCircle className="w-3 h-3" />
@@ -251,7 +251,7 @@ export default function MessageThread({
               <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32">
                 <button
                   onClick={() => onReply(message)}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
                 >
                   <Reply className="w-4 h-4 mr-2" />
                   Reply
@@ -260,7 +260,7 @@ export default function MessageThread({
                 {isOwnMessage && (
                   <button
                     onClick={handleEdit}
-                    className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
@@ -271,7 +271,7 @@ export default function MessageThread({
                 
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="w-full flex items-center px-3 py-2 type-ui text-gray-700 hover:bg-gray-100"
                 >
                   <Smile className="w-4 h-4 mr-2" />
                   React
@@ -280,7 +280,7 @@ export default function MessageThread({
                 {isOwnMessage && (
                   <button
                     onClick={handleDelete}
-                    className="w-full flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="w-full flex items-center px-3 py-2 type-ui text-red-600 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete

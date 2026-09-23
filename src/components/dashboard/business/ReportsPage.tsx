@@ -314,7 +314,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             <BrainCircuit className="w-5 h-5 text-[#adebb3]" />
                             Intelligence Trajectory
                         </h3>
-                        <p className="text-xs text-[#c0c0c0]">Module-level trend and drilldown actions for operators</p>
+                        <p className="type-card-description text-[#c0c0c0]">Module-level trend and drilldown actions for operators</p>
                     </div>
                     <select
                         value={intelligenceModule}
@@ -337,7 +337,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 bg-white/5 border border-white/5 rounded-2xl p-5">
-                        <h4 className="text-sm font-semibold text-[#e5e7eb] mb-3">Score Trend</h4>
+                        <h4 className="type-ui font-semibold text-[#e5e7eb] mb-3">Score Trend</h4>
                         <StandardLineChart
                             data={intelligencePoints.map((point) => ({
                                 ...point,
@@ -359,21 +359,21 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         {intelligenceSummary && (
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-3 space-y-3">
                                 <div>
-                            <div className="text-xs text-[#adebb3] font-semibold mb-1">Top Actions</div>
+                            <div className="type-caption text-[#adebb3] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
                                         {(Array.isArray(intelligenceSummary.topActions) ? intelligenceSummary.topActions : []).slice(0, 2).map((item) => (
-                                            <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
+                                            <li key={item} className="type-caption text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
                                 </div>
                                 <div>
-                            <div className="text-xs text-[#facc15] font-semibold mb-1 flex items-center gap-1">
+                            <div className="type-caption text-[#facc15] font-semibold mb-1 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" />
                                         Top Risks
                                     </div>
                                     <ul className="space-y-1">
                                         {(Array.isArray(intelligenceSummary.systemicRisks) ? intelligenceSummary.systemicRisks : []).slice(0, 2).map((item) => (
-                                            <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
+                                            <li key={item} className="type-caption text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -395,8 +395,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             <YAxis stroke="#c0c0c0" />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
-                                labelStyle={{ color: '#c0c0c0', fontSize: '10px', fontWeight: 'bold' }}
-                                itemStyle={{ color: '#f5f5f5', fontSize: '12px' }}
+                                labelStyle={{ color: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#f5f5f5', fontSize: 'var(--type-caption-size)' }}
                             />
                             <Legend />
                             <Bar dataKey="revenue" fill="#adebb3" name="Revenue" radius={[4, 4, 0, 0]} />
@@ -428,8 +428,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             <YAxis dataKey="name" type="category" stroke="#c0c0c0" width={100} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
-                                labelStyle={{ color: '#c0c0c0', fontSize: '10px', fontWeight: 'bold' }}
-                                itemStyle={{ color: '#f5f5f5', fontSize: '12px' }}
+                                labelStyle={{ color: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#f5f5f5', fontSize: 'var(--type-caption-size)' }}
                             />
                             <Bar dataKey="value" fill="#7f00ff" radius={[0, 4, 4, 0]} />
                         </BarChart>

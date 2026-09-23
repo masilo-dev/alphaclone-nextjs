@@ -254,10 +254,10 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">SMS Campaigns</h2>
-                    <p className="text-sm text-slate-400">Powered by Twilio · {campaigns.length} campaigns · {totalSent} messages sent</p>
+                    <p className="type-card-description text-slate-400">Powered by Twilio · {campaigns.length} campaigns · {totalSent} messages sent</p>
                 </div>
                 <button onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm">
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold type-ui">
                     <Plus className="w-4 h-4" /> New Campaign
                 </button>
             </div>
@@ -268,19 +268,19 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                     <div className="flex items-center gap-3 p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                         <CheckCircle2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
                         <div className="flex-1 flex items-center justify-between">
-                            <p className="text-xs text-teal-300">
+                            <p className="type-card-description text-teal-300">
                                 <span className="font-semibold">Twilio Connected:</span> {twilioIntegration.phone || 'Ready to send'}
                             </p>
-                            <span className="text-xs px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
+                            <span className="type-caption px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
                         </div>
                     </div>
                 ) : (
                     <div className="flex gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                         <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                        <div className="text-xs text-amber-300 flex-1">
+                        <div className="type-caption text-amber-300 flex-1">
                             <p className="font-semibold">Twilio Integration Missing or Inactive</p>
                             <p className="mt-1 opacity-80">You need to connect your Twilio credentials in the <span className="underline">Settings → Twilio</span> tab before you can send SMS campaigns.</p>
-                            <p className="mt-2 text-amber-500 text-xs">Required: SID · Auth Token · Phone Number</p>
+                            <p className="mt-2 text-amber-500 type-card-description">Required: SID · Auth Token · Phone Number</p>
                         </div>
                     </div>
                 )
@@ -296,7 +296,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                 ].map(s => (
                     <div key={s.label} className="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+                        <p className="type-card-description text-slate-500 mt-0.5">{s.label}</p>
                     </div>
                 ))}
             </div>
@@ -305,7 +305,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
             <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit">
                 {(['campaigns', 'messages', 'quick'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
                         {tab === 'quick' ? 'Quick Send' : tab.charAt(0).toUpperCase() + tab.slice(1)}
                     </button>
                 ))}
@@ -320,15 +320,15 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Campaign Name *</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Campaign Name *</label>
                             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. Summer Promo 2025"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Recipients</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Recipients</label>
                             <select value={form.recipient_source} onChange={e => setForm(f => ({ ...f, recipient_source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm">
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="leads">All Leads (with phone)</option>
                                 <option value="clients">All Clients (with phone)</option>
                                 <option value="manual">Manual Numbers</option>
@@ -338,36 +338,36 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
                     {form.recipient_source === 'manual' && (
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Phone Numbers (one per line)</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Phone Numbers (one per line)</label>
                             <textarea value={form.manual_numbers} onChange={e => setForm(f => ({ ...f, manual_numbers: e.target.value }))}
                                 rows={4} placeholder="+12125550100&#10;+447700900461&#10;+34612345678"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm font-mono resize-none" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui font-mono resize-none" />
                         </div>
                     )}
 
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Message *</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Message *</label>
                             <button
                                 onClick={() => setShowAiInput(v => !v)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg type-caption font-semibold transition-colors"
                             >
                                 <Edit2 className="w-3 h-3" /> AI Write
                             </button>
                         </div>
                         {showAiInput && (
                             <div className="mb-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
-                                <p className="text-xs font-semibold text-violet-300">AI SMS Generator</p>
+                                <p className="type-card-description font-semibold text-violet-300">AI SMS Generator</p>
                                 <input
                                     value={aiContext}
                                     onChange={e => setAiContext(e.target.value)}
                                     placeholder="e.g. '20% off this weekend only, book now'"
-                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 type-ui"
                                 />
                                 <button
                                     onClick={generateSMSWithAI}
                                     disabled={aiGenerating || !aiContext.trim()}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg type-caption font-semibold transition-colors"
                                 >
                                     {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                     {aiGenerating ? 'Generating...' : 'Generate SMS'}
@@ -376,10 +376,10 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         )}
                         <textarea value={form.message_body} onChange={e => setForm(f => ({ ...f, message_body: e.target.value }))}
                             rows={4} placeholder="Write your SMS message here, or use AI Write above."
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm resize-none" />
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none" />
                         <div className="flex justify-between mt-1">
-                            <p className="text-xs text-slate-600">Keep under 160 chars for 1 SMS segment</p>
-                            <p className={`text-xs font-medium ${form.message_body.length > 160 ? 'text-amber-400' : 'text-slate-500'}`}>
+                            <p className="type-card-description text-slate-600">Keep under 160 chars for 1 SMS segment</p>
+                            <p className={`type-card-description font-medium ${form.message_body.length > 160 ? 'text-amber-400' : 'text-slate-500'}`}>
                                 {form.message_body.length} chars · {Math.ceil(form.message_body.length / 160)} segment{Math.ceil(form.message_body.length / 160) !== 1 ? 's' : ''}
                             </p>
                         </div>
@@ -387,25 +387,25 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">From Number (optional)</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">From Number (optional)</label>
                             <input value={form.from_number} onChange={e => setForm(f => ({ ...f, from_number: e.target.value }))}
                                 placeholder="Uses TWILIO_PHONE_NUMBER if empty"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Schedule (optional)</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Schedule (optional)</label>
                             <input type="datetime-local" value={form.scheduled_at} onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm" />
+                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                     </div>
 
                     <div className="flex gap-3">
                         <button onClick={handleCreate} disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                             {saving ? 'Creating...' : 'Create Campaign'}
                         </button>
-                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-sm">Cancel</button>
+                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl type-ui">Cancel</button>
                     </div>
                 </div>
             )}
@@ -417,7 +417,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
                             <MessageSquare className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                             <p className="text-slate-400 font-semibold">No campaigns yet</p>
-                            <p className="text-slate-600 text-sm mt-1">Create your first SMS campaign to reach leads and clients.</p>
+                            <p className="text-slate-600 type-card-description mt-1">Create your first SMS campaign to reach leads and clients.</p>
                         </div>
                     ) : campaigns.map(campaign => (
                         <div key={campaign.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
@@ -425,26 +425,26 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <p className="font-semibold text-white">{campaign.name}</p>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLE[campaign.status] || STATUS_STYLE.draft}`}>
+                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${STATUS_STYLE[campaign.status] || STATUS_STYLE.draft}`}>
                                             {campaign.status}
                                         </span>
-                                        <span className="text-xs text-slate-500 capitalize">{campaign.recipient_source}</span>
+                                        <span className="type-caption text-slate-500 capitalize">{campaign.recipient_source}</span>
                                     </div>
-                                    <p className="text-sm text-slate-400 mt-1 line-clamp-2">{campaign.message_body}</p>
+                                    <p className="type-card-description text-slate-400 mt-1 line-clamp-2">{campaign.message_body}</p>
 
                                     {campaign.recipients_total > 0 && (
                                         <div className="flex gap-4 mt-3">
                                             <div className="text-center">
-                                                <p className="text-sm font-bold text-white">{campaign.recipients_total}</p>
-                                                <p className="text-xs text-slate-500">Total</p>
+                                                <p className="type-card-description font-bold text-white">{campaign.recipients_total}</p>
+                                                <p className="type-card-description text-slate-500">Total</p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-sm font-bold text-teal-400">{campaign.sent_count}</p>
-                                                <p className="text-xs text-slate-500">Sent</p>
+                                                <p className="type-card-description font-bold text-teal-400">{campaign.sent_count}</p>
+                                                <p className="type-card-description text-slate-500">Sent</p>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-sm font-bold text-red-400">{campaign.failed_count}</p>
-                                                <p className="text-xs text-slate-500">Failed</p>
+                                                <p className="type-card-description font-bold text-red-400">{campaign.failed_count}</p>
+                                                <p className="type-card-description text-slate-500">Failed</p>
                                             </div>
                                             {campaign.recipients_total > 0 && (
                                                 <div className="flex-1 flex items-center">
@@ -454,7 +454,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                                             style={{ width: `${Math.round((campaign.sent_count / campaign.recipients_total) * 100)}%` }}
                                                         />
                                                     </div>
-                                                    <span className="text-xs text-slate-500 ml-2 whitespace-nowrap">
+                                                    <span className="type-caption text-slate-500 ml-2 whitespace-nowrap">
                                                         {Math.round((campaign.sent_count / campaign.recipients_total) * 100)}%
                                                     </span>
                                                 </div>
@@ -463,7 +463,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                     )}
 
                                     {campaign.scheduled_at && campaign.status === 'scheduled' && (
-                                        <p className="text-xs text-blue-400 mt-2 flex items-center gap-1">
+                                        <p className="type-card-description text-blue-400 mt-2 flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             Scheduled: {new Date(campaign.scheduled_at).toLocaleString()}
                                         </p>
@@ -473,7 +473,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     {['draft', 'scheduled'].includes(campaign.status) && (
                                         <button onClick={() => handleRun(campaign.id)} disabled={runningId === campaign.id}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-500/30 text-teal-400 rounded-lg text-xs font-semibold transition-colors">
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/20 hover:bg-teal-500/30 border border-teal-500/30 text-teal-400 rounded-lg type-caption font-semibold transition-colors">
                                             {runningId === campaign.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                                             {runningId === campaign.id ? 'Running...' : 'Run Now'}
                                         </button>
@@ -493,23 +493,23 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
             {activeTab === 'messages' && (
                 <div className="space-y-2">
                     <div className="flex justify-end">
-                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
+                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-slate-400 hover:text-white">
                             <RefreshCw className="w-3 h-3" /> Refresh
                         </button>
                     </div>
                     {messages.length === 0 ? (
                         <div className="text-center py-12 border border-dashed border-slate-700 rounded-2xl">
                             <MessageSquare className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                            <p className="text-slate-500 text-sm">No messages yet</p>
+                            <p className="text-slate-500 type-card-description">No messages yet</p>
                         </div>
                     ) : (
                         <>
                         <ResponsiveTableMobile>
                             {messages.map((msg) => (
                                 <MobileDataCard key={msg.id} className="border-slate-800 bg-slate-900/40">
-                                    <p className="text-slate-300 text-xs font-mono">{msg.to_number}</p>
-                                    <p className="text-slate-400 text-sm line-clamp-3">{msg.body}</p>
-                                    <div className="flex flex-wrap justify-between gap-2 text-xs">
+                                    <p className="text-slate-300 type-card-description font-mono">{msg.to_number}</p>
+                                    <p className="text-slate-400 type-card-description line-clamp-3">{msg.body}</p>
+                                    <div className="flex flex-wrap justify-between gap-2 type-caption">
                                         <span className={`px-2 py-0.5 rounded-full border ${
                                             msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
                                             : msg.status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30'
@@ -522,29 +522,29 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             ))}
                         </ResponsiveTableMobile>
                         <ResponsiveTableDesktop className="rounded-2xl border border-slate-800 min-w-0">
-                            <table className="w-full min-w-[640px] text-sm">
+                            <table className="w-full min-w-[640px] type-ui">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-900/50">
                                         {['To', 'Message', 'Status', 'SID', 'Sent'].map(h => (
-                                            <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                                            <th key={h} className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
                                     {messages.map(msg => (
                                         <tr key={msg.id} className="hover:bg-slate-800/30">
-                                            <td className="px-4 py-3 text-slate-300 text-xs font-mono">{msg.to_number}</td>
-                                            <td className="px-4 py-3 text-slate-400 text-xs max-w-[200px] truncate">{msg.body}</td>
+                                            <td className="px-4 py-3 text-slate-300 type-table-cell font-mono">{msg.to_number}</td>
+                                            <td className="px-4 py-3 text-slate-400 type-table-cell max-w-[200px] truncate">{msg.body}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                                                <span className={`type-caption px-2 py-0.5 rounded-full border ${
                                                     msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
                                                     : msg.status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30'
                                                     : 'bg-slate-700/50 text-slate-400 border-slate-700'}`}>
                                                     {msg.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-slate-600 font-mono">{msg.twilio_sid?.slice(-8) || '—'}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-600">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '—'}</td>
+                                            <td className="px-4 py-3 type-table-cell text-slate-600 font-mono">{msg.twilio_sid?.slice(-8) || '—'}</td>
+                                            <td className="px-4 py-3 type-table-cell text-slate-600">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -558,34 +558,34 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
             {/* QUICK SEND TAB */}
             {activeTab === 'quick' && (
                 <div className="max-w-lg space-y-4">
-                    <p className="text-sm text-slate-400">Send a one-off SMS to any phone number immediately.</p>
+                    <p className="type-card-description text-slate-400">Send a one-off SMS to any phone number immediately.</p>
                     <div>
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">To Number</label>
+                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">To Number</label>
                         <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                             <input value={quickTo} onChange={e => setQuickTo(e.target.value)}
                                 placeholder="+12125550100"
-                                className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm font-mono" />
+                                className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui font-mono" />
                         </div>
                     </div>
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Message</label>
+                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Message</label>
                             <button
                                 onClick={() => setShowAiInput(v => !v)}
-                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg text-xs font-semibold transition-colors"
+                                className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 text-violet-300 rounded-lg type-caption font-semibold transition-colors"
                             >
                                 <Sparkles className="w-3 h-3" /> AI Write
                             </button>
                         </div>
                         {showAiInput && (
                             <div className="mb-2 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl space-y-2">
-                                <p className="text-xs font-semibold text-violet-300">AI SMS Generator</p>
+                                <p className="type-card-description font-semibold text-violet-300">AI SMS Generator</p>
                                 <input
                                     value={aiContext}
                                     onChange={e => setAiContext(e.target.value)}
                                     placeholder="e.g. 'follow up with client about their project quote'"
-                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 type-ui"
                                 />
                                 <button
                                     onClick={async () => {
@@ -615,7 +615,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                         setAiGenerating(false);
                                     }}
                                     disabled={aiGenerating || !aiContext.trim()}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg type-caption font-semibold transition-colors"
                                 >
                                     {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                                     {aiGenerating ? 'Generating...' : 'Generate'}
@@ -624,8 +624,8 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         )}
                         <textarea value={quickMsg} onChange={e => setQuickMsg(e.target.value)}
                             rows={4} placeholder="Type your message, or use AI Write above..."
-                            className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 text-sm resize-none" />
-                        <p className="text-xs text-right text-slate-600 mt-1">{quickMsg.length} chars</p>
+                            className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none" />
+                        <p className="type-card-description text-right text-slate-600 mt-1">{quickMsg.length} chars</p>
                     </div>
                     <button onClick={handleQuickSend} disabled={sending}
                         className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold transition-colors">

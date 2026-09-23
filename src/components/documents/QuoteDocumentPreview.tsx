@@ -76,10 +76,10 @@ export function QuoteDocumentPreview({ quoteId, className }: QuoteDocumentPrevie
   }, [quoteId, currentTenant]);
 
   if (loading) {
-    return <p className="text-xs text-slate-500">Loading document preview…</p>;
+    return <p className="type-card-description text-slate-500">Loading document preview…</p>;
   }
   if (error || !previewInput) {
-    return <p className="text-xs text-slate-500">{error || 'Preview unavailable'}</p>;
+    return <p className="type-card-description text-slate-500">{error || 'Preview unavailable'}</p>;
   }
 
   return <DocumentPreview input={previewInput} className={className} />;

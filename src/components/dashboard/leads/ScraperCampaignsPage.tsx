@@ -80,8 +80,8 @@ const presets = [
   ['Businesses with public email addresses', 'businesses', ''],
 ] as const;
 
-const fieldClass = 'min-h-11 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)] px-3 text-sm text-[var(--ws-text-primary)] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20';
-const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-not-allowed disabled:opacity-50';
+const fieldClass = 'min-h-11 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)] px-3 type-ui text-[var(--ws-text-primary)] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20';
+const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 type-ui font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function ScraperCampaignsPage() {
   const tenant = useCurrentTenantSafe();
@@ -356,7 +356,7 @@ export default function ScraperCampaignsPage() {
         <header className="flex flex-col gap-4 border-b border-[var(--ws-border)] pb-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 id="lead-finder-title" className="text-2xl font-bold tracking-tight">Lead Finder</h1>
-            <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">Find, verify and organize businesses that match your ideal customer.</p>
+            <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">Find, verify and organize businesses that match your ideal customer.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => toast('CSV/XLSX import is not connected in this workspace yet. Use a new public-source search instead.') }><FileUp size={16}/>Import (not ready)</button>
@@ -367,21 +367,21 @@ export default function ScraperCampaignsPage() {
 
         {!tenant?.id ? (
           <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <p className="text-sm font-semibold text-amber-200">Choose or create a workspace before finding leads.</p>
-            <p className="mt-1 text-sm text-amber-100/80">Lead searches, candidate review, and CRM handoff are saved inside one workspace.</p>
+            <p className="type-card-description font-semibold text-amber-200">Choose or create a workspace before finding leads.</p>
+            <p className="mt-1 type-card-description text-amber-100/80">Lead searches, candidate review, and CRM handoff are saved inside one workspace.</p>
             <Link href="/onboarding/create-business" className={`${buttonClass} mt-3 border border-amber-500/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15`}>Set up workspace <ArrowRight size={16}/></Link>
           </div>
         ) : !canReviewCandidates ? (
           <div className="mt-4 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
-            <p className="text-sm font-semibold text-sky-100">Lead review requires workspace admin access.</p>
-            <p className="mt-1 text-sm text-sky-100/80">You can run searches, but ask an owner or admin to accept candidates into CRM.</p>
+            <p className="type-card-description font-semibold text-sky-100">Lead review requires workspace admin access.</p>
+            <p className="mt-1 type-card-description text-sky-100/80">You can run searches, but ask an owner or admin to accept candidates into CRM.</p>
           </div>
         ) : null}
 
         {!available ? (
           <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <p className="text-sm font-semibold text-amber-200">Lead Finder is still being prepared for this workspace.</p>
-            <p className="mt-1 text-sm text-amber-100/80">
+            <p className="type-card-description font-semibold text-amber-200">Lead Finder is still being prepared for this workspace.</p>
+            <p className="mt-1 type-card-description text-amber-100/80">
               {availabilityNotice || 'Database tables for lead search are not available yet. Apply migrations and refresh.'}
             </p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -405,24 +405,24 @@ export default function ScraperCampaignsPage() {
 
         <nav className="my-4 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)]" aria-label="Lead Finder sections">
           {nav.map(item => <button key={item} onClick={() => setActive(item)} aria-current={active === item ? 'page' : undefined}
-            className={`min-h-11 shrink-0 border-b-2 px-3 text-sm font-medium ${active === item ? 'border-teal-400 text-teal-400' : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]'}`}>{item}</button>)}
+            className={`min-h-11 shrink-0 border-b-2 px-3 type-caption font-medium ${active === item ? 'border-teal-400 text-teal-400' : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]'}`}>{item}</button>)}
         </nav>
 
         {active === 'Discover' && (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
             <form onSubmit={createSearch} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:p-6">
               <div className="mb-5 flex items-start justify-between gap-4">
-                <div><h2 className="text-lg font-semibold">What businesses should we find?</h2><p className="text-sm text-[var(--ws-text-secondary)]">Only permitted public sources are searched. Free sources have responsible quotas.</p></div>
+                <div><h2 className="text-lg font-semibold">What businesses should we find?</h2><p className="type-caption text-[var(--ws-text-secondary)]">Only permitted public sources are searched. Free sources have responsible quotas.</p></div>
                 <Sparkles className="text-teal-400" aria-hidden="true"/>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="text-sm font-medium">Business type or keywords
+                <label className="type-label font-medium">Business type or keywords
                   <input className={`${fieldClass} mt-1.5`} value={form.keywords} onChange={e => setForm({...form, keywords:e.target.value})} placeholder="e.g. accounting firms" />
                 </label>
-                <label className="text-sm font-medium">Location
+                <label className="type-label font-medium">Location
                   <div className="relative mt-1.5"><MapPin className="absolute left-3 top-3 text-[var(--ws-text-secondary)]" size={17}/><input className={`${fieldClass} pl-10`} value={form.location} onChange={e => setForm({...form, location:e.target.value})} placeholder="City, region or country" /></div>
                 </label>
-                <label className="text-sm font-medium">Search mode
+                <label className="type-label font-medium">Search mode
                   <select className={`${fieldClass} mt-1.5`} value={form.searchType} onChange={e => setForm({...form,searchType:e.target.value})}>
                     <option value="businesses_by_location">Businesses by location</option><option value="businesses_by_keyword">Businesses by keyword</option>
                     <option value="domain_discovery" disabled>Domain discovery (coming soon)</option><option value="website_contact_discovery" disabled>Website contact discovery (coming soon)</option>
@@ -430,36 +430,36 @@ export default function ScraperCampaignsPage() {
                     <option value="csv_import" disabled>CSV import (coming soon)</option><option value="manual" disabled>Manual lead entry (coming soon)</option>
                   </select>
                 </label>
-                <label className="text-sm font-medium">Industry
+                <label className="type-label font-medium">Industry
                   <input className={`${fieldClass} mt-1.5`} value={form.industry} onChange={e => setForm({...form,industry:e.target.value})} placeholder="Optional industry" />
                 </label>
               </div>
-              <fieldset className="mt-5"><legend className="text-sm font-semibold">Required public information</legend>
+              <fieldset className="mt-5"><legend className="type-ui font-semibold">Required public information</legend>
                 <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">{(['website','email','phone','social'] as const).map(key =>
-                  <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm capitalize"><input type="checkbox" checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})} className="accent-teal-500"/>{key}</label>)}</div>
+                  <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 type-label capitalize"><input type="checkbox" checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})} className="accent-teal-500"/>{key}</label>)}</div>
               </fieldset>
-              <button type="button" onClick={() => setAdvanced(!advanced)} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-teal-400"><SlidersHorizontal size={16}/>{advanced ? 'Hide' : 'Show'} advanced filters</button>
+              <button type="button" onClick={() => setAdvanced(!advanced)} className="mt-5 inline-flex min-h-11 items-center gap-2 type-ui font-semibold text-teal-400"><SlidersHorizontal size={16}/>{advanced ? 'Hide' : 'Show'} advanced filters</button>
               {advanced && <div className="grid gap-4 border-t border-[var(--ws-border)] pt-4 md:grid-cols-2">
-                <label className="text-sm">Country<input className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
-                <label className="text-sm">City or region<input className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
-                <label className="text-sm">Excluded keywords<input className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
-                <label className="text-sm">Excluded domains<input className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
-                <label className="text-sm">Result limit<input type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
-                <label className="text-sm">Radius (km)<input type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
+                <label className="type-label">Country<input className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
+                <label className="type-label">City or region<input className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
+                <label className="type-label">Excluded keywords<input className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
+                <label className="type-label">Excluded domains<input className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
+                <label className="type-label">Result limit<input type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
+                <label className="type-label">Radius (km)<input type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
+                <p className="type-caption text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
                 <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
               </div>
             </form>
             <aside className="space-y-4">
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
-                <h2 className="font-semibold">Search presets</h2><p className="mb-3 text-xs text-[var(--ws-text-secondary)]">Suggestions only—results always come from live public sources.</p>
-                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm hover:bg-white/5"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
+                <h2 className="font-semibold">Search presets</h2><p className="mb-3 type-caption text-[var(--ws-text-secondary)]">Suggestions only—results always come from live public sources.</p>
+                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left type-ui hover:bg-white/5"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
               </div>
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
                 <div className="flex items-center gap-2"><Database size={17} className="text-teal-400"/><h2 className="font-semibold">Public-source policy</h2></div>
-                <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">No login bypass, private-profile collection, CAPTCHA evasion or paid lead database is required. Robots rules and source limits are enforced by workers.</p>
+                <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">No login bypass, private-profile collection, CAPTCHA evasion or paid lead database is required. Robots rules and source limits are enforced by workers.</p>
               </div>
             </aside>
           </div>
@@ -515,19 +515,19 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
   }));
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 text-xs text-amber-300">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
+      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 type-caption text-amber-300">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
       {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
     </div>
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
     <div className="flex gap-2">
       <button type="button" onClick={() => setView('list')} className={`${buttonClass} ${view === 'list' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}>List</button>
       <button type="button" onClick={() => setView('map')} className={`${buttonClass} ${view === 'map' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}><MapPin size={16}/>Map</button>
     </div>
-    {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between text-xs"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
+    {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between type-caption"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
     {!candidates.length && selected && (selected.discovered_count ?? 0) > 0 ? (
       <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center" role="status">
         <h2 className="font-semibold text-amber-100">Saving {selected.discovered_count} discovered businesses…</h2>
-        <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+        <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">
           Results appear here once the search finishes writing candidates. This page refreshes automatically.
         </p>
       </div>
@@ -535,14 +535,14 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
     {view === 'map' ? (
       <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
     ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
-      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-teal-300">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs text-xs text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
-      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left type-caption"><thead className="border-b border-[var(--ws-border)] type-caption uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="type-caption font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-teal-300">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
+      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
   </div>;
 }
 
 function HistoryPanel({ searches, onOpen }: { searches:SearchRecord[]; onOpen:(s:SearchRecord)=>void }) {
-  return searches.length ? <div className="space-y-2">{searches.map(s=><button key={s.id} onClick={()=>onOpen(s)} className="flex min-h-16 w-full items-center justify-between rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 text-left"><div><p className="font-semibold">{s.name}</p><p className="text-xs text-[var(--ws-text-secondary)]">{new Date(s.created_at).toLocaleString()} · {s.discovered_count} found · {s.error_count} errors</p></div><span className="capitalize">{s.status.replace('_',' ')}</span></button>)}</div> : <ModuleEmpty section="Search history"/>;
+  return searches.length ? <div className="space-y-2">{searches.map(s=><button key={s.id} onClick={()=>onOpen(s)} className="flex min-h-16 w-full items-center justify-between rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 text-left"><div><p className="font-semibold">{s.name}</p><p className="type-caption text-[var(--ws-text-secondary)]">{new Date(s.created_at).toLocaleString()} · {s.discovered_count} found · {s.error_count} errors</p></div><span className="capitalize">{s.status.replace('_',' ')}</span></button>)}</div> : <ModuleEmpty section="Search history"/>;
 }
 
 function ListsPanel({
@@ -574,24 +574,24 @@ function ListsPanel({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Lead lists</h2>
-            <p className="text-sm text-[var(--ws-text-secondary)]">Organize accepted candidates before outreach.</p>
+            <p className="type-caption text-[var(--ws-text-secondary)]">Organize accepted candidates before outreach.</p>
           </div>
           <button type="button" className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={onRefresh}>
             Refresh
           </button>
         </div>
         {loading ? (
-          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center text-sm text-[var(--ws-text-secondary)]">Loading lists…</div>
+          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center type-caption text-[var(--ws-text-secondary)]">Loading lists…</div>
         ) : lists.length ? (
           <div className="space-y-2">
             {lists.map((list) => (
               <div key={list.id} className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-semibold">{list.name}</p>
-                  <p className="text-xs text-[var(--ws-text-secondary)]">
+                  <p className="type-caption text-[var(--ws-text-secondary)]">
                     {list.lead_count || 0} leads · created {new Date(list.created_at).toLocaleDateString()}
                   </p>
-                  {list.description ? <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">{list.description}</p> : null}
+                  {list.description ? <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">{list.description}</p> : null}
                 </div>
                 <button
                   type="button"
@@ -611,7 +611,7 @@ function ListsPanel({
       </div>
       <aside className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
         <h2 className="font-semibold">Create list</h2>
-        <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Lists stay in your workspace and can feed outreach batches.</p>
+        <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">Lists stay in your workspace and can feed outreach batches.</p>
         <form onSubmit={onCreateList} className="mt-4 space-y-3">
           <input
             className={fieldClass}
@@ -624,7 +624,7 @@ function ListsPanel({
             {creatingList ? 'Creating…' : 'Create list'}
           </button>
         </form>
-        <p className="mt-4 text-xs text-[var(--ws-text-secondary)]">
+        <p className="mt-4 type-caption text-[var(--ws-text-secondary)]">
           {acceptedCount > 0
             ? `${acceptedCount} accepted candidate${acceptedCount === 1 ? '' : 's'} ready from the current Results view.`
             : 'Accept candidates in Results, then add them here.'}
@@ -647,22 +647,22 @@ function OutreachPanel({
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5">
         <div className="flex items-center gap-2"><Mail size={18} className="text-teal-400" /><h2 className="text-lg font-semibold">Outreach readiness</h2></div>
-        <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+        <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">
           Lead Finder never sends email automatically. Review recipients in Contacts or Outreach before anything is queued.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">Accepted</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedCount}</p></div>
-          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">With email</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedWithEmail}</p></div>
+          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">Accepted</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedCount}</p></div>
+          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">With email</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedWithEmail}</p></div>
         </div>
         {selectedSearch ? (
-          <p className="mt-4 text-xs text-[var(--ws-text-secondary)]">
+          <p className="mt-4 type-caption text-[var(--ws-text-secondary)]">
             Current search: <span className="text-[var(--ws-text-primary)]">{selectedSearch.name}</span> · {selectedSearch.accepted_count} accepted total
           </p>
         ) : null}
       </div>
       <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5 space-y-3">
         <h2 className="text-lg font-semibold">Launch outreach safely</h2>
-        <p className="text-sm text-[var(--ws-text-secondary)]">Use the existing reviewed batch flow — consent checks, suppression, and audit trail stay enforced.</p>
+        <p className="type-caption text-[var(--ws-text-secondary)]">Use the existing reviewed batch flow — consent checks, suppression, and audit trail stay enforced.</p>
         <Link href="/dashboard/contacts" className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-teal-400`}>
           Open Contacts batch outreach
         </Link>
@@ -693,8 +693,8 @@ function SettingsPanel({
   return (
     <div className="max-w-2xl rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5 space-y-5">
       <div className="flex items-center gap-2"><Settings2 size={18} className="text-teal-400" /><h2 className="text-lg font-semibold">Lead Finder defaults</h2></div>
-      <p className="text-sm text-[var(--ws-text-secondary)]">Saved per workspace on this device. New searches start with these values.</p>
-      <label className="block text-sm font-medium">
+      <p className="type-caption text-[var(--ws-text-secondary)]">Saved per workspace on this device. New searches start with these values.</p>
+      <label className="block type-label font-medium">
         Default result limit
         <input
           type="number"
@@ -706,23 +706,23 @@ function SettingsPanel({
         />
       </label>
       <fieldset>
-        <legend className="text-sm font-semibold">Required public information</legend>
+        <legend className="type-ui font-semibold">Required public information</legend>
         <div className="mt-2 grid grid-cols-2 gap-2">
-          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm">
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 type-label">
             <input type="checkbox" checked={draft.requireEmail} onChange={(event) => setDraft({ ...draft, requireEmail: event.target.checked })} className="accent-teal-500" />
             Email required
           </label>
-          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm">
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 type-label">
             <input type="checkbox" checked={draft.requireWebsite} onChange={(event) => setDraft({ ...draft, requireWebsite: event.target.checked })} className="accent-teal-500" />
             Website required
           </label>
         </div>
       </fieldset>
       <fieldset>
-        <legend className="text-sm font-semibold">Default sources</legend>
+        <legend className="type-ui font-semibold">Default sources</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {['openstreetmap', 'website'].map((source) => (
-            <label key={source} className="flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 py-2 text-sm capitalize">
+            <label key={source} className="flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 py-2 type-label capitalize">
               <input
                 type="checkbox"
                 checked={draft.defaultSources.includes(source)}
@@ -741,7 +741,7 @@ function SettingsPanel({
           ))}
         </div>
       </fieldset>
-      <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 text-sm text-[var(--ws-text-secondary)]">
+      <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 type-caption text-[var(--ws-text-secondary)]">
       Public-source limits are enforced by the search workers. Only phone or email contacts are saved.
       </div>
       <button type="button" onClick={() => onSave(draft)} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>
@@ -759,5 +759,5 @@ function ModuleEmpty({ section }: { section:string }) {
     Settings:['Lead Finder settings','Source controls, quotas, scoring, verification and retention are workspace-scoped.'],
     'Search history':['No search history','Your completed, running and cancelled searches will appear here.'],
   }; const [title,body]=copy[section]||[`No ${section.toLowerCase()}`,`Your ${section.toLowerCase()} will appear here.`];
-  return <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center"><Search className="mb-3 text-[var(--ws-text-secondary)]"/><h2 className="font-semibold">{title}</h2><p className="mt-1 max-w-md text-sm text-[var(--ws-text-secondary)]">{body}</p></div>;
+  return <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center"><Search className="mb-3 text-[var(--ws-text-secondary)]"/><h2 className="font-semibold">{title}</h2><p className="mt-1 max-w-md type-caption text-[var(--ws-text-secondary)]">{body}</p></div>;
 }

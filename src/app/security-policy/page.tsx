@@ -38,7 +38,7 @@ export default function SecurityPolicyPage() {
 
           <CompanyInfoBlock className="mb-8" compact />
 
-          <div className="space-y-4 text-sm text-[var(--marketing-text-secondary)]">
+          <div className="space-y-4 type-caption text-[var(--marketing-text-secondary)]">
             <div className="mkt-surface p-5">
               <h2 className="text-lg font-bold text-[var(--marketing-text-primary)] mb-2">
                 Secure Development

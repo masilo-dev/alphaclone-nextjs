@@ -54,7 +54,7 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Search messages..."
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent type-ui"
           />
         </div>
         <button
@@ -75,7 +75,7 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-10">
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block type-label font-medium text-gray-700 mb-1">
                 <User className="w-4 h-4 inline mr-1" />
                 From
               </label>
@@ -84,12 +84,12 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
                 value={filters.from}
                 onChange={(e) => setFilters(prev => ({ ...prev, from: e.target.value }))}
                 placeholder="Sender name"
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded type-ui focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block type-label font-medium text-gray-700 mb-1">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Date
               </label>
@@ -97,7 +97,7 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
                 type="date"
                 value={filters.date}
                 onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded type-ui focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
@@ -109,7 +109,7 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
                   onChange={(e) => setFilters(prev => ({ ...prev, hasAttachments: e.target.checked }))}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">Has attachments</span>
+                <span className="type-ui text-gray-700">Has attachments</span>
               </label>
               
               <label className="flex items-center">
@@ -119,7 +119,7 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
                   onChange={(e) => setFilters(prev => ({ ...prev, isUnread: e.target.checked }))}
                   className="mr-2"
                 />
-                <span className="text-sm text-gray-700">Unread only</span>
+                <span className="type-ui text-gray-700">Unread only</span>
               </label>
             </div>
 
@@ -134,13 +134,13 @@ export default function MessageSearch({ onSearch, onClose }: MessageSearchProps)
                   });
                   setQuery('');
                 }}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                className="px-3 py-1 type-ui text-gray-600 hover:text-gray-800"
               >
                 Clear
               </button>
               <button
                 onClick={handleSearch}
-                className="px-4 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                className="px-4 py-1 bg-blue-600 text-white type-ui rounded hover:bg-blue-700"
               >
                 Search
               </button>

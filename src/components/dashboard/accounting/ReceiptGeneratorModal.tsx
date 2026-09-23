@@ -139,7 +139,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                         <User className="w-4 h-4 text-emerald-400" />
-                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Client</h3>
+                        <h3 className="type-caption font-black text-slate-300 uppercase tracking-widest">Client</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -155,16 +155,16 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                        <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Items</h3>
-                        <button onClick={handleAddItem} className="text-emerald-400 text-xs font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
+                        <h3 className="type-caption font-black text-slate-300 uppercase tracking-widest">Items</h3>
+                        <button onClick={handleAddItem} className="text-emerald-400 type-caption font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
                     </div>
                     <div className="space-y-3">
                         {receiptData.items.map((item, i) => (
                             <div key={i} className="dashboard-panel-soft p-4 space-y-3">
-                                <input placeholder="Description" value={item.description} onChange={e => handleItemChange(i, 'description', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" />
+                                <input placeholder="Description" value={item.description} onChange={e => handleItemChange(i, 'description', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 type-ui text-white" />
                                 <div className="flex gap-3">
-                                    <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', parseInt(e.target.value) || 1)} className="w-20 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-center text-white" />
-                                    <input type="number" placeholder="Price" value={item.price} onChange={e => handleItemChange(i, 'price', parseFloat(e.target.value) || 0)} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" />
+                                    <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', parseInt(e.target.value) || 1)} className="w-20 bg-black/40 border border-white/10 rounded-xl px-4 py-3 type-ui text-center text-white" />
+                                    <input type="number" placeholder="Price" value={item.price} onChange={e => handleItemChange(i, 'price', parseFloat(e.target.value) || 0)} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 type-ui text-white" />
                                     {receiptData.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="p-3 text-rose-400"><Trash2 size={18} /></button>}
                                 </div>
                             </div>
@@ -173,15 +173,15 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 </div>
 
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl flex flex-col items-end gap-2">
-                    <div className="flex justify-between w-full text-xs font-black text-slate-300 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
+                    <div className="flex justify-between w-full type-caption font-black text-slate-300 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
                     <div className="text-4xl font-black text-white tracking-tighter">${calculateTotal().toLocaleString()}</div>
-                    <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">Amount Paid</p>
+                    <p className="type-caption font-black text-emerald-400 uppercase tracking-widest">Amount Paid</p>
                 </div>
 
                 {/* Footer Actions */}
                 <div className={`flex flex-wrap gap-3 pt-6 border-t border-white/5 ${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-black/90 backdrop-blur-xl z-50 border-white/10' : ''}`}>
                     {isMobile ? (
-                        <button onClick={finalizeReceipt} disabled={isSaving} className="w-full h-14 bg-emerald-600 disabled:opacity-60 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Save size={20} /> {isSaving ? 'Finalizing…' : 'Finalize & Download'}</button>
+                        <button onClick={finalizeReceipt} disabled={isSaving} className="w-full h-14 bg-emerald-600 disabled:opacity-60 text-white rounded-2xl font-black uppercase type-caption shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Save size={20} /> {isSaving ? 'Finalizing…' : 'Finalize & Download'}</button>
                     ) : (
                         <>
                             <Button variant="ghost" onClick={onClose}>Cancel</Button>

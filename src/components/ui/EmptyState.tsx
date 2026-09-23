@@ -59,8 +59,8 @@ export function EmptyState({
       <div className="w-11 h-11 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-hover)] flex items-center justify-center mb-4">
         <Icon className="w-5 h-5 text-teal-400/90" strokeWidth={1.5} />
       </div>
-      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2 text-[1rem]')}>{title}</h3>
-      <p className="text-[13px] text-[var(--ws-text-secondary)] leading-relaxed mb-6 max-w-sm">{description}</p>
+      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2 text-base')}>{title}</h3>
+      <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed mb-6 max-w-sm">{description}</p>
       {action}
       {!action && actionLabel && onAction && (
         <button
@@ -77,7 +77,7 @@ export function EmptyState({
           {bonnieSuggestion ? (
             <div className="ac-workspace-panel p-3 flex items-start gap-2 border border-teal-500/20">
               <Bot className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <p className="text-[12px] text-[var(--ws-text-secondary)]">{bonnieSuggestion}</p>
+              <p className="type-card-description text-[var(--ws-text-secondary)]">{bonnieSuggestion}</p>
             </div>
           ) : null}
 
@@ -88,7 +88,7 @@ export function EmptyState({
                   <Link
                     key={qa.label}
                     href={qa.href}
-                    className="ac-workspace-action-btn ac-workspace-action-btn--secondary text-[12px] min-h-8 px-3"
+                    className="ac-workspace-action-btn ac-workspace-action-btn--secondary type-ui min-h-8 px-3"
                   >
                     {qa.label}
                   </Link>
@@ -97,7 +97,7 @@ export function EmptyState({
                     key={qa.label}
                     type="button"
                     onClick={qa.onAction}
-                    className="ac-workspace-action-btn ac-workspace-action-btn--secondary text-[12px] min-h-8 px-3"
+                    className="ac-workspace-action-btn ac-workspace-action-btn--secondary type-ui min-h-8 px-3"
                   >
                     {qa.label}
                   </button>
@@ -108,14 +108,14 @@ export function EmptyState({
 
           {templateLinks && templateLinks.length > 0 ? (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
+              <p className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
                 Templates
               </p>
               {templateLinks.map((t) => (
                 <Link
                   key={t.href}
                   href={t.href}
-                  className="block text-[12px] text-teal-400 hover:text-teal-300"
+                  className="block type-ui text-teal-400 hover:text-teal-300"
                 >
                   {t.label}
                 </Link>
@@ -125,19 +125,19 @@ export function EmptyState({
 
           {importOptions && importOptions.length > 0 ? (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
+              <p className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
                 Import
               </p>
               {importOptions.map((opt) =>
                 opt.href ? (
                   <Link key={opt.label} href={opt.href} className="block ac-workspace-panel p-2.5 hover:border-teal-500/30">
-                    <p className="text-[12px] font-medium text-[var(--ws-text-primary)]">{opt.label}</p>
-                    <p className="text-[11px] text-[var(--ws-text-tertiary)]">{opt.description}</p>
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{opt.label}</p>
+                    <p className="type-card-description text-[var(--ws-text-tertiary)]">{opt.description}</p>
                   </Link>
                 ) : (
                   <div key={opt.label} className="ac-workspace-panel p-2.5">
-                    <p className="text-[12px] font-medium text-[var(--ws-text-primary)]">{opt.label}</p>
-                    <p className="text-[11px] text-[var(--ws-text-tertiary)]">{opt.description}</p>
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{opt.label}</p>
+                    <p className="type-card-description text-[var(--ws-text-tertiary)]">{opt.description}</p>
                   </div>
                 )
               )}

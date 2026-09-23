@@ -79,9 +79,9 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-teal-400" />
-                    <h4 className="text-sm font-bold text-white">Admin Controls</h4>
+                    <h4 className="type-ui font-bold text-white">Admin Controls</h4>
                 </div>
-                <span className="text-xs px-2 py-1 bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
+                <span className="type-caption px-2 py-1 bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
                     Admin
                 </span>
             </div>
@@ -89,7 +89,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <button
                     onClick={muteAll}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-sm text-white"
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors type-ui text-white"
                     title="Mute all participants"
                 >
                     <MicOff className="w-4 h-4" />
@@ -98,7 +98,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
 
                 <button
                     onClick={lockMeeting}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm text-white ${isMeetingLocked
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors type-ui text-white ${isMeetingLocked
                         ? 'bg-yellow-600 hover:bg-yellow-700'
                         : 'bg-slate-800 hover:bg-slate-700'
                         }`}
@@ -110,7 +110,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
 
                 <button
                     onClick={toggleRecording}
-                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm text-white ${isRecording
+                    className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors type-ui text-white ${isRecording
                         ? 'bg-red-600 hover:bg-red-700'
                         : 'bg-slate-800 hover:bg-slate-700'
                         }`}
@@ -122,7 +122,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
 
                 <button
                     onClick={endMeetingForAll}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm text-white"
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors type-ui text-white"
                     title="End meeting for all participants"
                 >
                     <StopCircle className="w-4 h-4" />
@@ -130,7 +130,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                 </button>
             </div>
 
-            <p className="text-xs text-slate-500 mt-2 text-center">
+            <p className="type-card-description text-slate-500 mt-2 text-center">
                 Admin controls affect all participants
             </p>
         </div>

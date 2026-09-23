@@ -58,12 +58,12 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
       <div className="text-center mb-6">
         <Users className="w-12 h-12 text-teal-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Complete Your Profile</h4>
-        <p className="text-slate-400 text-sm">Add your business information to personalize your experience</p>
+        <p className="text-slate-400 type-card-description">Add your business information to personalize your experience</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Full Name</label>
           <input
             type="text"
             value={formData.name}
@@ -74,7 +74,7 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Company Name</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Company Name</label>
           <input
             type="text"
             value={formData.company}
@@ -85,7 +85,7 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Phone Number</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Phone Number</label>
           <input
             type="tel"
             value={formData.phone}
@@ -95,7 +95,7 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Timezone</label>
           <select
             value={formData.timezone}
             onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
@@ -200,7 +200,7 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
 
       <div className="bg-slate-800 rounded-lg p-4 mb-6 text-left">
         <h5 className="font-medium text-white mb-2">Benefits of Stripe Connect:</h5>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 type-ui text-slate-300">
           <li className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
             Direct payments to your bank account
@@ -271,12 +271,12 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
       <div className="text-center mb-6">
         <Mail className="w-12 h-12 text-teal-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Configure Email Service</h4>
-        <p className="text-slate-400 text-sm">Set up SendGrid to send professional emails to clients</p>
+        <p className="text-slate-400 type-card-description">Set up SendGrid to send professional emails to clients</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Email Provider</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Email Provider</label>
           <select
             value={formData.provider}
             onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
@@ -288,7 +288,7 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">API Key</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">API Key</label>
           <input
             type="password"
             value={formData.apiKey}
@@ -300,7 +300,7 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">From Email</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">From Email</label>
           <input
             type="email"
             value={formData.fromEmail}
@@ -312,7 +312,7 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">From Name</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">From Name</label>
           <input
             type="text"
             value={formData.fromName}
@@ -377,7 +377,7 @@ const HubSpotSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }) => 
 
       <div className="bg-slate-800 rounded-lg p-4 mb-6 text-left">
         <h5 className="font-medium text-white mb-2">HubSpot Integration Features:</h5>
-        <ul className="space-y-2 text-sm text-slate-300">
+        <ul className="space-y-2 type-ui text-slate-300">
           <li className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
             Two-way contact synchronization
@@ -453,12 +453,12 @@ const TeamInvitation: React.FC<SetupComponentProps> = ({ tenant, onComplete }) =
       <div className="text-center mb-6">
         <Users className="w-12 h-12 text-teal-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Invite Team Members</h4>
-        <p className="text-slate-400 text-sm">Add your team to collaborate on projects and clients</p>
+        <p className="text-slate-400 type-card-description">Add your team to collaborate on projects and clients</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1">Email Addresses</label>
+          <label className="block type-label font-medium text-slate-300 mb-1">Email Addresses</label>
           <textarea
             value={emails}
             onChange={(e) => setEmails(e.target.value)}
@@ -466,7 +466,7 @@ const TeamInvitation: React.FC<SetupComponentProps> = ({ tenant, onComplete }) =
             rows={4}
             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
           />
-          <p className="text-xs text-slate-500 mt-1">Separate multiple emails with commas</p>
+          <p className="type-card-description text-slate-500 mt-1">Separate multiple emails with commas</p>
         </div>
 
         <div className="flex gap-3">
@@ -593,7 +593,7 @@ const SetupWizard: React.FC = () => {
               <Sparkles className="w-6 h-6 text-teal-500" />
               <h2 className="text-2xl font-bold text-white">Setup Your Business</h2>
             </div>
-            <div className="text-sm text-slate-400">
+            <div className="type-ui text-slate-400">
               Step {currentStep + 1} of {steps.length}
             </div>
           </div>
@@ -604,7 +604,7 @@ const SetupWizard: React.FC = () => {
               return (
                 <div key={step.id} className="flex items-center">
                   <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                    w-8 h-8 rounded-full flex items-center justify-center type-ui font-medium
                     ${index < currentStep ? 'bg-green-500 text-white' : 
                       index === currentStep ? 'bg-teal-500 text-white' : 
                       'bg-slate-700 text-slate-400'}

@@ -72,7 +72,7 @@ function NativeModuleWorkspace({
   return (
     <div className="native-screen ac-scroll-full pb-4" data-native-module-workspace={moduleId}>
       <div className="px-4 pb-4 pt-2">
-        <h1 className="text-[22px] font-semibold tracking-tight text-white">{screenTitle}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">{screenTitle}</h1>
       </div>
 
       {loading ? (
@@ -85,7 +85,7 @@ function NativeModuleWorkspace({
         <section className="grid grid-cols-2 gap-2 px-4 pb-5" aria-label={t('Key numbers')}>
           {metrics.map((metric) => (
             <div key={metric.label} className="min-w-0 rounded-[14px] border border-white/[0.06] bg-white/[0.04] px-3.5 py-3">
-              <div className="truncate text-[11px] font-medium uppercase tracking-wide text-white/40">
+              <div className="truncate type-caption font-medium uppercase tracking-wide text-white/40">
                 {t(metric.label)}
               </div>
               <div className="mt-1 truncate text-xl font-semibold tabular-nums text-white">
@@ -169,7 +169,7 @@ function DashboardContent({
     return (
       <div className="ac-scroll-full ac-module-section">
         <div className="ac-workspace-panel p-8 text-center">
-          <p className="text-[13px] text-[var(--ws-text-secondary)]">Could not load metrics</p>
+          <p className="type-card-description text-[var(--ws-text-secondary)]">Could not load metrics</p>
           {errWorkspace ? (
             <button
               type="button"
@@ -243,7 +243,7 @@ function DashboardContent({
   return (
     <div className={cn('ac-scroll-full ac-module-section space-y-4', isValidating ? 'opacity-95' : '')}>
       {moduleId === 'overview' && allMetricsZero ? (
-        <p className="text-[12px] text-[var(--ws-text-tertiary)] px-0.5">
+        <p className="type-card-description text-[var(--ws-text-tertiary)] px-0.5">
           {t('No activity yet — use the checklist above to add your first client.')}
         </p>
       ) : null}
@@ -269,14 +269,14 @@ function DashboardContent({
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className={cn(
-                  'text-[11px] font-black uppercase tracking-widest',
+                  'type-caption font-black uppercase tracking-widest',
                   featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
                 )}>{t(label)}</span>
               </div>
-              <h3 className="text-sm font-semibold text-white">{t(title)}</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{t(description)}</p>
+              <h3 className="type-ui font-semibold text-white">{t(title)}</h3>
+              <p className="mt-1 type-card-description leading-relaxed text-slate-400">{t(description)}</p>
               <span className={cn(
-                'mt-4 inline-flex items-center gap-1 text-[12px] font-bold',
+                'mt-4 inline-flex items-center gap-1 type-ui font-bold',
                 featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
               )}>
                 {t(cta)}
@@ -297,7 +297,7 @@ function DashboardContent({
           <button
             type="button"
             onClick={() => router.push(workspaceAction.resolvedHref)}
-            className="ac-workspace-action-btn ac-workspace-action-btn--primary text-[11px] min-h-8 px-2.5"
+            className="ac-workspace-action-btn ac-workspace-action-btn--primary type-ui min-h-8 px-2.5"
           >
             {t(workspaceAction.label)}
             <ChevronRight className="w-3.5 h-3.5" aria-hidden />
@@ -347,11 +347,11 @@ function DashboardContent({
       {overviewQuickModules ? (
         <div className="ac-workspace-panel rounded-lg p-4">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
+            <span className="type-caption font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
             <button
               type="button"
               onClick={() => router.push('/dashboard/settings')}
-              className="text-[11px] text-[var(--brand-blue-400)] font-bold"
+              className="type-ui text-[var(--brand-blue-400)] font-bold"
             >
               Manage
             </button>
@@ -368,12 +368,12 @@ function DashboardContent({
                 aria-label={label}
               >
                 <Icon className="w-4 h-4 shrink-0 text-[var(--brand-blue-400)]" />
-                <span className="text-[10px] font-bold text-slate-300 truncate">{label}</span>
+                <span className="type-ui font-bold text-slate-300 truncate">{label}</span>
               </button>
             ))}
           </div>
 
-          <p className="text-[11px] text-slate-500 mt-3">
+          <p className="type-card-description text-slate-500 mt-3">
             Tip: Tap a module tile to jump straight into CRM, Deals, Invoicing, and more.
           </p>
         </div>

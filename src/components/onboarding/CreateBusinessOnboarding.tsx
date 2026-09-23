@@ -146,7 +146,7 @@ export default function CreateBusinessOnboarding() {
               <div className="space-y-6">
                 {/* Business Name */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block type-label font-medium text-slate-300 mb-2">
                     Business Name
                   </label>
                   <input
@@ -161,7 +161,7 @@ export default function CreateBusinessOnboarding() {
 
                 {/* Business Slug */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block type-label font-medium text-slate-300 mb-2">
                     Business URL
                   </label>
                   <div className="flex items-center gap-2">
@@ -172,16 +172,16 @@ export default function CreateBusinessOnboarding() {
                       placeholder="acme-design"
                       className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                     />
-                    <span className="text-slate-400 text-sm">.alphaclone.com</span>
+                    <span className="text-slate-400 type-ui">.alphaclone.com</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="type-card-description text-slate-500 mt-2">
                     This will be your unique business URL. Only lowercase letters, numbers, and hyphens allowed.
                   </p>
                 </div>
 
                 {/* Industry (Optional) */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block type-label font-medium text-slate-300 mb-2">
                     Your Sector
                   </label>
                     <select
@@ -197,7 +197,7 @@ export default function CreateBusinessOnboarding() {
                     <option value="real-estate">Real Estate</option>
                     <option value="other">Other</option>
                   </select>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="type-card-description text-slate-500 mt-2">
                     You can update your workspace profile and defaults from Settings after setup.
                   </p>
                 </div>
@@ -239,7 +239,7 @@ export default function CreateBusinessOnboarding() {
                   >
                     {plan.label && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <div className="px-3 py-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                        <div className="px-3 py-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white type-caption font-bold rounded-full flex items-center gap-1">
                           {plan.label}
                         </div>
                       </div>
@@ -257,13 +257,13 @@ export default function CreateBusinessOnboarding() {
                         <span className="text-3xl font-bold text-white">
                           ${plan.price}
                         </span>
-                        <span className="text-slate-400 text-sm">/{plan.period}</span>
+                        <span className="text-slate-400 type-ui">/{plan.period}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-2 min-h-[40px]">
+                      <p className="type-card-description text-slate-500 mt-2 min-h-[40px]">
                         {PLAN_PRICING[plan.id]?.description}
                       </p>
                       {PLAN_PRICING[plan.id]?.isDiscountable && (
-                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter">
+                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded type-caption font-bold text-amber-400 uppercase tracking-tighter">
                           Intro discount shown at checkout
                         </div>
                       )}
@@ -271,7 +271,7 @@ export default function CreateBusinessOnboarding() {
 
                     <ul className="space-y-2">
                       {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
+                        <li key={index} className="flex items-start gap-2 type-ui text-slate-300">
                           <Check className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
                           <span>{feature}</span>
                         </li>
@@ -313,7 +313,7 @@ export default function CreateBusinessOnboarding() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-slate-500 text-sm">
+        <div className="text-center mt-8 text-slate-500 type-ui">
           By creating a business, you agree to our Terms of Service and Privacy Policy
         </div>
       </div>
@@ -332,7 +332,7 @@ function StepIndicator({ number, label, active, completed }: { number: number; l
         }`}>
         {completed ? <Check className="w-5 h-5" /> : number}
       </div>
-      <span className={`text-sm font-medium ${active ? 'text-white' : 'text-slate-500'}`}>
+      <span className={`type-ui font-medium ${active ? 'text-white' : 'text-slate-500'}`}>
         {label}
       </span>
     </div>

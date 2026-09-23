@@ -81,7 +81,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
             >
                 <div className="flex items-center gap-2">
                     <UserPlus className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm">
+                    <span className="type-ui">
                         {selectedLead ? selectedLead.businessName : placeholder}
                     </span>
                 </div>
@@ -108,7 +108,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                                     placeholder="Search leads..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
                                     autoFocus
                                 />
                             </div>
@@ -117,15 +117,15 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                         {/* Leads List */}
                         <div className="overflow-y-auto flex-1">
                             {loading ? (
-                                <div className="p-4 text-center text-slate-400 text-sm">
+                                <div className="p-4 text-center text-slate-400 type-ui">
                                     Loading leads...
                                 </div>
                             ) : filteredLeads.length === 0 ? (
                                 <div className="p-4 text-center">
-                                    <p className="text-slate-400 text-sm mb-2">No leads match this search. Clear the search or add a new lead.</p>
+                                    <p className="text-slate-400 type-card-description mb-2">No leads match this search. Clear the search or add a new lead.</p>
                                     <a
                                         href="/dashboard/sales-agent"
-                                        className="text-teal-400 text-xs hover:underline flex items-center justify-center gap-1"
+                                        className="text-teal-400 type-caption hover:underline flex items-center justify-center gap-1"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         Go to Sales Agent
@@ -140,21 +140,21 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="text-white font-medium text-sm truncate">
+                                                <h4 className="text-white font-medium type-ui truncate">
                                                     {lead.businessName}
                                                 </h4>
-                                                <p className="text-slate-400 text-xs truncate">
+                                                <p className="text-slate-400 type-card-description truncate">
                                                     {lead.email || lead.phone || 'No contact info'}
                                                 </p>
                                             </div>
                                             {lead.industry && (
-                                                <span className="ml-2 px-2 py-1 bg-slate-800 text-slate-400 text-xs rounded-full whitespace-nowrap">
+                                                <span className="ml-2 px-2 py-1 bg-slate-800 text-slate-400 type-caption rounded-full whitespace-nowrap">
                                                     {lead.industry}
                                                 </span>
                                             )}
                                         </div>
                                         {lead.location && (
-                                            <p className="text-slate-500 text-xs mt-1">
+                                            <p className="text-slate-500 type-card-description mt-1">
                                                 {lead.location}
                                             </p>
                                         )}
@@ -165,7 +165,7 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
 
                         {/* Footer */}
                         <div className="p-3 border-t border-slate-800 bg-slate-950">
-                            <p className="text-slate-500 text-xs text-center">
+                            <p className="text-slate-500 type-card-description text-center">
                                 {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} available
                             </p>
                         </div>

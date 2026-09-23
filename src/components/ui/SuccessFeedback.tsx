@@ -62,15 +62,15 @@ export function SuccessFeedbackProvider({ children }: { children: React.ReactNod
           <div className="flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400/90">
+              <p className="type-caption font-semibold uppercase tracking-wide text-emerald-400/90">
                 {ACTION_LABELS[toast.action]}
               </p>
-              <p className="text-[13px] font-medium text-[var(--ws-text-primary)] mt-0.5">{toast.title}</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-primary)] mt-0.5">{toast.title}</p>
               {toast.detail ? (
-                <p className="text-[12px] text-[var(--ws-text-secondary)] mt-1">{toast.detail}</p>
+                <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">{toast.detail}</p>
               ) : null}
               {toast.impact ? (
-                <p className="text-[11px] text-emerald-300/80 mt-1.5">{toast.impact}</p>
+                <p className="type-card-description text-emerald-300/80 mt-1.5">{toast.impact}</p>
               ) : null}
             </div>
             <button

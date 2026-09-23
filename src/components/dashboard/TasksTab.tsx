@@ -174,24 +174,24 @@ const SwipeableTaskRow: React.FC<{
 
         <div className="flex-1 min-w-0 py-2 cursor-pointer" onClick={() => onTap(task)}>
           <div className="flex items-center gap-2 pr-4">
-            <span className={`text-[15px] flex-1 truncate ${done ? 'line-through text-slate-500 opacity-40' : 'text-white'}`}>{task.title}</span>
+            <span className={`type-ui flex-1 truncate ${done ? 'line-through text-slate-500 opacity-40' : 'text-white'}`}>{task.title}</span>
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
           </div>
           <div className="flex items-center gap-2 mt-0.5 pr-4 flex-wrap">
             {task.project_name && (
-              <span className="text-[11px] px-1.5 py-0.5 bg-slate-800 rounded-full text-slate-400 truncate">{task.project_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-slate-800 rounded-full text-slate-400 truncate">{task.project_name}</span>
             )}
             {task.deal_name && (
-              <span className="text-[11px] px-1.5 py-0.5 bg-purple-500/10 rounded-full text-purple-300 truncate">{task.deal_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-purple-500/10 rounded-full text-purple-300 truncate">{task.deal_name}</span>
             )}
             {task.contact_name && (
-              <span className="text-[11px] px-1.5 py-0.5 bg-blue-500/10 rounded-full text-blue-300 truncate">{task.contact_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-blue-500/10 rounded-full text-blue-300 truncate">{task.contact_name}</span>
             )}
             {task.lead_name && (
-              <span className="text-[11px] px-1.5 py-0.5 bg-amber-500/10 rounded-full text-amber-300 truncate">{task.lead_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-amber-500/10 rounded-full text-amber-300 truncate">{task.lead_name}</span>
             )}
             {task.due_date && (
-              <span className={`text-[13px] opacity-55 ${done ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`type-ui opacity-55 ${done ? 'text-slate-500' : 'text-slate-400'}`}>
                 {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
             )}
@@ -248,10 +248,10 @@ const TaskDetailContent: React.FC<{
         validate={(v) => !v.trim() ? 'Task title is required' : undefined}
       />
       <div>
-        <label className="text-xs font-medium text-slate-400 block mb-2">Priority</label>
+        <label className="type-label font-medium text-slate-400 block mb-2">Priority</label>
         <div className="flex gap-2">
           {(['low', 'medium', 'high'] as Priority[]).map(p => (
-            <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 min-h-11 py-2 rounded-xl text-sm font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-slate-700 text-slate-300 border-slate-600') : 'bg-slate-900 text-slate-500 border-white/5'}`}>
+            <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 min-h-11 py-2 rounded-xl type-ui font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-slate-700 text-slate-300 border-slate-600') : 'bg-slate-900 text-slate-500 border-white/5'}`}>
               {p}
             </button>
           ))}
@@ -259,47 +259,47 @@ const TaskDetailContent: React.FC<{
       </div>
       <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
         <Calendar className="w-5 h-5 text-slate-500" />
-        <span className="text-sm text-slate-300">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
+        <span className="type-ui text-slate-300">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
       </div>
       {task.project_name && (
         <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
           <Briefcase className="w-5 h-5 text-slate-500" />
-          <span className="text-sm text-slate-300">{task.project_name}</span>
+          <span className="type-ui text-slate-300">{task.project_name}</span>
         </div>
       )}
       {task.deal_name && (
         <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
           <Target className="w-5 h-5 text-purple-400" />
-          <span className="text-sm text-slate-300">{task.deal_name}</span>
+          <span className="type-ui text-slate-300">{task.deal_name}</span>
         </div>
       )}
       {task.contact_name && (
         <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
           <User className="w-5 h-5 text-blue-400" />
-          <span className="text-sm text-slate-300">{task.contact_name}</span>
+          <span className="type-ui text-slate-300">{task.contact_name}</span>
         </div>
       )}
       {task.lead_name && (
         <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
           <TrendingUp className="w-5 h-5 text-amber-400" />
-          <span className="text-sm text-slate-300">{task.lead_name}</span>
+          <span className="type-ui text-slate-300">{task.lead_name}</span>
         </div>
       )}
       <div>
-        <label className="text-xs font-medium text-slate-400 block mb-2">Notes</label>
+        <label className="type-label font-medium text-slate-400 block mb-2">Notes</label>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
           placeholder="Add notes..."
           rows={4}
-          className="w-full text-sm text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
+          className="w-full type-ui text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
         />
       </div>
-      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm">Save Changes</button>
+      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl type-ui">Save Changes</button>
       <button
         type="button"
         onClick={() => { if (confirm('Delete this task?')) { onDelete(task.id); onClose(); } }}
-        className="w-full min-h-11 py-3 text-red-400 font-medium text-sm"
+        className="w-full min-h-11 py-3 text-red-400 font-medium type-ui"
       >
         Delete Task
       </button>
@@ -325,8 +325,8 @@ const TaskSection: React.FC<{
     <div>
       <button onClick={() => setCollapsed(c => !c)} className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-900/60 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-black uppercase tracking-wider text-slate-400">{label}</span>
-          <span className="text-[11px] font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded-full">{tasks.length}</span>
+          <span className="type-ui font-black uppercase tracking-wider text-slate-400">{label}</span>
+          <span className="type-ui font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded-full">{tasks.length}</span>
         </div>
         {collapsed ? <ChevronRight className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
       </button>
@@ -429,14 +429,14 @@ const TaskCreateContent: React.FC<{
         autoFocus
       />
       <div>
-        <label className="text-xs font-medium text-slate-400 block mb-2">Priority</label>
+        <label className="type-label font-medium text-slate-400 block mb-2">Priority</label>
         <div className="flex gap-2">
           {(['low', 'medium', 'high'] as Priority[]).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+              className={`flex-1 min-h-11 py-2 rounded-xl type-caption font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-slate-900 text-slate-500 border-white/5'}`}
             >
               {p}
             </button>
@@ -447,26 +447,26 @@ const TaskCreateContent: React.FC<{
         type="date"
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
+        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui outline-none"
       />
       <div className="grid grid-cols-1 gap-2">
-        <label className="text-xs font-medium text-slate-400">Link to project (optional)</label>
-        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+        <label className="type-label font-medium text-slate-400">Link to project (optional)</label>
+        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <label className="text-xs font-medium text-slate-400">Link to deal (optional)</label>
-        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+        <label className="type-label font-medium text-slate-400">Link to deal (optional)</label>
+        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
-        <label className="text-xs font-medium text-slate-400">Link to contact (optional)</label>
-        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+        <label className="type-label font-medium text-slate-400">Link to contact (optional)</label>
+        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <label className="text-xs font-medium text-slate-400">Link to lead (optional)</label>
-        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+        <label className="type-label font-medium text-slate-400">Link to lead (optional)</label>
+        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {leads.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
@@ -475,7 +475,7 @@ const TaskCreateContent: React.FC<{
         type="button"
         onClick={submit}
         disabled={creating}
-        className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm disabled:opacity-50"
+        className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl type-ui disabled:opacity-50"
       >
         {creating ? 'Saving…' : 'Create task'}
       </button>
@@ -621,7 +621,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
             toast.dismiss(toastId.id);
             toast.success('Task restored');
           }}
-          className="rounded-md bg-white/15 px-2 py-1 text-xs font-bold text-white hover:bg-white/25"
+          className="rounded-md bg-white/15 px-2 py-1 type-caption font-bold text-white hover:bg-white/25"
         >
           Undo
         </button>
@@ -941,19 +941,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               setBulkMode((v) => !v);
               setSelectedIds(new Set());
             }}
-            className={`px-3 py-1.5 rounded-[8px] text-xs font-semibold ${bulkMode ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}
+            className={`px-3 py-1.5 rounded-[8px] type-caption font-semibold ${bulkMode ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}
           >
             {bulkMode ? 'Cancel' : 'Select'}
           </button>
           {bulkMode && (
             <>
-              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-white/10">
+              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg type-ui font-bold text-slate-300 border border-white/10">
                 All
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30 disabled:opacity-40">
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-emerald-300 border border-emerald-500/30 disabled:opacity-40">
                 Complete ({selectedIds.size})
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-300 border border-rose-500/30 disabled:opacity-40">
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-rose-300 border border-rose-500/30 disabled:opacity-40">
                 Delete ({selectedIds.size})
               </button>
             </>
@@ -963,14 +963,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         <button
           type="button"
           onClick={() => setViewMode('list')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-semibold transition-colors ${viewMode === 'list' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
         >
           <List className="w-3.5 h-3.5" /> List
         </button>
         <button
           type="button"
           onClick={() => setViewMode('board')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-semibold transition-colors ${viewMode === 'board' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
         >
           <LayoutGrid className="w-3.5 h-3.5" /> Board
         </button>
@@ -1001,12 +1001,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
                     <AlertTriangle className="w-4 h-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+                    <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                       {taskDecision.overdueHigh > 0
                         ? `${taskDecision.overdueHigh} high-priority overdue — tackle before starting anything new`
                         : `${taskDecision.overdue} overdue item${taskDecision.overdue !== 1 ? 's' : ''} · ${taskDecision.highPriority} flagged high`}
                     </p>
-                    <p className="mt-0.5 text-[12px] text-[var(--ws-text-secondary)]">
+                    <p className="mt-0.5 type-card-description text-[var(--ws-text-secondary)]">
                       In-progress: {taskDecision.inProgress} · Due today: {taskDecision.dueToday} · Completion {taskDecision.completionRate}%
                       {Number.isFinite(taskDecision.projectedDays) && taskDecision.projectedDays > 0 ? ` · Backlog drain: ${taskDecision.projectedDays > 30 ? '>30' : Math.round(taskDecision.projectedDays)} days at ~${taskDecision.pacePerDay.toFixed(1)}/day` : ''}
                     </p>
@@ -1026,8 +1026,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-bold text-white">Microsoft To Do</h3>
-                <p className="text-xs text-slate-400">Connected task lists appear alongside native Alphaclone tasks.</p>
+                <h3 className="type-ui font-bold text-white">Microsoft To Do</h3>
+                <p className="type-card-description text-slate-400">Connected task lists appear alongside native Alphaclone tasks.</p>
               </div>
               <button
                 type="button"
@@ -1038,31 +1038,31 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               </button>
             </div>
             {microsoftLoading ? (
-              <div className="text-xs text-slate-500">Loading Microsoft To Do lists...</div>
+              <div className="type-caption text-slate-500">Loading Microsoft To Do lists...</div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {microsoftLists.map((list) => (
                   <div key={list.id} className="rounded-xl border border-blue-500/10 bg-slate-950/50 p-3">
-                    <p className="text-sm font-semibold text-white truncate">{list.displayName}</p>
-                    <p className="text-[11px] text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
+                    <p className="type-card-description font-semibold text-white truncate">{list.displayName}</p>
+                    <p className="type-card-description text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
                     <div className="mt-3 space-y-2">
                       {list.tasks.slice(0, 3).map((task: any) => (
                         <div key={task.id} className="rounded-lg bg-slate-900/70 px-2.5 py-2">
-                          <p className="text-xs font-medium text-slate-200 truncate">{task.title}</p>
-                          <p className="text-[11px] text-slate-500">
+                          <p className="type-card-description font-medium text-slate-200 truncate">{task.title}</p>
+                          <p className="type-card-description text-slate-500">
                             {task.status === 'completed' ? 'Completed' : 'Open in Microsoft To Do'}
                           </p>
                         </div>
                       ))}
                       {list.tasks.length === 0 && (
-                        <p className="text-[11px] text-slate-500">No Microsoft tasks in this list.</p>
+                        <p className="type-card-description text-slate-500">No Microsoft tasks in this list.</p>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {microsoftError && <p className="text-xs text-rose-400 mt-3">{microsoftError}</p>}
+            {microsoftError && <p className="type-card-description text-rose-400 mt-3">{microsoftError}</p>}
           </div>
         )}
         {loading ? (
@@ -1085,7 +1085,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         ) : (
           <div>
             {isTruncated && (
-              <div className="px-4 py-3 text-[12px] text-slate-400 bg-slate-900/60 border-b border-white/5">
+              <div className="px-4 py-3 type-ui text-slate-400 bg-slate-900/60 border-b border-white/5">
                 Showing {tasks.length.toLocaleString()} of {totalCount?.toLocaleString()} tasks
               </div>
             )}
@@ -1104,7 +1104,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               />
             ))}
             {hasMore && (
-              <div className="p-4 text-center text-xs text-slate-500 ac-skeleton-pulse">
+              <div className="p-4 text-center type-caption text-slate-500 ac-skeleton-pulse">
                 Loading more…
               </div>
             )}

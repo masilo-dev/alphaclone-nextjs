@@ -113,7 +113,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                             placeholder="Search growth leads..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-teal-500"
+                            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg type-ui text-slate-300 focus:outline-none focus:border-teal-500"
                         />
                     </div>
                     <Button
@@ -147,9 +147,9 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                                             className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
                                         />
                                     </th>
-                                    <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Business Name</th>
-                                    <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Industry</th>
-                                    <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Location</th>
+                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Business Name</th>
+                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Industry</th>
+                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Location</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -169,10 +169,10 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                                         </td>
                                         <td className="p-4">
                                             <div className="font-bold text-white">{lead.businessName}</div>
-                                            <div className="text-xs text-slate-500">{lead.email || 'No email'}</div>
+                                            <div className="type-caption text-slate-500">{lead.email || 'No email'}</div>
                                         </td>
-                                        <td className="p-4 text-sm text-slate-400">{lead.industry || '-'}</td>
-                                        <td className="p-4 text-sm text-slate-400">{lead.location || '-'}</td>
+                                        <td className="p-4 type-table-cell text-slate-400">{lead.industry || '-'}</td>
+                                        <td className="p-4 type-table-cell text-slate-400">{lead.location || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -181,7 +181,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                    <div className="text-xs text-slate-500">
+                    <div className="type-caption text-slate-500">
                         {selectedIds.size} leads selected for import
                     </div>
                     <div className="flex gap-3">

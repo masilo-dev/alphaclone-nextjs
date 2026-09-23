@@ -270,7 +270,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
                 <div className="flex flex-1 flex-col items-center justify-center gap-4 min-h-[320px]">
                     <div className="w-12 h-12 border-4 border-[var(--brand-blue-500)]/20 border-t-[var(--brand-blue-500)] rounded-full animate-spin" />
-                    <div className="text-slate-500 text-sm animate-pulse">Loading projects...</div>
+                    <div className="text-slate-500 type-ui animate-pulse">Loading projects...</div>
                 </div>
             </div>
         );
@@ -304,7 +304,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                     <h3 className="text-base font-black text-white tracking-tight mb-1">
                                         Project created! Want to create an invoice for this project?
                                     </h3>
-                                    <p className="text-sm text-slate-400 font-medium">
+                                    <p className="type-card-description text-slate-400 font-medium">
                                         <span className="text-[var(--brand-blue-300)] font-bold">{lastCreatedProject.name}</span>
                                         {lastCreatedProject.clientId && clients.find(c => c.id === lastCreatedProject.clientId)?.name && (
                                             <> · Client: <span className="text-slate-200 font-semibold">{clients.find(c => c.id === lastCreatedProject.clientId)?.name}</span></>
@@ -315,7 +315,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             <div className="flex items-center gap-3 shrink-0">
                                 <button
                                     onClick={() => setLastCreatedProject(null)}
-                                    className="px-4 py-2.5 text-sm font-bold text-slate-400 hover:text-white transition-colors"
+                                    className="px-4 py-2.5 type-ui font-bold text-slate-400 hover:text-white transition-colors"
                                 >
                                     Not now
                                 </button>
@@ -324,7 +324,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         openCreateInvoiceForProject(lastCreatedProject);
                                         setLastCreatedProject(null);
                                     }}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white text-sm font-semibold shadow-lg shadow-blue-900/25 active:scale-95 transition-all"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white type-ui font-semibold shadow-lg shadow-blue-900/25 active:scale-95 transition-all"
                                 >
                                     <DollarSign className="w-4 h-4" />
                                     Create Invoice
@@ -346,7 +346,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             Projects
                         </h2>
                     </div>
-                    <p className="text-[var(--ws-text-muted)] text-sm ml-1 mt-2 flex items-center gap-2">
+                    <p className="text-[var(--ws-text-muted)] type-card-description ml-1 mt-2 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--success-500)]"></span>
                         {projects.filter((project) => !isFinishedProject(project)).length} active · {projects.filter((project) => isFinishedProject(project)).length} finished
                     </p>
@@ -360,27 +360,27 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="Search projects…"
                             aria-label="Search projects"
-                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 text-xs text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
+                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 type-caption text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </label>
                     <div className="flex p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <LayoutList className="w-3.5 h-3.5" />
                             <span>List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <Activity className="w-3.5 h-3.5" />
                             <span>Health</span>
@@ -389,14 +389,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
                     <button
                         onClick={() => exportToCSV(projects, 'Projects')}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 text-[11px] font-bold text-white transition-all hover:bg-slate-800"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 type-ui font-bold text-white transition-all hover:bg-slate-800"
                     >
                         <Download className="w-3.5 h-3.5" />
                         Export CSV
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-[var(--brand-blue-50)] active:scale-95 shadow-xl hover:shadow-white/10"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 type-ui font-bold text-slate-900 transition-all hover:bg-[var(--brand-blue-50)] active:scale-95 shadow-xl hover:shadow-white/10"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         New Project
@@ -410,7 +410,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-lg type-caption font-semibold uppercase tracking-wide text-slate-500">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -429,7 +429,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             ) : filteredProjects.length === 0 ? (
                                 <div className="py-16 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
                                     <Target className="w-12 h-12 mb-3 opacity-20" />
-                                    <p className="text-xs text-slate-500">No projects found</p>
+                                    <p className="type-card-description text-slate-500">No projects found</p>
                                 </div>
                             ) : (
                                 filteredProjects.map((project) => (
@@ -548,15 +548,15 @@ const ProjectListRow = ({
                     <Briefcase className="w-5 h-5 text-slate-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors truncate">
+                    <h4 className="type-ui font-bold text-slate-200 group-hover:text-white transition-colors truncate">
                         {project.name}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">
+                        <span className="type-caption text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">
                             {project.category || 'General'}
                         </span>
                         {project.budget && (
-                            <span className="flex items-center gap-1 text-xs text-emerald-400/80 font-medium">
+                            <span className="flex items-center gap-1 type-caption text-emerald-400/80 font-medium">
                                 <DollarSign className="w-3 h-3" />
                                 {project.budget.toLocaleString()}
                             </span>
@@ -567,7 +567,7 @@ const ProjectListRow = ({
                                 style={{ width: `${project.progress}%` }}
                             />
                         </div>
-                        <span className="text-xs font-bold text-slate-500">{project.progress}%</span>
+                        <span className="type-caption font-bold text-slate-500">{project.progress}%</span>
                     </div>
                     {/* Stage Visualizer */}
                     <div className="mt-3">
@@ -586,7 +586,7 @@ const ProjectListRow = ({
                                 );
                             })}
                         </div>
-                        <div className="flex justify-between items-center text-xs text-slate-500">
+                        <div className="flex justify-between items-center type-caption text-slate-500">
                             <select
                                 value={getNormalizedStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
@@ -611,8 +611,8 @@ const ProjectListRow = ({
             {/* Mobile metadata */}
             <div className="lg:hidden grid grid-cols-2 gap-3 pt-3 mt-1 border-t border-white/5">
                 <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
-                    <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
+                    <span className={`inline-block px-2 py-1 rounded-lg type-caption font-medium border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                         project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                             'bg-slate-800 text-slate-400 border-white/5'
                         }`}>
@@ -620,8 +620,8 @@ const ProjectListRow = ({
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Health</span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Health</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg type-caption border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
                         project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                             'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                         }`}>
@@ -629,13 +629,13 @@ const ProjectListRow = ({
                     </span>
                 </div>
                 <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
+                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
                     {finished ? (
-                        <span className="text-xs font-semibold text-emerald-400">Finished</span>
+                        <span className="type-caption font-semibold text-emerald-400">Finished</span>
                     ) : project.dueDate ? (
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     ) : (
-                        <span className="text-xs text-slate-600 italic">No deadline</span>
+                        <span className="type-caption text-slate-600 italic">No deadline</span>
                     )}
                 </div>
                 <div className="flex items-end justify-end gap-1">
@@ -674,7 +674,7 @@ const ProjectListRow = ({
 
             {/* Status */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                <span className={`px-2.5 py-1 rounded-full type-ui font-bold border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
@@ -684,7 +684,7 @@ const ProjectListRow = ({
 
             {/* Health & Risk */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center gap-2">
-                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border type-ui font-bold ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
                     project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                         'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                     }`}>
@@ -696,13 +696,13 @@ const ProjectListRow = ({
             {/* Countdown */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 {finished ? (
-                    <span className="text-xs font-semibold text-emerald-400">Finished</span>
+                    <span className="type-caption font-semibold text-emerald-400">Finished</span>
                 ) : project.dueDate ? (
                     <div className="scale-90 origin-center bg-slate-950/50 px-2.5 py-1 rounded-full border border-white/5">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     </div>
                 ) : (
-                    <span className="text-xs text-slate-600 italic">No deadline</span>
+                    <span className="type-caption text-slate-600 italic">No deadline</span>
                 )}
             </div>
 
@@ -792,7 +792,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Health Distribution Panel could go here */}
                 <div className="p-6 bg-slate-900/40 border border-white/5 rounded-3xl">
-                    <h3 className="text-sm font-semibold text-slate-400 mb-6 flex items-center gap-2">
+                    <h3 className="type-ui font-semibold text-slate-400 mb-6 flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Project Health
                     </h3>
                     <div className="space-y-4">
@@ -801,11 +801,11 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                             const color = status === 'On Track' ? 'bg-emerald-500' : status === 'At Risk' ? 'bg-red-500' : 'bg-amber-500';
                             return (
                                 <div key={status} className="flex items-center gap-4">
-                                    <span className="text-xs font-bold text-white w-20">{status}</span>
+                                    <span className="type-caption font-bold text-white w-20">{status}</span>
                                     <div className="flex-1 h-2 bg-slate-950 rounded-full overflow-hidden">
                                         <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${(count / projects.length) * 100}%` }} />
                                     </div>
-                                    <span className="text-xs text-slate-500">{count}</span>
+                                    <span className="type-caption text-slate-500">{count}</span>
                                 </div>
                             )
                         })}
@@ -826,7 +826,7 @@ const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) =
         </div>
         <div>
             <div className="text-2xl font-bold text-white mb-1">{value}</div>
-            <div className="text-xs font-medium text-slate-500">{label}</div>
+            <div className="type-caption font-medium text-slate-500">{label}</div>
         </div>
     </div>
 );
@@ -876,24 +876,24 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                 </div>
                 <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
+                        <label className="type-label font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-medium focus:border-[var(--brand-blue-500)] outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-300 ml-1">Briefing</label>
+                        <label className="type-label font-semibold text-slate-300 ml-1">Briefing</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
                             className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-normal focus:border-[var(--brand-blue-500)] outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-300 ml-1">Due Date</label>
+                            <label className="type-label font-semibold text-slate-300 ml-1">Due Date</label>
                             <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none" />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-300 ml-1">Client</label>
+                            <label className="type-label font-semibold text-slate-300 ml-1">Client</label>
                             <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                                 className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none">
                                 <option value="">Internal</option>
@@ -904,7 +904,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-300 ml-1">Live Stage</label>
+                            <label className="type-label font-semibold text-slate-300 ml-1">Live Stage</label>
                             <select
                                 value={formData.currentStage}
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
@@ -919,7 +919,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-sm font-semibold text-slate-300 ml-1">Health Status</label>
+                            <label className="type-caption font-semibold text-slate-300 ml-1">Health Status</label>
                             <select
                                 value={formData.health}
                                 onChange={(e) => setFormData({ ...formData, health: e.target.value as any })}
@@ -933,7 +933,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-sm font-semibold text-slate-300 ml-1">Budget</label>
+                        <label className="type-label font-semibold text-slate-300 ml-1">Budget</label>
                         <input
                             type="number"
                             value={formData.budget}
@@ -946,15 +946,15 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     {initialData?.id && tenantId ? (
                         <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
                             <div>
-                                <p className="text-sm font-semibold text-white">Client portal</p>
-                                <p className="text-xs text-slate-400 mt-1">
+                                <p className="type-card-description font-semibold text-white">Client portal</p>
+                                <p className="type-card-description text-slate-400 mt-1">
                                     Generate a password-protected link so clients can track milestones and delivery.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setShareDialogOpen(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 text-sm font-semibold transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 type-ui font-semibold transition-all"
                             >
                                 <Share2 className="w-4 h-4" />
                                 Copy client portal link
@@ -963,8 +963,8 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     ) : null}
 
                     <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm text-slate-300 transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
+                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold type-ui text-slate-300 transition-all">Cancel</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-lg font-bold type-ui transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>
@@ -1005,11 +1005,11 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
     return (
         <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-950/20">
             <div className="flex border-b border-white/10 bg-slate-900/40 sticky top-0 z-20">
-                <div className="w-64 min-w-[16rem] p-4 text-xs font-medium text-slate-400 border-r border-white/5">Project Timeline</div>
+                <div className="w-64 min-w-[16rem] p-4 type-caption font-medium text-slate-400 border-r border-white/5">Project Timeline</div>
                 <div className="flex-1 relative h-12 flex">
                     {months.map((m, i) => (
                         <div key={i} className="flex-1 border-r border-white/5 last:border-0 p-3 text-center flex flex-col justify-center">
-                            <span className="text-xs text-slate-400">{m.toLocaleDateString('default', { month: 'short' })}</span>
+                            <span className="type-caption text-slate-400">{m.toLocaleDateString('default', { month: 'short' })}</span>
                         </div>
                     ))}
                 </div>
@@ -1018,7 +1018,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 opacity-30">
                         <BarChart3 className="w-12 h-12 mb-4" />
-                        <p className="text-sm text-slate-500">No active timelines</p>
+                        <p className="type-card-description text-slate-500">No active timelines</p>
                     </div>
                 ) : sorted.map(proj => {
                     const startPos = getPosition(proj.startDate || proj.createdAt, new Date());
@@ -1028,7 +1028,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                     return (
                         <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-[var(--brand-blue-500)]/30">
                             <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-slate-900/20 backdrop-blur-sm">
-                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
+                                <h4 className="type-card-title font-bold text-slate-200 group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">
                                 <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">
@@ -1039,7 +1039,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
                                     <div className="absolute top-0 bottom-0 left-0 bg-[var(--brand-blue-500)]/20" style={{ width: `${proj.progress}%` }}></div>
-                                    <span className="relative px-3 text-xs text-white truncate drop-shadow-md">{proj.name}</span>
+                                    <span className="relative px-3 type-caption text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
                         </div>

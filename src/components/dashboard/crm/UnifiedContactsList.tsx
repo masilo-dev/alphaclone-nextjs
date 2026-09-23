@@ -75,8 +75,8 @@ export default function UnifiedContactsList({
       <CRMWorkspaceBridge active="contacts" compact />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-bold text-white">Unified directory</h3>
-          <p className="text-xs text-slate-500">
+          <h3 className="type-ui font-bold text-white">Unified directory</h3>
+          <p className="type-card-description text-slate-500">
             Canonical CRM contacts merged with sales clients missing a linked row.
           </p>
         </div>
@@ -87,13 +87,13 @@ export default function UnifiedContactsList({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search name or email"
-              className="w-full rounded-xl border border-white/10 bg-slate-950 py-2 pl-9 pr-3 text-sm text-white"
+              className="w-full rounded-xl border border-white/10 bg-slate-950 py-2 pl-9 pr-3 type-ui text-white"
             />
           </div>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-1 rounded-xl border border-white/10 px-3 py-2 text-xs font-bold text-slate-300"
+            className="inline-flex items-center gap-1 rounded-xl border border-white/10 px-3 py-2 type-caption font-bold text-slate-300"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Refresh
@@ -118,11 +118,11 @@ export default function UnifiedContactsList({
             >
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{row.full_name}</p>
-                <p className="truncate text-xs text-slate-400">
+                <p className="truncate type-card-description text-slate-400">
                   {[row.email, row.phone].filter(Boolean).join(' · ') || 'No email or phone'}
                 </p>
               </div>
-              <div className="ml-3 flex shrink-0 items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <div className="ml-3 flex shrink-0 items-center gap-2 type-caption font-bold uppercase tracking-wide text-slate-500">
                 {row.email ? <Mail className="h-3.5 w-3.5" /> : null}
                 {row.phone ? <Phone className="h-3.5 w-3.5" /> : null}
                 {row.company_id ? <Building2 className="h-3.5 w-3.5" /> : null}

@@ -239,9 +239,9 @@ export default function SalesConsole() {
   return (
     <div className="p-4 space-y-5 overflow-y-auto pb-24 ac-scroll-full">
       <div>
-        <p className="text-[11px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Sales</p>
-        <h1 className="mt-1 text-[1.375rem] font-bold tracking-tight text-[var(--ws-text-primary)]">Pipeline &amp; forecast</h1>
-        <p className="mt-1 text-[13px] text-[var(--ws-text-secondary)] max-w-2xl">
+        <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Sales</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ws-text-primary)]">Pipeline &amp; forecast</h1>
+        <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] max-w-2xl">
           Weighted pipeline · expected value · stage conversion · next best actions.
         </p>
       </div>
@@ -299,10 +299,10 @@ export default function SalesConsole() {
               <AlertTriangle className="w-4 h-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                 {hotCount} high-priority deal{hotCount !== 1 ? 's' : ''} by expected value
               </p>
-              <p className="mt-0.5 text-[12px] text-[var(--ws-text-secondary)]">
+              <p className="mt-0.5 type-card-description text-[var(--ws-text-secondary)]">
                 Expected-value surfaced — tackle these before administrative work to multiply revenue outcomes.
               </p>
             </div>
@@ -317,52 +317,52 @@ export default function SalesConsole() {
               <Gauge className="w-4 h-4" />
             </span>
             <div>
-              <h3 className="text-[14px] font-bold text-[var(--ws-text-primary)]">Weighted pipeline forecast</h3>
-              <p className="text-[11.5px] text-[var(--ws-text-muted)] mt-0.5">Value × probability at each stage.</p>
+              <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Weighted pipeline forecast</h3>
+              <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Value × probability at each stage.</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => router.push('/dashboard/forecast')}
-            className="text-[11.5px] text-[var(--success-text)] font-bold inline-flex items-center gap-1"
+            className="type-ui text-[var(--success-text)] font-bold inline-flex items-center gap-1"
           >
             View full forecast <ArrowRight className="w-3 h-3" />
           </button>
         </div>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
-            <p className="text-[10.5px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Total value</p>
-            <p className="mt-1 text-[1.15rem] font-black text-[var(--ws-text-primary)] tabular-nums">
+            <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Total value</p>
+            <p className="mt-1 text-lg font-black text-[var(--ws-text-primary)] tabular-nums">
               {formatMoney(pipelineTotalsVm.totalValue || stats.pipelineValue)}
             </p>
           </div>
           <div>
-            <p className="text-[10.5px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Weighted EV</p>
-            <p className="mt-1 text-[1.15rem] font-black text-[var(--success-text)] tabular-nums">
+            <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Weighted EV</p>
+            <p className="mt-1 text-lg font-black text-[var(--success-text)] tabular-nums">
               {formatMoney(pipelineTotalsVm.weightedValue || stats.weightedForecast)}
             </p>
           </div>
           <div>
-            <p className="text-[10.5px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Forecast</p>
-            <p className="mt-1 text-[1.15rem] font-black text-[var(--brand-amber-400)] tabular-nums">
+            <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Forecast</p>
+            <p className="mt-1 text-lg font-black text-[var(--brand-amber-400)] tabular-nums">
               {formatMoney(pipelineTotalsVm.forecastValue || stats.weightedForecast)}
             </p>
           </div>
           <div>
-            <p className="text-[10.5px] font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Avg deal</p>
-            <p className="mt-1 text-[1.15rem] font-black text-[var(--ws-text-primary)] tabular-nums">
+            <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Avg deal</p>
+            <p className="mt-1 text-lg font-black text-[var(--ws-text-primary)] tabular-nums">
               {formatMoney(pipelineTotalsVm.averageDealValue || (stats.pipelineValue / Math.max(stats.openDeals, 1)))}
             </p>
           </div>
         </div>
         {pipelineTotalsVm.expectedWinRate != null ? (
           <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-[var(--ws-text-secondary)]">
+            <span className="inline-flex items-center gap-1.5 type-ui text-[var(--ws-text-secondary)]">
               <BarChart3 className="w-3.5 h-3.5" />
               Expected win rate
             </span>
             <span className={cn(
-              'text-[12.5px] font-bold tabular-nums',
+              'type-ui font-bold tabular-nums',
               pipelineTotalsVm.expectedWinRate >= 25
                 ? 'text-[var(--success-text)]'
                 : pipelineTotalsVm.expectedWinRate >= 15
@@ -371,7 +371,7 @@ export default function SalesConsole() {
             )}>
               {pipelineTotalsVm.expectedWinRate}%
               {pipelineTotalsVm.expectedWinRate < 20 ? (
-                <span className="ml-2 inline-flex items-center gap-1 text-[10px] font-bold text-[var(--warning-text)]">
+                <span className="ml-2 inline-flex items-center gap-1 type-ui font-bold text-[var(--warning-text)]">
                   <AlertTriangle className="w-3 h-3" /> Below healthy range
                 </span>
               ) : null}
@@ -389,18 +389,18 @@ export default function SalesConsole() {
           <div className="px-4 py-3 border-b border-white/[0.04] flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[var(--brand-violet-400)]" />
-              <span className="text-[13px] font-bold text-[var(--ws-text-primary)]">Leads needing action</span>
+              <span className="type-ui font-bold text-[var(--ws-text-primary)]">Leads needing action</span>
             </div>
             <button
               type="button"
               onClick={() => router.push('/dashboard/leads')}
-              className="text-[11px] text-[var(--success-text)] font-bold flex items-center gap-1"
+              className="type-ui text-[var(--success-text)] font-bold flex items-center gap-1"
             >
               View all <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           {hotLeads.length === 0 ? (
-            <p className="text-sm text-[var(--ws-text-muted)] p-6 text-center">No new leads — use Find Leads to grow pipeline.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] p-6 text-center">No new leads — use Find Leads to grow pipeline.</p>
           ) : (
             hotLeads.map((l) => (
               <button
@@ -409,8 +409,8 @@ export default function SalesConsole() {
                 onClick={() => router.push('/dashboard/leads')}
                 className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/5 text-left"
               >
-                <span className="text-[13px] text-[var(--ws-text-primary)]">{l.name}</span>
-                <span className="text-[11px] text-[var(--ws-text-muted)] capitalize">{l.status}</span>
+                <span className="type-ui text-[var(--ws-text-primary)]">{l.name}</span>
+                <span className="type-caption text-[var(--ws-text-muted)] capitalize">{l.status}</span>
               </button>
             ))
           )}

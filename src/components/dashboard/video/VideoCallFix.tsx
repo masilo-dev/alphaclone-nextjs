@@ -200,7 +200,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
           
           {isMobileDevice() && (
             <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg">
-              <p className="text-yellow-400 text-sm">
+              <p className="text-yellow-400 type-card-description">
                 📱 Mobile device detected. For best experience, use landscape mode and ensure stable internet connection.
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
 
           <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700 rounded-lg">
             <h3 className="text-blue-400 font-medium mb-2">Troubleshooting Tips:</h3>
-            <ul className="text-blue-300 text-sm space-y-1 text-left">
+            <ul className="text-blue-300 type-ui space-y-1 text-left">
               <li>• Check your internet connection</li>
               <li>• Ensure camera and microphone permissions are granted</li>
               <li>• Try refreshing the page</li>

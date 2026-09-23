@@ -79,7 +79,7 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                         className="bg-green-600 hover:bg-green-500 flex items-center justify-center gap-2 h-12 px-2"
                     >
                         <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-xs sm:text-sm">It Happened</span>
+                        <span className="type-caption sm:text-sm">It Happened</span>
                     </Button>
                     <Button
                         onClick={() => handleAction('postponed')}
@@ -87,7 +87,7 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                         className="bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2 h-12 px-2"
                     >
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-xs sm:text-sm">Postponed</span>
+                        <span className="type-caption sm:text-sm">Postponed</span>
                     </Button>
                     <Button
                         onClick={() => handleAction('cancelled')}
@@ -95,12 +95,12 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                         className="bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 h-12 px-2"
                     >
                         <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span className="text-xs sm:text-sm">Cancelled</span>
+                        <span className="type-caption sm:text-sm">Cancelled</span>
                     </Button>
                 </div>
 
                 <div className="flex justify-between items-center pt-4 border-t border-slate-800">
-                    <span className="text-xs text-slate-500">
+                    <span className="type-caption text-slate-500">
                         {currentIndex + 1} of {actualCalendarEvents.length} past events
                     </span>
                     <Button variant="ghost" onClick={handleDismiss} disabled={isUpdating} className="text-slate-400 hover:text-white hover:bg-slate-800">

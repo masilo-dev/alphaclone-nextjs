@@ -84,7 +84,7 @@ export function NotificationBell() {
               alignItems="center"
               justifyContent="center"
             >
-              <Text fontSize="10px" fontWeight="bold" color="white">
+              <Text fontSize="var(--type-caption-size)" fontWeight="bold" color="white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </Text>
             </Box>

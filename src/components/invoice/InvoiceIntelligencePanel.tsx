@@ -177,10 +177,10 @@ export default function InvoiceIntelligencePanel({
   const sentAt = invoice?.sent_at;
 
   return (
-    <div className="space-y-5 text-sm">
+    <div className="space-y-5 type-ui">
       {/* Status Pipeline */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Lifecycle</p>
+        <p className="type-caption font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Lifecycle</p>
         <InvoiceStatusPipeline
           status={(invoice?.status || 'draft') as InvoiceStatus}
           timestamps={{
@@ -195,7 +195,7 @@ export default function InvoiceIntelligencePanel({
 
       {/* Read Receipt Card */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Read Receipt</p>
+        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Read Receipt</p>
         {viewedAt ? (
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 bg-violet-500/10 border border-violet-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -203,9 +203,9 @@ export default function InvoiceIntelligencePanel({
             </div>
             <div>
               <p className="font-semibold text-violet-300">Client opened invoice</p>
-              <p className="text-slate-500 text-xs">{formatRelativeTime(viewedAt)}</p>
+              <p className="text-slate-500 type-card-description">{formatRelativeTime(viewedAt)}</p>
               {viewCount > 1 && (
-                <p className="text-slate-600 text-xs mt-0.5">Viewed {viewCount} times total</p>
+                <p className="text-slate-600 type-card-description mt-0.5">Viewed {viewCount} times total</p>
               )}
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function InvoiceIntelligencePanel({
             </div>
             <div>
               <p className="font-semibold text-amber-300">Not yet opened</p>
-              <p className="text-slate-500 text-xs">Sent {formatRelativeTime(sentAt)}</p>
+              <p className="text-slate-500 type-card-description">Sent {formatRelativeTime(sentAt)}</p>
             </div>
           </div>
         ) : (
@@ -229,28 +229,28 @@ export default function InvoiceIntelligencePanel({
 
       {/* Delivery Status */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Email Delivery</p>
+        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Email Delivery</p>
         <div className="flex items-center gap-3">
           <div className={cn('w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0', deliveryCfg.bg)}>
             <Shield className={cn('w-4 h-4', deliveryCfg.color)} />
           </div>
           <div>
             <span className={cn('font-bold', deliveryCfg.color)}>{deliveryCfg.label}</span>
-            {sentAt && <p className="text-slate-500 text-xs">Sent {formatRelativeTime(sentAt)}</p>}
+            {sentAt && <p className="text-slate-500 type-card-description">Sent {formatRelativeTime(sentAt)}</p>}
           </div>
         </div>
       </div>
 
       {/* Actions */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Actions</p>
+        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Actions</p>
 
         <button
           onClick={handleDownloadCertificate}
           className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-slate-300 hover:text-white"
         >
           <Download className="w-4 h-4 text-teal-400 flex-shrink-0" />
-          <span className="text-sm font-medium">Download Delivery Certificate</span>
+          <span className="type-ui font-medium">Download Delivery Certificate</span>
         </button>
 
         {['sent', 'viewed', 'overdue'].includes(invoice?.status) && (
@@ -264,7 +264,7 @@ export default function InvoiceIntelligencePanel({
             ) : (
               <Send className="w-4 h-4 text-orange-400 flex-shrink-0" />
             )}
-            <span className="text-sm font-medium">Send Manual Reminder</span>
+            <span className="type-ui font-medium">Send Manual Reminder</span>
           </button>
         )}
 
@@ -285,7 +285,7 @@ export default function InvoiceIntelligencePanel({
           ) : (
             <BellOff className="w-4 h-4 flex-shrink-0" />
           )}
-          <span className="text-sm font-medium">
+          <span className="type-ui font-medium">
             {autoFollowup ? 'Auto Follow-Up: On' : 'Auto Follow-Up: Off'}
           </span>
         </button>
@@ -294,7 +294,7 @@ export default function InvoiceIntelligencePanel({
       {/* Audit Timeline */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Activity Timeline</p>
+          <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Activity Timeline</p>
           <button
             onClick={loadAuditLog}
             className="p-1 text-slate-600 hover:text-slate-400 transition-colors"
@@ -308,7 +308,7 @@ export default function InvoiceIntelligencePanel({
             <Loader2 className="w-5 h-5 animate-spin text-slate-600" />
           </div>
         ) : auditLog.length === 0 ? (
-          <p className="text-slate-600 text-xs text-center py-4">No events yet</p>
+          <p className="text-slate-600 type-card-description text-center py-4">No events yet</p>
         ) : (
           <div className="space-y-0 relative">
             <div className="absolute left-4 top-4 bottom-4 w-px bg-slate-800" />
@@ -330,18 +330,18 @@ export default function InvoiceIntelligencePanel({
                       <Icon className={cn('w-3.5 h-3.5', color)} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-300 text-xs leading-tight">
+                      <p className="font-semibold text-slate-300 type-card-description leading-tight">
                         {formatEventLabel(event.event_type)}
                       </p>
                       {event.event_data?.status_changed_to && (
-                        <p className="text-xs text-slate-600">
+                        <p className="type-card-description text-slate-600">
                           → {event.event_data.status_changed_to}
                         </p>
                       )}
                       {event.event_data?.source && (
-                        <p className="text-xs text-slate-600 capitalize">{event.event_data.source.replace('_', ' ')}</p>
+                        <p className="type-card-description text-slate-600 capitalize">{event.event_data.source.replace('_', ' ')}</p>
                       )}
-                      <p className="text-slate-600 text-[10px] mt-0.5">{formatRelativeTime(event.created_at)}</p>
+                      <p className="text-slate-600 type-card-description mt-0.5">{formatRelativeTime(event.created_at)}</p>
                     </div>
                   </motion.div>
                 );

@@ -174,7 +174,7 @@ export default function PagesTab() {
         return (
             <div>
                 <div
-                    className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all text-sm
+                    className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all type-ui
                         ${isSelected ? 'bg-teal-500/15 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                     style={{ paddingLeft: `${0.5 + depth * 1.25}rem` }}
                     onClick={() => setSelectedPageId(page.id)}
@@ -204,12 +204,12 @@ export default function PagesTab() {
                             onBlur={() => renameSubmit(page.id)}
                             onKeyDown={e => { if (e.key === 'Enter') renameSubmit(page.id); if (e.key === 'Escape') setRenamingId(null); }}
                             onClick={e => e.stopPropagation()}
-                            className="flex-1 bg-slate-900 text-white text-sm px-1 py-0 rounded border border-teal-500 outline-none min-w-0"
+                            className="flex-1 bg-slate-900 text-white type-ui px-1 py-0 rounded border border-teal-500 outline-none min-w-0"
                             placeholder="Page title"
                             autoFocus
                         />
                     ) : (
-                        <span className="flex-1 truncate text-sm">{page.title}</span>
+                        <span className="flex-1 truncate type-ui">{page.title}</span>
                     )}
 
                     {/* Action buttons - visible on hover */}
@@ -230,17 +230,17 @@ export default function PagesTab() {
                             </button>
                             {showMenu && (
                                 <div className="absolute right-0 top-full mt-1 w-40 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 py-1">
-                                    <button onClick={e => { e.stopPropagation(); setRenamingId(page.id); setRenameValue(page.title); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white">
+                                    <button onClick={e => { e.stopPropagation(); setRenamingId(page.id); setRenameValue(page.title); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
                                         <Edit3 className="w-3 h-3" /> Rename
                                     </button>
-                                    <button onClick={e => { e.stopPropagation(); createPage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white">
+                                    <button onClick={e => { e.stopPropagation(); createPage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
                                         <Plus className="w-3 h-3" /> Add sub-page
                                     </button>
-                                    <button onClick={e => { e.stopPropagation(); archivePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white">
+                                    <button onClick={e => { e.stopPropagation(); archivePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
                                         <Archive className="w-3 h-3" /> Archive
                                     </button>
                                     <div className="my-1 border-t border-slate-800" />
-                                    <button onClick={e => { e.stopPropagation(); deletePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10">
+                                    <button onClick={e => { e.stopPropagation(); deletePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-red-400 hover:bg-red-500/10">
                                         <Trash2 className="w-3 h-3" /> Delete
                                     </button>
                                 </div>
@@ -287,7 +287,7 @@ export default function PagesTab() {
             <aside className="w-60 shrink-0 flex flex-col border-r border-slate-800/60 bg-slate-950 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800/60">
-                    <div className="flex items-center gap-2 text-slate-300 text-sm font-semibold">
+                    <div className="flex items-center gap-2 text-slate-300 type-ui font-semibold">
                         <FileText className="w-4 h-4 text-teal-400" />
                         Pages
                     </div>
@@ -308,7 +308,7 @@ export default function PagesTab() {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Search pages..."
-                            className="w-full bg-slate-900 text-slate-300 text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-800 outline-none focus:border-teal-500/50 placeholder:text-slate-600"
+                            className="w-full bg-slate-900 text-slate-300 type-caption pl-8 pr-3 py-2 rounded-lg border border-slate-800 outline-none focus:border-teal-500/50 placeholder:text-slate-600"
                         />
                     </div>
                 </div>
@@ -318,10 +318,10 @@ export default function PagesTab() {
                     {pages.length === 0 ? (
                         <div className="text-center py-8 px-4">
                             <FileText className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                            <p className="text-xs text-slate-500 mb-3">No pages yet. Create your first client-facing page.</p>
+                            <p className="type-card-description text-slate-500 mb-3">No pages yet. Create your first client-facing page.</p>
                             <button
                                 onClick={() => createPage(null)}
-                                className="text-xs text-teal-400 hover:text-teal-300 font-medium"
+                                className="type-caption text-teal-400 hover:text-teal-300 font-medium"
                             >
                                 + Create your first page
                             </button>
@@ -330,7 +330,7 @@ export default function PagesTab() {
                         filteredPages.map(page => (
                             <div
                                 key={page.id}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${selectedPageId === page.id ? 'bg-teal-500/15 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer type-ui transition-colors ${selectedPageId === page.id ? 'bg-teal-500/15 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                                 onClick={() => { setSelectedPageId(page.id); setSearchTerm(''); }}
                             >
                                 <span>{page.icon}</span>
@@ -388,7 +388,7 @@ export default function PagesTab() {
                                         {selectedPage.title || 'Untitled'}
                                     </h1>
                                 )}
-                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                <div className="flex items-center gap-3 mt-1 type-caption text-slate-500">
                                     <span>
                                         {savingId === selectedPage.id ? (
                                             <span className="flex items-center gap-1 text-teal-500">

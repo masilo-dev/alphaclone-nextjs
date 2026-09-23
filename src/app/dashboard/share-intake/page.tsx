@@ -43,11 +43,11 @@ function ShareIntakeContent() {
       <NativeScreenHeader title="Shared to AlphaClone" onBack={() => router.push('/dashboard')} />
       <div className="px-4 py-4 space-y-4">
         {shared.combined ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-300 whitespace-pre-wrap break-words">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 type-ui text-slate-300 whitespace-pre-wrap break-words">
             {shared.combined}
           </div>
         ) : (
-          <p className="text-sm text-slate-400">Nothing was shared. Try sharing a link or note from another app.</p>
+          <p className="type-card-description text-slate-400">Nothing was shared. Try sharing a link or note from another app.</p>
         )}
       </div>
 

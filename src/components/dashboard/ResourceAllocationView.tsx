@@ -226,7 +226,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 <Users className="w-5 h-5 text-teal-400" />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-400">Total Team</div>
+                                <div className="type-ui text-slate-400">Total Team</div>
                                 <div className="text-2xl font-bold text-white">{totalMembers}</div>
                             </div>
                         </div>
@@ -237,7 +237,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 <CheckCircle className="w-5 h-5 text-green-400" />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-400">Available</div>
+                                <div className="type-ui text-slate-400">Available</div>
                                 <div className="text-2xl font-bold text-white">{availableMembers}</div>
                             </div>
                         </div>
@@ -248,7 +248,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 <Briefcase className="w-5 h-5 text-orange-400" />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-400">Avg Capacity</div>
+                                <div className="type-ui text-slate-400">Avg Capacity</div>
                                 <div className="text-2xl font-bold text-white">{avgCapacity}%</div>
                             </div>
                         </div>
@@ -269,12 +269,12 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     />
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-white truncate">{member.name}</h3>
-                                        <p className="text-xs text-slate-400 truncate">{member.role}</p>
+                                        <p className="type-card-description text-slate-400 truncate">{member.role}</p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => handleQuickStatusToggle(member)}
-                                        className={`min-h-11 px-2 py-0.5 text-xs rounded-full transition-colors ${member.status === 'Available'
+                                        className={`min-h-11 px-2 py-0.5 type-caption rounded-full transition-colors ${member.status === 'Available'
                                             ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                                             : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                                             }`}
@@ -284,7 +284,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 </div>
 
                                 <div className="mt-2">
-                                    <div className="flex justify-between text-xs mb-1">
+                                    <div className="flex justify-between type-caption mb-1">
                                         <span className="text-slate-400">Workload</span>
                                         <span className={
                                             member.capacity > 80 ? 'text-orange-400' :
@@ -307,7 +307,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 </div>
 
                                 <div>
-                                    <div className="text-xs text-slate-400 mb-2 flex items-center gap-2">
+                                    <div className="type-caption text-slate-400 mb-2 flex items-center gap-2">
                                         <Briefcase className="w-3 h-3" />
                                         <span>Assigned Projects ({assignedProjects.length})</span>
                                     </div>
@@ -316,22 +316,22 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                             {assignedProjects.slice(0, 3).map(project => (
                                                 <div
                                                     key={project.id}
-                                                    className="text-xs bg-slate-800/50 px-2 py-1 rounded border border-slate-700/50"
+                                                    className="type-caption bg-slate-800/50 px-2 py-1 rounded border border-slate-700/50"
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-slate-300 truncate">{project.name}</span>
-                                                        <span className="text-slate-500 text-xs ml-2">{project.progress}%</span>
+                                                        <span className="text-slate-500 type-caption ml-2">{project.progress}%</span>
                                                     </div>
                                                 </div>
                                             ))}
                                             {assignedProjects.length > 3 && (
-                                                <div className="text-xs text-slate-500 text-center">
+                                                <div className="type-caption text-slate-500 text-center">
                                                     +{assignedProjects.length - 3} more
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-xs text-slate-500 text-center py-2 bg-slate-900/30 rounded border border-dashed border-slate-800">
+                                        <div className="type-caption text-slate-500 text-center py-2 bg-slate-900/30 rounded border border-dashed border-slate-800">
                                             No assignments
                                         </div>
                                     )}
@@ -341,7 +341,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     {member.skills.slice(0, 3).map(skill => (
                                         <span
                                             key={skill}
-                                            className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-300 border border-slate-700"
+                                            className="px-2 py-1 bg-slate-800 rounded type-caption text-slate-300 border border-slate-700"
                                         >
                                             {skill}
                                         </span>
@@ -351,7 +351,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full mt-auto text-xs min-h-11"
+                                    className="w-full mt-auto type-caption min-h-11"
                                     onClick={() => handleManageAssignment(member)}
                                 >
                                     <Edit className="w-3 h-3 mr-2" />
@@ -369,14 +369,14 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                         title={`Manage Assignments - ${selectedMember.name}`}
                     >
                         <div className="space-y-4">
-                            <p className="text-sm text-slate-400">
+                            <p className="type-card-description text-slate-400">
                                 Select projects to assign to {selectedMember.name}. Each project adds ~20% to workload.
                             </p>
 
                             {projects.length === 0 ? (
                                 <div className="p-8 text-center border border-dashed border-slate-800 rounded-lg">
                                     <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                                    <p className="text-slate-400 text-sm">No active projects available</p>
+                                    <p className="text-slate-400 type-card-description">No active projects available</p>
                                 </div>
                             ) : (
                                 <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -395,12 +395,12 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <h4 className="font-semibold text-white text-sm">{project.name}</h4>
+                                                            <h4 className="font-semibold text-white type-ui">{project.name}</h4>
                                                             {isAssigned && (
                                                                 <CheckCircle className="w-4 h-4 text-teal-400" />
                                                             )}
                                                         </div>
-                                                        <p className="text-xs text-slate-400">{project.category} • {project.currentStage}</p>
+                                                        <p className="type-card-description text-slate-400">{project.category} • {project.currentStage}</p>
                                                         <div className="flex items-center gap-2 mt-2">
                                                             <div className="flex-1 bg-slate-900 h-1 rounded-full overflow-hidden">
                                                                 <div
@@ -408,7 +408,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                                     style={{ width: `${project.progress}%` }}
                                                                 />
                                                             </div>
-                                                            <span className="text-xs text-slate-500">{project.progress}%</span>
+                                                            <span className="type-caption text-slate-500">{project.progress}%</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -420,8 +420,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 
                             <div className="pt-4 border-t border-slate-800">
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-sm text-slate-400">Estimated Workload:</span>
-                                    <span className={`text-sm font-semibold ${selectedProjects.length * 20 > 100 ? 'text-red-400' :
+                                    <span className="type-ui text-slate-400">Estimated Workload:</span>
+                                    <span className={`type-ui font-semibold ${selectedProjects.length * 20 > 100 ? 'text-red-400' :
                                         selectedProjects.length * 20 > 80 ? 'text-orange-400' :
                                             'text-teal-400'
                                         }`}>

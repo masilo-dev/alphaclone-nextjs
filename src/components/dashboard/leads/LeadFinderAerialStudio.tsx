@@ -209,7 +209,7 @@ export default function LeadFinderAerialStudio({ lead, allLeads = [], onSelectLe
             <Text fontSize="sm" fontWeight="semibold" color="white" noOfLines={1}>
               Aerial studio
             </Text>
-            <Badge colorScheme="teal" variant="subtle" fontSize="10px">
+            <Badge colorScheme="teal" variant="subtle" fontSize="var(--type-caption-size)">
               Building · Birds-eye · Street
             </Badge>
           </HStack>
@@ -337,7 +337,7 @@ export default function LeadFinderAerialStudio({ lead, allLeads = [], onSelectLe
           borderColor="whiteAlpha.200"
         >
           <MetaIcon size={12} color="#5EEAD4" />
-          <Text fontSize="10px" color="teal.200" fontWeight="bold" textTransform="uppercase">
+          <Text fontSize="var(--type-caption-size)" color="teal.200" fontWeight="bold" textTransform="uppercase">
             {MODE_META[mode].label} live
           </Text>
         </HStack>

@@ -103,7 +103,7 @@ export function ModuleIntelligenceCard({
 
   if (loading && !data) {
     return (
-      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-xs text-slate-400 flex items-center gap-2">
+      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 type-caption text-slate-400 flex items-center gap-2">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
         Loading module intelligence...
       </div>
@@ -115,15 +115,15 @@ export function ModuleIntelligenceCard({
     return (
       <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs uppercase tracking-wider text-slate-400">{title}</h4>
+          <h4 className="type-caption uppercase tracking-wider text-slate-400">{title}</h4>
           <button
             onClick={() => load()}
-            className="text-[10px] text-teal-400 hover:text-teal-300 font-bold uppercase tracking-wider flex items-center gap-1"
+            className="type-caption text-teal-400 hover:text-teal-300 font-bold uppercase tracking-wider flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" /> Scan
           </button>
         </div>
-        <p className="text-[11px] text-slate-500">
+        <p className="type-card-description text-slate-500">
           {unavailable
             ? 'Intelligence is still warming up for this workspace — add a few records, then run a scan.'
             : 'No insights yet.'}
@@ -137,9 +137,9 @@ export function ModuleIntelligenceCard({
   return (
     <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2.5">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs uppercase tracking-wider text-slate-400">{title}</h4>
+        <h4 className="type-caption uppercase tracking-wider text-slate-400">{title}</h4>
         <div className="flex items-center gap-2">
-          <div className={`text-sm font-bold ${scoreTone}`}>{Math.round(data.module.score)}</div>
+          <div className={`type-ui font-bold ${scoreTone}`}>{Math.round(data.module.score)}</div>
           <button
             onClick={() => load()}
             title="Recalibrate scan"
@@ -160,16 +160,16 @@ export function ModuleIntelligenceCard({
             {executing === topAction
               ? <Loader2 className="w-3.5 h-3.5 text-teal-400 animate-spin mt-0.5 shrink-0" />
               : <Zap className="w-3.5 h-3.5 text-teal-400 mt-0.5 shrink-0" />}
-            <span className="text-xs text-teal-100 font-medium line-clamp-2">{topAction}</span>
+            <span className="type-caption text-teal-100 font-medium line-clamp-2">{topAction}</span>
           </span>
           <Play className="w-3 h-3 text-teal-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
         </button>
       ) : (
-        <p className="text-[11px] text-slate-500">System optimized — no immediate action needed.</p>
+        <p className="type-card-description text-slate-500">System optimized — no immediate action needed.</p>
       )}
 
       {data.systemicRisks?.[0] && (
-        <p className="text-[11px] text-amber-300 flex items-start gap-1.5 line-clamp-2">
+        <p className="type-card-description text-amber-300 flex items-start gap-1.5 line-clamp-2">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           {data.systemicRisks[0]}
         </p>

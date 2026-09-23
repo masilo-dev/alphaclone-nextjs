@@ -76,13 +76,13 @@ export function DashboardBarChart({
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 width={52}
@@ -98,7 +98,7 @@ export function DashboardBarChart({
                   height={28}
                   iconType="circle"
                   formatter={(value: string) => (value === 'value2' ? 'Collected' : 'Invoiced')}
-                  wrapperStyle={{ fontSize: 11, color: '#94a3b8' }}
+                  wrapperStyle={{ fontSize: 'var(--type-caption-size)', color: '#94a3b8' }}
                 />
               ) : null}
               <Bar dataKey="value" name="value" fill={`url(#bar-fill-${gradientId})`} radius={[8, 8, 2, 2]} maxBarSize={42} />

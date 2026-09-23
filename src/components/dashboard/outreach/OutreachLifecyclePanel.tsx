@@ -464,17 +464,17 @@ export function OutreachLifecyclePanel() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-white">
+          <h2 className="type-ui font-semibold text-white">
             Sequences & campaign safety
           </h2>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="mt-0.5 type-card-description text-slate-500">
             Conditional multi-channel outreach with approvals, frequency caps
             and automatic safety pauses.
           </p>
         </div>
         <button
           onClick={() => setCreating((value) => !value)}
-          className="ac-workspace-action-btn ac-workspace-action-btn--primary text-[11px] min-h-8 px-3"
+          className="ac-workspace-action-btn ac-workspace-action-btn--primary type-ui min-h-8 px-3"
         >
           <Plus className="h-3.5 w-3.5" /> New sequence
         </button>
@@ -483,7 +483,7 @@ export function OutreachLifecyclePanel() {
         <section className={panel}>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-sky-300" />
-            <p className="text-xs font-bold text-white">CRM audiences</p>
+            <p className="type-card-description font-bold text-white">CRM audiences</p>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <input
@@ -492,7 +492,7 @@ export function OutreachLifecyclePanel() {
                 setAudienceForm({ ...audienceForm, name: e.target.value })
               }
               placeholder="Audience name"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <select
               value={audienceForm.source}
@@ -504,7 +504,7 @@ export function OutreachLifecyclePanel() {
                   industry: "",
                 })
               }
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             >
               <option value="leads">Leads</option>
               <option value="contacts">Contacts</option>
@@ -516,7 +516,7 @@ export function OutreachLifecyclePanel() {
                 setAudienceForm({ ...audienceForm, status: e.target.value })
               }
               placeholder="Status (optional)"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <input
               value={audienceForm.industry}
@@ -525,7 +525,7 @@ export function OutreachLifecyclePanel() {
               }
               placeholder="Industry (optional)"
               disabled={audienceForm.source === "contacts"}
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white disabled:opacity-40"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white disabled:opacity-40"
             />
             <input
               value={audienceForm.search}
@@ -533,13 +533,13 @@ export function OutreachLifecyclePanel() {
                 setAudienceForm({ ...audienceForm, search: e.target.value })
               }
               placeholder="Name or email contains"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white sm:col-span-2"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white sm:col-span-2"
             />
           </div>
           <button
             onClick={() => void saveAudience()}
             disabled={!audienceForm.name.trim()}
-            className="mt-2 rounded-lg bg-sky-500/15 px-3 py-2 text-[10px] font-bold text-sky-200 disabled:opacity-40"
+            className="mt-2 rounded-lg bg-sky-500/15 px-3 py-2 type-ui font-bold text-sky-200 disabled:opacity-40"
           >
             Calculate & save audience
           </button>
@@ -547,7 +547,7 @@ export function OutreachLifecyclePanel() {
             {audiences.map((audience) => (
               <span
                 key={audience.id}
-                className="rounded-lg border border-white/10 px-2 py-1 text-[10px] text-slate-300"
+                className="rounded-lg border border-white/10 px-2 py-1 type-ui text-slate-300"
               >
                 {audience.name} · {audience.estimated_size || 0}
               </span>
@@ -557,7 +557,7 @@ export function OutreachLifecyclePanel() {
         <section className={panel}>
           <div className="flex items-center gap-2">
             <FlaskConical className="h-4 w-4 text-violet-300" />
-            <p className="text-xs font-bold text-white">A/B experiments</p>
+            <p className="type-card-description font-bold text-white">A/B experiments</p>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <input
@@ -566,7 +566,7 @@ export function OutreachLifecyclePanel() {
                 setExperimentForm({ ...experimentForm, name: e.target.value })
               }
               placeholder="Experiment name"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <select
               value={experimentForm.sequenceId}
@@ -576,7 +576,7 @@ export function OutreachLifecyclePanel() {
                   sequenceId: e.target.value,
                 })
               }
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             >
               <option value="">Select sequence</option>
               {sequences.map((sequence) => (
@@ -594,14 +594,14 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="Hypothesis"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <select
               value={experimentForm.metric}
               onChange={(e) =>
                 setExperimentForm({ ...experimentForm, metric: e.target.value })
               }
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             >
               <option value="open_rate">Open rate</option>
               <option value="click_rate">Click rate</option>
@@ -618,7 +618,7 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="A subject (blank = campaign subject)"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <input
               value={experimentForm.subjectB}
@@ -629,7 +629,7 @@ export function OutreachLifecyclePanel() {
                 })
               }
               placeholder="B subject"
-              className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <textarea
               value={experimentForm.bodyA}
@@ -637,7 +637,7 @@ export function OutreachLifecyclePanel() {
                 setExperimentForm({ ...experimentForm, bodyA: e.target.value })
               }
               placeholder="A message (blank = campaign message)"
-              className="min-h-16 rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="min-h-16 rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
             <textarea
               value={experimentForm.bodyB}
@@ -645,13 +645,13 @@ export function OutreachLifecyclePanel() {
                 setExperimentForm({ ...experimentForm, bodyB: e.target.value })
               }
               placeholder="B message / offer"
-              className="min-h-16 rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+              className="min-h-16 rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
             />
           </div>
           <button
             onClick={() => void saveExperiment()}
             disabled={!experimentForm.name.trim() || !experimentForm.sequenceId}
-            className="mt-2 rounded-lg bg-violet-500/15 px-3 py-2 text-[10px] font-bold text-violet-200 disabled:opacity-40"
+            className="mt-2 rounded-lg bg-violet-500/15 px-3 py-2 type-ui font-bold text-violet-200 disabled:opacity-40"
           >
             Create 50/50 test
           </button>
@@ -661,7 +661,7 @@ export function OutreachLifecyclePanel() {
                 key={experiment.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 p-2"
               >
-                <span className="text-[10px] text-slate-300">
+                <span className="type-ui text-slate-300">
                   {experiment.name} · {experiment.metric.replaceAll("_", " ")} ·{" "}
                   {experiment.status}
                   {experiment.live_results
@@ -674,7 +674,7 @@ export function OutreachLifecyclePanel() {
                       onClick={() =>
                         void updateExperiment(experiment.id, "running")
                       }
-                      className="text-[9px] font-bold text-teal-300"
+                      className="type-ui font-bold text-teal-300"
                     >
                       Start
                     </button>
@@ -685,7 +685,7 @@ export function OutreachLifecyclePanel() {
                         onClick={() =>
                           void updateExperiment(experiment.id, "completed", "A")
                         }
-                        className="text-[9px] font-bold text-sky-300"
+                        className="type-ui font-bold text-sky-300"
                       >
                         A wins
                       </button>
@@ -693,7 +693,7 @@ export function OutreachLifecyclePanel() {
                         onClick={() =>
                           void updateExperiment(experiment.id, "completed", "B")
                         }
-                        className="text-[9px] font-bold text-violet-300"
+                        className="type-ui font-bold text-violet-300"
                       >
                         B wins
                       </button>
@@ -701,7 +701,7 @@ export function OutreachLifecyclePanel() {
                         onClick={() =>
                           void updateExperiment(experiment.id, "stopped")
                         }
-                        className="text-[9px] font-bold text-amber-300"
+                        className="type-ui font-bold text-amber-300"
                       >
                         Stop
                       </button>
@@ -716,20 +716,20 @@ export function OutreachLifecyclePanel() {
       {creating ? (
         <section className={panel}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <label className="text-[10px] font-bold uppercase text-slate-500">
+            <label className="type-caption font-bold uppercase text-slate-500">
               Name
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs normal-case text-white"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption normal-case text-white"
               />
             </label>
-            <label className="text-[10px] font-bold uppercase text-slate-500">
+            <label className="type-caption font-bold uppercase text-slate-500">
               Saved audience
               <select
                 value={form.audienceId}
                 onChange={(e) => setForm({ ...form, audienceId: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs normal-case text-white"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption normal-case text-white"
               >
                 <option value="">Select audience</option>
                 {audiences.map((audience) => (
@@ -739,15 +739,15 @@ export function OutreachLifecyclePanel() {
                 ))}
               </select>
             </label>
-            <label className="text-[10px] font-bold uppercase text-slate-500">
+            <label className="type-caption font-bold uppercase text-slate-500">
               Timezone
               <input
                 value={form.timezone}
                 onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs normal-case text-white"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption normal-case text-white"
               />
             </label>
-            <label className="text-[10px] font-bold uppercase text-slate-500">
+            <label className="type-caption font-bold uppercase text-slate-500">
               Max / 7 days
               <input
                 type="number"
@@ -757,11 +757,11 @@ export function OutreachLifecyclePanel() {
                 onChange={(e) =>
                   setForm({ ...form, maxPerWeek: Number(e.target.value) })
                 }
-                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs normal-case text-white"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption normal-case text-white"
               />
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="text-[10px] font-bold uppercase text-slate-500">
+              <label className="type-caption font-bold uppercase text-slate-500">
                 Quiet from
                 <input
                   type="time"
@@ -769,10 +769,10 @@ export function OutreachLifecyclePanel() {
                   onChange={(e) =>
                     setForm({ ...form, quietStart: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
               </label>
-              <label className="text-[10px] font-bold uppercase text-slate-500">
+              <label className="type-caption font-bold uppercase text-slate-500">
                 Until
                 <input
                   type="time"
@@ -780,7 +780,7 @@ export function OutreachLifecyclePanel() {
                   onChange={(e) =>
                     setForm({ ...form, quietEnd: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
               </label>
             </div>
@@ -805,7 +805,7 @@ export function OutreachLifecyclePanel() {
                       ),
                     )
                   }
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 >
                   <option value="email">Email</option>
                   <option value="linkedin">LinkedIn</option>
@@ -828,7 +828,7 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Delay min"
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
                 <select
                   value={step.condition}
@@ -841,7 +841,7 @@ export function OutreachLifecyclePanel() {
                       ),
                     )
                   }
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 >
                   <option value="always">Always</option>
                   <option value="not_opened">Not opened</option>
@@ -860,7 +860,7 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Subject / task title"
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
                 <input
                   value={step.body}
@@ -872,7 +872,7 @@ export function OutreachLifecyclePanel() {
                     )
                   }
                   placeholder="Message / instructions"
-                  className="rounded-lg border border-white/10 bg-slate-950 p-2 text-xs text-white"
+                  className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
                 />
                 <button
                   onClick={() =>
@@ -888,7 +888,7 @@ export function OutreachLifecyclePanel() {
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-xs text-slate-300">
+              <label className="flex items-center gap-2 type-label text-slate-300">
                 <input
                   type="checkbox"
                   checked={form.stopOnReply}
@@ -898,7 +898,7 @@ export function OutreachLifecyclePanel() {
                 />{" "}
                 Stop on reply
               </label>
-              <label className="flex items-center gap-2 text-xs text-slate-300">
+              <label className="flex items-center gap-2 type-label text-slate-300">
                 <input
                   type="checkbox"
                   checked={form.requiresApproval}
@@ -912,14 +912,14 @@ export function OutreachLifecyclePanel() {
             <div className="flex gap-2">
               <button
                 onClick={() => setSteps([...steps, blankStep()])}
-                className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold text-slate-300"
+                className="rounded-lg border border-white/10 px-3 py-2 type-caption font-bold text-slate-300"
               >
                 Add step
               </button>
               <button
                 onClick={() => void save()}
                 disabled={saving}
-                className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                className="rounded-lg bg-teal-600 px-3 py-2 type-caption font-bold text-white disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save sequence"}
               </button>
@@ -941,19 +941,19 @@ export function OutreachLifecyclePanel() {
                 <div>
                   <div className="flex items-center gap-2">
                     <GitBranch className="h-4 w-4 text-teal-400" />
-                    <p className="text-sm font-semibold text-white">
+                    <p className="type-card-description font-semibold text-white">
                       {sequence.name}
                     </p>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-500">
+                  <p className="mt-1 type-card-description text-slate-500">
                     {sequence.steps?.length || 0} steps · {sequence.timezone} ·
                     max {sequence.frequency_cap?.max_per_7_days || 3}/week
                   </p>
-                  <p className="mt-1 text-[10px] text-slate-500">
+                  <p className="mt-1 type-card-description text-slate-500">
                     Audience: {sequence.audience?.name || "Not selected"}
                   </p>
                 </div>
-                <span className="rounded-full border border-white/10 px-2 py-1 text-[9px] font-black uppercase text-slate-300">
+                <span className="rounded-full border border-white/10 px-2 py-1 type-caption font-black uppercase text-slate-300">
                   {sequence.status}
                 </span>
               </div>
@@ -963,7 +963,7 @@ export function OutreachLifecyclePanel() {
                   .map((step) => (
                     <span
                       key={step.id}
-                      className="rounded-lg border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-400"
+                      className="rounded-lg border border-white/10 bg-slate-950/50 px-2 py-1 type-ui text-slate-400"
                     >
                       {step.step_order}. {step.channel} · {step.delay_minutes}m
                     </span>
@@ -979,7 +979,7 @@ export function OutreachLifecyclePanel() {
                         sequence.requires_approval && !sequence.approved_at,
                       )
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/10 px-2.5 py-1.5 text-[10px] font-bold text-teal-300"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500/10 px-2.5 py-1.5 type-ui font-bold text-teal-300"
                   >
                     <Play className="h-3 w-3" />
                     {sequence.requires_approval && !sequence.approved_at
@@ -989,7 +989,7 @@ export function OutreachLifecyclePanel() {
                 ) : (
                   <button
                     onClick={() => void changeStatus(sequence, "paused")}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-[10px] font-bold text-amber-300"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1.5 type-ui font-bold text-amber-300"
                   >
                     <Pause className="h-3 w-3" />
                     Pause
@@ -1000,7 +1000,7 @@ export function OutreachLifecyclePanel() {
           ))
         ) : (
           <div
-            className={`${panel} lg:col-span-2 text-center text-xs text-slate-500`}
+            className={`${panel} lg:col-span-2 text-center type-caption text-slate-500`}
           >
             No multi-channel sequences yet.
           </div>
@@ -1009,7 +1009,7 @@ export function OutreachLifecyclePanel() {
       <section className={panel}>
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-sky-300" />
-          <p className="text-xs font-bold text-white">
+          <p className="type-card-description font-bold text-white">
             Sender warm-up & reputation
           </p>
         </div>
@@ -1022,10 +1022,10 @@ export function OutreachLifecyclePanel() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold text-white">
+                    <p className="type-card-description font-bold text-white">
                       {sender.email_address}
                     </p>
-                    <p className="text-[9px] uppercase text-slate-500">
+                    <p className="type-caption uppercase text-slate-500">
                       {sender.provider} ·{" "}
                       {sender.warmup_status.replaceAll("_", " ")}
                     </p>
@@ -1037,7 +1037,7 @@ export function OutreachLifecyclePanel() {
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <label className="text-[9px] uppercase text-slate-500">
+                  <label className="type-caption uppercase text-slate-500">
                     Daily limit{" "}
                     <input
                       type="number"
@@ -1051,20 +1051,20 @@ export function OutreachLifecyclePanel() {
                           Number(event.target.value),
                         )
                       }
-                      className="ml-1 w-20 rounded border border-white/10 bg-slate-950 p-1 text-xs text-white"
+                      className="ml-1 w-20 rounded border border-white/10 bg-slate-950 p-1 type-caption text-white"
                     />
                   </label>
                   {sender.warmup_status !== "warming" ? (
                     <button
                       onClick={() => void updateSender(sender, "warming")}
-                      className="text-[9px] font-bold text-sky-300"
+                      className="type-ui font-bold text-sky-300"
                     >
                       Start warm-up
                     </button>
                   ) : (
                     <button
                       onClick={() => void updateSender(sender, "paused")}
-                      className="text-[9px] font-bold text-amber-300"
+                      className="type-ui font-bold text-amber-300"
                     >
                       Pause
                     </button>
@@ -1073,13 +1073,13 @@ export function OutreachLifecyclePanel() {
                   !sender.live_health?.unsafe ? (
                     <button
                       onClick={() => void updateSender(sender, "ready")}
-                      className="text-[9px] font-bold text-emerald-300"
+                      className="type-ui font-bold text-emerald-300"
                     >
                       Mark ready
                     </button>
                   ) : null}
                 </div>
-                <p className="mt-2 text-[9px] text-slate-500">
+                <p className="mt-2 type-card-description text-slate-500">
                   Bounce{" "}
                   {((sender.live_health?.bounceRate || 0) * 100).toFixed(1)}% ·
                   complaints{" "}
@@ -1089,7 +1089,7 @@ export function OutreachLifecyclePanel() {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-[11px] text-slate-500">
+          <p className="mt-3 type-card-description text-slate-500">
             Connect and verify an email sender to manage warm-up and reputation.
           </p>
         )}
@@ -1097,13 +1097,13 @@ export function OutreachLifecyclePanel() {
       <section className={panel}>
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-emerald-300" />
-          <p className="text-xs font-bold text-white">
+          <p className="type-card-description font-bold text-white">
             Campaign safety & revenue outcomes
           </p>
         </div>
         {health.length ? (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
+            <table className="w-full text-left type-ui">
               <thead className="text-slate-500">
                 <tr>
                   <th className="pb-2">Campaign</th>
@@ -1150,7 +1150,7 @@ export function OutreachLifecyclePanel() {
             </table>
           </div>
         ) : (
-          <p className="mt-3 text-[11px] text-slate-500">
+          <p className="mt-3 type-card-description text-slate-500">
             Delivery and revenue health will appear after campaign events
             arrive.
           </p>

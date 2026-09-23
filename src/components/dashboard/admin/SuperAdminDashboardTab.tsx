@@ -185,12 +185,12 @@ export const SuperAdminDashboardTab: React.FC = () => {
     <div className="space-y-6 ac-enterprise-module">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ac-accent)]">Platform owner</p>
-          <h1 className="mt-1 flex items-center gap-2 text-[28px] font-bold tracking-tight text-[var(--ws-text-primary)]">
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ac-accent)]">Platform owner</p>
+          <h1 className="mt-1 flex items-center gap-2 text-3xl font-bold tracking-tight text-[var(--ws-text-primary)]">
             <ShieldCheck className="h-6 w-6" />
             Super Admin Control Center
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--ws-text-secondary)]">
+          <p className="mt-1 max-w-2xl type-caption text-[var(--ws-text-secondary)]">
             One place to monitor platform health, inspect global errors, manage tenant communication, and verify outbound delivery.
           </p>
         </div>
@@ -206,11 +206,11 @@ export const SuperAdminDashboardTab: React.FC = () => {
         <section className="ac-workspace-panel p-5">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--ws-text-primary)]">
+              <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                 <Mail className="h-4 w-4 text-[var(--ac-accent)]" />
                 Tenant communications
               </div>
-              <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">
+              <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">
                 Send a platform message to one registered user, one tenant, or everyone. Sends are logged and admin actions are audited.
               </p>
             </div>
@@ -226,7 +226,7 @@ export const SuperAdminDashboardTab: React.FC = () => {
                 key={value}
                 type="button"
                 onClick={() => setAudience(value)}
-                className={`min-h-11 rounded-[var(--ws-radius-lg)] border px-3 text-sm font-medium transition-colors ${
+                className={`min-h-11 rounded-[var(--ws-radius-lg)] border px-3 type-ui font-medium transition-colors ${
                   audience === value
                     ? 'border-[var(--ac-accent)] bg-[var(--ac-accent-muted)] text-[var(--ws-text-primary)]'
                     : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'
@@ -239,9 +239,9 @@ export const SuperAdminDashboardTab: React.FC = () => {
 
           <div className="mt-4 space-y-3">
             {audience === 'tenant' ? (
-              <label className="block text-xs font-medium text-[var(--ws-text-secondary)]">
+              <label className="block type-caption font-medium text-[var(--ws-text-secondary)]">
                 Tenant
-                <select value={tenantId} onChange={(e) => setTenantId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)]">
+                <select value={tenantId} onChange={(e) => setTenantId(e.target.value)} className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)]">
                   {(data?.tenants || []).map((tenant) => (
                     <option key={tenant.id} value={tenant.id}>{tenant.name} · {tenant.plan || 'free'}</option>
                   ))}
@@ -250,20 +250,20 @@ export const SuperAdminDashboardTab: React.FC = () => {
             ) : null}
 
             {audience === 'user' ? (
-              <label className="block text-xs font-medium text-[var(--ws-text-secondary)]">
+              <label className="block type-caption font-medium text-[var(--ws-text-secondary)]">
                 Registered user email
-                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="user@example.com" className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
+                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="user@example.com" className="mt-1.5 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
               </label>
             ) : null}
 
             {audience === 'all' ? (
-              <div className="rounded-lg border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/10 p-3 text-xs text-[var(--ws-text-secondary)]">
+              <div className="rounded-lg border border-[var(--warning-500)]/25 bg-[var(--warning-500)]/10 p-3 type-caption text-[var(--ws-text-secondary)]">
                 This will send one email to every registered tenant user. A confirmation appears before delivery starts.
               </div>
             ) : null}
 
-            <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Email subject" className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={8} placeholder="Write the platform message…" className="w-full resize-y rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm leading-6 text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
+            <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Email subject" className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={8} placeholder="Write the platform message…" className="w-full resize-y rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption leading-6 text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)]" />
             <div className="flex justify-end">
               <button type="button" onClick={() => void handleSend()} disabled={sending} className="ac-workspace-action-btn ac-workspace-action-btn--primary inline-flex min-h-11 items-center gap-2 disabled:opacity-50">
                 <Send className="h-4 w-4" />
@@ -276,18 +276,18 @@ export const SuperAdminDashboardTab: React.FC = () => {
         <section className="ac-workspace-panel p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Global error intelligence</p>
-              <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Errors captured in Supabase during the last 24 hours.</p>
+              <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Global error intelligence</p>
+              <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">Errors captured in Supabase during the last 24 hours.</p>
             </div>
             <AlertTriangle className="h-5 w-5 text-[var(--warning-500)]" />
           </div>
 
           {(data?.recentErrors || []).length === 0 ? (
             <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-[var(--success-500)]">
+              <div className="flex items-center gap-2 type-ui font-medium text-[var(--success-500)]">
                 <CheckCircle2 className="h-4 w-4" /> No captured errors in the last 24 hours
               </div>
-              <p className="mt-2 text-xs leading-5 text-[var(--ws-text-secondary)]">
+              <p className="mt-2 type-caption leading-5 text-[var(--ws-text-secondary)]">
                 This means the error table is quiet, not necessarily that every service is error-free. Production routes should keep forwarding failures into the central error log.
               </p>
             </div>
@@ -297,14 +297,14 @@ export const SuperAdminDashboardTab: React.FC = () => {
                 <div key={row.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-[var(--ws-text-primary)]">{row.error_type || row.endpoint || 'Platform error'}</p>
-                      <p className="mt-1 line-clamp-2 text-xs text-[var(--ws-text-secondary)]">{row.error_message || row.message || 'No message recorded'}</p>
+                      <p className="truncate type-card-description font-semibold text-[var(--ws-text-primary)]">{row.error_type || row.endpoint || 'Platform error'}</p>
+                      <p className="mt-1 line-clamp-2 type-caption text-[var(--ws-text-secondary)]">{row.error_message || row.message || 'No message recorded'}</p>
                     </div>
-                    <span className="shrink-0 rounded-full border border-[var(--error-500)]/25 bg-[var(--error-500)]/10 px-2 py-1 text-[10px] font-semibold text-[var(--error-500)]">
+                    <span className="shrink-0 rounded-full border border-[var(--error-500)]/25 bg-[var(--error-500)]/10 px-2 py-1 type-ui font-semibold text-[var(--error-500)]">
                       {row.status_code || row.severity || 'error'}
                     </span>
                   </div>
-                  <p className="mt-2 text-[10px] text-[var(--ws-text-muted)]">{new Date(row.created_at).toLocaleString()}</p>
+                  <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">{new Date(row.created_at).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -315,17 +315,17 @@ export const SuperAdminDashboardTab: React.FC = () => {
       <section className="ac-workspace-panel overflow-hidden">
         <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-5 py-4">
           <div>
-            <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Recent platform email delivery</p>
-            <p className="mt-0.5 text-xs text-[var(--ws-text-secondary)]">See what was sent, provider used, and failures without opening another tool.</p>
+            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Recent platform email delivery</p>
+            <p className="mt-0.5 type-caption text-[var(--ws-text-secondary)]">See what was sent, provider used, and failures without opening another tool.</p>
           </div>
           <Building2 className="h-5 w-5 text-[var(--ac-accent)]" />
         </div>
         <div className="divide-y divide-[var(--ws-border)]">
           {(data?.recentEmails || []).length === 0 ? (
-            <div className="p-5 text-sm text-[var(--ws-text-secondary)]">No email activity captured in the last 24 hours.</div>
+            <div className="p-5 type-caption text-[var(--ws-text-secondary)]">No email activity captured in the last 24 hours.</div>
           ) : (
             (data?.recentEmails || []).slice(0, 12).map((row) => (
-              <div key={row.id} className="grid gap-2 px-5 py-3 text-xs sm:grid-cols-[auto_1fr_auto] sm:items-center">
+              <div key={row.id} className="grid gap-2 px-5 py-3 type-caption sm:grid-cols-[auto_1fr_auto] sm:items-center">
                 {row.status === 'sent' ? <CheckCircle2 className="h-4 w-4 text-[var(--success-500)]" /> : <XCircle className="h-4 w-4 text-[var(--error-500)]" />}
                 <div className="min-w-0">
                   <p className="truncate font-medium text-[var(--ws-text-primary)]">{row.subject || 'Untitled email'}</p>

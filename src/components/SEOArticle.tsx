@@ -114,7 +114,7 @@ const SEOArticle: React.FC = () => {
                     {/* Article Header */}
                     <header className="mb-12">
                         {/* Category Badge */}
-                        <span className="inline-block px-4 py-2 bg-teal-500/10 text-teal-400 text-sm font-semibold rounded-full mb-4">
+                        <span className="inline-block px-4 py-2 bg-teal-500/10 text-teal-400 type-ui font-semibold rounded-full mb-4">
                             {article.category}
                         </span>
 
@@ -124,7 +124,7 @@ const SEOArticle: React.FC = () => {
                         </h1>
 
                         {/* Meta Info */}
-                        <div className="flex flex-wrap gap-6 text-slate-400 text-sm">
+                        <div className="flex flex-wrap gap-6 text-slate-400 type-ui">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4" />
                                 {new Date(article.published_at).toLocaleDateString('en-US', {
@@ -147,7 +147,7 @@ const SEOArticle: React.FC = () => {
                             {article.tags.map(tag => (
                                 <span
                                     key={tag}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-slate-800 text-slate-300 text-xs rounded-full"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-slate-800 text-slate-300 type-caption rounded-full"
                                 >
                                     <Tag className="w-3 h-3" />
                                     {tag}

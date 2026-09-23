@@ -70,17 +70,17 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
             </div>
 
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Your referral link</label>
+                <label className="type-caption font-bold text-slate-400 uppercase tracking-widest">Your referral link</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <input
                         readOnly
                         value={referralLink}
                         onClick={(e) => (e.target as HTMLInputElement).select()}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 font-mono"
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 type-ui text-slate-200 font-mono"
                     />
                     <button
                         onClick={copyLink}
-                        className="flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl text-sm font-bold text-white transition-colors"
+                        className="flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl type-ui font-bold text-white transition-colors"
                     >
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         {copied ? 'Copied' : 'Copy'}
@@ -94,7 +94,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                             href={t.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-semibold transition-transform active:scale-95 ${t.color}`}
+                            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border type-ui font-semibold transition-transform active:scale-95 ${t.color}`}
                         >
                             <t.icon className="w-4 h-4" />
                             {t.label}
@@ -104,8 +104,8 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
             </div>
 
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
-                <h3 className="text-sm font-bold text-white mb-3">How it works</h3>
-                <ol className="space-y-2 text-sm text-slate-400 list-decimal list-inside">
+                <h3 className="type-ui font-bold text-white mb-3">How it works</h3>
+                <ol className="space-y-2 type-ui text-slate-400 list-decimal list-inside">
                     <li>Share your unique link with other business owners.</li>
                     <li>They sign up for AlphaClone using your link.</li>
                     <li>You both unlock rewards once they activate their workspace.</li>

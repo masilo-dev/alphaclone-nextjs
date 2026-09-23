@@ -83,14 +83,14 @@ export default function AiInterfaceShowcase() {
     <div className="mx-auto max-w-6xl px-2 sm:px-4">
       {/* Header */}
       <div className="mx-auto max-w-3xl text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3.5 py-1 text-xs font-bold text-cyan-300 shadow-sm backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3.5 py-1 type-caption font-bold text-cyan-300 shadow-sm backdrop-blur-md">
           <Braces className="h-3.5 w-3.5 text-cyan-600" aria-hidden="true" />
           <span>Universal AI Interface Layer</span>
         </div>
-        <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-[42px]">
+        <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
           Work from the <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">AI interface</span> you already prefer.
         </h2>
-        <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
+        <p className="mt-3 type-card-description leading-6 text-slate-300 sm:text-base">
           ChatGPT, Claude, and Manus act as natural conversational interfaces into AlphaClone — while AlphaClone supplies the underlying business context, tools, permissions, and execution layer underneath.
         </p>
       </div>
@@ -99,7 +99,7 @@ export default function AiInterfaceShowcase() {
       <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_auto_1.2fr_auto_1.3fr] lg:items-center">
         {/* Column 1: AI Interfaces */}
         <div className="space-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 px-1">
+          <p className="type-caption font-black uppercase tracking-caps text-slate-400 px-1">
             01. Choose AI Interface
           </p>
           {AI_CLIENTS.map((client) => {
@@ -122,12 +122,12 @@ export default function AiInterfaceShowcase() {
                       <Icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" style={{ color: client.iconColor }} />
                     </div>
                     <div>
-                      <h4 className="text-sm font-extrabold text-white group-hover:text-cyan-200">{client.name}</h4>
-                      <p className="text-[10px] font-medium text-slate-400">{client.badge}</p>
+                      <h4 className="type-ui font-extrabold text-white group-hover:text-cyan-200">{client.name}</h4>
+                      <p className="type-caption font-medium text-slate-400">{client.badge}</p>
                     </div>
                   </div>
                   {isSelected && (
-                    <span className="flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/20 px-2 py-0.5 text-[9px] font-extrabold text-emerald-300">
+                    <span className="flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/20 px-2 py-0.5 type-ui font-extrabold text-emerald-300">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Active Prompt
                     </span>
@@ -135,7 +135,7 @@ export default function AiInterfaceShowcase() {
                 </div>
 
                 <div className="mt-3 rounded-xl border border-white/[.07] bg-slate-950/80 p-2.5">
-                  <p className="text-xs italic text-slate-300">“{client.prompt}”</p>
+                  <p className="type-card-description italic text-slate-300">“{client.prompt}”</p>
                 </div>
               </button>
             );
@@ -158,7 +158,7 @@ export default function AiInterfaceShowcase() {
             </div>
 
             <h3 className="mt-4 text-xl font-black text-white">AlphaClone OS</h3>
-            <p className="mt-1 text-xs font-bold text-cyan-200">Context + Permission + Execution</p>
+            <p className="mt-1 type-card-description font-bold text-cyan-200">Context + Permission + Execution</p>
 
             <div className="mt-5 space-y-2 border-t border-cyan-400/20 pt-4 text-left">
               {[
@@ -166,17 +166,17 @@ export default function AiInterfaceShowcase() {
                 ["Granular Guardrails", "Human approval required for high risk"],
                 ["Full Audit Trail", "Every API call logged & verified"],
               ].map(([t, d]) => (
-                <div key={t} className="flex items-center gap-2 rounded-lg border border-white/[.06] bg-slate-900/60 p-2 text-xs">
+                <div key={t} className="flex items-center gap-2 rounded-lg border border-white/[.06] bg-slate-900/60 p-2 type-caption">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                   <div>
-                    <p className="font-bold text-white text-[11px]">{t}</p>
-                    <p className="text-[10px] text-slate-400">{d}</p>
+                    <p className="font-bold text-white type-card-description">{t}</p>
+                    <p className="type-card-description text-slate-400">{d}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-2 text-center text-[10px] font-extrabold text-emerald-300">
+            <div className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-2 text-center type-ui font-extrabold text-emerald-300">
               Live sync with {currentClient.name}
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function AiInterfaceShowcase() {
 
         {/* Column 3: Connected Business Execution Modules */}
         <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 px-1">
+          <p className="type-caption font-black uppercase tracking-caps text-slate-400 px-1">
             03. Executed Systems & Tools
           </p>
           <div className="grid grid-cols-1 gap-2">
@@ -212,13 +212,13 @@ export default function AiInterfaceShowcase() {
                       <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-125" style={{ color: mod.color }} />
                     </div>
                     <div>
-                      <p className={`text-xs font-extrabold ${isTargeted ? "text-white" : "text-slate-300"}`}>{mod.name}</p>
-                      <p className="text-[10px] text-slate-400">{mod.detail}</p>
+                      <p className={`type-card-description font-extrabold ${isTargeted ? "text-white" : "text-slate-300"}`}>{mod.name}</p>
+                      <p className="type-card-description text-slate-400">{mod.detail}</p>
                     </div>
                   </div>
 
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold ${
+                    className={`rounded-full px-2 py-0.5 type-ui font-extrabold ${
                       isTargeted
                         ? "border border-emerald-400/40 bg-emerald-400/20 text-emerald-300 animate-pulse"
                         : "border border-slate-800 bg-slate-900 text-slate-500"

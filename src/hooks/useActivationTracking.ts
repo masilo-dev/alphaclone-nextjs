@@ -40,8 +40,8 @@ export const useActivationTracking = () => {
                 color: '#fff',
                 border: '1px solid #14b8a6',
                 padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold'
+                fontSize: 'var(--type-toast-size)',
+                fontWeight: 'var(--type-toast-weight)'
             }
         });
     }, []);

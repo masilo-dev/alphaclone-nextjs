@@ -45,7 +45,7 @@ const VideoExplainer = () => {
                         <div key={i} className="p-8 bg-slate-900/40 border border-slate-800/50 rounded-2xl backdrop-blur-sm hover:border-slate-700 transition-colors group">
                             <div className="mb-4">{item.icon}</div>
                             <h4 className="text-lg font-bold text-white mb-2 group-hover:text-teal-400 transition-colors">{item.title}</h4>
-                            <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
+                            <p className="text-slate-400 type-card-description leading-relaxed">{item.desc}</p>
                         </div>
                     ))}
                 </div>

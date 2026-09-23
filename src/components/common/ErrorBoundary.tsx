@@ -57,15 +57,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-red-400" />
           </div>
-          <h3 className="text-sm font-bold text-white mb-2">
+          <h3 className="type-ui font-bold text-white mb-2">
             {this.props.componentName || 'Section'} Unavailable
           </h3>
-          <p className="text-xs text-slate-400 mb-4 max-w-xs">
+          <p className="type-card-description text-slate-400 mb-4 max-w-xs">
             Something went wrong while loading this section. Our team has been notified.
           </p>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl type-caption font-bold transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry

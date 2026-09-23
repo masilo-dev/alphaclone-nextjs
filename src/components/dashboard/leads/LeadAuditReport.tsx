@@ -30,14 +30,14 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                         <BarChart className="w-6 h-6 text-blue-400" />
                         <div>
                             <h2 className="text-xl font-bold text-white">Lead Generation Audit</h2>
-                            <p className="text-sm text-gray-400">Comparing Sales Agent output vs. Raw Maps API JSON</p>
+                            <p className="type-card-description text-gray-400">Comparing Sales Agent output vs. Raw Maps API JSON</p>
                         </div>
                     </div>
                     <div className="flex flex-col items-end">
                         <span className={`text-3xl font-black ${getScoreColor(audit.accuracyScore)}`}>
                             {audit.accuracyScore}%
                         </span>
-                        <span className="text-xs uppercase tracking-wider text-gray-500 font-bold">Accuracy Score</span>
+                        <span className="type-caption uppercase tracking-wider text-gray-500 font-bold">Accuracy Score</span>
                     </div>
                 </div>
 
@@ -53,7 +53,7 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 mb-4">
                                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                                <span className="text-sm font-medium text-gray-300">
+                                <span className="type-ui font-medium text-gray-300">
                                     Found {audit.flags.length} discrepancies in {audit.totalLeads} leads
                                 </span>
                             </div>
@@ -75,12 +75,12 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h4 className="font-bold text-white tracking-tight">{flag.businessName}</h4>
-                                                <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${flag.type === 'CRITICAL HALLUCINATION' ? 'bg-rose-500/20 text-rose-500' : 'bg-amber-500/20 text-amber-500'
+                                                <span className={`type-caption px-2 py-0.5 rounded-full font-bold uppercase tracking-widest ${flag.type === 'CRITICAL HALLUCINATION' ? 'bg-rose-500/20 text-rose-500' : 'bg-amber-500/20 text-amber-500'
                                                     }`}>
                                                     {flag.type}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-gray-400 leading-relaxed font-medium">
+                                            <p className="type-card-description text-gray-400 leading-relaxed font-medium">
                                                 {flag.reason}
                                             </p>
                                         </div>

@@ -114,7 +114,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                 <h3 className="text-lg font-bold text-white mb-1">
                                     Before you go...
                                 </h3>
-                                <p className="text-sm text-slate-400">
+                                <p className="type-card-description text-slate-400">
                                     What do you think should be improved on this platform?
                                 </p>
                             </div>
@@ -142,7 +142,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
 
                             {/* Severity selector */}
                             <div>
-                                <label className="text-sm text-slate-400 mb-2 block">
+                                <label className="type-label text-slate-400 mb-2 block">
                                     Priority (optional)
                                 </label>
                                 <div className="flex gap-2">
@@ -151,7 +151,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                             key={level}
                                             onClick={() => setSeverity(level)}
                                             disabled={isSubmitting}
-                                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${severity === level
+                                            className={`flex-1 px-4 py-2 rounded-lg type-ui font-medium transition-all ${severity === level
                                                     ? level === 'high'
                                                         ? 'bg-red-500 text-white'
                                                         : level === 'medium'

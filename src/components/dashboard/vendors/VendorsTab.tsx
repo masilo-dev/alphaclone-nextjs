@@ -77,11 +77,11 @@ export default function VendorsTab() {
         <div className="px-1 pb-2 flex items-end justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold text-white">Vendors & Suppliers</h1>
-            <p className="text-sm text-slate-400">AP vendors rolled up from bills payable</p>
+            <p className="type-card-description text-slate-400">AP vendors rolled up from bills payable</p>
           </div>
           <Link
             href="/dashboard/accounting/bills"
-            className="text-xs font-semibold text-teal-400 hover:text-teal-300"
+            className="type-caption font-semibold text-teal-400 hover:text-teal-300"
           >
             Open bills payable →
           </Link>
@@ -90,7 +90,7 @@ export default function VendorsTab() {
     >
       <div className="ac-scroll-full pb-24">
         {loading ? (
-          <p className="text-sm text-slate-500 p-4">Loading vendors…</p>
+          <p className="type-card-description text-slate-500 p-4">Loading vendors…</p>
         ) : vendors.length === 0 ? (
           <EmptyState
             icon={Building2}
@@ -109,19 +109,19 @@ export default function VendorsTab() {
                       <Building2 className="w-4 h-4 text-teal-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white truncate">{v.vendor_name}</p>
-                      <p className="text-[11px] text-[var(--ws-text-tertiary)]">{v.bill_count} bill{v.bill_count === 1 ? '' : 's'}</p>
+                      <p className="type-card-description font-semibold text-white truncate">{v.vendor_name}</p>
+                      <p className="type-card-description text-[var(--ws-text-tertiary)]">{v.bill_count} bill{v.bill_count === 1 ? '' : 's'}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-semibold text-amber-300">{format(v.open_total)}</p>
-                      <p className="text-[10px] text-[var(--ws-text-tertiary)] uppercase">Open AP</p>
+                      <p className="type-card-description font-semibold text-amber-300">{format(v.open_total)}</p>
+                      <p className="type-caption text-[var(--ws-text-tertiary)] uppercase">Open AP</p>
                     </div>
                   </div>
                 </MobileDataCard>
               ))}
             </ResponsiveTableMobile>
             <ResponsiveTableDesktop className="ac-workspace-panel overflow-hidden">
-              <table className="w-full min-w-[560px] text-sm ac-data-table">
+              <table className="w-full min-w-[560px] type-ui ac-data-table">
                 <thead>
                   <tr>
                     <th>Vendor</th>
@@ -136,7 +136,7 @@ export default function VendorsTab() {
                       <td className="font-medium text-white">{v.vendor_name}</td>
                       <td className="text-[var(--ws-text-secondary)]">{v.bill_count}</td>
                       <td className="text-right font-semibold text-amber-300">{format(v.open_total)}</td>
-                      <td className="text-[var(--ws-text-tertiary)] text-xs">
+                      <td className="text-[var(--ws-text-tertiary)] type-table-cell">
                         {v.last_bill_at ? new Date(v.last_bill_at).toLocaleDateString() : '—'}
                       </td>
                     </tr>

@@ -33,7 +33,7 @@ export function OsEmptyState({ title, description, action, className, tone = 'de
       className={cn(WORKSPACE.panel.base, 'p-8 text-center', toneStyles(tone), className)}
     >
       <h3 className="text-base font-semibold text-[var(--ws-text-primary)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--ws-text-secondary)] max-w-md mx-auto">{description}</p>
+      <p className="mt-2 type-caption text-[var(--ws-text-secondary)] max-w-md mx-auto">{description}</p>
       {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>
   );
@@ -52,7 +52,7 @@ export function OsErrorState({ title, description, action, className, tone = 'er
       )}
     >
       <h3 className="text-base font-semibold text-[var(--error-text)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">{description}</p>
+      <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );
@@ -65,7 +65,7 @@ export function OsPermissionState({ title, description, action, className }: Sta
       className={cn(WORKSPACE.panel.base, 'p-6 border-[var(--info-border)] bg-[var(--info-surface)]', className)}
     >
       <h3 className="text-base font-semibold text-[var(--ws-text-primary)]">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">{description}</p>
+      <p className="mt-2 type-caption text-[var(--ws-text-secondary)]">{description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

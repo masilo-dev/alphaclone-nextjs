@@ -140,8 +140,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ws-radius-control,8px)]" style={{ background: tint }}>
             <Icon className={`h-4 w-4 ${color}`} aria-hidden="true" />
           </span>
-          <h3 className="truncate text-xs font-semibold text-[var(--ws-text-primary)]">{label}</h3>
-          <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--ws-text-tertiary)]">
+          <h3 className="truncate type-card-title font-semibold text-[var(--ws-text-primary)]">{label}</h3>
+          <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2 py-0.5 type-ui font-semibold tabular-nums text-[var(--ws-text-tertiary)]">
             {tasks.length}
           </span>
         </div>
@@ -162,7 +162,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }
             ))}
             {tasks.length === 0 ? (
               <div className="flex h-24 items-center justify-center rounded-[var(--ws-radius-lg,14px)] border border-dashed border-[var(--ws-border)]">
-                <p className="text-[11px] font-medium text-[var(--ws-text-tertiary)]">No tasks</p>
+                <p className="type-card-description font-medium text-[var(--ws-text-tertiary)]">No tasks</p>
               </div>
             ) : null}
           </div>
@@ -221,7 +221,7 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
     >
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="truncate text-sm font-semibold leading-tight text-[var(--ws-text-primary)]">
+          <h4 className="truncate type-ui font-semibold leading-tight text-[var(--ws-text-primary)]">
             {task.title}
           </h4>
           {task.priority === 'urgent' ? (
@@ -230,7 +230,7 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
         </div>
 
         {task.description ? (
-          <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-[var(--ws-text-secondary)]">
+          <p className="line-clamp-2 type-card-description font-normal leading-relaxed text-[var(--ws-text-secondary)]">
             {task.description}
           </p>
         ) : null}
@@ -238,20 +238,20 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
         {(task.relatedToProject || task.relatedToLead || task.relatedToDeal) ? (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {task.relatedToProject ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-bonnie)_22%,transparent)] bg-[color-mix(in_srgb,var(--ac-bonnie)_10%,transparent)] px-2 py-0.5 text-[9px] font-semibold text-[var(--ac-bonnie)]">Project</span>
+              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-bonnie)_22%,transparent)] bg-[color-mix(in_srgb,var(--ac-bonnie)_10%,transparent)] px-2 py-0.5 type-ui font-semibold text-[var(--ac-bonnie)]">Project</span>
             ) : null}
             {task.relatedToLead ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-accent)_22%,transparent)] bg-[var(--ac-accent-muted)] px-2 py-0.5 text-[9px] font-semibold text-[var(--ac-accent)]">Lead</span>
+              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-accent)_22%,transparent)] bg-[var(--ac-accent-muted)] px-2 py-0.5 type-ui font-semibold text-[var(--ac-accent)]">Lead</span>
             ) : null}
             {task.relatedToDeal ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2 py-0.5 text-[9px] font-semibold text-[var(--warning)]">Deal</span>
+              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2 py-0.5 type-ui font-semibold text-[var(--warning)]">Deal</span>
             ) : null}
           </div>
         ) : null}
 
         {subtaskStats ? (
           <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between text-[10px] font-medium text-[var(--ws-text-tertiary)]">
+            <div className="flex items-center justify-between type-ui font-medium text-[var(--ws-text-tertiary)]">
               <span>Progress</span>
               <span className="tabular-nums">{subtaskStats.completed}/{subtaskStats.total} ({subtaskStats.percent}%)</span>
             </div>
@@ -267,7 +267,7 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-3">
             {task.dueDate ? (
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--ws-text-tertiary)]">
+              <div className="flex items-center gap-1.5 type-ui font-medium text-[var(--ws-text-tertiary)]">
                 <Clock className="h-3 w-3" aria-hidden="true" />
                 {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>

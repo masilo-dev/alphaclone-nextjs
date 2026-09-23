@@ -42,14 +42,14 @@ export function AccountFormModal({
           autoFocus
         />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl text-sm text-slate-400 hover:text-white">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl type-ui text-slate-400 hover:text-white">
             Cancel
           </button>
           <button
             type="button"
             disabled={loading || !name.trim()}
             onClick={() => void onSubmit(name.trim())}
-            className="px-4 py-2 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-teal-600 text-white type-ui font-semibold disabled:opacity-50"
           >
             {loading ? 'Saving…' : submitLabel}
           </button>

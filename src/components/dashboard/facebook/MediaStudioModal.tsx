@@ -328,7 +328,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
           <div>
             <h3 className="text-lg font-semibold text-white">Media Studio</h3>
-            <p className="text-xs text-slate-400">Professional editing controls for non-technical users</p>
+            <p className="type-card-description text-slate-400">Professional editing controls for non-technical users</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white">
             <X className="h-5 w-5" />
@@ -362,7 +362,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
 
           <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+              <div className="mb-2 flex items-center gap-2 type-ui font-semibold text-white">
                 <Crop className="h-4 w-4 text-blue-400" />
                 Social Presets
               </div>
@@ -371,7 +371,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   <button
                     key={p}
                     onClick={() => setPreset(p)}
-                    className={`rounded-lg border px-2 py-1.5 text-xs ${
+                    className={`rounded-lg border px-2 py-1.5 type-caption ${
                       preset === p
                         ? 'border-blue-500 bg-blue-500/20 text-blue-200'
                         : 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600'
@@ -386,11 +386,11 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
             {isVideo ? (
               <>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
                     <Scissors className="h-4 w-4 text-violet-400" />
                     Timeline Trim
                   </div>
-                  <label className="text-xs text-slate-400">Start ({trimStart}%)</label>
+                  <label className="type-label text-slate-400">Start ({trimStart}%)</label>
                   <input
                     type="range"
                     min={0}
@@ -399,7 +399,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                     onChange={(e) => setTrimStart(Math.min(Number(e.target.value), trimEnd - 1))}
                     className="w-full"
                   />
-                  <label className="text-xs text-slate-400">End ({trimEnd}%)</label>
+                  <label className="type-label text-slate-400">End ({trimEnd}%)</label>
                   <input
                     type="range"
                     min={5}
@@ -410,7 +410,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
                     <Scissors className="h-4 w-4 text-blue-400" />
                     Timeline Preview
                   </div>
@@ -436,7 +436,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs text-slate-300">Cover frame ({coverTimePct}%)</label>
+                  <label className="type-label text-slate-300">Cover frame ({coverTimePct}%)</label>
                   <input
                     type="range"
                     min={0}
@@ -453,11 +453,11 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                     <img src={coverFramePreview} alt="Video cover frame" className="h-28 w-full rounded border border-slate-700 object-cover" />
                   )}
                 </div>
-                <p className="rounded-lg border border-slate-700 bg-slate-900 p-2 text-xs text-slate-300">
+                <p className="rounded-lg border border-slate-700 bg-slate-900 p-2 type-card-description text-slate-300">
                   Duration: {videoDuration ? `${videoDuration.toFixed(1)}s` : '...'} | Resolution: {videoWidth || '?'}x{videoHeight || '?'}
                 </p>
                 {ffmpegLoading && (
-                  <p className="rounded-lg border border-amber-700/40 bg-amber-500/10 p-2 text-xs text-amber-200">
+                  <p className="rounded-lg border border-amber-700/40 bg-amber-500/10 p-2 type-card-description text-amber-200">
                     Loading video engine... {ffmpegProgress}%
                   </p>
                 )}
@@ -472,29 +472,29 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                       setSaturation(112);
                       toast.success('Auto-enhance applied');
                     }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs text-violet-200 hover:bg-violet-500/20"
+                    className="inline-flex items-center gap-2 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 type-caption text-violet-200 hover:bg-violet-500/20"
                   >
                     <Wand2 className="h-4 w-4" />
                     Auto-enhance
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
                     <SlidersHorizontal className="h-4 w-4 text-teal-400" />
                     Color Precision
                   </div>
-                  <label className="text-xs text-slate-400">Brightness ({brightness}%)</label>
+                  <label className="type-label text-slate-400">Brightness ({brightness}%)</label>
                   <input type="range" min={60} max={160} value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} className="w-full" />
-                  <label className="text-xs text-slate-400">Contrast ({contrast}%)</label>
+                  <label className="type-label text-slate-400">Contrast ({contrast}%)</label>
                   <input type="range" min={60} max={160} value={contrast} onChange={(e) => setContrast(Number(e.target.value))} className="w-full" />
-                  <label className="text-xs text-slate-400">Saturation ({saturation}%)</label>
+                  <label className="type-label text-slate-400">Saturation ({saturation}%)</label>
                   <input type="range" min={0} max={200} value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} className="w-full" />
                 </div>
 
                 <div>
                   <button
                     onClick={() => setRotation((r) => (r + 90) % 360)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700"
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 type-caption text-slate-200 hover:bg-slate-700"
                   >
                     <RotateCw className="h-4 w-4" />
                     Rotate 90 deg
@@ -507,11 +507,11 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
               <button
                 onClick={isVideo ? applyVideoEdits : applyImageEdits}
                 disabled={saving}
-                className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                className="w-full rounded-lg bg-blue-600 px-3 py-2 type-ui font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
               >
                 {saving ? 'Applying...' : 'Apply In Media Studio'}
               </button>
-              <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+              <p className="mt-2 flex items-center gap-1 type-card-description text-slate-500">
                 <Wand2 className="h-3.5 w-3.5" />
                 Presets are tuned for Facebook reach and quality.
               </p>

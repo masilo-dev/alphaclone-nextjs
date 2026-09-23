@@ -80,15 +80,15 @@ export default async function BlogPost({ params }: PageProps) {
             <div className="relative py-8 pb-16 overflow-hidden border-b border-white/5 bg-slate-900/50">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl mx-auto">
-                        <Link href="/blog" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 transition-colors text-sm font-medium">
+                        <Link href="/blog" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 transition-colors type-ui font-medium">
                             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Articles
                         </Link>
 
                         <div className="flex items-center gap-4 mb-6">
-                            <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
+                            <span className="px-3 py-1 type-caption font-bold uppercase tracking-wider bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
                                 {article.category}
                             </span>
-                            <span className="text-slate-400 text-sm flex items-center gap-1">
+                            <span className="text-slate-400 type-ui flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
                                 {new Date(article.created_at).toLocaleDateString(undefined, {
                                     year: 'numeric',
@@ -118,7 +118,7 @@ export default async function BlogPost({ params }: PageProps) {
                     {article.tags && article.tags.length > 0 && (
                         <div className="mt-12 flex flex-wrap gap-2">
                             {article.tags.map((tag) => (
-                                <span key={tag} className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-sm flex items-center gap-2 border border-white/5">
+                                <span key={tag} className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg type-ui flex items-center gap-2 border border-white/5">
                                     <Tag className="w-3 h-3" />
                                     {tag}
                                 </span>

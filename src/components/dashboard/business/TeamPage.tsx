@@ -136,7 +136,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg type-ui font-medium transition-all ${
                                 activeTab === tab.id
                                     ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -207,8 +207,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             <div key={member.user_id} className="flex flex-col items-center relative group">
                                                 <div className="absolute -top-4 left-1/2 w-px h-4 bg-slate-700"></div>
                                                 <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
-                                                    <div className="font-bold text-white text-sm">{member.user?.name || 'Unknown'}</div>
-                                                    <div className="text-xs text-slate-500 uppercase">{member.role}</div>
+                                                    <div className="font-bold text-white type-ui">{member.user?.name || 'Unknown'}</div>
+                                                    <div className="type-caption text-slate-500 uppercase">{member.role}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -247,22 +247,22 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                                 <Inbox className="w-4 h-4 text-teal-400" />
                                             </div>
                                             <div>
-                                                <h3 className="text-sm font-semibold text-white">Connected work</h3>
-                                                <p className="text-xs text-slate-500">Keep chat, email, and tasks linked.</p>
+                                                <h3 className="type-ui font-semibold text-white">Connected work</h3>
+                                                <p className="type-card-description text-slate-500">Keep chat, email, and tasks linked.</p>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-2 mb-3">
                                             <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
-                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Members</div>
+                                                <div className="type-caption uppercase tracking-widest text-slate-500">Members</div>
                                                 <div className="text-lg font-black text-white">{teamMembers.length}</div>
                                             </div>
                                             <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
-                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Chat</div>
+                                                <div className="type-caption uppercase tracking-widest text-slate-500">Chat</div>
                                                 <div className="text-lg font-black text-white">Live</div>
                                             </div>
                                             <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-2.5">
-                                                <div className="text-[11px] uppercase tracking-widest text-slate-500">Email</div>
+                                                <div className="type-caption uppercase tracking-widest text-slate-500">Email</div>
                                                 <div className="text-lg font-black text-white">On</div>
                                             </div>
                                         </div>
@@ -274,7 +274,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Mail className="w-4 h-4 text-sky-400 shrink-0" />
-                                                    <span className="text-sm font-medium text-white truncate">Open inbox</span>
+                                                    <span className="type-ui font-medium text-white truncate">Open inbox</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
                                             </button>
@@ -284,7 +284,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Inbox className="w-4 h-4 text-emerald-400 shrink-0" />
-                                                    <span className="text-sm font-medium text-white truncate">Open Zoho Mail</span>
+                                                    <span className="type-ui font-medium text-white truncate">Open Zoho Mail</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
                                             </button>
@@ -294,7 +294,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <CheckSquare className="w-4 h-4 text-orange-400 shrink-0" />
-                                                    <span className="text-sm font-medium text-white truncate">Open tasks</span>
+                                                    <span className="type-ui font-medium text-white truncate">Open tasks</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
                                             </button>
@@ -302,15 +302,15 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {teamMembers.slice(0, 4).map((member) => (
                                                 <div key={member.user_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-slate-950/60 border border-slate-800">
-                                                    <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-black text-white">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center type-ui font-black text-white">
                                                         {member.user?.name?.charAt(0) || '?'}
                                                     </div>
-                                                    <span className="text-xs text-slate-300 max-w-[120px] truncate">{member.user?.name || member.user?.email}</span>
+                                                    <span className="type-caption text-slate-300 max-w-[120px] truncate">{member.user?.name || member.user?.email}</span>
                                                 </div>
                                             ))}
                                             {teamMembers.length > 4 && (
                                                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-slate-950/60 border border-slate-800">
-                                                    <span className="text-xs text-slate-400">+{teamMembers.length - 4} more</span>
+                                                    <span className="type-caption text-slate-400">+{teamMembers.length - 4} more</span>
                                                 </div>
                                             )}
                                         </div>
@@ -349,7 +349,7 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
                     </div>
                     <div>
                         <h3 className="font-bold text-white">{member.user?.name || 'Unknown'}</h3>
-                        <p className="text-xs text-slate-400 font-mono">{member.user?.email}</p>
+                        <p className="type-card-description text-slate-400 font-mono">{member.user?.email}</p>
                     </div>
                 </div>
                 {canManage && !isCurrentUser && (
@@ -365,11 +365,11 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
             </div>
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/50">
-                <span className={`text-xs font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
+                <span className={`type-caption font-bold uppercase tracking-widest px-2 py-1 rounded-lg border ${roleColors[member.role as keyof typeof roleColors] || roleColors.member}`}>
                     {member.role?.charAt(0).toUpperCase() + member.role?.slice(1) || 'Member'}
                 </span>
                 {isCurrentUser && (
-                    <span className="text-xs font-bold text-teal-400 flex items-center gap-1">
+                    <span className="type-caption font-bold text-teal-400 flex items-center gap-1">
                         <Shield className="w-3 h-3" /> You
                     </span>
                 )}
@@ -399,7 +399,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">Email Address *</label>
+                        <label className="block type-label font-bold text-slate-300 mb-2">Email Address *</label>
                         <input
                             type="email"
                             required
@@ -411,14 +411,14 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-slate-300 mb-2">Role</label>
+                        <label className="block type-label font-bold text-slate-300 mb-2">Role</label>
                         <div className="grid grid-cols-3 gap-2">
                             {['member', 'client', 'admin'].map((r) => (
                                 <button
                                     key={r}
                                     type="button"
                                     onClick={() => setRole(r)}
-                                    className={`px-2 py-2 rounded-xl text-xs font-bold uppercase tracking-wide border transition-all ${
+                                    className={`px-2 py-2 rounded-xl type-caption font-bold uppercase tracking-wide border transition-all ${
                                         role === r 
                                             ? 'bg-teal-500 text-white border-teal-500' 
                                             : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-600'
@@ -428,7 +428,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                                 </button>
                             ))}
                         </div>
-                        <p className="text-xs text-slate-500 mt-3 bg-slate-800/50 p-3 rounded-lg border border-slate-800">
+                        <p className="type-card-description text-slate-500 mt-3 bg-slate-800/50 p-3 rounded-lg border border-slate-800">
                             {role === 'member' && "Can view projects and tasks assigned to them."}
                             {role === 'manager' && "Can create projects, manage tasks, and view reports."}
                             {role === 'admin' && "Full access to all settings, billing, and team management."}

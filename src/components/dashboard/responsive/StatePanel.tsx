@@ -101,7 +101,7 @@ export function StatePanel({
       </span>
       <h2 className="text-base md:text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
       {description ? (
-        <p className="mt-1.5 max-w-md text-sm text-[var(--text-secondary)] leading-relaxed">{description}</p>
+        <p className="mt-1.5 max-w-md type-caption text-[var(--text-secondary)] leading-relaxed">{description}</p>
       ) : null}
       {actions.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">

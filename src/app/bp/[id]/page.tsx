@@ -76,7 +76,7 @@ export default function PublicBusinessProjectPage() {
             <div className="max-w-4xl mx-auto relative z-10 space-y-12">
                 {/* Header */}
                 <div className="text-center space-y-6">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 text-sm font-semibold border border-teal-500/20 tracking-wide uppercase">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 type-caption font-semibold border border-teal-500/20 tracking-wide uppercase">
                         <CheckCircle2 className="w-4 h-4" />
                         Live Implementation Tracking
                     </div>
@@ -107,7 +107,7 @@ export default function PublicBusinessProjectPage() {
                         {/* Big Percent */}
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="text-center md:text-left">
-                                <p className="text-slate-500 text-sm font-medium uppercase tracking-widest mb-2">Overall Completion</p>
+                                <p className="text-slate-500 type-caption font-medium uppercase tracking-widest mb-2">Overall Completion</p>
                                 <div className="text-6xl sm:text-8xl font-black text-white flex items-baseline">
                                     {project.progress}
                                     <span className="text-teal-500 text-3xl sm:text-4xl ml-2">%</span>
@@ -115,7 +115,7 @@ export default function PublicBusinessProjectPage() {
                             </div>
 
                             <div className="w-full sm:w-48 bg-slate-800/50 rounded-2xl p-6 border border-white/5 text-center">
-                                <p className="text-slate-500 text-xs uppercase mb-2">Current Phase</p>
+                                <p className="text-slate-500 type-caption uppercase mb-2">Current Phase</p>
                                 <p className={`text-lg font-bold capitalize ${statusColors[project.status].split(' ')[0]}`}>
                                     {project.status.replace('_', ' ')}
                                 </p>
@@ -137,7 +137,7 @@ export default function PublicBusinessProjectPage() {
                         {/* Description */}
                         {project.description && (
                             <div className="pt-8 border-t border-white/5">
-                                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Project Brief</h3>
+                                <h3 className="type-caption font-semibold text-slate-500 uppercase tracking-widest mb-4">Project Brief</h3>
                                 <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
                                     {project.description}
                                 </p>
@@ -150,7 +150,7 @@ export default function PublicBusinessProjectPage() {
                 <div className="text-center space-y-8 pt-12">
                     <div className="flex items-center justify-center gap-3">
                         <div className="h-px w-12 bg-slate-800"></div>
-                        <p className="text-slate-600 font-mono text-sm">SECURE UPDATES POWERED BY ALPHACLONE</p>
+                        <p className="text-slate-600 font-mono type-card-description">SECURE UPDATES POWERED BY ALPHACLONE</p>
                         <div className="h-px w-12 bg-slate-800"></div>
                     </div>
 
@@ -162,7 +162,7 @@ export default function PublicBusinessProjectPage() {
                         <div className="absolute inset-x-0 bottom-0 h-0 group-hover:h-full bg-teal-500 transition-all duration-300"></div>
                     </button>
 
-                    <p className="text-slate-500 text-xs">
+                    <p className="text-slate-500 type-card-description">
                         &copy; {new Date().getFullYear()} AlphaClone Systems. All systems operational.
                     </p>
                 </div>

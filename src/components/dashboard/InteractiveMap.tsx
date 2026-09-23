@@ -50,7 +50,7 @@ const InteractiveMap = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             whileHover={{ opacity: 1, y: 0 }}
-                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-slate-950/80 border border-slate-800 rounded text-xs text-teal-400 font-bold backdrop-blur-md pointer-events-none"
+                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-slate-950/80 border border-slate-800 rounded type-caption text-teal-400 font-bold backdrop-blur-md pointer-events-none"
                         >
                             {loc.name}
                         </motion.div>
@@ -61,16 +61,16 @@ const InteractiveMap = () => {
             {/* Map Stats */}
             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
                 <div className="space-y-1">
-                    <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">Global Infrastructure</div>
+                    <div className="type-caption text-slate-500 uppercase tracking-widest font-bold">Global Infrastructure</div>
                     <div className="text-2xl font-bold text-white flex items-center gap-2">
-                        20+ <span className="text-slate-500 text-sm font-normal">Countries Served</span>
+                        20+ <span className="text-slate-500 type-ui font-normal">Countries Served</span>
                     </div>
                 </div>
                 <div className="flex -space-x-3">
                     {[1, 2, 3, 4].map(i => (
                         <div key={i} className={`w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800`} />
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-teal-500/20 flex items-center justify-center text-xs font-bold text-teal-400">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-teal-500/20 flex items-center justify-center type-caption font-bold text-teal-400">
                         +50
                     </div>
                 </div>

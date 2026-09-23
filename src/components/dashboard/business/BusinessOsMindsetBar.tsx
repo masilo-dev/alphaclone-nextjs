@@ -26,19 +26,19 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                     <Route className={`text-violet-400 ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    <p className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1">
                         Business OS mindset
                     </p>
                     <p
-                        className={`text-slate-200 font-medium leading-snug ${compact ? 'text-xs' : 'text-sm'}`}
+                        className={`text-slate-200 font-medium leading-snug ${compact ? 'type-caption' : 'type-ui'}`}
                     >
                         {g.mindset}
                     </p>
                     {!compact && (
-                        <p className="text-xs text-slate-400 mt-2 leading-relaxed">{g.outcome}</p>
+                        <p className="type-card-description text-slate-400 mt-2 leading-relaxed">{g.outcome}</p>
                     )}
                     {compact && (
-                        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">{g.outcome}</p>
+                        <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{g.outcome}</p>
                     )}
                     <div className="flex flex-wrap gap-2 mt-2.5">
                         {g.actions.map((a) => (
@@ -46,7 +46,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                                 key={a.tab + a.label}
                                 type="button"
                                 onClick={() => setActiveTab(a.tab)}
-                                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/80 text-teal-400 hover:text-teal-300 hover:border-teal-500/40 transition-colors"
+                                className="type-ui font-semibold px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/80 text-teal-400 hover:text-teal-300 hover:border-teal-500/40 transition-colors"
                             >
                                 {a.label}
                             </button>

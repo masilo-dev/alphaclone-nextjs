@@ -22,7 +22,7 @@ export default function LegalNav() {
   return (
     <div className="sticky top-20 z-30 hidden border-b border-[var(--marketing-border)] bg-[rgba(2,13,26,0.92)] backdrop-blur-md md:block">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/legal" className="text-sm font-semibold text-[var(--marketing-text-primary)] shrink-0">
+        <Link href="/legal" className="type-ui font-semibold text-[var(--marketing-text-primary)] shrink-0">
           AlphaClone Legal
         </Link>
 
@@ -33,7 +33,7 @@ export default function LegalNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)] ${
+                className={`rounded-full px-3 py-1.5 type-caption font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)] ${
                   active
                     ? 'bg-[var(--marketing-accent-soft)] text-[var(--marketing-accent-hover)] ring-1 ring-[rgba(20,184,166,0.35)]'
                     : 'text-[var(--marketing-text-muted)] hover:bg-[var(--marketing-surface)] hover:text-[var(--marketing-text-primary)]'

@@ -203,7 +203,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
                 <Loader2 className="w-10 h-10 animate-spin text-teal-400 mb-4" />
-                <p className="text-slate-400 text-sm">Loading Teams workspace…</p>
+                <p className="text-slate-400 type-card-description">Loading Teams workspace…</p>
             </div>
         );
     }
@@ -218,7 +218,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                         <Video className="w-8 h-8 text-blue-400" />
                         Microsoft Teams &amp; Meetings
                     </h1>
-                    <p className="text-slate-400 text-sm mt-1">
+                    <p className="text-slate-400 type-card-description mt-1">
                         Start or join a secure video meeting, check presence, and manage your team.
                     </p>
                 </div>
@@ -252,7 +252,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                             <span className="font-bold text-white">Teams Sync Engine</span>
                             <Badge variant={isConnected ? 'success' : 'warning'}>{isConnected ? 'Active' : 'Setup Needed'}</Badge>
                         </div>
-                        <p className="text-sm text-slate-400">
+                        <p className="type-card-description text-slate-400">
                             {isConnected
                                 ? 'Microsoft account connected. Outlook, Calendar, Teams, and OneDrive are available.'
                                 : 'Connect Microsoft 365 to unlock Teams presence, calendar sync, and more.'}
@@ -281,7 +281,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                             <Button
                                 onClick={startInstantMeeting}
                                 disabled={starting}
-                                className="gap-1.5 h-8 text-xs px-3 bg-teal-600 hover:bg-teal-500 text-white"
+                                className="gap-1.5 h-8 type-caption px-3 bg-teal-600 hover:bg-teal-500 text-white"
                             >
                                 <Plus className="w-3.5 h-3.5" /> New Meeting
                             </Button>
@@ -294,7 +294,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                 <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
                                     <Video className="w-7 h-7 text-teal-400" />
                                 </div>
-                                <p className="text-slate-400 text-sm max-w-xs">No active rooms. Start a meeting and your team can join instantly.</p>
+                                <p className="text-slate-400 type-card-description max-w-xs">No active rooms. Start a meeting and your team can join instantly.</p>
                                 <Button onClick={startInstantMeeting} disabled={starting} className="gap-2">
                                     <Plus className="w-4 h-4" /> Start a Meeting
                                 </Button>
@@ -309,10 +309,10 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <p className="text-sm font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
+                                                    <p className="type-card-description font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
                                                     <MeetingProviderBadge meeting={m} />
                                                 </div>
-                                                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                                <p className="type-card-description text-slate-500 flex items-center gap-1 mt-0.5">
                                                     <Clock className="w-3 h-3" />
                                                     {new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                                 </p>
@@ -327,7 +327,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                             >
                                                 <Copy className="w-3.5 h-3.5" />
                                             </button>
-                                            <Button onClick={() => void joinMeeting(m.id)} className="gap-1.5 h-8 text-xs px-3">
+                                            <Button onClick={() => void joinMeeting(m.id)} className="gap-1.5 h-8 type-caption px-3">
                                                 <Video className="w-3.5 h-3.5" /> Join
                                             </Button>
                                         </div>
@@ -340,13 +340,13 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                     {/* Team Directory */}
                     <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <h3 className="type-caption font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <Users className="w-4 h-4" /> Workspace Directory
                             </h3>
                             {loadingPresence && <Loader2 className="w-4 h-4 animate-spin text-teal-400" />}
                         </div>
                         {teamMembers.length === 0 ? (
-                            <p className="text-sm text-slate-500">No workspace members found.</p>
+                            <p className="type-card-description text-slate-500">No workspace members found.</p>
                         ) : (
                             <div className="divide-y divide-white/5 max-h-72 overflow-y-auto pr-1">
                                 {teamMembers.map((member: any) => {
@@ -358,18 +358,18 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                     return (
                                         <div key={member.id} className="py-3 flex items-center justify-between gap-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center font-bold text-slate-300 text-xs">
+                                                <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center font-bold text-slate-300 type-caption">
                                                     {name.slice(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-white">{name}</p>
-                                                    <p className="text-xs text-slate-500">{email}</p>
+                                                    <p className="type-card-description font-bold text-white">{name}</p>
+                                                    <p className="type-card-description text-slate-500">{email}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight bg-slate-950/40 border border-white/5 px-2 py-0.5 rounded-full">{role}</span>
+                                                <span className="type-caption text-slate-400 uppercase font-bold tracking-tight bg-slate-950/40 border border-white/5 px-2 py-0.5 rounded-full">{role}</span>
                                                 {isConnected && (
-                                                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 border border-white/5 rounded-full bg-slate-950/40 text-[10px] font-black uppercase tracking-wider">
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 border border-white/5 rounded-full bg-slate-950/40 type-caption font-black uppercase tracking-wider">
                                                         <span className={`w-2 h-2 rounded-full ${dot} animate-pulse`} />
                                                         <span className={text}>{presence}</span>
                                                     </div>
@@ -388,8 +388,8 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
 
                     {/* Presence checker */}
                     <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-4">
-                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Presence Verifier</h3>
-                        <p className="text-xs text-slate-500 leading-relaxed">Query live Teams presence for any user in your tenant.</p>
+                        <h3 className="type-caption font-black text-slate-400 uppercase tracking-widest">Presence Verifier</h3>
+                        <p className="type-card-description text-slate-500 leading-relaxed">Query live Teams presence for any user in your tenant.</p>
                         <form onSubmit={handlePresenceCheck} className="space-y-3">
                             <div className="relative">
                                 <input
@@ -397,11 +397,11 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                     value={searchEmail}
                                     onChange={(e) => setSearchEmail(e.target.value)}
                                     placeholder="user@domain.com"
-                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-xs text-white outline-none focus:border-teal-500/40"
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 type-caption text-white outline-none focus:border-teal-500/40"
                                 />
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                             </div>
-                            <Button type="submit" disabled={checkingEmail || !isConnected} className="w-full bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2 text-xs">
+                            <Button type="submit" disabled={checkingEmail || !isConnected} className="w-full bg-blue-600/80 hover:bg-blue-600 text-white font-bold py-2 type-caption">
                                 {checkingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Check Status'}
                             </Button>
                         </form>
@@ -409,10 +409,10 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                             const { dot, text } = getStatusColor(checkedPresence.status);
                             return (
                                 <div className="p-3 rounded-xl bg-slate-950/50 border border-white/5 space-y-2">
-                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Result</div>
+                                    <div className="type-caption font-black text-slate-500 uppercase tracking-widest">Result</div>
                                     <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs truncate font-semibold text-slate-300">{checkedPresence.email}</span>
-                                        <div className="flex items-center gap-1.5 px-2 py-0.5 border border-white/5 rounded-full bg-slate-950/40 text-[10px] font-black uppercase tracking-wider">
+                                        <span className="type-caption truncate font-semibold text-slate-300">{checkedPresence.email}</span>
+                                        <div className="flex items-center gap-1.5 px-2 py-0.5 border border-white/5 rounded-full bg-slate-950/40 type-caption font-black uppercase tracking-wider">
                                             <span className={`w-2 h-2 rounded-full ${dot} animate-pulse`} />
                                             <span className={text}>{checkedPresence.status}</span>
                                         </div>
@@ -424,24 +424,24 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
 
                     {/* Quick actions */}
                     <div className="p-5 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3">
-                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest">Quick Actions</h4>
+                        <h4 className="type-caption font-black text-slate-500 uppercase tracking-widest">Quick Actions</h4>
                         <div className="space-y-2">
                             <button
                                 onClick={startInstantMeeting}
                                 disabled={starting}
-                                className="flex items-center gap-2 w-full p-3 rounded-xl bg-teal-600/10 hover:bg-teal-600/20 border border-teal-500/20 text-left text-sm font-semibold text-teal-300 transition-colors"
+                                className="flex items-center gap-2 w-full p-3 rounded-xl bg-teal-600/10 hover:bg-teal-600/20 border border-teal-500/20 text-left type-ui font-semibold text-teal-300 transition-colors"
                             >
                                 <Plus className="w-4 h-4" /> Start Instant Meeting
                             </button>
                             <button
                                 onClick={() => setActiveTab('/dashboard/business/calendar')}
-                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left text-xs text-slate-300 transition-colors"
+                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left type-caption text-slate-300 transition-colors"
                             >
                                 <Calendar className="w-4 h-4 text-blue-400" /> Go to Calendar
                             </button>
                             <button
                                 onClick={() => setActiveTab('/dashboard/business/meetings')}
-                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left text-xs text-slate-300 transition-colors"
+                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left type-caption text-slate-300 transition-colors"
                             >
                                 <PhoneCall className="w-4 h-4 text-blue-400" /> All Meetings
                             </button>
@@ -449,7 +449,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                 href="https://teams.microsoft.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left text-xs text-slate-300 transition-colors"
+                                className="flex items-center gap-2 w-full p-2.5 rounded-xl bg-slate-950/40 hover:bg-slate-950/80 border border-white/5 hover:border-slate-700 text-left type-caption text-slate-300 transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4 text-blue-400" /> Open Teams Web
                             </a>

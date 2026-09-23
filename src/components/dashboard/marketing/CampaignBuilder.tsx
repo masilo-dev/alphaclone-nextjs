@@ -18,8 +18,8 @@ export default function CampaignBuilder({ onClose, onCreated }: CampaignBuilderP
         <div className="flex h-full min-h-0 flex-col bg-slate-950">
             <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-teal-400">Unified Campaign Experience</p>
-                    <p className="text-xs text-slate-500">Legacy marketing composer now routes through the main campaign builder.</p>
+                    <p className="type-caption font-black uppercase tracking-widest text-teal-400">Unified Campaign Experience</p>
+                    <p className="type-card-description text-slate-500">Legacy marketing composer now routes through the main campaign builder.</p>
                 </div>
                 <button
                     type="button"

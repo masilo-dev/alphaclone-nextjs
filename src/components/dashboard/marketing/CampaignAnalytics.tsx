@@ -88,7 +88,7 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">{campaign.name}</h2>
-                    <p className="text-sm text-slate-400">Subject: {campaign.subject}</p>
+                    <p className="type-card-description text-slate-400">Subject: {campaign.subject}</p>
                 </div>
                 <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-slate-400">
                     <X className="w-5 h-5" />
@@ -104,9 +104,9 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
                 <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                         <AlertCircle className="w-4 h-4 text-red-400" />
-                        <span className="text-sm font-bold text-red-400">Delivery Issues</span>
+                        <span className="type-ui font-bold text-red-400">Delivery Issues</span>
                     </div>
-                    <div className="flex gap-4 text-sm">
+                    <div className="flex gap-4 type-ui">
                         {statusCounts.bounced > 0 && (
                             <span className="text-red-300">{statusCounts.bounced} bounced</span>
                         )}
@@ -119,11 +119,11 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
 
             {/* Recipient List */}
             <div>
-                <h3 className="text-sm font-bold text-white mb-3">Recipients ({recipients.length})</h3>
+                <h3 className="type-ui font-bold text-white mb-3">Recipients ({recipients.length})</h3>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                     <div className="divide-y divide-white/5 max-h-60 overflow-y-auto">
                         {recipients.map(r => (
-                            <div key={r.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                            <div key={r.id} className="flex items-center justify-between px-4 py-2.5 type-ui">
                                 <div>
                                     <span className="text-white">{r.email}</span>
                                     {r.name && <span className="text-slate-500 ml-2">({r.name})</span>}

@@ -40,7 +40,7 @@ export default function HumanVerification({ onVerify, verified }: HumanVerificat
 
     return (
         <div className="w-full space-y-2">
-            <label className="text-xs text-slate-500 font-medium uppercase tracking-wider block text-center">
+            <label className="type-caption text-slate-500 font-medium uppercase tracking-wider block text-center">
                 Security Check
             </label>
             <div
@@ -50,13 +50,13 @@ export default function HumanVerification({ onVerify, verified }: HumanVerificat
             >
                 <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isVerified ? 'opacity-0' : 'opacity-100'
                     }`}>
-                    <span className="text-xs font-semibold text-slate-400 tracking-widest uppercase truncate pl-12 pr-8">
+                    <span className="type-caption font-semibold text-slate-400 tracking-widest uppercase truncate pl-12 pr-8">
                         Slide key to unlock
                     </span>
                 </div>
 
                 {isVerified ? (
-                    <div className="w-full flex items-center justify-center gap-2 text-teal-400 font-bold animate-fade-in text-sm">
+                    <div className="w-full flex items-center justify-center gap-2 text-teal-400 font-bold animate-fade-in type-ui">
                         <CheckCircle2 className="w-4 h-4" />
                         Human Verified
                     </div>

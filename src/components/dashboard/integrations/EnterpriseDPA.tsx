@@ -45,32 +45,32 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
           <Shield className="w-6 h-6 text-teal-400" />
           <h2 className="text-xl font-bold text-white">Enterprise Data Processing Agreement</h2>
         </div>
-        <p className="text-slate-400 text-sm">Required for all Enterprise-tier AI integrations.</p>
+        <p className="text-slate-400 type-card-description">Required for all Enterprise-tier AI integrations.</p>
       </div>
 
       <div className="p-6">
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 h-64 overflow-y-auto mb-6 text-slate-300 text-xs leading-relaxed space-y-4 custom-scrollbar">
-          <h3 className="text-white font-bold text-sm underline">1. Subject Matter and Duration</h3>
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 h-64 overflow-y-auto mb-6 text-slate-300 type-caption leading-relaxed space-y-4 custom-scrollbar">
+          <h3 className="text-white font-bold type-ui underline">1. Subject Matter and Duration</h3>
           <p>
             This Data Processing Agreement ("DPA") applies to the processing of personal data by AlphaClone (the "Processor") on behalf of the customer (the "Controller") in connection with the Model Context Protocol (MCP) and external AI Agent integrations.
           </p>
           
-          <h3 className="text-white font-bold text-sm underline">2. Nature and Purpose of Processing</h3>
+          <h3 className="text-white font-bold type-ui underline">2. Nature and Purpose of Processing</h3>
           <p>
             The Processor will process data for the purpose of providing CRM automation, lead management, and project tracking via AI agents as requested by the Controller. This includes reading CRM records and inserting new operational data.
           </p>
 
-          <h3 className="text-white font-bold text-sm underline">3. Technical and Organizational Measures</h3>
+          <h3 className="text-white font-bold type-ui underline">3. Technical and Organizational Measures</h3>
           <p>
             The Processor implements robust security measures, including multi-tenant isolation, encrypted storage, and restricted AI access permissions (No-Delete policy). All AI actions are audited and visible in the Controller's activity feed.
           </p>
 
-          <h3 className="text-white font-bold text-sm underline">4. AI Agent Liability</h3>
+          <h3 className="text-white font-bold type-ui underline">4. AI Agent Liability</h3>
           <p>
             The Controller acknowledges that connecting external AI agents (e.g., Claude, Manus) involves a "User-in-the-loop" model. The Controller is responsible for the actions initiated by the AI agents configured via the Controller's unique connection keys.
           </p>
 
-          <h3 className="text-white font-bold text-sm underline">5. Data Deletion</h3>
+          <h3 className="text-white font-bold type-ui underline">5. Data Deletion</h3>
           <p>
             Upon termination of the service, the Processor shall delete all personal data processed on behalf of the Controller, unless required by law to retain such data.
           </p>
@@ -87,7 +87,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
               />
               <CheckCircle className="absolute h-3.5 w-3.5 text-white opacity-0 transition-opacity peer-checked:opacity-100 left-0.5" />
             </div>
-            <span className="text-slate-300 text-sm select-none group-hover:text-white transition-colors">
+            <span className="text-slate-300 type-ui select-none group-hover:text-white transition-colors">
               I represent that I have the authority to bind the organization and I agree to the terms of the Enterprise Data Processing Agreement (DPA v1.0).
             </span>
           </label>
@@ -117,7 +117,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
 
       <div className="px-6 py-4 bg-slate-950/50 border-t border-slate-800 flex items-center gap-2">
         <AlertCircle className="w-4 h-4 text-amber-400" />
-        <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">
+        <p className="type-caption text-slate-500 uppercase tracking-widest font-semibold">
           Acceptance will be cryptographically logged for compliance.
         </p>
       </div>

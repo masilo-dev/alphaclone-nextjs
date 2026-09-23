@@ -138,10 +138,10 @@ export function StandardStatCard({
     <div className="flex flex-col h-full justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1 min-w-0">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+          <span className="type-caption font-black uppercase tracking-wider text-slate-500">
             {label}
           </span>
-          <h4 className="text-[1.45rem] sm:text-2xl font-black text-[#f5f5f5] tracking-tight leading-none mt-1">
+          <h4 className="text-2xl sm:text-2xl font-black text-[#f5f5f5] tracking-tight leading-none mt-1">
             {value}
           </h4>
         </div>
@@ -166,7 +166,7 @@ export function StandardStatCard({
           {delta !== undefined && (
             <span
               className={cn(
-                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums',
+                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded type-ui font-bold tabular-nums',
                 resolvedDeltaDir === 'up' && 'bg-[#adebb3]/10 text-[#adebb3]',
                 resolvedDeltaDir === 'down' && 'bg-[#f87171]/10 text-[#f87171]',
                 resolvedDeltaDir === 'none' && 'bg-white/5 text-[#c0c0c0]'
@@ -177,7 +177,7 @@ export function StandardStatCard({
               {deltaText}
             </span>
           )}
-          <span className="text-[10px] text-[#94a3b8] font-medium truncate">{comparisonText}</span>
+          <span className="type-ui text-[#94a3b8] font-medium truncate">{comparisonText}</span>
         </div>
 
         {isClickable && (

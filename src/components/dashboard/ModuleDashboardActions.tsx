@@ -42,11 +42,11 @@ export function ModuleDashboardActions({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <p className={WORKSPACE.typography.sectionLabel}>{t('What to do next')}</p>
-            <h2 className="text-[15px] font-semibold text-white mt-0.5 truncate">{t(title)}</h2>
+            <h2 className="type-ui font-semibold text-white mt-0.5 truncate">{t(title)}</h2>
             {!expanded ? (
-              <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-1 line-clamp-1">{t(purpose)}</p>
+              <p className="type-card-description text-[var(--ws-text-tertiary)] mt-1 line-clamp-1">{t(purpose)}</p>
             ) : (
-              <p className="text-[13px] text-[var(--ws-text-secondary)] mt-2 max-w-3xl leading-relaxed">{t(purpose)}</p>
+              <p className="type-card-description text-[var(--ws-text-secondary)] mt-2 max-w-3xl leading-relaxed">{t(purpose)}</p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -78,8 +78,8 @@ export function ModuleDashboardActions({
               <p className={WORKSPACE.typography.sectionLabel}>{t('Your workflow')}</p>
               <ol className="space-y-2 mt-3">
                 {playbook.map((step, index) => (
-                  <li key={step} className="flex gap-3 text-[13px] text-[var(--ws-text-secondary)] leading-relaxed">
-                    <span className="shrink-0 w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center bg-[var(--ws-active)] text-teal-300">
+                  <li key={step} className="flex gap-3 type-ui text-[var(--ws-text-secondary)] leading-relaxed">
+                    <span className="shrink-0 w-5 h-5 rounded type-ui font-bold flex items-center justify-center bg-[var(--ws-active)] text-teal-300">
                       {index + 1}
                     </span>
                     <span className="pt-0.5">{t(step)}</span>
@@ -98,7 +98,7 @@ export function ModuleDashboardActions({
                 >
                   <div className="flex items-center gap-2.5">
                     <action.icon className="w-4 h-4 text-teal-400 shrink-0" />
-                    <span className="text-[12px] font-semibold text-white group-hover:text-teal-300 truncate">
+                    <span className="type-ui font-semibold text-white group-hover:text-teal-300 truncate">
                       {t(action.label)}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 ml-auto shrink-0" />
@@ -111,7 +111,7 @@ export function ModuleDashboardActions({
       </section>
 
       {showChartNote && expanded ? (
-        <p className="text-[11px] text-[var(--ws-text-tertiary)] px-1 leading-relaxed border-l-2 border-[var(--ws-border-strong)] pl-3">
+        <p className="type-card-description text-[var(--ws-text-tertiary)] px-1 leading-relaxed border-l-2 border-[var(--ws-border-strong)] pl-3">
           {chartNote}
         </p>
       ) : null}

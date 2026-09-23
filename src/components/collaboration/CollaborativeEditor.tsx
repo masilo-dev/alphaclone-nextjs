@@ -108,7 +108,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                     <div className="flex items-center gap-4">
                         <h2 className="text-xl font-bold text-white">{document?.title || 'Collaborative Document'}</h2>
                         {isSaving && (
-                            <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <span className="type-caption text-slate-400 flex items-center gap-1">
                                 <Save className="w-3 h-3 animate-spin" />
                                 Saving...
                             </span>
@@ -129,7 +129,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                                     />
                                 ))}
                                 {participants.length > 3 && (
-                                    <div className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-800 flex items-center justify-center text-xs text-white">
+                                    <div className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-800 flex items-center justify-center type-caption text-white">
                                         +{participants.length - 3}
                                     </div>
                                 )}
@@ -154,7 +154,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                         ref={editorRef}
                         value={content}
                         onChange={handleContentChange}
-                        className="flex-1 w-full p-6 bg-slate-950 text-white placeholder-slate-600 resize-none outline-none font-mono text-sm"
+                        className="flex-1 w-full p-6 bg-slate-950 text-white placeholder-slate-600 resize-none outline-none font-mono type-ui"
                         placeholder="Start typing... Changes are saved automatically and synced in real-time."
                     />
 
@@ -171,7 +171,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                                     }}
                                 >
                                     <div
-                                        className="absolute -top-6 left-0 px-2 py-1 rounded text-xs text-white whitespace-nowrap"
+                                        className="absolute -top-6 left-0 px-2 py-1 rounded type-caption text-white whitespace-nowrap"
                                         style={{ backgroundColor: cursor.color }}
                                     >
                                         {cursor.userName}
@@ -183,7 +183,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 flex items-center justify-between text-sm text-slate-400">
+                <div className="p-4 border-t border-slate-800 flex items-center justify-between type-ui text-slate-400">
                     <div className="flex items-center gap-4">
                         <span>{participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
                         <span>Version {document?.version || 1}</span>

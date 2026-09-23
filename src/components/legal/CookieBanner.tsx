@@ -141,24 +141,24 @@ export default function CookieBanner() {
                   <Shield className="h-4 w-4 text-[var(--brand-cyan-soft)]" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-white sm:text-sm">Your privacy choices</h4>
-                  <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-300 sm:text-xs">
+                  <h4 className="type-card-title font-bold text-white sm:text-sm">Your privacy choices</h4>
+                  <p className="mt-1 max-w-2xl type-card-description leading-relaxed text-slate-300 sm:text-sm">
                     We use essential cookies to keep AlphaClone secure. You can allow optional functional, analytics, and marketing cookies, or choose essential only.
                   </p>
-                  <Link href="/cookie-policy" className="mt-1 inline-flex text-[10px] font-semibold text-[var(--brand-cyan-soft)] hover:text-white hover:underline sm:mt-1.5 sm:text-[11px]">
+                  <Link href="/cookie-policy" className="mt-1 inline-flex type-ui font-semibold text-[var(--brand-cyan-soft)] hover:text-white hover:underline sm:mt-1.5 sm:text-sm">
                     Read the Cookie Policy
                   </Link>
                 </div>
               </div>
               <div className="grid grid-cols-3 items-center gap-1.5 sm:flex sm:shrink-0 sm:gap-2">
-                <button type="button" onClick={() => saveConsent({ functional: false, analytics: false, marketing: false })} className="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:px-3 sm:py-2.5 sm:text-xs">
+                <button type="button" onClick={() => saveConsent({ functional: false, analytics: false, marketing: false })} className="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 type-ui font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:px-3 sm:py-2.5 sm:text-sm">
                   Essential only
                 </button>
-                <button type="button" onClick={() => setOpenPrefs(true)} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-xs">
+                <button type="button" onClick={() => setOpenPrefs(true)} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 type-ui font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm">
                   <Settings2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   Manage
                 </button>
-                <button type="button" onClick={() => saveConsent({ functional: true, analytics: true, marketing: true })} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-1.5 py-2 text-[10px] font-bold text-white shadow-lg shadow-blue-950/40 transition-colors hover:bg-[var(--brand-primary-hover)] sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-xs">
+                <button type="button" onClick={() => saveConsent({ functional: true, analytics: true, marketing: true })} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-1.5 py-2 type-ui font-bold text-white shadow-lg shadow-blue-950/40 transition-colors hover:bg-[var(--brand-primary-hover)] sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-sm">
                   <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   Accept all
                 </button>
@@ -174,7 +174,7 @@ export default function CookieBanner() {
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
               <div>
                 <h3 id="cookie-preferences-title" className="text-base font-bold text-white">Privacy & Cookie Preferences</h3>
-                <p className="mt-0.5 text-xs text-slate-400">Choose which optional cookies AlphaClone may use.</p>
+                <p className="mt-0.5 type-card-description text-slate-400">Choose which optional cookies AlphaClone may use.</p>
               </div>
               <button type="button" onClick={() => setOpenPrefs(false)} className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white" aria-label="Close preferences">
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -189,8 +189,8 @@ export default function CookieBanner() {
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-slate-800/80 pt-4">
-              <button type="button" onClick={() => setOpenPrefs(false)} className="rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-400 transition-colors hover:text-white">Cancel</button>
-              <button type="button" onClick={() => saveConsent({ functional, analytics, marketing })} className="rounded-xl bg-[var(--brand-primary)] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[var(--brand-primary-hover)]">Save preferences</button>
+              <button type="button" onClick={() => setOpenPrefs(false)} className="rounded-xl px-4 py-2.5 type-ui font-semibold text-slate-400 transition-colors hover:text-white">Cancel</button>
+              <button type="button" onClick={() => saveConsent({ functional, analytics, marketing })} className="rounded-xl bg-[var(--brand-primary)] px-5 py-2.5 type-ui font-bold text-white transition-colors hover:bg-[var(--brand-primary-hover)]">Save preferences</button>
             </div>
           </div>
         </div>
@@ -203,10 +203,10 @@ function ToggleRow({ label, description, checked, disabled, onToggle }: { label:
   return (
     <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3.5 sm:p-4">
       <div>
-        <p className="text-xs font-bold text-white sm:text-sm">{label}</p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-400">{description}</p>
+        <p className="type-card-description font-bold text-white sm:text-sm">{label}</p>
+        <p className="mt-1 type-card-description leading-relaxed text-slate-400">{description}</p>
       </div>
-      <button type="button" onClick={disabled ? undefined : onToggle} disabled={disabled} aria-pressed={checked} className={`mt-0.5 inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold transition-all ${checked ? 'border border-teal-500/30 bg-teal-500/20 text-teal-300' : 'border border-slate-700 bg-slate-800 text-slate-400'} ${disabled ? 'cursor-not-allowed opacity-60' : 'hover:scale-105'}`}>
+      <button type="button" onClick={disabled ? undefined : onToggle} disabled={disabled} aria-pressed={checked} className={`mt-0.5 inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 py-1 type-ui font-bold transition-all ${checked ? 'border border-teal-500/30 bg-teal-500/20 text-teal-300' : 'border border-slate-700 bg-slate-800 text-slate-400'} ${disabled ? 'cursor-not-allowed opacity-60' : 'hover:scale-105'}`}>
         {checked ? <ToggleRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ToggleLeft className="h-3.5 w-3.5" aria-hidden="true" />}
         {checked ? 'On' : 'Off'}
       </button>

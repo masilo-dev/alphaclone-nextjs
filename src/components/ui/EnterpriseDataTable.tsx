@@ -73,7 +73,7 @@ export function EnterpriseDataTable<T>({
   if (data.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-12 text-center">
-        <p className="text-sm text-slate-400">{emptyMessage}</p>
+        <p className="type-card-description text-slate-400">{emptyMessage}</p>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export function EnterpriseDataTable<T>({
   return (
     <div className={cn('ac-scroll-full', className)}>
       <ResponsiveTableDesktop>
-        <table className="ac-data-table w-full text-sm">
+        <table className="ac-data-table w-full type-ui">
           <thead>
             <tr>
               {columns.map((col) => (
@@ -167,7 +167,7 @@ export function EnterpriseDataTable<T>({
             >
               <div className="space-y-2">
                 {mobilePrimary.map((col) => (
-                  <div key={col.id} className="flex justify-between gap-3 text-sm">
+                  <div key={col.id} className="flex justify-between gap-3 type-ui">
                     <span className="text-slate-500 shrink-0">{col.header}</span>
                     <span className="text-white text-right min-w-0">{col.accessor(row)}</span>
                   </div>
@@ -177,7 +177,7 @@ export function EnterpriseDataTable<T>({
                 <>
                   <button
                     type="button"
-                    className="w-full min-h-11 text-xs font-medium text-teal-400 flex items-center justify-center gap-1"
+                    className="w-full min-h-11 type-caption font-medium text-teal-400 flex items-center justify-center gap-1"
                     onClick={(e) => {
                       e.stopPropagation();
                       setExpandedId(isExpanded ? null : id);

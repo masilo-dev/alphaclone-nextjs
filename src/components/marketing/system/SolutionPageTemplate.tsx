@@ -86,10 +86,10 @@ export default function SolutionPageTemplate({ content }: SolutionPageTemplatePr
                 <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
                   {module.label}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                <p className="mt-2 type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
                   {module.description}
                 </p>
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--marketing-accent-hover)]">
+                <span className="mt-4 inline-flex items-center gap-2 type-ui font-semibold text-[var(--marketing-accent-hover)]">
                   Explore module
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -129,10 +129,10 @@ export default function SolutionPageTemplate({ content }: SolutionPageTemplatePr
               <ol className="space-y-3">
                 {content.setup.map((step, index) => (
                   <li key={step} className="mkt-surface flex gap-4 p-4">
-                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--marketing-accent-soft)] text-sm font-bold text-[var(--marketing-accent-hover)]">
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--marketing-accent-soft)] type-ui font-bold text-[var(--marketing-accent-hover)]">
                       {index + 1}
                     </span>
-                    <span className="text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                    <span className="type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
                       {step}
                     </span>
                   </li>

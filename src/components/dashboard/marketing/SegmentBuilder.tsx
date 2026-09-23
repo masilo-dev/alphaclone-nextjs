@@ -87,13 +87,13 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
 
   return (
     <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
-      <div className="flex items-center gap-2 text-sm font-bold text-white">
+      <div className="flex items-center gap-2 type-ui font-bold text-white">
         <Filter className="w-4 h-4 text-teal-400" />
         Audience segment
       </div>
-      <p className="text-[11px] text-slate-500">Filter CRM clients, preview the count, then apply to your campaign audience.</p>
+      <p className="type-card-description text-slate-500">Filter CRM clients, preview the count, then apply to your campaign audience.</p>
       {rules.length === 0 ? (
-        <p className="text-xs text-slate-500">Add a rule to target by sales stage, industry, or tag.</p>
+        <p className="type-card-description text-slate-500">Add a rule to target by sales stage, industry, or tag.</p>
       ) : null}
       {rules.map((r, i) => (
         <div key={i} className="flex gap-2 flex-wrap">
@@ -104,7 +104,7 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
               next[i].field = e.target.value;
               setRules(next);
             }}
-            className="h-9 px-2 rounded-lg bg-slate-950 border border-white/5 text-xs text-white"
+            className="h-9 px-2 rounded-lg bg-slate-950 border border-white/5 type-caption text-white"
           >
             {FIELDS.map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
@@ -117,19 +117,19 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
               next[i].value = e.target.value;
               setRules(next);
             }}
-            className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-slate-950 border border-white/5 text-xs text-white"
+            className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-slate-950 border border-white/5 type-caption text-white"
             placeholder="Value"
           />
-          <button type="button" onClick={() => setRules(rules.filter((_, j) => j !== i))} className="text-xs text-red-400">Remove</button>
+          <button type="button" onClick={() => setRules(rules.filter((_, j) => j !== i))} className="type-ui text-red-400">Remove</button>
         </div>
       ))}
       <div className="flex flex-wrap gap-2 items-center">
-        <button type="button" onClick={addRule} className="text-xs font-bold text-teal-400">+ Add rule</button>
+        <button type="button" onClick={addRule} className="type-ui font-bold text-teal-400">+ Add rule</button>
         <button
           type="button"
           onClick={() => void preview()}
           disabled={loading || rules.length === 0}
-          className="h-9 px-4 rounded-xl bg-violet-500/20 text-violet-400 text-xs font-bold border border-violet-500/30 flex items-center gap-1 disabled:opacity-50"
+          className="h-9 px-4 rounded-xl bg-violet-500/20 text-violet-400 type-caption font-bold border border-violet-500/30 flex items-center gap-1 disabled:opacity-50"
         >
           <Users className="w-3.5 h-3.5" />
           Preview {previewCount != null ? `(${previewCount})` : ''}
@@ -139,7 +139,7 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
             type="button"
             onClick={() => void applyToCampaign()}
             disabled={loading || rules.length === 0}
-            className="ml-auto h-9 px-4 rounded-xl bg-teal-500/20 text-teal-300 text-xs font-bold border border-teal-500/30 flex items-center gap-1 disabled:opacity-50"
+            className="ml-auto h-9 px-4 rounded-xl bg-teal-500/20 text-teal-300 type-caption font-bold border border-teal-500/30 flex items-center gap-1 disabled:opacity-50"
           >
             <Check className="w-3.5 h-3.5" />
             Apply to audience

@@ -50,7 +50,7 @@ export default function BookDemoContent() {
           <div className="max-w-5xl mx-auto">
             <Link
               href="/"
-              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors mb-5 sm:mb-8 text-sm font-medium"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors mb-5 sm:mb-8 type-ui font-medium"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {copy.back}
@@ -58,7 +58,7 @@ export default function BookDemoContent() {
 
             <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-8 lg:gap-10 items-start">
               <div className="order-1">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold tracking-widest uppercase mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 type-caption font-semibold tracking-widest uppercase mb-4">
                   {copy.eyebrow}
                 </span>
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-950 leading-tight mb-3 sm:mb-4 font-marketing-heading">
@@ -74,7 +74,7 @@ export default function BookDemoContent() {
                     { icon: CheckCircle2, text: copy.points[1] },
                     { icon: CheckCircle2, text: copy.points[2] },
                   ].map(({ icon: Icon, text }) => (
-                    <li key={text} className="flex items-start gap-3 text-sm text-slate-700">
+                    <li key={text} className="flex items-start gap-3 type-ui text-slate-700">
                       <Icon className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       {text}
                     </li>
@@ -91,12 +91,12 @@ export default function BookDemoContent() {
                       className="p-3.5 bg-white border border-slate-200 rounded-xl text-center shadow-sm"
                     >
                       <p className="text-lg font-bold text-slate-950">{value}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+                      <p className="type-card-description text-slate-500 mt-0.5">{label}</p>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-sm text-slate-500">
+                <p className="type-card-description text-slate-500">
                   {copy.exploreFirst}{' '}
                   <Link href={TRIAL_HREF} className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
                     {copy.startTrial} →
@@ -118,7 +118,7 @@ export default function BookDemoContent() {
                     href={bookingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 transition-colors font-medium"
+                    className="inline-flex items-center gap-1 type-caption text-slate-500 hover:text-blue-600 transition-colors font-medium"
                   >
                     {copy.newTab}
                     <ExternalLink className="w-3 h-3" />
@@ -129,7 +129,7 @@ export default function BookDemoContent() {
                   <CalComEmbed bookingUrl={bookingUrl} variant="page" />
                 </div>
 
-                <p className="text-center text-xs text-slate-500 mt-3">
+                <p className="text-center type-card-description text-slate-500 mt-3">
                   {copy.timezone}
                 </p>
               </div>
@@ -143,10 +143,10 @@ export default function BookDemoContent() {
               className="rounded-xl border border-slate-200 bg-slate-50 p-6 sm:p-8"
               aria-label="Explore AlphaClone"
             >
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-700 mb-4">
+              <p className="type-caption font-bold uppercase tracking-widest text-blue-700 mb-4">
                 {copy.explore}
               </p>
-              <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm">
+              <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 type-ui">
                 {[
                   { href: '/services', label: copy.links[0] },
                   { href: '/pricing', label: copy.links[1] },

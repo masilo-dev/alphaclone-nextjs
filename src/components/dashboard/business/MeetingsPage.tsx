@@ -106,9 +106,9 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
             <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
+                    <div className="type-caption font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
                     <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Video rooms & booking links</h1>
-                    <p className="text-slate-400 text-sm mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
+                    <p className="text-slate-400 type-card-description mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
                 </div>
                 <div className="flex gap-2">
                     {hasBooking && (
@@ -137,7 +137,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
             <div className="ac-workspace-panel rounded-lg p-6">
                 <div className="mb-4">
-                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Rooms</div>
+                    <div className="type-caption font-black uppercase tracking-widest text-slate-400">Rooms</div>
                     <h2 className="text-lg font-bold text-white mt-1">Active and upcoming meetings</h2>
                 </div>
                 {loading ? (
@@ -162,10 +162,10 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="text-sm font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
+                                            <p className="type-card-description font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
                                             <MeetingProviderBadge meeting={m} />
                                         </div>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <p className="type-card-description text-slate-500 flex items-center gap-1 mt-0.5">
                                             <Clock className="w-3 h-3" />
                                             {new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                         </p>

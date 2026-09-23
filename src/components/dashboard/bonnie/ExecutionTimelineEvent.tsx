@@ -148,7 +148,7 @@ export default function ExecutionTimelineEvent({
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Kind chip */}
           <span
-            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest ${KIND_COLOR[kind]}`}
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 type-caption font-black uppercase tracking-widest ${KIND_COLOR[kind]}`}
           >
             {KIND_ICON[kind]}
             {kind.replace('_', ' ')}
@@ -156,7 +156,7 @@ export default function ExecutionTimelineEvent({
 
           {/* Tool badge */}
           {tool && (
-            <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] text-slate-300 border border-slate-700/60">
+            <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono type-ui text-slate-300 border border-slate-700/60">
               {tool}
             </span>
           )}
@@ -166,7 +166,7 @@ export default function ExecutionTimelineEvent({
 
           {/* Duration */}
           {durationMs !== undefined && (
-            <span className="text-[10px] text-slate-600 ml-auto shrink-0">
+            <span className="type-ui text-slate-600 ml-auto shrink-0">
               {formatDuration(durationMs)}
             </span>
           )}
@@ -189,20 +189,20 @@ export default function ExecutionTimelineEvent({
         </div>
 
         {/* Label */}
-        <p className={`mt-0.5 text-[11px] leading-snug ${cfg.labelClass}`}>
+        <p className={`mt-0.5 type-card-description leading-snug ${cfg.labelClass}`}>
           {label}
         </p>
 
         {/* Summary */}
         {summary && (
-          <p className="mt-0.5 text-[10px] text-slate-500 leading-snug">
+          <p className="mt-0.5 type-card-description text-slate-500 leading-snug">
             {summary}
           </p>
         )}
 
         {/* Timestamp */}
         {timestamp && (
-          <p className="mt-0.5 text-[9px] text-slate-700">
+          <p className="mt-0.5 type-card-description text-slate-700">
             {new Date(timestamp).toLocaleTimeString()}
           </p>
         )}
@@ -217,7 +217,7 @@ export default function ExecutionTimelineEvent({
               transition={{ duration: 0.18 }}
               className="overflow-hidden"
             >
-              <pre className="mt-1.5 max-h-40 overflow-auto rounded-lg border border-slate-700/60 bg-slate-950 p-2 text-[10px] text-slate-400 custom-scrollbar">
+              <pre className="mt-1.5 max-h-40 overflow-auto rounded-lg border border-slate-700/60 bg-slate-950 p-2 type-ui text-slate-400 custom-scrollbar">
                 {JSON.stringify(payload, null, 2)}
               </pre>
             </motion.div>

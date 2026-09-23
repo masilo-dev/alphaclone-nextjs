@@ -95,15 +95,15 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         </div>
 
                         <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 mb-6">
-                            <p className="text-sm font-mono text-red-400 mb-2">
+                            <p className="type-card-description font-mono text-red-400 mb-2">
                                 {this.state.error?.toString()}
                             </p>
                             {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
                                 <details className="mt-4">
-                                    <summary className="text-sm text-slate-500 cursor-pointer hover:text-slate-400">
+                                    <summary className="type-ui text-slate-500 cursor-pointer hover:text-slate-400">
                                         Show error details
                                     </summary>
-                                    <pre className="mt-2 text-xs text-slate-500 overflow-auto max-h-64">
+                                    <pre className="mt-2 type-caption text-slate-500 overflow-auto max-h-64">
                                         {this.state.errorInfo.componentStack}
                                     </pre>
                                 </details>
@@ -126,7 +126,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         </div>
 
                         <div className="mt-6 text-center">
-                            <p className="text-sm text-slate-500">
+                            <p className="type-card-description text-slate-500">
                                 If this problem persists, please contact{' '}
                                 <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">
                                     support@alphaclonesystems.com
@@ -217,12 +217,12 @@ export class ComponentErrorBoundary extends Component<
                             <h3 className="text-lg font-semibold text-white mb-1">
                                 {this.props.componentName} Error
                             </h3>
-                            <p className="text-sm text-slate-400 mb-4">
+                            <p className="type-card-description text-slate-400 mb-4">
                                 This component encountered an error and couldn't load properly.
                             </p>
                             <button
                                 onClick={this.handleRetry}
-                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white type-ui font-medium rounded-lg transition-colors"
                             >
                                 Reload Component
                             </button>

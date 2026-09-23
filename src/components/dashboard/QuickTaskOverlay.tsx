@@ -91,7 +91,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     <div className="p-1.5 bg-teal-500/10 rounded-lg">
                                         <Zap className="w-4 h-4 text-teal-400" />
                                     </div>
-                                    <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Quick Neural Capture</h2>
+                                    <h2 className="type-caption font-black text-slate-500 uppercase tracking-caps">Quick Neural Capture</h2>
                                 </div>
                                 <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
                                     <X className="w-4 h-4" />
@@ -112,7 +112,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Add details (optional)..."
                                         rows={2}
-                                        className="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-400 placeholder-slate-700 p-0 resize-none"
+                                        className="w-full bg-transparent border-none focus:ring-0 type-ui text-slate-400 placeholder-slate-700 p-0 resize-none"
                                     />
                                 </div>
 
@@ -124,7 +124,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                                 key={p}
                                                 type="button"
                                                 onClick={() => setPriority(p)}
-                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                                className={`px-3 py-1.5 rounded-lg type-caption font-black uppercase tracking-widest transition-all ${
                                                     priority === p 
                                                     ? 'bg-teal-500 text-slate-950' 
                                                     : 'text-slate-500 hover:text-slate-300'
@@ -142,18 +142,18 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
-                                            className="bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase tracking-widest text-slate-400 placeholder-slate-700 p-0 cursor-pointer"
+                                            className="bg-transparent border-none focus:ring-0 type-caption font-black uppercase tracking-widest text-slate-400 placeholder-slate-700 p-0 cursor-pointer"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="flex items-center justify-between pt-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                                        <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
                                             <span className="px-1.5 py-0.5 bg-slate-950 rounded border border-white/5">ESC</span>
                                             <span>Close</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                                        <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
                                             <span className="px-1.5 py-0.5 bg-slate-950 rounded border border-white/5">⌘ + ENTER</span>
                                             <span>Capture</span>
                                         </div>
@@ -162,7 +162,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     <button
                                         type="submit"
                                         disabled={isSubmitting || !title.trim()}
-                                        className={`px-6 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${
+                                        className={`px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-caps transition-all flex items-center gap-2 ${
                                             !title.trim() 
                                             ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
                                             : 'bg-teal-500 text-slate-950 hover:bg-teal-400 shadow-lg shadow-teal-500/20'

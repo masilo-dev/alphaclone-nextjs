@@ -194,7 +194,7 @@ export default function InvoiceStatusPipeline({
     return (
       <span
         className={cn(
-          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border',
+          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider border',
           stage.bgColor,
           stage.color,
           stage.borderColor,
@@ -218,8 +218,8 @@ export default function InvoiceStatusPipeline({
         )}>
           <terminalStage.icon className={cn('w-5 h-5 flex-shrink-0', terminalStage.color)} />
           <div>
-            <p className={cn('font-bold text-sm', terminalStage.color)}>{terminalStage.label}</p>
-            <p className="text-xs text-slate-500">{terminalStage.description}</p>
+            <p className={cn('font-bold type-card-description', terminalStage.color)}>{terminalStage.label}</p>
+            <p className="type-card-description text-slate-500">{terminalStage.description}</p>
           </div>
         </div>
       )}
@@ -254,13 +254,13 @@ export default function InvoiceStatusPipeline({
                   )}
                 </div>
                 <p className={cn(
-                  'text-[10px] font-bold uppercase tracking-wide mt-1.5 text-center',
+                  'type-caption font-bold uppercase tracking-wide mt-1.5 text-center',
                   isCompleted || isActive ? stage.color : 'text-slate-700'
                 )}>
                   {stage.shortLabel}
                 </p>
                 {ts && (isCompleted || isActive) && (
-                  <p className="text-[9px] text-slate-600 mt-0.5 text-center whitespace-nowrap">
+                  <p className="type-card-description text-slate-600 mt-0.5 text-center whitespace-nowrap">
                     {formatTime(ts)}
                   </p>
                 )}

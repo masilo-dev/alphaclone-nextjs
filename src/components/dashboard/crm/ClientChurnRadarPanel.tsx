@@ -34,16 +34,16 @@ export function ClientChurnRadarPanel() {
             <Activity size={16} />
           </div>
           <div>
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">Client Churn Risk & Health Radar</h4>
-            <p className="text-[11px] text-slate-400">Predictive retention analytics & proactive recovery plays</p>
+            <h4 className="type-caption font-black text-white uppercase tracking-wider">Client Churn Risk & Health Radar</h4>
+            <p className="type-card-description text-slate-400">Predictive retention analytics & proactive recovery plays</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-bold">
+          <span className="type-caption text-slate-400 font-bold">
             Average Health: <span className="text-teal-400 font-black">{avgHealth}%</span>
           </span>
-          <span className="text-xs font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+          <span className="type-caption font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
             {highRiskCount} High Risk
           </span>
         </div>
@@ -60,7 +60,7 @@ export function ClientChurnRadarPanel() {
           <button
             key={t.id}
             onClick={() => setFilter(t.id as any)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
               filter === t.id
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -73,7 +73,7 @@ export function ClientChurnRadarPanel() {
 
       {/* Grid of Accounts */}
       {filteredRecords.length === 0 ? (
-        <p className="text-sm text-slate-400">
+        <p className="type-card-description text-slate-400">
           Churn risk is empty until live client activity, invoices, and contract dates are available. No sample accounts are shown.
         </p>
       ) : (
@@ -95,11 +95,11 @@ export function ClientChurnRadarPanel() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h5 className="text-xs font-bold text-white">{r.company}</h5>
-                  <p className="text-[11px] text-slate-400">{r.name}</p>
+                  <h5 className="type-card-title font-bold text-white">{r.company}</h5>
+                  <p className="type-card-description text-slate-400">{r.name}</p>
                 </div>
                 <span
-                  className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                  className={`type-caption font-black uppercase px-2.5 py-0.5 rounded-full border ${
                     isHigh
                       ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
                       : isMod
@@ -113,7 +113,7 @@ export function ClientChurnRadarPanel() {
 
               {/* Progress Bar */}
               <div className="mt-3 space-y-1">
-                <div className="flex items-center justify-between text-[10px] font-bold">
+                <div className="flex items-center justify-between type-ui font-bold">
                   <span className="text-slate-400">Health Score</span>
                   <span className={isHigh ? 'text-rose-400' : isMod ? 'text-amber-400' : 'text-emerald-400'}>
                     {r.healthScore} / 100
@@ -130,7 +130,7 @@ export function ClientChurnRadarPanel() {
               </div>
 
               {/* Signals */}
-              <div className="grid grid-cols-3 gap-2 mt-3 text-[10px] text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-white/5">
+              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-white/5">
                 <div>
                   <span className="block font-bold text-white">{r.lastActiveDaysAgo}d ago</span>
                   <span>Last Active</span>
@@ -147,12 +147,12 @@ export function ClientChurnRadarPanel() {
 
               {/* Playbook Recommendation */}
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
-                <p className="text-[11px] text-slate-300 italic truncate max-w-[240px]">
+                <p className="type-card-description text-slate-300 italic truncate max-w-[240px]">
                   "{r.recommendedAction}"
                 </p>
                 <button
                   onClick={() => handleActionClick(r)}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0"
+                  className="inline-flex items-center gap-1 type-ui font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0"
                 >
                   Playbook <ArrowUpRight size={12} />
                 </button>

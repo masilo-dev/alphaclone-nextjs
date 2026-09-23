@@ -91,7 +91,7 @@ function TabLink({
       href={tab.href}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        'inline-flex items-center gap-1.5 shrink-0 rounded-lg border px-2.5 min-h-11 text-[12px] font-semibold transition-colors',
+        'inline-flex items-center gap-1.5 shrink-0 rounded-lg border px-2.5 min-h-11 type-ui font-semibold transition-colors',
         compact ? 'py-1' : 'py-1.5',
         isActive
           ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
@@ -132,7 +132,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
           aria-haspopup="menu"
           onClick={() => setMoreOpen((v) => !v)}
           className={cn(
-            'inline-flex items-center gap-1.5 min-h-11 rounded-lg border px-2.5 py-1.5 text-[12px] font-semibold transition-colors',
+            'inline-flex items-center gap-1.5 min-h-11 rounded-lg border px-2.5 py-1.5 type-ui font-semibold transition-colors',
             secondaryActive || moreOpen
               ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
               : 'border-transparent bg-white/[0.03] text-slate-400 hover:text-slate-200'
@@ -163,7 +163,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
                     role="menuitem"
                     onClick={() => setMoreOpen(false)}
                     className={cn(
-                      'flex items-center gap-2 min-h-11 rounded-md px-3 text-[12px] font-medium',
+                      'flex items-center gap-2 min-h-11 rounded-md px-3 type-ui font-medium',
                       isActive ? 'bg-teal-500/10 text-teal-300' : 'text-slate-300 hover:bg-white/5'
                     )}
                   >

@@ -441,13 +441,13 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mb-6">
                     <Mail size={48} className="text-gray-400" />
                 </div>
-                <h3 className="text-[17px] font-bold text-white uppercase tracking-tight">Connect Zoho Mail</h3>
-                <p className="text-[13px] text-gray-500 opacity-55 max-w-xs mt-3 mb-8">
+                <h3 className="text-lg font-bold text-white uppercase tracking-tight">Connect Zoho Mail</h3>
+                <p className="type-card-description text-gray-500 opacity-55 max-w-xs mt-3 mb-8">
                     Connect your Zoho account to view and manage emails directly in AlphaClone.
                 </p>
                 <a 
                     href={reconnectUrl}
-                    className="w-full max-w-sm h-[52px] flex items-center justify-center bg-teal-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-teal-900/20 active:scale-95 transition-all"
+                    className="w-full max-w-sm h-[52px] flex items-center justify-center bg-teal-500 text-white font-black uppercase type-caption rounded-2xl shadow-xl shadow-teal-900/20 active:scale-95 transition-all"
                 >
                     Connect Zoho Mail
                 </a>
@@ -461,13 +461,13 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 <div className="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-500/20">
                     <Mail size={22} />
                 </div>
-                <span className="font-black text-white uppercase tracking-widest text-sm">Zoho Mail</span>
+                <span className="font-black text-white uppercase tracking-widest type-caption">Zoho Mail</span>
             </div>
             
             <div className="p-6">
                 <button 
                     onClick={() => { openCompose(); setSelectedMessage(null); }}
-                    className="w-full flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 text-white py-4 px-4 rounded-2xl transition-all shadow-xl active:scale-95 group font-black uppercase text-xs"
+                    className="w-full flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 text-white py-4 px-4 rounded-2xl transition-all shadow-xl active:scale-95 group font-black uppercase type-caption"
                 >
                     <Plus size={20} /> 
                     Compose
@@ -475,7 +475,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             </div>
 
             <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
-                <div className="mt-4 mb-3 px-2 text-xs font-black text-gray-600 uppercase tracking-widest">Mailboxes</div>
+                <div className="mt-4 mb-3 px-2 type-caption font-black text-gray-600 uppercase tracking-widest">Mailboxes</div>
                 {displayFolders.map(folder => (
                     <button
                         key={folder.folderId}
@@ -484,17 +484,17 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     >
                         <div className="flex items-center gap-3">
                             <Inbox size={20} />
-                            <span className="text-sm font-bold">{folder.folderName}</span>
+                            <span className="type-ui font-bold">{folder.folderName}</span>
                         </div>
                         {folder.unreadCount > 0 && (
-                            <span className="text-xs px-2 py-0.5 rounded-full font-black bg-teal-500 text-white">{folder.unreadCount}</span>
+                            <span className="type-caption px-2 py-0.5 rounded-full font-black bg-teal-500 text-white">{folder.unreadCount}</span>
                         )}
                     </button>
                 ))}
             </nav>
 
             <div className="p-4 border-t border-white/5 space-y-2">
-                <button onClick={() => setIsLeadModalOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-white/5 transition-all text-sm font-bold">
+                <button onClick={() => setIsLeadModalOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-white/5 transition-all type-ui font-bold">
                     <Sparkles size={18} className="text-teal-500" /> Lead Outreach
                 </button>
             </div>
@@ -506,7 +506,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             
             {/* Expired Token Inline Banner (non-blocking, below header) */}
             {needsReconnect && (
-                <div className="h-[44px] shrink-0 bg-yellow-500 text-slate-900 px-4 flex items-center justify-between text-xs font-semibold select-none z-20">
+                <div className="h-[44px] shrink-0 bg-yellow-500 text-slate-900 px-4 flex items-center justify-between type-caption font-semibold select-none z-20">
                     <div className="flex items-center gap-2">
                         <AlertCircle size={16} />
                         <span>Session expired — reconnect</span>
@@ -514,7 +514,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     <div className="flex items-center gap-3">
                         <a 
                             href={reconnectUrl}
-                            className="bg-slate-900 text-yellow-500 px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider"
+                            className="bg-slate-900 text-yellow-500 px-3 py-1 rounded-lg type-caption font-black uppercase tracking-wider"
                         >
                             Reconnect
                         </a>
@@ -557,7 +557,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
                             <input 
                                 type="text" placeholder="Search mail..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-teal-500/50 outline-none"
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl pl-12 pr-4 py-3 type-ui text-white focus:border-teal-500/50 outline-none"
                             />
                         </div>
                     </div>
@@ -568,7 +568,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                             <button
                                 key={folder.folderId}
                                 onClick={() => { setSelectedFolder(folder.folderId); setSelectedMessage(null); setComposeModal(null); }}
-                                className={`h-[34px] px-4 rounded-full text-xs font-semibold uppercase tracking-wider whitespace-nowrap transition-all flex items-center justify-center shrink-0 ${selectedFolder === folder.folderId ? 'bg-teal-500 text-white font-black' : 'bg-transparent text-white opacity-55'}`}
+                                className={`h-[34px] px-4 rounded-full type-caption font-semibold uppercase tracking-wider whitespace-nowrap transition-all flex items-center justify-center shrink-0 ${selectedFolder === folder.folderId ? 'bg-teal-500 text-white font-black' : 'bg-transparent text-white opacity-55'}`}
                             >
                                 {folder.folderName}
                             </button>
@@ -576,7 +576,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     </div>
 
                     {error && (
-                        <div className="mx-4 mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+                        <div className="mx-4 mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 type-caption text-amber-200">
                             {error}
                         </div>
                     )}
@@ -586,7 +586,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         {/* Category Filter Pills */}
                         <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-2 border-b border-white/5">
                             {['all', 'urgent', 'follow-up', 'newsletter'].map(cat => (
-                                <button key={cat} onClick={() => setCategoryFilter(cat as any)} className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border transition-all ${categoryFilter === cat ? 'bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                <button key={cat} onClick={() => setCategoryFilter(cat as any)} className={`px-4 py-1.5 rounded-full type-caption font-black uppercase tracking-wider border transition-all ${categoryFilter === cat ? 'bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-white/5 border-white/5 text-gray-500'}`}>
                                     {cat}
                                 </button>
                             ))}
@@ -603,8 +603,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                         ) : filteredMessages.length === 0 ? (
                             <div className="flex flex-col items-center justify-center text-center p-8 py-20">
                                 <Mail size={48} className="text-slate-700 mb-4" />
-                                <h4 className="text-[15px] font-semibold text-white">You're all caught up</h4>
-                                <p className="text-[13px] text-gray-500 opacity-55 mt-1">No new messages</p>
+                                <h4 className="type-ui font-semibold text-white">You're all caught up</h4>
+                                <p className="type-card-description text-gray-500 opacity-55 mt-1">No new messages</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-white/5">
@@ -613,10 +613,10 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                         
                                         {/* Swipe Background Zones */}
                                         <div className="absolute inset-0 flex justify-between items-center px-4 pointer-events-none">
-                                            <div className="bg-green-600 h-full flex items-center justify-start px-4 text-white text-xs font-bold w-1/2">
+                                            <div className="bg-green-600 h-full flex items-center justify-start px-4 text-white type-caption font-bold w-1/2">
                                                 Archive
                                             </div>
-                                            <div className="bg-red-600 h-full flex items-center justify-end px-4 text-white text-xs font-bold w-1/2 text-right">
+                                            <div className="bg-red-600 h-full flex items-center justify-end px-4 text-white type-caption font-bold w-1/2 text-right">
                                                 Delete
                                             </div>
                                         </div>
@@ -638,24 +638,24 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                             className={`relative z-10 flex items-center gap-3 py-3 px-4 cursor-pointer select-none transition-colors ${msg.status === 'unread' ? 'bg-slate-900/30' : 'bg-[#0f0f0f]'}`}
                                         >
                                             {/* Avatar/Initial Circle */}
-                                            <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm shrink-0">
+                                            <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold type-ui shrink-0">
                                                 {getInitials(msg.sender)}
                                             </div>
 
                                             {/* Text Stacked Center */}
                                             <div className="flex-1 min-w-0 pr-2">
                                                 <div className="flex items-center justify-between">
-                                                    <span className={`text-[15px] truncate block ${msg.status === 'unread' ? 'font-semibold text-white' : 'font-normal text-gray-300'}`}>
+                                                    <span className={`type-ui truncate block ${msg.status === 'unread' ? 'font-semibold text-white' : 'font-normal text-gray-300'}`}>
                                                         {msg.sender.split('<')[0].trim()}
                                                     </span>
                                                 </div>
-                                                <div className="text-[15px] text-gray-200 truncate">{msg.subject}</div>
-                                                <div className="text-[13px] text-gray-500 opacity-55 truncate mt-0.5">{msg.snippet}</div>
+                                                <div className="type-ui text-gray-200 truncate">{msg.subject}</div>
+                                                <div className="type-ui text-gray-500 opacity-55 truncate mt-0.5">{msg.snippet}</div>
                                             </div>
 
                                             {/* Right Timestamp & Unread Dot */}
                                             <div className="flex flex-col items-end gap-1.5 shrink-0 self-start pt-1">
-                                                <span className="text-[11px] text-gray-400 opacity-55">{formatDate(msg.receivedTime)}</span>
+                                                <span className="type-ui text-gray-400 opacity-55">{formatDate(msg.receivedTime)}</span>
                                                 {msg.status === 'unread' && (
                                                     <div className="w-2 h-2 rounded-full bg-teal-500" />
                                                 )}
@@ -690,9 +690,9 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                 {/* Header Bar */}
                                 <div className="h-14 px-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#0f0f0f] md:bg-transparent md:h-20 md:px-8">
                                     <button onClick={() => setSelectedMessage(null)} className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-400 hover:text-white"><ArrowLeft size={20} /></button>
-                                    <h2 className="text-[17px] font-semibold text-white">Inbox</h2>
+                                    <h2 className="text-lg font-semibold text-white">Inbox</h2>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-1.5 bg-teal-500/10 text-teal-400 px-3 py-1.5 rounded-xl border border-teal-600/20 text-xs font-black uppercase tracking-widest">
+                                        <button onClick={() => handleAiReply()} disabled={aiGenerating} className="flex items-center gap-1.5 bg-teal-500/10 text-teal-400 px-3 py-1.5 rounded-xl border border-teal-600/20 type-caption font-black uppercase tracking-widest">
                                             <Sparkles size={12} /> {aiGenerating ? '...' : 'AI'}
                                         </button>
                                         <button onClick={() => handleArchive(messageContent.messageId)} className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 hover:text-white"><Archive size={20} /></button>
@@ -704,47 +704,47 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     <div className="max-w-4xl mx-auto space-y-6">
                                         
                                         {/* Subject */}
-                                        <h1 className="text-[17px] font-semibold text-white mt-4">{messageContent.subject || 'No Subject'}</h1>
+                                        <h1 className="text-lg font-semibold text-white mt-4">{messageContent.subject || 'No Subject'}</h1>
 
                                         {/* Sender Row */}
                                         <div className="flex items-center justify-between py-2 border-b border-white/5">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-sm shrink-0">
+                                                <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold type-ui shrink-0">
                                                     {getInitials(messageContent.sender)}
                                                 </div>
                                                 <div>
-                                                    <div className="text-[15px] font-bold text-white">{messageContent.sender?.split('<')[0]?.trim()}</div>
-                                                    <div className="text-[13px] text-gray-400 opacity-55 truncate max-w-[200px] sm:max-w-md">
+                                                    <div className="type-ui font-bold text-white">{messageContent.sender?.split('<')[0]?.trim()}</div>
+                                                    <div className="type-ui text-gray-400 opacity-55 truncate max-w-[200px] sm:max-w-md">
                                                         {messageContent.sender?.includes('<') ? messageContent.sender.split('<')[1].replace('>', '') : messageContent.sender}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="text-[11px] text-gray-400 opacity-55">
+                                            <div className="type-ui text-gray-400 opacity-55">
                                                 {formatDate(messageContent.receivedTime)}
                                             </div>
                                         </div>
 
                                         {(isSummarizing || threadSummary) && (
                                             <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4">
-                                                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-teal-400 mb-2">
+                                                <div className="flex items-center gap-2 type-caption font-black uppercase tracking-widest text-teal-400 mb-2">
                                                     <Sparkles size={12} />
                                                     {isSummarizing ? 'Summarizing…' : 'Summary'}
                                                 </div>
                                                 {threadSummary && (
-                                                    <p className="text-sm text-slate-300 leading-relaxed">{threadSummary}</p>
+                                                    <p className="type-card-description text-slate-300 leading-relaxed">{threadSummary}</p>
                                                 )}
                                             </div>
                                         )}
 
                                         {/* Sandboxed Body Content */}
-                                        <div className="text-[15px] leading-[1.6] text-gray-200">
+                                        <div className="type-ui leading-body text-gray-200">
                                             <EmailBody content={messageContent.content || messageContent.snippet || ''} />
                                         </div>
 
                                         {/* Attachments scrolling chip row */}
                                         {messageContent.attachments && messageContent.attachments.length > 0 && (
                                             <div className="mt-4 pt-4 border-t border-white/5">
-                                                <div className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Attachments</div>
+                                                <div className="type-caption font-semibold text-gray-400 mb-2 uppercase tracking-wider">Attachments</div>
                                                 <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
                                                     {messageContent.attachments.map((att: any, idx: number) => (
                                                         <button
@@ -754,7 +754,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                                 const url = `/api/zoho/mail?action=attachment&tenantId=${encodeURIComponent(currentTenant.id)}&folderId=${encodeURIComponent(selectedFolder)}&messageId=${encodeURIComponent(messageContent.messageId)}&attachmentId=${encodeURIComponent(att.attachmentId)}&fileName=${encodeURIComponent(att.fileName || 'attachment')}`;
                                                                 window.location.assign(url);
                                                             }}
-                                                            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[13px] text-white hover:bg-white/10 shrink-0"
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full type-ui text-white hover:bg-white/10 shrink-0"
                                                         >
                                                             <FileText size={14} className="text-teal-400" />
                                                             <span>{att.fileName}</span>
@@ -775,7 +775,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                             <button 
                                                 key={i} 
                                                 onClick={() => handleSmartReply(reply)}
-                                                className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-xs font-bold text-gray-400 hover:text-teal-400 hover:border-teal-500/30 whitespace-nowrap transition-all"
+                                                className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 type-caption font-bold text-gray-400 hover:text-teal-400 hover:border-teal-500/30 whitespace-nowrap transition-all"
                                             >
                                                 {reply}
                                             </button>
@@ -787,7 +787,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                 value={replyBody}
                                                 onChange={e => setReplyBody(e.target.value)}
                                                 placeholder="Type a quick reply..." 
-                                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-white outline-none focus:border-teal-500/50 pr-12"
+                                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 type-ui text-white outline-none focus:border-teal-500/50 pr-12"
                                                 onKeyDown={e => e.key === 'Enter' && handleQuickReply()}
                                             />
                                             <button 
@@ -807,7 +807,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                     <Mail size={48} className="text-gray-700" />
                                 </div>
                                 <h3 className="text-xl font-black text-white uppercase tracking-tight">Select a message</h3>
-                                <p className="text-sm text-gray-600 max-w-xs mt-3">Choose an email from the list to view its contents and use AI tools.</p>
+                                <p className="type-card-description text-gray-600 max-w-xs mt-3">Choose an email from the list to view its contents and use AI tools.</p>
                             </div>
                         )}
                     </AnimatePresence>

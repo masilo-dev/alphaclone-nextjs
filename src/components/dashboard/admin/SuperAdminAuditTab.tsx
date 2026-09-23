@@ -40,7 +40,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-teal-400" />
             Platform Audit Trail
           </h2>
-          <p className="text-slate-400 text-sm">Immutable log of privileged system and governance actions ({total} entries)</p>
+          <p className="text-slate-400 type-card-description">Immutable log of privileged system and governance actions ({total} entries)</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <Input
               placeholder="Search action or resource..."
-              className="pl-10 w-48 sm:w-64 h-10 bg-slate-900/50 border-slate-800 text-sm"
+              className="pl-10 w-48 sm:w-64 h-10 bg-slate-900/50 border-slate-800 type-ui"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -68,7 +68,7 @@ export const SuperAdminAuditTab: React.FC = () => {
           <button
             key={act}
             onClick={() => { setActionFilter(act); setPage(1); }}
-            className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${actionFilter === act
+            className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${actionFilter === act
               ? 'bg-teal-500 text-white border-teal-500'
               : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700'
             }`}
@@ -89,7 +89,7 @@ export const SuperAdminAuditTab: React.FC = () => {
       ) : (
         <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left type-caption">
               <thead className="bg-slate-900/80 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
                 <tr>
                   <th className="p-3.5">Timestamp</th>
@@ -106,7 +106,7 @@ export const SuperAdminAuditTab: React.FC = () => {
                       {new Date(log.created_at).toLocaleString()}
                     </td>
                     <td className="p-3.5 font-bold">
-                      <span className={`px-2 py-0.5 rounded uppercase text-[10px] font-black ${
+                      <span className={`px-2 py-0.5 rounded uppercase type-caption font-black ${
                         log.action.includes('SUPER_ADMIN') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
                         log.action.includes('SUSPENDED') || log.action.includes('DELETED') ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                         'bg-teal-500/20 text-teal-400 border border-teal-500/30'
@@ -119,9 +119,9 @@ export const SuperAdminAuditTab: React.FC = () => {
                     </td>
                     <td className="p-3.5">
                       <span className="font-semibold text-white">{log.resource_type}</span>
-                      <span className="text-slate-500 block text-[10px] font-mono">{log.resource_id}</span>
+                      <span className="text-slate-500 block type-ui font-mono">{log.resource_id}</span>
                     </td>
-                    <td className="p-3.5 font-mono text-[11px] text-slate-400 max-w-xs truncate">
+                    <td className="p-3.5 font-mono type-ui text-slate-400 max-w-xs truncate">
                       {JSON.stringify(log.metadata || {})}
                     </td>
                   </tr>

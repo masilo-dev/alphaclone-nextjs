@@ -127,12 +127,12 @@ export function JournalEntriesPage() {
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
                         <div>
                             <h1 className="text-lg font-semibold text-white">Ledger Entries</h1>
-                            <p className="text-sm text-slate-300">Review and post the manual entries shaping your books.</p>
+                            <p className="type-card-description text-slate-300">Review and post the manual entries shaping your books.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
+                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white type-caption font-bold hover:bg-emerald-500"
                         >
                             + New ledger entry
                         </button>
@@ -142,7 +142,7 @@ export function JournalEntriesPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-emerald-500/50"
                     >
                         <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
@@ -152,7 +152,7 @@ export function JournalEntriesPage() {
                 )}
             >
                 {error && (
-                    <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+                    <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl type-ui">
                         {error}
                     </div>
                 )}
@@ -168,10 +168,10 @@ export function JournalEntriesPage() {
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-white">{entry.entryNumber}</p>
-                                    <p className="text-xs text-slate-400">{new Date(entry.entryDate).toLocaleDateString()}</p>
+                                    <p className="type-card-description font-semibold text-white">{entry.entryNumber}</p>
+                                    <p className="type-card-description text-slate-400">{new Date(entry.entryDate).toLocaleDateString()}</p>
                                 </div>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${entry.status === 'posted'
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full type-caption font-medium ${entry.status === 'posted'
                                     ? 'bg-green-900/50 text-green-300'
                                     : entry.status === 'void'
                                         ? 'bg-red-900/50 text-red-300'
@@ -180,17 +180,17 @@ export function JournalEntriesPage() {
                                     {entry.status.toUpperCase()}
                                 </span>
                             </div>
-                            <p className="text-sm text-slate-200 leading-relaxed">{entry.description}</p>
+                            <p className="type-card-description text-slate-200 leading-relaxed">{entry.description}</p>
                             {entry.reference ? (
-                                <p className="text-xs text-slate-500">Ref: {entry.reference}</p>
+                                <p className="type-card-description text-slate-500">Ref: {entry.reference}</p>
                             ) : null}
-                            <div className="grid grid-cols-2 gap-3 text-sm font-mono">
+                            <div className="grid grid-cols-2 gap-3 type-ui font-mono">
                                 <div>
-                                    <span className="block text-[10px] uppercase tracking-wider text-slate-500">Debits</span>
+                                    <span className="block type-caption uppercase tracking-wider text-slate-500">Debits</span>
                                     <span className="text-white">${entry.totalDebits.toFixed(2)}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block text-[10px] uppercase tracking-wider text-slate-500">Credits</span>
+                                    <span className="block type-caption uppercase tracking-wider text-slate-500">Credits</span>
                                     <span className="text-white">${entry.totalCredits.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -198,7 +198,7 @@ export function JournalEntriesPage() {
                                 <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); handleViewEntry(entry.id); }}
-                                    className="px-2.5 py-1.5 rounded-lg border border-blue-500/20 text-blue-300 text-xs font-semibold hover:bg-blue-500/10"
+                                    className="px-2.5 py-1.5 rounded-lg border border-blue-500/20 text-blue-300 type-caption font-semibold hover:bg-blue-500/10"
                                 >
                                     View
                                 </button>
@@ -207,14 +207,14 @@ export function JournalEntriesPage() {
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); handlePost(entry.id); }}
-                                            className="px-2.5 py-1.5 rounded-lg border border-green-500/20 text-green-300 text-xs font-semibold hover:bg-green-500/10"
+                                            className="px-2.5 py-1.5 rounded-lg border border-green-500/20 text-green-300 type-caption font-semibold hover:bg-green-500/10"
                                         >
                                             Post
                                         </button>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
-                                            className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 text-xs font-semibold hover:bg-red-500/10"
+                                            className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 type-caption font-semibold hover:bg-red-500/10"
                                         >
                                             Delete
                                         </button>
@@ -224,7 +224,7 @@ export function JournalEntriesPage() {
                                     <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); handleVoid(entry.id); }}
-                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 text-xs font-semibold hover:bg-red-500/10"
+                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 type-caption font-semibold hover:bg-red-500/10"
                                     >
                                         Void
                                     </button>
@@ -238,38 +238,38 @@ export function JournalEntriesPage() {
                         <table className="min-w-[880px] w-full divide-y divide-slate-700">
                             <thead className="bg-slate-900">
                                 <tr>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Entry #</th>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
-                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Debits</th>
-                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Credits</th>
-                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
-                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Entry #</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Date</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Description</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Debits</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Credits</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Status</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-slate-900/60 divide-y divide-white/5">
                                 {entries.map((entry) => (
                                     <tr key={entry.id} className={entry.status === 'void' ? 'bg-slate-900/50 opacity-60' : ''}>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-white">
                                             {entry.entryNumber}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-slate-200">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-slate-200">
                                             {new Date(entry.entryDate).toLocaleDateString()}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 text-sm text-slate-200">
+                                        <td className="px-4 md:px-6 py-4 type-table-cell text-slate-200">
                                             {entry.description}
                                             {entry.reference && (
-                                                <span className="ml-2 text-xs text-slate-400">({entry.reference})</span>
+                                                <span className="ml-2 type-caption text-slate-400">({entry.reference})</span>
                                             )}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
                                             ${entry.totalDebits.toFixed(2)}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
                                             ${entry.totalCredits.toFixed(2)}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${entry.status === 'posted'
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full type-caption font-medium ${entry.status === 'posted'
                                                 ? 'bg-green-900/50 text-green-300'
                                                 : entry.status === 'void'
                                                     ? 'bg-red-900/50 text-red-300'
@@ -278,7 +278,7 @@ export function JournalEntriesPage() {
                                                 {entry.status.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right type-table-cell font-medium">
                                             <button
                                                 onClick={() => handleViewEntry(entry.id)}
                                                 className="text-blue-400 hover:text-blue-300 mr-3 transition-colors"
@@ -342,26 +342,26 @@ export function JournalEntriesPage() {
                     <div className="space-y-4 pb-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Date</p>
+                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Date</p>
                                 <p className="font-medium text-white">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Status</p>
+                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Status</p>
                                 <p className="font-medium text-white capitalize">{viewingEntry.status}</p>
                             </div>
                             <div className="col-span-1 md:col-span-2">
-                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Description</p>
+                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Description</p>
                                 <p className="text-white">{viewingEntry.description}</p>
                             </div>
                         </div>
                         <div className="rounded-xl border border-white/5 overflow-x-auto">
-                            <table className="min-w-[520px] w-full divide-y divide-white/5 text-sm">
+                            <table className="min-w-[520px] w-full divide-y divide-white/5 type-ui">
                                 <thead className="bg-slate-900/80">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs text-slate-400 uppercase">Account</th>
-                                        <th className="px-4 py-2 text-left text-xs text-slate-400 uppercase">Description</th>
-                                        <th className="px-4 py-2 text-right text-xs text-slate-400 uppercase">Debit</th>
-                                        <th className="px-4 py-2 text-right text-xs text-slate-400 uppercase">Credit</th>
+                                        <th className="px-4 py-2 text-left type-caption text-slate-400 uppercase">Account</th>
+                                        <th className="px-4 py-2 text-left type-caption text-slate-400 uppercase">Description</th>
+                                        <th className="px-4 py-2 text-right type-caption text-slate-400 uppercase">Debit</th>
+                                        <th className="px-4 py-2 text-right type-caption text-slate-400 uppercase">Credit</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">

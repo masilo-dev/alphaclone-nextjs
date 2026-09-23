@@ -442,12 +442,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </div>
                 <div className="text-center sm:text-left space-y-1 flex-1">
                     <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{user.name}</h2>
-                    <p className="text-xs text-[var(--ws-text-muted)] font-mono">{user.email}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{user.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                        <span className="px-2.5 py-0.5 text-[var(--brand-blue-500)] border border-[var(--ws-border)] bg-[var(--ws-active)] text-[10px] font-bold uppercase rounded-lg">
+                        <span className="px-2.5 py-0.5 text-[var(--brand-blue-500)] border border-[var(--ws-border)] bg-[var(--ws-active)] type-caption font-bold uppercase rounded-lg">
                             {currentTenant?.subscription_plan || 'free'} tier
                         </span>
-                        <span className="px-2.5 py-0.5 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] text-[10px] font-bold uppercase rounded-lg">
+                        <span className="px-2.5 py-0.5 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] type-caption font-bold uppercase rounded-lg">
                             WS: {currentTenant?.name}
                         </span>
                     </div>
@@ -463,8 +463,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <BookOpen className="w-5 h-5 text-[var(--brand-blue-500)]" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-[var(--ws-text-primary)]">{translate('Platform guide & glossary')}</p>
-                        <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{translate('Learn hub names, overview vs workspace, and where to find each feature.')}</p>
+                        <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{translate('Platform guide & glossary')}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{translate('Learn hub names, overview vs workspace, and where to find each feature.')}</p>
                     </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-[var(--brand-blue-500)] group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -472,7 +472,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 1. ACCOUNT GROUP */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Account Preferences')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Account Preferences')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Profile Details */}
@@ -485,7 +485,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                                     <UserIcon className="w-4 h-4 text-blue-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Profile Details')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Profile Details')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['profile'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -498,15 +498,15 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     <div className="p-4 space-y-4 border-t border-white/5">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Full Name')}</label>
-                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                                <label className="type-caption text-slate-500 uppercase font-black">{translate('Full Name')}</label>
+                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Phone Number')}</label>
-                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" placeholder="+1 (555) 000-0000" />
+                                                <label className="type-caption text-slate-500 uppercase font-black">{translate('Phone Number')}</label>
+                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" placeholder="+1 (555) 000-0000" />
                                             </div>
                                         </div>
-                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">{translate('Save Profile')}</button>
+                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Profile')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -523,7 +523,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                                     <Lock className="w-4 h-4 text-orange-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Security & Credentials')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Security & Credentials')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['security'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -535,11 +535,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
                                         <div className="space-y-3">
-                                            <input type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <input type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <input type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
                                         </div>
-                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">{translate('Update Password')}</button>
+                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Update Password')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -556,11 +556,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Two-Factor Authentication (2FA)')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Two-Factor Authentication (2FA)')}</span>
                             </div>
                             <button
                                 onClick={(e) => { e.stopPropagation(); toggleRow('mfa'); }}
-                                className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-black uppercase"
+                                className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg type-caption font-black uppercase"
                             >
                                 {expandedRows['mfa'] ? 'Close' : 'Manage'}
                             </button>
@@ -585,7 +585,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 2. WORKSPACE & BUSINESS GROUP */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Workspace Settings')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Workspace Settings')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Brand Info */}
@@ -598,7 +598,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
                                     <Building className="w-4 h-4 text-pink-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Business Profile & Invoices')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Business Profile & Invoices')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['business_profile'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -610,14 +610,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
                                         <div className="space-y-3">
-                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <p className="text-[10px] text-slate-500">{translate('PDF invoices use the short trading name when set — keeps layouts clean.')}</p>
-                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
-                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
+                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <p className="type-card-description text-slate-500">{translate('PDF invoices use the short trading name when set — keeps layouts clean.')}</p>
+                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 type-ui text-white resize-none" />
+                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 type-ui text-white resize-none" />
                                         </div>
-                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">{translate('Save Details')}</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Details')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -634,7 +634,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
                                     <Globe className="w-4 h-4 text-violet-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Regional Format')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Regional Format')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['regional'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -646,7 +646,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Tax country (VAT / GST)')}</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black">{translate('Tax country (VAT / GST)')}</label>
                                             <select
                                                 value={businessSettings.taxCountry}
                                                 onChange={(e) => {
@@ -658,7 +658,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                         taxRate: lookup.rate > 0 ? lookup.rate : businessSettings.taxRate,
                                                     });
                                                 }}
-                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
                                             >
                                                 <option value="ZW">{translate('Zimbabwe (15% VAT)')}</option>
                                                 <option value="ZA">{translate('South Africa (15% VAT)')}</option>
@@ -670,7 +670,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                             </select>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Default tax rate (%)')}</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black">{translate('Default tax rate (%)')}</label>
                                             <input
                                                 type="number"
                                                 min={0}
@@ -678,22 +678,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 step={0.5}
                                                 value={businessSettings.taxRate}
                                                 onChange={(e) => setBusinessSettings({ ...businessSettings, taxRate: parseFloat(e.target.value) || 0 })}
-                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Workspace currency')}</label>
+                                            <label className="type-caption text-slate-500 uppercase font-black">{translate('Workspace currency')}</label>
                                             <select 
                                                 value={businessSettings.currency} 
                                                 onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
-                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
                                             >
                                                 <option value="USD">USD ($)</option>
                                                 <option value="EUR">EUR (€)</option>
                                                 <option value="GBP">GBP (£)</option>
                                                 <option value="KES">KES (Ksh)</option>
                                             </select>
-                                            <p className="text-[10px] text-slate-500 pt-1">{translate('Applies to invoices and reports for this workspace.')}</p>
+                                            <p className="type-card-description text-slate-500 pt-1">{translate('Applies to invoices and reports for this workspace.')}</p>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -711,7 +711,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
                                     <Briefcase className="w-4 h-4 text-teal-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Sectors & Expertise')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Sectors & Expertise')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['sectors'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -743,13 +743,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                         }}
                                                     />
                                                     <div className="min-w-0">
-                                                        <span className="font-bold text-xs block truncate">{category.name}</span>
-                                                        <span className="text-[9px] opacity-60 block">{category.services.length} catalog options</span>
+                                                        <span className="font-bold type-caption block truncate">{category.name}</span>
+                                                        <span className="type-ui opacity-60 block">{category.services.length} catalog options</span>
                                                     </div>
                                                 </label>
                                             ))}
                                         </div>
-                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">{translate('Save sectors')}</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save sectors')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -761,7 +761,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 2b. TEAM, MODULES & AI */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('People, modules & AI')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('People, modules & AI')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     <div id="settings-section-team">
                         <Link
@@ -773,8 +773,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     <Users className="w-4 h-4 text-violet-400" />
                                 </div>
                                 <div className="min-w-0">
-                                    <span className="text-[13px] font-bold text-slate-200 block">{translate('Team and access')}</span>
-                                    <span className="text-[10px] text-slate-500">{translate('Invite members, assign roles, and manage workspace ownership')}</span>
+                                    <span className="type-ui font-bold text-slate-200 block">{translate('Team and access')}</span>
+                                    <span className="type-ui text-slate-500">{translate('Invite members, assign roles, and manage workspace ownership')}</span>
                                 </div>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
@@ -791,8 +791,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     <LayoutGrid className="w-4 h-4 text-blue-400" />
                                 </div>
                                 <div className="min-w-0">
-                                    <span className="text-[13px] font-bold text-slate-200 block">{translate('Modules and integrations')}</span>
-                                    <span className="text-[10px] text-slate-500">{translate('Enable connectors, automations, and workspace modules from the marketplace')}</span>
+                                    <span className="type-ui font-bold text-slate-200 block">{translate('Modules and integrations')}</span>
+                                    <span className="type-ui text-slate-500">{translate('Enable connectors, automations, and workspace modules from the marketplace')}</span>
                                 </div>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
@@ -810,8 +810,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                         <Bot className="w-4 h-4 text-teal-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <span className="text-[13px] font-bold text-slate-200 block">{translate('Bonnie AI workspace')}</span>
-                                        <span className="text-[10px] text-slate-500">{translate('Open Bonnie to review approvals, drafts, and assistant permissions')}</span>
+                                        <span className="type-ui font-bold text-slate-200 block">{translate('Bonnie AI workspace')}</span>
+                                        <span className="type-ui text-slate-500">{translate('Open Bonnie to review approvals, drafts, and assistant permissions')}</span>
                                     </div>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
@@ -825,8 +825,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                         <Sparkles className="w-4 h-4 text-amber-400" />
                                     </div>
                                     <div className="min-w-0">
-                                        <span className="text-[13px] font-bold text-slate-200 block">{translate('AI usage and quotas')}</span>
-                                        <span className="text-[10px] text-slate-500">{translate('Live usage limits, plan headroom, and daily AI budget')}</span>
+                                        <span className="type-ui font-bold text-slate-200 block">{translate('AI usage and quotas')}</span>
+                                        <span className="type-ui text-slate-500">{translate('Live usage limits, plan headroom, and daily AI budget')}</span>
                                     </div>
                                 </div>
                                 <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
@@ -838,7 +838,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 3. INTEGRATIONS GROUP */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('System Integrations')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('System Integrations')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Email delivery provider (transactional) */}
@@ -847,7 +847,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('email_provider')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Email Delivery Provider')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Email Delivery Provider')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['email_provider'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['email_provider'] && (
@@ -863,7 +863,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_zoho')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Zoho Mail Client')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Zoho Mail Client')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_zoho'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_zoho'] && (
@@ -877,7 +877,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_m365')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Microsoft 365 / Teams Suite')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Microsoft 365 / Teams Suite')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_m365'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_m365'] && (
@@ -891,7 +891,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_resend')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Resend.com Email API')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Resend.com Email API')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_resend'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_resend'] && (
@@ -905,7 +905,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_sendgrid')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('SendGrid Email Delivery')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('SendGrid Email Delivery')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_sendgrid'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_sendgrid'] && (
@@ -919,7 +919,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_stripe')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Stripe Connect (invoice payouts)')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Stripe Connect (invoice payouts)')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_stripe'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_stripe'] && (
@@ -933,7 +933,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_calendly')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">{translate('Calendly Booking Schedule')}</span>
+                            <span className="type-ui font-bold text-slate-200">{translate('Calendly Booking Schedule')}</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_calendly'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_calendly'] && (
@@ -946,7 +946,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 4. NOTIFICATIONS GROUP */}
             <div id="settings-section-notifications" className="space-y-3 scroll-mt-4">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Notification alerts')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Notification alerts')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     {[
                         { key: 'emailNotifications', label: 'Email Outreach Logs', desc: 'Get updates on active campaign statuses' },
@@ -955,8 +955,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     ].map((setting) => (
                         <div key={setting.key} className="flex items-center justify-between p-4">
                             <div>
-                                <h4 className="text-[13px] font-bold text-white">{setting.label}</h4>
-                                <p className="text-[10px] text-slate-500">{setting.desc}</p>
+                                <h4 className="type-ui font-bold text-white">{setting.label}</h4>
+                                <p className="type-card-description text-slate-500">{setting.desc}</p>
                             </div>
                             <button
                                 onClick={() => handleNotificationToggle(setting.key as keyof typeof notificationSettings)}
@@ -974,8 +974,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 {currentTenant?.id ? (
                     <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
                         <div className="p-4 border-b border-white/5">
-                            <h4 className="text-[13px] font-bold text-white">Event categories</h4>
-                            <p className="text-[10px] text-slate-500">Control in-app, owner email, digest, and client email per business event class. Client email never fires on internal updates.</p>
+                            <h4 className="type-ui font-bold text-white">Event categories</h4>
+                            <p className="type-card-description text-slate-500">Control in-app, owner email, digest, and client email per business event class. Client email never fires on internal updates.</p>
                         </div>
                         <NotificationCategoryPolicyPanel tenantId={currentTenant.id} />
                     </div>
@@ -984,12 +984,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 5. APPEARANCE GROUP */}
             <div id="settings-appearance" className="space-y-3 scroll-mt-4">
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Appearance')}</span>
+                <span className="type-caption font-semibold uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Appearance')}</span>
                 <div className="ac-workspace-panel p-4 space-y-4">
                     
                     {/* Theme Mode Segment switcher */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] text-[var(--ws-text-muted)] uppercase font-semibold">{translate('Interface theme')}</label>
+                        <label className="type-caption text-[var(--ws-text-muted)] uppercase font-semibold">{translate('Interface theme')}</label>
                         <div className="flex bg-[var(--ws-surface-tertiary)] p-1 rounded-[10px] border border-[var(--ws-border)]">
                             {([
                                 { id: 'light' as const, label: 'Light' },
@@ -1003,7 +1003,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                         setThemeMode(theme.id);
                                         toast.success(`Theme updated to ${theme.label}`);
                                     }}
-                                    className={`flex-1 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all ${
+                                    className={`flex-1 py-1.5 type-ui font-semibold rounded-[8px] transition-all ${
                                         themeMode === theme.id
                                             ? 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-primary)] shadow-sm'
                                             : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
@@ -1017,22 +1017,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                     {/* Personal language — does not change workspace for other users */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-500 uppercase font-black">{translate('Your language')}</label>
+                        <label className="type-caption text-slate-500 uppercase font-black">{translate('Your language')}</label>
                         <select
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as typeof language)}
-                            className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                            className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
                         >
                             {LANGUAGES.map((lang) => (
                                 <option key={lang.code} value={lang.code}>{lang.label}</option>
                             ))}
                         </select>
-                        <p className="text-[10px] text-slate-500">{translate('Personal preference only — other team members keep their own language.')}</p>
+                        <p className="type-card-description text-slate-500">{translate('Personal preference only — other team members keep their own language.')}</p>
                     </div>
 
                     {/* Color palette dot pickers */}
                     <div className="space-y-2">
-                        <label className="text-[10px] text-slate-500 uppercase font-black block">{translate('Accent Brand Theme')}</label>
+                        <label className="type-caption text-slate-500 uppercase font-black block">{translate('Accent Brand Theme')}</label>
                         <div className="flex gap-3 pt-1">
                             {[
                                 { color: '#0d9488', name: 'teal' },
@@ -1071,8 +1071,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     <Smartphone className="w-5 h-5 text-teal-400" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-[var(--ws-text-primary)]">{translate('Mobile app & PWA')}</p>
-                                    <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{translate('Push alerts, bottom navigation, and install preferences for phone/tablet.')}</p>
+                                    <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{translate('Mobile app & PWA')}</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{translate('Push alerts, bottom navigation, and install preferences for phone/tablet.')}</p>
                                 </div>
                             </div>
                             <ChevronRight className="w-5 h-5 text-[var(--brand-blue-500)] group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -1084,21 +1084,21 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 6. BILLING GROUP */}
             <div id="settings-section-billing" className="space-y-3 scroll-mt-4">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Plans & billing')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Plans & billing')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Subscription tier summary */}
                     <div className="p-4 flex justify-between items-center bg-slate-950/30">
                         <div>
-                            <span className="text-[9px] text-slate-500 font-bold uppercase">{translate('Current active tier')}</span>
-                            <h4 className="text-sm font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
+                            <span className="type-caption text-slate-500 font-bold uppercase">{translate('Current active tier')}</span>
+                            <h4 className="type-ui font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
                             {currentTenant?.subscription_status === 'trial' && (
-                                <p className="text-[10px] text-teal-400 mt-1">
+                                <p className="type-card-description text-teal-400 mt-1">
                                     {translate('Premium trial active · full access · no daily limits')}
                                 </p>
                             )}
                         </div>
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 border rounded-lg ${statusColors[currentTenant?.subscription_status || ''] || 'bg-slate-800 text-slate-400 border-transparent'}`}>
+                        <span className={`type-caption font-black uppercase px-2 py-0.5 border rounded-lg ${statusColors[currentTenant?.subscription_status || ''] || 'bg-slate-800 text-slate-400 border-transparent'}`}>
                             {currentTenant?.subscription_status || 'active'}
                         </span>
                     </div>
@@ -1111,13 +1111,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             return (
                                 <div key={planId} className={`p-4 rounded-xl border flex flex-col justify-between ${isCurrent ? 'bg-teal-500/5 border-teal-500/30' : 'bg-slate-950 border-white/5'}`}>
                                     <div>
-                                        <span className="text-xs font-black uppercase text-white tracking-wide block">{planId}</span>
-                                        <span className="text-lg font-black text-white mt-1 block">${plan.monthly} <span className="text-[9px] text-slate-500 font-bold uppercase">/mo</span></span>
+                                        <span className="type-caption font-black uppercase text-white tracking-wide block">{planId}</span>
+                                        <span className="text-lg font-black text-white mt-1 block">${plan.monthly} <span className="type-caption text-slate-500 font-bold uppercase">/mo</span></span>
                                     </div>
                                     <button 
                                         onClick={() => !isCurrent && handleUpgrade(planId)}
                                         disabled={isCurrent}
-                                        className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase mt-4 border transition-all ${
+                                        className={`w-full py-1.5 rounded-lg type-caption font-black uppercase mt-4 border transition-all ${
                                             isCurrent ? 'bg-slate-900 border-transparent text-slate-500' : 'bg-teal-600 border-teal-500 text-white'
                                         }`}
                                     >
@@ -1131,19 +1131,19 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     {/* Stripe portal */}
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 className="text-xs font-bold text-white uppercase tracking-wider">{translate('Payment credentials & portals')}</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{translate('Manage details, history, and invoices safely on Stripe')}</p>
+                            <h4 className="type-caption font-bold text-white uppercase tracking-wider">{translate('Payment credentials & portals')}</h4>
+                            <p className="type-card-description text-slate-500 mt-0.5">{translate('Manage details, history, and invoices safely on Stripe')}</p>
                         </div>
-                        <button onClick={handleManageBilling} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open portal')}</button>
+                        <button onClick={handleManageBilling} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white type-caption font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open portal')}</button>
                     </div>
 
                     {/* AI Quotas */}
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{translate('AI usage and quotas')}</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{translate('Live usage is calculated in the quota dashboard rather than shown as a simulated percentage here.')}</p>
+                            <h4 className="type-caption font-bold text-slate-400 uppercase tracking-wider">{translate('AI usage and quotas')}</h4>
+                            <p className="type-card-description text-slate-500 mt-0.5">{translate('Live usage is calculated in the quota dashboard rather than shown as a simulated percentage here.')}</p>
                         </div>
-                        <Link href="/dashboard/business/quotas" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open quotas')}</Link>
+                        <Link href="/dashboard/business/quotas" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white type-caption font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open quotas')}</Link>
                     </div>
 
                 </div>
@@ -1151,7 +1151,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 7. DATA MANAGEMENT */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Data Management')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Data Management')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     <div>
                         <div
@@ -1162,13 +1162,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-slate-500/10 flex items-center justify-center">
                                     <Archive className="w-4 h-4 text-slate-400" />
                                 </div>
-                                <span className="text-[13px] font-bold text-slate-200">{translate('Deleted Records')}</span>
+                                <span className="type-ui font-bold text-slate-200">{translate('Deleted Records')}</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['deleted_records'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['deleted_records'] && (
                             <div className="p-4 bg-slate-950/40 border-t border-white/5">
-                                <p className="text-[10px] text-slate-500 mb-3">
+                                <p className="type-card-description text-slate-500 mb-3">
                                     {translate('Restore soft-deleted contacts and archived clients, or permanently purge contacts.')}
                                 </p>
                                 <DeletedRecordsSection />
@@ -1180,15 +1180,15 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 8. DEVELOPER MCP & API KEYS */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Developer MCP & API')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-slate-500 px-2 block">{translate('Developer MCP & API')}</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-slate-500 uppercase font-black block">{translate('MCP API Key')}</span>
+                        <span className="type-caption text-slate-500 uppercase font-black block">{translate('MCP API Key')}</span>
                         {!mcpApiKey && !isLoadingApiKey && (
                             <button
                                 onClick={handleGenerateApiKey}
                                 disabled={isSaving}
-                                className="text-[10px] px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors disabled:opacity-50"
+                                className="type-ui px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors disabled:opacity-50"
                             >
                                 {isSaving ? 'Generating...' : 'Generate Key'}
                             </button>
@@ -1200,7 +1200,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                     ) : mcpApiKey ? (
                         <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
-                            <span className="font-mono text-xs text-slate-400 select-all">
+                            <span className="font-mono type-caption text-slate-400 select-all">
                                 {showApiKey ? mcpApiKey : `${mcpApiKey.substring(0, 12)}••••••••••••••••••••••••`}
                             </span>
                             <div className="flex items-center gap-1.5 ml-2">
@@ -1223,8 +1223,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                     ) : (
                         <div className="p-3 bg-slate-950 rounded-xl border border-white/5 text-center">
-                            <p className="text-sm text-slate-400">{hasMcpApiKey ? 'MCP key active' : 'No MCP API key generated yet'}</p>
-                            <p className="text-xs text-slate-500 mt-1">{hasMcpApiKey ? 'For security, the key is shown only when generated. Rotate it to receive a new value.' : 'Click "Generate Key" to create one'}</p>
+                            <p className="type-card-description text-slate-400">{hasMcpApiKey ? 'MCP key active' : 'No MCP API key generated yet'}</p>
+                            <p className="type-card-description text-slate-500 mt-1">{hasMcpApiKey ? 'For security, the key is shown only when generated. Rotate it to receive a new value.' : 'Click "Generate Key" to create one'}</p>
                         </div>
                     )}
                 </div>
@@ -1232,16 +1232,16 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             {/* 8. DANGER ZONE */}
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-rose-500 px-2 block">{translate('Danger Zone')}</span>
+                <span className="type-caption font-black uppercase tracking-widest text-rose-500 px-2 block">{translate('Danger Zone')}</span>
                 <div className="bg-slate-900/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 className="text-[13px] font-bold text-rose-400">{translate('Delete Account Now')}</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{translate('Permanently removes your account and signs you out immediately')}</p>
+                            <h4 className="type-ui font-bold text-rose-400">{translate('Delete Account Now')}</h4>
+                            <p className="type-card-description text-slate-500 mt-0.5">{translate('Permanently removes your account and signs you out immediately')}</p>
                         </div>
                         <button 
                             onClick={() => setDeleteModalOpen(true)}
-                            className="px-4 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 text-xs font-black uppercase tracking-wider rounded-xl border border-rose-500/20"
+                            className="px-4 py-2 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 type-caption font-black uppercase tracking-wider rounded-xl border border-rose-500/20"
                         >
                             {translate('Delete Account')}
                         </button>
@@ -1261,22 +1261,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         >
                             <div className="flex items-center gap-2 text-amber-500">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <h3 className="text-sm font-black uppercase tracking-wider">{translate('Warning Action')}</h3>
+                                <h3 className="type-caption font-black uppercase tracking-wider">{translate('Warning Action')}</h3>
                             </div>
-                            <p className="text-xs text-slate-400 leading-relaxed">
+                            <p className="type-card-description text-slate-400 leading-relaxed">
                                 This will permanently delete your profile and associated data. You will be signed out and will not be able to log back in.
                             </p>
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button 
                                     onClick={handleDeleteAccount}
                                     disabled={isDeleting}
-                                    className="py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black uppercase rounded-xl flex items-center justify-center"
+                                    className="py-2.5 bg-rose-600 hover:bg-rose-500 text-white type-caption font-black uppercase rounded-xl flex items-center justify-center"
                                 >
                                     {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Deletion'}
                                 </button>
                                 <button 
                                     onClick={() => setDeleteModalOpen(false)}
-                                    className="py-2.5 bg-slate-800 text-slate-400 text-xs font-bold rounded-xl border border-white/5"
+                                    className="py-2.5 bg-slate-800 text-slate-400 type-caption font-bold rounded-xl border border-white/5"
                                 >
                                     {translate('Cancel')}
                                 </button>

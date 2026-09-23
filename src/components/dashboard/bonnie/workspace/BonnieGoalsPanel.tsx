@@ -43,17 +43,17 @@ export default function BonnieGoalsPanel({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+          <p className="type-caption font-semibold uppercase tracking-caps text-slate-400">
             Active goals
           </p>
-          <p className="text-xs text-slate-500">Persistent work Bonnie is chasing</p>
+          <p className="type-card-description text-slate-500">Persistent work Bonnie is chasing</p>
         </div>
         {onChase && (
           <button
             type="button"
             onClick={onChase}
             disabled={chasing || loading}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-50 dark:text-teal-300 dark:hover:bg-slate-900"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 type-ui font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-50 dark:text-teal-300 dark:hover:bg-slate-900"
           >
             {chasing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
             Chase
@@ -62,11 +62,11 @@ export default function BonnieGoalsPanel({
       </div>
 
       {loading && goals.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-800">
+        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 type-card-description text-slate-500 dark:border-slate-800">
           Loading goals…
         </p>
       ) : goals.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-xs text-slate-500 dark:border-slate-800">
+        <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 type-card-description text-slate-500 dark:border-slate-800">
           No open goals yet. Ask Bonnie for an objective like “Recover overdue payments.”
         </p>
       ) : (
@@ -84,10 +84,10 @@ export default function BonnieGoalsPanel({
                 <div className="flex items-start gap-2">
                   <Target className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${statusTone(goal.status)}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="truncate type-card-description font-medium text-slate-800 dark:text-slate-100">
                       {goal.title}
                     </p>
-                    <p className={`mt-0.5 text-[11px] capitalize ${statusTone(goal.status)}`}>
+                    <p className={`mt-0.5 type-caption capitalize ${statusTone(goal.status)}`}>
                       {goal.status.replace(/_/g, ' ')}
                       {goal.waiting_for ? ` · waiting on ${goal.waiting_for}` : ''}
                     </p>
@@ -98,7 +98,7 @@ export default function BonnieGoalsPanel({
                       />
                     </div>
                     {goal.blocker_reason && (
-                      <p className="mt-1.5 line-clamp-2 text-[11px] text-slate-500">
+                      <p className="mt-1.5 line-clamp-2 type-card-description text-slate-500">
                         {goal.blocker_reason}
                       </p>
                     )}
@@ -111,7 +111,7 @@ export default function BonnieGoalsPanel({
                     <button
                       type="button"
                       onClick={() => onResume(goal.id)}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 type-ui text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
                     >
                       <Play className="h-3 w-3" /> Resume
                     </button>
@@ -121,18 +121,18 @@ export default function BonnieGoalsPanel({
                   <button
                     type="button"
                     onClick={() => onCancel(goal.id)}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 type-ui text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
                   >
                     <XCircle className="h-3 w-3" /> Cancel
                   </button>
                 )}
                 {goal.status === 'completed' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-emerald-600">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 type-ui text-emerald-600">
                     <CheckCircle2 className="h-3 w-3" /> Done
                   </span>
                 )}
                 {goal.status === 'monitoring' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-[11px] text-sky-600">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 type-ui text-sky-600">
                     <PauseCircle className="h-3 w-3" /> Watching
                   </span>
                 )}

@@ -95,7 +95,7 @@ export const pwaService = {
         notification.innerHTML = `
             <div>
                 <p class="font-semibold">Update Available</p>
-                <p class="text-sm opacity-70">Finish or save current work, then update when ready.</p>
+                <p class="type-card-description opacity-70">Finish or save current work, then update when ready.</p>
             </div>
             <button id="pwa-update-btn" class="px-4 py-2 bg-white text-teal-600 rounded font-semibold hover:bg-teal-50 transition-colors">
                 Update

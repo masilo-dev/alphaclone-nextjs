@@ -96,14 +96,14 @@ export const BORDER_RADIUS = {
 
 export const TYPOGRAPHY = {
   display: 'text-5xl md:text-6xl font-bold tracking-tight',
-  h1: 'text-[28px] leading-9 font-bold tracking-tight',
-  h2: 'text-[18px] leading-[26px] font-semibold tracking-tight',
+  h1: 'text-3xl leading-9 font-bold tracking-tight',
+  h2: 'text-lg leading-ui font-semibold tracking-tight',
   h3: 'text-base font-semibold',
-  h4: 'text-sm font-semibold',
-  h5: 'text-sm font-medium',
-  body: 'text-sm leading-[22px]',
-  small: 'text-xs leading-[18px]',
-  tiny: 'text-[11px] leading-4',
+  h4: 'type-ui font-semibold',
+  h5: 'type-ui font-medium',
+  body: 'type-ui leading-ui',
+  small: 'type-caption leading-ui',
+  tiny: 'type-ui leading-4',
 } as const;
 
 export const SHADOWS = {
@@ -161,10 +161,10 @@ export const ENTERPRISE = {
     wide: '1439px',
   },
   metricCard: {
-    valueSize: 'text-[28px] leading-[34px]',
-    labelSize: 'text-sm',
-    trendSize: 'text-xs',
-    comparisonSize: 'text-[12px]',
+    valueSize: 'text-3xl leading-body',
+    labelSize: 'type-ui',
+    trendSize: 'type-caption',
+    comparisonSize: 'type-ui',
     minHeight: 'min-h-[112px]',
     defaultComparison: 'versus previous 30 days',
   },
@@ -199,8 +199,8 @@ export const ENTERPRISE = {
  */
 export const WORKSPACE = {
   sidebar: {
-    widthExpanded: 'w-[240px]',
-    widthCollapsed: 'md:w-12',
+    widthExpanded: 'w-56',
+    widthCollapsed: 'md:w-14',
     logoHeight: 'h-14',
   },
   toolbar: {
@@ -233,10 +233,10 @@ export const WORKSPACE = {
     active: 'ac-workspace-tab--active',
   },
   typography: {
-    pageTitle: 'text-[22px] leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
-    sectionLabel: 'text-[12px] font-medium text-[var(--ws-text-muted)]',
-    panelTitle: 'text-[14px] font-semibold text-[var(--ws-text-primary)]',
-    panelSubtitle: 'text-[12px] text-[var(--ws-text-muted)]',
-    sectionTitle: 'text-[18px] leading-[26px] font-semibold text-[var(--ws-text-primary)]',
+    pageTitle: 'text-2xl leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
+    sectionLabel: 'type-ui font-medium text-[var(--ws-text-muted)]',
+    panelTitle: 'type-ui font-semibold text-[var(--ws-text-primary)]',
+    panelSubtitle: 'type-ui text-[var(--ws-text-muted)]',
+    sectionTitle: 'text-lg leading-ui font-semibold text-[var(--ws-text-primary)]',
   },
 } as const;

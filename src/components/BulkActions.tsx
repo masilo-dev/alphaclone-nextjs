@@ -54,7 +54,7 @@ export function BulkActions<T extends { id: string }>({
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleSelectAll}
-                    className="flex items-center gap-2 text-sm text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
+                    className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
                 >
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${allSelected
                             ? 'bg-teal-500 border-teal-500'
@@ -82,7 +82,7 @@ export function BulkActions<T extends { id: string }>({
                         key={index}
                         onClick={() => handleAction(action)}
                         disabled={isProcessing}
-                        className={`min-h-11 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border ${action.variant === 'danger'
+                        className={`min-h-11 px-4 py-2 rounded-xl type-ui font-medium transition-colors flex items-center gap-2 border ${action.variant === 'danger'
                                 ? 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_16%,transparent)] border-[color-mix(in_srgb,var(--danger)_28%,var(--ws-border))]'
                                 : 'bg-[color-mix(in_srgb,var(--interactive-secondary)_12%,transparent)] text-[var(--interactive-secondary)] hover:bg-[color-mix(in_srgb,var(--interactive-secondary)_16%,transparent)] border-[color-mix(in_srgb,var(--interactive-secondary)_22%,var(--ws-border))]'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}

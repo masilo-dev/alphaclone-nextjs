@@ -107,7 +107,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         <h3 className="text-2xl font-black tracking-tight text-white">
                             {step === 'review' ? 'Review outreach batch' : 'Prepare outreach batch'}
                         </h3>
-                        <p className="mt-1 text-sm font-bold uppercase tracking-widest text-slate-400">
+                        <p className="mt-1 type-caption font-bold uppercase tracking-widest text-slate-400">
                             {uniqueIds.length} selected · maximum {MAX_BATCH_RECIPIENTS}
                         </p>
                     </div>
@@ -121,12 +121,12 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         {capExceeded && (
                             <div className="flex gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-100">
                                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
-                                <p className="text-sm leading-6">This selection has {uniqueIds.length} recipients. A reviewed batch is limited to {MAX_BATCH_RECIPIENTS}; remove {uniqueIds.length - MAX_BATCH_RECIPIENTS} recipients before continuing.</p>
+                                <p className="type-card-description leading-6">This selection has {uniqueIds.length} recipients. A reviewed batch is limited to {MAX_BATCH_RECIPIENTS}; remove {uniqueIds.length - MAX_BATCH_RECIPIENTS} recipients before continuing.</p>
                             </div>
                         )}
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
                                 <Zap className="h-4 w-4 text-amber-400" />
                                 Engagement tone
                             </label>
@@ -135,7 +135,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                     <button
                                         key={item}
                                         onClick={() => setTone(item)}
-                                        className={`rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                                        className={`rounded-xl border px-4 py-3 type-ui font-bold transition-all ${
                                             tone === item
                                                 ? 'border-teal-500 bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/10'
                                                 : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
@@ -148,7 +148,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         </div>
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
                                 <Target className="h-4 w-4 text-teal-400" />
                                 Helpful context for the draft
                             </label>
@@ -156,19 +156,19 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 value={context}
                                 onChange={(event) => setContext(event.target.value)}
                                 placeholder="For example: mention our recent industry report on Q3 growth."
-                                className="h-28 w-full resize-none rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white transition-all placeholder:text-slate-600 focus:border-teal-500 focus:outline-none"
+                                className="h-28 w-full resize-none rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 type-ui text-white transition-all placeholder:text-slate-600 focus:border-teal-500 focus:outline-none"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
                                 <ShieldCheck className="h-4 w-4 text-blue-400" />
                                 Delivery channel
                             </label>
                             <select
                                 value={provider}
                                 onChange={(event) => setProvider(event.target.value)}
-                                className="w-full rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 text-sm text-white transition-all focus:border-teal-500 focus:outline-none"
+                                className="w-full rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 type-ui text-white transition-all focus:border-teal-500 focus:outline-none"
                             >
                                 <option value="sendgrid">SendGrid</option>
                                 <option value="resend">Resend</option>
@@ -176,7 +176,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             </select>
                         </div>
 
-                        <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm leading-6 text-blue-100">
+                        <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 type-ui leading-6 text-blue-100">
                             First review the final recipient list. The review checks for direct email addresses, recorded marketing consent, and suppression status. No email is sent at this stage.
                         </div>
 
@@ -197,18 +197,18 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
                                 <div>
                                     <p className="font-bold text-emerald-100">{reviewedRecipients.length} recipients passed review</p>
-                                    <p className="mt-1 text-sm leading-6 text-emerald-100/75">Only the people listed below can be queued. They have a direct email address, recorded marketing consent, and no active suppression.</p>
+                                    <p className="mt-1 type-card-description leading-6 text-emerald-100/75">Only the people listed below can be queued. They have a direct email address, recorded marketing consent, and no active suppression.</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="overflow-hidden rounded-2xl border border-slate-700">
-                            <div className="border-b border-slate-700 bg-slate-800/70 px-4 py-3 text-xs font-black uppercase tracking-widest text-slate-400">Recipients to queue</div>
+                            <div className="border-b border-slate-700 bg-slate-800/70 px-4 py-3 type-caption font-black uppercase tracking-widest text-slate-400">Recipients to queue</div>
                             <div className="max-h-52 divide-y divide-slate-800 overflow-y-auto bg-slate-950/30">
                                 {reviewedRecipients.map((recipient) => (
                                     <div key={`${recipient.kind}-${recipient.id}`} className="px-4 py-3">
-                                        <p className="truncate text-sm font-bold text-white">{recipient.name}</p>
-                                        <p className="truncate text-xs text-slate-400">{recipient.email}</p>
+                                        <p className="truncate type-card-description font-bold text-white">{recipient.name}</p>
+                                        <p className="truncate type-card-description text-slate-400">{recipient.email}</p>
                                     </div>
                                 ))}
                             </div>
@@ -216,8 +216,8 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
 
                         {excludedRecipients.length > 0 && (
                             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
-                                <p className="text-sm font-bold text-amber-100">{excludedRecipients.length} recipients excluded</p>
-                                <div className="mt-2 max-h-28 space-y-1 overflow-y-auto text-xs leading-5 text-amber-100/80">
+                                <p className="type-card-description font-bold text-amber-100">{excludedRecipients.length} recipients excluded</p>
+                                <div className="mt-2 max-h-28 space-y-1 overflow-y-auto type-caption leading-5 text-amber-100/80">
                                     {excludedRecipients.map((recipient) => (
                                         <p key={`${recipient.kind}-${recipient.id}`}>{recipient.name}: {exclusionLabel(recipient.reason)}</p>
                                     ))}
@@ -225,7 +225,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             </div>
                         )}
 
-                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 text-sm text-slate-200">
+                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 type-label text-slate-200">
                             <input
                                 type="checkbox"
                                 checked={finalConfirmation}
@@ -254,7 +254,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 Confirm & queue
                             </Button>
                         </div>
-                        <p className="text-center text-[10px] font-bold uppercase tracking-wide text-slate-500">Queuing does not send from this screen. Processing is tracked in the outreach log and audit trail.</p>
+                        <p className="text-center type-caption font-bold uppercase tracking-wide text-slate-500">Queuing does not send from this screen. Processing is tracked in the outreach log and audit trail.</p>
                     </div>
                 )}
             </div>

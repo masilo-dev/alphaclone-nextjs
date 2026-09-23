@@ -75,10 +75,10 @@ export function UniversalModuleExecutionHeader({
     return (
       <div className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/65 px-3 py-2 ${className}`}>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-teal-400">
+          <p className="truncate type-caption font-semibold uppercase tracking-wider text-teal-400">
             {moduleName}
           </p>
-          <p className="truncate text-[13px] font-medium text-slate-200">
+          <p className="truncate type-card-description font-medium text-slate-200">
             {nextActionState.nextAction || recordTitle}
           </p>
         </div>
@@ -86,7 +86,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={onExecuteNextAction}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-teal-600 px-3 text-xs font-semibold text-white hover:bg-teal-500"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-teal-600 px-3 type-caption font-semibold text-white hover:bg-teal-500"
           >
             Next
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -108,11 +108,11 @@ export function UniversalModuleExecutionHeader({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">
+              <span className="type-caption font-black uppercase tracking-widest text-teal-400">
                 {moduleName} • Active Execution Object
               </span>
               <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${authority.bg} ${authority.text} ${authority.border}`}
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 type-caption font-bold uppercase tracking-wider ${authority.bg} ${authority.text} ${authority.border}`}
               >
                 <Shield className="h-3 w-3" />
                 {authority.label}
@@ -128,7 +128,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={onExecuteNextAction}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-xs font-bold text-white hover:bg-teal-500 transition-colors shadow-md shrink-0"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 type-caption font-bold text-white hover:bg-teal-500 transition-colors shadow-md shrink-0"
           >
             <span>Execute Next Action</span>
             <ArrowRight className="h-4 w-4" />
@@ -137,16 +137,16 @@ export function UniversalModuleExecutionHeader({
       </div>
 
       {/* Operational 7-Field Grid */}
-      <div className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4 lg:grid-cols-7 border-t border-slate-800 pt-3">
+      <div className="mt-4 grid grid-cols-2 gap-2 type-caption sm:grid-cols-4 lg:grid-cols-7 border-t border-slate-800 pt-3">
         {/* 1. Current State */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400">Current State</p>
+          <p className="type-caption font-semibold uppercase text-slate-400">Current State</p>
           <p className="mt-1 font-medium text-slate-200 truncate">{nextActionState.currentState}</p>
         </div>
 
         {/* 2. Owner */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400 flex items-center gap-1">
+          <p className="type-caption font-semibold uppercase text-slate-400 flex items-center gap-1">
             <User className="h-3 w-3 text-slate-400" /> Owner
           </p>
           <p className="mt-1 font-medium text-slate-200 truncate">{nextActionState.owner}</p>
@@ -154,13 +154,13 @@ export function UniversalModuleExecutionHeader({
 
         {/* 3. Next Action */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-teal-500/30">
-          <p className="text-[10px] font-bold uppercase text-teal-400">Next Action</p>
+          <p className="type-caption font-bold uppercase text-teal-400">Next Action</p>
           <p className="mt-1 font-semibold text-teal-300 truncate">{nextActionState.nextAction}</p>
         </div>
 
         {/* 4. Deadline */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400 flex items-center gap-1">
+          <p className="type-caption font-semibold uppercase text-slate-400 flex items-center gap-1">
             <Clock className="h-3 w-3 text-slate-400" /> Deadline
           </p>
           <p className="mt-1 font-medium text-slate-200 truncate">
@@ -170,7 +170,7 @@ export function UniversalModuleExecutionHeader({
 
         {/* 5. Blocker */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400 flex items-center gap-1">
+          <p className="type-caption font-semibold uppercase text-slate-400 flex items-center gap-1">
             <AlertTriangle className="h-3 w-3 text-amber-400" /> Blocker
           </p>
           <p className={`mt-1 font-medium truncate ${nextActionState.blocker ? 'text-amber-400 font-semibold' : 'text-slate-500'}`}>
@@ -180,13 +180,13 @@ export function UniversalModuleExecutionHeader({
 
         {/* 6. Expected Outcome */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400">Expected Outcome</p>
+          <p className="type-caption font-semibold uppercase text-slate-400">Expected Outcome</p>
           <p className="mt-1 font-medium text-slate-200 truncate">{nextActionState.expectedOutcome}</p>
         </div>
 
         {/* 7. Verified Result */}
         <div className="rounded-lg bg-slate-950/60 p-2.5 border border-slate-800/60">
-          <p className="text-[10px] font-semibold uppercase text-slate-400 flex items-center gap-1">
+          <p className="type-caption font-semibold uppercase text-slate-400 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Verified Result
           </p>
           <p className={`mt-1 font-medium truncate ${nextActionState.outcomeStatus === 'verified' ? 'text-emerald-400 font-semibold' : 'text-slate-400'}`}>
@@ -201,7 +201,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={() => setShow8Questions(!show8Questions)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 type-caption font-semibold text-slate-400 hover:text-white transition-colors"
           >
             <HelpCircle className="h-3.5 w-3.5 text-teal-400" />
             <span>8 Operational Questions Audit</span>
@@ -209,39 +209,39 @@ export function UniversalModuleExecutionHeader({
           </button>
 
           {show8Questions && (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 rounded-lg bg-slate-950/90 p-3 border border-slate-800 text-xs">
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 rounded-lg bg-slate-950/90 p-3 border border-slate-800 type-caption">
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">1. WHAT CAME IN?</span>
+                <span className="font-bold text-teal-400 type-ui">1. WHAT CAME IN?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whatCameIn}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">2. WHAT DOES IT MEAN?</span>
+                <span className="font-bold text-teal-400 type-ui">2. WHAT DOES IT MEAN?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whatDoesItMean}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">3. WHAT SHOULD HAPPEN?</span>
+                <span className="font-bold text-teal-400 type-ui">3. WHAT SHOULD HAPPEN?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whatShouldHappen}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">4. WHO OWNS IT?</span>
+                <span className="font-bold text-teal-400 type-ui">4. WHO OWNS IT?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whoOwnsIt}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">5. CAN ALPHACLONE ACT?</span>
+                <span className="font-bold text-teal-400 type-ui">5. CAN ALPHACLONE ACT?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed uppercase font-semibold text-sky-400">{questions.canAlphaCloneAct}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">6. WHAT ACTUALLY HAPPENED?</span>
+                <span className="font-bold text-teal-400 type-ui">6. WHAT ACTUALLY HAPPENED?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whatActuallyHappened || 'Pending execution'}</p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">7. EXPECTED OUTCOME PRODUCED?</span>
+                <span className="font-bold text-teal-400 type-ui">7. EXPECTED OUTCOME PRODUCED?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed font-semibold text-emerald-400">
                   {questions.didItProduceExpectedOutcome || 'Verification in progress'}
                 </p>
               </div>
               <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80">
-                <span className="font-bold text-teal-400 text-[11px]">8. WHAT HAPPENS NEXT?</span>
+                <span className="font-bold text-teal-400 type-ui">8. WHAT HAPPENS NEXT?</span>
                 <p className="mt-1 text-slate-300 leading-relaxed">{questions.whatHappensNext || 'Follow up or close'}</p>
               </div>
             </div>

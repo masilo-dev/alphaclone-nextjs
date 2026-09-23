@@ -6,7 +6,7 @@ export default function MaintenancePage() {
                 <p className="text-slate-300 mb-3">
                     The platform is temporarily unavailable while critical updates are applied.
                 </p>
-                <p className="text-slate-500 text-sm">
+                <p className="text-slate-500 type-card-description">
                     Please try again shortly.
                 </p>
             </section>

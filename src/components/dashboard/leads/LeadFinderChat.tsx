@@ -545,11 +545,11 @@ export default function LeadFinderChat({ onActivity }: Props) {
           <Sparkles className="w-5 h-5 text-teal-400" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-white font-semibold text-sm">Lead search assistant</h2>
-          <p className="text-xs text-slate-500 truncate">Natural language → directory scrape → CRM</p>
+          <h2 className="text-white font-semibold type-ui">Lead search assistant</h2>
+          <p className="type-card-description text-slate-500 truncate">Natural language → directory scrape → CRM</p>
         </div>
         {runStatus && runStatus.status === 'running' && (
-          <div className="ml-auto flex items-center gap-2 text-xs text-slate-400 shrink-0">
+          <div className="ml-auto flex items-center gap-2 type-caption text-slate-400 shrink-0">
             <Loader2 className="w-3 h-3 animate-spin text-teal-400" />
             <span className="hidden sm:inline">
               {STEP_LABELS[runStatus.current_step || ''] || 'Processing'}
@@ -572,7 +572,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
               </div>
             )}
             <div
-              className={`max-w-[85%] rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
+              className={`max-w-[85%] rounded-xl px-4 py-3 type-ui whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-teal-700/80 text-white rounded-br-sm'
                   : 'bg-slate-800/80 text-slate-200 rounded-bl-sm border border-slate-700/50'
@@ -591,20 +591,20 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {/* Pending intent card */}
         {pendingIntent && !campaignId && (
           <div className="mx-2 rounded-xl border border-teal-500/25 bg-teal-950/20 p-4 space-y-3">
-            <p className="text-sm text-teal-200 font-medium">Search plan</p>
-            <p className="text-xs text-slate-400 leading-relaxed">{pendingIntent.summary}</p>
+            <p className="type-card-description text-teal-200 font-medium">Search plan</p>
+            <p className="type-card-description text-slate-400 leading-relaxed">{pendingIntent.summary}</p>
             {pendingIntent.niche && (
-              <p className="text-xs text-emerald-400">Niche: {pendingIntent.niche}</p>
+              <p className="type-card-description text-emerald-400">Niche: {pendingIntent.niche}</p>
             )}
-            <p className="text-[10px] text-slate-500">Target: SMB (1–200 employees) · enterprise domains excluded</p>
+            <p className="type-card-description text-slate-500">Target: SMB (1–200 employees) · enterprise domains excluded</p>
             <div className="flex flex-wrap gap-1">
               {pendingIntent.sources.map((s) => (
-                <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                <span key={s} className="type-caption px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
                   {s}
                 </span>
               ))}
               {pendingIntent.location?.city && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                <span className="type-caption px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
                   📍 {pendingIntent.location.city}
                 </span>
               )}
@@ -612,7 +612,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <button
               onClick={handleStartSearch}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white type-ui font-medium disabled:opacity-50"
             >
               <Search className="w-4 h-4" />
               Start search
@@ -623,7 +623,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {/* Progress bar */}
         {runStatus && runStatus.status === 'running' && (
           <div className="mx-2 space-y-2 ac-workspace-panel p-3">
-            <div className="flex justify-between text-xs text-slate-400">
+            <div className="flex justify-between type-caption text-slate-400">
               <span>{STEP_LABELS[runStatus.current_step || ''] || 'Processing'}</span>
               <span className="tabular-nums text-slate-300">{runStatus.progress ?? 5}%</span>
             </div>
@@ -633,7 +633,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 style={{ width: `${runStatus.progress || 5}%` }}
               />
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="grid grid-cols-3 gap-2 text-center type-caption">
               <div>
                 <div className="text-slate-500">Found</div>
                 <div className="text-white font-semibold tabular-nums">{runStatus.source_count ?? 0}</div>
@@ -655,7 +655,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <button
               onClick={() => handleRetryNiche(retryAttempt)}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-600/50 text-amber-300 text-sm hover:bg-amber-950/30"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-600/50 text-amber-300 type-ui hover:bg-amber-950/30"
             >
               <RefreshCw className="w-4 h-4" />
               Broaden niche search
@@ -667,12 +667,12 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {leads.length > 0 && (
           <div className="space-y-2 mx-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <p className="text-sm text-slate-300 font-medium">{leads.length} SMB leads</p>
+              <p className="type-card-description text-slate-300 font-medium">{leads.length} SMB leads</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={qualifySelected}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 type-caption text-white disabled:opacity-40"
                 >
                   <CheckCircle2 className="w-3 h-3" />
                   Qualify
@@ -680,7 +680,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={saveToCrm}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 text-xs text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 type-caption text-white disabled:opacity-40"
                 >
                   <Save className="w-3 h-3" />
                   Save CRM
@@ -688,7 +688,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={() => openOutreachForLeads(Array.from(selectedIds))}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption text-white disabled:opacity-40"
                 >
                   <Mail className="w-3 h-3" />
                   Outreach selected
@@ -696,14 +696,14 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={startAutoSequence}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-xs text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 type-caption text-white disabled:opacity-40"
                 >
                   <Zap className="w-3 h-3" />
                   Auto-sequence
                 </button>
                 <button
                   onClick={runNexusEnrich}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-xs text-white"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 type-caption text-white"
                 >
                   <MessageSquare className="w-3 h-3" />
                   Nexus
@@ -728,32 +728,32 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-white font-medium text-sm">
+                    <span className="text-white font-medium type-ui">
                       {lead.name || lead.company || 'Unknown'}
                     </span>
                     {lead.grade && (
                       <span
-                        className={`text-xs px-1.5 py-0.5 rounded border ${GRADE_STYLES[lead.grade] || ''}`}
+                        className={`type-caption px-1.5 py-0.5 rounded border ${GRADE_STYLES[lead.grade] || ''}`}
                       >
                         {lead.grade}
                       </span>
                     )}
                     {lead.score != null && (
-                      <span className="text-xs text-slate-500 flex items-center gap-0.5">
+                      <span className="type-caption text-slate-500 flex items-center gap-0.5">
                         <Star className="w-3 h-3" /> {lead.score}
                       </span>
                     )}
                     {lead.status === 'qualified' && (
-                      <span className="text-xs text-emerald-400">✓ qualified</span>
+                      <span className="type-caption text-emerald-400">✓ qualified</span>
                     )}
                     {lead.status === 'contacted' && (
-                      <span className="text-xs text-blue-400">✓ contacted</span>
+                      <span className="type-caption text-blue-400">✓ contacted</span>
                     )}
                     {lead.status === 'synced' && (
-                      <span className="text-xs text-indigo-400">in CRM</span>
+                      <span className="type-caption text-indigo-400">in CRM</span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5 flex flex-wrap gap-x-3">
+                  <div className="type-caption text-slate-400 mt-0.5 flex flex-wrap gap-x-3">
                     {lead.title && <span>{lead.title}</span>}
                     {lead.company && (
                       <span className="flex items-center gap-1">
@@ -768,7 +768,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                   type="button"
                   onClick={() => openOutreachForLeads([lead.id])}
                   disabled={loading || (!lead.email && !lead.company_website)}
-                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white disabled:opacity-40"
+                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption font-semibold text-white disabled:opacity-40"
                   title={!lead.email && !lead.company_website ? 'Need email or website' : 'Open outreach — auto-saves to CRM'}
                 >
                   <Mail className="w-3.5 h-3.5" />
@@ -780,7 +780,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-slate-500 text-sm px-2">
+          <div className="flex items-center gap-2 text-slate-500 type-ui px-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Thinking…
           </div>
@@ -801,7 +801,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g. Find owner-operated yoga studios in Denver — SMB only, no chains"
-            className="flex-1 rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 type-ui text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
             disabled={loading}
           />
           <button

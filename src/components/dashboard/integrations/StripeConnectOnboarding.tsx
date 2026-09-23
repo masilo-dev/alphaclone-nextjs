@@ -122,19 +122,19 @@ export const StripeConnectOnboarding: React.FC = () => {
           </p>
           
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-slate-300">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Receive payments directly to your bank account</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-slate-300">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Automatic payment links and invoicing</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-slate-300">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Professional payment experience for clients</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-slate-300">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Multi-currency support</span>
             </div>
@@ -155,7 +155,7 @@ export const StripeConnectOnboarding: React.FC = () => {
             <span className="font-medium">Stripe Connected</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 type-ui">
             <div>
               <span className="text-slate-500">Charges Enabled:</span>
               <span className={`ml-2 ${status.chargesEnabled ? 'text-green-400' : 'text-amber-400'}`}>
@@ -174,9 +174,9 @@ export const StripeConnectOnboarding: React.FC = () => {
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
               <div className="flex items-center gap-2 text-amber-400 mb-2">
                 <AlertCircle className="w-4 h-4" />
-                <span className="font-medium text-sm">Action Required</span>
+                <span className="font-medium type-ui">Action Required</span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="type-card-description text-slate-400">
                 Complete the requirements in your Stripe dashboard to enable all features.
               </p>
             </div>
@@ -209,7 +209,7 @@ export const StripeConnectOnboarding: React.FC = () => {
             <span className="font-medium">Connection In Progress</span>
           </div>
           
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 type-card-description">
             Your Stripe account setup is in progress. Please complete the onboarding process in Stripe.
           </p>
 

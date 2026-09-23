@@ -92,7 +92,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                         <BarChart3 className="w-5 h-5 text-teal-400" />
                         Daily Usage Limits
                     </h3>
-                    <p className="text-slate-400 text-sm mt-1">
+                    <p className="text-slate-400 type-card-description mt-1">
                         {summary
                             ? `${formatPlanDisplayName(summary.plan)} plan · ${formatQuotaResetLabel()}`
                             : 'Track your daily usage across different resources'}
@@ -124,7 +124,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                     <Icon className={`w-4 h-4 ${meta.color}`} />
                                     <span className="text-white font-medium">{meta.label}</span>
                                 </div>
-                                <span className="text-slate-400 text-sm">
+                                <span className="text-slate-400 type-ui">
                                     {formatNumber(usage)} / {formatLimit(limit)}
                                 </span>
                             </div>
@@ -134,7 +134,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                                     style={{ width: `${getProgressPercentage(usage, limit)}%` }}
                                 />
                             </div>
-                            <div className="mt-2 text-xs text-slate-400">
+                            <div className="mt-2 type-caption text-slate-400">
                                 {limit < 0 ? 'No daily cap on this resource' : `${formatNumber(Math.max(0, remaining))} remaining`}
                             </div>
                         </div>
@@ -153,7 +153,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                             className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg"
                         >
                             <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                            <span className="text-yellow-400 text-sm">
+                            <span className="text-yellow-400 type-ui">
                                 You are approaching your daily {CARD_META[key].label.toLowerCase()} limit.
                             </span>
                         </div>

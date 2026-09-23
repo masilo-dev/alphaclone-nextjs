@@ -21,7 +21,7 @@ export function ActivityFeed({
       <DashboardPanelHeader title={title} subtitle={subtitle} />
       <div className="space-y-3 flex-1">
         {visible.length === 0 ? (
-          <div className="text-sm text-slate-500 py-8 text-center">No recent activity</div>
+          <div className="type-ui text-slate-500 py-8 text-center">No recent activity</div>
         ) : (
           visible.map((item, i) => (
             <div key={`${item.text}-${i}`} className="flex items-start gap-2.5">
@@ -30,8 +30,8 @@ export function ActivityFeed({
                 style={{ backgroundColor: item.dot }}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-slate-200 leading-snug line-clamp-2">{item.text}</p>
-                <span className="text-xs text-slate-500">{item.time}</span>
+                <p className="type-card-description text-slate-200 leading-snug line-clamp-2">{item.text}</p>
+                <span className="type-caption text-slate-500">{item.time}</span>
               </div>
             </div>
           ))

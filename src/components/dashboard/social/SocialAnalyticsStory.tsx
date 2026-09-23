@@ -153,13 +153,13 @@ export function SocialAnalyticsStory({
         <div className="mx-auto max-w-6xl space-y-10 animate-in fade-in duration-300">
             <header className="flex flex-col gap-5 border-b border-white/10 pb-7 sm:flex-row sm:items-end sm:justify-between">
                 <div className="max-w-2xl">
-                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-indigo-300">
+                    <p className="mb-2 type-caption font-black uppercase tracking-caps text-indigo-300">
                         {platform} performance narrative
                     </p>
                     <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
                         From content to customer intent
                     </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                    <p className="mt-2 type-card-description leading-6 text-slate-400">
                         A traceable view of what was published, what earned attention, and what people did next.
                     </p>
                 </div>
@@ -169,7 +169,7 @@ export function SocialAnalyticsStory({
                             key={item}
                             type="button"
                             onClick={() => onRangeChange(item)}
-                            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${
+                            className={`rounded-md px-3 py-1.5 type-caption font-bold transition-colors ${
                                 range === item ? 'bg-indigo-500 text-white' : 'text-slate-500 hover:text-white'
                             }`}
                         >
@@ -181,8 +181,8 @@ export function SocialAnalyticsStory({
 
             {!hasSyncedMetrics ? (
                 <section className="border-l-2 border-amber-400 bg-amber-400/[0.06] px-5 py-4">
-                    <p className="text-sm font-semibold text-amber-200">No provider metrics are available for this period.</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                    <p className="type-card-description font-semibold text-amber-200">No provider metrics are available for this period.</p>
+                    <p className="mt-1 type-card-description leading-5 text-slate-400">
                         {visiblePosts.length} published post{visiblePosts.length === 1 ? '' : 's'} found. Reach,
                         engagement, leads, conversions, and revenue remain unavailable until a provider sync returns
                         those fields.
@@ -192,10 +192,10 @@ export function SocialAnalyticsStory({
 
             <section aria-labelledby="overview-heading">
                 <div className="mb-5 flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 text-xs font-black text-white">1</span>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">1</span>
                     <div>
                         <h3 id="overview-heading" className="font-semibold text-white">Overview</h3>
-                        <p className="text-xs text-slate-500">The shape of performance in this period</p>
+                        <p className="type-card-description text-slate-500">The shape of performance in this period</p>
                     </div>
                 </div>
                 <div className="grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
@@ -207,11 +207,11 @@ export function SocialAnalyticsStory({
                     ].map(({ label, value, note, icon: Icon }) => (
                         <div key={label} className="bg-slate-950 px-5 py-5">
                             <div className="flex items-center justify-between">
-                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{label}</p>
+                                <p className="type-caption font-black uppercase tracking-caps text-slate-500">{label}</p>
                                 <Icon className="h-4 w-4 text-indigo-300" />
                             </div>
                             <p className="mt-4 text-2xl font-semibold tabular-nums text-white">{value}</p>
-                            <p className="mt-1 text-[11px] text-slate-500">{note}</p>
+                            <p className="mt-1 type-card-description text-slate-500">{note}</p>
                         </div>
                     ))}
                 </div>
@@ -220,10 +220,10 @@ export function SocialAnalyticsStory({
             <section aria-labelledby="content-heading" className="grid gap-6 lg:grid-cols-[1.55fr_0.8fr]">
                 <div>
                     <div className="mb-5 flex items-center gap-3">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 text-xs font-black text-white">2</span>
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">2</span>
                         <div>
                             <h3 id="content-heading" className="font-semibold text-white">Content response</h3>
-                            <p className="text-xs text-slate-500">Hover for context; select a post to drill down</p>
+                            <p className="type-card-description text-slate-500">Hover for context; select a post to drill down</p>
                         </div>
                     </div>
                     <div className="relative min-h-64 rounded-xl border border-white/10 bg-slate-950 p-5">
@@ -249,16 +249,16 @@ export function SocialAnalyticsStory({
                                         </button>
                                     ))}
                                 </div>
-                                <div className="mt-3 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                                <div className="mt-3 flex justify-between type-caption font-bold uppercase tracking-wider text-slate-600">
                                     <span>{new Date(scoredPosts[0].post.published_at || scoredPosts[0].post.created_at).toLocaleDateString()}</span>
                                     <span>{new Date(scoredPosts.at(-1)!.post.published_at || scoredPosts.at(-1)!.post.created_at).toLocaleDateString()}</span>
                                 </div>
-                                <p className="mt-4 text-[11px] text-slate-500">
+                                <p className="mt-4 type-card-description text-slate-500">
                                     Bar height = verified reactions + comments + clicks + shares. It is not a synthetic score.
                                 </p>
                             </>
                         ) : (
-                            <div className="flex min-h-52 items-center justify-center text-sm text-slate-500">
+                            <div className="flex min-h-52 items-center justify-center type-ui text-slate-500">
                                 No published content in this range.
                             </div>
                         )}
@@ -272,15 +272,15 @@ export function SocialAnalyticsStory({
                             return (
                                 <>
                                     <div className="flex items-center justify-between">
-                                        <span className="rounded-md bg-indigo-500/10 px-2 py-1 text-[10px] font-black uppercase text-indigo-300">
+                                        <span className="rounded-md bg-indigo-500/10 px-2 py-1 type-caption font-black uppercase text-indigo-300">
                                             {focused ? 'Selected post' : 'Top response'}
                                         </span>
-                                        <span className="text-[10px] text-slate-500">{mediaLabel(item.post)}</span>
+                                        <span className="type-ui text-slate-500">{mediaLabel(item.post)}</span>
                                     </div>
-                                    <p className="mt-4 line-clamp-3 text-sm font-semibold leading-6 text-white">
+                                    <p className="mt-4 line-clamp-3 type-card-description font-semibold leading-6 text-white">
                                         {item.post.title || item.post.caption || 'Untitled post'}
                                     </p>
-                                    <dl className="mt-5 space-y-2 border-t border-white/10 pt-4 text-xs">
+                                    <dl className="mt-5 space-y-2 border-t border-white/10 pt-4 type-caption">
                                         <div className="flex justify-between"><dt className="text-slate-500">Impressions</dt><dd className="font-bold text-white">{formatNumber(item.metric.impressions)}</dd></div>
                                         <div className="flex justify-between"><dt className="text-slate-500">Engagements</dt><dd className="font-bold text-white">{formatNumber(item.engagements)}</dd></div>
                                         <div className="flex justify-between"><dt className="text-slate-500">Engagement rate</dt><dd className="font-bold text-white">{item.rate === null ? 'Unavailable' : `${item.rate.toFixed(2)}%`}</dd></div>
@@ -288,7 +288,7 @@ export function SocialAnalyticsStory({
                                     <button
                                         type="button"
                                         onClick={() => onOpenPost(item.post)}
-                                        className="mt-5 flex w-full items-center justify-between border-t border-white/10 pt-4 text-xs font-bold text-indigo-300 hover:text-white"
+                                        className="mt-5 flex w-full items-center justify-between border-t border-white/10 pt-4 type-caption font-bold text-indigo-300 hover:text-white"
                                     >
                                         Open full post detail <ChevronRight className="h-4 w-4" />
                                     </button>
@@ -298,7 +298,7 @@ export function SocialAnalyticsStory({
                     ) : (
                         <div className="py-16 text-center">
                             <BarChart3 className="mx-auto h-6 w-6 text-slate-600" />
-                            <p className="mt-3 text-xs text-slate-500">Post detail will appear after metrics sync.</p>
+                            <p className="mt-3 type-card-description text-slate-500">Post detail will appear after metrics sync.</p>
                         </div>
                     )}
                 </aside>
@@ -306,10 +306,10 @@ export function SocialAnalyticsStory({
 
             <section aria-labelledby="journey-heading">
                 <div className="mb-5 flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 text-xs font-black text-white">3</span>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">3</span>
                     <div>
                         <h3 id="journey-heading" className="font-semibold text-white">Business journey</h3>
-                        <p className="text-xs text-slate-500">Known events stay separate from unavailable outcomes</p>
+                        <p className="type-card-description text-slate-500">Known events stay separate from unavailable outcomes</p>
                     </div>
                 </div>
                 <div className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950 sm:flex-row sm:items-stretch">
@@ -326,8 +326,8 @@ export function SocialAnalyticsStory({
                                 <p className={`text-xl font-semibold tabular-nums ${step.tone}`}>
                                     {step.value === null ? '—' : formatNumber(step.value)}
                                 </p>
-                                <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-slate-500">{step.label}</p>
-                                {step.value === null ? <p className="mt-1 text-[9px] text-amber-300/80">Not connected</p> : null}
+                                <p className="mt-1 type-caption font-black uppercase tracking-wider text-slate-500">{step.label}</p>
+                                {step.value === null ? <p className="mt-1 type-card-description text-amber-300/80">Not connected</p> : null}
                             </div>
                         </React.Fragment>
                     ))}
@@ -338,8 +338,8 @@ export function SocialAnalyticsStory({
                 <div className="flex gap-4">
                     <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-purple-300" />
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-purple-300">Bonnie insight</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-200">
+                        <p className="type-caption font-black uppercase tracking-caps text-purple-300">Bonnie insight</p>
+                        <p className="mt-2 type-card-description leading-6 text-slate-200">
                             {leadingType && leadingType.engagements > 0
                                 ? `${leadingType.label} content generated the most recorded engagement in this ${rangeDays}-day window: ${formatNumber(leadingType.engagements)} interactions across ${leadingType.posts} post${leadingType.posts === 1 ? '' : 's'}. Review the top post before reusing its format; this is correlation, not proof of cause.`
                                 : 'There is not enough synchronized engagement data to explain a performance pattern yet. Bonnie will not infer a winner from publishing volume alone.'}
@@ -351,13 +351,13 @@ export function SocialAnalyticsStory({
             <section className="grid gap-6 border-t border-white/10 pt-8 md:grid-cols-2">
                 <div>
                     <h3 className="font-semibold text-white">Leads & revenue</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-2 type-card-description leading-6 text-slate-500">
                         Attribution is unavailable in the current social analytics record. Clicks remain traffic events until a verified lead, customer, conversion, or payment relationship is connected.
                     </p>
                 </div>
                 <div>
                     <h3 className="font-semibold text-white">Recommendations</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                    <p className="mt-2 type-card-description leading-6 text-slate-400">
                         {topPost && topPost.engagements > 0
                             ? `Open “${topPost.post.title || topPost.post.caption.slice(0, 48)}” and compare its message, format, and publishing time with the next two posts.`
                             : 'Publish and synchronize at least two posts before comparing formats or timing.'}
@@ -369,7 +369,7 @@ export function SocialAnalyticsStory({
                 <button
                     type="button"
                     onClick={() => setFocusedId(null)}
-                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-300 shadow-xl lg:hidden"
+                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-3 py-2 type-caption text-slate-300 shadow-xl lg:hidden"
                 >
                     <X className="h-3.5 w-3.5" /> Clear chart selection
                 </button>

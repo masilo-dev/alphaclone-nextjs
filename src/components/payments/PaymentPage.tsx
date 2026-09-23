@@ -96,14 +96,14 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             <div className="flex gap-4 border-b border-slate-700">
                 <button
                     onClick={() => setActiveTab('invoices')}
-                    className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'invoices' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
+                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'invoices' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Invoices
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
+                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'history' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
                         }`}
                 >
                     Payment History
@@ -127,8 +127,8 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-white">{invoice.description}</h3>
-                                        <div className="text-sm text-slate-400">Due: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}</div>
-                                        <div className="text-xs text-slate-500">ID: {invoice.id.slice(0, 8)}...</div>
+                                        <div className="type-ui text-slate-400">Due: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}</div>
+                                        <div className="type-caption text-slate-500">ID: {invoice.id.slice(0, 8)}...</div>
                                     </div>
                                 </div>
 
@@ -179,14 +179,14 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                                     </div>
                                     <div>
                                         <div className="font-medium text-white">Payment via Stripe</div>
-                                        <div className="text-sm text-slate-400">{format(new Date(payment.created_at), 'PPP p')}</div>
+                                        <div className="type-ui text-slate-400">{format(new Date(payment.created_at), 'PPP p')}</div>
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <div className="font-bold text-white">
                                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: payment.currency.toUpperCase() }).format(payment.amount)}
                                     </div>
-                                    <div className="text-xs text-green-400 uppercase">{payment.status}</div>
+                                    <div className="type-caption text-green-400 uppercase">{payment.status}</div>
                                 </div>
                             </Card>
                         ))
@@ -206,7 +206,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
 
                         <div className="mb-6">
                             <h3 className="text-xl font-bold text-white mb-1">Secure Payment</h3>
-                            <p className="text-slate-400 text-sm">Complete your payment for invoice #{selectedInvoice.id.slice(0, 8)}</p>
+                            <p className="text-slate-400 type-card-description">Complete your payment for invoice #{selectedInvoice.id.slice(0, 8)}</p>
                         </div>
 
                         <Elements stripe={stripePromise} options={{
@@ -221,7 +221,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                             />
                         </Elements>
 
-                        <div className="mt-4 pt-4 border-t border-slate-700 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                        <div className="mt-4 pt-4 border-t border-slate-700 text-center type-caption text-slate-500 flex items-center justify-center gap-2">
                             <CheckCircle className="w-3 h-3" />
                             Payments secured by Stripe. End-to-end encrypted.
                         </div>

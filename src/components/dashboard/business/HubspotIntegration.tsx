@@ -188,7 +188,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
         return (
             <div className="max-w-4xl ac-workspace-panel rounded-lg p-5 text-center">
                 <RefreshCw className="w-5 h-5 animate-spin text-orange-400 mx-auto mb-3" />
-                <p className="text-sm text-slate-400">Checking HubSpot connection...</p>
+                <p className="type-card-description text-slate-400">Checking HubSpot connection...</p>
             </div>
         );
     }
@@ -201,13 +201,13 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         <Plug2 className="w-5 h-5 text-orange-400" />
                     </div>
                     <div className="flex-1">
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
-                        <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+                        <p className="type-card-description text-slate-400 mt-1 max-w-2xl">
                             Sync HubSpot contacts into AlphaClone and manage them from one workspace.
                         </p>
                         {status === 'error' && (
-                            <div className="mt-3 flex items-center gap-2 text-amber-400 text-sm">
+                            <div className="mt-3 flex items-center gap-2 text-amber-400 type-ui">
                                 <AlertCircle className="w-4 h-4" />
                                 Unable to verify the current HubSpot connection.
                             </div>
@@ -236,15 +236,15 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         <Users className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Connected
                             </span>
                         </div>
-                        <p className="text-sm text-slate-400">View and refresh HubSpot contacts inside AlphaClone.</p>
+                        <p className="type-card-description text-slate-400">View and refresh HubSpot contacts inside AlphaClone.</p>
                     </div>
                 </div>
 
@@ -278,19 +278,19 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search contacts by name, email, or company..."
-                        className="w-full rounded-lg border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40"
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 type-ui text-white outline-none focus:border-orange-500/40"
                     />
                 </div>
 
                 {isLoadingContacts ? (
                     <div className="py-10 text-center">
                         <RefreshCw className="w-5 h-5 animate-spin text-orange-400 mx-auto mb-3" />
-                        <p className="text-sm text-slate-400">Loading HubSpot contacts...</p>
+                        <p className="type-card-description text-slate-400">Loading HubSpot contacts...</p>
                     </div>
                 ) : filteredContacts.length === 0 ? (
                     <div className="py-10 text-center text-slate-400">
                         <Users className="w-8 h-8 mx-auto mb-3 opacity-40" />
-                        <p className="text-sm">No HubSpot contacts found.</p>
+                        <p className="type-card-description">No HubSpot contacts found.</p>
                     </div>
                 ) : (
                     <div className="space-y-3 max-h-[24rem] overflow-y-auto pr-1">
@@ -303,7 +303,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                                 >
                                     <div className="min-w-0">
                                         <p className="font-semibold text-white truncate">{fullName}</p>
-                                        <div className="text-sm text-slate-400 flex flex-col gap-1 mt-1">
+                                        <div className="type-ui text-slate-400 flex flex-col gap-1 mt-1">
                                             <span className="truncate">{contact.properties.email || 'No email'}</span>
                                             {contact.properties.company && <span className="truncate">{contact.properties.company}</span>}
                                         </div>

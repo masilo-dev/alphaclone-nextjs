@@ -169,13 +169,13 @@ export function MarketingTestimonialsCarousel({
           {items.map((item) => (
             <CarouselItem key={item.quote.slice(0, 48)}>
               <article className="rounded-2xl border border-slate-800/80 bg-slate-950/50 px-6 py-8 sm:px-10 sm:py-10 text-center marketing-shadow-md">
-                <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                <p className="mb-4 type-caption font-bold uppercase tracking-caps text-slate-500">
                   Typical outcome · {item.outcome}
                 </p>
                 <blockquote className="text-lg sm:text-xl text-slate-200 leading-relaxed">
                   &ldquo;{item.quote}&rdquo;
                 </blockquote>
-                <cite className="mt-6 block text-sm font-semibold not-italic text-teal-400">{item.persona}</cite>
+                <cite className="mt-6 block type-ui font-semibold not-italic text-teal-400">{item.persona}</cite>
               </article>
             </CarouselItem>
           ))}
@@ -183,7 +183,7 @@ export function MarketingTestimonialsCarousel({
         <CarouselPrevious className="-left-1 sm:left-0" />
         <CarouselNext className="-right-1 sm:right-0" />
       </Carousel>
-      <p className="text-center text-xs text-slate-500 max-w-2xl mx-auto leading-relaxed">{disclaimer}</p>
+      <p className="text-center type-card-description text-slate-500 max-w-2xl mx-auto leading-relaxed">{disclaimer}</p>
     </div>
   );
 }

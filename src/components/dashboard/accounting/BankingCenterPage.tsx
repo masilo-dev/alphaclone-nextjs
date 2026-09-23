@@ -129,8 +129,8 @@ export default function BankingCenterPage() {
       sortValue: (a) => a.name,
       accessor: (a) => (
         <div>
-          <span className="text-[13px] font-bold text-white block">{a.name}</span>
-          <span className="text-[11px] text-slate-500 capitalize">{a.account_type || 'checking'}</span>
+          <span className="type-ui font-bold text-white block">{a.name}</span>
+          <span className="type-ui text-slate-500 capitalize">{a.account_type || 'checking'}</span>
         </div>
       ),
     },
@@ -169,7 +169,7 @@ export default function BankingCenterPage() {
       sortable: true,
       sortValue: (s) => s.statement_start_date,
       accessor: (s) => (
-        <span className="text-sm text-white">
+        <span className="type-ui text-white">
           {s.statement_start_date} → {s.statement_end_date}
         </span>
       ),
@@ -196,7 +196,7 @@ export default function BankingCenterPage() {
         header={(
           <div className="px-1 pb-2">
             <h1 className="text-lg font-semibold text-white">Banking Workspace</h1>
-            <p className="text-sm text-slate-400">Track balances, manage accounts, and run reconciliations from one place.</p>
+            <p className="type-card-description text-slate-400">Track balances, manage accounts, and run reconciliations from one place.</p>
           </div>
         )}
         toolbar={(
@@ -244,9 +244,9 @@ export default function BankingCenterPage() {
               emptyMessage="No bank accounts."
             />
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Reconciliation Sessions</h3>
+              <h3 className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Reconciliation Sessions</h3>
               {sessions.length === 0 ? (
-                <p className="text-sm text-slate-500 px-1">No reconciliation sessions yet.</p>
+                <p className="type-card-description text-slate-500 px-1">No reconciliation sessions yet.</p>
               ) : (
                 <EnterpriseDataTable
                   columns={sessionColumns}
@@ -288,11 +288,11 @@ export default function BankingCenterPage() {
               validate={(v) => v.trim() && v.trim().length !== 4 ? 'Enter exactly 4 digits' : undefined}
             />
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Type</label>
+              <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Type</label>
               <select
                 value={form.accountType}
                 onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value as AccountType }))}
-                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-teal-500/50"
               >
                 <option value="checking">Checking</option>
                 <option value="savings">Savings</option>

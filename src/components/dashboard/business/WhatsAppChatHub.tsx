@@ -358,7 +358,7 @@ export default function WhatsAppChatHub() {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
-                <p className="text-sm text-slate-400">Syncing WhatsApp chats...</p>
+                <p className="type-card-description text-slate-400">Syncing WhatsApp chats...</p>
             </div>
         );
     }
@@ -372,7 +372,7 @@ export default function WhatsAppChatHub() {
                 {/* Search Bar */}
                 <div className="p-4 border-b border-white/5 space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-white flex items-center gap-2 text-sm tracking-wide">
+                        <h3 className="font-bold text-white flex items-center gap-2 type-caption tracking-wide">
                             <MessageCircle className="w-5 h-5 text-emerald-400" /> WhatsApp Live Chat
                         </h3>
                         {/* Auto Outreach Toggle */}
@@ -380,7 +380,7 @@ export default function WhatsAppChatHub() {
                             <button
                                 onClick={handleToggleChatbot}
                                 disabled={savingSettings}
-                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all ${
+                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl type-caption font-semibold border transition-all ${
                                     chatbotEnabled 
                                     ? 'text-emerald-400 bg-emerald-500/5 border-emerald-500/20' 
                                     : 'text-slate-400 bg-slate-800 border-slate-700'
@@ -400,14 +400,14 @@ export default function WhatsAppChatHub() {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Search chats or phone..."
-                            className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
+                            className="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 type-caption text-white outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
                         />
                     </div>
 
                     <button
                         type="button"
                         onClick={() => setShowFbSearch((prev) => !prev)}
-                        className="w-full text-left text-[10px] font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 flex items-center gap-1.5"
+                        className="w-full text-left type-caption font-bold uppercase tracking-wider text-blue-400 hover:text-blue-300 flex items-center gap-1.5"
                     >
                         <Facebook className="w-3.5 h-3.5" />
                         {showFbSearch ? 'Hide Facebook lead search' : 'Search Facebook leads'}
@@ -422,13 +422,13 @@ export default function WhatsAppChatHub() {
                                     onChange={(e) => setFbLeadQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
                                     placeholder="Name, email, campaign..."
-                                    className="flex-1 px-3 py-1.5 text-xs bg-slate-900 border border-slate-800 rounded-lg text-white"
+                                    className="flex-1 px-3 py-1.5 type-caption bg-slate-900 border border-slate-800 rounded-lg text-white"
                                 />
                                 <button
                                     type="button"
                                     onClick={handleFacebookLeadSearch}
                                     disabled={searchingFbLeads}
-                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                                    className="px-3 py-1.5 type-caption font-semibold rounded-lg bg-blue-600 text-white disabled:opacity-50"
                                 >
                                     {searchingFbLeads ? '…' : 'Find'}
                                 </button>
@@ -440,10 +440,10 @@ export default function WhatsAppChatHub() {
                                     onClick={() => startWhatsAppFromLead(lead)}
                                     className="w-full text-left p-2 rounded-lg bg-slate-900/80 border border-slate-800 hover:border-emerald-500/30"
                                 >
-                                    <p className="text-xs font-semibold text-white truncate">
+                                    <p className="type-card-description font-semibold text-white truncate">
                                         {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.full_name || lead.company || 'Lead'}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 truncate">
+                                    <p className="type-card-description text-slate-500 truncate">
                                         {lead.phone || lead.email || lead.campaign_name || 'Tap to start WhatsApp'}
                                     </p>
                                 </button>
@@ -477,20 +477,20 @@ export default function WhatsAppChatHub() {
                                     }`}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-sm font-bold text-emerald-400">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 type-ui font-bold text-emerald-400">
                                             {thread.contactName.charAt(0) === '+' ? <Phone className="w-4 h-4 text-emerald-400" /> : thread.contactName.charAt(0)}
                                         </div>
                                         <div className="min-w-0">
-                                            <h4 className="font-bold text-xs text-white truncate">{thread.contactName}</h4>
-                                            <p className="text-[11px] text-slate-500 truncate mt-1">{thread.lastMessage}</p>
+                                            <h4 className="font-bold type-card-title text-white truncate">{thread.contactName}</h4>
+                                            <p className="type-card-description text-slate-500 truncate mt-1">{thread.lastMessage}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                        <span className="text-[10px] font-black text-slate-600 uppercase">
+                                        <span className="type-caption font-black text-slate-600 uppercase">
                                             {new Date(thread.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         {thread.unreadCount > 0 && (
-                                            <span className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] font-black">
+                                            <span className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center type-ui font-black">
                                                 {thread.unreadCount}
                                             </span>
                                         )}
@@ -513,8 +513,8 @@ export default function WhatsAppChatHub() {
                                     <MessageSquare className="w-5 h-5 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-sm text-white tracking-wide">{activeThread.contactName}</h4>
-                                    <div className="text-[10px] flex items-center gap-1.5 font-bold uppercase tracking-wider mt-0.5">
+                                    <h4 className="font-bold type-caption text-white tracking-wide">{activeThread.contactName}</h4>
+                                    <div className="type-caption flex items-center gap-1.5 font-bold uppercase tracking-wider mt-0.5">
                                         {metaConnected ? (
                                             <>
                                                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
@@ -529,7 +529,7 @@ export default function WhatsAppChatHub() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <div className="flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-3 py-1.5 type-caption font-bold uppercase tracking-wider text-slate-500">
                                 <ShieldCheck className="w-4 h-4 text-emerald-400" /> Secure Encryption
                             </div>
                         </div>
@@ -540,14 +540,14 @@ export default function WhatsAppChatHub() {
                                 const isMe = msg.direction === 'outbound';
                                 return (
                                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
-                                        <div className={`max-w-[70%] rounded-lg border p-3.5 text-xs transition-all ${
+                                        <div className={`max-w-[70%] rounded-lg border p-3.5 type-caption transition-all ${
                                             isMe 
                                             ? 'bg-emerald-950/60 text-emerald-50 border-emerald-500/20 rounded-br-none' 
                                             : 'bg-slate-900 border-slate-800 text-slate-200 rounded-bl-none'
                                         }`}>
                                             <p className="leading-relaxed whitespace-pre-wrap">{msg.body}</p>
                                             <div className="flex items-center justify-end gap-1.5 mt-2">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                                <span className="type-caption font-black text-slate-500 uppercase tracking-widest">
                                                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                                 {isMe && (
@@ -566,7 +566,7 @@ export default function WhatsAppChatHub() {
                         {/* Input Footer */}
                         <div className="space-y-3 border-t border-[var(--ws-border)] bg-slate-900/30 p-4 backdrop-blur-md">
                             {!metaConnected && (
-                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 type-ui text-amber-100">
                                     Outbound WhatsApp is not configured for this workspace. Connect Meta Cloud API credentials in Integration Settings before sending messages.
                                 </div>
                             )}
@@ -574,7 +574,7 @@ export default function WhatsAppChatHub() {
                                 <button
                                     onClick={handleAiSuggest}
                                     disabled={aiGenerating}
-                                    className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 transition-all active:scale-95 disabled:opacity-50"
+                                    className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-3.5 py-1.5 type-caption font-bold uppercase tracking-wider text-emerald-400 transition-all active:scale-95 disabled:opacity-50"
                                 >
                                     {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
                                     AI Assist Copilot Draft
@@ -588,7 +588,7 @@ export default function WhatsAppChatHub() {
                                     onChange={e => setReplyText(e.target.value)}
                                     placeholder={metaConnected ? 'Type a WhatsApp message...' : 'Configure WhatsApp to send messages'}
                                     disabled={!metaConnected}
-                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-4 py-3 text-xs text-white outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
+                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-4 py-3 type-caption text-white outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"

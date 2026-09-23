@@ -80,13 +80,13 @@ export function UnifiedActionCenter() {
   ) => {
     if (items.length === 0) {
       return emptyHint ? (
-        <p className="text-[12px] text-[var(--ws-text-tertiary)] px-1">{emptyHint}</p>
+        <p className="type-card-description text-[var(--ws-text-tertiary)] px-1">{emptyHint}</p>
       ) : null;
     }
 
     return (
       <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3">
+        <h2 className="type-ui font-semibold text-[var(--ws-text-primary)] mb-3">
           {title} ({items.length})
         </h2>
         <ul className="space-y-2">
@@ -100,9 +100,9 @@ export function UnifiedActionCenter() {
                 >
                   <Icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[var(--ws-text-primary)] truncate">{item.title}</p>
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{item.title}</p>
                     {item.detail ? (
-                      <p className="text-[11px] text-[var(--ws-text-tertiary)] truncate">{item.detail}</p>
+                      <p className="type-card-description text-[var(--ws-text-tertiary)] truncate">{item.detail}</p>
                     ) : null}
                   </div>
                   <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)]" aria-hidden="true" />

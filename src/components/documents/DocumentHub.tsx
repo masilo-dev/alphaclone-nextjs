@@ -872,7 +872,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 maxWidth="max-w-lg"
             >
                 <form onSubmit={handleEmailDocument} className="flex flex-col gap-4">
-                    <p className="text-xs text-[var(--text-muted)]">
+                    <p className="type-card-description text-[var(--text-muted)]">
                         {emailFile.original_filename} will be attached
                     </p>
                     <Input
@@ -933,7 +933,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         <div className="h-5 w-1/2 rounded bg-[color-mix(in_srgb,var(--ws-border)_35%,transparent)] ac-skeleton-pulse" />
                     </div>
                 ) : merged.length === 0 ? (
-                    <div className="text-sm text-[var(--text-secondary)]">
+                    <div className="type-caption text-[var(--text-secondary)]">
                         No activity is available for this file yet.
                     </div>
                 ) : (
@@ -942,16 +942,16 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             <div key={item.id} className="ac-workspace-panel p-4">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-[var(--ws-text-primary)]">
+                                        <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">
                                             {item.title}
                                         </p>
                                         {item.description ? (
-                                            <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">
+                                            <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">
                                                 {item.description}
                                             </p>
                                         ) : null}
                                     </div>
-                                    <div className="text-[11px] text-[var(--ws-text-muted)] whitespace-nowrap">
+                                    <div className="type-ui text-[var(--ws-text-muted)] whitespace-nowrap">
                                         {format(new Date(item.createdAt), 'MMM d, HH:mm')}
                                     </div>
                                 </div>
@@ -1032,7 +1032,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 />
                 {selectedFile ? (
                     <div className="px-4 py-2 border-b border-white/5 bg-slate-950/80">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                        <p className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1.5">
                             Related versions
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -1052,7 +1052,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         key={f.id}
                                         type="button"
                                         onClick={() => setSelectedFile(f)}
-                                        className="text-[10px] px-2 py-1 rounded-lg border border-white/10 text-slate-300 hover:border-teal-500/40 hover:text-teal-300"
+                                        className="type-ui px-2 py-1 rounded-lg border border-white/10 text-slate-300 hover:border-teal-500/40 hover:text-teal-300"
                                     >
                                         {f.original_filename} ·{' '}
                                         {new Date(f.created_at).toLocaleDateString()}
@@ -1066,7 +1066,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     f.id !== selectedFile.id
                                 );
                             }).length === 0 ? (
-                                <span className="text-[11px] text-slate-500">
+                                <span className="type-ui text-slate-500">
                                     Save edits to create another version of this file.
                                 </span>
                             ) : null}
@@ -1127,23 +1127,23 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             <div className="bg-slate-900 border border-white/5 p-12 rounded-3xl text-center max-w-sm">
                                 <FileIcon className="w-16 h-16 text-slate-700 mx-auto mb-6" />
                                 <h3 className="text-white font-bold text-lg mb-2">No Preview Available</h3>
-                                <p className="text-slate-400 text-sm mb-8">This file type cannot be viewed inside the platform yet.</p>
+                                <p className="text-slate-400 type-card-description mb-8">This file type cannot be viewed inside the platform yet.</p>
                                 <button
                                     onClick={() => handleDownload(selectedFile)}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all mb-2"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white type-ui font-bold transition-all mb-2"
                                 >
                                     <Download className="w-4 h-4" /> Download File
                                 </button>
                                 <button
                                     onClick={() => handlePrint(fileUrl || '')}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold transition-all mb-2"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white type-ui font-bold transition-all mb-2"
                                 >
                                     <Printer className="w-4 h-4" /> Print
                                 </button>
                                 <button
                                     onClick={() => selectedFile && handleSaveToDrive(selectedFile)}
                                     disabled={selectedFile ? isSavingToDrive === selectedFile.id : false}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-500/20"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white type-ui font-bold transition-all shadow-lg shadow-teal-500/20"
                                 >
                                     {selectedFile && isSavingToDrive === selectedFile.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                                     Save to Drive
@@ -1190,7 +1190,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         <select
                                             value={documentFilter}
                                             onChange={(e) => setDocumentFilter(e.target.value)}
-                                            className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] pl-10 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                            className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] pl-10 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                                         >
                                             <option value="all">All files</option>
                                             <option value="contracts">Contracts</option>
@@ -1211,7 +1211,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     <select
                                         value={sortMode}
                                         onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                                         aria-label="Sort documents"
                                     >
                                         <option value="newest">Newest</option>
@@ -1230,7 +1230,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     <select
                                         value={String(pageSize)}
                                         onChange={(e) => setPageSize(Number(e.target.value))}
-                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] type-ui text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                                         aria-label="Items per page"
                                     >
                                         <option value="10">10 / page</option>
@@ -1344,8 +1344,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         <div className="px-4 md:px-6">
                             <div className="ac-workspace-panel p-4">
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs text-[var(--ws-text-muted)] font-medium">Storage used</span>
-                                    <span className="text-xs text-[var(--ws-text-secondary)] font-semibold">
+                                    <span className="type-caption text-[var(--ws-text-muted)] font-medium">Storage used</span>
+                                    <span className="type-caption text-[var(--ws-text-secondary)] font-semibold">
                                         {formatBytes(storageUsed)} / 100 MB
                                     </span>
                                 </div>
@@ -1450,7 +1450,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         ) : (
                         <div className="ac-workspace-panel p-10 text-center">
                             <FolderOpen className="w-14 h-14 text-[var(--ws-text-muted)] mx-auto mb-4" aria-hidden="true" />
-                            <p className="text-sm font-medium text-[var(--ws-text-secondary)]">
+                            <p className="type-caption font-medium text-[var(--ws-text-secondary)]">
                                 {viewTrash
                                     ? 'Trash is empty.'
                                     : 'No documents match your search.'}
@@ -1495,17 +1495,17 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                                         {getFileIcon(file.file_type)}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-medium text-[var(--ws-text-primary)] truncate">
+                                                        <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">
                                                             {file.original_filename}
                                                         </p>
                                                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                                                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-[var(--ws-border)] text-[var(--ws-text-muted)]">
+                                                            <span className="type-ui font-medium px-2 py-0.5 rounded-full border border-[var(--ws-border)] text-[var(--ws-text-muted)]">
                                                                 {getFileLabel(file.file_type)}
                                                             </span>
-                                                            <span className="text-xs text-[var(--ws-text-muted)]">
+                                                            <span className="type-caption text-[var(--ws-text-muted)]">
                                                                 {formatBytes(file.file_size)}
                                                             </span>
-                                                            <span className="text-xs text-[var(--ws-text-muted)]">
+                                                            <span className="type-caption text-[var(--ws-text-muted)]">
                                                                 {format(new Date(file.created_at), 'MMM d, yyyy')}
                                                             </span>
                                                         </div>
@@ -1628,7 +1628,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
                     {!isLoading && sortedFiles.length > 0 ? (
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
-                            <p className="text-xs text-[var(--ws-text-muted)]">
+                            <p className="type-card-description text-[var(--ws-text-muted)]">
                                 Showing {Math.min(pagination.pageStart + 1, pagination.totalItems)}–
                                 {Math.min(pagination.pageStart + pageSize, pagination.totalItems)} of {pagination.totalItems}
                             </p>
@@ -1645,7 +1645,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 >
                                     Previous
                                 </button>
-                                <span className="text-xs font-semibold text-[var(--ws-text-secondary)]">
+                                <span className="type-caption font-semibold text-[var(--ws-text-secondary)]">
                                     Page {pagination.safePage} / {pagination.totalPages}
                                 </span>
                                 <button
@@ -1678,7 +1678,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">AI Document Designer</h3>
-                                    <p className="text-slate-400 text-sm font-medium">Transform descriptions into professional documents</p>
+                                    <p className="text-slate-400 type-card-description font-medium">Transform descriptions into professional documents</p>
                                 </div>
                             </div>
                             <button
@@ -1691,12 +1691,12 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Creation Intent</label>
+                                <label className="type-caption font-bold text-slate-500 uppercase tracking-widest ml-1">Creation Intent</label>
                                 <textarea
                                     value={aiPrompt}
                                     onChange={(e) => setAiPrompt(e.target.value)}
                                     placeholder="Describe the document you want... e.g., 'A professional project proposal for a tech company with a clear timeline and budget section, using a teal and slate color palette.'"
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all text-sm leading-relaxed"
+                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all type-ui leading-relaxed"
                                 />
                             </div>
 
@@ -1737,7 +1737,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                            <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">
                                 Utilizing advanced AI for professional document generation
                             </p>
                         </div>

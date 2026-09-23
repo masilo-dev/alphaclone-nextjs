@@ -149,7 +149,7 @@ export function UserLocationTable() {
                                             </Avatar>
                                             <div className="flex flex-col">
                                                 <span className="font-medium">{user.name}</span>
-                                                <span className="text-xs text-gray-500">{user.email}</span>
+                                                <span className="type-caption text-gray-500">{user.email}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
@@ -166,12 +166,12 @@ export function UserLocationTable() {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex items-center gap-1.5 text-sm">
+                                            <div className="flex items-center gap-1.5 type-ui">
                                                 <MapPin className="h-3.5 w-3.5 text-gray-400" />
                                                 {user.last_location !== 'Unknown' ? user.last_location : <span className="text-gray-400">Unknown</span>}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="font-mono text-xs text-gray-500">
+                                        <TableCell className="font-mono type-caption text-gray-500">
                                             {user.last_ip}
                                         </TableCell>
                                     </TableRow>

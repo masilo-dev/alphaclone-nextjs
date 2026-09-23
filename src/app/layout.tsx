@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
 
 import "./globals.css";
@@ -12,8 +12,18 @@ import "@/styles/apple-fluid-system.css";
 import "@/styles/crisp-product-ui.css";
 import { Providers } from "@/components/Providers";
 
-const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter-next" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], display: "swap", variable: "--font-space-grotesk-next" });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter-next",
+  weight: ["400", "500", "600", "700", "800"],
+});
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-plus-jakarta-next",
+  weight: ["500", "600", "700", "800"],
+});
 
 import { PWAProvider } from "@/contexts/PWAContext";
 import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
@@ -98,7 +108,7 @@ function serializeJsonLd(value: object): string { return JSON.stringify(value).r
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${plusJakartaSans.variable}`}>
       <head>
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />

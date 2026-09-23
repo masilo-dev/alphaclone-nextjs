@@ -91,14 +91,14 @@ export default function StackSavingsCalculator() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 type-caption sm:text-sm font-medium mb-4">
             <Calculator className="w-4 h-4 text-amber-400" />
             <span>Interactive ROI Calculator</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
             Calculate How Much You Stop Wasting Each Month
           </h2>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-300 type-card-description sm:text-base leading-relaxed">
             Select the software tools your business currently uses separately to see your instant monthly cost and time savings.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function StackSavingsCalculator() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Tool Selection List */}
             <div className="lg:col-span-7 space-y-4">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
                 Select Your Current Disconnected Software Stack:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -126,16 +126,16 @@ export default function StackSavingsCalculator() {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${isChecked ? 'bg-teal-500 border-teal-400 text-white' : 'border-slate-700 bg-slate-900'}`}>
+                          <div className={`w-4 h-4 rounded flex items-center justify-center border type-ui ${isChecked ? 'bg-teal-500 border-teal-400 text-white' : 'border-slate-700 bg-slate-900'}`}>
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
-                          <span className={`text-xs font-bold ${isChecked ? 'text-white' : 'text-slate-400'}`}>
+                          <span className={`type-caption font-bold ${isChecked ? 'text-white' : 'text-slate-400'}`}>
                             {tool.name}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1 pl-6">{tool.category}</p>
+                        <p className="type-card-description text-slate-400 mt-1 pl-6">{tool.category}</p>
                       </div>
-                      <span className="text-xs font-mono font-semibold text-slate-300">
+                      <span className="type-caption font-mono font-semibold text-slate-300">
                         ${tool.avgMonthlyCost}/mo
                       </span>
                     </button>
@@ -148,31 +148,31 @@ export default function StackSavingsCalculator() {
             <div className="lg:col-span-5 flex flex-col justify-between p-6 rounded-xl bg-slate-950 border border-slate-800">
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Current Stack Cost:</span>
+                  <span className="type-caption font-bold text-slate-400 uppercase">Current Stack Cost:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-rose-400 font-mono">${currentMonthlyTotal} / mo</span>
-                    <p className="text-[10px] text-slate-500">(${currentAnnualTotal.toLocaleString()} / year)</p>
+                    <p className="type-card-description text-slate-500">(${currentAnnualTotal.toLocaleString()} / year)</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <span className="text-xs font-bold text-slate-400 uppercase">AlphaClone Unified Engine:</span>
+                  <span className="type-caption font-bold text-slate-400 uppercase">AlphaClone Unified Engine:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-teal-400 font-mono">${alphaCloneMonthly} / mo</span>
-                    <p className="text-[10px] text-slate-500">(${alphaCloneAnnual.toLocaleString()} / year)</p>
+                    <p className="type-card-description text-slate-500">(${alphaCloneAnnual.toLocaleString()} / year)</p>
                   </div>
                 </div>
 
                 {/* Big Savings Highlight */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-950/40 to-teal-950/40 border border-emerald-500/40">
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase mb-1">
+                  <div className="flex items-center gap-2 text-emerald-400 type-caption font-bold uppercase mb-1">
                     <ReceiptText className="w-4 h-4" aria-hidden="true" />
                     <span>Your Net Annual Savings:</span>
                   </div>
                   <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
-                    ${annualDollarSavings.toLocaleString()} <span className="text-sm font-normal text-emerald-300">/ yr saved</span>
+                    ${annualDollarSavings.toLocaleString()} <span className="type-ui font-normal text-emerald-300">/ yr saved</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-300 mt-2">
+                  <div className="flex items-center gap-2 type-caption text-slate-300 mt-2">
                     <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>Plus <strong className="text-white">{currentHoursAnnual} hours / year</strong> saved on manual re-entry.</span>
                   </div>
@@ -183,12 +183,12 @@ export default function StackSavingsCalculator() {
               <div className="mt-6 pt-4 border-t border-slate-800">
                 <Link
                   href="/auth/login?register=true&plan=starter"
-                  className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-teal-950"
+                  className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold type-caption sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-teal-950"
                 >
                   <span>Get Started & Save</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <p className="text-[11px] text-center text-slate-400 mt-2">No credit card required • Instant CSV data import</p>
+                <p className="type-card-description text-center text-slate-400 mt-2">No credit card required • Instant CSV data import</p>
               </div>
             </div>
           </div>

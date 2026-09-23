@@ -167,7 +167,7 @@ export function BonnieDrawer() {
             <h2 className="text-base font-semibold text-[var(--ws-text-primary)]">
               Bonnie AI
             </h2>
-            <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
               {currentTenant?.name
                 ? `Helping across ${currentTenant.name}`
                 : "Workspace assistant"}
@@ -189,13 +189,13 @@ export function BonnieDrawer() {
         {contexts.length > 0 ? (
           <div className="px-4 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
+              <p className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
                 Working with
               </p>
               <button
                 type="button"
                 onClick={clearContexts}
-                className="text-[11px] font-medium text-[var(--brand-violet-500)]"
+                className="type-ui font-medium text-[var(--brand-violet-500)]"
               >
                 Clear
               </button>
@@ -206,17 +206,17 @@ export function BonnieDrawer() {
                   {ctx.href ? (
                     <Link
                       href={ctx.href}
-                      className="block text-sm font-medium text-[var(--ws-text-primary)] hover:text-[var(--brand-violet-500)]"
+                      className="block type-ui font-medium text-[var(--ws-text-primary)] hover:text-[var(--brand-violet-500)]"
                     >
                       {ctx.label}
-                      <span className="ml-2 text-xs font-normal text-[var(--ws-text-muted)]">
+                      <span className="ml-2 type-caption font-normal text-[var(--ws-text-muted)]">
                         {ctx.type}
                       </span>
                     </Link>
                   ) : (
-                    <p className="text-sm font-medium text-[var(--ws-text-primary)]">
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)]">
                       {ctx.label}
-                      <span className="ml-2 text-xs font-normal text-[var(--ws-text-muted)]">
+                      <span className="ml-2 type-caption font-normal text-[var(--ws-text-muted)]">
                         {ctx.type}
                       </span>
                     </p>
@@ -243,7 +243,7 @@ export function BonnieDrawer() {
                     aria-selected={mode === item.id}
                     onClick={() => setMode(item.id)}
                     className={cn(
-                      "px-2.5 min-h-8 rounded-[8px] text-xs font-semibold whitespace-nowrap transition-colors",
+                      "px-2.5 min-h-8 rounded-[8px] type-caption font-semibold whitespace-nowrap transition-colors",
                       mode === item.id
                         ? "bg-[var(--brand-violet-500)] text-white"
                         : "text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-secondary)]",
@@ -256,11 +256,11 @@ export function BonnieDrawer() {
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-              <p className="text-sm text-[var(--ws-text-secondary)]">
+              <p className="type-caption text-[var(--ws-text-secondary)]">
                 {MODE_HINT[mode]}
               </p>
               <label className="block">
-                <span className="text-xs font-medium text-[var(--ws-text-muted)]">
+                <span className="type-caption font-medium text-[var(--ws-text-muted)]">
                   Your request
                 </span>
                 <textarea
@@ -272,10 +272,10 @@ export function BonnieDrawer() {
                       ? "e.g. Draft a follow-up email for this customer…"
                       : "Describe what you need Bonnie to do…"
                   }
-                  className="mt-1.5 w-full rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-disabled)] focus:outline-none focus:border-[var(--brand-violet-500)]"
+                  className="mt-1.5 w-full rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-disabled)] focus:outline-none focus:border-[var(--brand-violet-500)]"
                 />
               </label>
-              <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 text-xs text-[var(--ws-text-muted)] space-y-1.5">
+              <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 type-caption text-[var(--ws-text-muted)] space-y-1.5">
                 <p className="font-semibold text-[var(--ws-text-secondary)]">
                   Before Bonnie acts
                 </p>
@@ -289,10 +289,10 @@ export function BonnieDrawer() {
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-[var(--ws-text-primary)]">
+              <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">
                 Confirm Bonnie&apos;s plan
               </h3>
-              <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">
+              <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">
                 Review what will happen. Nothing external runs until you
                 continue in the workspace and approve.
               </p>
@@ -301,14 +301,14 @@ export function BonnieDrawer() {
               {planItems.map((item) => (
                 <li
                   key={item}
-                  className="rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)]"
+                  className="rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 type-caption text-[var(--ws-text-primary)]"
                 >
                   {item}
                 </li>
               ))}
             </ol>
             <div
-              className="rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-surface)] p-3 text-xs text-[var(--warning-text)]"
+              className="rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-surface)] p-3 type-caption text-[var(--warning-text)]"
               role="status"
             >
               Confirmation required for communications, public posts, deletions,

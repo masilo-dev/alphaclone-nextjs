@@ -10,7 +10,7 @@ interface AppLegalFooterProps {
 export default function AppLegalFooter({ compact = false }: AppLegalFooterProps) {
   return (
     <footer
-      className={`w-full border-t border-slate-800 bg-slate-950/70 px-4 text-xs text-slate-400 ${
+      className={`w-full border-t border-slate-800 bg-slate-950/70 px-4 type-caption text-slate-400 ${
         compact ? 'py-3' : 'py-6'
       }`}
     >
@@ -18,14 +18,14 @@ export default function AppLegalFooter({ compact = false }: AppLegalFooterProps)
         <div
           className={`flex flex-col ${compact ? 'gap-2 md:flex-row md:items-center md:justify-between' : 'gap-1 sm:flex-row sm:items-start sm:justify-between'}`}
         >
-          <div className={`text-slate-500 ${compact ? 'space-y-0.5 text-[11px]' : 'space-y-1'}`}>
+          <div className={`text-slate-500 ${compact ? 'space-y-0.5 type-ui' : 'space-y-1'}`}>
             <p>{formatCopyrightLine()}</p>
             <p>{formatLegalAddress()}</p>
             <p className={compact ? 'truncate md:max-w-[34rem]' : ''}>
               {COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}
             </p>
           </div>
-          <nav className={`flex flex-wrap ${compact ? 'gap-x-3 gap-y-1 text-[11px]' : 'gap-x-4 gap-y-2'}`}>
+          <nav className={`flex flex-wrap ${compact ? 'gap-x-3 gap-y-1 type-ui' : 'gap-x-4 gap-y-2'}`}>
             <Link className="hover:text-slate-200" href="/privacy-policy">Privacy</Link>
             <Link className="hover:text-slate-200" href="/terms-of-service">Terms</Link>
             <Link className="hover:text-slate-200" href="/cookie-policy">Cookies</Link>

@@ -145,7 +145,7 @@ export function SettingsCategoryNav({
     <section className={cn('space-y-3', className)} aria-label={t('Settings categories')}>
       <div>
         <h2 className={WORKSPACE.typography.sectionTitle}>{t('Settings')}</h2>
-        <p className="mt-1 text-sm text-[var(--ws-text-muted)]">
+        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
           {t('Administration organised by area — open a category to manage details.')}
         </p>
       </div>
@@ -169,11 +169,11 @@ export function SettingsCategoryNav({
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-[color-mix(in_srgb,var(--brand-blue-500)_12%,transparent)] text-[var(--brand-blue-500)]">
                     <Icon className="w-4 h-4" aria-hidden />
                   </span>
-                  <span className="text-sm font-semibold text-[var(--ws-text-primary)]">
+                  <span className="type-ui font-semibold text-[var(--ws-text-primary)]">
                     {t(category.label)}
                   </span>
                 </span>
-                <span className="mt-1.5 block text-xs text-[var(--ws-text-muted)]">
+                <span className="mt-1.5 block type-caption text-[var(--ws-text-muted)]">
                   {t(category.description)}
                 </span>
               </button>

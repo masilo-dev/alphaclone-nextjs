@@ -105,10 +105,10 @@ function SetPasswordContent() {
                     <div className="h-14 w-14 rounded-2xl bg-[color:var(--brand-teal)]/10 text-[color:var(--brand-teal)] grid place-items-center mb-4 border border-[color:var(--border-strong)]">
                         <ShieldCheck className="h-7 w-7" strokeWidth={1.8} />
                     </div>
-                    <h1 className="text-[22px] leading-tight font-semibold tracking-tight">
+                    <h1 className="text-2xl leading-tight font-semibold tracking-tight">
                         {isDone ? 'Password set' : 'Set your secure client portal password'}
                     </h1>
-                    <p className="text-sm mt-2 text-[color:var(--text-secondary)] max-w-[360px]">
+                    <p className="type-caption mt-2 text-[color:var(--text-secondary)] max-w-[360px]">
                         {isDone
                             ? 'Signing you into your workspace…'
                             : 'Create a password you only use here. You will use this plus your email each time you sign in.'}
@@ -117,7 +117,7 @@ function SetPasswordContent() {
 
                 <form onSubmit={handleSubmit} className="rounded-2xl border border-[color:var(--border-medium)] bg-[color:var(--surface-elevated)] p-5 sm:p-6 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
                     <div className="mb-4">
-                        <label className="block text-[13px] font-medium mb-2 text-[color:var(--text-primary)]">
+                        <label className="block type-ui font-medium mb-2 text-[color:var(--text-primary)]">
                             New password
                         </label>
                         <div className="relative">
@@ -128,7 +128,7 @@ function SetPasswordContent() {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 disabled={isSubmitting || isDone}
-                                className="w-full h-11 rounded-xl border border-[color:var(--border-medium)] bg-[color:var(--surface-base)] pl-9 pr-10 text-sm outline-none focus:border-[color:var(--brand-teal)] focus:ring-2 focus:ring-[color:var(--brand-teal)]/20 disabled:opacity-60"
+                                className="w-full h-11 rounded-xl border border-[color:var(--border-medium)] bg-[color:var(--surface-base)] pl-9 pr-10 type-ui outline-none focus:border-[color:var(--brand-teal)] focus:ring-2 focus:ring-[color:var(--brand-teal)]/20 disabled:opacity-60"
                                 placeholder="Minimum 8 characters"
                                 required
                             />
@@ -161,7 +161,7 @@ function SetPasswordContent() {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-[13px] font-medium mb-2 text-[color:var(--text-primary)]">
+                        <label className="block type-ui font-medium mb-2 text-[color:var(--text-primary)]">
                             Confirm new password
                         </label>
                         <div className="relative">
@@ -172,7 +172,7 @@ function SetPasswordContent() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 disabled={isSubmitting || isDone}
-                                className="w-full h-11 rounded-xl border border-[color:var(--border-medium)] bg-[color:var(--surface-base)] pl-9 pr-3 text-sm outline-none focus:border-[color:var(--brand-teal)] focus:ring-2 focus:ring-[color:var(--brand-teal)]/20 disabled:opacity-60"
+                                className="w-full h-11 rounded-xl border border-[color:var(--border-medium)] bg-[color:var(--surface-base)] pl-9 pr-3 type-ui outline-none focus:border-[color:var(--brand-teal)] focus:ring-2 focus:ring-[color:var(--brand-teal)]/20 disabled:opacity-60"
                                 placeholder="Re-enter password"
                                 required
                             />
@@ -180,20 +180,20 @@ function SetPasswordContent() {
                     </div>
 
                     {error && (
-                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3.5 py-2.5 text-[13px] text-rose-600 dark:text-rose-400 mb-4 flex items-start gap-2">
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-3.5 py-2.5 type-ui text-rose-600 dark:text-rose-400 mb-4 flex items-start gap-2">
                             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
                     )}
 
                     {notice && (
-                        <div className="rounded-xl border border-[color:var(--brand-teal)]/25 bg-[color:var(--brand-teal)]/5 px-3.5 py-2.5 text-[13px] text-[color:var(--text-secondary)] mb-4">
+                        <div className="rounded-xl border border-[color:var(--brand-teal)]/25 bg-[color:var(--brand-teal)]/5 px-3.5 py-2.5 type-ui text-[color:var(--text-secondary)] mb-4">
                             {notice}
                         </div>
                     )}
 
                     {isDone && (
-                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-2.5 text-[13px] text-emerald-700 dark:text-emerald-400 mb-4 flex items-center gap-2">
+                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-2.5 type-ui text-emerald-700 dark:text-emerald-400 mb-4 flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                             <span>Password saved. Taking you to your workspace…</span>
                         </div>
@@ -202,13 +202,13 @@ function SetPasswordContent() {
                     <button
                         type="submit"
                         disabled={isSubmitting || isDone}
-                        className="w-full h-11 rounded-xl bg-[color:var(--brand-teal)] hover:bg-[color:var(--brand-teal)]/90 text-white text-sm font-medium shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_1px_1px_rgba(15,23,42,0.08)] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                        className="w-full h-11 rounded-xl bg-[color:var(--brand-teal)] hover:bg-[color:var(--brand-teal)]/90 text-white type-ui font-medium shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_1px_1px_rgba(15,23,42,0.08)] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                     >
                         {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
                         {isDone ? 'Signed in' : 'Set password & sign in'}
                     </button>
 
-                    <div className="mt-5 flex items-center justify-between text-[12.5px] text-[color:var(--text-secondary)]">
+                    <div className="mt-5 flex items-center justify-between type-ui text-[color:var(--text-secondary)]">
                         <Link href={portalLoginHref} className="hover:text-[color:var(--text-primary)] transition-colors">
                             Already have a password? Sign in
                         </Link>
@@ -218,7 +218,7 @@ function SetPasswordContent() {
                     </div>
                 </form>
 
-                <div className="mt-6 text-center text-[11.5px] text-[color:var(--text-tertiary)] flex items-center justify-center gap-1.5">
+                <div className="mt-6 text-center type-ui text-[color:var(--text-tertiary)] flex items-center justify-center gap-1.5">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     <span>Session secured with end-to-end server-side verification.</span>
                 </div>

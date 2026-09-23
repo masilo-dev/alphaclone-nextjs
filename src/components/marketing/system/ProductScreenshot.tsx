@@ -28,7 +28,7 @@ export default function ProductScreenshot({
           <span className="h-2.5 w-2.5 rounded-full bg-slate-600" aria-hidden="true" />
           <span className="h-2.5 w-2.5 rounded-full bg-slate-600" aria-hidden="true" />
           <span className="h-2.5 w-2.5 rounded-full bg-slate-600" aria-hidden="true" />
-          <span className="ml-3 text-[11px] text-[var(--marketing-text-muted)]">
+          <span className="ml-3 type-ui text-[var(--marketing-text-muted)]">
             AlphaClone workspace — demonstration data
           </span>
         </div>
@@ -53,7 +53,7 @@ export default function ProductScreenshot({
         </div>
       </div>
       {caption ? (
-        <figcaption className="mt-3 text-center text-sm text-[var(--marketing-text-muted)]">
+        <figcaption className="mt-3 text-center type-ui text-[var(--marketing-text-muted)]">
           {caption}
         </figcaption>
       ) : null}
