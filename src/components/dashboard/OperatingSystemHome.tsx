@@ -28,6 +28,7 @@ import { PlatformKpiGrid, MetricDateRangeSelector, ModuleKpiRichSections } from 
 import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { useMetricDateRange } from '@/hooks/useMetricDateRange';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -78,7 +79,7 @@ export function OperatingSystemHome() {
   const { pendingCount } = useBonnieApprovals(currentTenant?.id);
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(() => readDashboardStatsCache(currentTenant?.id, 'last_30_days'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !readDashboardStatsCache(currentTenant?.id, 'last_30_days'));
   const [loadError, setLoadError] = useState<string | null>(null);
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
   const { data: overviewRich } = useDashboardStats(currentTenant?.id, '/api/dashboard/overview', preset);
@@ -126,6 +127,27 @@ export function OperatingSystemHome() {
       active = false;
     };
   }, [currentTenant?.id, user?.id, preset]);
+
+  // Silently refresh stats on tab return without resetting loading state or flashing skeletons
+  useOnTabVisible(() => {
+    if (!currentTenant?.id || !user?.id) return;
+    const url = `/api/dashboard/stats?tenantId=${encodeURIComponent(currentTenant.id)}&period=${encodeURIComponent(preset)}`;
+    void fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const payload = await res.json();
+        const nextStats = (payload.stats as Record<string, unknown>) ?? null;
+        if (nextStats) {
+          setStats(nextStats);
+          try {
+            window.sessionStorage.setItem(dashboardStatsCacheKey(currentTenant.id, preset), JSON.stringify(nextStats));
+          } catch {
+            // Session cache is optional.
+          }
+        }
+      })
+      .catch(() => undefined);
+  }, { cooldownMs: 10_000, enabled: !!currentTenant?.id && !!user?.id });
 
   const retry = async () => {
     if (!currentTenant?.id || !user?.id) return;

@@ -420,7 +420,22 @@ class TenantService {
         return this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
     }
 
-    private async fetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+    private inFlightStatsRequests = new Map<string, Promise<{ stats: any | null; error: string | null }>>();
+
+    private fetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+        const inFlightKey = `${tenantId}:${userId}`;
+        const existing = this.inFlightStatsRequests.get(inFlightKey);
+        if (existing) return existing;
+
+        const promise = this.executeFetchAndCacheStats(tenantId, userId, cacheKey).finally(() => {
+            this.inFlightStatsRequests.delete(inFlightKey);
+        });
+
+        this.inFlightStatsRequests.set(inFlightKey, promise);
+        return promise;
+    }
+
+    private async executeFetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
         const EMPTY_STATS = {
             totalRevenue: 0, clientCount: 0, activeProjects: 0,
             pendingInvoices: 0, overdueInvoices: 0, totalMessages: 0, pendingRevenue: 0,

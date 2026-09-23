@@ -6,6 +6,7 @@ import { User } from '../types';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { AuthChangeEvent } from '@supabase/supabase-js';
 import { resetPlatformState } from '@/lib/platformReset';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
 
 
 interface AuthContextType {
@@ -261,19 +262,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // A PWA can remain suspended for a long time. Refresh its stored session as
-    // soon as it becomes visible so reopening the installed app does not send a
-    // valid returning user back through the sign-in screen.
-    useEffect(() => {
-        if (!user || typeof document === 'undefined') return;
-        const refreshOnReturn = () => {
-            if (document.visibilityState === 'visible') {
+    // Refresh stored session when returning to the tab ONLY if the token is close
+    // to expiring (within 5 minutes) or already expired, avoiding redundant network
+    // calls and authentication overhead on every tab switch.
+    useOnTabVisible(async () => {
+        if (!user) return;
+        try {
+            const { data } = await supabase.auth.getSession();
+            const session = data?.session;
+            if (!session) return;
+
+            const expiresAtMs = (session.expires_at || 0) * 1000;
+            const now = Date.now();
+            const timeRemainingMs = expiresAtMs - now;
+
+            // Only refresh if expiring in less than 5 minutes (or already expired)
+            const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
+            if (timeRemainingMs < EXPIRY_BUFFER_MS) {
+                console.log('[AuthContext] Session token expiring within buffer, refreshing in background...');
                 void supabase.auth.refreshSession().catch(() => undefined);
             }
-        };
-        document.addEventListener('visibilitychange', refreshOnReturn);
-        return () => document.removeEventListener('visibilitychange', refreshOnReturn);
-    }, [user?.id]);
+        } catch {
+            // Ignore background check errors
+        }
+    }, { cooldownMs: 15_000, enabled: !!user?.id });
 
     const signOut = async () => {
         setSafeUser(null);

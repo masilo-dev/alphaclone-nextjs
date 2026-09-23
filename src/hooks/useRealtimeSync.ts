@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { tenantService } from '../services/tenancy/TenantService';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
 
 // ============================================================================
 // 120% FEATURE: Universal Real-time Sync Engine
@@ -97,6 +98,9 @@ export function useRealtimeSync<T>(options: SyncOptions): SyncState<T> & {
     }
   }, [tenantId, options]);
 
+  const channelStatusRef = useRef<string>('DISCONNECTED');
+  const reconnectNowRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     if (!tenantId) {
       setState(prev => ({ ...prev, isLoading: false, error: 'No tenant selected' }));
@@ -159,10 +163,11 @@ export function useRealtimeSync<T>(options: SyncOptions): SyncState<T> & {
         )
         .subscribe((status: string) => {
           if (!mounted) return;
+          channelStatusRef.current = status;
 
           if (status === 'SUBSCRIBED') {
             reconnectAttempts = 0;
-          } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+          } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT') {
             if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
               reconnectAttempts++;
               reconnectTimeout = setTimeout(() => {
@@ -176,18 +181,37 @@ export function useRealtimeSync<T>(options: SyncOptions): SyncState<T> & {
         });
     };
 
+    reconnectNowRef.current = () => {
+      if (!mounted) return;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      reconnectAttempts = 0;
+      channel?.unsubscribe();
+      setupChannel();
+    };
+
     // Initial fetch
     fetchData();
     setupChannel();
 
     return () => {
       mounted = false;
+      channelStatusRef.current = 'DISCONNECTED';
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
   }, [tenantId, options.table, fetchData]);
+
+  // Immediately reconnect dropped subscriptions and sync stale records upon returning to tab
+  useOnTabVisible(() => {
+    if (!tenantId) return;
+    if (channelStatusRef.current !== 'SUBSCRIBED') {
+      reconnectNowRef.current();
+    }
+    // Silently fetch data in the background — existing screen & data stay visible
+    void fetchData();
+  }, { cooldownMs: 5000, enabled: !!tenantId });
 
   const mutate = useCallback((updater: (prev: T[]) => T[]) => {
     setState(prev => ({ ...prev, data: updater(prev.data) }));
@@ -286,24 +310,29 @@ export function useSyncStatus() {
   const [isOnline, setIsOnline] = useState(true);
   const [latency, setLatency] = useState<number | null>(null);
 
-  useEffect(() => {
-    const checkConnection = async () => {
-      const start = Date.now();
-      try {
-        await supabase.from('tenants').select('id').limit(1);
-        setIsOnline(true);
-        setLatency(Date.now() - start);
-      } catch {
-        setIsOnline(false);
-        setLatency(null);
-      }
-    };
+  const checkConnection = useCallback(async () => {
+    const start = Date.now();
+    try {
+      await supabase.from('tenants').select('id').limit(1);
+      setIsOnline(true);
+      setLatency(Date.now() - start);
+    } catch {
+      setIsOnline(false);
+      setLatency(null);
+    }
+  }, []);
 
+  useEffect(() => {
     const interval = setInterval(checkConnection, 30000);
-    checkConnection();
+    void checkConnection();
 
     return () => clearInterval(interval);
-  }, []);
+  }, [checkConnection]);
+
+  // Re-check immediately on tab return or network recovery instead of waiting 30s
+  useOnTabVisible(() => {
+    void checkConnection();
+  }, { cooldownMs: 5000 });
 
   return { isOnline, latency };
 }

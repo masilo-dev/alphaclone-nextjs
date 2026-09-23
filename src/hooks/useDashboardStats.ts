@@ -1,11 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { DashboardStatsResponse, OverviewStatsResponse } from '@/types/dashboardStats';
 import { resolveHubFromEndpoint } from '@/lib/dashboard/hubKpi';
 import type { SlimHubStats } from '@/lib/dashboard/hubKpi';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
 
 const CLIENT_CACHE_MS = 5 * 60_000;
+const STALE_THRESHOLD_MS = 30_000;
+
+// Shared in-flight deduplication map so simultaneous callers share a single request
+const inFlightRequests = new Map<string, Promise<OverviewStatsResponse>>();
 
 function cacheKey(endpoint: string, tenantId: string, period?: string) {
   return `ac_dash_stats:${endpoint}:${tenantId}:${period ?? 'last_30_days'}`;
@@ -142,22 +147,35 @@ export function useDashboardStats(
     setIsValidating(true);
     setError(null);
 
-    fetch(statsUrl(endpoint, tenantId, period), {
-      signal: controller.signal,
-      credentials: 'include',
-      cache: refreshNonce > 0 ? 'no-store' : 'default',
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || 'Failed to load stats');
-        }
-        return res.json();
+    const reqKey = `${endpoint}:${tenantId}:${period}`;
+    let reqPromise = inFlightRequests.get(reqKey);
+    if (!reqPromise || refreshNonce > 0) {
+      reqPromise = fetch(statsUrl(endpoint, tenantId, period), {
+        signal: controller.signal,
+        credentials: 'include',
+        cache: refreshNonce > 0 ? 'no-store' : 'default',
       })
-      .then((json) => {
+        .then(async (res) => {
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || 'Failed to load stats');
+          }
+          return res.json();
+        })
+        .then((json) => {
+          const raw = (json.stats ?? json.data ?? json) as SlimHubStats | OverviewStatsResponse;
+          return normalizeHubStats(raw);
+        })
+        .finally(() => {
+          inFlightRequests.delete(reqKey);
+        });
+
+      inFlightRequests.set(reqKey, reqPromise);
+    }
+
+    reqPromise
+      .then((stats) => {
         if (cancelled) return;
-        const raw = (json.stats ?? json.data ?? json) as SlimHubStats | OverviewStatsResponse;
-        const stats = normalizeHubStats(raw);
         setData(stats);
         writeClientCache(endpoint, tenantId, stats, period);
       })
@@ -176,6 +194,12 @@ export function useDashboardStats(
       controller.abort();
     };
   }, [tenantId, endpoint, period, refreshNonce]);
+
+  // When returning to tab, silently refresh stale dashboard stats in the background without UI flicker
+  useOnTabVisible(() => {
+    if (!tenantId) return;
+    setRefreshNonce((n) => n + 1);
+  }, { cooldownMs: 10_000, enabled: !!tenantId });
 
   const loading = !data && isValidating;
 

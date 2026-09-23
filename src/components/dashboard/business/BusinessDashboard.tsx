@@ -41,6 +41,7 @@ import { useCrmDashboardSync } from '@/hooks/useCrmDashboardSync';
 import { startClientVideoCall } from '@/services/instantMeetingService';
 import { WORKSPACE } from '@/constants/design';
 import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
+import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -375,22 +376,28 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     }, [user?.id]);
 
     // Live unread direct-message count for the sidebar/bottom-nav badges.
+    const fetchUnread = React.useCallback(async () => {
+        if (!currentTenant?.id || !user?.id) return;
+        const { count } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', currentTenant.id)
+            .eq('recipient_id', user.id)
+            .is('read_at', null);
+        setUnreadMessageCount(count || 0);
+    }, [currentTenant?.id, user?.id]);
+
     React.useEffect(() => {
         if (!currentTenant?.id) return;
-        let active = true;
-        const fetchUnread = async () => {
-            const { count } = await supabase
-                .from('messages')
-                .select('*', { count: 'exact', head: true })
-                .eq('tenant_id', currentTenant.id)
-                .eq('recipient_id', user.id)
-                .is('read_at', null);
-            if (active) setUnreadMessageCount(count || 0);
-        };
-        fetchUnread();
+        void fetchUnread();
         const interval = setInterval(fetchUnread, 30000);
-        return () => { active = false; clearInterval(interval); };
-    }, [currentTenant?.id, user.id]);
+        return () => { clearInterval(interval); };
+    }, [currentTenant?.id, fetchUnread]);
+
+    // Re-check unread messages immediately when returning to tab instead of waiting 30s
+    useOnTabVisible(() => {
+        void fetchUnread();
+    }, { cooldownMs: 5000, enabled: !!currentTenant?.id });
 
     // -- PERSISTENT VIDEO CALL STATE --
     const { tasks: bgTasks } = useBackgroundTasks();

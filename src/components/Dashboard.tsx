@@ -169,6 +169,7 @@ import { DashboardScrollRegion, dispatchPullRefresh } from "./common/DashboardSc
 import { OfflineQueueIndicator } from "./common/OfflineQueueIndicator";
 import SkipToMainContent from "./accessibility/SkipToMainContent";
 import LanguageSwitcher from "./common/LanguageSwitcher";
+import { useOnTabVisible } from "@/lib/sync/tabFocusCoordinator";
 
 const ConferenceTab = React.lazy(() => import("./dashboard/ConferenceTab"));
 const AnalyticsTab = React.lazy(() => import("./dashboard/AnalyticsTab"));
@@ -957,6 +958,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         `dashboard_messages_${user.id}`,
       );
       if (cachedMessages) setMessages(JSON.parse(cachedMessages));
+
+      const cachedStats = localStorage.getItem(
+        `dashboard_stats_${currentTenant.id}`,
+      );
+      if (cachedStats) setDashboardStats(JSON.parse(cachedStats));
     } catch (e) {
       console.error("Cache load error", e);
     }
@@ -1004,11 +1010,27 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (!currentTenant?.id) return;
     try {
       const { stats } = await getDashboardStats(currentTenant.id, user.id);
-      if (stats) setDashboardStats(stats);
+      if (stats) {
+        setDashboardStats(stats);
+        try {
+          localStorage.setItem(
+            `dashboard_stats_${currentTenant.id}`,
+            JSON.stringify(stats),
+          );
+        } catch {
+          // localStorage full or unavailable
+        }
+      }
     } catch (err) {
       console.error("[Dashboard] Stats refresh error:", err);
     }
   }, [currentTenant?.id, user.id, getDashboardStats]);
+
+  // Silently refresh stats in the background upon tab return
+  useOnTabVisible(() => {
+    if (!currentTenant?.id) return;
+    void refreshStats();
+  }, { cooldownMs: 10_000, enabled: !!currentTenant?.id });
 
   const handlePullRefresh = useCallback(async () => {
     const isAdmin =
