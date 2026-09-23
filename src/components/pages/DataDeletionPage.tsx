@@ -66,21 +66,6 @@ function DataDeletionContent() {
 
     return (
         <div className="min-h-screen bg-slate-950">
-            {/* Header */}
-            <div className="bg-slate-900 border-b border-slate-800">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center justify-center">
-                            <Trash2 className="w-6 h-6 text-red-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">Data Deletion Request</h1>
-                            <p className="text-slate-400 text-sm">GDPR, CCPA & Facebook compliant</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
                 {/* Info box */}
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">

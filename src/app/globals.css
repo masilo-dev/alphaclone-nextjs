@@ -22,11 +22,11 @@
 }
 
 @theme {
-  --font-sans: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
   --font-inter: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
   --font-heading: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
-  --font-body: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-body: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
   --color-ac-accent: #356AF4;
   --color-ac-accent-hover: #5F8FFF;
   --color-ac-accent-deep: #2553DD;
@@ -238,23 +238,23 @@ html.dark {
 }
 
 .font-marketing-heading {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", "SF Pro Display", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-heading);
   letter-spacing: -0.018em;
   font-weight: 650;
 }
 
 .font-marketing-body {
-  font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
 }
 
 .font-marketing-brand {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-heading);
   font-weight: 800;
 }
 
 .font-marketing-data {
-  font-family: "Space Grotesk", "Inter", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-heading);
   font-feature-settings: "tnum";
 }
 

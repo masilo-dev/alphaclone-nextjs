@@ -25,12 +25,11 @@ export default async function Home() {
   return (
     <Suspense
       fallback={
-        <div className="marketing-theme min-h-screen text-[var(--marketing-text-primary)] flex items-center justify-center px-4 sm:px-6">
-          <div className="w-full max-w-xs sm:max-w-lg md:max-w-3xl" aria-hidden="true">
-            <div className="h-8 sm:h-10 w-3/4 sm:w-64 rounded-md bg-[var(--marketing-surface)] mb-4 sm:mb-5" />
-            <div className="h-4 sm:h-5 w-full rounded bg-[var(--marketing-surface)] mb-2 sm:mb-3" />
-            <div className="h-4 sm:h-5 w-4/5 sm:w-5/6 rounded bg-[var(--marketing-surface)] mb-6 sm:mb-10" />
-            <div className="h-9 sm:h-11 w-32 sm:w-40 rounded-md bg-[var(--marketing-accent-soft)]" />
+        <div className="marketing-theme min-h-screen bg-white text-slate-950 flex items-center justify-center px-5 sm:px-8">
+          <div className="w-full max-w-3xl">
+            <p className="mb-4 text-sm font-bold uppercase tracking-[.16em] text-blue-700">AI business execution layer</p>
+            <h1 className="font-marketing-heading text-5xl font-bold leading-[1.02] tracking-tight sm:text-7xl">You type. We make it happen.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{EXECUTION_LAYER.heroSubhead}</p>
           </div>
         </div>
       }
