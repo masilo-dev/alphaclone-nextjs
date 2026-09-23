@@ -254,6 +254,9 @@ const DeepDeskView = React.lazy(
 const EmailCampaignsPage = React.lazy(
   () => import("./dashboard/marketing/EmailCampaignsPage"),
 );
+const OutboundEngine = React.lazy(
+  () => import("./dashboard/outbound/OutboundEngine"),
+);
 const SocialMediaComposer = React.lazy(
   () => import("./dashboard/engine/SocialMediaComposer"),
 );
@@ -2143,6 +2146,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <CRMTab user={user} />
+          </React.Suspense>
+        );
+
+      case "/dashboard/outbound":
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <OutboundEngine />
           </React.Suspense>
         );
 

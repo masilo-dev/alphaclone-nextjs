@@ -127,3 +127,11 @@ scratch_tool_matrix.ts
 # Railway CLI config
 .railway
 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+env/
+venv/

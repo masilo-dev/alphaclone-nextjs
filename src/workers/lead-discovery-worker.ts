@@ -198,7 +198,7 @@ async function execute(job: Job) {
   for (let index = 0; index < Math.min(partial.length, limit); index += 6) {
     const batch = await Promise.all(partial.slice(index, index + 6).map(async (lead) => {
       if (!lead.website || lead.email) return { lead, crawl: null };
-      try { return { lead, crawl: await crawlPublicWebsite(lead.website, { maxPages: 6 }) }; }
+      try { return { lead, crawl: await crawlPublicWebsite(lead.website, { maxPages: 2, timeoutMs: 6000 }) }; }
       catch { return { lead, crawl: null }; }
     }));
     enriched.push(...batch);
@@ -272,8 +272,15 @@ async function execute(job: Job) {
       .eq('workspace_id', job.workspace_id).in('canonical_business_key', keys);
     if (candidateError) throw candidateError;
     const { qualifyCandidate } = await import('@/lib/lead-finder/qualificationEngine');
-    for (const candidate of savedCandidates || []) {
-      await qualifyCandidate(supabase, job.workspace_id, candidate as Record<string, unknown>);
+    const candidatesList = savedCandidates || [];
+    for (let i = 0; i < candidatesList.length; i += 4) {
+      await Promise.all(
+        candidatesList.slice(i, i + 4).map((cand) =>
+          qualifyCandidate(supabase, job.workspace_id, cand as Record<string, unknown>).catch((qErr) => {
+            console.warn('[lead-discovery-worker] Candidate qualification warning:', qErr?.message);
+          })
+        )
+      );
     }
   } catch (qualificationError) {
     console.warn('[lead-discovery-worker] qualification warning:', qualificationError);
@@ -292,15 +299,15 @@ async function execute(job: Job) {
     console.warn('[lead-discovery-worker] Auto-accept/sync failed gracefully, search continues:', err);
   }
 
-  const status = Object.keys(sourceErrors).length && rows.length === 0 ? 'failed' : Object.keys(sourceErrors).length ? 'partially_completed' : 'completed';
+  const totalDiscovered = partial.length || rows.length;
+  const status = totalDiscovered === 0 && Object.keys(sourceErrors).length ? 'failed' : Object.keys(sourceErrors).length ? 'partially_completed' : 'completed';
   await supabase.from('lead_searches').update({
-    status, progress: 100, discovered_count: rows.length, error_count: Object.keys(sourceErrors).length,
-    accepted_count: autoAcceptedCount, crm_synced_count: crmSyncedCount,
+    status, progress: 100, discovered_count: totalDiscovered, error_count: Object.keys(sourceErrors).length,
+    accepted_count: autoAcceptedCount,
     completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }).eq('id', search.id).eq('workspace_id', job.workspace_id);
   await supabase.from('lead_search_jobs').update({
-    status: 'completed', progress: 100, records_found: rows.length, records_processed: rows.length,
-    records_crm_synced: crmSyncedCount, records_auto_accepted: autoAcceptedCount,
+    status: 'completed', progress: 100, records_found: totalDiscovered, records_processed: rows.length,
     completed_at: new Date().toISOString(), locked_at: null,
     metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started, auto_accepted: autoAcceptedCount, crm_synced: crmSyncedCount },
   }).eq('id', job.id).eq('workspace_id', job.workspace_id);
@@ -329,12 +336,22 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
   const claimLimit = Math.max(1, Math.min(options?.claimLimit ?? 3, 10));
   let jobs: Job[] = [];
 
+  // Auto-expire ancient stuck jobs (> 24 hours old with expired lock) so they never block the queue forever
+  const ancientBefore = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+  const staleBefore = new Date(Date.now() - 10 * 60_000).toISOString();
+  await supabase.from('lead_search_jobs')
+    .update({ status: 'cancelled', locked_at: null, error_message: 'Auto-expired after 24h of inactivity' })
+    .in('status', ['running', 'retrying'])
+    .lt('created_at', ancientBefore)
+    .or(`locked_at.is.null,locked_at.lt.${staleBefore}`);
+
   // A terminated cron used to leave jobs at `running` forever. Requeue only
-  // expired locks so another worker can safely finish the durable search.
-  const staleBefore = new Date(Date.now() - 15 * 60_000).toISOString();
+  // recently expired locks (last 24h, older than 10 minutes) so another worker can safely finish.
   const { data: staleJobs } = await supabase.from('lead_search_jobs')
     .update({ status: 'retrying', locked_at: null, next_run_at: new Date().toISOString() })
-    .eq('status', 'running').lt('locked_at', staleBefore)
+    .eq('status', 'running')
+    .lt('locked_at', staleBefore)
+    .gte('created_at', ancientBefore)
     .select('search_id,workspace_id');
   for (const stale of staleJobs || []) {
     if (!stale.search_id || !stale.workspace_id) continue;
@@ -342,15 +359,67 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
       .eq('id', stale.search_id).eq('workspace_id', stale.workspace_id).eq('status', 'running');
   }
 
-  // Try RPC claim first
-  try {
-    const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
-    if (error) throw new Error(`LEAD_JOB_CLAIM_FAILED: ${error.message}`);
-    if (Array.isArray(data) && data.length > 0) {
-      jobs = data as Job[];
+  // If a specific searchId was requested (e.g. interactive user click), claim it directly
+  if (options?.searchId) {
+    const { data: specificJob } = await supabase
+      .from('lead_search_jobs')
+      .update({
+        status: 'running',
+        locked_at: new Date().toISOString(),
+        started_at: new Date().toISOString(),
+        attempt_count: 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('search_id', options.searchId)
+      .in('status', ['queued', 'pending', 'retrying', 'cancelled'])
+      .select('*')
+      .maybeSingle();
+
+    if (specificJob) {
+      jobs = [specificJob as Job];
     }
-  } catch (err) {
-    throw err;
+  }
+
+  // Try RPC claim if we haven't already claimed a specific job
+  if (jobs.length === 0) {
+    try {
+      const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
+      if (error) {
+        console.warn(`[lead-discovery-worker] RPC claim notice: ${error.message}`);
+      } else if (Array.isArray(data) && data.length > 0) {
+        jobs = data as Job[];
+      }
+    } catch (err) {
+      console.warn('[lead-discovery-worker] RPC claim exception:', err);
+    }
+  }
+
+  // Fallback direct claim: pick newest queued or pending jobs first so users get immediate results
+  if (jobs.length === 0) {
+    const { data: pendingJobs } = await supabase
+      .from('lead_search_jobs')
+      .select('id,workspace_id,created_by,search_id,attempt_count,max_attempts')
+      .in('status', ['queued', 'pending'])
+      .or(`locked_at.is.null,locked_at.lt.${staleBefore}`)
+      .order('created_at', { ascending: false })
+      .limit(claimLimit);
+
+    if (Array.isArray(pendingJobs) && pendingJobs.length > 0) {
+      const ids = pendingJobs.map(p => p.id);
+      const { data: claimed } = await supabase
+        .from('lead_search_jobs')
+        .update({
+          status: 'running',
+          locked_at: new Date().toISOString(),
+          started_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .in('id', ids)
+        .select('*');
+      if (Array.isArray(claimed) && claimed.length > 0) {
+        jobs = claimed as Job[];
+      }
+    }
   }
 
 

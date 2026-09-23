@@ -130,7 +130,8 @@ export async function qualifyCandidate(db: SupabaseClient, workspaceId: string, 
     : { state: 'new', lastContactAt: null, contactAttempts: 0 };
   const snapshot = buildLeadQualification(candidate, relationship);
   const { data: current } = await db.from('lead_qualification_snapshots').select('id').eq('workspace_id', workspaceId).eq('candidate_id', String(candidate.id)).maybeSingle();
-  const payload = { workspace_id: workspaceId, candidate_id: String(candidate.id), ...snapshot, updated_at: nowIso() };
+  const { signals: _signals, ...snapshotForDb } = snapshot;
+  const payload = { workspace_id: workspaceId, candidate_id: String(candidate.id), ...snapshotForDb, updated_at: nowIso() };
   const result = current ? await db.from('lead_qualification_snapshots').update(payload).eq('id', current.id).eq('workspace_id', workspaceId) : await db.from('lead_qualification_snapshots').insert(payload);
   if (result.error) throw result.error;
   await db.from('lead_signals').delete().eq('workspace_id', workspaceId).eq('candidate_id', String(candidate.id));

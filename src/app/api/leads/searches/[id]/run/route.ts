@@ -42,6 +42,8 @@ function leadSearchJobSeed(input: {
     location,
     sort_by: 'default',
     use_playwright: false,
+    status: 'queued',
+    progress: 0,
     job_type: 'lead.search.start',
     source_type: 'orchestrator',
     idempotency_key: input.idempotencyKey,
@@ -84,6 +86,14 @@ export async function POST(req: NextRequest, context: Context) {
     }
     if (error) throw error;
 
+    // Kick off processing in the background immediately so the user does not wait for a cron tick
+    import('@/workers/lead-discovery-worker')
+      .then(({ processLeadDiscoveryBatch }) =>
+        processLeadDiscoveryBatch({ searchId: id, claimLimit: 1 })
+      )
+      .catch((err) => {
+        console.warn('[api/leads/searches/run] Direct batch execution notice:', err?.message);
+      });
 
     const { data: updatedSearch } = await admin.from('lead_searches').select('status,progress,discovered_count').eq('id', id).single();
 

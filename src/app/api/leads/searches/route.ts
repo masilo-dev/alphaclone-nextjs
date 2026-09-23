@@ -38,6 +38,8 @@ function leadSearchJobSeed(input: {
     location,
     sort_by: 'default',
     use_playwright: false,
+    status: 'queued',
+    progress: 0,
     job_type: 'lead.search.start',
     source_type: 'orchestrator',
     idempotency_key: input.idempotencyKey,
@@ -134,6 +136,14 @@ export async function POST(req: NextRequest) {
       }
       if (jobError) throw jobError;
 
+      // Kick off processing in the background immediately so the user does not wait for a cron tick
+      import('@/workers/lead-discovery-worker')
+        .then(({ processLeadDiscoveryBatch }) =>
+          processLeadDiscoveryBatch({ searchId: search.id, claimLimit: 1 })
+        )
+        .catch((err) => {
+          console.warn('[api/leads/searches] Direct batch execution notice:', err?.message);
+        });
     }
 
     // Refetch latest search status after execution

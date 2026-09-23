@@ -96,6 +96,17 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
       { label: 'Documents', href: '/dashboard/submit', icon: FileText },
     ]
   },
+  {
+    label: 'Growth',
+    href: '#',
+    icon: Target,
+    subItems: [
+      { label: 'Outbound Engine', href: '/dashboard/outbound', icon: Target },
+      { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
+      { label: 'Email campaigns', href: '/dashboard/business/campaigns', icon: Mail },
+      { label: 'Lead finder', href: '/dashboard/leads/finder', icon: Search },
+    ]
+  },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
 ];

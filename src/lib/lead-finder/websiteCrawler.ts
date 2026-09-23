@@ -66,14 +66,15 @@ export function analyzeWebsiteQuality(html: string, url: string, responseBytes =
   return { website_quality_score: websiteQualityScore, opportunity_score: 100 - websiteQualityScore, problems };
 }
 
-export async function crawlPublicWebsite(value: string, options: { maxPages?: number } = {}) {
-  const root = validateCrawlUrl(value); const maxPages = Math.max(1, Math.min(options.maxPages || 6, 8));
+export async function crawlPublicWebsite(value: string, options: { maxPages?: number; timeoutMs?: number } = {}) {
+  const root = validateCrawlUrl(value); const maxPages = Math.max(1, Math.min(options.maxPages || 2, 8));
   const pages: Array<{ url: string; html: string; bytes: number }> = [];
-  const robots = await fetchPublicPage(new URL('/robots.txt', root).href, 256_000, 5000);
+  const timeoutMs = Math.max(1000, Math.min(options.timeoutMs || 8000, 45_000));
+  const robots = await fetchPublicPage(new URL('/robots.txt', root).href, 256_000, Math.min(timeoutMs, 3000));
   if (robots.status !== 200 && robots.status !== 404 && robots.status !== 410) throw new Error('CRAWL_ROBOTS_UNAVAILABLE');
   const guard = new RobotsTxtGuard(robots.status === 200 ? robots.body : '');
   const queue = DEFAULT_PATHS.map(path => ({ url: new URL(path, root), depth: 1 }));
-  const visited = new Set<string>(); const deadline = Date.now() + 45_000;
+  const visited = new Set<string>(); const deadline = Date.now() + timeoutMs;
   for (let index = 0; index < queue.length && visited.size < maxPages && Date.now() < deadline; index++) {
     const { url, depth } = queue[index];
     if (visited.has(url.href) || !guard.isAllowed('AlphaCloneBot', url.pathname)) continue;

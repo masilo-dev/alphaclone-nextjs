@@ -5,7 +5,7 @@ const RULES: Array<[ReplyClassification, RegExp]> = [
   ['wrong_person', /\b(wrong person|not the right person|no longer (work|works)|contact .+ instead)\b/i],
   ['not_now', /\b(not (right )?now|later this (month|quarter|year)|circle back|reach out in|not a priority)\b/i],
   ['objection', /\b(too expensive|no budget|already use|not interested|security concern|cannot justify)\b/i],
-  ['positive', /\b(interested|book|schedule|let'?s talk|send (me )?(details|a proposal)|sounds good|yes[,! ]|demo)\b/i],
+  ['positive', /\b(interested|book|schedule|let'?s talk|send (me )?(the )?(details|info|more info|a proposal)|sounds good|yes[,! ]|demo)\b/i],
 ];
 
 export function classifyOutreachReply(text: string): ReplyClassification {

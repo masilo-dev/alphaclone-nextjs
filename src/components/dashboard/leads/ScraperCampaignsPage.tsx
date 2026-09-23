@@ -13,6 +13,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { propagation } from '@/lib/behavioral/propagationBridge';
 import LeadFinderMapPanel from '@/components/dashboard/leads/LeadFinderMapPanel';
 import LeadFinderChat from '@/components/dashboard/leads/LeadFinderChat';
+import ResearchEngineWorkspace from '@/components/dashboard/leads/ResearchEngineWorkspace';
 
 type SearchRecord = {
   id: string; name: string; query?: string; location?: string; industry?: string;
@@ -69,7 +70,7 @@ function writeLeadFinderSettings(workspaceId: string, settings: LeadFinderSettin
   window.localStorage.setItem(`${SETTINGS_KEY}:${workspaceId}`, JSON.stringify(settings));
 }
 
-const nav = ['Discover', 'Assistant', 'Results', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
+const nav = ['Discover', 'Assistant', 'Results', 'Research', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
 const presets = [
   ['Restaurants in Harare', 'restaurants', 'Harare'],
   ['Construction companies in Bulawayo', 'construction companies', 'Bulawayo'],
@@ -114,8 +115,8 @@ export default function ScraperCampaignsPage() {
   });
   const [form, setForm] = useState({
     keywords: '', location: '', country: '', city: '', region: '', industry: '',
-    searchType: 'businesses_by_location', resultLimit: 50, website: false, email: true,
-    phone: true, social: false, sources: ['openstreetmap', 'website'],
+    searchType: 'businesses_by_location', resultLimit: 50, website: false, email: false,
+    phone: false, social: false, sources: ['openstreetmap', 'website'],
     excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
   });
   // The safe tenant hook exposes tenant identity, not membership role. The API
@@ -463,6 +464,10 @@ export default function ScraperCampaignsPage() {
               </div>
             </aside>
           </div>
+        )}
+
+        {active === 'Research' && (
+          <ResearchEngineWorkspace />
         )}
 
         {active === 'Assistant' && (

@@ -117,6 +117,10 @@ export function resolveSkillForModule(moduleId: string): string | null {
     tickets: 'support-triage',
     tasks: 'meeting-prep',
     general: 'workspace-ops',
+    outbound: 'outbound-acquisition',
+    outreach: 'outbound-acquisition',
+    social: 'social-media-advisor',
+    sdr: 'sdr-sales-rep',
   };
   return map[moduleId] || null;
 }

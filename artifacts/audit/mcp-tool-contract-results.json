@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-09-23T13:27:23.538Z",
-  "total_tools": 553,
-  "passed": 497,
+  "generated_at": "2026-09-23T13:51:38.512Z",
+  "total_tools": 568,
+  "passed": 511,
   "failed": 0,
-  "skipped": 56,
+  "skipped": 57,
   "before_failure_count": 8,
   "after_failure_count": 0,
   "results": [
@@ -387,6 +387,15 @@
     },
     {
       "tool": "cancel_meeting",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "cancel_research_job",
       "classification": "delete",
       "registered": true,
       "has_schema": true,
@@ -1961,6 +1970,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "get_mailbox_health_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "get_media",
       "classification": "read-only",
       "registered": true,
@@ -2015,7 +2033,25 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "get_outbound_overview",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "get_outcome_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_outreach_thread",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -2168,6 +2204,24 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "get_research_job",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_research_results",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "get_revenue_summary",
       "classification": "read-only",
       "registered": true,
@@ -2223,6 +2277,15 @@
     },
     {
       "tool": "get_social_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_content_recommendations",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -2501,6 +2564,24 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "handle_lead_objection",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "import_research_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "ingest_document",
       "classification": "read-only",
       "registered": true,
@@ -2754,6 +2835,15 @@
     },
     {
       "tool": "list_modules",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_outbound_icps",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -3518,6 +3608,24 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "qualify_outbound_lead",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "qualify_research_results",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "queue_email_campaign_send",
       "classification": "read-only",
       "registered": true,
@@ -3555,6 +3663,15 @@
     },
     {
       "tool": "read_emails",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "read_outreach_inbox",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -3744,6 +3861,15 @@
     },
     {
       "tool": "request_outcome",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "research_businesses",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4905,6 +5031,15 @@
     },
     {
       "tool": "verify_lead_created",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_outbound_email",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

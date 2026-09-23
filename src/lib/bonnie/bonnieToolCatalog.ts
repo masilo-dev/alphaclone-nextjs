@@ -16,10 +16,13 @@ export const BONNIE_REGISTRY_TOOLS = [
   // Campaigns & outreach
   'campaign_brief', 'campaign_diagnose',
   'create_email_sequence', 'enroll_contact_in_sequence', 'create_bulk_email_batch', 'get_batch_job_status',
+  'get_outbound_overview', 'list_outbound_icps', 'qualify_outbound_lead', 'verify_outbound_email', 'get_mailbox_health_status',
+  'read_outreach_inbox', 'get_outreach_thread', 'handle_lead_objection',
   // Social
   'get_social_accounts', 'get_linkedin_identities', 'schedule_social_post', 'get_scheduled_posts',
   'upload_media_asset', 'create_social_post_with_media',
   'publish_facebook_reel', 'publish_facebook_multi_photo',
+  'get_social_content_recommendations',
   // WhatsApp (registry subset — full send via MCP)
   // Contracts
   'get_contracts', 'create_contract', 'send_contract', 'update_contract_status',
@@ -129,12 +132,38 @@ export type BonnieModuleId =
   | 'inbox'
   | 'analytics'
   | 'automation'
+  | 'outbound'
   | 'general';
 
 export const BONNIE_MODULE_HINTS: Record<
   BonnieModuleId,
   { label: string; tools: string[]; examples: string[] }
 > = {
+  outbound: {
+    label: 'Outbound Acquisition Engine',
+    tools: [
+      'get_outbound_overview',
+      'list_outbound_icps',
+      'qualify_outbound_lead',
+      'verify_outbound_email',
+      'get_mailbox_health_status',
+      'find_and_qualify_leads',
+      'generate_outreach_draft',
+      'create_email_sequence',
+      'enroll_contact_in_sequence',
+      'read_outreach_inbox',
+      'get_outreach_thread',
+      'handle_lead_objection',
+      'delegate_to_hermes',
+    ],
+    examples: [
+      'Check mailbox health and sending limits',
+      'Qualify these leads against our ICP',
+      'Verify email deliverability before launching outreach',
+      'Read prospect replies and handle objections',
+      'Start a multi-touch acquisition sequence',
+    ],
+  },
   crm: {
     label: 'CRM',
     tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity', 'client_pulse', 'owner_autopilot_queue', 'revenue_recovery_agent', 'get_tenant_activity_timeline'],
@@ -195,8 +224,10 @@ export const BONNIE_MODULE_HINTS: Record<
       'publish_facebook_reel',
       'publish_facebook_multi_photo',
       'search_facebook_leads',
+      'get_social_content_recommendations',
     ],
     examples: [
+      'Give me social media content advice for today based on recent wins',
       'Publish this caption to Facebook now',
       'Upload media and publish a LinkedIn post about our new service',
       'Schedule tomorrow’s Instagram post and confirm it is live in the calendar',

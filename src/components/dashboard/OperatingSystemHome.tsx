@@ -67,7 +67,7 @@ const DEFAULT_MODULES: ModuleLauncherItem[] = [
   { id: 'calendar', href: '/dashboard/business/calendar', purpose: 'Protect your time' },
   { id: 'documents', href: '/dashboard/business/documents', purpose: 'Files and knowledge' },
   { id: 'marketing', href: '/dashboard/marketing', purpose: 'Campaign performance' },
-  { id: 'outreach', href: '/dashboard/outreach/inbox', purpose: 'Replies and reach inbox' },
+  { id: 'outreach', href: '/dashboard/outbound', purpose: 'Outbound engine, SDR & reach inbox' },
   { id: 'reports', href: '/dashboard/business/reports', purpose: 'Business insight' },
 ];
 

@@ -202,3 +202,48 @@ async def enrich_domain(req: DomainEnrichRequest, background_tasks: BackgroundTa
 
     background_tasks.add_task(_run, req.domain, req.tenant_id)
     return {"status": "queued", "domain": req.domain}
+
+
+# ── Scrapy Web Research Endpoints ─────────────────────────────────────────────
+
+from research.runner import ResearchRunner
+
+research_runner = ResearchRunner()
+
+
+class ResearchStartRequest(_BaseModel):
+    research_job_id: str
+    tenant_id: str
+    target_urls: list[str]
+    max_pages_per_domain: int = 4
+    timeout_seconds: int = 15
+
+
+@router.post("/api/research/start", dependencies=[Depends(verify_internal_key)])
+async def start_research_job(req: ResearchStartRequest):
+    """Launch asynchronous Scrapy web research for a batch of target domains."""
+    res = await research_runner.start_research_crawl(
+        research_job_id=req.research_job_id,
+        tenant_id=req.tenant_id,
+        target_urls=req.target_urls,
+        max_pages_per_domain=req.max_pages_per_domain,
+        timeout_seconds=req.timeout_seconds,
+    )
+    return res
+
+
+@router.get("/api/research/status/{research_job_id}", dependencies=[Depends(verify_internal_key)])
+async def get_research_status(research_job_id: str):
+    """Retrieve live status, progress, and extracted leads for a research job."""
+    state = research_runner.get_job_status(research_job_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Research job not found or not active")
+    return state
+
+
+@router.post("/api/research/cancel/{research_job_id}", dependencies=[Depends(verify_internal_key)])
+async def cancel_research_job(research_job_id: str):
+    """Cancel an in-flight research crawl job."""
+    success = research_runner.cancel_job(research_job_id)
+    return {"cancelled": success, "research_job_id": research_job_id}
+
