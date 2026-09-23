@@ -10,37 +10,37 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
     return (
-        <div className={`prose prose-invert prose-lg max-w-none ${className}`}>
+        <div className={`prose prose-slate prose-lg max-w-none ${className}`}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                     // Custom component overrides if needed
                     a: ({ node, ...props }) => (
-                        <a {...props} className="text-teal-400 hover:text-teal-300 no-underline hover:underline transition-colors" target="_blank" rel="noopener noreferrer" />
+                        <a {...props} className="text-blue-700 hover:text-blue-900 underline-offset-2 hover:underline transition-colors" target="_blank" rel="noopener noreferrer" />
                     ),
                     h1: ({ node, ...props }) => (
-                        <h1 {...props} className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mt-8 mb-4" />
+                        <h1 {...props} className="text-3xl md:text-4xl font-bold text-slate-950 mt-8 mb-4" />
                     ),
                     h2: ({ node, ...props }) => (
-                        <h2 {...props} className="text-2xl md:text-3xl font-bold text-white mt-12 mb-6 border-b border-white/10 pb-2" />
+                        <h2 {...props} className="text-2xl md:text-3xl font-bold text-slate-950 mt-12 mb-6 border-b border-slate-200 pb-2" />
                     ),
                     h3: ({ node, ...props }) => (
-                        <h3 {...props} className="text-xl md:text-2xl font-semibold text-teal-100 mt-8 mb-4" />
+                        <h3 {...props} className="text-xl md:text-2xl font-semibold text-slate-900 mt-8 mb-4" />
                     ),
                     p: ({ node, ...props }) => (
-                        <p {...props} className="text-slate-300 leading-relaxed mb-6" />
+                        <p {...props} className="text-slate-700 leading-relaxed mb-6" />
                     ),
                     ul: ({ node, ...props }) => (
-                        <ul {...props} className="list-disc list-outside ml-6 space-y-2 mb-6 text-slate-300" />
+                        <ul {...props} className="list-disc list-outside ml-6 space-y-2 mb-6 text-slate-700" />
                     ),
                     ol: ({ node, ...props }) => (
-                        <ol {...props} className="list-decimal list-outside ml-6 space-y-2 mb-6 text-slate-300" />
+                        <ol {...props} className="list-decimal list-outside ml-6 space-y-2 mb-6 text-slate-700" />
                     ),
                     li: ({ node, ...props }) => (
                         <li {...props} className="pl-2" />
                     ),
                     blockquote: ({ node, ...props }) => (
-                        <blockquote {...props} className="border-l-4 border-teal-500 pl-4 py-2 my-6 bg-teal-500/10 rounded-r-lg italic text-slate-200" />
+                        <blockquote {...props} className="border-l-4 border-blue-600 pl-4 py-2 my-6 bg-blue-50 rounded-r-lg text-slate-700" />
                     ),
                     code: ({ node, className, ...props }) => {
                         return (

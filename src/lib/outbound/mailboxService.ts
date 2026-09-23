@@ -226,11 +226,13 @@ export async function checkMailboxHealth(
 export async function recordMailboxSend(tenantId: string, mailboxId: string): Promise<void> {
   const admin = createSupabaseAdminClient();
   const today = new Date().toISOString().slice(0, 10);
-  await admin.rpc('increment_mailbox_sent_today', {
-    p_tenant_id: tenantId,
-    p_mailbox_id: mailboxId,
-    p_today: today,
-  }).then(() => {}).catch(async () => {
+  try {
+    await admin.rpc('increment_mailbox_sent_today', {
+      p_tenant_id: tenantId,
+      p_mailbox_id: mailboxId,
+      p_today: today,
+    });
+  } catch {
     // Fallback if RPC not available
     const { data } = await admin
       .from('outbound_mailboxes')
@@ -251,7 +253,7 @@ export async function recordMailboxSend(tenantId: string, mailboxId: string): Pr
         .eq('tenant_id', tenantId)
         .eq('id', mailboxId);
     }
-  });
+  }
 }
 
 /**

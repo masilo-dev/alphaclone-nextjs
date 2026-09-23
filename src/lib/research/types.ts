@@ -113,6 +113,7 @@ export type ResearchSource = {
     location?: string | null;
     industry?: string | null;
     source_url?: string | null;
+    source_type: string;
     raw?: Record<string, unknown>;
   }>>;
 };

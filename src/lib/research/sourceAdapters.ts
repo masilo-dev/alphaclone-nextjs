@@ -133,13 +133,36 @@ export class PublicBusinessDirectoryAdapter implements ResearchSource {
       // Use internal geo/business fallback index
       try {
         const { runLeadStep } = await import('@/lib/scraper/freeLeadSearch');
-        const searchStep = await runLeadStep({
-          query: cleanQuery,
-          location: cleanLoc,
-          maxResults: limit,
-        });
+        let step: 'init' | 'fallbacks' | 'browser' | 'finalize' = 'init';
+        let partialResults: import('@/lib/scraper/freeLeadSearch').LeadResult[] = [];
+        let sourceStats: Record<string, number> = {};
+        let sourceErrors: Record<string, string> = {};
+        let finalResults: import('@/lib/scraper/freeLeadSearch').LeadResult[] = [];
 
-        for (const item of searchStep.leads || []) {
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const searchStep = await runLeadStep({
+            step,
+            niche: cleanQuery,
+            location: cleanLoc,
+            radiusKm: 50,
+            sortBy: 'reach_asc',
+            usePlaywright: false,
+            partialResults,
+            sourceStats,
+            sourceErrors,
+            resultLimit: limit,
+          });
+          partialResults = searchStep.partialResults;
+          sourceStats = searchStep.sourceStats;
+          sourceErrors = searchStep.sourceErrors;
+          if (searchStep.nextStep === 'completed') {
+            finalResults = searchStep.finalResults.length ? searchStep.finalResults : partialResults;
+            break;
+          }
+          step = searchStep.nextStep;
+        }
+
+        for (const item of finalResults.length ? finalResults : partialResults) {
           results.push({
             business_name: normalizeBusinessName(item.business_name),
             website: item.website || null,

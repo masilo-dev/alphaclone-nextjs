@@ -1785,19 +1785,20 @@
 }
 
 .mkt-btn-demo {
-  background: rgba(13, 116, 109, 0.35);
-  color: #a7f3d0;
-  border: 1px solid rgba(20, 184, 166, 0.42);
+  background: #047857;
+  color: #ffffff;
+  border: 1px solid #065f46;
+  box-shadow: 0 8px 20px rgba(4, 120, 87, 0.18);
 }
 
 .mkt-btn-demo:hover {
-  background: rgba(13, 116, 109, 0.52);
-  border-color: rgba(45, 212, 191, 0.62);
-  color: #ecfdf5;
+  background: #065f46;
+  border-color: #064e3b;
+  color: #ffffff;
 }
 
 .mkt-btn-demo:active {
-  background: rgba(13, 116, 109, 0.62);
+  background: #064e3b;
 }
 
 .mkt-nav-trigger:focus-visible {

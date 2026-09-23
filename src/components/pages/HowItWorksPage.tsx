@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, Eye, Play, Shield } from 'lucide-react';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { DEMO_HREF } from '@/lib/marketing/cta';
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const MECHANISM = [
   {
@@ -34,19 +35,20 @@ const MECHANISM = [
 ] as const;
 
 export default function HowItWorksPage() {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-white text-[#07152f]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
         <Link href="/" className="inline-flex items-center text-[#52627b] hover:text-[#0878f9] mb-8 type-ui font-medium transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to home
+          {t('Back to home')}
         </Link>
 
         <p className="type-caption font-bold uppercase tracking-caps text-[#075fc7] mb-3">{EXECUTION_LAYER.category}</p>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-marketing-heading text-[#07152f] mb-5 tracking-tight leading-tight">
-          How execution works
+          {t('How execution works')}
         </h1>
-        <p className="text-lg text-[#52627b] leading-relaxed mb-10">{EXECUTION_LAYER.explanatoryLine}</p>
+        <p className="text-lg text-[#52627b] leading-relaxed mb-10">{t(EXECUTION_LAYER.explanatoryLine)}</p>
 
         <div className="grid sm:grid-cols-2 gap-5 mb-12">
           {MECHANISM.map(({ step, icon: Icon, title, body }, i) => (
@@ -54,10 +56,10 @@ export default function HowItWorksPage() {
               <div className="flex items-center gap-3 mb-3">
                 <span className="type-caption font-bold text-[#0878f9]">0{i + 1}</span>
                 <Icon className="h-5 w-5 text-[#0878f9]" />
-                <span className="type-caption font-bold uppercase tracking-wider text-[#76849a]">{step}</span>
+                <span className="type-caption font-bold uppercase tracking-wider text-[#76849a]">{t(step)}</span>
               </div>
-              <h2 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{title}</h2>
-              <p className="type-card-description text-[#52627b] leading-relaxed">{body}</p>
+              <h2 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{t(title)}</h2>
+              <p className="type-card-description text-[#52627b] leading-relaxed">{t(body)}</p>
             </div>
           ))}
         </div>

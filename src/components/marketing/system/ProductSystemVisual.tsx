@@ -131,7 +131,7 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
   const rows = compact ? data.rows.slice(0, 2) : data.rows;
 
   return (
-    <div className="product-system-visual relative overflow-hidden rounded-[1.35rem] border border-slate-200 bg-[#071426] p-2 shadow-xl sm:p-3">
+    <div className="product-system-visual relative select-none overflow-hidden rounded-[1.35rem] border border-slate-200 bg-[#071426] p-2 shadow-xl sm:p-3" onContextMenu={(event) => event.preventDefault()}>
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-300/10 blur-3xl" aria-hidden="true" />
       <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0a182d]">
         <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5 sm:px-4">
@@ -191,10 +191,10 @@ export function ProductFlowRail() {
   return (
     <div className="grid gap-3 sm:grid-cols-4">
       {[['01', 'Capture', 'The request or record enters the workspace.'], ['02', 'Context', 'AlphaClone resolves the right client and history.'], ['03', 'Approve', 'A person reviews consequential external actions.'], ['04', 'Verify', 'The result is checked and recorded.']].map(([step, title, body]) => (
-        <div key={step} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div key={step} className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm">
           <span className="type-caption font-bold tracking-wider text-blue-600 font-mono">{step}</span>
           <p className="mt-2 type-card-description font-bold text-slate-900">{title}</p>
-          <p className="mt-1 type-card-description leading-relaxed text-slate-600">{body}</p>
+          <p className="mt-1 type-ui leading-relaxed text-slate-700">{body}</p>
         </div>
       ))}
     </div>

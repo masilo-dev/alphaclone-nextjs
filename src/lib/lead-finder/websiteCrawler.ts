@@ -102,7 +102,22 @@ export async function crawlPublicWebsite(value: string, options: { maxPages?: nu
   const emails = pages.flatMap((page) => extractPublicEmails(page.html, page.url));
   const phones = pages.flatMap((page) => extractPublicPhones(page.html, page.url));
   const first = pages[0];
+  const firstPage = first ? load(first.html) : null;
+  const socialLinks = firstPage
+    ? firstPage('a[href]')
+        .map((_, element) => firstPage(element).attr('href') || '')
+        .get()
+    : [];
+  const social = {
+    linkedin: socialLinks.find((href) => /linkedin\.com/i.test(href)),
+    facebook: socialLinks.find((href) => /facebook\.com/i.test(href)),
+    instagram: socialLinks.find((href) => /instagram\.com/i.test(href)),
+    twitter: socialLinks.find((href) => /(?:twitter|x)\.com/i.test(href)),
+    youtube: socialLinks.find((href) => /(?:youtube\.com|youtu\.be)/i.test(href)),
+  };
   return {
+    title: firstPage?.('title').first().text().trim() || null,
+    social,
     pages_crawled: pages.length,
     emails: [...new Map(emails.map((x) => [x.email, x])).values()],
     phones: [...new Map(phones.map((x) => [x.phone, x])).values()],

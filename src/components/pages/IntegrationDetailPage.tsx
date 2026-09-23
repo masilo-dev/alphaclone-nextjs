@@ -32,7 +32,7 @@ const SPECIFIC_DETAILS: Record<string, { summary: string; auth: string; access: 
     auth: 'Meta business authorization',
     access: 'Business account, Page relationship, and publishing permissions when released',
     capabilities: ['Prepare business posts', 'Route content through approval', 'Track publishing and inbox outcomes when available'],
-    boundary: 'This connector is currently marked Coming soon; no live connection should be assumed from this page.',
+    boundary: 'Publishing depends on the connected Instagram business identity and the permissions granted to it.',
   },
 };
 
@@ -47,9 +47,9 @@ const CATEGORY_FLOW: Record<string, string[]> = {
 };
 
 function statusClass(status: PublicIntegration['status']) {
-  if (status === 'AVAILABLE') return 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300';
-  if (status === 'BETA') return 'border-amber-400/25 bg-amber-400/10 text-amber-200';
-  return 'border-slate-600 bg-slate-800 text-slate-300';
+  if (status === 'AVAILABLE') return 'border-emerald-300 bg-emerald-50 text-emerald-800';
+  if (status === 'BETA') return 'border-amber-300 bg-amber-50 text-amber-800';
+  return 'border-slate-300 bg-slate-100 text-slate-700';
 }
 
 export default function IntegrationDetailPage({ integration }: { integration: PublicIntegration }) {
@@ -60,9 +60,9 @@ export default function IntegrationDetailPage({ integration }: { integration: Pu
   const isAvailable = integration.status === 'AVAILABLE' || integration.status === 'BETA';
 
   return (
-    <main className="min-h-screen bg-[#020815] px-4 py-24 text-white sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-white px-4 py-24 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        <Link href="/ecosystem" className="inline-flex items-center gap-2 type-ui text-teal-300 hover:text-teal-200"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to ecosystem</Link>
+        <Link href="/ecosystem" className="inline-flex items-center gap-2 type-ui font-semibold text-blue-700 hover:text-blue-900"><ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to integrations</Link>
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
           <section>
             <div className="flex flex-wrap items-center gap-3">
@@ -70,35 +70,49 @@ export default function IntegrationDetailPage({ integration }: { integration: Pu
                 <IntegrationBrandIcon id={integration.id} className="h-7 w-7" />
               </div>
               <div>
-                <p className="type-caption font-bold uppercase tracking-caps text-teal-300">{integration.category.replace('_', ' ')}</p>
+                <p className="type-caption font-bold uppercase tracking-caps text-blue-700">{integration.category.replace('_', ' ')}</p>
                 <h1 className="mt-1 font-marketing-heading text-3xl font-extrabold sm:text-5xl">{integration.name}</h1>
               </div>
               <span className={`rounded-full border px-3 py-1.5 type-caption font-bold ${statusClass(integration.status)}`}>{integration.statusLabel}</span>
             </div>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">{summary}</p>
-            <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-950/10 p-5">
-              <p className="type-caption font-black uppercase tracking-caps text-cyan-300">What connecting means</p>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700">{summary}</p>
+            <div className="mt-8 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+              <p className="type-caption font-black uppercase tracking-caps text-blue-800">What connecting means</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {capabilities.map((capability) => <div key={capability} className="flex gap-2 type-ui leading-6 text-slate-200"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />{capability}</div>)}
+                {capabilities.map((capability) => <div key={capability} className="flex gap-2 type-ui leading-6 text-slate-800"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />{capability}</div>)}
               </div>
             </div>
           </section>
-          <aside className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 shadow-xl">
-            <p className="type-caption font-black uppercase tracking-caps text-slate-400">Connection readiness</p>
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-lg">
+            <p className="type-caption font-black uppercase tracking-caps text-slate-600">Connection readiness</p>
             <dl className="mt-4 space-y-4 type-ui">
-              <div><dt className="type-caption text-slate-500">Authentication</dt><dd className="mt-1 text-slate-200">{specific?.auth ?? 'Provider-supported authorization or configuration flow'}</dd></div>
-              <div><dt className="type-caption text-slate-500">Access</dt><dd className="mt-1 text-slate-200">{specific?.access ?? 'The permissions required depend on the supported workflow and provider account.'}</dd></div>
-              <div><dt className="type-caption text-slate-500">Approval boundary</dt><dd className="mt-1 text-slate-200">Human review remains available before consequential external actions.</dd></div>
+              <div><dt className="type-caption text-slate-600">Authentication</dt><dd className="mt-1 text-slate-800">{specific?.auth ?? 'Provider-supported authorization or configuration flow'}</dd></div>
+              <div><dt className="type-caption text-slate-600">Access</dt><dd className="mt-1 text-slate-800">{specific?.access ?? 'The permissions required depend on the supported workflow and provider account.'}</dd></div>
+              <div><dt className="type-caption text-slate-600">Approval boundary</dt><dd className="mt-1 text-slate-800">Human review remains available before consequential external actions.</dd></div>
             </dl>
-            <div className="mt-5 flex gap-3 rounded-xl border border-slate-700 bg-slate-950/60 p-3 type-caption leading-5 text-slate-400"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" aria-hidden="true" />Connect only the account and permissions required for the workflow.</div>
-            {specific?.boundary ? <p className="mt-4 type-card-description leading-5 text-amber-200/80"><CircleAlert className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />{specific.boundary}</p> : null}
+            <div className="mt-5 flex gap-3 rounded-xl border border-slate-200 bg-white p-3 type-caption leading-5 text-slate-700"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" aria-hidden="true" />Connect only the account and permissions required for the workflow.</div>
+            {specific?.boundary ? <p className="mt-4 type-card-description leading-5 text-amber-900"><CircleAlert className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />{specific.boundary}</p> : null}
             <Link href={isAvailable ? '/dashboard/marketplace' : '/contact'} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-400 px-4 py-3 type-ui font-bold text-slate-950 transition hover:bg-teal-300">{isAvailable ? 'Open connection settings' : 'Ask about availability'}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           </aside>
         </div>
-        <section className="mt-10 rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-7">
-          <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-teal-300" aria-hidden="true" /><h2 className="text-lg font-bold">How the workflow moves</h2></div>
+        <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-7">
+          <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-blue-700" aria-hidden="true" /><h2 className="text-lg font-bold">How the workflow moves</h2></div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {flow.map((step, index) => <div key={step} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"><span className="type-caption font-black tracking-caps text-teal-300">0{index + 1}</span><p className="mt-2 type-ui leading-5 text-slate-200">{step}</p></div>)}
+            {flow.map((step, index) => <div key={step} className="rounded-xl border border-slate-200 bg-white p-4"><span className="type-caption font-black tracking-caps text-blue-700">0{index + 1}</span><p className="mt-2 type-ui leading-6 text-slate-800">{step}</p></div>)}
+          </div>
+        </section>
+        <section className="mt-6 grid gap-5 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold">Before you connect</h2>
+            <ul className="mt-4 space-y-3 type-ui leading-6 text-slate-700">
+              <li className="flex gap-2"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" />Confirm which business account or identity should own the connection.</li>
+              <li className="flex gap-2"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" />Grant only the permissions required for the workflows you plan to use.</li>
+              <li className="flex gap-2"><Check className="mt-1 h-4 w-4 shrink-0 text-emerald-700" />Run a small test and verify the result before enabling routine work.</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold">What AlphaClone records</h2>
+            <p className="mt-4 type-ui leading-6 text-slate-700">The workspace keeps the selected account, requested action, approval state, provider outcome, and relevant business record together. Failed or unavailable actions remain visible instead of being presented as completed.</p>
           </div>
         </section>
       </div>

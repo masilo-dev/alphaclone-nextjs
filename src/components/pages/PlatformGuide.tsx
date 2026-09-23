@@ -37,14 +37,14 @@ const PlatformGuide = () => (
       <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" aria-hidden="true" />
       <div className="mx-auto grid max-w-5xl gap-12 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
-          <p className="inline-flex items-center rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 type-caption font-semibold uppercase tracking-caps text-teal-300">A practical guide for first-time teams</p>
+          <p className="inline-flex items-center rounded-full border border-teal-500 bg-teal-700 px-3 py-1 type-caption font-bold uppercase tracking-caps text-white">A practical guide for first-time teams</p>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">Start with one useful thing for your business.</h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">AlphaClone brings customer work, outreach, finance, projects, and everyday tasks into one workspace. You do not need to configure everything before you begin.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link href="/auth/login?register=true" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-teal-500 px-5 py-3 type-ui font-semibold text-slate-950 transition-colors hover:bg-teal-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-200">Create an account <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
             <a href="#first-wins" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-600 px-5 py-3 type-ui font-semibold text-white transition-colors hover:border-teal-300 hover:bg-teal-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-200">See what you can do first</a>
           </div>
-          <p className="mt-5 type-card-description text-slate-500">Choose a direction now. Change it later without losing access to the rest of your workspace.</p>
+          <p className="mt-5 type-ui text-slate-300">Choose a direction now. Change it later without losing access to the rest of your workspace.</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-black/20 backdrop-blur-sm sm:p-6">
           <p className="type-caption font-semibold uppercase tracking-caps text-teal-300">Your first session</p>
@@ -52,7 +52,7 @@ const PlatformGuide = () => (
             {STARTING_STEPS.slice(0, 3).map((step, index) => (
               <div key={step.number} className="flex gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-400/15 type-caption font-bold text-teal-200">{step.number}</span>
-                <div><p className="type-card-description font-semibold text-white">{step.title}</p><p className="mt-1 type-card-description leading-relaxed text-slate-400">{index === 0 ? 'Confirm your email and enter your workspace.' : index === 1 ? 'Tell AlphaClone what matters most right now.' : 'Complete one small action and see the result.'}</p></div>
+                <div><p className="type-card-description font-semibold text-white">{step.title}</p><p className="mt-1 type-ui leading-relaxed text-slate-300">{index === 0 ? 'Confirm your email and enter your workspace.' : index === 1 ? 'Tell AlphaClone what matters most right now.' : 'Complete one small action and see the result.'}</p></div>
               </div>
             ))}
           </div>

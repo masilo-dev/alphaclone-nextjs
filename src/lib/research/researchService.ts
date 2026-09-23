@@ -431,7 +431,7 @@ export class ResearchService {
       }> = [];
 
       for (const srcType of job.sources) {
-        if (job.status === 'cancelled') return;
+        if (MEMORY_JOBS.get(jobId)?.status === 'cancelled') return;
         const adapter = getSourceAdapter(srcType);
         const items = await adapter.discover({
           query: job.query,
@@ -456,7 +456,7 @@ export class ResearchService {
         maxPagesPerDomain: 3,
         timeoutSeconds: 12,
         onProgress: (done, total) => {
-          if (job.status === 'cancelled') return;
+          if (MEMORY_JOBS.get(jobId)?.status === 'cancelled') return;
           job.progress = Math.min(80, 30 + Math.floor((done / Math.max(1, total)) * 50));
           this.syncJobUpdate(job);
         },
@@ -473,7 +473,7 @@ export class ResearchService {
       const stagedResults: LeadResearchResult[] = [];
 
       for (const item of discovered) {
-        if (job.status === 'cancelled') return;
+        if (MEMORY_JOBS.get(jobId)?.status === 'cancelled') return;
 
         const domain = normalizeDomain(item.website);
         const crawl = domain ? crawledMap.get(domain) : null;
@@ -646,26 +646,30 @@ export class ResearchService {
   private syncJobUpdate(job: ResearchJob): void {
     MEMORY_JOBS.set(job.id, { ...job });
     const supabase = createSupabaseAdminClient();
-    supabase
-      .from('research_jobs')
-      .update({
-        status: job.status,
-        progress: job.progress,
-        discovered_count: job.discovered_count,
-        processed_count: job.processed_count,
-        qualified_count: job.qualified_count,
-        duplicate_count: job.duplicate_count,
-        error_count: job.error_count,
-        started_at: job.started_at,
-        completed_at: job.completed_at,
-        failed_at: job.failed_at,
-        error_message: job.error_message,
-        updated_at: job.updated_at,
-      })
-      .eq('id', job.id)
-      .eq('tenant_id', job.tenant_id)
-      .then(() => {})
-      .catch(() => {});
+    void (async () => {
+      try {
+        await supabase
+          .from('research_jobs')
+          .update({
+            status: job.status,
+            progress: job.progress,
+            discovered_count: job.discovered_count,
+            processed_count: job.processed_count,
+            qualified_count: job.qualified_count,
+            duplicate_count: job.duplicate_count,
+            error_count: job.error_count,
+            started_at: job.started_at,
+            completed_at: job.completed_at,
+            failed_at: job.failed_at,
+            error_message: job.error_message,
+            updated_at: job.updated_at,
+          })
+          .eq('id', job.id)
+          .eq('tenant_id', job.tenant_id);
+      } catch {
+        // The in-memory job remains authoritative when persistence is unavailable.
+      }
+    })();
   }
 
   private async recordAuditEvent(

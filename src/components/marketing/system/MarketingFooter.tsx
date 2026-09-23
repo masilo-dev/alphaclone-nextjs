@@ -9,6 +9,7 @@ import { DEMO_HREF } from '@/lib/marketing/cta';
 import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useEffect, useState } from 'react';
 
 const COLUMNS = [
   {
@@ -59,6 +60,15 @@ const COLUMNS = [
 
 export default function MarketingFooter() {
   const { t } = useLanguage();
+  const [desktopFooter, setDesktopFooter] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 768px)');
+    const sync = () => setDesktopFooter(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
   return (
     <footer className="mkt-footer mkt-footer-redesign">
       <MarketingContainer className="py-12 sm:py-16">
@@ -78,7 +88,7 @@ export default function MarketingFooter() {
           </div>
           <div className="mkt-footer-columns-redesign">
             {COLUMNS.map((column) => (
-              <details key={column.title}>
+              <details key={column.title} open={desktopFooter || undefined}>
                 <summary>{t(column.title)}<ChevronDown aria-hidden="true" /></summary>
                 <ul>
                   {column.links.map(([label, href]) => <li key={href}><Link href={href}>{t(label)}</Link></li>)}

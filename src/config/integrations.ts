@@ -46,24 +46,21 @@ function integration(
 
 /** Integrations shown on /ecosystem and future /integrations/* pages. */
 export const PUBLIC_INTEGRATIONS: PublicIntegration[] = [
-  integration('calcom', 'Cal.com', 'Platform demo scheduling and native booking pages', 'AVAILABLE', 'scheduling'),
+  integration('calcom', 'Cal.com', 'Scheduling connection for booking pages', 'COMING_SOON', 'scheduling'),
   integration('linkedin', 'LinkedIn', 'OAuth, posting, and lead forms', 'AVAILABLE', 'social'),
   integration('facebook', 'Facebook', 'Pages, posts, and lead capture', 'AVAILABLE', 'social'),
-  integration('stripe', 'Stripe', 'Payment processing and Connect', 'AVAILABLE', 'payments'),
-  integration('microsoft365', 'Microsoft 365', 'Outlook, calendar, and tasks', 'AVAILABLE', 'productivity'),
-  integration('gmail', 'Gmail', 'OAuth inbox read, compose, and reply', 'AVAILABLE', 'communication'),
+  integration('stripe', 'Stripe', 'Payment processing and connected billing', 'COMING_SOON', 'payments'),
+  integration('microsoft365', 'Outlook', 'Outlook mail, calendar, and tasks', 'AVAILABLE', 'productivity'),
+  integration('gmail', 'Gmail', 'Inbox read, compose, and reply', 'COMING_SOON', 'communication'),
   integration('zoho', 'Zoho', 'CRM and Mail integration', 'AVAILABLE', 'crm'),
-  integration('hubspot', 'HubSpot', 'Contact and deal sync via OAuth', 'AVAILABLE', 'crm'),
+  integration('hubspot', 'HubSpot', 'Contact and deal synchronisation', 'COMING_SOON', 'crm'),
   integration('calendly', 'Calendly', 'External scheduling sync', 'AVAILABLE', 'scheduling'),
-  integration('google_calendar', 'Google Calendar', 'Bi-directional calendar sync', 'AVAILABLE', 'scheduling'),
-  integration('slack', 'Slack', 'Workspace notifications and OAuth', 'BETA', 'communication'),
+  integration('google_calendar', 'Google Calendar', 'Calendar availability and event sync', 'COMING_SOON', 'scheduling'),
+  integration('slack', 'Slack', 'Workspace notifications and collaboration', 'COMING_SOON', 'communication'),
   integration('whatsapp', 'WhatsApp', 'Dashboard connection and messaging', 'COMING_SOON', 'communication'),
-  integration('instagram', 'Instagram', 'Business publishing and inbox', 'COMING_SOON', 'social'),
-  integration('deepseek', 'DeepSeek API', 'Bonnie planning provider', 'AVAILABLE', 'ai'),
-  integration('claude', 'Claude API', 'AI reasoning and MCP agent workflows', 'AVAILABLE', 'ai'),
-  integration('openai', 'OpenAI API', 'Generation and AI fallback', 'AVAILABLE', 'ai'),
-  integration('openrouter', 'OpenRouter', 'Optional model routing', 'AVAILABLE', 'ai'),
-  integration('supabase', 'Supabase', 'Database, auth, and realtime infrastructure', 'AVAILABLE', 'platform'),
+  integration('instagram', 'Instagram', 'Business publishing and connected social workflows', 'AVAILABLE', 'social'),
+  integration('mcp-cloud', 'MCP Cloud', 'Secure Model Context Protocol connections for approved business actions', 'AVAILABLE', 'ai'),
+  integration('openai', 'OpenAI API', 'AI reasoning and execution planning', 'AVAILABLE', 'ai'),
 ];
 
 export function getIntegrationsByStatus(status: IntegrationStatus): PublicIntegration[] {

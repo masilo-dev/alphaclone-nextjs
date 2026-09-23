@@ -27,7 +27,7 @@ export default async function BlogPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
+        <div className="min-h-screen bg-white text-slate-950">
             <div className="relative py-8 pb-20 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
@@ -37,10 +37,10 @@ export default async function BlogPage() {
                             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
                         </Link>
 
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-teal-100 to-slate-400">
+                        <h1 className="text-4xl md:text-6xl font-bold mb-6 text-slate-950">
                             Knowledge Hub
                         </h1>
-                        <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+                        <p className="text-xl text-slate-700 mb-10 max-w-2xl mx-auto">
                             Practical guidance for connecting AI to real business workflows with control, context, and traceability.
                         </p>
                     </div>
@@ -52,7 +52,7 @@ export default async function BlogPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {articles.map((article) => (
                             <Link href={`/blog/${article.slug}`} key={article.id} className="group">
-                                <article className="glass-card h-full rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-teal-500/20 flex flex-col">
+                                <article className="h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg flex flex-col">
                                     <div className="flex items-center gap-3 mb-4">
                                         <span className="px-3 py-1 type-caption font-semibold bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
                                             {article.category}
@@ -63,11 +63,11 @@ export default async function BlogPage() {
                                         </span>
                                     </div>
 
-                                    <h2 className="text-xl font-bold text-white mb-3 group-hover:text-teal-300 transition-colors line-clamp-2">
+                                    <h2 className="text-xl font-bold text-slate-950 mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
                                         {article.title}
                                     </h2>
 
-                                    <p className="text-slate-400 type-card-description mb-6 line-clamp-3 flex-grow">
+                                    <p className="text-slate-700 type-ui leading-6 mb-6 line-clamp-4 flex-grow">
                                         {article.meta_description}
                                     </p>
 

@@ -301,6 +301,7 @@ const workflowConfig = withWorkflow(baseConfig as any, {
 export default withSentryConfig(workflowConfig as any, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
+  telemetry: false,
   silent: !process.env.CI,
   // Full client upload balloons webpack memory during CI builds.
   widenClientFileUpload: false,

@@ -7,8 +7,10 @@ import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
 import IntegrationBrandIcon from '@/components/marketing/system/IntegrationBrandIcon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const EcosystemPage: React.FC = () => {
+    const { t } = useLanguage();
     const [query, setQuery] = useState('');
     const [category, setCategory] = useState('all');
     const advantages = [
@@ -111,12 +113,12 @@ const EcosystemPage: React.FC = () => {
                         </h1>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.2}>
-                        <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-8">
+                        <p className="text-base sm:text-lg md:text-xl text-slate-700 max-w-3xl mx-auto mb-8">
                             Bring CRM, billing, projects, contracts, meetings, and analytics into one workspace. Built for agencies, freelancers, and service businesses that want fewer disconnected systems.
                         </p>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.3}>
-                        <div className="flex flex-wrap items-center justify-center gap-4 type-ui text-slate-500">
+                        <div className="flex flex-wrap items-center justify-center gap-4 type-ui text-slate-700">
                             <div className="flex items-center gap-2">
                                 <Check className="w-4 h-4 text-teal-400" />
                                 <span>CRM & Pipeline Management</span>
@@ -143,7 +145,7 @@ const EcosystemPage: React.FC = () => {
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
                             Integrated <span className="text-teal-400">Business Modules</span>
                         </h2>
-                        <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
+                        <p className="text-slate-700 text-center max-w-2xl mx-auto mb-12">
                             Core workflows for service businesses, unified in one platform with shared operational context.
                         </p>
                     </AnimateIn>
@@ -175,46 +177,46 @@ const EcosystemPage: React.FC = () => {
                 <section className="mb-24">
                     <AnimateIn type="fadeUp">
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
-                            Built on <span className="text-teal-400">Modern Infrastructure</span>
+                            Built on <span className="text-teal-700">Modern Infrastructure</span>
                         </h2>
-                        <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Modern architecture designed for performance, reliability, and scale.
+                        <p className="text-slate-700 text-center max-w-2xl mx-auto mb-12">
+                            A secure, scalable foundation without exposing implementation vendors as product features.
                         </p>
                     </AnimateIn>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 min-w-0">
                         <AnimateIn type="fadeLeft">
                             <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                                 <Code className="w-10 h-10 text-blue-600 mb-4" />
-                                <h3 className="text-xl font-bold text-slate-950 mb-4">Frontend Stack</h3>
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Product experience</h3>
                                 <ul className="space-y-2 text-slate-600">
-                                    <li>Next.js 15 with React 18</li>
-                                    <li>TypeScript for type safety</li>
-                                    <li>TailwindCSS for styling</li>
-                                    <li>Framer Motion animations</li>
+                                    <li>Fast responsive web application</li>
+                                    <li>Desktop, tablet, mobile, and PWA</li>
+                                    <li>Accessible interaction patterns</li>
+                                    <li>Consistent shared design system</li>
                                 </ul>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
                             <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                                 <Database className="w-10 h-10 text-blue-600 mb-4" />
-                                <h3 className="text-xl font-bold text-slate-950 mb-4">Backend & Data</h3>
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Data foundation</h3>
                                 <ul className="space-y-2 text-slate-600">
-                                    <li>Supabase (PostgreSQL)</li>
-                                    <li>Real-time subscriptions</li>
-                                    <li>Row-level security</li>
-                                    <li>Automated backups</li>
+                                    <li>PostgreSQL business data</li>
+                                    <li>Workspace-scoped access controls</li>
+                                    <li>Real-time operational updates</li>
+                                    <li>Backup and recovery controls</li>
                                 </ul>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeRight" delay={0.2}>
                             <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
                                 <Layers className="w-10 h-10 text-blue-600 mb-4" />
-                                <h3 className="text-xl font-bold text-slate-950 mb-4">Infrastructure</h3>
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Reliable delivery</h3>
                                 <ul className="space-y-2 text-slate-600">
-                                    <li>Railway deployment</li>
-                                    <li>Managed app hosting</li>
+                                    <li>Managed application hosting</li>
+                                    <li>Health and availability monitoring</li>
                                     <li>Global CDN</li>
-                                    <li>Auto-scaling</li>
+                                    <li>Scalable background execution</li>
                                 </ul>
                             </div>
                         </AnimateIn>
@@ -227,7 +229,7 @@ const EcosystemPage: React.FC = () => {
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
                             Connect the tools that <span className="text-teal-400">run the work</span>
                         </h2>
-                        <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
+                        <p className="text-slate-700 text-center max-w-2xl mx-auto mb-12">
                             Browse by system or search by the outcome you need. Every status is explicit so a directory listing never feels like a promise of unsupported automation.
                         </p>
                     </AnimateIn>
@@ -259,14 +261,14 @@ const EcosystemPage: React.FC = () => {
                                             <div className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white shadow-sm">
                                                 <IntegrationBrandIcon id={integration.id} className="h-5 w-5" />
                                             </div>
-                                            <span className={`rounded-full border px-2 py-1 type-caption font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
+                                            <span className={`rounded-full border px-2 py-1 type-caption font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : integration.status === 'BETA' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-slate-300 bg-slate-100 text-slate-700'}`}>{integration.statusLabel}</span>
                                         </div>
                                         <p className="mt-4 text-base font-bold text-slate-950">{integration.name}</p>
-                                        <p className="mt-1 type-card-description leading-5 text-slate-600">{integration.description}</p>
-                                        <p className="mt-3 type-card-description leading-4 text-blue-700">{capabilityByCategory[integration.category]}</p>
+                                        <p className="mt-1 type-ui leading-6 text-slate-700">{t(integration.description)}</p>
+                                        <p className="mt-3 type-ui leading-6 text-blue-800">{t(capabilityByCategory[integration.category])}</p>
                                         <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200 pt-3 type-ui">
-                                            <span className="text-slate-600">{categoryLabels[integration.category]}</span>
-                                            <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900">View connection details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
+                                            <span className="text-slate-600">{t(categoryLabels[integration.category])}</span>
+                                            <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900">{t('View connection details')} <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
                                         </div>
                                     </article>
                                 </AnimateIn>
