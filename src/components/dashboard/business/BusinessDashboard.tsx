@@ -43,6 +43,7 @@ import { startClientVideoCall } from '@/services/instantMeetingService';
 import { WORKSPACE } from '@/constants/design';
 import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
 import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -1458,6 +1459,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     router.push(`/call/${roomId}`);
                                 }}
                             />
+                        </div>
+                        <div className="ac-pwa-desktop-only hidden lg:block" data-tour="language-switcher">
+                            <LanguageSwitcher />
                         </div>
                         <div data-tour="business-notifications">
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />

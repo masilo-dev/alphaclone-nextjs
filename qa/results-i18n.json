@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-09-24T19:39:26.620Z",
+  "targetUrl": "https://alphaclonesystems.com",
+  "languagesTested": [
+    "en",
+    "es",
+    "pl"
+  ],
+  "surfaces": {
+    "marketing": {
+      "hasLanguageSwitcher": true,
+      "enToEs": {
+        "success": true,
+        "latencyMs": 834,
+        "langAttribute": "es",
+        "storageValue": "es",
+        "navSample": [
+          "AlphaClone\nSYSTEMS",
+          "Integraciones",
+          "Precios",
+          "Acerca de",
+          "Iniciar sesión"
+        ]
+      }
+    },
+    "dashboard": {
+      "hasLanguageSelector": true,
+      "switcherType": "account-menu",
+      "enToEs": {
+        "success": true,
+        "latencyMs": 1048,
+        "langAttribute": "es",
+        "sidebarSample": []
+      }
+    },
+    "settingsPage": {
+      "hasDedicatedLanguageControl": false
+    },
+    "clientPortal": {
+      "langAttribute": "es",
+      "hasLanguageControl": false
+    }
+  },
+  "metrics": {
+    "switchesTested": 4,
+    "successfulSwitches": 3,
+    "persistedAcrossReload": 1,
+    "averageSwitchLatencyMs": 8428
+  },
+  "translationsSampled": [],
+  "untranslatedStringsFound": [],
+  "layoutIssues": [],
+  "screenshots": [
+    {
+      "name": "01-landing-en.png",
+      "surface": "Marketing (EN)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/01-landing-en.png"
+    },
+    {
+      "name": "02-landing-es.png",
+      "surface": "Marketing (ES)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/02-landing-es.png"
+    },
+    {
+      "name": "03-landing-pl.png",
+      "surface": "Marketing (PL)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/03-landing-pl.png"
+    },
+    {
+      "name": "04-about-pl.png",
+      "surface": "About Page (PL)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/04-about-pl.png"
+    },
+    {
+      "name": "05-about-en.png",
+      "surface": "About Page (EN)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/05-about-en.png"
+    },
+    {
+      "name": "06-dashboard-en.png",
+      "surface": "Dashboard (EN)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/06-dashboard-en.png"
+    },
+    {
+      "name": "07-dashboard-es.png",
+      "surface": "Dashboard (ES)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/07-dashboard-es.png"
+    },
+    {
+      "name": "08-dashboard-crm-es.png",
+      "surface": "CRM Workspace (ES)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/08-dashboard-crm-es.png"
+    },
+    {
+      "name": "09-dashboard-pl.png",
+      "surface": "CRM Workspace (PL)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/09-dashboard-pl.png"
+    },
+    {
+      "name": "11-dashboard-restored-en.png",
+      "surface": "Dashboard Restored (EN)",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/11-dashboard-restored-en.png"
+    },
+    {
+      "name": "10-settings-page.png",
+      "surface": "Settings Page",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/10-settings-page.png"
+    },
+    {
+      "name": "12-portal-login.png",
+      "surface": "Client Portal Login",
+      "path": "/home/bonnie/alphaclone-nextjs/qa/screenshots/i18n/12-portal-login.png"
+    }
+  ]
+}

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { ClientFinancePortalData } from '@/services/finance/clientFinancePortalService';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 type Tab = 'overview' | 'projects' | 'invoices' | 'quotes' | 'contracts' | 'documents' | 'messages';
 type PortalMessage = { id: string; project_id: string; projectName: string; author_name: string; content: string; is_client: boolean; created_at: string };
@@ -201,6 +202,9 @@ function Shell({
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
+                            <div className="hidden sm:block">
+                                <LanguageSwitcher />
+                            </div>
                             <div className="hidden sm:flex items-center gap-1.5 rounded-lg px-3 py-1.5 type-ui font-medium text-[color:var(--ws-text-tertiary)] bg-[color:var(--ws-panel)] border border-[color:var(--ws-border)]">
                                 <Bell className="h-3.5 w-3.5 text-[color:var(--warning)]" />
                                 {counts.approvals + counts.invoices} items need your attention

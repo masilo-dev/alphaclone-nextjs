@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck, LogIn } from 'lucide-react';
 import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -104,7 +105,11 @@ function PortalLoginContent() {
     };
 
     return (
-        <div className="ac-client-portal-root ac-business-root min-h-screen w-full bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
+        <div className="relative ac-client-portal-root ac-business-root min-h-screen w-full bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
+            {/* Top-right language switcher — accessible before login */}
+            <div className="absolute top-4 right-4 z-10">
+                <LanguageSwitcher />
+            </div>
             <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
                 <div className="w-full max-w-md">
                     <div className="mb-8 text-center">
