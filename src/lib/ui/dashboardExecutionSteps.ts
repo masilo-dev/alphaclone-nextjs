@@ -35,6 +35,7 @@ export const BILLING_MANAGER_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Build the invoice',
     description: 'Choose client, invoice number, line items, due date, payment terms, and project link.',
     status: 'active',
+    href: '/dashboard/business/billing/manage',
   },
   {
     id: 'billing-send',
@@ -42,6 +43,7 @@ export const BILLING_MANAGER_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Email the secure client link',
     description: 'Send or resend the invoice, then watch sent, partial, paid, and overdue status.',
     status: 'running',
+    href: '/dashboard/business/billing',
   },
   {
     id: 'billing-reconcile',
@@ -60,6 +62,7 @@ export const PROJECT_MANAGER_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Create the delivery record',
     description: 'Set client, owner, stage, deadline, milestones, portal password, and public link settings.',
     status: 'active',
+    href: '/dashboard/business/projects/manage',
   },
   {
     id: 'project-update',
@@ -86,6 +89,7 @@ export const CRM_WORKSPACE_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Add real contact details',
     description: 'Start with name plus email or phone, then enrich company and source.',
     status: 'active',
+    href: '/dashboard/crm/unified-contacts',
   },
   {
     id: 'crm-qualify',
@@ -112,6 +116,7 @@ export const DEALS_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Set amount and close date',
     description: 'Every deal should have an owner, value, expected close date, and next step.',
     status: 'active',
+    href: '/dashboard/deals',
   },
   {
     id: 'deals-stage',
@@ -119,6 +124,7 @@ export const DEALS_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Move the pipeline forward',
     description: 'Keep stages honest so forecast, CRM reports, and Bonnie advice stay useful.',
     status: 'running',
+    href: '/dashboard/forecast',
   },
   {
     id: 'deals-convert',
@@ -137,6 +143,7 @@ export const TASKS_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Sort today’s work',
     description: 'Check overdue, due today, and blocked tasks before adding new work.',
     status: 'warning',
+    href: '/dashboard/tasks',
   },
   {
     id: 'tasks-execute',
@@ -144,6 +151,7 @@ export const TASKS_EXECUTION_STEPS: ExecutionDecisionStep[] = [
     title: 'Complete or reassign',
     description: 'Move tasks forward with owner, due date, notes, and linked project/client context.',
     status: 'running',
+    href: '/dashboard/tasks',
   },
   {
     id: 'tasks-confirm',

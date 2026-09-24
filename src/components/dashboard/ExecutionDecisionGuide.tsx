@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { CheckCircle2, ChevronRight, CircleDot, PlayCircle, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEMANTIC_STATUS_STYLES, type SemanticStatus } from '@/lib/ui/statusSemantics';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useProgressiveGuidance } from '@/hooks/useProgressiveGuidance';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 
 export interface ExecutionDecisionStep {
   id: string;
@@ -38,9 +40,15 @@ export function ExecutionDecisionGuide({
   onNavigate,
   className,
 }: ExecutionDecisionGuideProps) {
+  const router = useRouter();
   const { t } = useLanguage();
   const guideKey = steps[0]?.id ? `${title}:${steps[0].id}` : title;
   const { showGuidance } = useProgressiveGuidance(guideKey);
+
+  const handleNavigate = onNavigate ?? ((href: string) => {
+    router.push(resolveCanonicalPath(href));
+  });
+
   if (!steps.length || !showGuidance) return null;
 
   return (
@@ -83,13 +91,13 @@ export function ExecutionDecisionGuide({
             </>
           );
 
-          if (step.href && onNavigate) {
+          if (step.href) {
             return (
               <button
                 key={step.id}
                 type="button"
-                onClick={() => onNavigate(step.href!)}
-                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-slate-900/70', style.border, style.bg)}
+                onClick={() => handleNavigate(step.href!)}
+                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-slate-900/70 cursor-pointer', style.border, style.bg)}
               >
                 {content}
               </button>

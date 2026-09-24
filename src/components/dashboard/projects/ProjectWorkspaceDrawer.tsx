@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   X,
@@ -77,6 +77,15 @@ export function ProjectWorkspaceDrawer({
   onStageChange,
 }: ProjectWorkspaceDrawerProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      onClose();
+    }
+  }, [pathname, onClose]);
   const [tab, setTab] = useState<WorkspaceTab>('overview');
   const [progress, setProgress] = useState(project.progress || 0);
   const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean; dueDate?: string }[]>([]);
@@ -408,7 +417,14 @@ export function ProjectWorkspaceDrawer({
                   <p className="type-caption font-bold uppercase tracking-widest text-slate-400 mb-1">Client</p>
                   <p className="type-card-description text-white font-semibold">{clientName || 'Linked client'}</p>
                   {clientEmail ? (
-                    <button type="button" onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName}`))} className="type-ui text-[var(--brand-blue-300)] hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName}`));
+                      }}
+                      className="type-ui text-[var(--brand-blue-300)] hover:underline"
+                    >
                       {clientEmail}
                     </button>
                   ) : null}
@@ -560,7 +576,10 @@ export function ProjectWorkspaceDrawer({
 
               <button
                 type="button"
-                onClick={() => router.push('/dashboard/business/team')}
+                onClick={() => {
+                  onClose();
+                  router.push('/dashboard/business/team');
+                }}
                 className="type-caption font-semibold text-[var(--brand-blue-300)] hover:underline"
               >
                 Open team allocation →

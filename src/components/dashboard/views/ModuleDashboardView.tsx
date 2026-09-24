@@ -286,12 +286,6 @@ function DashboardContent({
           ))}
         </div>
       ) : null}
-      {executionSteps.length ? (
-        <ExecutionDecisionGuide
-          steps={executionSteps}
-          onNavigate={(href) => router.push(href)}
-        />
-      ) : null}
       <div className="flex items-center justify-end gap-2">
         {workspaceAction ? (
           <button
@@ -377,6 +371,14 @@ function DashboardContent({
             Tip: Tap a module tile to jump straight into CRM, Deals, Invoicing, and more.
           </p>
         </div>
+      ) : null}
+
+      {executionSteps.length ? (
+        <ExecutionDecisionGuide
+          steps={executionSteps}
+          onNavigate={(href) => router.push(href)}
+          className="mt-6"
+        />
       ) : null}
     </div>
   );

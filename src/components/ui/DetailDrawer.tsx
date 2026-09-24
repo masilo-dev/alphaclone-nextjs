@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import {
   Sheet,
@@ -39,6 +40,18 @@ export function DetailDrawer({
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { isInstalledMobileCompanion } = useDeviceExperience();
   const useNativeSheet = isInstalledMobileCompanion || isMobile;
+
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      if (open) {
+        onOpenChange(false);
+      }
+    }
+  }, [pathname, open, onOpenChange]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

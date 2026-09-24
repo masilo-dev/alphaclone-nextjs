@@ -1262,10 +1262,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               }}
               onExecuteNextAction={() => setShowCreateModal(true)}
             />
-            <ExecutionDecisionGuide
-              steps={DEALS_EXECUTION_STEPS}
-              onNavigate={(href) => router.push(href)}
-            />
           </div>
         </HelpDisclosure>
       </div>
@@ -1416,6 +1412,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             {viewMode === 'board' && renderBoard()}
             {viewMode === 'list' && renderList()}
             {viewMode === 'mobile-stage' && renderMobileStageList()}
+            <ExecutionDecisionGuide
+              steps={DEALS_EXECUTION_STEPS}
+              className="mt-8 mb-6 mx-4"
+            />
           </>
         )}
       </div>

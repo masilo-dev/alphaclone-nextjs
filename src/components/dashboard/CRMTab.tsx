@@ -748,6 +748,7 @@ const Client360Detail: React.FC<{
         return;
       }
       toast.success('Meeting room ready', { id: toastId });
+      if (inDrawer) onBack();
       router.push(`/call/${call.id}`);
     } catch (err) {
       toast.error('Failed to start call', { id: toastId });
@@ -757,21 +758,30 @@ const Client360Detail: React.FC<{
   const clientActions = (
     <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-slate-950/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-white/5` : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
-        onClick={() => onNewDeal(client)}
+        onClick={() => {
+          if (inDrawer) onBack();
+          onNewDeal(client);
+        }}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <TrendingUp className="w-5 h-5 text-emerald-400" />
         <span className="type-ui text-slate-400 font-bold">Add Deal</span>
       </button>
       <button
-        onClick={() => onDraftContract(client)}
+        onClick={() => {
+          if (inDrawer) onBack();
+          onDraftContract(client);
+        }}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
       >
         <ShieldCheck className="w-5 h-5 text-[var(--brand-blue-400)]" />
         <span className="type-ui text-[var(--brand-blue-300)] font-bold">Draft Contract</span>
       </button>
       <button
-        onClick={() => router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance')}
+        onClick={() => {
+          if (inDrawer) onBack();
+          router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance');
+        }}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <DollarSign className="w-5 h-5 text-blue-400" />
@@ -2304,10 +2314,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               }}
               onExecuteNextAction={() => setIsCreateOpen(true)}
             />
-            <ExecutionDecisionGuide
-              steps={CRM_WORKSPACE_EXECUTION_STEPS}
-              onNavigate={(href) => router.push(href)}
-            />
           </div>
         )}
         stats={(
@@ -2626,6 +2632,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             )}
           </>
         )}
+        <ExecutionDecisionGuide
+          steps={CRM_WORKSPACE_EXECUTION_STEPS}
+          className="mt-8 mb-6"
+        />
       </div>
       </ModulePageLayout>
 

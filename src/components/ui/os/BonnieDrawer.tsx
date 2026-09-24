@@ -79,6 +79,17 @@ export function BonnieDrawer() {
     }
   }, [open, pathname]); // eslint-disable-line react-hooks/exhaustive-deps -- only seed on open/path
 
+  const prevPathnameRef = React.useRef(pathname);
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      if (open) {
+        setStep("compose");
+        closeDrawer();
+      }
+    }
+  }, [pathname, open, closeDrawer]);
+
   const needsConfirm = useMemo(
     () => modeRequiresConfirmation(mode, prompt),
     [mode, prompt],
@@ -206,6 +217,10 @@ export function BonnieDrawer() {
                   {ctx.href ? (
                     <Link
                       href={ctx.href}
+                      onClick={() => {
+                        setStep("compose");
+                        closeDrawer();
+                      }}
                       className="block type-ui font-medium text-[var(--ws-text-primary)] hover:text-[var(--brand-violet-500)]"
                     >
                       {ctx.label}

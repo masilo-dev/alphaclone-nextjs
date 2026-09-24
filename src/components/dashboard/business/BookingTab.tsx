@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import CalendlyEmbed from '../../booking/CalendlyEmbed';
@@ -14,6 +15,7 @@ import { BOOKING_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 const BookingTab: React.FC = () => {
     const { currentTenant } = useTenant();
     const { user } = useAuth();
+    const router = useRouter();
     const [activeView, setActiveView] = useState<'schedule' | 'booking'>('schedule');
     const [scheduledEvents, setScheduledEvents] = useState<any[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(false);
@@ -22,6 +24,10 @@ const BookingTab: React.FC = () => {
     const calendlyConfig = (currentTenant?.settings as any)?.calendly;
     const calendlyUrl = calendlyConfig?.eventUrl;
     const isEnabled = calendlyConfig?.enabled;
+
+    const handleNavigate = (href: string) => {
+        router.push(href);
+    };
 
     useEffect(() => {
         if (isEnabled && currentTenant?.id) {
@@ -89,10 +95,6 @@ const BookingTab: React.FC = () => {
     if (!isEnabled || !calendlyUrl) {
         return (
             <div className="space-y-5 pb-20 ac-scroll-full ac-enterprise-module">
-                <ExecutionDecisionGuide
-                    steps={BOOKING_EXECUTION_STEPS}
-                    onNavigate={(href) => { window.location.href = href; }}
-                />
                 <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
                     <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
                         <Calendar className="w-10 h-10 text-slate-500" />
@@ -102,13 +104,18 @@ const BookingTab: React.FC = () => {
                         Connect Calendly or native booking in settings. Cal.com connection is coming soon.
                     </p>
                     <button
-                        onClick={() => window.location.href = '/dashboard/business/settings'}
+                        onClick={() => router.push('/dashboard/business/settings')}
                         className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         <Settings className="w-4 h-4" />
                         Go to Settings
                     </button>
                 </div>
+                <ExecutionDecisionGuide
+                    steps={BOOKING_EXECUTION_STEPS}
+                    onNavigate={handleNavigate}
+                    className="mt-8"
+                />
             </div>
         );
     }
@@ -139,11 +146,6 @@ const BookingTab: React.FC = () => {
                     </button>
                 </div>
             </div>
-
-            <ExecutionDecisionGuide
-                steps={BOOKING_EXECUTION_STEPS}
-                onNavigate={(href) => { window.location.href = href; }}
-            />
 
             <ModuleStatCards stats={bookingStats} hub="calendar" />
 
@@ -341,6 +343,12 @@ const BookingTab: React.FC = () => {
                     </Card>
                 </div>
             )}
+
+            <ExecutionDecisionGuide
+                steps={BOOKING_EXECUTION_STEPS}
+                onNavigate={handleNavigate}
+                className="mt-8"
+            />
         </div>
     );
 };

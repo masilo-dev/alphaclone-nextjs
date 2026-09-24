@@ -926,10 +926,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               }}
               onExecuteNextAction={() => setCreateOpen(true)}
             />
-            <ExecutionDecisionGuide
-              steps={TASKS_EXECUTION_STEPS}
-              onNavigate={(href) => router.push(href)}
-            />
           </div>
         )}
         toolbar={(
@@ -1110,6 +1106,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
             )}
           </div>
         )}
+        <ExecutionDecisionGuide
+          steps={TASKS_EXECUTION_STEPS}
+          className="mt-8 mb-6"
+        />
       </div>
       </ModulePageLayout>
 
