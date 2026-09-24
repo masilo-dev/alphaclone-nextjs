@@ -1,0 +1,137 @@
+[
+  {
+    "type": "error",
+    "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+    "time": 1790272520330
+  },
+  {
+    "type": "pageerror",
+    "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "time": 1790272520999
+  },
+  {
+    "type": "error",
+    "text": "Error fetching leads: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/23011.4f884b8a81f4ad1a.js:52:49344, hint: , code: }",
+    "time": 1790272523084
+  },
+  {
+    "type": "error",
+    "text": "Error fetching unified contacts: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/23011.4f884b8a81f4ad1a.js:52:49344, hint: , code: }",
+    "time": 1790272523084
+  },
+  {
+    "type": "error",
+    "text": "Failed to sync CRM resources: Error: Unknown error\n    at https://alphaclonesystems.com/_next/static/chunks/23011.4f884b8a81f4ad1a.js:52:49439",
+    "time": 1790272523084
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272530699
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272533432
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272535812
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272535821
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272538259
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272538260
+  },
+  {
+    "type": "error",
+    "text": "Error fetching receipts: TypeError: Failed to fetch\n    at Object.getReceipts (https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:906)\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:116647\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:117818\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)",
+    "time": 1790272540735
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272540736
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272540736
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272543366
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272543367
+  },
+  {
+    "type": "error",
+    "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+    "time": 1790272543367
+  },
+  {
+    "type": "error",
+    "text": "[useServicesCatalog] Failed to load catalog: TypeError: Failed to fetch\n    at Object.getCatalog (https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:1612)\n    at https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:3331\n    at https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:3491\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117066)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+    "time": 1790272543367
+  },
+  {
+    "type": "error",
+    "text": "[useServicesCatalog] Failed to load catalog: TypeError: Failed to fetch\n    at Object.getCatalog (https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:1612)\n    at https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:3331\n    at https://alphaclonesystems.com/_next/static/chunks/74103.e2e6378672d437fd.js:1:3491\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117066)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+    "time": 1790272543367
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272545984
+  },
+  {
+    "type": "warning",
+    "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+    "time": 1790272548032
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272548533
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272548534
+  },
+  {
+    "type": "error",
+    "text": "Failed to load MCP API key: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71134\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71343\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+    "time": 1790272551269
+  },
+  {
+    "type": "error",
+    "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+    "time": 1790272551269
+  },
+  {
+    "type": "error",
+    "text": "Failed to load business settings: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:70285\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71050\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+    "time": 1790272551271
+  },
+  {
+    "type": "pageerror",
+    "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "time": 1790272551890
+  }
+]

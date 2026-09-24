@@ -1,0 +1,254 @@
+[
+  {
+    "route": "Dashboard",
+    "path": "/dashboard",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 44,
+      "namelessButtonsCount": 1,
+      "totalInputs": 0,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 4,
+      "headingsHierarchy": [
+        {
+          "tag": "H2",
+          "text": "Platform command center"
+        },
+        {
+          "tag": "H1",
+          "text": "Command Center"
+        },
+        {
+          "tag": "H2",
+          "text": "Latest tenants"
+        },
+        {
+          "tag": "H2",
+          "text": "Ops log snapshot"
+        }
+      ]
+    },
+    "status": "WARNING"
+  },
+  {
+    "route": "CRM",
+    "path": "/dashboard/crm",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 44,
+      "namelessButtonsCount": 1,
+      "totalInputs": 0,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 0,
+      "headingsHierarchy": []
+    },
+    "status": "WARNING"
+  },
+  {
+    "route": "Contacts",
+    "path": "/dashboard/contacts",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 0,
+      "namelessButtonsCount": 0,
+      "totalInputs": 0,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 0,
+      "headingsHierarchy": []
+    },
+    "status": "PASS"
+  },
+  {
+    "route": "Leads",
+    "path": "/dashboard/leads",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 40,
+      "namelessButtonsCount": 1,
+      "totalInputs": 0,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 0,
+      "headingsHierarchy": []
+    },
+    "status": "WARNING"
+  },
+  {
+    "route": "Accounting",
+    "path": "/dashboard/accounting",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 40,
+      "namelessButtonsCount": 1,
+      "totalInputs": 0,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 0,
+      "headingsHierarchy": []
+    },
+    "status": "WARNING"
+  },
+  {
+    "route": "Settings",
+    "path": "/dashboard/business/settings",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/",
+      "BODY[]: {\"@context\":\"https:/"
+    ],
+    "domAudit": {
+      "totalButtons": 69,
+      "namelessButtonsCount": 9,
+      "totalInputs": 2,
+      "unlabelledInputsCount": 2,
+      "headingsCount": 10,
+      "headingsHierarchy": [
+        {
+          "tag": "H2",
+          "text": "Settings"
+        },
+        {
+          "tag": "H2",
+          "text": "bonnie"
+        },
+        {
+          "tag": "H4",
+          "text": "Email Outreach Logs"
+        },
+        {
+          "tag": "H4",
+          "text": "Project Status Sync"
+        },
+        {
+          "tag": "H4",
+          "text": "Inbound chat warnings"
+        },
+        {
+          "tag": "H4",
+          "text": "Event categories"
+        }
+      ]
+    },
+    "status": "WARNING"
+  },
+  {
+    "route": "Pricing",
+    "path": "/pricing",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "A[]: Skip to main content",
+      "A[]: AlphaCloneSYSTEMS",
+      "BUTTON[button]: Product",
+      "BUTTON[button]: Solutions",
+      "A[]: Integrations"
+    ],
+    "domAudit": {
+      "totalButtons": 15,
+      "namelessButtonsCount": 0,
+      "totalInputs": 1,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 13,
+      "headingsHierarchy": [
+        {
+          "tag": "H1",
+          "text": "One system. Choose your execut"
+        },
+        {
+          "tag": "H2",
+          "text": "Starter"
+        },
+        {
+          "tag": "H2",
+          "text": "Pro"
+        },
+        {
+          "tag": "H2",
+          "text": "Enterprise"
+        },
+        {
+          "tag": "H2",
+          "text": "Compare Execution Power Across"
+        },
+        {
+          "tag": "H2",
+          "text": "Frequently Asked Questions"
+        }
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "route": "Contact Us",
+    "path": "/contact",
+    "tabFocusCount": 15,
+    "firstFocusedElements": [
+      "A[]: Skip to main content",
+      "A[]: AlphaCloneSYSTEMS",
+      "BUTTON[button]: Product",
+      "BUTTON[button]: Solutions",
+      "A[]: Integrations"
+    ],
+    "domAudit": {
+      "totalButtons": 10,
+      "namelessButtonsCount": 0,
+      "totalInputs": 8,
+      "unlabelledInputsCount": 0,
+      "headingsCount": 4,
+      "headingsHierarchy": [
+        {
+          "tag": "H1",
+          "text": "Let's Build Your Growth Engine"
+        },
+        {
+          "tag": "H2",
+          "text": "Direct Channels"
+        },
+        {
+          "tag": "H2",
+          "text": "Send a Message"
+        },
+        {
+          "tag": "H4",
+          "text": "Your privacy choices"
+        }
+      ]
+    },
+    "status": "PASS"
+  }
+]

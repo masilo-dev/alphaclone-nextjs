@@ -53,3 +53,13 @@ select:focus-visible {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Mobile Tap Target Safeguards (WCAG 2.5.5 / 2.5.8 min 40px/44px) */
+@media (pointer: coarse), (max-width: 640px) {
+  button:not([data-no-touch-target]):not(.ac-compact-action),
+  a[role="button"]:not([data-no-touch-target]),
+  [role="button"]:not([data-no-touch-target]) {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}

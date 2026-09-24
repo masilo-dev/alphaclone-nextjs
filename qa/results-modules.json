@@ -1,0 +1,1585 @@
+[
+  {
+    "hub": "Core",
+    "label": "Workspace home",
+    "path": "/dashboard",
+    "status": "FAIL",
+    "loadTimeMs": 1304,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard.png"
+  },
+  {
+    "hub": "Core",
+    "label": "Operations Command",
+    "path": "/dashboard/operations",
+    "status": "FAIL",
+    "loadTimeMs": 992,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_operations.png"
+  },
+  {
+    "hub": "Core",
+    "label": "Bonnie AI",
+    "path": "/dashboard/business/bonnie",
+    "status": "FAIL",
+    "loadTimeMs": 858,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_bonnie.png"
+  },
+  {
+    "hub": "Core",
+    "label": "Approvals",
+    "path": "/dashboard/bonnie/approvals",
+    "status": "FAIL",
+    "loadTimeMs": 965,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_bonnie_approvals.png"
+  },
+  {
+    "hub": "Core",
+    "label": "Chase inbox",
+    "path": "/dashboard/bonnie/chases",
+    "status": "FAIL",
+    "loadTimeMs": 1000,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_bonnie_chases.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM overview",
+    "path": "/dashboard/crm",
+    "status": "FAIL",
+    "loadTimeMs": 854,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM workspace",
+    "path": "/dashboard/crm/workspace",
+    "status": "FAIL",
+    "loadTimeMs": 966,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm_workspace.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Sales Console",
+    "path": "/dashboard/crm/console",
+    "status": "FAIL",
+    "loadTimeMs": 818,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm_console.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Outreach",
+    "path": "/dashboard/outreach",
+    "status": "FAIL",
+    "loadTimeMs": 1303,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_outreach.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Reach inbox",
+    "path": "/dashboard/outreach/inbox",
+    "status": "FAIL",
+    "loadTimeMs": 1133,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_outreach_inbox.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Leads Board",
+    "path": "/dashboard/leads",
+    "status": "FAIL",
+    "loadTimeMs": 814,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_leads.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead Finder",
+    "path": "/dashboard/leads/finder",
+    "status": "FAIL",
+    "loadTimeMs": 846,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_leads_finder.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead sources alias",
+    "path": "/dashboard/leads/campaigns",
+    "status": "FAIL",
+    "loadTimeMs": 802,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_leads_campaigns.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead Ingestion",
+    "path": "/dashboard/business/ingestion",
+    "status": "FAIL",
+    "loadTimeMs": 844,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_ingestion.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Deals Pipeline",
+    "path": "/dashboard/deals",
+    "status": "FAIL",
+    "loadTimeMs": 1045,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_deals.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Contacts",
+    "path": "/dashboard/contacts",
+    "status": "FAIL",
+    "loadTimeMs": 1071,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_contacts.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Accounts",
+    "path": "/dashboard/crm/accounts",
+    "status": "FAIL",
+    "loadTimeMs": 911,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm_accounts.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM Reports",
+    "path": "/dashboard/crm/reports",
+    "status": "FAIL",
+    "loadTimeMs": 733,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm_reports.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Sales Forecast",
+    "path": "/dashboard/forecast",
+    "status": "FAIL",
+    "loadTimeMs": 786,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_forecast.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Goals & Targets",
+    "path": "/dashboard/goals",
+    "status": "FAIL",
+    "loadTimeMs": 841,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_goals.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Annual Planning",
+    "path": "/dashboard/planning",
+    "status": "FAIL",
+    "loadTimeMs": 1033,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_planning.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Jobs & Queue",
+    "path": "/dashboard/jobs",
+    "status": "FAIL",
+    "loadTimeMs": 800,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_jobs.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Production Tasks",
+    "path": "/dashboard/tasks",
+    "status": "FAIL",
+    "loadTimeMs": 983,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_tasks.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Webhooks",
+    "path": "/dashboard/webhooks",
+    "status": "FAIL",
+    "loadTimeMs": 726,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_webhooks.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Growth Agent",
+    "path": "/dashboard/sales-agent",
+    "status": "FAIL",
+    "loadTimeMs": 1218,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_sales-agent.png"
+  },
+  {
+    "hub": "Sales",
+    "label": "Activities",
+    "path": "/dashboard/crm/follow-ups",
+    "status": "FAIL",
+    "loadTimeMs": 807,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_crm_follow-ups.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Marketing overview",
+    "path": "/dashboard/marketing",
+    "status": "FAIL",
+    "loadTimeMs": 836,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_marketing.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Email Campaigns",
+    "path": "/dashboard/business/campaigns",
+    "status": "FAIL",
+    "loadTimeMs": 1268,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_campaigns.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Email campaigns alias",
+    "path": "/dashboard/email-campaigns",
+    "status": "FAIL",
+    "loadTimeMs": 865,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_email-campaigns.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Sequences",
+    "path": "/dashboard/marketing/sequences",
+    "status": "FAIL",
+    "loadTimeMs": 1008,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_marketing_sequences.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Deliverability",
+    "path": "/dashboard/marketing/deliverability",
+    "status": "FAIL",
+    "loadTimeMs": 1088,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_marketing_deliverability.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Branded Forms",
+    "path": "/dashboard/business/forms",
+    "status": "FAIL",
+    "loadTimeMs": 809,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_forms.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Social Overview",
+    "path": "/dashboard/business/social",
+    "status": "FAIL",
+    "loadTimeMs": 775,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_social.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Compose",
+    "path": "/dashboard/business/social/compose",
+    "status": "FAIL",
+    "loadTimeMs": 1015,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_social_compose.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Social Scheduler",
+    "path": "/dashboard/business/social-command",
+    "status": "FAIL",
+    "loadTimeMs": 916,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_social-command.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "LinkedIn",
+    "path": "/dashboard/business/linkedin",
+    "status": "FAIL",
+    "loadTimeMs": 692,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_linkedin.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Facebook",
+    "path": "/dashboard/business/facebook",
+    "status": "FAIL",
+    "loadTimeMs": 847,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_facebook.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Instagram",
+    "path": "/dashboard/business/instagram",
+    "status": "FAIL",
+    "loadTimeMs": 733,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_instagram.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "X/Twitter",
+    "path": "/dashboard/business/x",
+    "status": "FAIL",
+    "loadTimeMs": 918,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_x.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "SMS Outreach",
+    "path": "/dashboard/business/sms",
+    "status": "FAIL",
+    "loadTimeMs": 933,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_sms.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Accounting",
+    "path": "/dashboard/accounting",
+    "status": "FAIL",
+    "loadTimeMs": 586,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_accounting.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Banking",
+    "path": "/dashboard/accounting/banking",
+    "status": "FAIL",
+    "loadTimeMs": 991,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_accounting_banking.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Bills Payable",
+    "path": "/dashboard/accounting/bills",
+    "status": "FAIL",
+    "loadTimeMs": 829,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_accounting_bills.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Vendors",
+    "path": "/dashboard/vendors",
+    "status": "FAIL",
+    "loadTimeMs": 1127,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_vendors.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Period Close",
+    "path": "/dashboard/accounting/period-close",
+    "status": "FAIL",
+    "loadTimeMs": 813,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_accounting_period-close.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Billing",
+    "path": "/dashboard/business/billing",
+    "status": "FAIL",
+    "loadTimeMs": 882,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_billing.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Invoice Manager",
+    "path": "/dashboard/business/billing/manage",
+    "status": "FAIL",
+    "loadTimeMs": 892,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_billing_manage.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Finance / Expenses",
+    "path": "/dashboard/business/expenses",
+    "status": "FAIL",
+    "loadTimeMs": 829,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_expenses.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Quotes & Proposals",
+    "path": "/dashboard/business/quotes",
+    "status": "FAIL",
+    "loadTimeMs": 820,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_quotes.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Cash Flow Forecast",
+    "path": "/dashboard/business/cash-flow",
+    "status": "FAIL",
+    "loadTimeMs": 941,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_cash-flow.png"
+  },
+  {
+    "hub": "Money",
+    "label": "Tax Estimator",
+    "path": "/dashboard/business/tax-estimator",
+    "status": "FAIL",
+    "loadTimeMs": 881,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_tax-estimator.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Executive Dashboard",
+    "path": "/dashboard/executive",
+    "status": "FAIL",
+    "loadTimeMs": 784,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_executive.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Analytics",
+    "path": "/dashboard/analytics",
+    "status": "FAIL",
+    "loadTimeMs": 1074,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_analytics.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Performance",
+    "path": "/dashboard/performance",
+    "status": "FAIL",
+    "loadTimeMs": 1535,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_performance.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Revenue Reports",
+    "path": "/dashboard/business/reports",
+    "status": "FAIL",
+    "loadTimeMs": 806,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_reports.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Reporting",
+    "path": "/dashboard/reporting",
+    "status": "FAIL",
+    "loadTimeMs": 1039,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_reporting.png"
+  },
+  {
+    "hub": "Insights",
+    "label": "Notifications",
+    "path": "/dashboard/notifications",
+    "status": "FAIL",
+    "loadTimeMs": 5465,
+    "rating": "CRITICAL",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_notifications.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Documents",
+    "path": "/dashboard/business/documents",
+    "status": "FAIL",
+    "loadTimeMs": 1170,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_documents.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Vault",
+    "path": "/dashboard/business/vault",
+    "status": "FAIL",
+    "loadTimeMs": 953,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_vault.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Contracts",
+    "path": "/dashboard/business/contracts",
+    "status": "FAIL",
+    "loadTimeMs": 653,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_contracts.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Contract Manager",
+    "path": "/dashboard/business/contracts/manage",
+    "status": "FAIL",
+    "loadTimeMs": 747,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_contracts_manage.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Projects",
+    "path": "/dashboard/business/projects",
+    "status": "FAIL",
+    "loadTimeMs": 901,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_projects.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Project Manager",
+    "path": "/dashboard/business/projects/manage",
+    "status": "FAIL",
+    "loadTimeMs": 703,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_projects_manage.png"
+  },
+  {
+    "hub": "Documents",
+    "label": "Client Onboarding",
+    "path": "/dashboard/business/onboarding",
+    "status": "FAIL",
+    "loadTimeMs": 982,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_onboarding.png"
+  },
+  {
+    "hub": "Channels",
+    "label": "Tickets",
+    "path": "/dashboard/business/tickets",
+    "status": "FAIL",
+    "loadTimeMs": 878,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_tickets.png"
+  },
+  {
+    "hub": "Channels",
+    "label": "Team Messages",
+    "path": "/dashboard/business/messages",
+    "status": "FAIL",
+    "loadTimeMs": 616,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_messages.png"
+  },
+  {
+    "hub": "Channels",
+    "label": "Mail",
+    "path": "/dashboard/comms",
+    "status": "FAIL",
+    "loadTimeMs": 1002,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_comms.png"
+  },
+  {
+    "hub": "Channels",
+    "label": "WhatsApp",
+    "path": "/dashboard/business/whatsapp",
+    "status": "FAIL",
+    "loadTimeMs": 832,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_whatsapp.png"
+  },
+  {
+    "hub": "Schedule",
+    "label": "Calendar",
+    "path": "/dashboard/business/calendar",
+    "status": "FAIL",
+    "loadTimeMs": 964,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_calendar.png"
+  },
+  {
+    "hub": "Schedule",
+    "label": "Booking Links",
+    "path": "/dashboard/business/booking",
+    "status": "FAIL",
+    "loadTimeMs": 1283,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_booking.png"
+  },
+  {
+    "hub": "Schedule",
+    "label": "Meetings",
+    "path": "/dashboard/business/meetings",
+    "status": "FAIL",
+    "loadTimeMs": 954,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_meetings.png"
+  },
+  {
+    "hub": "Schedule",
+    "label": "Microsoft Teams",
+    "path": "/dashboard/business/teams",
+    "status": "FAIL",
+    "loadTimeMs": 815,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_teams.png"
+  },
+  {
+    "hub": "Workspace",
+    "label": "Integration Marketplace",
+    "path": "/dashboard/marketplace",
+    "status": "FAIL",
+    "loadTimeMs": 1284,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_marketplace.png"
+  },
+  {
+    "hub": "Workspace",
+    "label": "Workflow Builder",
+    "path": "/dashboard/business/workflows",
+    "status": "FAIL",
+    "loadTimeMs": 890,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_workflows.png"
+  },
+  {
+    "hub": "Workspace",
+    "label": "Platform Guide",
+    "path": "/dashboard/help",
+    "status": "FAIL",
+    "loadTimeMs": 836,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_help.png"
+  },
+  {
+    "hub": "Workspace",
+    "label": "Settings",
+    "path": "/dashboard/business/settings",
+    "status": "FAIL",
+    "loadTimeMs": 965,
+    "rating": "GOOD",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_settings.png"
+  },
+  {
+    "hub": "Workspace",
+    "label": "Audit trail",
+    "path": "/dashboard/business/audit",
+    "status": "FAIL",
+    "loadTimeMs": 1039,
+    "rating": "ACCEPTABLE",
+    "failureReason": "Blank screen rendered",
+    "controlsTested": [],
+    "screenshot": "qa/screenshots/modules/dashboard_business_audit.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Home Page",
+    "path": "/",
+    "status": "PASS",
+    "loadTimeMs": 1808,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 2135,
+        "rating": "WARNING",
+        "status": "PASS"
+      },
+      {
+        "name": "button[]",
+        "role": "button",
+        "latencyMs": 171,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "button[button]",
+        "role": "button",
+        "latencyMs": 434,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "button[]",
+        "role": "button",
+        "latencyMs": 1219,
+        "rating": "ACCEPTABLE",
+        "status": "PASS"
+      },
+      {
+        "name": "Pre-customer review",
+        "role": "button",
+        "latencyMs": 245,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/home.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Pricing",
+    "path": "/pricing",
+    "status": "PASS",
+    "loadTimeMs": 1601,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 58,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 61,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Solutions",
+        "role": "button",
+        "latencyMs": 67,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Who we serve\nFind the right path for your team",
+        "role": "a",
+        "latencyMs": 2769,
+        "rating": "WARNING",
+        "status": "PASS"
+      },
+      {
+        "name": "button[]",
+        "role": "button",
+        "latencyMs": 83,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "button[]",
+        "role": "button",
+        "latencyMs": 716,
+        "rating": "GOOD",
+        "status": "PASS"
+      },
+      {
+        "name": "button[]",
+        "role": "button",
+        "latencyMs": 91,
+        "rating": "INSTANT",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/pricing.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "About",
+    "path": "/about",
+    "status": "PASS",
+    "loadTimeMs": 1050,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 61,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 532,
+        "rating": "GOOD",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/about.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Contact",
+    "path": "/contact",
+    "status": "PASS",
+    "loadTimeMs": 1194,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 228,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 135,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Solutions",
+        "role": "button",
+        "latencyMs": 185,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/contact.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Book Demo",
+    "path": "/book-demo",
+    "status": "PASS",
+    "loadTimeMs": 686,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 85,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 286,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/book-demo.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Public CRM",
+    "path": "/crm",
+    "status": "PASS",
+    "loadTimeMs": 1420,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 59,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 706,
+        "rating": "GOOD",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/crm.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Platform Status",
+    "path": "/platform-status",
+    "status": "PASS",
+    "loadTimeMs": 1112,
+    "rating": "ACCEPTABLE",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 141,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 290,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 73,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 423,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 314,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 269,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 106,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 408,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 66,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 300,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Control-10",
+        "status": "FAIL",
+        "error": "locator.click: Element is not visible\nCall log:\n  - waiting for locator('button, [role=\"button\"], [role=\"tab\"], a[href^=\"/\"], input[type=\"search\"], select').nth(10)\n    - locator resolved to <a href=\"/book-demo\" aria-label=\"Book a demo\" class=\"mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-demo-mobile\">Book a demo</a>\n  - attempting click action\n    - scrolling into view if needed\n"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/platform-status.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Legal Privacy",
+    "path": "/legal/privacy",
+    "status": "PASS",
+    "loadTimeMs": 834,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 69,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 253,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 74,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 388,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 277,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 275,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 57,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 439,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 159,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 336,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Control-10",
+        "status": "FAIL",
+        "error": "locator.click: Element is not visible\nCall log:\n  - waiting for locator('button, [role=\"button\"], [role=\"tab\"], a[href^=\"/\"], input[type=\"search\"], select').nth(10)\n    - locator resolved to <a href=\"/book-demo\" aria-label=\"Book a demo\" class=\"mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-demo-mobile\">Book a demo</a>\n  - attempting click action\n    - scrolling into view if needed\n"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/legal_privacy.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Legal Terms",
+    "path": "/legal/terms",
+    "status": "PASS",
+    "loadTimeMs": 807,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 64,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 271,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 44,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 43,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 268,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 322,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 80,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 424,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 190,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 325,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Control-10",
+        "status": "FAIL",
+        "error": "locator.click: Element is not visible\nCall log:\n  - waiting for locator('button, [role=\"button\"], [role=\"tab\"], a[href^=\"/\"], input[type=\"search\"], select').nth(10)\n    - locator resolved to <a href=\"/book-demo\" aria-label=\"Book a demo\" class=\"mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-demo-mobile\">Book a demo</a>\n  - attempting click action\n    - scrolling into view if needed\n"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/legal_terms.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "FAQ",
+    "path": "/faq",
+    "status": "PASS",
+    "loadTimeMs": 559,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 56,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 230,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 44,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 489,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 203,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 287,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 47,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 536,
+        "rating": "GOOD",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 173,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 242,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Control-10",
+        "status": "FAIL",
+        "error": "locator.click: Element is not visible\nCall log:\n  - waiting for locator('button, [role=\"button\"], [role=\"tab\"], a[href^=\"/\"], input[type=\"search\"], select').nth(10)\n    - locator resolved to <a href=\"/book-demo\" aria-label=\"Book a demo\" class=\"mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-demo-mobile\">Book a demo</a>\n  - attempting click action\n    - scrolling into view if needed\n"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/faq.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "AI Business OS",
+    "path": "/ai-business-os",
+    "status": "PASS",
+    "loadTimeMs": 770,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 51,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 177,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 69,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 266,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 265,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 305,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 92,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 1212,
+        "rating": "ACCEPTABLE",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 290,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 496,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/ai-business-os.png"
+  },
+  {
+    "hub": "Marketing",
+    "label": "Agency Solutions",
+    "path": "/solutions/agencies",
+    "status": "PASS",
+    "loadTimeMs": 724,
+    "rating": "GOOD",
+    "failureReason": null,
+    "controlsTested": [
+      {
+        "name": "AlphaClone\nSYSTEMS",
+        "role": "a",
+        "latencyMs": 73,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Product",
+        "role": "button",
+        "latencyMs": 302,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Platform overview\nOne connected workspace",
+        "role": "a",
+        "latencyMs": 72,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Integrations",
+        "role": "a",
+        "latencyMs": 367,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Pricing",
+        "role": "a",
+        "latencyMs": 210,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Resources",
+        "role": "button",
+        "latencyMs": 99,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Documentation",
+        "role": "a",
+        "latencyMs": 60,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "EN\nES\nPL",
+        "role": "select",
+        "latencyMs": 470,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Sign in",
+        "role": "a",
+        "latencyMs": 99,
+        "rating": "INSTANT",
+        "status": "PASS"
+      },
+      {
+        "name": "Privacy",
+        "role": "a",
+        "latencyMs": 297,
+        "rating": "EXCELLENT",
+        "status": "PASS"
+      },
+      {
+        "name": "Control-10",
+        "status": "FAIL",
+        "error": "locator.click: Element is not visible\nCall log:\n  - waiting for locator('button, [role=\"button\"], [role=\"tab\"], a[href^=\"/\"], input[type=\"search\"], select').nth(10)\n    - locator resolved to <a href=\"/book-demo\" aria-label=\"Book a demo\" class=\"mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-demo-mobile\">Book a demo</a>\n  - attempting click action\n    - scrolling into view if needed\n"
+      }
+    ],
+    "screenshot": "qa/screenshots/modules/solutions_agencies.png"
+  }
+]

@@ -76,21 +76,44 @@ export async function requireAuthenticatedUser(
     };
 }
 
+type CachedProfile = {
+    profile: any;
+    cachedAt: number;
+};
+const profileCache = new Map<string, CachedProfile>();
+const membershipCache = new Map<string, { membership: TenantMembership; cachedAt: number }>();
+const AUTH_CACHE_TTL_MS = 15_000;
+
 async function requireActiveProfile(
     supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
     userId: string,
     options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
 ) {
-    const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('id, role, account_status, scheduled_deletion_at')
-        .eq('id', userId)
-        .maybeSingle();
+    const now = Date.now();
+    const cached = profileCache.get(userId);
+    let profile = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.profile : null;
 
-    if (error) {
-        console.error('[apiAuth] Failed to verify account status:', error);
-        throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+    if (!profile) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, role, account_status, scheduled_deletion_at')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('[apiAuth] Failed to verify account status:', error);
+            throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+        }
+        profile = data;
+        if (profile) {
+            if (profileCache.size > 500) {
+                const oldest = profileCache.keys().next().value;
+                if (oldest) profileCache.delete(oldest);
+            }
+            profileCache.set(userId, { profile, cachedAt: now });
+        }
     }
+
     if (!profile) {
         if (options?.allowMissingProfile) return null;
         throw new RouteAuthError(403, 'Account profile is unavailable', 'FORBIDDEN');
@@ -117,26 +140,41 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
 
     const { supabase, user, admin } = await requireAuthenticatedUser(req);
 
-    const { data, error } = await supabase
-        .from('tenant_users')
-        .select('tenant_id, role')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', user.id)
-        .maybeSingle();
+    const cleanTenantId = tenantId.trim();
+    const cacheKey = `${user.id}:${cleanTenantId}`;
+    const now = Date.now();
+    const cached = membershipCache.get(cacheKey);
+    let membership = cached && (now - cached.cachedAt < AUTH_CACHE_TTL_MS) ? cached.membership : null;
 
-    if (error) {
-        console.error('[apiAuth] Failed to verify tenant membership:', error);
-        throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
-    }
+    if (!membership) {
+        const { data, error } = await supabase
+            .from('tenant_users')
+            .select('tenant_id, role')
+            .eq('tenant_id', cleanTenantId)
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-    if (!data) {
-        throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
+        if (error) {
+            console.error('[apiAuth] Failed to verify tenant membership:', error);
+            throw new RouteAuthError(500, 'Failed to verify tenant access', 'INTERNAL_ERROR');
+        }
+
+        if (!data) {
+            throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
+        }
+
+        membership = data as TenantMembership;
+        if (membershipCache.size > 500) {
+            const oldest = membershipCache.keys().next().value;
+            if (oldest) membershipCache.delete(oldest);
+        }
+        membershipCache.set(cacheKey, { membership, cachedAt: now });
     }
 
     return {
         supabase,
         user,
-        membership: data as TenantMembership,
+        membership,
         admin,
     };
 }

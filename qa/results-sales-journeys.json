@@ -1,0 +1,152 @@
+[
+  {
+    "name": "CRM & Clients",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Dashboard",
+        "success": true,
+        "totalTime": 1547,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to CRM Overview",
+        "success": true,
+        "totalTime": 1148,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Contacts",
+        "success": true,
+        "totalTime": 1366,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Leads & Deals Pipeline",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Leads Board",
+        "success": true,
+        "totalTime": 1095,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Lead Finder",
+        "success": true,
+        "totalTime": 1198,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Deals Pipeline",
+        "success": true,
+        "totalTime": 1377,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Accounting & Cash Flow",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Accounting Hub",
+        "success": true,
+        "totalTime": 1304,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Invoice Manager",
+        "success": true,
+        "totalTime": 1322,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Quotes & Proposals",
+        "success": true,
+        "totalTime": 1199,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Social & Outreach Hub",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Outreach Hub",
+        "success": true,
+        "totalTime": 1443,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Reach Mailbox",
+        "success": true,
+        "totalTime": 1282,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Social Overview",
+        "success": true,
+        "totalTime": 1144,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Projects & Tasks",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Projects",
+        "success": true,
+        "totalTime": 1221,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Tasks Board",
+        "success": true,
+        "totalTime": 1207,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Contracts & E-Signature",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Contracts Hub",
+        "success": true,
+        "totalTime": 1337,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Contract Manager",
+        "success": true,
+        "totalTime": 1336,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Settings & Integrations",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Organization Settings",
+        "success": true,
+        "totalTime": 1219,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Integration Marketplace",
+        "success": true,
+        "totalTime": 1258,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  }
+]

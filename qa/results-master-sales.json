@@ -1,0 +1,2511 @@
+{
+  "account": "sales@alphaclonesystems.com",
+  "tenantId": "066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4",
+  "timestamp": "2026-09-24T18:32:22.390Z",
+  "metrics": {
+    "totalModulesTested": 89,
+    "totalScreensTested": 89,
+    "totalInteractionsAttempted": 135,
+    "passCount": 135,
+    "failCount": 0,
+    "slowCount": 0,
+    "criticalCount": 0,
+    "routeCoveragePercent": "89%",
+    "workflowCoveragePercent": "100%"
+  },
+  "qaTable": [
+    {
+      "module": "Workspace home",
+      "path": "/dashboard",
+      "hub": "Core",
+      "action": "Open Workspace home",
+      "result": "PASS",
+      "wait": "1.60s",
+      "waitMs": 1599,
+      "networkMs": 1015,
+      "renderMs": 412,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Operations Command",
+      "path": "/dashboard/operations",
+      "hub": "Core",
+      "action": "Open Operations Command",
+      "result": "PASS",
+      "wait": "1.26s",
+      "waitMs": 1257,
+      "networkMs": 559,
+      "renderMs": 419,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Bonnie AI",
+      "path": "/dashboard/business/bonnie",
+      "hub": "Core",
+      "action": "Open Bonnie AI",
+      "result": "PASS",
+      "wait": "1.20s",
+      "waitMs": 1203,
+      "networkMs": 560,
+      "renderMs": 412,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Approvals",
+      "path": "/dashboard/bonnie/approvals",
+      "hub": "Core",
+      "action": "Open Approvals",
+      "result": "PASS",
+      "wait": "1.36s",
+      "waitMs": 1363,
+      "networkMs": 848,
+      "renderMs": 411,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Chase inbox",
+      "path": "/dashboard/bonnie/chases",
+      "hub": "Core",
+      "action": "Open Chase inbox",
+      "result": "PASS",
+      "wait": "1.32s",
+      "waitMs": 1319,
+      "networkMs": 715,
+      "renderMs": 433,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "CRM overview",
+      "path": "/dashboard/crm",
+      "hub": "Sales",
+      "action": "Open CRM overview",
+      "result": "PASS",
+      "wait": "1.47s",
+      "waitMs": 1470,
+      "networkMs": 711,
+      "renderMs": 413,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "CRM workspace",
+      "path": "/dashboard/crm/workspace",
+      "hub": "Sales",
+      "action": "Open CRM workspace",
+      "result": "PASS",
+      "wait": "1.34s",
+      "waitMs": 1337,
+      "networkMs": 739,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Sales Console",
+      "path": "/dashboard/crm/console",
+      "hub": "Sales",
+      "action": "Open Sales Console",
+      "result": "PASS",
+      "wait": "1.25s",
+      "waitMs": 1249,
+      "networkMs": 571,
+      "renderMs": 413,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Outreach",
+      "path": "/dashboard/outreach",
+      "hub": "Sales",
+      "action": "Open Outreach",
+      "result": "PASS",
+      "wait": "1.40s",
+      "waitMs": 1400,
+      "networkMs": 755,
+      "renderMs": 413,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Reach inbox",
+      "path": "/dashboard/outreach/inbox",
+      "hub": "Sales",
+      "action": "Open Reach inbox",
+      "result": "PASS",
+      "wait": "1.57s",
+      "waitMs": 1569,
+      "networkMs": 1007,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Leads Board",
+      "path": "/dashboard/leads",
+      "hub": "Sales",
+      "action": "Open Leads Board",
+      "result": "PASS",
+      "wait": "1.24s",
+      "waitMs": 1241,
+      "networkMs": 515,
+      "renderMs": 416,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Lead Finder",
+      "path": "/dashboard/leads/finder",
+      "hub": "Sales",
+      "action": "Open Lead Finder",
+      "result": "PASS",
+      "wait": "1.75s",
+      "waitMs": 1745,
+      "networkMs": 804,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Lead sources alias",
+      "path": "/dashboard/leads/campaigns",
+      "hub": "Sales",
+      "action": "Open Lead sources alias",
+      "result": "PASS",
+      "wait": "1.35s",
+      "waitMs": 1346,
+      "networkMs": 731,
+      "renderMs": 410,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Lead Ingestion",
+      "path": "/dashboard/business/ingestion",
+      "hub": "Sales",
+      "action": "Open Lead Ingestion",
+      "result": "PASS",
+      "wait": "1.27s",
+      "waitMs": 1268,
+      "networkMs": 612,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Deals Pipeline",
+      "path": "/dashboard/deals",
+      "hub": "Sales",
+      "action": "Open Deals Pipeline",
+      "result": "PASS",
+      "wait": "1.25s",
+      "waitMs": 1246,
+      "networkMs": 762,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Contacts",
+      "path": "/dashboard/contacts",
+      "hub": "Sales",
+      "action": "Open Contacts",
+      "result": "PASS",
+      "wait": "1.21s",
+      "waitMs": 1205,
+      "networkMs": 499,
+      "renderMs": 417,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Accounts",
+      "path": "/dashboard/crm/accounts",
+      "hub": "Sales",
+      "action": "Open Accounts",
+      "result": "PASS",
+      "wait": "1.08s",
+      "waitMs": 1078,
+      "networkMs": 588,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "CRM Reports",
+      "path": "/dashboard/crm/reports",
+      "hub": "Sales",
+      "action": "Open CRM Reports",
+      "result": "PASS",
+      "wait": "1.13s",
+      "waitMs": 1128,
+      "networkMs": 496,
+      "renderMs": 489,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Sales Forecast",
+      "path": "/dashboard/forecast",
+      "hub": "Sales",
+      "action": "Open Sales Forecast",
+      "result": "PASS",
+      "wait": "1.35s",
+      "waitMs": 1354,
+      "networkMs": 786,
+      "renderMs": 413,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Goals & Targets",
+      "path": "/dashboard/goals",
+      "hub": "Sales",
+      "action": "Open Goals & Targets",
+      "result": "PASS",
+      "wait": "1.03s",
+      "waitMs": 1035,
+      "networkMs": 495,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Annual Planning",
+      "path": "/dashboard/planning",
+      "hub": "Sales",
+      "action": "Open Annual Planning",
+      "result": "PASS",
+      "wait": "1.15s",
+      "waitMs": 1145,
+      "networkMs": 488,
+      "renderMs": 414,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Jobs & Queue",
+      "path": "/dashboard/jobs",
+      "hub": "Sales",
+      "action": "Open Jobs & Queue",
+      "result": "PASS",
+      "wait": "1.32s",
+      "waitMs": 1325,
+      "networkMs": 808,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Production Tasks",
+      "path": "/dashboard/tasks",
+      "hub": "Sales",
+      "action": "Open Production Tasks",
+      "result": "PASS",
+      "wait": "1.47s",
+      "waitMs": 1469,
+      "networkMs": 935,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Webhooks",
+      "path": "/dashboard/webhooks",
+      "hub": "Sales",
+      "action": "Open Webhooks",
+      "result": "PASS",
+      "wait": "1.20s",
+      "waitMs": 1201,
+      "networkMs": 601,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Growth Agent",
+      "path": "/dashboard/sales-agent",
+      "hub": "Sales",
+      "action": "Open Growth Agent",
+      "result": "PASS",
+      "wait": "1.16s",
+      "waitMs": 1159,
+      "networkMs": 512,
+      "renderMs": 422,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Activities",
+      "path": "/dashboard/crm/follow-ups",
+      "hub": "Sales",
+      "action": "Open Activities",
+      "result": "PASS",
+      "wait": "1.41s",
+      "waitMs": 1407,
+      "networkMs": 914,
+      "renderMs": 404,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Marketing overview",
+      "path": "/dashboard/marketing",
+      "hub": "Marketing",
+      "action": "Open Marketing overview",
+      "result": "PASS",
+      "wait": "1.56s",
+      "waitMs": 1558,
+      "networkMs": 981,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Email Campaigns",
+      "path": "/dashboard/business/campaigns",
+      "hub": "Marketing",
+      "action": "Open Email Campaigns",
+      "result": "PASS",
+      "wait": "1.16s",
+      "waitMs": 1160,
+      "networkMs": 501,
+      "renderMs": 437,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Email campaigns alias",
+      "path": "/dashboard/email-campaigns",
+      "hub": "Marketing",
+      "action": "Open Email campaigns alias",
+      "result": "PASS",
+      "wait": "1.14s",
+      "waitMs": 1140,
+      "networkMs": 518,
+      "renderMs": 418,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Sequences",
+      "path": "/dashboard/marketing/sequences",
+      "hub": "Marketing",
+      "action": "Open Sequences",
+      "result": "PASS",
+      "wait": "1.23s",
+      "waitMs": 1234,
+      "networkMs": 689,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Deliverability",
+      "path": "/dashboard/marketing/deliverability",
+      "hub": "Marketing",
+      "action": "Open Deliverability",
+      "result": "PASS",
+      "wait": "1.17s",
+      "waitMs": 1170,
+      "networkMs": 582,
+      "renderMs": 409,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Branded Forms",
+      "path": "/dashboard/business/forms",
+      "hub": "Marketing",
+      "action": "Open Branded Forms",
+      "result": "PASS",
+      "wait": "1.15s",
+      "waitMs": 1148,
+      "networkMs": 604,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Social Overview",
+      "path": "/dashboard/business/social",
+      "hub": "Marketing",
+      "action": "Open Social Overview",
+      "result": "PASS",
+      "wait": "1.31s",
+      "waitMs": 1311,
+      "networkMs": 708,
+      "renderMs": 411,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Compose",
+      "path": "/dashboard/business/social/compose",
+      "hub": "Marketing",
+      "action": "Open Compose",
+      "result": "PASS",
+      "wait": "1.21s",
+      "waitMs": 1213,
+      "networkMs": 575,
+      "renderMs": 414,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Social Scheduler",
+      "path": "/dashboard/business/social-command",
+      "hub": "Marketing",
+      "action": "Open Social Scheduler",
+      "result": "PASS",
+      "wait": "1.19s",
+      "waitMs": 1190,
+      "networkMs": 573,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "LinkedIn",
+      "path": "/dashboard/business/linkedin",
+      "hub": "Marketing",
+      "action": "Open LinkedIn",
+      "result": "PASS",
+      "wait": "1.23s",
+      "waitMs": 1233,
+      "networkMs": 621,
+      "renderMs": 409,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Facebook",
+      "path": "/dashboard/business/facebook",
+      "hub": "Marketing",
+      "action": "Open Facebook",
+      "result": "PASS",
+      "wait": "1.20s",
+      "waitMs": 1199,
+      "networkMs": 539,
+      "renderMs": 420,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Instagram",
+      "path": "/dashboard/business/instagram",
+      "hub": "Marketing",
+      "action": "Open Instagram",
+      "result": "PASS",
+      "wait": "1.20s",
+      "waitMs": 1198,
+      "networkMs": 558,
+      "renderMs": 422,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "X/Twitter",
+      "path": "/dashboard/business/x",
+      "hub": "Marketing",
+      "action": "Open X/Twitter",
+      "result": "PASS",
+      "wait": "1.21s",
+      "waitMs": 1206,
+      "networkMs": 649,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "SMS Outreach",
+      "path": "/dashboard/business/sms",
+      "hub": "Marketing",
+      "action": "Open SMS Outreach",
+      "result": "PASS",
+      "wait": "1.29s",
+      "waitMs": 1290,
+      "networkMs": 651,
+      "renderMs": 417,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Accounting",
+      "path": "/dashboard/accounting",
+      "hub": "Money",
+      "action": "Open Accounting",
+      "result": "PASS",
+      "wait": "1.29s",
+      "waitMs": 1291,
+      "networkMs": 727,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Banking",
+      "path": "/dashboard/accounting/banking",
+      "hub": "Money",
+      "action": "Open Banking",
+      "result": "PASS",
+      "wait": "1.19s",
+      "waitMs": 1186,
+      "networkMs": 624,
+      "renderMs": 425,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Bills Payable",
+      "path": "/dashboard/accounting/bills",
+      "hub": "Money",
+      "action": "Open Bills Payable",
+      "result": "PASS",
+      "wait": "1.45s",
+      "waitMs": 1446,
+      "networkMs": 902,
+      "renderMs": 409,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Vendors",
+      "path": "/dashboard/vendors",
+      "hub": "Money",
+      "action": "Open Vendors",
+      "result": "PASS",
+      "wait": "1.36s",
+      "waitMs": 1362,
+      "networkMs": 680,
+      "renderMs": 444,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Period Close",
+      "path": "/dashboard/accounting/period-close",
+      "hub": "Money",
+      "action": "Open Period Close",
+      "result": "PASS",
+      "wait": "1.47s",
+      "waitMs": 1471,
+      "networkMs": 777,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Billing",
+      "path": "/dashboard/business/billing",
+      "hub": "Money",
+      "action": "Open Billing",
+      "result": "PASS",
+      "wait": "1.29s",
+      "waitMs": 1295,
+      "networkMs": 664,
+      "renderMs": 410,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Invoice Manager",
+      "path": "/dashboard/business/billing/manage",
+      "hub": "Money",
+      "action": "Open Invoice Manager",
+      "result": "PASS",
+      "wait": "1.61s",
+      "waitMs": 1607,
+      "networkMs": 1013,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Finance / Expenses",
+      "path": "/dashboard/business/expenses",
+      "hub": "Money",
+      "action": "Open Finance / Expenses",
+      "result": "PASS",
+      "wait": "1.27s",
+      "waitMs": 1272,
+      "networkMs": 738,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Quotes & Proposals",
+      "path": "/dashboard/business/quotes",
+      "hub": "Money",
+      "action": "Open Quotes & Proposals",
+      "result": "PASS",
+      "wait": "1.22s",
+      "waitMs": 1216,
+      "networkMs": 566,
+      "renderMs": 414,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Cash Flow Forecast",
+      "path": "/dashboard/business/cash-flow",
+      "hub": "Money",
+      "action": "Open Cash Flow Forecast",
+      "result": "PASS",
+      "wait": "1.17s",
+      "waitMs": 1172,
+      "networkMs": 542,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Tax Estimator",
+      "path": "/dashboard/business/tax-estimator",
+      "hub": "Money",
+      "action": "Open Tax Estimator",
+      "result": "PASS",
+      "wait": "1.28s",
+      "waitMs": 1278,
+      "networkMs": 757,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Executive Dashboard",
+      "path": "/dashboard/executive",
+      "hub": "Insights",
+      "action": "Open Executive Dashboard",
+      "result": "PASS",
+      "wait": "1.09s",
+      "waitMs": 1089,
+      "networkMs": 548,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Analytics",
+      "path": "/dashboard/analytics",
+      "hub": "Insights",
+      "action": "Open Analytics",
+      "result": "PASS",
+      "wait": "1.17s",
+      "waitMs": 1172,
+      "networkMs": 685,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Performance",
+      "path": "/dashboard/performance",
+      "hub": "Insights",
+      "action": "Open Performance",
+      "result": "PASS",
+      "wait": "1.11s",
+      "waitMs": 1114,
+      "networkMs": 537,
+      "renderMs": 465,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Revenue Reports",
+      "path": "/dashboard/business/reports",
+      "hub": "Insights",
+      "action": "Open Revenue Reports",
+      "result": "PASS",
+      "wait": "1.31s",
+      "waitMs": 1314,
+      "networkMs": 701,
+      "renderMs": 466,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Reporting",
+      "path": "/dashboard/reporting",
+      "hub": "Insights",
+      "action": "Open Reporting",
+      "result": "PASS",
+      "wait": "1.37s",
+      "waitMs": 1367,
+      "networkMs": 860,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Notifications",
+      "path": "/dashboard/notifications",
+      "hub": "Insights",
+      "action": "Open Notifications",
+      "result": "PASS",
+      "wait": "1.17s",
+      "waitMs": 1174,
+      "networkMs": 641,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Documents",
+      "path": "/dashboard/business/documents",
+      "hub": "Documents",
+      "action": "Open Documents",
+      "result": "PASS",
+      "wait": "1.28s",
+      "waitMs": 1277,
+      "networkMs": 681,
+      "renderMs": 433,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Vault",
+      "path": "/dashboard/business/vault",
+      "hub": "Documents",
+      "action": "Open Vault",
+      "result": "PASS",
+      "wait": "0.92s",
+      "waitMs": 920,
+      "networkMs": 259,
+      "renderMs": 419,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Contracts",
+      "path": "/dashboard/business/contracts",
+      "hub": "Documents",
+      "action": "Open Contracts",
+      "result": "PASS",
+      "wait": "0.99s",
+      "waitMs": 989,
+      "networkMs": 284,
+      "renderMs": 407,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Contract Manager",
+      "path": "/dashboard/business/contracts/manage",
+      "hub": "Documents",
+      "action": "Open Contract Manager",
+      "result": "PASS",
+      "wait": "0.90s",
+      "waitMs": 896,
+      "networkMs": 256,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Projects",
+      "path": "/dashboard/business/projects",
+      "hub": "Documents",
+      "action": "Open Projects",
+      "result": "PASS",
+      "wait": "0.95s",
+      "waitMs": 950,
+      "networkMs": 261,
+      "renderMs": 410,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Project Manager",
+      "path": "/dashboard/business/projects/manage",
+      "hub": "Documents",
+      "action": "Open Project Manager",
+      "result": "PASS",
+      "wait": "0.88s",
+      "waitMs": 878,
+      "networkMs": 261,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Client Onboarding",
+      "path": "/dashboard/business/onboarding",
+      "hub": "Documents",
+      "action": "Open Client Onboarding",
+      "result": "PASS",
+      "wait": "0.93s",
+      "waitMs": 925,
+      "networkMs": 274,
+      "renderMs": 411,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Tickets",
+      "path": "/dashboard/business/tickets",
+      "hub": "Channels",
+      "action": "Open Tickets",
+      "result": "PASS",
+      "wait": "0.93s",
+      "waitMs": 930,
+      "networkMs": 258,
+      "renderMs": 411,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Team Messages",
+      "path": "/dashboard/business/messages",
+      "hub": "Channels",
+      "action": "Open Team Messages",
+      "result": "PASS",
+      "wait": "1.19s",
+      "waitMs": 1189,
+      "networkMs": 474,
+      "renderMs": 419,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Mail",
+      "path": "/dashboard/comms",
+      "hub": "Channels",
+      "action": "Open Mail",
+      "result": "PASS",
+      "wait": "0.92s",
+      "waitMs": 921,
+      "networkMs": 283,
+      "renderMs": 422,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "WhatsApp",
+      "path": "/dashboard/business/whatsapp",
+      "hub": "Channels",
+      "action": "Open WhatsApp",
+      "result": "PASS",
+      "wait": "0.95s",
+      "waitMs": 950,
+      "networkMs": 284,
+      "renderMs": 416,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Calendar",
+      "path": "/dashboard/business/calendar",
+      "hub": "Schedule",
+      "action": "Open Calendar",
+      "result": "PASS",
+      "wait": "0.94s",
+      "waitMs": 941,
+      "networkMs": 373,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Collapse navigation",
+          "latencyMs": 433,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "AS",
+          "latencyMs": 480,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Booking Links",
+      "path": "/dashboard/business/booking",
+      "hub": "Schedule",
+      "action": "Open Booking Links",
+      "result": "PASS",
+      "wait": "1.03s",
+      "waitMs": 1031,
+      "networkMs": 364,
+      "renderMs": 428,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Expand navigation",
+          "latencyMs": 388,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Home",
+          "latencyMs": 588,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "module": "Meetings",
+      "path": "/dashboard/business/meetings",
+      "hub": "Schedule",
+      "action": "Open Meetings",
+      "result": "PASS",
+      "wait": "1.24s",
+      "waitMs": 1238,
+      "networkMs": 640,
+      "renderMs": 420,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Microsoft Teams",
+      "path": "/dashboard/business/teams",
+      "hub": "Schedule",
+      "action": "Open Microsoft Teams",
+      "result": "PASS",
+      "wait": "0.93s",
+      "waitMs": 934,
+      "networkMs": 272,
+      "renderMs": 409,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Integration Marketplace",
+      "path": "/dashboard/marketplace",
+      "hub": "Workspace",
+      "action": "Open Integration Marketplace",
+      "result": "PASS",
+      "wait": "0.96s",
+      "waitMs": 965,
+      "networkMs": 338,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Workflow Builder",
+      "path": "/dashboard/business/workflows",
+      "hub": "Workspace",
+      "action": "Open Workflow Builder",
+      "result": "PASS",
+      "wait": "0.89s",
+      "waitMs": 890,
+      "networkMs": 261,
+      "renderMs": 431,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Platform Guide",
+      "path": "/dashboard/help",
+      "hub": "Workspace",
+      "action": "Open Platform Guide",
+      "result": "PASS",
+      "wait": "0.96s",
+      "waitMs": 961,
+      "networkMs": 272,
+      "renderMs": 434,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Settings",
+      "path": "/dashboard/business/settings",
+      "hub": "Workspace",
+      "action": "Open Settings",
+      "result": "PASS",
+      "wait": "0.91s",
+      "waitMs": 908,
+      "networkMs": 261,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Audit trail",
+      "path": "/dashboard/business/audit",
+      "hub": "Workspace",
+      "action": "Open Audit trail",
+      "result": "PASS",
+      "wait": "1.10s",
+      "waitMs": 1104,
+      "networkMs": 568,
+      "renderMs": 405,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Collapse navigation",
+          "latencyMs": 683,
+          "rating": "GOOD"
+        },
+        {
+          "name": "AS",
+          "latencyMs": 361,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Home Page",
+      "path": "/",
+      "hub": "Marketing",
+      "action": "Open Home Page",
+      "result": "PASS",
+      "wait": "1.16s",
+      "waitMs": 1157,
+      "networkMs": 293,
+      "renderMs": 414,
+      "issue": "None",
+      "controls": []
+    },
+    {
+      "module": "Pricing",
+      "path": "/pricing",
+      "hub": "Marketing",
+      "action": "Open Pricing",
+      "result": "PASS",
+      "wait": "1.32s",
+      "waitMs": 1316,
+      "networkMs": 334,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 256,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 252,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "About",
+      "path": "/about",
+      "hub": "Marketing",
+      "action": "Open About",
+      "result": "PASS",
+      "wait": "1.03s",
+      "waitMs": 1033,
+      "networkMs": 249,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 251,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 248,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Contact",
+      "path": "/contact",
+      "hub": "Marketing",
+      "action": "Open Contact",
+      "result": "PASS",
+      "wait": "1.01s",
+      "waitMs": 1015,
+      "networkMs": 262,
+      "renderMs": 429,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 261,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 324,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Book Demo",
+      "path": "/book-demo",
+      "hub": "Marketing",
+      "action": "Open Book Demo",
+      "result": "PASS",
+      "wait": "1.09s",
+      "waitMs": 1090,
+      "networkMs": 267,
+      "renderMs": 430,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 363,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 1063,
+          "rating": "ACCEPTABLE"
+        }
+      ]
+    },
+    {
+      "module": "Public CRM",
+      "path": "/crm",
+      "hub": "Marketing",
+      "action": "Open Public CRM",
+      "result": "PASS",
+      "wait": "1.10s",
+      "waitMs": 1103,
+      "networkMs": 328,
+      "renderMs": 413,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 259,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 256,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Platform Status",
+      "path": "/platform-status",
+      "hub": "Marketing",
+      "action": "Open Platform Status",
+      "result": "PASS",
+      "wait": "1.17s",
+      "waitMs": 1172,
+      "networkMs": 389,
+      "renderMs": 408,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 258,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 263,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Legal Privacy",
+      "path": "/legal/privacy",
+      "hub": "Marketing",
+      "action": "Open Legal Privacy",
+      "result": "PASS",
+      "wait": "1.23s",
+      "waitMs": 1225,
+      "networkMs": 431,
+      "renderMs": 410,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 259,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 275,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Legal Terms",
+      "path": "/legal/terms",
+      "hub": "Marketing",
+      "action": "Open Legal Terms",
+      "result": "PASS",
+      "wait": "1.43s",
+      "waitMs": 1426,
+      "networkMs": 859,
+      "renderMs": 404,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 258,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 244,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "FAQ",
+      "path": "/faq",
+      "hub": "Marketing",
+      "action": "Open FAQ",
+      "result": "PASS",
+      "wait": "1.01s",
+      "waitMs": 1015,
+      "networkMs": 259,
+      "renderMs": 409,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 260,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 252,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "AI Business OS",
+      "path": "/ai-business-os",
+      "hub": "Marketing",
+      "action": "Open AI Business OS",
+      "result": "PASS",
+      "wait": "1.23s",
+      "waitMs": 1225,
+      "networkMs": 432,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 270,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 241,
+          "rating": "EXCELLENT"
+        }
+      ]
+    },
+    {
+      "module": "Agency Solutions",
+      "path": "/solutions/agencies",
+      "hub": "Marketing",
+      "action": "Open Agency Solutions",
+      "result": "PASS",
+      "wait": "1.00s",
+      "waitMs": 1004,
+      "networkMs": 420,
+      "renderMs": 406,
+      "issue": "None",
+      "controls": [
+        {
+          "name": "Product",
+          "latencyMs": 255,
+          "rating": "EXCELLENT"
+        },
+        {
+          "name": "Solutions",
+          "latencyMs": 240,
+          "rating": "EXCELLENT"
+        }
+      ]
+    }
+  ],
+  "top10Slowest": [
+    {
+      "location": "Sales > Lead Finder (/dashboard/leads/finder)",
+      "waitMs": 1745,
+      "networkMs": 804,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Invoice Manager (/dashboard/business/billing/manage)",
+      "waitMs": 1607,
+      "networkMs": 1013,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Workspace home (/dashboard)",
+      "waitMs": 1599,
+      "networkMs": 1015,
+      "renderMs": 412,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Reach inbox (/dashboard/outreach/inbox)",
+      "waitMs": 1569,
+      "networkMs": 1007,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Marketing overview (/dashboard/marketing)",
+      "waitMs": 1558,
+      "networkMs": 981,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Period Close (/dashboard/accounting/period-close)",
+      "waitMs": 1471,
+      "networkMs": 777,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > CRM overview (/dashboard/crm)",
+      "waitMs": 1470,
+      "networkMs": 711,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Production Tasks (/dashboard/tasks)",
+      "waitMs": 1469,
+      "networkMs": 935,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Bills Payable (/dashboard/accounting/bills)",
+      "waitMs": 1446,
+      "networkMs": 902,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Legal Terms (/legal/terms)",
+      "waitMs": 1426,
+      "networkMs": 859,
+      "renderMs": 404,
+      "rating": "ACCEPTABLE"
+    }
+  ],
+  "journeys": [
+    {
+      "name": "CRM & Clients",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Dashboard",
+          "success": true,
+          "latencyMs": 920,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to CRM Overview",
+          "success": true,
+          "latencyMs": 938,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Contacts",
+          "success": true,
+          "latencyMs": 928,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Leads & Deals Pipeline",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Leads Board",
+          "success": true,
+          "latencyMs": 1023,
+          "rating": "ACCEPTABLE"
+        },
+        {
+          "actionName": "Navigate to Lead Finder",
+          "success": true,
+          "latencyMs": 804,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Deals Pipeline",
+          "success": true,
+          "latencyMs": 849,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Accounting & Cash Flow",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Accounting Hub",
+          "success": true,
+          "latencyMs": 904,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Invoice Manager",
+          "success": true,
+          "latencyMs": 858,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Quotes & Proposals",
+          "success": true,
+          "latencyMs": 870,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Social & Outreach Hub",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Outreach Hub",
+          "success": true,
+          "latencyMs": 842,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Reach Mailbox",
+          "success": true,
+          "latencyMs": 911,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Social Overview",
+          "success": true,
+          "latencyMs": 971,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Projects & Tasks",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Projects",
+          "success": true,
+          "latencyMs": 903,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Tasks Board",
+          "success": true,
+          "latencyMs": 895,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Contracts & E-Signature",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Contracts Hub",
+          "success": true,
+          "latencyMs": 815,
+          "rating": "GOOD"
+        },
+        {
+          "actionName": "Navigate to Contract Manager",
+          "success": true,
+          "latencyMs": 908,
+          "rating": "GOOD"
+        }
+      ]
+    },
+    {
+      "name": "Settings & Integrations",
+      "status": "PASS",
+      "steps": [
+        {
+          "actionName": "Navigate to Organization Settings",
+          "success": true,
+          "latencyMs": 1049,
+          "rating": "ACCEPTABLE"
+        },
+        {
+          "actionName": "Navigate to Integration Marketplace",
+          "success": true,
+          "latencyMs": 844,
+          "rating": "GOOD"
+        }
+      ]
+    }
+  ],
+  "mobile": [
+    {
+      "viewport": "mobile-320",
+      "routes": [
+        {
+          "route": "/dashboard",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 320,
+            "innerWidth": 320
+          },
+          "smallTargetCount": 0,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/crm",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 320,
+            "innerWidth": 320
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/leads",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 320,
+            "innerWidth": 320
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/accounting",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 320,
+            "innerWidth": 320
+          },
+          "smallTargetCount": 0,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/business/social",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 320,
+            "innerWidth": 320
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "viewport": "mobile-390",
+      "routes": [
+        {
+          "route": "/dashboard",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 390,
+            "innerWidth": 390
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/crm",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 390,
+            "innerWidth": 390
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/leads",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 390,
+            "innerWidth": 390
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/accounting",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 390,
+            "innerWidth": 390
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/business/social",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 390,
+            "innerWidth": 390
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        }
+      ]
+    },
+    {
+      "viewport": "mobile-430",
+      "routes": [
+        {
+          "route": "/dashboard",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 430,
+            "innerWidth": 430
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/crm",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 430,
+            "innerWidth": 430
+          },
+          "smallTargetCount": 0,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/leads",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 430,
+            "innerWidth": 430
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/accounting",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 430,
+            "innerWidth": 430
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        },
+        {
+          "route": "/dashboard/business/social",
+          "overflow": {
+            "hasOverflow": false,
+            "scrollWidth": 430,
+            "innerWidth": 430
+          },
+          "smallTargetCount": 11,
+          "status": "PASS"
+        }
+      ]
+    }
+  ],
+  "walkthrough": {
+    "step3Advances": false,
+    "skipDismissesOverlay": false
+  },
+  "stress": [
+    {
+      "cycle": 1,
+      "durationMs": 2715,
+      "avgPerRouteMs": 543
+    },
+    {
+      "cycle": 2,
+      "durationMs": 2643,
+      "avgPerRouteMs": 529
+    },
+    {
+      "cycle": 3,
+      "durationMs": 2743,
+      "avgPerRouteMs": 549
+    }
+  ],
+  "networkErrors": [
+    {
+      "status": 401,
+      "url": "https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/pat/a403dda83d0ec527/1790274684573/d99bf258cd92d06118917041aa32adfbc1b65e2d40b3f0e270a48dc04dcd29d7/hok7CSneM8mWWm0hwNg.8iwASKlarG9uOkoAr7pMGgk-1790274684-1.3.1.1-bqYjlFTXxfDsjEJarnvRO8VaAGGy2xjyOtH8QQ.998daTAy73Nek23MzaibGUebN11FYw0CrUY6yn8ZboXBdg7ueb3KWmQYFf.6ePWkGdV.q.mAe8UHJL2sGUwyzZ0ZdnLF60JU32w8Xzyyn3JijCFb8UcwOm2O9RgWJNWVhtTFgOpX9qudc_vTO2Jin7YumkVIKQCpY_jsmQJ_5Wesn3tuU3RmIsVgIrc.YcOrNfH1EVQK3Adc9Vzn8r4A4QXgEFIuM5i3cNzSDeWA1vxCwwcHDEhiYHpHNTt243BmDbetjcwuVHty45QXRAjFADoHQLoWNd8h3ejozRUMonxNoq9F0xfIQfRD8sodGhn5WDKtf3XYAvrg1b7gocG6mro0xqkm1afevrdWASKqVm.oViNi4kTIvqWJgL.bEWQ8uKzyHsqNarW9pAkycxhHhjFIcjzmpAPhZerNvT4hCzys_H2KGP.Pm.88Ksphsj6neATCD4j83f_5LLKx8op62Xr12gpIT5Yz4jBt.Z7vXZlzJ99ZZWCvKIwtyBalVZlTT_mGXpWFdXJ57G67uuiyM_RgXNiXuM_HwhBP7m3Db8HA12lKsoEtwRRUpQRuZlsy7OQHegAqYl2auG0kKYR64vgq05VTwNy6ccPXWi6qU31.YPQahQFDzmk8Y6AgdtsZx91BQb_EfOiqx2D8WWatwK.v0v492Js4cqqSJ9QNnQfKsAtAWBSlHOock2sid_2LTSKNiji1_v8Msz1TgDJmIe6J33iJT97XWtVjsGCHluPAg6d0qKt7QYxxdoDf2oSuGIzosF_eMgG6KgPeEWxZvBR6o",
+      "statusText": "",
+      "durationMs": 4
+    }
+  ],
+  "consoleLogs": [
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274566392
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274568821
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274575831
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274577504
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274578534
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274580427
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274582051
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274585576
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274586158
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274591084
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274592445
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274594513
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274596569
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274598109
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274601152
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274601659
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274602652
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274608637
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274611186
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274611186
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274615487
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274616879
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274617413
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274618275
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274623863
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274625517
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274626831
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at s (https://alphaclonesystems.com/_next/static/chunks/75034.3ca18778cfeb4d18.js:1:3172)\n    at Object.getBills (https://alphaclonesystems.com/_next/static/chunks/75034.3ca18778cfeb4d18.js:1:3680)\n    at https://alphaclonesystems.com/_next/static/chunks/75034.3ca18778cfeb4d18.js:1:4364\n    at https://alphaclonesystems.com/_next/static/chunks/75034.3ca18778cfeb4d18.js:1:4598\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+      "time": 1790274628598
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274630351
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274631965
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274635344
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274637420
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274639739
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274645981
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274648370
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274650003
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274652479
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274655745
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274657908
+    },
+    {
+      "type": "error",
+      "text": "Failed to load MCP API key: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71134\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71343\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118321)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)",
+      "time": 1790274665529
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274665529
+    },
+    {
+      "type": "error",
+      "text": "Failed to load business settings: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:70285\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71050\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118321)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)",
+      "time": 1790274665529
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274665529
+    },
+    {
+      "type": "error",
+      "text": "Failed to load business settings: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:70285\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71050\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+      "time": 1790274665529
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274665530
+    },
+    {
+      "type": "error",
+      "text": "Failed to load MCP API key: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71134\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71343\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+      "time": 1790274665530
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274665799
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274667115
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274667675
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274668002
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274668002
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274668002
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274671844
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274672997
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274675275
+    },
+    {
+      "type": "error",
+      "text": "Failed to load MCP API key: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71134\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71343\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118321)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)",
+      "time": 1790274678554
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274678554
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274678554
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274678554
+    },
+    {
+      "type": "error",
+      "text": "Failed to load MCP API key: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71134\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71343\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+      "time": 1790274678557
+    },
+    {
+      "type": "error",
+      "text": "Failed to load business settings: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:70285\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71050\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)",
+      "time": 1790274678557
+    },
+    {
+      "type": "error",
+      "text": "Failed to load business settings: TypeError: Failed to fetch\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:70285\n    at https://alphaclonesystems.com/_next/static/chunks/60867.8188b564a2ec12cd.js:1:71050\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118321)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)",
+      "time": 1790274678557
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274678557
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274679722
+    },
+    {
+      "type": "warning",
+      "text": "No available adapters.",
+      "time": 1790274684419
+    },
+    {
+      "type": "startGroupCollapsed",
+      "text": "",
+      "time": 1790274685477
+    },
+    {
+      "type": "debug",
+      "text": "Error",
+      "time": 1790274685478
+    },
+    {
+      "type": "log",
+      "text": "/.*.*=.*/",
+      "time": 1790274685487
+    },
+    {
+      "type": "log",
+      "text": "/.*.*=.*/",
+      "time": 1790274685497
+    },
+    {
+      "type": "log",
+      "text": "function () { [native code] }",
+      "time": 1790274685497
+    },
+    {
+      "type": "log",
+      "text": "function () { [native code] }",
+      "time": 1790274685497
+    },
+    {
+      "type": "log",
+      "text": "JSHandle@node",
+      "time": 1790274685497
+    },
+    {
+      "type": "log",
+      "text": "JSHandle@node",
+      "time": 1790274685497
+    },
+    {
+      "type": "count",
+      "text": "\u0000: 1",
+      "time": 1790274685502
+    },
+    {
+      "type": "count",
+      "text": "\u0000: 1",
+      "time": 1790274685502
+    },
+    {
+      "type": "debug",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "debug",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "dir",
+      "text": " Error",
+      "time": 1790274685502
+    },
+    {
+      "type": "dir",
+      "text": " Error",
+      "time": 1790274685502
+    },
+    {
+      "type": "dirxml",
+      "text": "%c%d font-size:0;color:transparent Error",
+      "time": 1790274685502
+    },
+    {
+      "type": "dirxml",
+      "text": "%c%d font-size:0;color:transparent Error",
+      "time": 1790274685502
+    },
+    {
+      "type": "error",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "error",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "info",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "info",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "log",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685502
+    },
+    {
+      "type": "log",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685503
+    },
+    {
+      "type": "table",
+      "text": "%c%d font-size:0;color:transparent Error",
+      "time": 1790274685503
+    },
+    {
+      "type": "table",
+      "text": "%c%d font-size:0;color:transparent Error",
+      "time": 1790274685503
+    },
+    {
+      "type": "trace",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685503
+    },
+    {
+      "type": "trace",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685503
+    },
+    {
+      "type": "warning",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685503
+    },
+    {
+      "type": "warning",
+      "text": "%c%d font-size:0;color:transparent NaN",
+      "time": 1790274685503
+    },
+    {
+      "type": "endGroup",
+      "text": "console.groupEnd",
+      "time": 1790274685503
+    },
+    {
+      "type": "warning",
+      "text": "OTS parsing error: Size of decompressed WOFF 2.0 is less than compressed size",
+      "time": 1790274685504
+    },
+    {
+      "type": "warning",
+      "text": "Error with Permissions-Policy header: Unrecognized feature: 'bluetooth'.",
+      "time": 1790274686731
+    },
+    {
+      "type": "warning",
+      "text": "Cal.com Embed: `styles` prop is deprecated. Use `cssVarsPerTheme` instead to achieve the same effect. Here is a list of CSS variables that are supported. https://github.com/calcom/cal.com/blob/main/packages/config/tailwind-preset.js#L19",
+      "time": 1790274687286
+    },
+    {
+      "type": "warning",
+      "text": "Existing embed CSS Vars are being reset",
+      "time": 1790274687287
+    },
+    {
+      "type": "warning",
+      "text": "Existing embed CSS Vars are being reset",
+      "time": 1790274687289
+    },
+    {
+      "type": "log",
+      "text": "{\"0\":\"tRPC request failed\",\"1\":{\"path\":\"viewer.slots.getSchedule\",\"type\":\"query\",\"code\":\"INTERNAL_SERVER_ERROR\",\"httpStatus\":null,\"elapsedMs\":1112.3999999910593},\"_meta\":{\"runtime\":\"Browser\",\"browser\":\"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/145.0.7632.6 Safari/537.36\",\"date\":\"2026-09-24T18:31:28.792Z\",\"logLevelId\":5,\"logLevelName\":\"ERROR\",\"path\":{\"fullFilePath\":\"https://app.cal.com/app.cal.com/_next/static/chunks/2r8wqjxg_ne4n.js\",\"fileName\":\"2r8wqjxg_ne4n.js\",\"fileNameWithLine\":\"2r8wqjxg_ne4n.js:1\",\"fileColumn\":\"40649\",\"fileLine\":\"1\",\"filePath\":\"/app.cal.com/_next/static/chunks/2r8wqjxg_ne4n.js\",\"filePathWithLine\":\"/app.cal.com/_next/static/chunks/2r8wqjxg_ne4n.js:1\"}}}",
+      "time": 1790274688794
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274702581
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274703471
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274704447
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274707126
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274708849
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274709723
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274710594
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274711613
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274714242
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274714242
+    },
+    {
+      "type": "warning",
+      "text": "[contractSignerProfile] load failed TypeError: Failed to fetch\n    at Object.load (https://alphaclonesystems.com/_next/static/chunks/9533.8d822b6a51d26b6a.js:142:9870)\n    at https://alphaclonesystems.com/_next/static/chunks/9533.8d822b6a51d26b6a.js:157:4406\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)",
+      "time": 1790274716024
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274717052
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274718018
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274719045
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274719873
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274720175
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274721116
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274722001
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274722922
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274723779
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274723876
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274724541
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274724871
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274725112
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274725823
+    },
+    {
+      "type": "error",
+      "text": "TypeError: Failed to fetch\n    at fetch (https://alphaclonesystems.com/_next/static/chunks/86859-6c9c5c44083426b0.js:1:9427)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:38457\n    at tU (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:43413)\n    at tx (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:50:42941)\n    at https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14906\n    at rc._useSession (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:12424)\n    at async rc._getUser (https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14737)\n    at async https://alphaclonesystems.com/_next/static/chunks/76630-4e5fd3b89b7cd0a2.js:63:14531",
+      "time": 1790274725823
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274726781
+    },
+    {
+      "type": "error",
+      "text": "Error fetching receipts: TypeError: Failed to fetch\n    at Object.getReceipts (https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:906)\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:116647\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:117818\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)",
+      "time": 1790274726781
+    },
+    {
+      "type": "error",
+      "text": "Error fetching receipts: TypeError: Failed to fetch\n    at Object.getReceipts (https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:906)\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:116647\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:117818\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118321)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118176)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118434)",
+      "time": 1790274726781
+    },
+    {
+      "type": "error",
+      "text": "Error fetching finance snapshot: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error fetching accounts: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error calculating profit & loss: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error calculating profit & loss: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error fetching accounts: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error fetching finance snapshot: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error calculating trial balance: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "Error calculating trial balance: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at fetch (https://a…/static/chunks/20403.7ddb66c95287d96e.js:1:116388, hint: , code: }",
+      "time": 1790274726791
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274727693
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274728368
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274728642
+    },
+    {
+      "type": "error",
+      "text": "Error fetching receipts: TypeError: Failed to fetch\n    at Object.getReceipts (https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:906)\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:116647\n    at https://alphaclonesystems.com/_next/static/chunks/20403.7ddb66c95287d96e.js:1:117818\n    at iw (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:93027)\n    at e (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118189)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:118460)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)\n    at uh (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:116728)\n    at ug (https://alphaclonesystems.com/_next/static/chunks/4bd1b696-5e2e06237e9f942d.js:1:117111)",
+      "time": 1790274731474
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274731474
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274732673
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274733187
+    },
+    {
+      "type": "warning",
+      "text": "The width(-1) and height(-1) of chart should be greater than 0,\n       please check the style of container, or the props width(100%) and height(100%),\n       or add a minWidth(0) or minHeight(132) or use aspect(undefined) to control the\n       height and width.",
+      "time": 1790274733904
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:12645)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274734494
+    },
+    {
+      "type": "error",
+      "text": "[WalkthroughService] Save profile status failed TypeError: Failed to fetch\n    at o (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:537:2380)\n    at c (https://alphaclonesystems.com/_next/static/chunks/38006.cafbf43b470bce61.js:622:13112)\n    at async https://alphaclonesystems.com/_next/static/chunks/35463.b5c7cedb656c2506.js:6:43829",
+      "time": 1790274734494
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274735642
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274737761
+    },
+    {
+      "type": "warning",
+      "text": "[TenantService] get_user_tenants RPC failed, falling back to direct query: TypeError: Failed to fetch",
+      "time": 1790274739861
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274740638
+    },
+    {
+      "type": "pageerror",
+      "text": "Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+      "time": 1790274741723
+    }
+  ]
+}

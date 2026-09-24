@@ -83,6 +83,7 @@ current_tsc*.txt
 # Test artifacts
 /playwright-report/
 /test-results/
+/qa/screenshots/
 
 # Misc output files
 diff.txt

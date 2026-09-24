@@ -1,0 +1,151 @@
+{
+  "superAdmin": [
+    {
+      "actionName": "Super Admin Command Center (/dashboard)",
+      "success": true,
+      "clickTime": 4196,
+      "responseTime": 4203,
+      "totalTime": 4504,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Command Center Refresh Action",
+      "success": true,
+      "clickTime": 4062,
+      "responseTime": 4064,
+      "totalTime": 4366,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Super Admin Tenants Hub (/dashboard/admin/tenants)",
+      "success": false,
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('a[href*=\"tenants\"], button:has-text(\"Tenants\")').first()\n    - locator resolved to <button class=\"ac-workspace-nav-item  gap-2.5 group relative touch-manipulation\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    55 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
+      "totalTime": 30112,
+      "category": "CRITICAL"
+    },
+    {
+      "actionName": "Super Admin Ops & Logs (/dashboard/admin/operations)",
+      "success": true,
+      "clickTime": 3538,
+      "responseTime": 3539,
+      "totalTime": 3842,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Super Admin Executive Analytics (/dashboard/executive)",
+      "success": true,
+      "clickTime": 2886,
+      "responseTime": 2887,
+      "totalTime": 3187,
+      "category": "POOR"
+    }
+  ],
+  "tenantDashboard": [
+    {
+      "actionName": "Tenant Operations Home (/dashboard/operations)",
+      "success": true,
+      "clickTime": 3169,
+      "responseTime": 3170,
+      "totalTime": 3471,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Tenant CRM Workspace (/dashboard/crm/workspace)",
+      "success": true,
+      "clickTime": 3179,
+      "responseTime": 3179,
+      "totalTime": 3480,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Tenant Billing Hub (/dashboard/business/billing)",
+      "success": true,
+      "clickTime": 3008,
+      "responseTime": 3009,
+      "totalTime": 3309,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Tenant Settings (/dashboard/business/settings)",
+      "success": true,
+      "clickTime": 3290,
+      "responseTime": 3302,
+      "totalTime": 3603,
+      "category": "POOR"
+    }
+  ],
+  "clientPortal": [
+    {
+      "actionName": "Client Portal Login Screen (/portal-login)",
+      "success": true,
+      "clickTime": 2057,
+      "responseTime": 2059,
+      "totalTime": 2359,
+      "category": "WARNING"
+    },
+    {
+      "actionName": "Portal Login Inputs Interaction",
+      "success": true,
+      "clickTime": 271,
+      "responseTime": 272,
+      "totalTime": 573,
+      "category": "GOOD"
+    },
+    {
+      "actionName": "Live Client Portal (/portal/b4c6c01b-4461-4022-8577-0ccc0f50bd9a)",
+      "success": true,
+      "clickTime": 3946,
+      "responseTime": 3947,
+      "totalTime": 4248,
+      "category": "POOR"
+    },
+    {
+      "actionName": "Client Portal Tab: projects",
+      "success": true,
+      "clickTime": 25,
+      "responseTime": 26,
+      "totalTime": 329,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: invoices",
+      "success": true,
+      "clickTime": 4,
+      "responseTime": 5,
+      "totalTime": 306,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: quotes",
+      "success": true,
+      "clickTime": 4,
+      "responseTime": 5,
+      "totalTime": 305,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: contracts",
+      "success": true,
+      "clickTime": 3,
+      "responseTime": 4,
+      "totalTime": 305,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: documents",
+      "success": true,
+      "clickTime": 6,
+      "responseTime": 7,
+      "totalTime": 308,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: messages",
+      "success": true,
+      "clickTime": 6,
+      "responseTime": 6,
+      "totalTime": 307,
+      "category": "EXCELLENT"
+    }
+  ]
+}

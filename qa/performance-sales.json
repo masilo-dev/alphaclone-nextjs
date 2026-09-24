@@ -1,0 +1,501 @@
+{
+  "top10Slowest": [
+    {
+      "location": "Core > Workspace home (/dashboard)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Operations Command (/dashboard/operations)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Bonnie AI (/dashboard/business/bonnie)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Approvals (/dashboard/bonnie/approvals)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Chase inbox (/dashboard/bonnie/chases)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > CRM overview (/dashboard/crm)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > CRM workspace (/dashboard/crm/workspace)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Sales Console (/dashboard/crm/console)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Outreach (/dashboard/outreach)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Reach inbox (/dashboard/outreach/inbox)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    }
+  ],
+  "performanceLog": [
+    {
+      "location": "Core > Workspace home (/dashboard)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Operations Command (/dashboard/operations)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Bonnie AI (/dashboard/business/bonnie)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Approvals (/dashboard/bonnie/approvals)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Core > Chase inbox (/dashboard/bonnie/chases)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > CRM overview (/dashboard/crm)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > CRM workspace (/dashboard/crm/workspace)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Sales Console (/dashboard/crm/console)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Outreach (/dashboard/outreach)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Reach inbox (/dashboard/outreach/inbox)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Leads Board (/dashboard/leads)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Lead Finder (/dashboard/leads/finder)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Lead sources alias (/dashboard/leads/campaigns)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Lead Ingestion (/dashboard/business/ingestion)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Deals Pipeline (/dashboard/deals)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Contacts (/dashboard/contacts)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Accounts (/dashboard/crm/accounts)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > CRM Reports (/dashboard/crm/reports)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Sales Forecast (/dashboard/forecast)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Goals & Targets (/dashboard/goals)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Annual Planning (/dashboard/planning)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Jobs & Queue (/dashboard/jobs)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Production Tasks (/dashboard/tasks)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Webhooks (/dashboard/webhooks)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Growth Agent (/dashboard/sales-agent)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Sales > Activities (/dashboard/crm/follow-ups)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Marketing overview (/dashboard/marketing)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Email Campaigns (/dashboard/business/campaigns)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Email campaigns alias (/dashboard/email-campaigns)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Sequences (/dashboard/marketing/sequences)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Deliverability (/dashboard/marketing/deliverability)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Branded Forms (/dashboard/business/forms)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Social Overview (/dashboard/business/social)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Compose (/dashboard/business/social/compose)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Social Scheduler (/dashboard/business/social-command)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > LinkedIn (/dashboard/business/linkedin)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Facebook (/dashboard/business/facebook)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Instagram (/dashboard/business/instagram)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > X/Twitter (/dashboard/business/x)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > SMS Outreach (/dashboard/business/sms)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Accounting (/dashboard/accounting)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Banking (/dashboard/accounting/banking)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Bills Payable (/dashboard/accounting/bills)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Vendors (/dashboard/vendors)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Period Close (/dashboard/accounting/period-close)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Billing (/dashboard/business/billing)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Invoice Manager (/dashboard/business/billing/manage)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Finance / Expenses (/dashboard/business/expenses)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Quotes & Proposals (/dashboard/business/quotes)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Cash Flow Forecast (/dashboard/business/cash-flow)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Money > Tax Estimator (/dashboard/business/tax-estimator)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Executive Dashboard (/dashboard/executive)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Analytics (/dashboard/analytics)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Performance (/dashboard/performance)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Revenue Reports (/dashboard/business/reports)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Reporting (/dashboard/reporting)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Insights > Notifications (/dashboard/notifications)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Documents (/dashboard/business/documents)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Vault (/dashboard/business/vault)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Contracts (/dashboard/business/contracts)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Contract Manager (/dashboard/business/contracts/manage)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Projects (/dashboard/business/projects)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Project Manager (/dashboard/business/projects/manage)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Documents > Client Onboarding (/dashboard/business/onboarding)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Channels > Tickets (/dashboard/business/tickets)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Channels > Team Messages (/dashboard/business/messages)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Channels > Mail (/dashboard/comms)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Channels > WhatsApp (/dashboard/business/whatsapp)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Schedule > Calendar (/dashboard/business/calendar)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Schedule > Booking Links (/dashboard/business/booking)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Schedule > Meetings (/dashboard/business/meetings)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Schedule > Microsoft Teams (/dashboard/business/teams)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Workspace > Integration Marketplace (/dashboard/marketplace)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Workspace > Workflow Builder (/dashboard/business/workflows)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Workspace > Platform Guide (/dashboard/help)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Workspace > Settings (/dashboard/business/settings)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Workspace > Audit trail (/dashboard/business/audit)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Home Page (/)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Pricing (/pricing)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > About (/about)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Contact (/contact)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Book Demo (/book-demo)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Public CRM (/crm)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Platform Status (/platform-status)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Legal Privacy (/legal/privacy)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Legal Terms (/legal/terms)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > FAQ (/faq)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > AI Business OS (/ai-business-os)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    },
+    {
+      "location": "Marketing > Agency Solutions (/solutions/agencies)",
+      "loadTimeMs": 0,
+      "rating": "INSTANT"
+    }
+  ]
+}

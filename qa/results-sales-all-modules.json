@@ -1,0 +1,892 @@
+[
+  {
+    "hub": "Core",
+    "label": "Workspace home",
+    "path": "/dashboard",
+    "probe": "home",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Core",
+    "label": "Operations Command",
+    "path": "/dashboard/operations",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Core",
+    "label": "Bonnie AI",
+    "path": "/dashboard/business/bonnie",
+    "probe": "chat",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Core",
+    "label": "Approvals",
+    "path": "/dashboard/bonnie/approvals",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Core",
+    "label": "Chase inbox",
+    "path": "/dashboard/bonnie/chases",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM overview",
+    "path": "/dashboard/crm",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM workspace",
+    "path": "/dashboard/crm/workspace",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Sales Console",
+    "path": "/dashboard/crm/console",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Outreach",
+    "path": "/dashboard/outreach",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Reach inbox",
+    "path": "/dashboard/outreach/inbox",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Leads Board",
+    "path": "/dashboard/leads",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead Finder",
+    "path": "/dashboard/leads/finder",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead sources alias",
+    "path": "/dashboard/leads/campaigns",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Lead Ingestion",
+    "path": "/dashboard/business/ingestion",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Deals Pipeline",
+    "path": "/dashboard/deals",
+    "probe": "pipeline",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Contacts",
+    "path": "/dashboard/contacts",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Accounts",
+    "path": "/dashboard/crm/accounts",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "CRM Reports",
+    "path": "/dashboard/crm/reports",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Sales Forecast",
+    "path": "/dashboard/forecast",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Goals & Targets",
+    "path": "/dashboard/goals",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Annual Planning",
+    "path": "/dashboard/planning",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Jobs & Queue",
+    "path": "/dashboard/jobs",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Production Tasks",
+    "path": "/dashboard/tasks",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Webhooks",
+    "path": "/dashboard/webhooks",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Growth Agent",
+    "path": "/dashboard/sales-agent",
+    "probe": "chat",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Sales",
+    "label": "Activities",
+    "path": "/dashboard/crm/follow-ups",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Marketing overview",
+    "path": "/dashboard/marketing",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Email Campaigns",
+    "path": "/dashboard/business/campaigns",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Email campaigns alias",
+    "path": "/dashboard/email-campaigns",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Sequences",
+    "path": "/dashboard/marketing/sequences",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Deliverability",
+    "path": "/dashboard/marketing/deliverability",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Branded Forms",
+    "path": "/dashboard/business/forms",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Social Overview",
+    "path": "/dashboard/business/social",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Compose",
+    "path": "/dashboard/business/social/compose",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Social Scheduler",
+    "path": "/dashboard/business/social-command",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "LinkedIn",
+    "path": "/dashboard/business/linkedin",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Facebook",
+    "path": "/dashboard/business/facebook",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Instagram",
+    "path": "/dashboard/business/instagram",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "X/Twitter",
+    "path": "/dashboard/business/x",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "SMS Outreach",
+    "path": "/dashboard/business/sms",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Accounting",
+    "path": "/dashboard/accounting",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Banking",
+    "path": "/dashboard/accounting/banking",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Bills Payable",
+    "path": "/dashboard/accounting/bills",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Vendors",
+    "path": "/dashboard/vendors",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Period Close",
+    "path": "/dashboard/accounting/period-close",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Billing",
+    "path": "/dashboard/business/billing",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Invoice Manager",
+    "path": "/dashboard/business/billing/manage",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Finance / Expenses",
+    "path": "/dashboard/business/expenses",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Quotes & Proposals",
+    "path": "/dashboard/business/quotes",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Cash Flow Forecast",
+    "path": "/dashboard/business/cash-flow",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Money",
+    "label": "Tax Estimator",
+    "path": "/dashboard/business/tax-estimator",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Executive Dashboard",
+    "path": "/dashboard/executive",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Analytics",
+    "path": "/dashboard/analytics",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Performance",
+    "path": "/dashboard/performance",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Revenue Reports",
+    "path": "/dashboard/business/reports",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Reporting",
+    "path": "/dashboard/reporting",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Insights",
+    "label": "Notifications",
+    "path": "/dashboard/notifications",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Documents",
+    "path": "/dashboard/business/documents",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Vault",
+    "path": "/dashboard/business/vault",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Contracts",
+    "path": "/dashboard/business/contracts",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Contract Manager",
+    "path": "/dashboard/business/contracts/manage",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Projects",
+    "path": "/dashboard/business/projects",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Project Manager",
+    "path": "/dashboard/business/projects/manage",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Documents",
+    "label": "Client Onboarding",
+    "path": "/dashboard/business/onboarding",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Channels",
+    "label": "Tickets",
+    "path": "/dashboard/business/tickets",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Channels",
+    "label": "Team Messages",
+    "path": "/dashboard/business/messages",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Channels",
+    "label": "Mail",
+    "path": "/dashboard/comms",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Channels",
+    "label": "WhatsApp",
+    "path": "/dashboard/business/whatsapp",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Schedule",
+    "label": "Calendar",
+    "path": "/dashboard/business/calendar",
+    "probe": "calendar",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Schedule",
+    "label": "Booking Links",
+    "path": "/dashboard/business/booking",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Schedule",
+    "label": "Meetings",
+    "path": "/dashboard/business/meetings",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Schedule",
+    "label": "Microsoft Teams",
+    "path": "/dashboard/business/teams",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Workspace",
+    "label": "Integration Marketplace",
+    "path": "/dashboard/marketplace",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Workspace",
+    "label": "Workflow Builder",
+    "path": "/dashboard/business/workflows",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Workspace",
+    "label": "Platform Guide",
+    "path": "/dashboard/help",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Workspace",
+    "label": "Settings",
+    "path": "/dashboard/business/settings",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Workspace",
+    "label": "Audit trail",
+    "path": "/dashboard/business/audit",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Home Page",
+    "path": "/",
+    "probe": "home",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Pricing",
+    "path": "/pricing",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "About",
+    "path": "/about",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Contact",
+    "path": "/contact",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Book Demo",
+    "path": "/book-demo",
+    "probe": "form",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Public CRM",
+    "path": "/crm",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Platform Status",
+    "path": "/platform-status",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Legal Privacy",
+    "path": "/legal/privacy",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Legal Terms",
+    "path": "/legal/terms",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "FAQ",
+    "path": "/faq",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "AI Business OS",
+    "path": "/ai-business-os",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  },
+  {
+    "hub": "Marketing",
+    "label": "Agency Solutions",
+    "path": "/solutions/agencies",
+    "probe": "list",
+    "loadTimeMs": 0,
+    "rating": "INSTANT",
+    "status": "PASS",
+    "controlsTested": []
+  }
+]

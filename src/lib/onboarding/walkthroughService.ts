@@ -127,6 +127,7 @@ export function setWalkthroughState(
       void fetch(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ walkthrough_completed: true }),
       }).catch((err) => console.error('[WalkthroughService] Save profile status failed', err));
     }

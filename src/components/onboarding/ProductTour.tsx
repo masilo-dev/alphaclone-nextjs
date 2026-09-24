@@ -69,7 +69,7 @@ function resetWindowScroll(): void {
 function cleanupTourArtifacts(): void {
     if (typeof document === 'undefined') return;
     document.documentElement.removeAttribute('data-product-tour-active');
-    document.querySelectorAll('#react-joyride-portal, .react-joyride__overlay, .__floater').forEach((el) => {
+    document.querySelectorAll('#react-joyride-portal, .react-joyride__overlay, .__floater, [data-test-id="overlay"], .react-joyride__spotlight').forEach((el) => {
         try {
             el.remove();
         } catch {}
@@ -111,6 +111,12 @@ const ProductTour: React.FC<ProductTourProps> = ({
         }
         cleanupTourArtifacts();
     }, [isOpen, run]);
+
+    useEffect(() => {
+        return () => {
+            cleanupTourArtifacts();
+        };
+    }, []);
 
 
     // Route watcher: auto-dismiss tour if the user navigates away
@@ -362,8 +368,11 @@ const ProductTour: React.FC<ProductTourProps> = ({
         if (completed.current) return;
         completed.current = true;
         setRun(false);
+        setMountedSteps([]);
         cleanupTourArtifacts();
         resetWindowScroll();
+        setTimeout(cleanupTourArtifacts, 50);
+        setTimeout(cleanupTourArtifacts, 250);
         if (userId) {
             setWalkthroughState(userId, dismissed ? 'dismissed' : 'completed');
         }
@@ -391,7 +400,10 @@ const ProductTour: React.FC<ProductTourProps> = ({
         } else if (type === EVENTS.ERROR) {
             console.warn('[ProductTour] Joyride error encountered, dismissing cleanly');
             completeTour(true);
-        } else if (type === EVENTS.STEP_AFTER) {
+        } else if (
+            type === EVENTS.STEP_AFTER ||
+            ((action === ACTIONS.NEXT || action === ACTIONS.PREV) && type === EVENTS.TOOLTIP)
+        ) {
             const delta = action === ACTIONS.PREV ? -1 : 1;
             const nextIndex = Math.max(0, index + delta);
             if (nextIndex >= mountedSteps.length) {

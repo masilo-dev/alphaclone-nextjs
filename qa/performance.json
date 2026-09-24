@@ -1,0 +1,699 @@
+{
+  "top10Slowest": [
+    {
+      "location": "Sales > Lead Finder (/dashboard/leads/finder)",
+      "waitMs": 1745,
+      "networkMs": 804,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Invoice Manager (/dashboard/business/billing/manage)",
+      "waitMs": 1607,
+      "networkMs": 1013,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Workspace home (/dashboard)",
+      "waitMs": 1599,
+      "networkMs": 1015,
+      "renderMs": 412,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Reach inbox (/dashboard/outreach/inbox)",
+      "waitMs": 1569,
+      "networkMs": 1007,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Marketing overview (/dashboard/marketing)",
+      "waitMs": 1558,
+      "networkMs": 981,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Period Close (/dashboard/accounting/period-close)",
+      "waitMs": 1471,
+      "networkMs": 777,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > CRM overview (/dashboard/crm)",
+      "waitMs": 1470,
+      "networkMs": 711,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Production Tasks (/dashboard/tasks)",
+      "waitMs": 1469,
+      "networkMs": 935,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Bills Payable (/dashboard/accounting/bills)",
+      "waitMs": 1446,
+      "networkMs": 902,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Legal Terms (/legal/terms)",
+      "waitMs": 1426,
+      "networkMs": 859,
+      "renderMs": 404,
+      "rating": "ACCEPTABLE"
+    }
+  ],
+  "performanceItems": [
+    {
+      "location": "Sales > Lead Finder (/dashboard/leads/finder)",
+      "waitMs": 1745,
+      "networkMs": 804,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Invoice Manager (/dashboard/business/billing/manage)",
+      "waitMs": 1607,
+      "networkMs": 1013,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Workspace home (/dashboard)",
+      "waitMs": 1599,
+      "networkMs": 1015,
+      "renderMs": 412,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Reach inbox (/dashboard/outreach/inbox)",
+      "waitMs": 1569,
+      "networkMs": 1007,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Marketing overview (/dashboard/marketing)",
+      "waitMs": 1558,
+      "networkMs": 981,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Period Close (/dashboard/accounting/period-close)",
+      "waitMs": 1471,
+      "networkMs": 777,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > CRM overview (/dashboard/crm)",
+      "waitMs": 1470,
+      "networkMs": 711,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Production Tasks (/dashboard/tasks)",
+      "waitMs": 1469,
+      "networkMs": 935,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Bills Payable (/dashboard/accounting/bills)",
+      "waitMs": 1446,
+      "networkMs": 902,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Legal Terms (/legal/terms)",
+      "waitMs": 1426,
+      "networkMs": 859,
+      "renderMs": 404,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Activities (/dashboard/crm/follow-ups)",
+      "waitMs": 1407,
+      "networkMs": 914,
+      "renderMs": 404,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Outreach (/dashboard/outreach)",
+      "waitMs": 1400,
+      "networkMs": 755,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Reporting (/dashboard/reporting)",
+      "waitMs": 1367,
+      "networkMs": 860,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Approvals (/dashboard/bonnie/approvals)",
+      "waitMs": 1363,
+      "networkMs": 848,
+      "renderMs": 411,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Vendors (/dashboard/vendors)",
+      "waitMs": 1362,
+      "networkMs": 680,
+      "renderMs": 444,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Sales Forecast (/dashboard/forecast)",
+      "waitMs": 1354,
+      "networkMs": 786,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Lead sources alias (/dashboard/leads/campaigns)",
+      "waitMs": 1346,
+      "networkMs": 731,
+      "renderMs": 410,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > CRM workspace (/dashboard/crm/workspace)",
+      "waitMs": 1337,
+      "networkMs": 739,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Jobs & Queue (/dashboard/jobs)",
+      "waitMs": 1325,
+      "networkMs": 808,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Chase inbox (/dashboard/bonnie/chases)",
+      "waitMs": 1319,
+      "networkMs": 715,
+      "renderMs": 433,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Pricing (/pricing)",
+      "waitMs": 1316,
+      "networkMs": 334,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Revenue Reports (/dashboard/business/reports)",
+      "waitMs": 1314,
+      "networkMs": 701,
+      "renderMs": 466,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Social Overview (/dashboard/business/social)",
+      "waitMs": 1311,
+      "networkMs": 708,
+      "renderMs": 411,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Billing (/dashboard/business/billing)",
+      "waitMs": 1295,
+      "networkMs": 664,
+      "renderMs": 410,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Accounting (/dashboard/accounting)",
+      "waitMs": 1291,
+      "networkMs": 727,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > SMS Outreach (/dashboard/business/sms)",
+      "waitMs": 1290,
+      "networkMs": 651,
+      "renderMs": 417,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Tax Estimator (/dashboard/business/tax-estimator)",
+      "waitMs": 1278,
+      "networkMs": 757,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Documents > Documents (/dashboard/business/documents)",
+      "waitMs": 1277,
+      "networkMs": 681,
+      "renderMs": 433,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Finance / Expenses (/dashboard/business/expenses)",
+      "waitMs": 1272,
+      "networkMs": 738,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Lead Ingestion (/dashboard/business/ingestion)",
+      "waitMs": 1268,
+      "networkMs": 612,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Operations Command (/dashboard/operations)",
+      "waitMs": 1257,
+      "networkMs": 559,
+      "renderMs": 419,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Sales Console (/dashboard/crm/console)",
+      "waitMs": 1249,
+      "networkMs": 571,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Deals Pipeline (/dashboard/deals)",
+      "waitMs": 1246,
+      "networkMs": 762,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Leads Board (/dashboard/leads)",
+      "waitMs": 1241,
+      "networkMs": 515,
+      "renderMs": 416,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Schedule > Meetings (/dashboard/business/meetings)",
+      "waitMs": 1238,
+      "networkMs": 640,
+      "renderMs": 420,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Sequences (/dashboard/marketing/sequences)",
+      "waitMs": 1234,
+      "networkMs": 689,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > LinkedIn (/dashboard/business/linkedin)",
+      "waitMs": 1233,
+      "networkMs": 621,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Legal Privacy (/legal/privacy)",
+      "waitMs": 1225,
+      "networkMs": 431,
+      "renderMs": 410,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > AI Business OS (/ai-business-os)",
+      "waitMs": 1225,
+      "networkMs": 432,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Quotes & Proposals (/dashboard/business/quotes)",
+      "waitMs": 1216,
+      "networkMs": 566,
+      "renderMs": 414,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Compose (/dashboard/business/social/compose)",
+      "waitMs": 1213,
+      "networkMs": 575,
+      "renderMs": 414,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > X/Twitter (/dashboard/business/x)",
+      "waitMs": 1206,
+      "networkMs": 649,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Contacts (/dashboard/contacts)",
+      "waitMs": 1205,
+      "networkMs": 499,
+      "renderMs": 417,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Core > Bonnie AI (/dashboard/business/bonnie)",
+      "waitMs": 1203,
+      "networkMs": 560,
+      "renderMs": 412,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Webhooks (/dashboard/webhooks)",
+      "waitMs": 1201,
+      "networkMs": 601,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Facebook (/dashboard/business/facebook)",
+      "waitMs": 1199,
+      "networkMs": 539,
+      "renderMs": 420,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Instagram (/dashboard/business/instagram)",
+      "waitMs": 1198,
+      "networkMs": 558,
+      "renderMs": 422,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Social Scheduler (/dashboard/business/social-command)",
+      "waitMs": 1190,
+      "networkMs": 573,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Channels > Team Messages (/dashboard/business/messages)",
+      "waitMs": 1189,
+      "networkMs": 474,
+      "renderMs": 419,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Banking (/dashboard/accounting/banking)",
+      "waitMs": 1186,
+      "networkMs": 624,
+      "renderMs": 425,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Notifications (/dashboard/notifications)",
+      "waitMs": 1174,
+      "networkMs": 641,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Money > Cash Flow Forecast (/dashboard/business/cash-flow)",
+      "waitMs": 1172,
+      "networkMs": 542,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Analytics (/dashboard/analytics)",
+      "waitMs": 1172,
+      "networkMs": 685,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Platform Status (/platform-status)",
+      "waitMs": 1172,
+      "networkMs": 389,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Deliverability (/dashboard/marketing/deliverability)",
+      "waitMs": 1170,
+      "networkMs": 582,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Email Campaigns (/dashboard/business/campaigns)",
+      "waitMs": 1160,
+      "networkMs": 501,
+      "renderMs": 437,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Growth Agent (/dashboard/sales-agent)",
+      "waitMs": 1159,
+      "networkMs": 512,
+      "renderMs": 422,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Home Page (/)",
+      "waitMs": 1157,
+      "networkMs": 293,
+      "renderMs": 414,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Branded Forms (/dashboard/business/forms)",
+      "waitMs": 1148,
+      "networkMs": 604,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Annual Planning (/dashboard/planning)",
+      "waitMs": 1145,
+      "networkMs": 488,
+      "renderMs": 414,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Email campaigns alias (/dashboard/email-campaigns)",
+      "waitMs": 1140,
+      "networkMs": 518,
+      "renderMs": 418,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > CRM Reports (/dashboard/crm/reports)",
+      "waitMs": 1128,
+      "networkMs": 496,
+      "renderMs": 489,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Performance (/dashboard/performance)",
+      "waitMs": 1114,
+      "networkMs": 537,
+      "renderMs": 465,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Workspace > Audit trail (/dashboard/business/audit)",
+      "waitMs": 1104,
+      "networkMs": 568,
+      "renderMs": 405,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Public CRM (/crm)",
+      "waitMs": 1103,
+      "networkMs": 328,
+      "renderMs": 413,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Book Demo (/book-demo)",
+      "waitMs": 1090,
+      "networkMs": 267,
+      "renderMs": 430,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Insights > Executive Dashboard (/dashboard/executive)",
+      "waitMs": 1089,
+      "networkMs": 548,
+      "renderMs": 407,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Accounts (/dashboard/crm/accounts)",
+      "waitMs": 1078,
+      "networkMs": 588,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Sales > Goals & Targets (/dashboard/goals)",
+      "waitMs": 1035,
+      "networkMs": 495,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > About (/about)",
+      "waitMs": 1033,
+      "networkMs": 249,
+      "renderMs": 408,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Schedule > Booking Links (/dashboard/business/booking)",
+      "waitMs": 1031,
+      "networkMs": 364,
+      "renderMs": 428,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Contact (/contact)",
+      "waitMs": 1015,
+      "networkMs": 262,
+      "renderMs": 429,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > FAQ (/faq)",
+      "waitMs": 1015,
+      "networkMs": 259,
+      "renderMs": 409,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Marketing > Agency Solutions (/solutions/agencies)",
+      "waitMs": 1004,
+      "networkMs": 420,
+      "renderMs": 406,
+      "rating": "ACCEPTABLE"
+    },
+    {
+      "location": "Documents > Contracts (/dashboard/business/contracts)",
+      "waitMs": 989,
+      "networkMs": 284,
+      "renderMs": 407,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Workspace > Integration Marketplace (/dashboard/marketplace)",
+      "waitMs": 965,
+      "networkMs": 338,
+      "renderMs": 406,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Workspace > Platform Guide (/dashboard/help)",
+      "waitMs": 961,
+      "networkMs": 272,
+      "renderMs": 434,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Documents > Projects (/dashboard/business/projects)",
+      "waitMs": 950,
+      "networkMs": 261,
+      "renderMs": 410,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Channels > WhatsApp (/dashboard/business/whatsapp)",
+      "waitMs": 950,
+      "networkMs": 284,
+      "renderMs": 416,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Schedule > Calendar (/dashboard/business/calendar)",
+      "waitMs": 941,
+      "networkMs": 373,
+      "renderMs": 406,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Schedule > Microsoft Teams (/dashboard/business/teams)",
+      "waitMs": 934,
+      "networkMs": 272,
+      "renderMs": 409,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Channels > Tickets (/dashboard/business/tickets)",
+      "waitMs": 930,
+      "networkMs": 258,
+      "renderMs": 411,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Documents > Client Onboarding (/dashboard/business/onboarding)",
+      "waitMs": 925,
+      "networkMs": 274,
+      "renderMs": 411,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Channels > Mail (/dashboard/comms)",
+      "waitMs": 921,
+      "networkMs": 283,
+      "renderMs": 422,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Documents > Vault (/dashboard/business/vault)",
+      "waitMs": 920,
+      "networkMs": 259,
+      "renderMs": 419,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Workspace > Settings (/dashboard/business/settings)",
+      "waitMs": 908,
+      "networkMs": 261,
+      "renderMs": 405,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Documents > Contract Manager (/dashboard/business/contracts/manage)",
+      "waitMs": 896,
+      "networkMs": 256,
+      "renderMs": 406,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Workspace > Workflow Builder (/dashboard/business/workflows)",
+      "waitMs": 890,
+      "networkMs": 261,
+      "renderMs": 431,
+      "rating": "GOOD"
+    },
+    {
+      "location": "Documents > Project Manager (/dashboard/business/projects/manage)",
+      "waitMs": 878,
+      "networkMs": 261,
+      "renderMs": 405,
+      "rating": "GOOD"
+    }
+  ]
+}

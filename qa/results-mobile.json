@@ -1,0 +1,1234 @@
+[
+  {
+    "viewport": "mobile-320",
+    "width": 320,
+    "height": 568,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (100x32px): \"Admin Panel\"",
+            "BUTTON (100x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 320,
+          "clientWidth": 320
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (100x32px): \"Admin Panel\"",
+            "BUTTON (100x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-320_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-360",
+    "width": 360,
+    "height": 800,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (58x32px): \"Admin Panel\"",
+            "BUTTON (58x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 360,
+          "clientWidth": 360
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-360_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-375",
+    "width": 375,
+    "height": 812,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-375_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-390",
+    "width": 390,
+    "height": 844,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (101x32px): \"Admin Panel\"",
+            "BUTTON (101x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 390,
+          "clientWidth": 390
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-390_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-412",
+    "width": 412,
+    "height": 915,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (101x32px): \"Admin Panel\"",
+            "BUTTON (101x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 412,
+          "clientWidth": 412
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-412_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "mobile-430",
+    "width": 430,
+    "height": 932,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 54,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (150x32px): \"Admin Panel\"",
+            "BUTTON (150x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 45,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 430,
+          "clientWidth": 430
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": true,
+        "screenshot": "qa/screenshots/responsive/mobile-430_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "tablet-768",
+    "width": 768,
+    "height": 1024,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 53,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x32px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 768,
+          "clientWidth": 768
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/tablet-768_tasks.png"
+      }
+    ]
+  },
+  {
+    "viewport": "laptop-1280",
+    "width": 1280,
+    "height": 800,
+    "routes": [
+      {
+        "route": "Dashboard",
+        "path": "/dashboard",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 55,
+          "countSmall": 22,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_dashboard.png"
+      },
+      {
+        "route": "CRM",
+        "path": "/dashboard/crm",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 53,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_crm.png"
+      },
+      {
+        "route": "Contacts",
+        "path": "/dashboard/contacts",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_contacts.png"
+      },
+      {
+        "route": "Leads",
+        "path": "/dashboard/leads",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_leads.png"
+      },
+      {
+        "route": "Accounting",
+        "path": "/dashboard/accounting",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 41,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_accounting.png"
+      },
+      {
+        "route": "Social",
+        "path": "/dashboard/business/social",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 44,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_social.png"
+      },
+      {
+        "route": "Tasks",
+        "path": "/dashboard/tasks",
+        "overflow": {
+          "hasOverflow": false,
+          "diff": 0,
+          "scrollWidth": 1280,
+          "clientWidth": 1280
+        },
+        "tapTargets": {
+          "total": 57,
+          "countSmall": 20,
+          "samples": [
+            "A (1x1px): \"Skip to main content\"",
+            "BUTTON (203x34px): \"Admin Panel\"",
+            "BUTTON (203x32px): \"Operations\""
+          ]
+        },
+        "mobileNavWorked": false,
+        "screenshot": "qa/screenshots/responsive/laptop-1280_tasks.png"
+      }
+    ]
+  }
+]

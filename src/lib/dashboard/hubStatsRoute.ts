@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse, getApiAuthUser } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getHubKpiStats } from '@/lib/dashboard/hubKpiService';
 import type { HubKpiId } from '@/lib/dashboard/hubKpi';
@@ -35,7 +35,13 @@ export async function respondWithHubStats(
   errorMessage: string,
 ) {
   try {
-    const tenantId = request.nextUrl.searchParams.get('tenantId');
+    let tenantId = request.nextUrl.searchParams.get('tenantId')?.trim();
+    if (!tenantId) {
+      const authUser = await getApiAuthUser(request);
+      if (authUser?.tenantId) {
+        tenantId = authUser.tenantId;
+      }
+    }
     if (!tenantId) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
@@ -43,7 +49,7 @@ export async function respondWithHubStats(
     const period = parsePeriod(request);
     const range = resolveMetricDateRange(period);
 
-    await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId, request);
     const supabase = createSupabaseAdminClient();
     const stats = await getHubKpiStats(supabase, tenantId, hub, period);
 

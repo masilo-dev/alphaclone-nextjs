@@ -1,0 +1,278 @@
+{
+  "totalRequestsLogged": 4352,
+  "frequentRequests": [
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/profiles",
+      "count": 90
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/user_preferences",
+      "count": 60
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/rpc/get_user_tenants",
+      "count": 33
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/notifications",
+      "count": 34
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/health",
+      "count": 9
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/admin/operations-brief",
+      "count": 9
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/admin/tenants",
+      "count": 9
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/admin/platform-settings",
+      "count": 9
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/bonnie/approvals",
+      "count": 32
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/bonnie/briefing",
+      "count": 32
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/dashboard/stats",
+      "count": 32
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/auth/v1/user",
+      "count": 59
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/rpc/get_consolidated_dashboard_stats",
+      "count": 15
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/dashboard/hub-stats",
+      "count": 6
+    },
+    {
+      "url": "https://alphaclonesystems.com/api/tenant/3abb9768-b9b9-4d92-97ed-71fa56ce31af/activity",
+      "count": 34
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/search_history",
+      "count": 29
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/rpc/get_unseen_missed_calls_count",
+      "count": 23
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/tasks",
+      "count": 24
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/projects",
+      "count": 24
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/business_invoices",
+      "count": 38
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/messages",
+      "count": 24
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/tenant_users",
+      "count": 25
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/business_clients",
+      "count": 20
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/rpc/get_account_balances",
+      "count": 6
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/business_receipts",
+      "count": 6
+    },
+    {
+      "url": "https://ehekzoioqvtweugemktn.supabase.co/rest/v1/rpc/update_user_presence",
+      "count": 9
+    }
+  ],
+  "cycleMetrics": [
+    {
+      "round": 1,
+      "totalDurationMs": 29200,
+      "avgStepMs": 2655,
+      "memoryMB": {
+        "usedJSHeapSize": 141,
+        "totalJSHeapSize": 190
+      },
+      "steps": [
+        {
+          "route": "/dashboard",
+          "durationMs": 4382
+        },
+        {
+          "route": "/dashboard/crm",
+          "durationMs": 2798
+        },
+        {
+          "route": "/dashboard/contacts",
+          "durationMs": 2725
+        },
+        {
+          "route": "/dashboard/leads",
+          "durationMs": 2616
+        },
+        {
+          "route": "/dashboard/deals",
+          "durationMs": 2849
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2431
+        },
+        {
+          "route": "/dashboard/accounting",
+          "durationMs": 2523
+        },
+        {
+          "route": "/dashboard/business/cash-flow",
+          "durationMs": 2257
+        },
+        {
+          "route": "/dashboard/business/social",
+          "durationMs": 2131
+        },
+        {
+          "route": "/dashboard/business/facebook",
+          "durationMs": 2338
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2137
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "totalDurationMs": 25823,
+      "avgStepMs": 2348,
+      "memoryMB": {
+        "usedJSHeapSize": 141,
+        "totalJSHeapSize": 190
+      },
+      "steps": [
+        {
+          "route": "/dashboard",
+          "durationMs": 2568
+        },
+        {
+          "route": "/dashboard/crm",
+          "durationMs": 2451
+        },
+        {
+          "route": "/dashboard/contacts",
+          "durationMs": 2365
+        },
+        {
+          "route": "/dashboard/leads",
+          "durationMs": 2227
+        },
+        {
+          "route": "/dashboard/deals",
+          "durationMs": 2349
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2349
+        },
+        {
+          "route": "/dashboard/accounting",
+          "durationMs": 2282
+        },
+        {
+          "route": "/dashboard/business/cash-flow",
+          "durationMs": 2375
+        },
+        {
+          "route": "/dashboard/business/social",
+          "durationMs": 2317
+        },
+        {
+          "route": "/dashboard/business/facebook",
+          "durationMs": 2245
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2263
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "totalDurationMs": 29174,
+      "avgStepMs": 2652,
+      "memoryMB": {
+        "usedJSHeapSize": 141,
+        "totalJSHeapSize": 190
+      },
+      "steps": [
+        {
+          "route": "/dashboard",
+          "durationMs": 2947
+        },
+        {
+          "route": "/dashboard/crm",
+          "durationMs": 3008
+        },
+        {
+          "route": "/dashboard/contacts",
+          "durationMs": 3912
+        },
+        {
+          "route": "/dashboard/leads",
+          "durationMs": 2315
+        },
+        {
+          "route": "/dashboard/deals",
+          "durationMs": 2309
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2549
+        },
+        {
+          "route": "/dashboard/accounting",
+          "durationMs": 2331
+        },
+        {
+          "route": "/dashboard/business/cash-flow",
+          "durationMs": 2496
+        },
+        {
+          "route": "/dashboard/business/social",
+          "durationMs": 2342
+        },
+        {
+          "route": "/dashboard/business/facebook",
+          "durationMs": 2392
+        },
+        {
+          "route": "/dashboard",
+          "durationMs": 2398
+        }
+      ]
+    }
+  ],
+  "memoryGrowthDetected": false,
+  "latencyDegradationDetected": false
+}

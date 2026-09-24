@@ -152,6 +152,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
         return (
             <button
                 onClick={() => setIsOpen(true)}
+                aria-label={t('Search anything...') || 'Search anything'}
                 className="flex h-[42px] w-10 sm:w-[304px] max-w-[304px] items-center justify-center sm:justify-start gap-2 rounded-2xl border border-white/5 bg-white/[0.04] px-0 sm:px-3.5 text-slate-400 transition-colors hover:bg-white/[0.06] group"
             >
                 <div className="relative h-4 w-4 opacity-70 transition-opacity group-hover:opacity-100">
@@ -188,6 +189,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            aria-label={t('Search contacts, contracts, documents, invoices and campaigns') || 'Search contacts, contracts, documents, invoices and campaigns'}
                             placeholder="Search contacts, contracts, documents, invoices and campaigns..."
                             className="flex-1 bg-transparent text-white placeholder-slate-400 outline-none"
                             autoFocus
@@ -195,6 +197,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
+                                aria-label="Clear search query"
                                 className="text-slate-400 hover:text-white transition-colors"
                             >
                                 <X className="w-5 h-5" />
@@ -202,6 +205,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         )}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
+                            aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
                             className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-teal-500/20 text-teal-400' : 'text-slate-400 hover:text-white'
                                 }`}
                         >

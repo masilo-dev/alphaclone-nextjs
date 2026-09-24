@@ -1,0 +1,714 @@
+[
+  {
+    "module": "Workspace home",
+    "hub": "Core",
+    "path": "/dashboard",
+    "loadTimeMs": 1304,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Operations Command",
+    "hub": "Core",
+    "path": "/dashboard/operations",
+    "loadTimeMs": 992,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Bonnie AI",
+    "hub": "Core",
+    "path": "/dashboard/business/bonnie",
+    "loadTimeMs": 858,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Approvals",
+    "hub": "Core",
+    "path": "/dashboard/bonnie/approvals",
+    "loadTimeMs": 965,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Chase inbox",
+    "hub": "Core",
+    "path": "/dashboard/bonnie/chases",
+    "loadTimeMs": 1000,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "CRM overview",
+    "hub": "Sales",
+    "path": "/dashboard/crm",
+    "loadTimeMs": 854,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "CRM workspace",
+    "hub": "Sales",
+    "path": "/dashboard/crm/workspace",
+    "loadTimeMs": 966,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Sales Console",
+    "hub": "Sales",
+    "path": "/dashboard/crm/console",
+    "loadTimeMs": 818,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Outreach",
+    "hub": "Sales",
+    "path": "/dashboard/outreach",
+    "loadTimeMs": 1303,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Reach inbox",
+    "hub": "Sales",
+    "path": "/dashboard/outreach/inbox",
+    "loadTimeMs": 1133,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Leads Board",
+    "hub": "Sales",
+    "path": "/dashboard/leads",
+    "loadTimeMs": 814,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Lead Finder",
+    "hub": "Sales",
+    "path": "/dashboard/leads/finder",
+    "loadTimeMs": 846,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Lead sources alias",
+    "hub": "Sales",
+    "path": "/dashboard/leads/campaigns",
+    "loadTimeMs": 802,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Lead Ingestion",
+    "hub": "Sales",
+    "path": "/dashboard/business/ingestion",
+    "loadTimeMs": 844,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Deals Pipeline",
+    "hub": "Sales",
+    "path": "/dashboard/deals",
+    "loadTimeMs": 1045,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Contacts",
+    "hub": "Sales",
+    "path": "/dashboard/contacts",
+    "loadTimeMs": 1071,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Accounts",
+    "hub": "Sales",
+    "path": "/dashboard/crm/accounts",
+    "loadTimeMs": 911,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "CRM Reports",
+    "hub": "Sales",
+    "path": "/dashboard/crm/reports",
+    "loadTimeMs": 733,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Sales Forecast",
+    "hub": "Sales",
+    "path": "/dashboard/forecast",
+    "loadTimeMs": 786,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Goals & Targets",
+    "hub": "Sales",
+    "path": "/dashboard/goals",
+    "loadTimeMs": 841,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Annual Planning",
+    "hub": "Sales",
+    "path": "/dashboard/planning",
+    "loadTimeMs": 1033,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Jobs & Queue",
+    "hub": "Sales",
+    "path": "/dashboard/jobs",
+    "loadTimeMs": 800,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Production Tasks",
+    "hub": "Sales",
+    "path": "/dashboard/tasks",
+    "loadTimeMs": 983,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Webhooks",
+    "hub": "Sales",
+    "path": "/dashboard/webhooks",
+    "loadTimeMs": 726,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Growth Agent",
+    "hub": "Sales",
+    "path": "/dashboard/sales-agent",
+    "loadTimeMs": 1218,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Activities",
+    "hub": "Sales",
+    "path": "/dashboard/crm/follow-ups",
+    "loadTimeMs": 807,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Marketing overview",
+    "hub": "Marketing",
+    "path": "/dashboard/marketing",
+    "loadTimeMs": 836,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Email Campaigns",
+    "hub": "Marketing",
+    "path": "/dashboard/business/campaigns",
+    "loadTimeMs": 1268,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Email campaigns alias",
+    "hub": "Marketing",
+    "path": "/dashboard/email-campaigns",
+    "loadTimeMs": 865,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Sequences",
+    "hub": "Marketing",
+    "path": "/dashboard/marketing/sequences",
+    "loadTimeMs": 1008,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Deliverability",
+    "hub": "Marketing",
+    "path": "/dashboard/marketing/deliverability",
+    "loadTimeMs": 1088,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Branded Forms",
+    "hub": "Marketing",
+    "path": "/dashboard/business/forms",
+    "loadTimeMs": 809,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Social Overview",
+    "hub": "Marketing",
+    "path": "/dashboard/business/social",
+    "loadTimeMs": 775,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Compose",
+    "hub": "Marketing",
+    "path": "/dashboard/business/social/compose",
+    "loadTimeMs": 1015,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Social Scheduler",
+    "hub": "Marketing",
+    "path": "/dashboard/business/social-command",
+    "loadTimeMs": 916,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "LinkedIn",
+    "hub": "Marketing",
+    "path": "/dashboard/business/linkedin",
+    "loadTimeMs": 692,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Facebook",
+    "hub": "Marketing",
+    "path": "/dashboard/business/facebook",
+    "loadTimeMs": 847,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Instagram",
+    "hub": "Marketing",
+    "path": "/dashboard/business/instagram",
+    "loadTimeMs": 733,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "X/Twitter",
+    "hub": "Marketing",
+    "path": "/dashboard/business/x",
+    "loadTimeMs": 918,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "SMS Outreach",
+    "hub": "Marketing",
+    "path": "/dashboard/business/sms",
+    "loadTimeMs": 933,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Accounting",
+    "hub": "Money",
+    "path": "/dashboard/accounting",
+    "loadTimeMs": 586,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Banking",
+    "hub": "Money",
+    "path": "/dashboard/accounting/banking",
+    "loadTimeMs": 991,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Bills Payable",
+    "hub": "Money",
+    "path": "/dashboard/accounting/bills",
+    "loadTimeMs": 829,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Vendors",
+    "hub": "Money",
+    "path": "/dashboard/vendors",
+    "loadTimeMs": 1127,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Period Close",
+    "hub": "Money",
+    "path": "/dashboard/accounting/period-close",
+    "loadTimeMs": 813,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Billing",
+    "hub": "Money",
+    "path": "/dashboard/business/billing",
+    "loadTimeMs": 882,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Invoice Manager",
+    "hub": "Money",
+    "path": "/dashboard/business/billing/manage",
+    "loadTimeMs": 892,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Finance / Expenses",
+    "hub": "Money",
+    "path": "/dashboard/business/expenses",
+    "loadTimeMs": 829,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Quotes & Proposals",
+    "hub": "Money",
+    "path": "/dashboard/business/quotes",
+    "loadTimeMs": 820,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Cash Flow Forecast",
+    "hub": "Money",
+    "path": "/dashboard/business/cash-flow",
+    "loadTimeMs": 941,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Tax Estimator",
+    "hub": "Money",
+    "path": "/dashboard/business/tax-estimator",
+    "loadTimeMs": 881,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Executive Dashboard",
+    "hub": "Insights",
+    "path": "/dashboard/executive",
+    "loadTimeMs": 784,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Analytics",
+    "hub": "Insights",
+    "path": "/dashboard/analytics",
+    "loadTimeMs": 1074,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Performance",
+    "hub": "Insights",
+    "path": "/dashboard/performance",
+    "loadTimeMs": 1535,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Revenue Reports",
+    "hub": "Insights",
+    "path": "/dashboard/business/reports",
+    "loadTimeMs": 806,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Reporting",
+    "hub": "Insights",
+    "path": "/dashboard/reporting",
+    "loadTimeMs": 1039,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Notifications",
+    "hub": "Insights",
+    "path": "/dashboard/notifications",
+    "loadTimeMs": 5465,
+    "rating": "CRITICAL",
+    "controlsCount": 0
+  },
+  {
+    "module": "Documents",
+    "hub": "Documents",
+    "path": "/dashboard/business/documents",
+    "loadTimeMs": 1170,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Vault",
+    "hub": "Documents",
+    "path": "/dashboard/business/vault",
+    "loadTimeMs": 953,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Contracts",
+    "hub": "Documents",
+    "path": "/dashboard/business/contracts",
+    "loadTimeMs": 653,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Contract Manager",
+    "hub": "Documents",
+    "path": "/dashboard/business/contracts/manage",
+    "loadTimeMs": 747,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Projects",
+    "hub": "Documents",
+    "path": "/dashboard/business/projects",
+    "loadTimeMs": 901,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Project Manager",
+    "hub": "Documents",
+    "path": "/dashboard/business/projects/manage",
+    "loadTimeMs": 703,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Client Onboarding",
+    "hub": "Documents",
+    "path": "/dashboard/business/onboarding",
+    "loadTimeMs": 982,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Tickets",
+    "hub": "Channels",
+    "path": "/dashboard/business/tickets",
+    "loadTimeMs": 878,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Team Messages",
+    "hub": "Channels",
+    "path": "/dashboard/business/messages",
+    "loadTimeMs": 616,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Mail",
+    "hub": "Channels",
+    "path": "/dashboard/comms",
+    "loadTimeMs": 1002,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "WhatsApp",
+    "hub": "Channels",
+    "path": "/dashboard/business/whatsapp",
+    "loadTimeMs": 832,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Calendar",
+    "hub": "Schedule",
+    "path": "/dashboard/business/calendar",
+    "loadTimeMs": 964,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Booking Links",
+    "hub": "Schedule",
+    "path": "/dashboard/business/booking",
+    "loadTimeMs": 1283,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Meetings",
+    "hub": "Schedule",
+    "path": "/dashboard/business/meetings",
+    "loadTimeMs": 954,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Microsoft Teams",
+    "hub": "Schedule",
+    "path": "/dashboard/business/teams",
+    "loadTimeMs": 815,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Integration Marketplace",
+    "hub": "Workspace",
+    "path": "/dashboard/marketplace",
+    "loadTimeMs": 1284,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Workflow Builder",
+    "hub": "Workspace",
+    "path": "/dashboard/business/workflows",
+    "loadTimeMs": 890,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Platform Guide",
+    "hub": "Workspace",
+    "path": "/dashboard/help",
+    "loadTimeMs": 836,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Settings",
+    "hub": "Workspace",
+    "path": "/dashboard/business/settings",
+    "loadTimeMs": 965,
+    "rating": "GOOD",
+    "controlsCount": 0
+  },
+  {
+    "module": "Audit trail",
+    "hub": "Workspace",
+    "path": "/dashboard/business/audit",
+    "loadTimeMs": 1039,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 0
+  },
+  {
+    "module": "Home Page",
+    "hub": "Marketing",
+    "path": "/",
+    "loadTimeMs": 1808,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 5
+  },
+  {
+    "module": "Pricing",
+    "hub": "Marketing",
+    "path": "/pricing",
+    "loadTimeMs": 1601,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 7
+  },
+  {
+    "module": "About",
+    "hub": "Marketing",
+    "path": "/about",
+    "loadTimeMs": 1050,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 2
+  },
+  {
+    "module": "Contact",
+    "hub": "Marketing",
+    "path": "/contact",
+    "loadTimeMs": 1194,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 3
+  },
+  {
+    "module": "Book Demo",
+    "hub": "Marketing",
+    "path": "/book-demo",
+    "loadTimeMs": 686,
+    "rating": "GOOD",
+    "controlsCount": 2
+  },
+  {
+    "module": "Public CRM",
+    "hub": "Marketing",
+    "path": "/crm",
+    "loadTimeMs": 1420,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 2
+  },
+  {
+    "module": "Platform Status",
+    "hub": "Marketing",
+    "path": "/platform-status",
+    "loadTimeMs": 1112,
+    "rating": "ACCEPTABLE",
+    "controlsCount": 11
+  },
+  {
+    "module": "Legal Privacy",
+    "hub": "Marketing",
+    "path": "/legal/privacy",
+    "loadTimeMs": 834,
+    "rating": "GOOD",
+    "controlsCount": 11
+  },
+  {
+    "module": "Legal Terms",
+    "hub": "Marketing",
+    "path": "/legal/terms",
+    "loadTimeMs": 807,
+    "rating": "GOOD",
+    "controlsCount": 11
+  },
+  {
+    "module": "FAQ",
+    "hub": "Marketing",
+    "path": "/faq",
+    "loadTimeMs": 559,
+    "rating": "GOOD",
+    "controlsCount": 11
+  },
+  {
+    "module": "AI Business OS",
+    "hub": "Marketing",
+    "path": "/ai-business-os",
+    "loadTimeMs": 770,
+    "rating": "GOOD",
+    "controlsCount": 10
+  },
+  {
+    "module": "Agency Solutions",
+    "hub": "Marketing",
+    "path": "/solutions/agencies",
+    "loadTimeMs": 724,
+    "rating": "GOOD",
+    "controlsCount": 11
+  }
+]

@@ -217,7 +217,7 @@ export function useDashboardStats(
     setRefreshNonce((n) => n + 1);
   }, { cooldownMs: 10_000, enabled: !!tenantId });
 
-  const loading = !data && isValidating;
+  const loading = !data && (isValidating || !tenantId);
 
   return { data, loading, isValidating: isValidating && !!data, error };
 }

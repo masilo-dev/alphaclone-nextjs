@@ -1,0 +1,164 @@
+{
+  "user": "sales@alphaclonesystems.com",
+  "tenantId": "066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4",
+  "timestamp": "2026-09-24T17:55:12.196Z",
+  "modules": [
+    {
+      "name": "Tenant Overview",
+      "path": "/dashboard",
+      "loadTimeMs": 2470,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 46
+    },
+    {
+      "name": "Operations Command",
+      "path": "/dashboard/operations",
+      "loadTimeMs": 2138,
+      "rating": "WARNING",
+      "status": "WARN_EMPTY",
+      "buttonCount": 0
+    },
+    {
+      "name": "CRM Overview",
+      "path": "/dashboard/crm",
+      "loadTimeMs": 2043,
+      "rating": "WARNING",
+      "status": "WARN_EMPTY",
+      "buttonCount": 0
+    },
+    {
+      "name": "CRM Workspace",
+      "path": "/dashboard/crm/workspace",
+      "loadTimeMs": 2157,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 77
+    },
+    {
+      "name": "Contacts & Accounts",
+      "path": "/dashboard/contacts",
+      "loadTimeMs": 2362,
+      "rating": "WARNING",
+      "status": "WARN_EMPTY",
+      "buttonCount": 0
+    },
+    {
+      "name": "Leads Board",
+      "path": "/dashboard/leads",
+      "loadTimeMs": 2038,
+      "rating": "WARNING",
+      "status": "WARN_EMPTY",
+      "buttonCount": 0
+    },
+    {
+      "name": "Lead Finder",
+      "path": "/dashboard/leads/finder",
+      "loadTimeMs": 2277,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 58
+    },
+    {
+      "name": "Deals Pipeline",
+      "path": "/dashboard/deals",
+      "loadTimeMs": 2218,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 58
+    },
+    {
+      "name": "Outreach Hub",
+      "path": "/dashboard/outreach",
+      "loadTimeMs": 2016,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 40
+    },
+    {
+      "name": "Reach Mailbox",
+      "path": "/dashboard/comms",
+      "loadTimeMs": 2313,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 33
+    },
+    {
+      "name": "Accounting Dashboard",
+      "path": "/dashboard/accounting",
+      "loadTimeMs": 2292,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 37
+    },
+    {
+      "name": "Invoices & Billing Management",
+      "path": "/dashboard/business/billing/manage",
+      "loadTimeMs": 2047,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 37
+    },
+    {
+      "name": "Quotes & Proposals",
+      "path": "/dashboard/business/quotes",
+      "loadTimeMs": 2035,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 51
+    },
+    {
+      "name": "Subscription & Billing Hub",
+      "path": "/dashboard/business/billing",
+      "loadTimeMs": 2015,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 37
+    },
+    {
+      "name": "Tenant Organization Settings",
+      "path": "/dashboard/business/settings",
+      "loadTimeMs": 2485,
+      "rating": "WARNING",
+      "status": "PASS",
+      "buttonCount": 36
+    },
+    {
+      "name": "Marketplace & Integrations",
+      "path": "/dashboard/marketplace",
+      "loadTimeMs": 2090,
+      "rating": "WARNING",
+      "status": "WARN_EMPTY",
+      "buttonCount": 0
+    }
+  ],
+  "emailTest": {
+    "target": "bonniiehendrix@gmail.com",
+    "sender": "sales@alphaclonesystems.com",
+    "payload": {
+      "to": "bonniiehendrix@gmail.com",
+      "subject": "AlphaClone Systems QA Verification - Automated Test"
+    },
+    "result": {
+      "status": 200,
+      "ok": true,
+      "json": {
+        "success": true,
+        "provider": "brevo",
+        "providerAccountId": "840e87b1-a661-4088-ab01-f7dc92f272fc",
+        "emailId": "<202609241756.51410465984@smtp-relay.mailin.fr>",
+        "canonicalMessageId": "9aa7c741-8b81-4b66-a55c-50531933b53c"
+      },
+      "raw": "{\"success\":true,\"provider\":\"brevo\",\"providerAccountId\":\"840e87b1-a661-4088-ab01-f7dc92f272fc\",\"emailId\":\"<202609241756.51410465984@smtp-relay.mailin.fr>\",\"canonicalMessageId\":\"9aa7c741-8b81-4b66-a55c-50531933b53c\"}"
+    },
+    "status": "PASS"
+  },
+  "summary": {
+    "totalModules": 16,
+    "passedModules": 11,
+    "failedModules": 5,
+    "consoleErrorCount": 26,
+    "networkErrorCount": 0,
+    "emailDeliveryStatus": "PASS"
+  }
+}

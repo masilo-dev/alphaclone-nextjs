@@ -256,23 +256,59 @@ export const favoritesService = {
     },
 };
 
+const preferencesCache = new Map<string, { preferences: any; cachedAt: number }>();
+const preferencesInFlight = new Map<string, Promise<{ preferences: any; error?: any }>>();
+const PREFERENCES_CACHE_TTL_MS = 20_000;
+
 export const preferencesService = {
     async getPreferences(userId: string) {
-        const { data, error } = await supabase
-            .from('user_preferences')
-            .select('*')
-            .eq('user_id', userId)
-            .maybeSingle();
+        if (!userId) return { preferences: null, error: undefined };
 
-        return { preferences: data, error };
+        const now = Date.now();
+        const cached = preferencesCache.get(userId);
+        if (cached && now - cached.cachedAt < PREFERENCES_CACHE_TTL_MS) {
+            return { preferences: cached.preferences, error: undefined };
+        }
+
+        const inFlight = preferencesInFlight.get(userId);
+        if (inFlight) {
+            return inFlight;
+        }
+
+        const fetchPromise = (async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('user_preferences')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    preferencesCache.set(userId, { preferences: data, cachedAt: Date.now() });
+                }
+                return { preferences: data, error };
+            } finally {
+                preferencesInFlight.delete(userId);
+            }
+        })();
+
+        preferencesInFlight.set(userId, fetchPromise);
+        return fetchPromise;
     },
 
     async updatePreferences(userId: string, preferences: Partial<UserPreferences>) {
+        preferencesCache.delete(userId);
+        preferencesInFlight.delete(userId);
+
         const { data, error } = await supabase
             .from('user_preferences')
             .upsert({ user_id: userId, ...preferences }, { onConflict: 'user_id' })
             .select()
             .single();
+
+        if (!error && data) {
+            preferencesCache.set(userId, { preferences: data, cachedAt: Date.now() });
+        }
 
         return { preferences: data, error };
     },

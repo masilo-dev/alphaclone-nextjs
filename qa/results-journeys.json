@@ -1,0 +1,252 @@
+[
+  {
+    "name": "CRM & Clients",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Dashboard",
+        "success": true,
+        "clickTime": 1185,
+        "responseTime": 1187,
+        "totalTime": 1489,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to CRM Overview",
+        "success": true,
+        "clickTime": 2891,
+        "responseTime": 2892,
+        "totalTime": 3202,
+        "category": "POOR"
+      },
+      {
+        "actionName": "Open Contacts / Clients Tab",
+        "success": true,
+        "clickTime": 832,
+        "responseTime": 836,
+        "totalTime": 1137,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Search Input Interaction",
+        "success": true,
+        "clickTime": 13,
+        "responseTime": 13,
+        "totalTime": 314,
+        "category": "EXCELLENT"
+      },
+      {
+        "actionName": "Open Record Detail / Row Interaction",
+        "success": true,
+        "clickTime": 5,
+        "responseTime": 6,
+        "totalTime": 306,
+        "category": "EXCELLENT"
+      },
+      {
+        "actionName": "Back Navigation to CRM",
+        "success": true,
+        "clickTime": 409,
+        "responseTime": 410,
+        "totalTime": 710,
+        "category": "GOOD"
+      }
+    ]
+  },
+  {
+    "name": "Leads & Deals",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Leads Board",
+        "success": true,
+        "clickTime": 810,
+        "responseTime": 812,
+        "totalTime": 1115,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Switch to Lead Finder",
+        "success": true,
+        "clickTime": 1035,
+        "responseTime": 1036,
+        "totalTime": 1338,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Deals Pipeline",
+        "success": true,
+        "clickTime": 1002,
+        "responseTime": 1003,
+        "totalTime": 1304,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Interact with Deals View Controls",
+        "success": true,
+        "clickTime": 30,
+        "responseTime": 31,
+        "totalTime": 331,
+        "category": "EXCELLENT"
+      }
+    ]
+  },
+  {
+    "name": "Accounting & Cash Flow",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Accounting",
+        "success": true,
+        "clickTime": 707,
+        "responseTime": 708,
+        "totalTime": 1008,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Open Invoice Manager",
+        "success": true,
+        "clickTime": 1211,
+        "responseTime": 1211,
+        "totalTime": 1512,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Quotes & Proposals",
+        "success": true,
+        "clickTime": 1002,
+        "responseTime": 1002,
+        "totalTime": 1304,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Open Cash Flow Forecast",
+        "success": true,
+        "clickTime": 1116,
+        "responseTime": 1116,
+        "totalTime": 1417,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Social & Marketing",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Social Overview",
+        "success": true,
+        "clickTime": 870,
+        "responseTime": 874,
+        "totalTime": 1175,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to LinkedIn Hub",
+        "success": true,
+        "clickTime": 1036,
+        "responseTime": 1037,
+        "totalTime": 1337,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Facebook Hub",
+        "success": true,
+        "clickTime": 1061,
+        "responseTime": 1062,
+        "totalTime": 1363,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Open Compose & Safe Input Test",
+        "success": true,
+        "clickTime": 594,
+        "responseTime": 595,
+        "totalTime": 896,
+        "category": "GOOD"
+      }
+    ]
+  },
+  {
+    "name": "Projects & Tasks",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Projects",
+        "success": true,
+        "clickTime": 801,
+        "responseTime": 802,
+        "totalTime": 1105,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Navigate to Tasks Board",
+        "success": true,
+        "clickTime": 1230,
+        "responseTime": 1231,
+        "totalTime": 1539,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Interact with Task Filter/Tabs",
+        "success": true,
+        "clickTime": 123,
+        "responseTime": 123,
+        "totalTime": 425,
+        "category": "EXCELLENT"
+      }
+    ]
+  },
+  {
+    "name": "Contracts",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Contracts",
+        "success": true,
+        "clickTime": 862,
+        "responseTime": 862,
+        "totalTime": 1165,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Open Contract Manager",
+        "success": true,
+        "clickTime": 1092,
+        "responseTime": 1093,
+        "totalTime": 1395,
+        "category": "ACCEPTABLE"
+      }
+    ]
+  },
+  {
+    "name": "Settings & Integrations",
+    "status": "PASS",
+    "steps": [
+      {
+        "actionName": "Navigate to Settings",
+        "success": true,
+        "clickTime": 1112,
+        "responseTime": 1112,
+        "totalTime": 1414,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Open Integration Marketplace",
+        "success": true,
+        "clickTime": 1237,
+        "responseTime": 1239,
+        "totalTime": 1539,
+        "category": "ACCEPTABLE"
+      },
+      {
+        "actionName": "Search Integration in Marketplace",
+        "success": true,
+        "clickTime": 78,
+        "responseTime": 80,
+        "totalTime": 380,
+        "category": "EXCELLENT"
+      }
+    ]
+  }
+]
