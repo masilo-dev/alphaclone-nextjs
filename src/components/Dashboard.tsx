@@ -2385,7 +2385,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             setShowOnboarding(true);
             return;
           }
-          scheduleProductTour();
+          setShowProductTour(true);
         }}
         userName={user.name}
       />
@@ -2399,7 +2399,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               localStorage.setItem(`onboarding_completed_${user.id}`, "true");
               window.dispatchEvent(new CustomEvent("alphaclone:onboarding-updated"));
             }
-            scheduleProductTour();
+            setShowProductTour(true);
           }}
         />
       )}
