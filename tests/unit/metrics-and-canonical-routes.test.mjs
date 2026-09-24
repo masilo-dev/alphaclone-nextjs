@@ -78,6 +78,15 @@ test('canonical aliases resolve predictably', () => {
   assert.equal(resolveCanonicalPath('/dashboard/bonnie'), '/dashboard/business/bonnie');
   assert.equal(resolveCanonicalPath('/dashboard/contacts'), '/dashboard/crm/unified-contacts');
   assert.equal(resolveCanonicalPath('/dashboard/clients'), '/dashboard/crm/unified-contacts');
+  assert.equal(resolveCanonicalPath('/dashboard/prospects'), '/dashboard/crm/unified-contacts');
+  assert.equal(resolveCanonicalPath('/dashboard/contracts'), '/dashboard/business/contracts');
+  assert.equal(resolveCanonicalPath('/dashboard/facebook'), '/dashboard/business/facebook');
+  assert.equal(resolveCanonicalPath('/dashboard/cash-flow'), '/dashboard/business/cash-flow');
+  assert.equal(resolveCanonicalPath('/dashboard/projects'), '/dashboard/business/projects');
+  assert.equal(resolveCanonicalPath('/dashboard/quotes'), '/dashboard/business/quotes');
+  assert.equal(resolveCanonicalPath('/dashboard/invoices'), '/dashboard/business/billing/manage');
+  assert.equal(resolveCanonicalPath('/dashboard/crm/leads'), '/dashboard/leads');
+  assert.equal(resolveCanonicalPath('/dashboard/crm/deals'), '/dashboard/deals');
 });
 
 test('canonical route registry has no duplicate alias ownership', () => {

@@ -7,6 +7,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
 import { clientActivityService } from '../../../services/clientActivityService';
 import { fileImportService } from '../../../services/fileImportService';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 import {
     Users,
     Plus,
@@ -84,7 +85,8 @@ interface ClientsPageProps {
 const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const router = useRouter();
-    const pathname = usePathname() || '';
+    const rawPathname = usePathname() || '';
+    const pathname = resolveCanonicalPath(rawPathname);
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [filteredClients, setFilteredClients] = useState<BusinessClient[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -1712,7 +1714,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         size="sm"
                                                         variant="outline"
                                                         icon={<Plus className="w-3.5 h-3.5" />}
-                                                        onClick={() => router.push('/dashboard/business?tab=contracts')}
+                                                        onClick={() => router.push('/dashboard/business/contracts')}
                                                     >
                                                         New Contract
                                                     </Button>
@@ -1727,7 +1729,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         title="No contracts found"
                                                         description="Draft proposals and binding agreements for this client."
                                                         actionLabel="Go to Contracts"
-                                                        onAction={() => router.push('/dashboard/business?tab=contracts')}
+                                                        onAction={() => router.push('/dashboard/business/contracts')}
                                                         className="py-10"
                                                     />
                                                 ) : (
@@ -1756,7 +1758,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
-                                                                onClick={() => router.push(`/dashboard/business?tab=contracts&contractId=${contract.id}`)}
+                                                                onClick={() => router.push(`/dashboard/business/contracts?contractId=${contract.id}`)}
                                                             >
                                                                 View Contract
                                                             </Button>

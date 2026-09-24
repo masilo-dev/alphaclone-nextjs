@@ -96,6 +96,7 @@ import {
   STAGES,
 } from "../types";
 import { resolveDashboardPath } from "@/lib/dashboardNavigate";
+import { resolveCanonicalPath } from "@/lib/dashboard/canonicalRoutes";
 import { useTenant } from "../contexts/TenantContext";
 
 import NotificationCenter from "./dashboard/NotificationCenter";
@@ -242,6 +243,7 @@ const OperationsConsoleTab = React.lazy(
   () => import("./dashboard/admin/OperationsConsoleTab"),
 );
 const ClientsPage = React.lazy(() => import("./dashboard/business/ClientsPage"));
+const KanbanBoard = React.lazy(() => import("./dashboard/crm/KanbanBoard"));
 const ProjectsPage = React.lazy(() => import("./dashboard/business/ProjectsPage"));
 const ContractDashboard = React.lazy(
   () => import("./contracts/ContractDashboard"),
@@ -475,6 +477,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const navigateToTab = useCallback(
     (href: string) => {
       if (!href?.startsWith("/dashboard")) return;
+      const canonical = resolveCanonicalPath(href);
+      setActiveTab((prev) => (prev === canonical ? prev : canonical));
       void router.prefetch(href);
       router.push(href);
     },
@@ -1971,9 +1975,15 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case "/dashboard/leads":
+        return (
+          <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+            <KanbanBoard />
+          </React.Suspense>
+        );
+
       case "/dashboard/clients":
       case "/dashboard/contacts":
-      case "/dashboard/leads":
       case "/dashboard/crm/unified-contacts":
         return (
           <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>

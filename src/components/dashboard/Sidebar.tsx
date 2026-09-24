@@ -16,6 +16,7 @@ import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
 import { preferencesService } from '@/services/dashboardService';
 import { WORKSPACE } from '@/constants/design';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -76,15 +77,21 @@ const Sidebar = React.memo<SidebarProps>(({
         return () => window.removeEventListener('ac-theme-changed', onRemote);
     }, [user.id]);
 
+    const isSubItemActive = useCallback((subHref: string): boolean => {
+        const canonicalActive = resolveCanonicalPath(activeTab);
+        const canonicalSub = resolveCanonicalPath(subHref.split('?')[0]);
+        return canonicalActive === canonicalSub || (canonicalSub !== '/dashboard' && canonicalActive.startsWith(`${canonicalSub}/`));
+    }, [activeTab]);
+
     // Auto-expand parent if a child's href matches activeTab
     useEffect(() => {
         const activeParent = navItems?.find((item: any) =>
-            item.subItems?.some((sub: any) => activeTab.startsWith(sub.href.split('?')[0])),
+            item.subItems?.some((sub: any) => isSubItemActive(sub.href)),
         );
         if (activeParent) {
             setExpanded((prev) => prev[activeParent.label] ? prev : { [activeParent.label]: true });
         }
-    }, [activeTab, navItems]);
+    }, [isSubItemActive, navItems]);
 
     const handleTheme = useCallback((next: AcThemeMode) => {
         setTheme(next);
@@ -95,13 +102,17 @@ const Sidebar = React.memo<SidebarProps>(({
 
     const navigate = useCallback((href: string) => {
         if (!href || href === '#') return;
+        const canonical = resolveCanonicalPath(href);
+        if (setActiveTab) {
+            setActiveTab(canonical);
+        }
         void router.prefetch(href);
         router.push(href);
         if (onNavigate) onNavigate();
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
         }
-    }, [router, onNavigate, setSidebarOpen]);
+    }, [router, onNavigate, setSidebarOpen, setActiveTab]);
 
     useEffect(() => {
         if (!navItems?.length) return;
@@ -127,8 +138,16 @@ const Sidebar = React.memo<SidebarProps>(({
         .split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
     const isItemActive = (item: any): boolean => {
-        if (item.href !== '#' && activeTab === item.href) return true;
-        if (item.subItems?.some((s: any) => activeTab.startsWith(s.href.split('?')[0]))) return true;
+        const canonicalActive = resolveCanonicalPath(activeTab);
+        if (item.href && item.href !== '#') {
+            const canonicalItem = resolveCanonicalPath(item.href.split('?')[0]);
+            if (canonicalActive === canonicalItem || (canonicalItem !== '/dashboard' && canonicalActive.startsWith(`${canonicalItem}/`))) {
+                return true;
+            }
+        }
+        if (item.subItems?.some((s: any) => isSubItemActive(s.href))) {
+            return true;
+        }
         return false;
     };
 
@@ -273,8 +292,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <div className="ml-3 mt-0.5 pl-2 border-l border-[var(--ws-border)] space-y-0.5">
                                         {item.subItems.map((sub: any, sIdx: number) => {
                                             const SubIcon = sub.icon;
-                                            const subHref = sub.href.split('?')[0];
-                                            const subActive = activeTab === subHref;
+                                            const subActive = isSubItemActive(sub.href);
                                             return (
                                                 <button
                                                     key={sIdx}

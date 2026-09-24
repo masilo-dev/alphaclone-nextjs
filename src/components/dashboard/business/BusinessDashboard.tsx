@@ -63,6 +63,7 @@ const ClientsPage = React.lazy(() => import('./ClientsPage'));
 const CRMTab = React.lazy(() => import('../CRMTab'));
 const TasksTab = React.lazy(() => import('../TasksTab'));
 const DealsTab = React.lazy(() => import('../DealsTab'));
+const KanbanBoard = React.lazy(() => import('../crm/KanbanBoard'));
 const QuotesTab = React.lazy(() => import('../QuotesTab'));
 const MailTab = React.lazy(() => import('../MailTab'));
 const CommunicationHub = React.lazy(() => import('../communication/CommunicationHub'));
@@ -688,10 +689,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/referrals':
                 return <ReferralsPage user={user} tenant={currentTenant} />;
             case '/dashboard/leads':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <KanbanBoard />
+                    </React.Suspense>
+                );
             case '/dashboard/contacts':
             case '/dashboard/clients':
             case '/dashboard/business/clients':
-                return <ClientsPage user={user} />;
             case '/dashboard/crm/unified-contacts':
                 return <ClientsPage user={user} />;
             case '/dashboard/forecast':

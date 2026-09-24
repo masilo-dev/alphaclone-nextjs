@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 
 export interface WorkspaceOption {
   label: string;
@@ -81,7 +82,11 @@ export function WorkspaceSwitcher({
           {options.map((option) => {
             const isSelected = Boolean(
               option.label.toLowerCase() === currentLabel.toLowerCase() ||
-              (currentHref && (currentHref === option.href || currentHref.startsWith(option.href)))
+              (currentHref && (
+                resolveCanonicalPath(currentHref) === resolveCanonicalPath(option.href) ||
+                currentHref === option.href ||
+                currentHref.startsWith(option.href)
+              ))
             );
 
             return (

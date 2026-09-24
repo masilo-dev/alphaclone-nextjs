@@ -8,6 +8,8 @@ import ChannelsHub from '@/components/dashboard/hubs/ChannelsHub';
 import ScheduleHub from '@/components/dashboard/hubs/ScheduleHub';
 import WorkspaceHub from '@/components/dashboard/hubs/WorkspaceHub';
 
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
+
 export const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm',
   '/dashboard/crm/workspace',
@@ -21,11 +23,15 @@ export const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm/activity',
   '/dashboard/crm/unified-contacts',
   '/dashboard/leads',
+  '/dashboard/crm/leads',
   '/dashboard/leads/campaigns',
   '/dashboard/leads/finder',
   '/dashboard/contacts',
+  '/dashboard/clients',
+  '/dashboard/prospects',
   '/dashboard/business/clients',
   '/dashboard/deals',
+  '/dashboard/crm/deals',
   '/dashboard/forecast',
   '/dashboard/tasks',
   '/dashboard/sales-agent',
@@ -47,9 +53,12 @@ export const MONEY_HUB_ROUTES = new Set([
   '/dashboard/business/billing',
   '/dashboard/business/billing/manage',
   '/dashboard/business/invoices',
+  '/dashboard/invoices',
   '/dashboard/business/expenses',
   '/dashboard/business/quotes',
   '/dashboard/business/cash-flow',
+  '/dashboard/cash-flow',
+  '/dashboard/cashflow',
   '/dashboard/business/tax-estimator',
   '/dashboard/vendors',
 ]);
@@ -74,9 +83,13 @@ export const MARKETING_HUB_ROUTES = new Set([
   '/dashboard/business/unified-inbox',
   '/dashboard/zoho/mail',
   '/dashboard/business/facebook',
+  '/dashboard/facebook',
   '/dashboard/business/linkedin',
+  '/dashboard/linkedin',
   '/dashboard/business/instagram',
+  '/dashboard/instagram',
   '/dashboard/business/x',
+  '/dashboard/x',
 ]);
 
 export const INSIGHTS_HUB_ROUTES = new Set([
@@ -95,10 +108,6 @@ export const DOCUMENTS_HUB_ROUTES = new Set([
   '/dashboard/business/contracts',
   '/dashboard/contracts/manage',
   '/dashboard/business/contracts/manage',
-  '/dashboard/business/projects',
-  '/dashboard/projects',
-  '/dashboard/business/projects/manage',
-  '/dashboard/projects/manage',
   '/dashboard/business/onboarding',
   '/dashboard/business/pages',
   '/dashboard/business/contact-submissions',
@@ -106,9 +115,12 @@ export const DOCUMENTS_HUB_ROUTES = new Set([
 
 export const CHANNELS_HUB_ROUTES = new Set([
   '/dashboard/business/tickets',
+  '/dashboard/tickets',
   '/dashboard/messages',
   '/dashboard/business/messages',
   '/dashboard/business/whatsapp',
+  '/dashboard/whatsapp',
+  '/dashboard/business/unified-inbox',
 ]);
 
 export const SCHEDULE_HUB_ROUTES = new Set([
@@ -145,17 +157,19 @@ export const ALL_HUB_ROUTES = new Set([
 ]);
 
 export function isHubRoute(tab: string): boolean {
-  return ALL_HUB_ROUTES.has(tab);
+  const canonical = resolveCanonicalPath(tab);
+  return ALL_HUB_ROUTES.has(tab) || ALL_HUB_ROUTES.has(canonical);
 }
 
 export function wrapRouteInHub(tab: string, content: React.ReactNode): React.ReactNode {
-  if (SALES_HUB_ROUTES.has(tab)) return <SalesHub>{content}</SalesHub>;
-  if (MONEY_HUB_ROUTES.has(tab)) return <MoneyHub>{content}</MoneyHub>;
-  if (MARKETING_HUB_ROUTES.has(tab)) return <MarketingHub>{content}</MarketingHub>;
-  if (INSIGHTS_HUB_ROUTES.has(tab)) return <InsightsHub>{content}</InsightsHub>;
-  if (DOCUMENTS_HUB_ROUTES.has(tab)) return <DocumentsHub>{content}</DocumentsHub>;
-  if (CHANNELS_HUB_ROUTES.has(tab)) return <ChannelsHub>{content}</ChannelsHub>;
-  if (SCHEDULE_HUB_ROUTES.has(tab)) return <ScheduleHub>{content}</ScheduleHub>;
-  if (WORKSPACE_HUB_ROUTES.has(tab)) return <WorkspaceHub>{content}</WorkspaceHub>;
+  const canonical = resolveCanonicalPath(tab);
+  if (SALES_HUB_ROUTES.has(tab) || SALES_HUB_ROUTES.has(canonical)) return <SalesHub>{content}</SalesHub>;
+  if (MONEY_HUB_ROUTES.has(tab) || MONEY_HUB_ROUTES.has(canonical)) return <MoneyHub>{content}</MoneyHub>;
+  if (MARKETING_HUB_ROUTES.has(tab) || MARKETING_HUB_ROUTES.has(canonical)) return <MarketingHub>{content}</MarketingHub>;
+  if (INSIGHTS_HUB_ROUTES.has(tab) || INSIGHTS_HUB_ROUTES.has(canonical)) return <InsightsHub>{content}</InsightsHub>;
+  if (DOCUMENTS_HUB_ROUTES.has(tab) || DOCUMENTS_HUB_ROUTES.has(canonical)) return <DocumentsHub>{content}</DocumentsHub>;
+  if (CHANNELS_HUB_ROUTES.has(tab) || CHANNELS_HUB_ROUTES.has(canonical)) return <ChannelsHub>{content}</ChannelsHub>;
+  if (SCHEDULE_HUB_ROUTES.has(tab) || SCHEDULE_HUB_ROUTES.has(canonical)) return <ScheduleHub>{content}</ScheduleHub>;
+  if (WORKSPACE_HUB_ROUTES.has(tab) || WORKSPACE_HUB_ROUTES.has(canonical)) return <WorkspaceHub>{content}</WorkspaceHub>;
   return content;
 }

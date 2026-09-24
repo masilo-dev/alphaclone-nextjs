@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDown, Info, Maximize2, Minimize2 } from 'lucide-react';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 import { WorkspaceSwitcher } from '@/components/ui/workspace/WorkspaceSwitcher';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 
 export interface HubTab {
   label: string;
@@ -93,20 +94,23 @@ export default function HubShell({
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
+  const canonicalPath = resolveCanonicalPath(pathname || '');
+  const canonicalFirstTab = tabs[0] ? resolveCanonicalPath(tabs[0].href) : '';
+
   // Large Capability. Narrow Context:
   // Detect if user is on the module root / overview vs working in a focused sub-workspace
   const isOverview =
     !pathname ||
-    pathname === tabs[0]?.href ||
-    (moduleId ? pathname === `/dashboard/${moduleId}` : false);
+    canonicalPath === canonicalFirstTab ||
+    (moduleId ? canonicalPath === `/dashboard/${moduleId}` : false);
 
-  const activeTab = tabs.find(
-    (tab) =>
-      pathname != null &&
-      (pathname === tab.href ||
-        pathname.startsWith(`${tab.href}/`) ||
-        pathname.startsWith(`${tab.href}?`))
-  ) || tabs[0];
+  const activeTab = tabs.find((tab) => {
+    const canonicalTab = resolveCanonicalPath(tab.href);
+    return (
+      canonicalPath === canonicalTab ||
+      (canonicalTab !== '/dashboard' && (canonicalPath.startsWith(`${canonicalTab}/`) || canonicalPath.startsWith(`${canonicalTab}?`)))
+    );
+  }) || tabs[0];
 
   return (
     <div
@@ -213,11 +217,10 @@ export default function HubShell({
             aria-label={`${t(title)} · ${t('Sections')}`}
           >
             {tabs.map((tab) => {
+              const canonicalTab = resolveCanonicalPath(tab.href);
               const isActive =
-                pathname != null &&
-                (pathname === tab.href ||
-                  pathname.startsWith(`${tab.href}/`) ||
-                  pathname.startsWith(`${tab.href}?`));
+                canonicalPath === canonicalTab ||
+                (canonicalTab !== '/dashboard' && (canonicalPath.startsWith(`${canonicalTab}/`) || canonicalPath.startsWith(`${canonicalTab}?`)));
               const Icon = tab.icon;
               return (
                 <Link

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { ModuleId } from '@/constants/brand';
 import { MODULE_IDENTITY } from '@/constants/brand';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
 
 export interface SubNavItem {
   id: string;
@@ -34,9 +35,11 @@ export function SubNavigation({ moduleId, items, activeHref, className }: SubNav
       style={{ ['--module-accent' as string]: identity.primary }}
     >
       {items.map((item) => {
+        const canonicalActive = resolveCanonicalPath(activeHref || '');
+        const canonicalItem = resolveCanonicalPath(item.href);
         const active =
-          activeHref === item.href ||
-          (activeHref?.startsWith(item.href) && item.href !== '#' && item.href.length > 1);
+          canonicalActive === canonicalItem ||
+          (canonicalItem !== '/dashboard' && canonicalActive.startsWith(`${canonicalItem}/`));
         return (
           <Link
             key={item.id}

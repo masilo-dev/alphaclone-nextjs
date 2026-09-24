@@ -34,18 +34,30 @@ function TenantAdminDashboardShell({
     const location = usePathname();
     const router = useRouter();
     const { currentTenant } = useTenant();
-    const businessRoute = useMemo(
-        () => normalizeBusinessRoute(location || '/dashboard', user.role),
-        [location, user.role],
+    const [activeTab, setActiveTabState] = useState<string>(() =>
+        normalizeBusinessRoute(location || '/dashboard', user.role)
     );
+
+    useEffect(() => {
+        if (location) {
+            const next = normalizeBusinessRoute(location, user.role);
+            setActiveTabState((prev) => (prev === next ? prev : next));
+        }
+    }, [location, user.role]);
+
+    const handleTabChange = React.useCallback((tab: string) => {
+        const next = normalizeBusinessRoute(tab, user.role);
+        setActiveTabState(next);
+        router.push(tab);
+    }, [router, user.role]);
 
     return (
         <BusinessDashboard
             user={user}
             currentTenant={currentTenant ?? undefined}
             onLogout={onLogout}
-            activeTab={businessRoute}
-            setActiveTab={(tab) => router.push(tab)}
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
         />
     );
 }
