@@ -213,6 +213,19 @@
   --danger: #D85858;
   --info: #4199A4;
   --focus-ring: rgba(65, 153, 164, 0.35);
+
+  /* Global interaction tokens */
+  --interactive-cursor: pointer;
+  --interactive-disabled-cursor: not-allowed;
+  --interactive-z-base: 1;
+  --interactive-z-raised: 10;
+  --interactive-z-dropdown: 1000;
+  --interactive-z-modal: 1050;
+  --interactive-z-overlay: 1100;
+  --interactive-transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --interactive-focus-ring: 0 0 0 2px var(--color-ac-accent, #356AF4);
+  --interactive-disabled-opacity: 0.5;
+
   --backlight-idle-opacity: 0.03;
   --backlight-hover-opacity: 0.07;
   --backlight-active-opacity: 0.12;
@@ -3043,3 +3056,89 @@ html.ac-scroll-lock .ac-business-root {
 .ac-business-root [data-sheet-content] {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
+/* ========================================================================
+   GLOBAL INTERACTION & CLICKABILITY SYSTEM
+   Canonical interaction contract across Marketing, Dashboard, PWA, Modals,
+   Drawers, and Navigation.
+   ======================================================================== */
+
+/* 1. All interactive controls must explicitly show pointer cursor and receive pointer events when enabled */
+button,
+[role="button"],
+a[href],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select,
+summary,
+.ac-workspace-action-btn,
+.ac-workspace-nav-item,
+.ac-workspace-nav-subitem,
+.ac-workspace-tab,
+.mkt-btn {
+  cursor: var(--interactive-cursor, pointer);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+select:not(:disabled),
+.ac-workspace-action-btn:not(:disabled),
+.mkt-btn {
+  pointer-events: auto;
+}
+
+/* 2. Disabled controls: explicitly not clickable with not-allowed cursor and disabled opacity */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[role="button"][aria-disabled="true"],
+.ac-workspace-action-btn:disabled,
+.ac-workspace-action-btn[aria-disabled="true"] {
+  cursor: var(--interactive-disabled-cursor, not-allowed) !important;
+  opacity: var(--interactive-disabled-opacity, 0.5) !important;
+}
+
+/* 3. Global focus ring */
+button:focus-visible,
+[role="button"]:focus-visible,
+a[href]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--interactive-focus-ring) !important;
+}
+
+/* 4. Decorative elements, pseudo-elements, and closed states must NEVER intercept clicks */
+.pointer-events-none,
+.ac-backlit-surface::before,
+.ac-workspace-nav-item--active::before,
+[data-state="closed"],
+[data-state="closed"] * {
+  pointer-events: none !important;
+}
+
+/* 5. Product Walkthrough Overlay Guarantee:
+   When walkthrough is inactive, never leave stale backdrops, floaters, or portals intercepting clicks */
+html:not([data-product-tour-active="true"]) #react-joyride-portal,
+html:not([data-product-tour-active="true"]) .react-joyride__overlay,
+html:not([data-product-tour-active="true"]) .__floater {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* 6. Page transition exit safety: exiting pages/containers must never capture clicks */
+.ac-page-transition[data-framer-exit],
+[data-framer-exit] {
+  pointer-events: none !important;
+}
+

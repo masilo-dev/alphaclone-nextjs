@@ -64,7 +64,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
   return (
     <div className="fixed inset-0 bg-[#000814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none overscroll-behavior-none touch-action-manipulation">
       {/* Background - System Aesthetic */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <div className="absolute inset-0 bg-gradient-to-br from-[#000814] via-[#0a1628] to-[#000814]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-500/5 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />

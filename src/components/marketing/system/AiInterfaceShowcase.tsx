@@ -151,7 +151,7 @@ export default function AiInterfaceShowcase() {
 
         {/* Column 2: Central AlphaClone Core Engine */}
         <div className="relative group">
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-cyan-500/30 blur-xl opacity-80 group-hover:opacity-100 transition duration-500" />
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/30 via-teal-500/30 to-cyan-500/30 blur-xl opacity-80 group-hover:opacity-100 transition duration-500 pointer-events-none" aria-hidden="true" />
           <div className="relative overflow-hidden rounded-2xl border border-cyan-400/40 bg-gradient-to-b from-[#041324] via-[#020a17] to-[#010610] p-6 text-center shadow-2xl shadow-cyan-950/50 backdrop-blur-xl">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-cyan-400/40 bg-cyan-400/10 text-cyan-300 shadow-lg shadow-cyan-400/20">
               <Database className="h-7 w-7 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12" />

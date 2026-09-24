@@ -5,51 +5,80 @@ import Image from 'next/image';
 import { WORKSPACE } from '@/constants/design';
 
 // --- Button ---
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'ghost'
+    | 'danger'
+    | 'destructive'
+    | 'icon'
+    | 'navigation'
+    | 'cta'
+    | 'default';
+  size?: 'sm' | 'md' | 'lg' | 'icon' | 'default';
   isLoading?: boolean;
   icon?: React.ReactNode;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   children,
   className = '',
   variant = 'primary',
   size = 'md',
-  isLoading,
-  disabled,
+  isLoading = false,
+  disabled = false,
   icon,
+  type = 'button',
   ...props
-}) => {
-  const baseStyles = `inline-flex items-center justify-center rounded-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] disabled:opacity-50 disabled:pointer-events-none min-w-11`;
+}, ref) => {
+  const isActuallyDisabled = Boolean(disabled || isLoading);
 
-  const variants = {
-    primary: `${WORKSPACE.action.primary} border-0`,
-    secondary: "bg-[var(--interactive-secondary)] text-white hover:bg-[var(--interactive-secondary-hover)]",
-    outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]",
-    ghost: "text-[var(--interactive-secondary)] hover:bg-[var(--surface-hover)]",
-    danger: "bg-[var(--danger)] text-white hover:brightness-95",
+  const baseStyles =
+    'inline-flex items-center justify-center font-medium transition-all select-none touch-manipulation ' +
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app,#0C1220)] ' +
+    'disabled:cursor-[var(--interactive-disabled-cursor,not-allowed)] disabled:opacity-[var(--interactive-disabled-opacity,0.5)] ' +
+    '[&:not(:disabled)]:cursor-[var(--interactive-cursor,pointer)] [&:not(:disabled)]:pointer-events-auto';
+
+  const variants: Record<string, string> = {
+    primary: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
+    default: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
+    secondary: "bg-[var(--interactive-secondary,#4199A4)] text-white hover:bg-[var(--interactive-secondary-hover,#388A94)] active:scale-[0.98]",
+    outline: "border border-[var(--border-default,#282F45)] bg-[var(--surface-primary,#121A2A)] text-[var(--text-primary,#F4F7FC)] hover:bg-[var(--surface-hover,#172133)] active:scale-[0.98]",
+    ghost: "text-[var(--text-secondary,#8491A6)] hover:bg-[var(--surface-hover,#172133)] hover:text-[var(--text-primary,#F4F7FC)]",
+    danger: "bg-[var(--danger,#EF4444)] text-white hover:brightness-95 active:scale-[0.98]",
+    destructive: "bg-[var(--danger,#EF4444)] text-white hover:brightness-95 active:scale-[0.98]",
+    icon: "bg-transparent hover:bg-[var(--surface-hover,#172133)] text-[var(--text-secondary,#8491A6)] hover:text-[var(--text-primary,#F4F7FC)]",
+    navigation: `${WORKSPACE.nav.item} justify-start`,
+    cta: "bg-gradient-to-r from-[#5f8fff] to-[#356af4] text-white shadow-lg hover:brightness-110 active:scale-[0.98]",
   };
 
-  const sizes = {
-    sm: "h-8 px-3 type-caption min-h-11",
-    md: "h-10 px-4 py-2 type-ui min-h-11",
-    lg: "h-12 px-6 text-base min-h-11",
+  const sizes: Record<string, string> = {
+    sm: "h-8 px-3 type-caption min-h-9 min-w-9 rounded-[8px]",
+    md: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
+    lg: "h-12 px-6 text-base min-h-12 min-w-12 rounded-[12px]",
+    default: "h-10 px-4 py-2 type-ui min-h-11 min-w-11 rounded-[10px]",
+    icon: "h-10 w-10 p-0 min-h-10 min-w-10 rounded-[10px]",
   };
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={disabled || isLoading}
+      ref={ref}
+      type={type}
+      className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
+      disabled={isActuallyDisabled}
+      aria-busy={isLoading || undefined}
+      aria-disabled={isActuallyDisabled || undefined}
       {...props}
     >
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {!isLoading && icon && <span className="mr-2 flex items-center">{icon}</span>}
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+      {!isLoading && icon && <span className="mr-2 flex items-center" aria-hidden="true">{icon}</span>}
       {children}
     </button>
   );
-};
+});
+Button.displayName = 'Button';
 
 // --- Card ---
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -58,16 +87,44 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   hoverEffect?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
+export const Card: React.FC<CardProps> = ({
+  children,
+  className = '',
+  hoverEffect = false,
+  onClick,
+  onKeyDown,
+  role,
+  tabIndex,
+  ...props
+}) => {
+  const isClickable = Boolean(onClick);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick?.(e as any);
+    }
+    onKeyDown?.(e);
+  };
+
   return (
     <div
-      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${hoverEffect ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]' : ''} ${className}`}
+      role={role || (isClickable ? 'button' : undefined)}
+      tabIndex={tabIndex ?? (isClickable ? 0 : undefined)}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${
+        hoverEffect || isClickable
+          ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]'
+          : ''
+      } ${isClickable ? 'cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)]' : ''} ${className}`}
       {...props}
     >
       {children}
     </div>
   );
 };
+
 
 // --- Badge ---
 interface BadgeProps {
@@ -382,33 +439,64 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
         setIsOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const toggle = () => setIsOpen((prev) => !prev);
+
+  const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIsOpen((prev) => !prev);
+    }
+  };
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={toggle}
+        onKeyDown={handleTriggerKeyDown}
+        className="cursor-pointer inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] rounded-lg touch-manipulation select-none"
+      >
         {trigger}
       </div>
 
       {isOpen && (
-        <div className={`absolute z-[110] mt-2 w-48 rounded-xl bg-[var(--ws-panel,#171A26)] border border-[var(--ws-border)] shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+        <div
+          role="menu"
+          className={`absolute z-[1000] mt-2 w-48 rounded-xl bg-[var(--ws-panel,#171A26)] border border-[var(--ws-border)] shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}
+        >
           <div className="p-1 space-y-0.5">
             {items.map((item, index) => (
               <button
                 key={index}
+                type="button"
+                role="menuitem"
                 onClick={() => {
                   item.onClick();
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-2 px-3 py-2 type-ui font-medium rounded-lg transition-all duration-150 ${
+                className={`w-full flex items-center gap-2 px-3 py-2 type-ui font-medium rounded-lg transition-all duration-150 select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] ${
                   item.variant === 'danger'
                     ? 'text-red-400 hover:bg-red-500/10'
                     : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
                 }`}
               >
-                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                {item.icon && <span className="shrink-0" aria-hidden="true">{item.icon}</span>}
                 {item.label}
               </button>
             ))}
@@ -418,3 +506,4 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     </div>
   );
 };
+

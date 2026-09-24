@@ -131,6 +131,8 @@ export const BREAKPOINTS = {
 } as const;
 
 export const Z_INDEX = {
+  base: 1,
+  raised: 10,
   dropdown: 1000,
   sticky: 1020,
   fixed: 1030,
@@ -138,9 +140,29 @@ export const Z_INDEX = {
   modal: 1050,
   popover: 1060,
   tooltip: 1070,
+  drawerOverlay: 1100,
+  drawerPanel: 1110,
   bonnieDrawer: 1120,
   commandPalette: 1200,
+  tour: 10000,
 } as const;
+
+/**
+ * Global interaction system tokens — cursor, stacking, transition, focus ring, and disabled states.
+ */
+export const INTERACTIVE_TOKENS = {
+  cursor: 'pointer',
+  disabledCursor: 'not-allowed',
+  zBase: 1,
+  zRaised: 10,
+  zDropdown: 1000,
+  zModal: 1050,
+  zOverlay: 1100,
+  transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  focusRing: '0 0 0 2px #356AF4',
+  disabledOpacity: 0.5,
+} as const;
+
 
 /**
  * Enterprise structural patterns — Alphaclone OS brand.

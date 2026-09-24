@@ -145,13 +145,13 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
           <>
             <button
               type="button"
-              className="fixed inset-0 z-20 cursor-default"
+              className="fixed inset-0 z-[990] cursor-default"
               aria-label="Close more menu"
               onClick={() => setMoreOpen(false)}
             />
             <div
               role="menu"
-              className="absolute left-0 top-full z-30 mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-slate-900 p-1 shadow-lg"
+              className="absolute left-0 top-full z-[1000] mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-slate-900 p-1 shadow-lg"
             >
               {SALES_SECONDARY_TABS.map((tab) => {
                 const isActive = isSalesWorkspaceTabActive(pathname, tab.href);

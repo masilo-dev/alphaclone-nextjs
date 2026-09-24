@@ -242,7 +242,7 @@ export default function LookInsideAlphaClone() {
         {/* Left Side: Window-Framed Picture (No abrupt boundary cutouts!) */}
         <div className="relative group">
           {/* Glass Glow Backdrop */}
-          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-xl opacity-70 group-hover:opacity-100 transition duration-500" />
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-xl opacity-70 group-hover:opacity-100 transition duration-500 pointer-events-none" aria-hidden="true" />
           
           <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#030a16]/95 p-2 sm:p-3 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl transition-all duration-300 group-hover:border-emerald-400/40">
             {/* Browser Bar */}

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -61,6 +62,25 @@ function resetWindowScroll(): void {
     }
 }
 
+/**
+ * Thoroughly removes all Joyride backdrops, portals, and body scroll locks.
+ * Guarantees that an inactive or dismissed tour can NEVER block clicks.
+ */
+function cleanupTourArtifacts(): void {
+    if (typeof document === 'undefined') return;
+    document.documentElement.removeAttribute('data-product-tour-active');
+    document.querySelectorAll('#react-joyride-portal, .react-joyride__overlay, .__floater').forEach((el) => {
+        try {
+            el.remove();
+        } catch {}
+    });
+    if (document.body.style.overflow === 'hidden') {
+        document.body.style.overflow = '';
+    }
+    document.body.style.pointerEvents = '';
+    document.documentElement.style.pointerEvents = '';
+}
+
 const ProductTour: React.FC<ProductTourProps> = ({
     isOpen,
     userId,
@@ -71,6 +91,8 @@ const ProductTour: React.FC<ProductTourProps> = ({
 }) => {
     const { isDark } = useTheme();
     const { t } = useLanguage();
+    const pathname = usePathname();
+    const prevPathnameRef = useRef(pathname);
     const completed = useRef(false);
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
@@ -82,193 +104,207 @@ const ProductTour: React.FC<ProductTourProps> = ({
             document.documentElement.setAttribute('data-product-tour-active', 'true');
             window.addEventListener('scroll', resetWindowScroll, { passive: true });
             return () => {
-                document.documentElement.removeAttribute('data-product-tour-active');
+                cleanupTourArtifacts();
                 window.removeEventListener('scroll', resetWindowScroll);
                 resetWindowScroll();
             };
         }
-        document.documentElement.removeAttribute('data-product-tour-active');
+        cleanupTourArtifacts();
     }, [isOpen, run]);
 
-    const adminSteps: Step[] = [
-        {
-            target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"]',
-            title: t('Command Center'),
-            content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
-            placement: 'center',
-            disableBeacon: true,
-        },
-        {
-            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
-            title: t('Navigation'),
-            content: t('Use the sidebar to navigate between different sections. All your tools are organized here.'),
-            placement: 'right',
-        },
-        {
-            target: '[data-tour="messages"], [data-tour="navigation"]',
-            title: t('Client Messages'),
-            content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="projects"], [data-tour="navigation"]',
-            title: t('Project Delivery'),
-            content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="analytics"], [data-tour="navigation"]',
-            title: t('Analytics & Insights'),
-            content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="global-search"], [data-tour="navigation"]',
-            title: t('Global Search'),
-            content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
-            placement: 'bottom',
-        },
-    ];
 
-    const clientSteps: Step[] = [
-        {
-            target: '[data-tour="dashboard-overview"], [data-tour="navigation"]',
-            title: t('Client Workspace'),
-            content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
-            placement: 'center',
-            disableBeacon: true,
-        },
-        {
-            target: '[data-tour="my-projects"], [data-tour="projects"], [data-tour="navigation"]',
-            title: t('Your Projects'),
-            content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="messages"], [data-tour="navigation"]',
-            title: t('Team Chat'),
-            content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="submit-request"], [data-tour="navigation"]',
-            title: t('Submit Request'),
-            content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
-            placement: 'bottom',
-        },
-    ];
+    // Route watcher: auto-dismiss tour if the user navigates away
+    useEffect(() => {
+        if (prevPathnameRef.current !== pathname) {
+            prevPathnameRef.current = pathname;
+            if (isOpen || run) {
+                completeTour(true);
+            }
+        }
+    }, [pathname, isOpen, run]);
 
-    const tenantAdminSteps: Step[] = [
-        {
-            target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"]',
-            title: t('Welcome to AlphaClone'),
-            content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
-            placement: 'center',
-            disableBeacon: true,
-        },
-        {
-            target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
-            title: t('Command Center'),
-            content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"]',
-            title: t('Setup Checklist'),
-            content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
-            title: t('Hub Navigation'),
-            content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
-            placement: 'right',
-        },
-        {
-            target: '[data-tour="money-hub-nav"], [data-tour="navigation"]',
-            title: t('Money Hub'),
-            content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
-            placement: 'right',
-        },
-        {
-            target: '[data-tour="global-search"], [data-tour="navigation"]',
-            title: t('Quick Commands'),
-            content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="business-notifications"], [data-tour="navigation"]',
-            title: t('Notifications'),
-            content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
-            title: t('Bonnie AI Operator'),
-            content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
-            placement: 'left',
-        },
-        {
-            target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="business-home"], [data-tour="navigation"]',
-            title: t('Projects & Delivery'),
-            content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
-            placement: 'bottom',
-        },
-    ];
+    const steps = useMemo<Step[]>(() => {
+        const adminSteps: Step[] = [
+            {
+                target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"]',
+                title: t('Command Center'),
+                content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
+                placement: 'center',
+                disableBeacon: true,
+            },
+            {
+                target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+                title: t('Navigation'),
+                content: t('Use the sidebar to navigate between different sections. All your tools are organized here.'),
+                placement: 'right',
+            },
+            {
+                target: '[data-tour="messages"], [data-tour="navigation"]',
+                title: t('Client Messages'),
+                content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="projects"], [data-tour="navigation"]',
+                title: t('Project Delivery'),
+                content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="analytics"], [data-tour="navigation"]',
+                title: t('Analytics & Insights'),
+                content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                title: t('Global Search'),
+                content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
+                placement: 'bottom',
+            },
+        ];
 
-    const platformOwnerSteps: Step[] = [
-        {
-            target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
-            title: t('Platform Command'),
-            content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
-            placement: 'center',
-            disableBeacon: true,
-        },
-        {
-            target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
-            title: t('Platform Health'),
-            content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
-            placement: 'center',
-        },
-        {
-            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
-            title: t('Sidebar Navigation'),
-            content: t('Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.'),
-            placement: 'right',
-        },
-        {
-            target: '[data-tour="global-search"], [data-tour="navigation"]',
-            title: t('Global Search'),
-            content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="business-notifications"], [data-tour="navigation"]',
-            title: t('Ops Notifications'),
-            content: t('Notifications surface tickets, approvals, and platform alerts here.'),
-            placement: 'bottom',
-        },
-        {
-            target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
-            title: t('Bonnie AI Operator'),
-            content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
-            placement: 'left',
-        },
-        {
-            target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
-            title: t('Tenant Delivery'),
-            content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
-            placement: 'bottom',
-        },
-    ];
+        const clientSteps: Step[] = [
+            {
+                target: '[data-tour="dashboard-overview"], [data-tour="navigation"]',
+                title: t('Client Workspace'),
+                content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
+                placement: 'center',
+                disableBeacon: true,
+            },
+            {
+                target: '[data-tour="my-projects"], [data-tour="projects"], [data-tour="navigation"]',
+                title: t('Your Projects'),
+                content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="messages"], [data-tour="navigation"]',
+                title: t('Team Chat'),
+                content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="submit-request"], [data-tour="navigation"]',
+                title: t('Submit Request'),
+                content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
+                placement: 'bottom',
+            },
+        ];
 
-    const steps = isPlatformAdminRole(userRole)
-        ? platformOwnerSteps
-        : userRole === 'tenant_admin' || userRole === 'business_dashboard'
-          ? tenantAdminSteps
-          : userRole === 'admin'
-            ? adminSteps
-            : clientSteps;
+        const tenantAdminSteps: Step[] = [
+            {
+                target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"]',
+                title: t('Welcome to AlphaClone'),
+                content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
+                placement: 'center',
+                disableBeacon: true,
+            },
+            {
+                target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
+                title: t('Command Center'),
+                content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"]',
+                title: t('Setup Checklist'),
+                content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+                title: t('Hub Navigation'),
+                content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
+                placement: 'right',
+            },
+            {
+                target: '[data-tour="money-hub-nav"], [data-tour="navigation"]',
+                title: t('Money Hub'),
+                content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
+                placement: 'right',
+            },
+            {
+                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                title: t('Quick Commands'),
+                content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+                title: t('Notifications'),
+                content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+                title: t('Bonnie AI Operator'),
+                content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
+                placement: 'left',
+            },
+            {
+                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="business-home"], [data-tour="navigation"]',
+                title: t('Projects & Delivery'),
+                content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
+                placement: 'bottom',
+            },
+        ];
+
+        const platformOwnerSteps: Step[] = [
+            {
+                target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+                title: t('Platform Command'),
+                content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
+                placement: 'center',
+                disableBeacon: true,
+            },
+            {
+                target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
+                title: t('Platform Health'),
+                content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
+                placement: 'center',
+            },
+            {
+                target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+                title: t('Sidebar Navigation'),
+                content: t('Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.'),
+                placement: 'right',
+            },
+            {
+                target: '[data-tour="global-search"], [data-tour="navigation"]',
+                title: t('Global Search'),
+                content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+                title: t('Ops Notifications'),
+                content: t('Notifications surface tickets, approvals, and platform alerts here.'),
+                placement: 'bottom',
+            },
+            {
+                target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+                title: t('Bonnie AI Operator'),
+                content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
+                placement: 'left',
+            },
+            {
+                target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+                title: t('Tenant Delivery'),
+                content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
+                placement: 'bottom',
+            },
+        ];
+
+        return isPlatformAdminRole(userRole)
+            ? platformOwnerSteps
+            : userRole === 'tenant_admin' || userRole === 'business_dashboard'
+              ? tenantAdminSteps
+              : userRole === 'admin'
+                ? adminSteps
+                : clientSteps;
+    }, [userRole, t]);
+
 
     useEffect(() => {
         if (!isOpen || typeof document === 'undefined') {
@@ -326,6 +362,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
         if (completed.current) return;
         completed.current = true;
         setRun(false);
+        cleanupTourArtifacts();
         resetWindowScroll();
         if (userId) {
             setWalkthroughState(userId, dismissed ? 'dismissed' : 'completed');

@@ -21,6 +21,7 @@ const pageVariants: Variants = {
     opacity: 0,
     y: -10,
     scale: 0.995,
+    pointerEvents: 'none',
     transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
   },
 };
@@ -28,35 +29,28 @@ const pageVariants: Variants = {
 const reducedMotionVariants: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.1 } },
-  exit: { opacity: 0, transition: { duration: 0.1 } },
+  exit: { opacity: 0, pointerEvents: 'none', transition: { duration: 0.1 } },
 };
 
 const dashboardVariants: Variants = {
-  initial: { opacity: 0, y: 12, scale: 0.995 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
-  },
-  exit: {
-    opacity: 0,
-    y: -8,
-    scale: 0.998,
-    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
-  },
+  initial: { opacity: 1 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0, pointerEvents: 'none', transition: { duration: 0.12 } },
 };
 
 export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname() ?? '/';
   const reduceMotion = useReducedMotion();
   const isDashboard = pathname.startsWith('/dashboard');
-  const transitionKey = pathname;
+  // Keep dashboard shell stable across internal dashboard routes so tab navigation
+  // never causes full-tree remounts, opacity flicker, or click blocking.
+  const transitionKey = isDashboard ? '/dashboard' : pathname;
   const variants = reduceMotion
     ? reducedMotionVariants
     : isDashboard
       ? dashboardVariants
       : pageVariants;
+
 
   return (
     <AnimatePresence mode="sync" initial={false}>
