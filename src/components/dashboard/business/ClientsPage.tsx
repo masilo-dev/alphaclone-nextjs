@@ -1021,9 +1021,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
             <ContextualBulkBar
                 selectedCount={selectedClientIds.length}
-                totalCount={filteredClients.length}
-                onDeselectAll={() => setSelectedClientIds([])}
-            >
+                itemLabel={{ singular: 'contact', plural: 'contacts' }}
+                onClearSelection={() => setSelectedClientIds([])}
+                actions={
+                    <>
                 <Button
                     variant="outline"
                     size="sm"
@@ -1068,7 +1069,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 >
                     Outreach
                 </Button>
-            </ContextualBulkBar>
+                    </>
+                }
+            />
 
             {viewMode === 'micro' ? (
                 /* ── MICRO VIEW: tiny pill chips with full contact slide-in ── */
