@@ -36,7 +36,12 @@ import {
     UserCheck,
     Target,
     CheckSquare,
-    Square
+    Square,
+    Briefcase,
+    FileCheck,
+    ExternalLink,
+    Copy,
+    Globe
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
@@ -60,7 +65,8 @@ import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
-import { CRMNav } from '../crm/CRMNav';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { ContextualBulkBar, TableSkeleton } from '@/components/ui/workspace';
 import { resolveContactDeepLink } from '@/lib/crm/resolveContactDeepLink';
 import ClientPortalAccessPanel from './ClientPortalAccessPanel';
 
@@ -100,7 +106,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [portalAccessClient, setPortalAccessClient] = useState<BusinessClient | null>(null);
     const [clientTimeline, setClientTimeline] = useState<any>(null);
     const [timelineLoading, setTimelineLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'timeline' | 'notes' | 'invoices' | 'properties'>('timeline');
+    type ClientDetailTab = 'timeline' | 'projects' | 'invoices' | 'contracts' | 'portal' | 'notes' | 'properties';
+    const [activeTab, setActiveTab] = useState<ClientDetailTab>('timeline');
+    const [clientProjects, setClientProjects] = useState<any[]>([]);
+    const [projectsLoading, setProjectsLoading] = useState(false);
+    const [clientContracts, setClientContracts] = useState<any[]>([]);
+    const [contractsLoading, setContractsLoading] = useState(false);
+    const [portalUrl, setPortalUrl] = useState<string | null>(null);
+    const [portalUrlLoading, setPortalUrlLoading] = useState(false);
+    const [copiedPortalUrl, setCopiedPortalUrl] = useState(false);
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteDescription, setNewNoteDescription] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
@@ -123,7 +137,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const stageParam = searchParams?.get('stage');
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
     const directoryParam = searchParams?.get('directory');
-    const PAGE_SIZE = 500;
+    const PAGE_SIZE = 50;
 
     const loadClientTimeline = useCallback(async (clientId: string) => {
         setTimelineLoading(true);
@@ -137,12 +151,90 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     }, []);
 
+    const loadClientProjects = useCallback(async (clientId: string) => {
+        if (!currentTenant?.id) return;
+        setProjectsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .select('id, name, status, progress, updated_at, budget')
+                .eq('tenant_id', currentTenant.id)
+                .eq('client_id', clientId)
+                .order('updated_at', { ascending: false });
+            if (!error && data) {
+                setClientProjects(data);
+            }
+        } catch (err) {
+            console.error('Failed to load client projects:', err);
+        } finally {
+            setProjectsLoading(false);
+        }
+    }, [currentTenant?.id]);
+
+    const loadClientContracts = useCallback(async (clientId: string) => {
+        if (!currentTenant?.id) return;
+        setContractsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('contracts')
+                .select('id, title, status, value, created_at, expires_at')
+                .eq('tenant_id', currentTenant.id)
+                .eq('client_id', clientId)
+                .order('created_at', { ascending: false });
+            if (!error && data) {
+                setClientContracts(data);
+            }
+        } catch (err) {
+            console.error('Failed to load client contracts:', err);
+        } finally {
+            setContractsLoading(false);
+        }
+    }, [currentTenant?.id]);
+
+    const loadClientPortalUrl = useCallback(async (clientId: string) => {
+        if (!currentTenant?.id) return;
+        setPortalUrlLoading(true);
+        try {
+            const res = await fetch(
+                `/api/client-finance/portal-link/${clientId}?tenantId=${encodeURIComponent(currentTenant.id)}`
+            );
+            if (res.ok) {
+                const data = await res.json();
+                if (data.url) setPortalUrl(data.url);
+            }
+        } catch (err) {
+            console.error('Failed to fetch portal link:', err);
+        } finally {
+            setPortalUrlLoading(false);
+        }
+    }, [currentTenant?.id]);
+
+    const handleTabChange = useCallback((tab: ClientDetailTab) => {
+        setActiveTab(tab);
+        if (!selectedClient?.id) return;
+        if (tab === 'projects' && clientProjects.length === 0) {
+            void loadClientProjects(selectedClient.id);
+        } else if (tab === 'contracts' && clientContracts.length === 0) {
+            void loadClientContracts(selectedClient.id);
+        } else if (tab === 'portal' && !portalUrl) {
+            void loadClientPortalUrl(selectedClient.id);
+        }
+    }, [selectedClient, clientProjects.length, clientContracts.length, portalUrl, loadClientProjects, loadClientContracts, loadClientPortalUrl]);
+
     useEffect(() => {
         if (selectedClient?.id) {
             void loadClientTimeline(selectedClient.id);
-            setActiveTab('timeline'); // Reset tab on change
+            setActiveTab('timeline');
+            setClientProjects([]);
+            setClientContracts([]);
+            setPortalUrl(null);
+            setCopiedPortalUrl(false);
         } else {
             setClientTimeline(null);
+            setClientProjects([]);
+            setClientContracts([]);
+            setPortalUrl(null);
+            setCopiedPortalUrl(false);
         }
     }, [selectedClient, loadClientTimeline]);
 
@@ -715,7 +807,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     if (pathname === '/dashboard/crm') {
         return (
             <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
-                <CRMNav pathname={pathname} />
                 <CRMTab user={user} />
             </div>
         );
@@ -723,8 +814,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (pathname === '/dashboard/leads') {
         return (
-            <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
-                <CRMNav pathname={pathname} />
+            <div className="w-full min-w-0 min-h-[60vh]">
                 <Suspense fallback={crmSectionFallback}>
                     <KanbanBoard />
                 </Suspense>
@@ -734,8 +824,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (pathname === '/dashboard/deals') {
         return (
-            <div className="space-y-6 w-full min-w-0 min-h-[60vh]">
-                <CRMNav pathname={pathname} />
+            <div className="w-full min-w-0 min-h-[60vh]">
                 <Suspense fallback={crmSectionFallback}>
                     <DealsTab user={user} />
                 </Suspense>
@@ -754,7 +843,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     if (isContactsRoute && directoryView === 'email') {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
-                <CRMNav pathname={pathname} />
                 {directorySwitcher}
                 <Suspense fallback={crmSectionFallback}>
                     <ContactsList />
@@ -766,7 +854,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     if (isContactsRoute && directoryView === 'unified') {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
-                <CRMNav pathname={pathname} />
                 {directorySwitcher}
                 <Suspense fallback={crmSectionFallback}>
                     <UnifiedContactsList
@@ -791,9 +878,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     if (isSoloOwner) {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
-                <CRMNav pathname={pathname} />
                 {isContactsRoute && directorySwitcher}
-                <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+                <div className="flex justify-end">
+                    <HelpDisclosure title="Customer Success Intelligence" label="CRM guidance">
+                        <div className="pt-2">
+                            <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+                        </div>
+                    </HelpDisclosure>
+                </div>
                 {/* Simplified Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
@@ -841,21 +933,25 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <EmptyState
-                    icon={Users}
-                    title="Loading contacts"
-                    description="We are pulling your latest sales contacts and activity into the workspace."
-                />
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
+                {directorySwitcher}
+                <div className="pt-2">
+                    <TableSkeleton rows={8} columns={5} />
+                </div>
             </div>
         );
     }
 
     return (
         <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
-            <CRMNav pathname={pathname} />
             {directorySwitcher}
-            <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+            <div className="flex justify-end">
+                <HelpDisclosure title="Customer Success Intelligence" label="CRM guidance">
+                    <div className="pt-2">
+                        <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+                    </div>
+                </HelpDisclosure>
+            </div>
             <ModuleStatCards stats={contactStats} hub="leads" />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -920,53 +1016,59 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Grid3X3 className="w-4 h-4" />
                         </button>
                     </div>
-                    {selectedClientIds.length > 0 && (
-                        <>
-                        <Button
-                            variant="outline"
-                            onClick={async () => {
-                                if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
-                                const { error } = await businessClientService.bulkArchiveClients(selectedClientIds);
-                                if (error) {
-                                    toast.error(error);
-                                    return;
-                                }
-                                setClients(clients.filter(c => !selectedClientIds.includes(c.id)));
-                                setSelectedClientIds([]);
-                                toast.success('Selected contacts archived');
-                            }}
-                            icon={<Trash2 className="w-4 h-4" />}
-                        >
-                            Archive ({selectedClientIds.length})
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                const first = clients.find(c => selectedClientIds.includes(c.id) && c.email);
-                                if (!first?.email) {
-                                    toast.error('Selected contacts need email addresses');
-                                    return;
-                                }
-                                setSelectedClientForCommunication(first);
-                                setShowCommunicationModal(true);
-                                toast(`Composing for ${first.name}. Use Outreach for bulk sends.`, { icon: '✉️' });
-                            }}
-                            icon={<Mail className="w-4 h-4" />}
-                        >
-                            Email ({selectedClientIds.length})
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => setShowOutreachModal(true)}
-                            icon={<Users className="w-4 h-4" />}
-                            className="bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] shadow-lg shadow-[var(--brand-blue-500)]/20"
-                        >
-                            Outreach ({selectedClientIds.length})
-                        </Button>
-                        </>
-                    )}
                 </div>
             </div>
+
+            <ContextualBulkBar
+                selectedCount={selectedClientIds.length}
+                totalCount={filteredClients.length}
+                onDeselectAll={() => setSelectedClientIds([])}
+            >
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                        if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
+                        const { error } = await businessClientService.bulkArchiveClients(selectedClientIds);
+                        if (error) {
+                            toast.error(error);
+                            return;
+                        }
+                        setClients(clients.filter(c => !selectedClientIds.includes(c.id)));
+                        setSelectedClientIds([]);
+                        toast.success('Selected contacts archived');
+                    }}
+                    icon={<Trash2 className="w-4 h-4" />}
+                >
+                    Archive
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                        const first = clients.find(c => selectedClientIds.includes(c.id) && c.email);
+                        if (!first?.email) {
+                            toast.error('Selected contacts need email addresses');
+                            return;
+                        }
+                        setSelectedClientForCommunication(first);
+                        setShowCommunicationModal(true);
+                        toast(`Composing for ${first.name}. Use Outreach for bulk sends.`, { icon: '✉️' });
+                    }}
+                    icon={<Mail className="w-4 h-4" />}
+                >
+                    Email
+                </Button>
+                <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setShowOutreachModal(true)}
+                    icon={<Users className="w-4 h-4" />}
+                    className="bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] shadow-sm"
+                >
+                    Outreach
+                </Button>
+            </ContextualBulkBar>
 
             {viewMode === 'micro' ? (
                 /* ── MICRO VIEW: tiny pill chips with full contact slide-in ── */
@@ -1292,16 +1394,32 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 />
                                                 <Button
                                                     size="sm"
-                                                    variant="outline"
-                                                    icon={<UserCheck className="w-4 h-4" />}
-                                                    onClick={() => setPortalAccessClient(selectedClient)}
+                                                    variant="primary"
+                                                    icon={<Mail className="w-4 h-4" />}
+                                                    onClick={() => {
+                                                        setSelectedClientForCommunication(selectedClient);
+                                                        setShowCommunicationModal(true);
+                                                    }}
                                                 >
-                                                    Set up client portal
+                                                    Send Email
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    icon={<DollarSign className="w-4 h-4" />}
+                                                    onClick={() => {
+                                                        setSelectedClientForInvoice(selectedClient);
+                                                        setShowInvoiceModal(true);
+                                                    }}
+                                                >
+                                                    Create Invoice
                                                 </Button>
                                                 <Dropdown
                                                     trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
                                                     items={[
-                                                        { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
+                                                        { label: 'Set up client portal', icon: <UserCheck className="w-4 h-4"/>, onClick: () => setPortalAccessClient(selectedClient) },
+                                                        { label: 'Create Proposal', icon: <FilePlus className="w-4 h-4"/>, onClick: () => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); } },
+                                                        { label: 'Edit Client', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
                                                         { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
                                                     ]}
                                                 />
@@ -1312,7 +1430,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     {/* Tabs Header */}
                                     <div className="flex border-b border-[var(--ws-border)] mb-4 overflow-x-auto [scrollbar-width:none]">
                                         <button
-                                            onClick={() => setActiveTab('timeline')}
+                                            onClick={() => handleTabChange('timeline')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'timeline'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
@@ -1322,17 +1440,17 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             Timeline
                                         </button>
                                         <button
-                                            onClick={() => setActiveTab('notes')}
+                                            onClick={() => handleTabChange('projects')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
-                                                activeTab === 'notes'
+                                                activeTab === 'projects'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
-                                            Notes
+                                            Projects {clientProjects.length > 0 ? `(${clientProjects.length})` : ''}
                                         </button>
                                         <button
-                                            onClick={() => setActiveTab('invoices')}
+                                            onClick={() => handleTabChange('invoices')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'invoices'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
@@ -1342,7 +1460,40 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             Billing ({clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment')?.length || 0})
                                         </button>
                                         <button
-                                            onClick={() => setActiveTab('properties')}
+                                            onClick={() => handleTabChange('contracts')}
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'contracts'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Contracts {clientContracts.length > 0 ? `(${clientContracts.length})` : ''}
+                                        </button>
+                                        <button
+                                            onClick={() => handleTabChange('portal')}
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors inline-flex items-center gap-1.5 ${
+                                                activeTab === 'portal'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            <span>Client Portal</span>
+                                            {selectedClient.financePortalToken && (
+                                                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Portal Active" />
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => handleTabChange('notes')}
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'notes'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Notes
+                                        </button>
+                                        <button
+                                            onClick={() => handleTabChange('properties')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'properties'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
@@ -1481,6 +1632,232 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         );
                                                     })
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'projects' && (
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
+                                                        Client Projects {clientProjects.length > 0 ? `(${clientProjects.length})` : ''}
+                                                    </p>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        icon={<Plus className="w-3.5 h-3.5" />}
+                                                        onClick={() => router.push('/dashboard/projects')}
+                                                    >
+                                                        New Project
+                                                    </Button>
+                                                </div>
+                                                {projectsLoading ? (
+                                                    <div className="space-y-2">
+                                                        <TableSkeleton rows={3} columns={3} />
+                                                    </div>
+                                                ) : clientProjects.length === 0 ? (
+                                                    <EmptyState
+                                                        icon={Briefcase}
+                                                        title="No projects linked to this client"
+                                                        description="Create a project to track milestones, deliverables, and budgets for this client."
+                                                        action={{
+                                                            label: "Go to Projects",
+                                                            onClick: () => router.push('/dashboard/projects')
+                                                        }}
+                                                        className="py-10"
+                                                    />
+                                                ) : (
+                                                    clientProjects.map((proj: any) => (
+                                                        <div key={proj.id} className="ac-workspace-panel rounded-lg p-4 flex justify-between items-center gap-4">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Briefcase className="w-4 h-4 text-[var(--brand-blue-400)]" />
+                                                                    <h4 className="type-caption font-bold text-slate-200">{proj.name}</h4>
+                                                                    <Badge variant={proj.status === 'completed' ? 'success' : proj.status === 'in_progress' ? 'default' : 'secondary'}>
+                                                                        {proj.status?.replace(/_/g, ' ') || 'active'}
+                                                                    </Badge>
+                                                                </div>
+                                                                {proj.budget && (
+                                                                    <p className="type-card-description text-slate-400 mt-1 font-mono">
+                                                                        Budget: ${Number(proj.budget).toLocaleString()}
+                                                                    </p>
+                                                                )}
+                                                                {proj.updated_at && (
+                                                                    <span className="type-caption text-slate-500 block mt-1 font-mono">
+                                                                        Updated {formatDistanceToNow(new Date(proj.updated_at), { addSuffix: true })}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
+                                                                onClick={() => router.push(`/dashboard/projects?projectId=${proj.id}`)}
+                                                            >
+                                                                View Project
+                                                            </Button>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'contracts' && (
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
+                                                        Contracts & Agreements {clientContracts.length > 0 ? `(${clientContracts.length})` : ''}
+                                                    </p>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        icon={<Plus className="w-3.5 h-3.5" />}
+                                                        onClick={() => router.push('/dashboard/business?tab=contracts')}
+                                                    >
+                                                        New Contract
+                                                    </Button>
+                                                </div>
+                                                {contractsLoading ? (
+                                                    <div className="space-y-2">
+                                                        <TableSkeleton rows={3} columns={3} />
+                                                    </div>
+                                                ) : clientContracts.length === 0 ? (
+                                                    <EmptyState
+                                                        icon={FileCheck}
+                                                        title="No contracts found"
+                                                        description="Draft proposals and binding agreements for this client."
+                                                        action={{
+                                                            label: "Go to Contracts",
+                                                            onClick: () => router.push('/dashboard/business?tab=contracts')
+                                                        }}
+                                                        className="py-10"
+                                                    />
+                                                ) : (
+                                                    clientContracts.map((contract: any) => (
+                                                        <div key={contract.id} className="ac-workspace-panel rounded-lg p-4 flex justify-between items-center gap-4">
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <FileCheck className="w-4 h-4 text-emerald-400" />
+                                                                    <h4 className="type-caption font-bold text-slate-200">{contract.title}</h4>
+                                                                    <Badge variant={contract.status === 'signed' ? 'success' : contract.status === 'pending' ? 'warning' : 'secondary'}>
+                                                                        {contract.status || 'draft'}
+                                                                    </Badge>
+                                                                </div>
+                                                                {contract.value && (
+                                                                    <p className="type-card-description text-slate-400 mt-1 font-mono">
+                                                                        Value: ${Number(contract.value).toLocaleString()}
+                                                                    </p>
+                                                                )}
+                                                                {contract.created_at && (
+                                                                    <span className="type-caption text-slate-500 block mt-1 font-mono">
+                                                                        Created {new Date(contract.created_at).toLocaleDateString()}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
+                                                                onClick={() => router.push(`/dashboard/business?tab=contracts&contractId=${contract.id}`)}
+                                                            >
+                                                                View Contract
+                                                            </Button>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'portal' && (
+                                            <div className="space-y-4">
+                                                <div className="ac-workspace-panel rounded-xl p-5 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900/90 to-cyan-950/20">
+                                                    <div className="flex items-start justify-between gap-4 mb-4">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2.5 text-cyan-300">
+                                                                <Globe className="h-5 w-5" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <h3 className="type-ui font-bold text-white">Client Portal & Finance Hub</h3>
+                                                                    <Badge variant={selectedClient.financePortalToken || portalUrl ? 'success' : 'warning'}>
+                                                                        {selectedClient.financePortalToken || portalUrl ? 'Active' : 'Not Configured'}
+                                                                    </Badge>
+                                                                </div>
+                                                                <p className="type-card-description text-slate-400 mt-1 leading-relaxed">
+                                                                    A dedicated, secure workspace for {selectedClient.name} to view active projects, review invoices, sign contracts, and communicate.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {portalUrlLoading ? (
+                                                        <div className="py-6 text-center">
+                                                            <Clock className="w-5 h-5 animate-spin text-cyan-400 mx-auto mb-2" />
+                                                            <p className="type-caption text-slate-400">Loading portal link...</p>
+                                                        </div>
+                                                    ) : portalUrl ? (
+                                                        <div className="space-y-4 pt-2">
+                                                            <div>
+                                                                <label className="type-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                                                    Direct Portal Link
+                                                                </label>
+                                                                <div className="flex items-center gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        readOnly
+                                                                        value={portalUrl}
+                                                                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none"
+                                                                    />
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        icon={copiedPortalUrl ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                                                        onClick={async () => {
+                                                                            await navigator.clipboard.writeText(portalUrl);
+                                                                            setCopiedPortalUrl(true);
+                                                                            toast.success('Portal link copied to clipboard');
+                                                                            setTimeout(() => setCopiedPortalUrl(false), 2000);
+                                                                        }}
+                                                                    >
+                                                                        {copiedPortalUrl ? 'Copied' : 'Copy'}
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        icon={<ExternalLink className="w-4 h-4" />}
+                                                                        onClick={() => window.open(portalUrl, '_blank')}
+                                                                    >
+                                                                        Open
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                                                                <span className="type-caption text-slate-500">Need to grant login credentials or reset access?</span>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    icon={<UserCheck className="w-4 h-4" />}
+                                                                    onClick={() => setPortalAccessClient(selectedClient)}
+                                                                >
+                                                                    Manage Access & Credentials
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="pt-2 text-center sm:text-left">
+                                                            <p className="type-card-description text-slate-300 mb-4">
+                                                                Client portal access has not been generated for this client yet. Set up login credentials or a direct access link to provide self-service billing and project tracking.
+                                                            </p>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="primary"
+                                                                icon={<UserCheck className="w-4 h-4" />}
+                                                                onClick={() => setPortalAccessClient(selectedClient)}
+                                                            >
+                                                                Configure Client Portal Access
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
 

@@ -6,11 +6,15 @@ import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
+import { setWalkthroughState } from '@/lib/onboarding/walkthroughService';
 
 interface ProductTourProps {
     isOpen: boolean;
+    userId?: string;
     /** Tour finished, skipped or closed by the user — persist "walkthrough completed". */
     onComplete: () => void;
+    /** Tour explicitly skipped or dismissed. */
+    onDismiss?: () => void;
     /**
      * None of the tour targets are on screen (e.g. opened from a page that has
      * no tour anchors). The parent must flip `isOpen` back to false so the
@@ -26,7 +30,11 @@ const TARGET_POLL_INTERVAL_MS = 200;
 const TARGET_POLL_MAX_RETRIES = 10;
 
 function isVisibleAnchor(element: HTMLElement): boolean {
-    return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+    if (!element || element.getClientRects().length === 0) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
 }
 
 /** True when the anchor is taller/wider than the viewport, so a tooltip can't sit next to it. */
@@ -41,14 +49,26 @@ function isOversizedAnchor(element: HTMLElement): boolean {
  * window itself must stay at 0. If anything (Joyride, focus) scrolled it, the
  * whole shell disappears above the fold and the page looks blank.
  */
+let isResettingScroll = false;
 function resetWindowScroll(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isResettingScroll) return;
     if (window.scrollX !== 0 || window.scrollY !== 0) {
+        isResettingScroll = true;
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        window.requestAnimationFrame(() => {
+            isResettingScroll = false;
+        });
     }
 }
 
-const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavailable, userRole }) => {
+const ProductTour: React.FC<ProductTourProps> = ({
+    isOpen,
+    userId,
+    onComplete,
+    onDismiss,
+    onUnavailable,
+    userRole,
+}) => {
     const { isDark } = useTheme();
     const { t } = useLanguage();
     const completed = useRef(false);
@@ -72,33 +92,39 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const adminSteps: Step[] = [
         {
-            target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"], body',
+            target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"]',
+            title: t('Command Center'),
             content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
             placement: 'center',
             disableBeacon: true,
         },
         {
             target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+            title: t('Navigation'),
             content: t('Use the sidebar to navigate between different sections. All your tools are organized here.'),
             placement: 'right',
         },
         {
             target: '[data-tour="messages"], [data-tour="navigation"]',
+            title: t('Client Messages'),
             content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="projects"], [data-tour="navigation"]',
+            title: t('Project Delivery'),
             content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="analytics"], [data-tour="navigation"]',
+            title: t('Analytics & Insights'),
             content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="global-search"], [data-tour="navigation"]',
+            title: t('Global Search'),
             content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
             placement: 'bottom',
         },
@@ -106,23 +132,27 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const clientSteps: Step[] = [
         {
-            target: '[data-tour="dashboard-overview"], [data-tour="navigation"], body',
+            target: '[data-tour="dashboard-overview"], [data-tour="navigation"]',
+            title: t('Client Workspace'),
             content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
             placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="my-projects"], [data-tour="navigation"]',
+            target: '[data-tour="my-projects"], [data-tour="projects"], [data-tour="navigation"]',
+            title: t('Your Projects'),
             content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="messages"], [data-tour="navigation"]',
+            title: t('Team Chat'),
             content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="submit-request"], [data-tour="navigation"]',
+            title: t('Submit Request'),
             content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
             placement: 'bottom',
         },
@@ -130,94 +160,105 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const tenantAdminSteps: Step[] = [
         {
-            target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"], body',
+            target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"]',
+            title: t('Welcome to AlphaClone'),
             content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
             placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"], body',
+            target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
+            title: t('Command Center'),
             content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
-            placement: 'center',
+            placement: 'bottom',
         },
         {
-            target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"], body',
+            target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"]',
+            title: t('Setup Checklist'),
             content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
-            placement: 'center',
-        },
-        {
-            target: '[data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"], body',
-            content: t('This home screen is your daily starting point — stats, blockers, and quick actions for your workspace.'),
-            placement: 'center',
+            placement: 'bottom',
         },
         {
             target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+            title: t('Hub Navigation'),
             content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
             placement: 'right',
         },
         {
             target: '[data-tour="money-hub-nav"], [data-tour="navigation"]',
+            title: t('Money Hub'),
             content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
             placement: 'right',
         },
         {
             target: '[data-tour="global-search"], [data-tour="navigation"]',
+            title: t('Quick Commands'),
             content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+            title: t('Notifications'),
             content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+            title: t('Bonnie AI Operator'),
             content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
             placement: 'left',
         },
         {
-            target: '[data-tour="projects-center"], [data-tour="business-home"], [data-tour="navigation"], body',
+            target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="business-home"], [data-tour="navigation"]',
+            title: t('Projects & Delivery'),
             content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
-            placement: 'center',
+            placement: 'bottom',
         },
     ];
 
     const platformOwnerSteps: Step[] = [
         {
-            target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"], body',
+            target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+            title: t('Platform Command'),
             content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
             placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="platform-owner-home"], [data-tour="navigation"], body',
+            target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
+            title: t('Platform Health'),
             content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
             placement: 'center',
         },
         {
             target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
+            title: t('Sidebar Navigation'),
             content: t('Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.'),
             placement: 'right',
         },
         {
             target: '[data-tour="global-search"], [data-tour="navigation"]',
+            title: t('Global Search'),
             content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-notifications"], [data-tour="navigation"]',
+            title: t('Ops Notifications'),
             content: t('Notifications surface tickets, approvals, and platform alerts here.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
+            title: t('Bonnie AI Operator'),
             content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
             placement: 'left',
         },
         {
-            target: '[data-tour="projects-center"], [data-tour="platform-owner-home"], [data-tour="navigation"], body',
+            target: '[data-tour="projects-center"], [data-tour="projects"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+            title: t('Tenant Delivery'),
             content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
-            placement: 'center',
+            placement: 'bottom',
         },
     ];
 
@@ -233,6 +274,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
         if (!isOpen || typeof document === 'undefined') {
             setRun(false);
             setMountedSteps([]);
+            setStepIndex(0);
             return;
         }
 
@@ -278,36 +320,52 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             if (timerId) clearTimeout(timerId);
             resetWindowScroll();
         };
-    }, [isOpen, userRole]);
+    }, [isOpen, userRole, onUnavailable, onComplete, steps, t]);
 
-    const completeTour = () => {
+    const completeTour = (dismissed = false) => {
         if (completed.current) return;
         completed.current = true;
         setRun(false);
         resetWindowScroll();
-        void fetch('/api/account/profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ walkthrough_completed: true }),
-        }).then((response) => {
-            if (!response.ok) throw new Error(`Profile update failed (${response.status})`);
-        }).catch((err) => console.error('ProductTour: save walkthrough status failed', err));
-        onComplete();
+        if (userId) {
+            setWalkthroughState(userId, dismissed ? 'dismissed' : 'completed');
+        }
+        if (dismissed && onDismiss) {
+            onDismiss();
+        } else {
+            onComplete();
+        }
     };
 
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, type, action, index } = data;
-        if (status === STATUS.FINISHED || status === STATUS.SKIPPED || action === ACTIONS.CLOSE) {
-            completeTour();
-        } else if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
+        if (status === STATUS.FINISHED) {
+            completeTour(false);
+        } else if (status === STATUS.SKIPPED || action === ACTIONS.SKIP || action === ACTIONS.CLOSE) {
+            completeTour(true);
+        } else if (type === EVENTS.TARGET_NOT_FOUND) {
+            console.warn(`[ProductTour] Target not found for step index ${index}, advancing safely`);
+            const nextIndex = index + 1;
+            if (nextIndex >= mountedSteps.length) {
+                completeTour(false);
+            } else {
+                setStepIndex(nextIndex);
+            }
+        } else if (type === EVENTS.ERROR) {
+            console.warn('[ProductTour] Joyride error encountered, dismissing cleanly');
+            completeTour(true);
+        } else if (type === EVENTS.STEP_AFTER) {
             const delta = action === ACTIONS.PREV ? -1 : 1;
             const nextIndex = Math.max(0, index + delta);
-            if (nextIndex >= mountedSteps.length) completeTour();
-            else setStepIndex(nextIndex);
+            if (nextIndex >= mountedSteps.length) {
+                completeTour(false);
+            } else {
+                setStepIndex(nextIndex);
+            }
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || mountedSteps.length === 0) return null;
 
     return (
         <Joyride
@@ -318,8 +376,9 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             showProgress
             showSkipButton
             disableOverlay={false}
+            disableOverlayClose={true}
             disableScrolling
-            spotlightClicks
+            spotlightClicks={false}
             callback={handleJoyrideCallback}
             styles={{
                 options: {
@@ -340,20 +399,21 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
                     border: isDark ? '1px solid #282F45' : '1px solid #E2E8F0',
                     boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
                     maxWidth: '420px',
+                    pointerEvents: 'auto',
                 },
                 tooltipContainer: {
                     textAlign: 'left',
                 },
                 tooltipTitle: {
-                    fontSize: 'var(--type-body-size)',
-                    fontWeight: 'var(--weight-bold)',
-                    letterSpacing: 'var(--tracking-display)',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    letterSpacing: '-0.01em',
                     color: isDark ? '#FFFFFF' : '#0F172A',
                     marginBottom: '8px',
                 },
                 tooltipContent: {
-                    fontSize: 'var(--type-ui-size)',
-                    lineHeight: 'var(--leading-body)',
+                    fontSize: '13px',
+                    lineHeight: '1.5',
                     color: isDark ? '#94A3B8' : '#475569',
                     padding: '0 0 14px 0',
                 },
@@ -362,25 +422,29 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
                     color: '#FFFFFF',
                     borderRadius: '8px',
                     padding: '9px 18px',
-                    fontSize: 'var(--type-ui-size)',
-                    fontWeight: 'var(--weight-semibold)',
+                    fontSize: '13px',
+                    fontWeight: 600,
                     outline: 'none',
+                    cursor: 'pointer',
                     boxShadow: '0 1px 2px 0 rgba(53, 106, 244, 0.35)',
                 },
                 buttonBack: {
                     color: isDark ? '#94A3B8' : '#64748B',
                     marginRight: '12px',
-                    fontSize: 'var(--type-ui-size)',
-                    fontWeight: 'var(--weight-medium)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
                 },
                 buttonSkip: {
                     color: isDark ? '#64748B' : '#94A3B8',
-                    fontSize: 'var(--type-ui-size)',
+                    fontSize: '13px',
+                    cursor: 'pointer',
                 },
                 buttonClose: {
                     color: isDark ? '#94A3B8' : '#64748B',
                     top: '16px',
                     right: '16px',
+                    cursor: 'pointer',
                 },
             }}
             locale={{

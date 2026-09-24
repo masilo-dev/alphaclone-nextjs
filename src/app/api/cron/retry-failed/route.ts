@@ -43,10 +43,11 @@ export async function GET(request: NextRequest) {
     {
       const primary = await supabase
         .from('automation_runs')
-        .select('*')
+        .select('id, tenant_id, user_id, workflow_type, payload, retries, updated_at, status')
         .eq('status', 'failed')
         .lt('retries', 3)
-        .order('updated_at', { ascending: true });
+        .order('updated_at', { ascending: true })
+        .limit(50);
       failedRuns = primary.data;
       fetchError = primary.error;
     }
@@ -54,9 +55,10 @@ export async function GET(request: NextRequest) {
     if (fetchError && /retries/i.test(fetchError.message || '')) {
       const fallback = await supabase
         .from('automation_runs')
-        .select('*')
+        .select('id, tenant_id, user_id, workflow_type, payload, retries, updated_at, status')
         .eq('status', 'failed')
-        .order('updated_at', { ascending: true });
+        .order('updated_at', { ascending: true })
+        .limit(50);
       failedRuns = (fallback.data || []).filter((run) => Number(run.retries || 0) < 3);
       fetchError = fallback.error;
     }

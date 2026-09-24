@@ -26,75 +26,107 @@ export interface ClientTimeline {
     };
 }
 
+const timelineCache = new Map<string, { data: ClientTimeline; timestamp: number }>();
+const inFlightTimelines = new Map<string, Promise<{ timeline: ClientTimeline | null; error?: string }>>();
+const TIMELINE_CACHE_TTL_MS = 30_000;
+
+export function invalidateClientTimelineCache(clientId?: string) {
+    if (!clientId) {
+        timelineCache.clear();
+        return;
+    }
+    timelineCache.delete(clientId);
+}
+
 class ClientActivityService {
     /**
      * Get complete activity timeline for a client
      */
-    async getClientTimeline(clientId: string): Promise<{ timeline: ClientTimeline | null; error?: string }> {
-        try {
-            // Get client info
-            const { data: client } = await supabase
-                .from('business_clients')
-                .select('name, email, tenant_id')
-                .eq('id', clientId)
-                .single();
-
-            if (!client) {
-                return { timeline: null, error: 'Client not found' };
+    async getClientTimeline(clientId: string, forceRefresh = false): Promise<{ timeline: ClientTimeline | null; error?: string }> {
+        if (!forceRefresh) {
+            const cached = timelineCache.get(clientId);
+            if (cached && Date.now() - cached.timestamp < TIMELINE_CACHE_TTL_MS) {
+                return { timeline: cached.data };
             }
-
-            // Get all activities from various sources
-            const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes, crmActivities, portalEvents] = await Promise.all([
-                this.getClientMessages(clientId),
-                this.getClientUnifiedMessages(clientId, client.email),
-                this.getClientEmailLogs(clientId, client.email),
-                this.getClientMeetings(clientId),
-                this.getClientContracts(clientId),
-                this.getClientPayments(clientId),
-                this.getClientProjects(clientId),
-                this.getClientFiles(clientId),
-                this.getClientNotes(clientId),
-                this.getCrmUnifiedActivities(clientId, client.tenant_id),
-                this.getClientPortalEvents(clientId),
-            ]);
-
-            // Combine all activities
-            const activities: ClientActivity[] = [
-                ...messages,
-                ...unifiedMessages,
-                ...emailLogs,
-                ...meetings,
-                ...contracts,
-                ...payments,
-                ...projects,
-                ...files,
-                ...notes,
-                ...crmActivities,
-                ...portalEvents,
-            ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-            // Calculate stats
-            const stats = {
-                total_messages: messages.length + unifiedMessages.length + emailLogs.length,
-                total_calls: meetings.filter(m => m.activity_type === 'call').length,
-                total_meetings: meetings.filter(m => m.activity_type === 'meeting').length,
-                total_payments: payments.filter(p => p.activity_type === 'payment').length,
-                last_contact: activities.length > 0 ? activities[0].created_at : null,
-                response_time_avg: await this.calculateAvgResponseTime(clientId),
-            };
-
-            return {
-                timeline: {
-                    client_id: clientId,
-                    client_name: client.name,
-                    activities,
-                    stats,
-                },
-            };
-        } catch (error) {
-            console.error('Error fetching client timeline:', error);
-            return { timeline: null, error: String(error) };
+            const inFlight = inFlightTimelines.get(clientId);
+            if (inFlight) {
+                return inFlight;
+            }
         }
+
+        const task = (async () => {
+            try {
+                // Get client info
+                const { data: client } = await supabase
+                    .from('business_clients')
+                    .select('name, email, tenant_id')
+                    .eq('id', clientId)
+                    .single();
+
+                if (!client) {
+                    return { timeline: null, error: 'Client not found' };
+                }
+
+                // Get all activities from various sources in parallel
+                const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes, crmActivities, portalEvents] = await Promise.all([
+                    this.getClientMessages(clientId),
+                    this.getClientUnifiedMessages(clientId, client.email),
+                    this.getClientEmailLogs(clientId, client.email),
+                    this.getClientMeetings(clientId),
+                    this.getClientContracts(clientId),
+                    this.getClientPayments(clientId),
+                    this.getClientProjects(clientId),
+                    this.getClientFiles(clientId),
+                    this.getClientNotes(clientId),
+                    this.getCrmUnifiedActivities(clientId, client.tenant_id),
+                    this.getClientPortalEvents(clientId),
+                ]);
+
+                // Combine all activities
+                const activities: ClientActivity[] = [
+                    ...messages,
+                    ...unifiedMessages,
+                    ...emailLogs,
+                    ...meetings,
+                    ...contracts,
+                    ...payments,
+                    ...projects,
+                    ...files,
+                    ...notes,
+                    ...crmActivities,
+                    ...portalEvents,
+                ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+                // Calculate stats
+                const stats = {
+                    total_messages: messages.length + unifiedMessages.length + emailLogs.length,
+                    total_calls: meetings.filter(m => m.activity_type === 'call').length,
+                    total_meetings: meetings.filter(m => m.activity_type === 'meeting').length,
+                    total_payments: payments.filter(p => p.activity_type === 'payment').length,
+                    last_contact: activities.length > 0 ? activities[0].created_at : null,
+                    response_time_avg: await this.calculateAvgResponseTime(clientId),
+                };
+
+                const result = {
+                    timeline: {
+                        client_id: clientId,
+                        client_name: client.name,
+                        activities,
+                        stats,
+                    },
+                };
+                timelineCache.set(clientId, { data: result.timeline, timestamp: Date.now() });
+                return result;
+            } catch (error) {
+                console.error('Error fetching client timeline:', error);
+                return { timeline: null, error: String(error) };
+            } finally {
+                inFlightTimelines.delete(clientId);
+            }
+        })();
+
+        inFlightTimelines.set(clientId, task);
+        return task;
     }
 
     /**
@@ -103,7 +135,7 @@ class ClientActivityService {
     private async getClientMessages(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('messages')
-            .select('*')
+            .select('id, sender_id, recipient_id, text, priority, attachments, created_at')
             .or(`sender_id.eq.${clientId},recipient_id.eq.${clientId}`)
             .order('created_at', { ascending: false })
             .limit(50);
@@ -131,7 +163,7 @@ class ClientActivityService {
     private async getClientMeetings(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('calendar_events')
-            .select('*')
+            .select('id, user_id, title, description, start_time, end_time, meeting_link, created_at')
             .or(`user_id.eq.${clientId},attendees.cs.{${clientId}}`)
             .order('start_time', { ascending: false })
             .limit(20);
@@ -159,7 +191,7 @@ class ClientActivityService {
     private async getClientContracts(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('contracts')
-            .select('*')
+            .select('id, client_id, title, status, signed_at, created_at, admin_id')
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
 
@@ -185,7 +217,7 @@ class ClientActivityService {
     private async getClientPayments(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('business_invoices')
-            .select('*')
+            .select('id, client_id, status, total, notes, description, due_date, currency, currency_code, paid_at, created_at')
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
 
@@ -420,6 +452,8 @@ class ClientActivityService {
                 undefined,
                 { client_id: clientId, title }
             ).catch(err => console.error('Failed to log audit:', err));
+
+            invalidateClientTimelineCache(clientId);
 
             return {
                 activity: {

@@ -97,7 +97,7 @@ const EcosystemPage: React.FC = () => {
         <div className="min-h-screen marketing-theme bg-white text-slate-950">
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
                 <AnimateIn type="fadeIn">
-                    <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
+                    <Link href="/" className="inline-flex items-center text-teal-700 hover:text-teal-900 font-semibold mb-8">
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Back to Home
                     </Link>
@@ -105,34 +105,34 @@ const EcosystemPage: React.FC = () => {
 
                 <div className="text-center mb-20">
                     <AnimateIn type="scaleIn">
-                        <Layers className="w-12 h-12 sm:w-16 sm:h-16 text-teal-600 mx-auto mb-6" aria-hidden="true" />
+                        <Layers className="w-12 h-12 sm:w-16 sm:h-16 text-teal-700 mx-auto mb-6" aria-hidden="true" />
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.1}>
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6">
-                            The Complete Business <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-600">Operating System</span>
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6 text-slate-950">
+                            The Complete Business <span className="text-teal-700">Operating System</span>
                         </h1>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.2}>
-                        <p className="text-base sm:text-lg md:text-xl text-slate-700 max-w-3xl mx-auto mb-8">
+                        <p className="text-base sm:text-lg md:text-xl text-slate-700 max-w-3xl mx-auto mb-8 font-normal">
                             Bring CRM, billing, projects, contracts, meetings, and analytics into one workspace. Built for agencies, freelancers, and service businesses that want fewer disconnected systems.
                         </p>
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.3}>
-                        <div className="flex flex-wrap items-center justify-center gap-4 type-ui text-slate-700">
+                        <div className="flex flex-wrap items-center justify-center gap-4 type-ui text-slate-800 font-medium">
                             <div className="flex items-center gap-2">
-                                <Check className="w-4 h-4 text-teal-400" />
+                                <Check className="w-4 h-4 text-teal-700" />
                                 <span>CRM & Pipeline Management</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Check className="w-4 h-4 text-teal-400" />
+                                <Check className="w-4 h-4 text-teal-700" />
                                 <span>Billing & Invoicing</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Check className="w-4 h-4 text-teal-400" />
+                                <Check className="w-4 h-4 text-teal-700" />
                                 <span>Client Portal</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Check className="w-4 h-4 text-teal-400" />
+                                <Check className="w-4 h-4 text-teal-700" />
                                 <span>Team Collaboration</span>
                             </div>
                         </div>
@@ -142,8 +142,8 @@ const EcosystemPage: React.FC = () => {
                 {/* Core Modules */}
                 <section className="mb-24">
                     <AnimateIn type="fadeUp">
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
-                            Integrated <span className="text-teal-400">Business Modules</span>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center text-slate-950">
+                            Integrated <span className="text-teal-700">Business Modules</span>
                         </h2>
                         <p className="text-slate-700 text-center max-w-2xl mx-auto mb-12">
                             Core workflows for service businesses, unified in one platform with shared operational context.
@@ -226,8 +226,8 @@ const EcosystemPage: React.FC = () => {
                 {/* Integrations */}
                 <section className="mb-24">
                     <AnimateIn type="fadeUp">
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
-                            Connect the tools that <span className="text-teal-400">run the work</span>
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center text-slate-950">
+                            Connect the tools that <span className="text-teal-700">run the work</span>
                         </h2>
                         <p className="text-slate-700 text-center max-w-2xl mx-auto mb-12">
                             Browse by system or search by the outcome you need. Every status is explicit so a directory listing never feels like a promise of unsupported automation.
@@ -281,13 +281,13 @@ const EcosystemPage: React.FC = () => {
                 {/* Value Proposition */}
                 <section>
                     <AnimateIn type="scaleIn">
-                        <div className="bg-gradient-to-br from-teal-500 to-teal-600 p-12 sm:p-16 rounded-3xl text-center relative overflow-hidden">
+                        <div className="mkt-dark-banner bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 p-12 sm:p-16 rounded-3xl text-center relative overflow-hidden shadow-2xl">
                             <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
                             <div className="relative z-10">
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-6">
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-6 text-white" style={{ color: '#ffffff' }}>
                                     Start Building Smarter Today
                                 </h2>
-                                <p className="text-xl text-teal-50 mb-10 max-w-2xl mx-auto leading-relaxed">
+                                <p className="text-xl text-teal-100 mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: '#e6fffa' }}>
                                     Connect CRM, billing, contracts, project, and meeting workflows in one accountable workspace.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

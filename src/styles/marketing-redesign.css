@@ -44,6 +44,11 @@
   --marketing-text-primary: #07152f;
   --marketing-text-secondary: #33445e;
   --marketing-text-muted: #60708a;
+  --brand-cyan-soft: #0369a1;
+  --marketing-accent: #2563eb;
+  --marketing-accent-hover: #1d4ed8;
+  --marketing-accent-deep: #1e40af;
+  --marketing-accent-soft: rgba(37, 99, 235, 0.08);
   position: relative;
   overflow-x: clip;
   background: #ffffff;
@@ -103,17 +108,38 @@
 .mkt-light-canvas .acr-closing-panel h3,
 .mkt-light-canvas .mkt-mid-cta h2,
 .mkt-light-canvas .mkt-mid-cta h3,
+.mkt-light-canvas .mkt-dark-banner h2,
+.mkt-light-canvas .mkt-dark-banner h3,
 .mkt-light-canvas .product-system-visual h2,
 .mkt-light-canvas .product-system-visual h3,
 .mkt-light-canvas .product-system-visual [class*="text-white"],
 .mkt-light-canvas .acr-closing-panel [class*="text-white"],
-.mkt-light-canvas .mkt-mid-cta [class*="text-white"] {
+.mkt-light-canvas .mkt-mid-cta [class*="text-white"],
+.mkt-light-canvas .mkt-dark-banner [class*="text-white"] {
   color: #ffffff !important;
 }
 
 .mkt-light-canvas .acr-closing-panel p:not(.acr-eyebrow),
-.mkt-light-canvas .mkt-mid-cta p {
-  color: #c8d6e7 !important;
+.mkt-light-canvas .mkt-mid-cta p,
+.mkt-light-canvas .mkt-dark-banner p {
+  color: #e2e8f0 !important;
+}
+
+.mkt-light-canvas .product-system-visual .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.mkt-light-canvas .product-system-visual .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+/* Accessible pill labels and eyebrows in light canvas */
+.mkt-light-canvas .mkt-label,
+.mkt-light-canvas .mkt-eyebrow {
+  background: #f0fdfa !important;
+  border: 1px solid #99f6e4 !important;
+  color: #0f766e !important;
+  font-weight: 700 !important;
 }
 
 /* Buttons retain white text */
@@ -167,10 +193,10 @@
 .mkt-light-canvas .glass-card,
 .mkt-light-canvas .mkt-surface:not(.product-system-visual *),
 .mkt-light-canvas .mkt-surface-elevated:not(.product-system-visual *),
-.mkt-light-canvas div[class*="bg-slate-900"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not([role="dialog"] *),
-.mkt-light-canvas div[class*="bg-slate-950"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not([role="dialog"] *),
-.mkt-light-canvas div[class*="border-slate-700"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not([role="dialog"] *),
-.mkt-light-canvas div[class*="border-slate-800"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not([role="dialog"] *) {
+.mkt-light-canvas div[class*="bg-slate-900"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not(.mkt-dark-banner *):not([role="dialog"] *),
+.mkt-light-canvas div[class*="bg-slate-950"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not(.mkt-dark-banner *):not([role="dialog"] *),
+.mkt-light-canvas div[class*="border-slate-700"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not(.mkt-dark-banner *):not([role="dialog"] *),
+.mkt-light-canvas div[class*="border-slate-800"]:not(.product-system-visual *):not(.acr-workflow-section *):not(.acr-closing-panel *):not(.mkt-dark-banner *):not([role="dialog"] *) {
   border-color: #dfe6ef !important;
   background-color: #ffffff !important;
   color: #07152f !important;
@@ -190,8 +216,8 @@
   -webkit-text-fill-color: currentColor !important;
 }
 
-.mkt-light-canvas [class*="text-teal-"],
-.mkt-light-canvas [class*="text-cyan-"] {
+.mkt-light-canvas [class*="text-teal-"]:not(.mkt-dark-banner *):not(.product-system-visual *),
+.mkt-light-canvas [class*="text-cyan-"]:not(.mkt-dark-banner *):not(.product-system-visual *) {
   color: #0878f9 !important;
 }
 

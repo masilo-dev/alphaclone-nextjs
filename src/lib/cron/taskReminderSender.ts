@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { isPermanentEmailConfigError } from '@/lib/errors/AppOperationalError';
 
 type ReminderTask = {
   id: string;
@@ -112,10 +113,23 @@ export async function sendTaskReminderDirect(
   });
 
   if (!result.success) {
-    console.error(`[task-reminders] failed for task ${task.id}:`, result.error);
-    return;
+    const isPermanent = isPermanentEmailConfigError(result.code, result.error);
+    if (isPermanent) {
+      // Permanent config problem (no provider / missing sender email).
+      // Stamp reminder_at so the task is suppressed for the cooldown period,
+      // preventing the same task from flooding logs on every cron run.
+      console.warn(
+        `[task-reminders] permanent config error for task ${task.id} (tenant ${task.tenant_id}): ${result.error}. Suppressing re-queue for cooldown period.`,
+      );
+    } else {
+      console.error(`[task-reminders] failed for task ${task.id}:`, result.error);
+      return; // Transient — do NOT stamp reminder_at, let the next cron retry.
+    }
   }
 
+  // Stamp reminder_at whether send succeeded or hit a permanent config error.
+  // This prevents infinite re-queuing. A permanent config error will log once
+  // per cooldown window (3 days) rather than on every cron execution.
   await admin
     .from('tasks')
     .update({

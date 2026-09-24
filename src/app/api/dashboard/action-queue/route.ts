@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       .limit(5),
     admin
       .from('lead_outreach_log')
-      .select('id, lead_email, campaign_name, status')
+      .select('id, lead_email, subject, status')
       .eq('tenant_id', tenantId)
       .eq('status', 'replied')
       .order('created_at', { ascending: false })

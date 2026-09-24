@@ -39,6 +39,8 @@ import { WORKSPACE } from '@/constants/design';
 import { type SemanticSeverity, getSemanticStyles } from '@/lib/analytics/funnelAndPriority';
 import { semanticStatusStyle } from '@/lib/ui/statusSemantics';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { TableSkeleton, ContextualBulkBar, SavedViewsDropdown, type SavedViewOption } from '@/components/ui/workspace';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -381,9 +383,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     if (loading) {
         return (
             <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
-                <div className="ac-workspace-panel rounded-lg p-8 text-center text-slate-400">
-                    Loading billing workspace...
+                <div className="grid grid-cols-2 min-[960px]:grid-cols-4 gap-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-24 rounded-xl border border-white/5 bg-slate-900/40 animate-pulse" />
+                    ))}
                 </div>
+                <TableSkeleton rows={7} columns={6} />
             </div>
         );
     }
@@ -392,11 +397,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     return (
         <div className={`${isInstalledMobileCompanion ? 'space-y-3' : 'space-y-5'} pb-24 ${isInstalledMobileCompanion || isMobile ? 'p-2' : 'p-6'}`}>
-            <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
-            <ExecutionDecisionGuide
-                steps={BILLING_MANAGER_EXECUTION_STEPS}
-                onNavigate={(href) => router.push(href)}
-            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -405,37 +405,48 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </h2>
                     {!isInstalledMobileCompanion ? <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Invoices, recurring revenue, and follow-ups</p> : null}
                 </div>
-                <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll w-full sm:w-auto rounded-xl border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                  <button 
-                    onClick={() => setActiveTab('invoices')}
-                    className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Billing
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('aging')}
-                    className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Aging Report
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('reminders')}
-                    className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Reminders
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('recurring')}
-                    className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Recurring
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('services')}
-                    className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Catalog
-                  </button>
+                <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+                  <HelpDisclosure title="Invoicing Decision Guide" label="Billing guide">
+                    <div className="space-y-3 pt-2">
+                      <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
+                      <ExecutionDecisionGuide
+                        steps={BILLING_MANAGER_EXECUTION_STEPS}
+                        onNavigate={(href) => router.push(href)}
+                      />
+                    </div>
+                  </HelpDisclosure>
+                  <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll rounded-xl border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+                    <button 
+                      onClick={() => setActiveTab('invoices')}
+                      className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      Billing
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('aging')}
+                      className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      Aging Report
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('reminders')}
+                      className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      Reminders
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('recurring')}
+                      className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      Recurring
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('services')}
+                      className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    >
+                      Catalog
+                    </button>
+                  </div>
                 </div>
             </div>
 
@@ -551,9 +562,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 />
             </div>
 
-            {/* Collection funnel + bottleneck */}
-            {!isInstalledMobileCompanion && (stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0) ? (
-                <BottleneckDetector
+            {/* Collection funnel + bottleneck + revenue intelligence */}
+            {!isInstalledMobileCompanion && (stats.totalInvoiced >= 0) && (
+                <div className="flex justify-end">
+                    <HelpDisclosure title="Revenue Analysis & Collections Intelligence" label="Financial intelligence">
+                        <div className="space-y-4 pt-2">
+                            {(stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0) ? (
+                                <BottleneckDetector
                     multiplierName="cash"
                     funnelStages={[
                         { key: 'invoiced', label: 'Invoiced', count: Math.max(1, stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount)), benchmarkConversion: 90 },
@@ -641,61 +656,75 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </ResponsiveContainer>
                 </div>
             )}
+                        </div>
+                    </HelpDisclosure>
+                </div>
+            )}
 
             {/* Invoices List & Desktop Table */}
-            <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                        {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                            <button key={s} onClick={() => setFilter(s)} className={`h-8 px-3 rounded-full type-caption font-bold uppercase tracking-wider border transition-all ${filter === s ? 'bg-[var(--brand-blue-600)] border-[var(--brand-blue-500)] text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
-                        ))}
+            <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                        <SavedViewsDropdown
+                            views={[
+                                { id: 'all', label: 'All Invoices' },
+                                { id: 'overdue', label: 'Overdue' },
+                                { id: 'sent', label: 'Awaiting Payment' },
+                                { id: 'paid', label: 'Paid' },
+                                { id: 'draft', label: 'Drafts' },
+                            ]}
+                            currentViewId={filter}
+                            onSelectView={(viewId) => setFilter(viewId as any)}
+                        />
+                        <div className="flex gap-1.5 overflow-x-auto no-scrollbar rounded-xl border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+                            {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
+                                <button key={s} onClick={() => setFilter(s)} className={`h-7 px-3 rounded-lg type-caption font-bold uppercase tracking-wider border transition-all ${filter === s ? 'bg-[var(--brand-blue-600)] border-[var(--brand-blue-500)] text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        {selectedInvoiceIds.size > 0 && (
-                            <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedInvoiceIds(new Set())}
-                                    className="h-7 px-3 rounded-full type-caption font-bold uppercase tracking-wider border border-white/10 text-slate-500 transition-colors hover:text-slate-300"
-                                >
-                                    Clear
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleBulkEmailInvoices}
-                                    className="h-7 px-3 rounded-full type-caption font-bold uppercase tracking-wider border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
-                                >
-                                    <Mail size={12} />
-                                    {`Prepare Follow-up (${selectedInvoiceIds.size})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={bulkPausingFollowups}
-                                    onClick={handleBulkPauseFollowups}
-                                    className="h-7 px-3 rounded-full type-caption font-bold uppercase tracking-wider border border-amber-500/30 text-amber-200 flex items-center gap-1.5 transition-colors hover:text-amber-100 disabled:opacity-50"
-                                >
-                                    <Clock size={12} />
-                                    {bulkPausingFollowups ? 'Pausing…' : `Pause Follow-ups (${selectedInvoiceIds.size})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={bulkDeletingInvoices}
-                                    onClick={handleBulkDeleteInvoices}
-                                    className="h-7 px-3 rounded-full type-caption font-bold uppercase tracking-wider border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
-                                >
-                                    <Trash2 size={12} />
-                                    {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
-                                </button>
-                            </div>
-                        )}
-                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[var(--brand-blue-600)] px-3.5 type-caption font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[var(--brand-blue-500)] active:scale-95">
-                            <Plus size={12} /> Create Invoice
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => setShowCreateModal(true)} className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[var(--brand-blue-600)] px-3.5 type-caption font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[var(--brand-blue-500)] active:scale-95">
+                            <Plus size={13} /> Create Invoice
                         </button>
                     </div>
                 </div>
-                {!isInstalledMobileCompanion ? <p className="type-card-description text-[var(--ws-text-muted)] -mt-2">
-                    Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts.
-                </p> : null}
+
+                {/* Contextual Bulk Action Bar */}
+                <ContextualBulkBar
+                    selectedCount={selectedInvoiceIds.size}
+                    itemLabel={{ singular: 'invoice', plural: 'invoices' }}
+                    onClearSelection={() => setSelectedInvoiceIds(new Set())}
+                    actions={
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleBulkEmailInvoices}
+                                className="h-7 px-3 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 text-xs font-semibold hover:bg-indigo-500/30 transition-colors"
+                            >
+                                <Mail size={12} />
+                                Prepare Follow-up
+                            </button>
+                            <button
+                                type="button"
+                                disabled={bulkPausingFollowups}
+                                onClick={handleBulkPauseFollowups}
+                                className="h-7 px-3 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 text-xs font-semibold hover:bg-amber-500/30 transition-colors disabled:opacity-50"
+                            >
+                                <Clock size={12} />
+                                {bulkPausingFollowups ? 'Pausing…' : 'Pause Follow-ups'}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={bulkDeletingInvoices}
+                                onClick={handleBulkDeleteInvoices}
+                                className="h-7 px-3 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 text-xs font-semibold hover:bg-rose-500/30 transition-colors disabled:opacity-50"
+                            >
+                                <Trash2 size={12} />
+                                {bulkDeletingInvoices ? 'Deleting…' : 'Delete'}
+                            </button>
+                        </>
+                    }
+                />
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block ac-workspace-panel overflow-hidden">

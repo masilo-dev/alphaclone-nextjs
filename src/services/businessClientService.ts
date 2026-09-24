@@ -20,6 +20,7 @@ export interface BusinessClient {
     website?: string;
     metadata?: Record<string, any>;
     crmContactId?: string | null;
+    financePortalToken?: string | null;
 }
 
 export interface ClientsResponse { clients: BusinessClient[]; count: number; error: string | null }
@@ -33,6 +34,33 @@ export interface DashboardStats {
     pipeline: Record<string, number>;
 }
 
+// In-memory caching for near-instant back navigation and deduplication
+interface CacheEntry<T> {
+    data: T;
+    timestamp: number;
+}
+const CLIENTS_CACHE_TTL_MS = 60_000;
+const clientsCache = new Map<string, CacheEntry<ClientsResponse>>();
+const singleClientCache = new Map<string, CacheEntry<BusinessClient>>();
+
+export function invalidateClientsCache(tenantId?: string) {
+    if (!tenantId) {
+        clientsCache.clear();
+        singleClientCache.clear();
+        return;
+    }
+    clientsCache.forEach((_, key) => {
+        if (key.startsWith(tenantId)) {
+            clientsCache.delete(key);
+        }
+    });
+    singleClientCache.forEach((entry, id) => {
+        if (entry.data.tenantId === tenantId) {
+            singleClientCache.delete(id);
+        }
+    });
+}
+
 function mapClient(row: any): BusinessClient {
     return {
         id: row.id, tenantId: row.tenant_id, name: row.name, email: row.email, phone: row.phone,
@@ -40,32 +68,63 @@ function mapClient(row: any): BusinessClient {
         location: row.location, customFields: row.custom_fields || {}, createdAt: row.created_at,
         updatedAt: row.updated_at, isActive: row.is_active, industry: row.industry,
         website: row.website, metadata: row.metadata, crmContactId: row.crm_contact_id || null,
+        financePortalToken: row.finance_portal_token || null,
     };
 }
 
 export const businessClientService = {
-    async getClients(tenantId: string, page = 1, limit = 50, showArchived = false, searchTerm = ''): Promise<ClientsResponse> {
+    async getClients(
+        tenantId: string,
+        page = 1,
+        limit = 50,
+        showArchived = false,
+        searchTerm = '',
+        forceRefresh = false
+    ): Promise<ClientsResponse> {
         try {
+            const cacheKey = `${tenantId}:${page}:${limit}:${showArchived}:${searchTerm.trim().toLowerCase()}`;
+            if (!forceRefresh) {
+                const cached = clientsCache.get(cacheKey);
+                if (cached && Date.now() - cached.timestamp < CLIENTS_CACHE_TTL_MS) {
+                    return cached.data;
+                }
+            }
+
             const offset = (page - 1) * limit;
-            let query = supabase.from('business_clients').select('*', { count: 'exact' }).eq('tenant_id', tenantId);
+            const CLIENT_LIST_COLUMNS = 'id, tenant_id, name, email, phone, sales_stage, value, location, industry, is_active, created_at, updated_at, website, crm_contact_id';
+            let query = supabase.from('business_clients').select(CLIENT_LIST_COLUMNS, { count: 'exact' }).eq('tenant_id', tenantId);
             if (!showArchived) query = query.eq('is_active', true);
             if (searchTerm.trim()) query = query.or(`name.ilike.%${searchTerm.trim()}%,email.ilike.%${searchTerm.trim()}%`);
             const { data, count, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
             if (error) throw error;
-            return { clients: (data || []).map(mapClient), count: count || 0, error: null };
+            const result = { clients: (data || []).map(mapClient), count: count || 0, error: null };
+            
+            clientsCache.set(cacheKey, { data: result, timestamp: Date.now() });
+            for (const client of result.clients) {
+                singleClientCache.set(client.id, { data: client, timestamp: Date.now() });
+            }
+            return result;
         } catch (error) {
             return { clients: [], count: 0, error: error instanceof Error ? error.message : 'Clients could not be loaded' };
         }
     },
 
-    async getClient(clientId: string): Promise<{ client: BusinessClient | null; error: string | null }> {
+    async getClient(clientId: string, forceRefresh = false): Promise<{ client: BusinessClient | null; error: string | null }> {
         try {
+            if (!forceRefresh) {
+                const cached = singleClientCache.get(clientId);
+                if (cached && Date.now() - cached.timestamp < CLIENTS_CACHE_TTL_MS) {
+                    return { client: cached.data, error: null };
+                }
+            }
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('Select a workspace before loading a client');
             const { data, error } = await supabase.from('business_clients').select('*').eq('tenant_id', tenantId).eq('id', clientId).maybeSingle();
             if (error) throw error;
             if (!data) throw new Error('Client not found');
-            return { client: mapClient(data), error: null };
+            const client = mapClient(data);
+            singleClientCache.set(clientId, { data: client, timestamp: Date.now() });
+            return { client, error: null };
         } catch (error) {
             return { client: null, error: error instanceof Error ? error.message : 'Client could not be loaded' };
         }
@@ -94,6 +153,7 @@ export const businessClientService = {
             const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(client) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.client) throw new Error(payload.error || 'Client could not be created');
+            invalidateClientsCache(tenantId);
             void requestCrmBridgeSync(tenantId, 'client', payload.client.id);
             return { client: mapClient(payload.client), error: null };
         } catch (error) {
@@ -108,6 +168,7 @@ export const businessClientService = {
             const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId, ...updates }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Client could not be updated');
+            invalidateClientsCache(tenantId);
             void requestCrmBridgeSync(tenantId, 'client', clientId);
             return { error: null };
         } catch (error) { return { error: error instanceof Error ? error.message : 'Client could not be updated' }; }
@@ -120,6 +181,7 @@ export const businessClientService = {
             const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [clientId] }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Client could not be archived');
+            invalidateClientsCache(tenantId);
             return { error: null };
         } catch (error) { return { error: error instanceof Error ? error.message : 'Client could not be archived' }; }
     },
@@ -131,6 +193,7 @@ export const businessClientService = {
             const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientId, isActive: true }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Client could not be restored');
+            invalidateClientsCache(tenantId);
             return { error: null };
         } catch (error) { return { error: error instanceof Error ? error.message : 'Client could not be restored' }; }
     },
@@ -147,9 +210,10 @@ export const businessClientService = {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('Select a workspace before archiving clients');
-            const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [...new Set(clientIds)] }) });
+            const response = await fetch(`/api/tenant/${tenantId}/clients`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: Array.from(new Set(clientIds)) }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Clients could not be archived');
+            invalidateClientsCache(tenantId);
             return { error: null, count: Number(payload.count || 0) };
         } catch (error) { return { error: error instanceof Error ? error.message : 'Clients could not be archived', count: 0 }; }
     },

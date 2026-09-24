@@ -17,6 +17,7 @@ import {
   isSetupChecklistDismissed,
 } from './NewUserSetupPanel';
 import { WorkspaceGuide } from './WorkspaceGuide';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 
 interface BusinessHomeProps {
   user: User;
@@ -92,7 +93,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
       {homeLayout === 'attention_first' ? <AttentionFirstDashboard /> : <OperatingSystemHome />}
 
-      <WorkspaceGuide user={user} />
+      <div className="flex justify-end">
+        <HelpDisclosure title="Workspace Map & Guide" label="Workspace map">
+          <div className="pt-2">
+            <WorkspaceGuide user={user} />
+          </div>
+        </HelpDisclosure>
+      </div>
 
       <div className="flex justify-center pt-1">
         <button

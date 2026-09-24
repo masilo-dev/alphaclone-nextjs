@@ -62,8 +62,8 @@ export const seoService = {
      */
     async getArticleBySlug(slug: string): Promise<{ article: SeoArticle | null; error: string | null }> {
         try {
-            // First increment view count (fire and forget)
-            supabase.rpc('increment_article_views', { article_slug: slug }).catch(() => { });
+            // First increment view count (fire and forget — errors silently discarded)
+            void supabase.rpc('increment_article_views', { article_slug: slug });
 
             const { data, error } = await supabase
                 .from('seo_articles')

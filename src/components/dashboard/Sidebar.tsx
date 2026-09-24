@@ -142,7 +142,7 @@ const Sidebar = React.memo<SidebarProps>(({
                 />
             )}
 
-            <aside data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
+            <aside data-tour="navigation" data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
                 fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
                 flex flex-col transition-all duration-200 overflow-hidden will-change-transform
                 ${sidebarOpen ? 'translate-x-0 w-56 pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-14'}

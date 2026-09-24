@@ -240,3 +240,40 @@ export const WORKSPACE = {
     sectionTitle: 'text-lg leading-ui font-semibold text-[var(--ws-text-primary)]',
   },
 } as const;
+
+/**
+ * Focus-First UX Architecture Tokens — Large Capability, Narrow Context.
+ * Consistent layout, density, and disclosure tokens across all workspaces.
+ */
+export const WORKSPACE_FOCUS = {
+  headerHeight: 'min-h-12 md:min-h-14',
+  toolbarHeight: 'min-h-11 md:min-h-12',
+  filterHeight: 'min-h-9 md:min-h-10',
+  contentGap: 'space-y-3.5 md:space-y-4',
+  sectionGap: 'space-y-4 md:space-y-5',
+  container: 'w-full max-w-[1600px] mx-auto',
+  density: {
+    compact: {
+      header: 'py-2 px-3 sm:px-4',
+      toolbar: 'py-1.5 px-3',
+      gap: 'gap-2',
+      cell: 'px-2.5 py-2',
+    },
+    comfortable: {
+      header: 'py-3 px-4 md:px-6',
+      toolbar: 'py-2 px-4',
+      gap: 'gap-3',
+      cell: 'px-3 py-3',
+    },
+  },
+  typography: {
+    workspaceTitle: 'text-lg md:text-xl font-bold tracking-tight text-[var(--ws-text-primary)]',
+    workspaceSubtitle: 'type-caption text-[var(--ws-text-muted)] line-clamp-1',
+    metaBadge: 'text-xs font-semibold px-2 py-0.5 rounded-md border border-[var(--ws-border)] bg-[var(--ws-surface)] text-[var(--ws-text-secondary)]',
+  },
+  help: {
+    triggerButton: 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg type-ui font-medium text-[var(--ws-text-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] transition-colors',
+    panel: 'rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)]/90 backdrop-blur-sm p-4 text-[var(--ws-text-secondary)] shadow-sm animate-fade-in',
+  },
+} as const;
+

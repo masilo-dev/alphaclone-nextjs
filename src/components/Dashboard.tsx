@@ -160,6 +160,11 @@ import WelcomeModal from "./dashboard/WelcomeModal";
 import OnboardingFlow from "./onboarding/OnboardingFlow";
 import CreateInvoiceModal from "./dashboard/CreateInvoiceModal";
 import ProductTour from "./onboarding/ProductTour";
+import {
+  canAutoStartWalkthrough,
+  markAutoStartEvaluated,
+  setWalkthroughState,
+} from "@/lib/onboarding/walkthroughService";
 import { PLATFORM_TOUR_EVENT } from "./dashboard/PlatformExecutionWelcome";
 import { WidgetErrorBoundary } from "./dashboard/WidgetErrorBoundary";
 import { useOverdueTaskNotifier } from "../hooks/useOverdueTaskNotifier";
@@ -635,12 +640,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return;
       }
 
+      // Only auto-start once per browser session for eligible users
       if (
-        !gate.tourCompleted &&
-        !gate.establishedWorkspace &&
-        (location === "/dashboard" || location === "/dashboard/business")
+        (location === "/dashboard" || location === "/dashboard/business") &&
+        canAutoStartWalkthrough(user.id, gate.establishedWorkspace)
       ) {
-        window.setTimeout(() => setShowProductTour(true), 2000);
+        markAutoStartEvaluated(user.id);
+        window.setTimeout(() => setShowProductTour(true), 1500);
       }
     };
 
@@ -653,21 +659,25 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [showProductTour, setShowProductTour] = useState(false);
 
   const markTourCompleted = useCallback(() => {
-    if (typeof window === "undefined" || !user?.id) return;
-    localStorage.setItem(`business_tour_completed_${user.id}`, "1");
-    localStorage.setItem(`tour_completed_${user.id}`, "1");
+    if (user?.id) {
+      setWalkthroughState(user.id, "completed");
+    }
     setShowProductTour(false);
   }, [user?.id]);
 
-  const scheduleProductTour = useCallback(() => {
-    if (typeof window === "undefined" || !user?.id) return;
-    if (localStorage.getItem(`business_tour_completed_${user.id}`) === "1") return;
-    window.setTimeout(() => setShowProductTour(true), 1200);
+  const markTourDismissed = useCallback(() => {
+    if (user?.id) {
+      setWalkthroughState(user.id, "dismissed");
+    }
+    setShowProductTour(false);
   }, [user?.id]);
 
-  // Tour could not find anything to point at: close it WITHOUT marking it
-  // completed, so it still auto-starts on the dashboard home later.
-  const dismissUnavailableTour = useCallback(() => setShowProductTour(false), []);
+  const dismissUnavailableTour = useCallback(() => {
+    if (user?.id) {
+      markAutoStartEvaluated(user.id);
+    }
+    setShowProductTour(false);
+  }, [user?.id]);
 
   // Every explicit "Platform tour" press remounts the tour (new key) so it
   // restarts from step 1 even if a previous run is mid-way or got stuck open.
@@ -678,7 +688,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       window.setTimeout(() => {
         setTourRunId((id) => id + 1);
         setShowProductTour(true);
-      }, 350);
+      }, 400);
       return;
     }
     setTourRunId((id) => id + 1);
@@ -2888,7 +2898,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       <ProductTour
         key={tourRunId}
         isOpen={showProductTour}
+        userId={user.id}
         onComplete={markTourCompleted}
+        onDismiss={markTourDismissed}
         onUnavailable={dismissUnavailableTour}
         userRole={user.role}
       />

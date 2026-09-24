@@ -11,6 +11,8 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../dashboard/OperationalWorkflowStrip';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { TableSkeleton } from '@/components/ui/workspace';
 import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
@@ -1064,14 +1066,18 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
     return (
         <div className="min-h-full text-white px-1 sm:px-0">
-            <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} className="mb-3 sm:mb-4" />
             {/* Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5 sm:mb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-5">
                 <div className="min-w-0">
                     <h1 className="text-xl sm:text-2xl font-bold text-white">Contracts & Agreements</h1>
                     <p className="text-slate-400 type-card-description sm:text-sm mt-1 leading-relaxed">Create, import, review, approve, and send agreements from one workspace.</p>
                 </div>
-                <div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap">
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto flex-wrap">
+                    <HelpDisclosure title="Contract Lifecycle Guide" label="Contracts guide">
+                        <div className="pt-2">
+                            <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} />
+                        </div>
+                    </HelpDisclosure>
                     <button
                         type="button"
                         onClick={() => setActiveView('new')}
@@ -1247,7 +1253,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         ]}
                     />
                     {loadingContracts ? (
-                        <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
+                        <div className="p-4"><TableSkeleton rows={5} columns={4} /></div>
                     ) : savedContracts.length === 0 ? (
                         <div className="px-4 py-6">
                             <EmptyStateFromPreset

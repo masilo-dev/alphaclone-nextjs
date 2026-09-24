@@ -34,6 +34,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { ContextualBulkBar } from '@/components/ui/workspace';
 
 // Active pipeline columns only — won/lost are terminal actions (removed from board).
 const KANBAN_STAGES = [
@@ -749,61 +751,75 @@ export default function KanbanBoard() {
 
   return (
     <div className="w-full min-w-0 p-3 sm:p-4 pb-8 overflow-x-auto md:overflow-x-visible">
-        <CrmNextStepsPanel
-            heading="Lead execution"
-            subheading="Each card should move toward a clear decision: qualify, propose, win, or exit with a reason."
-            items={leadNextSteps}
-        />
-        <div className="mb-4 p-3 rounded-xl border border-slate-800 bg-slate-900/60 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
-              <span className="type-caption uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap mr-1">Lead source view</span>
-              {[
-                { value: 'all', label: `All (${sourceCounts.all})` },
-                { value: 'ai_mcp', label: `Claude/MCP (${sourceCounts.ai_mcp})` },
-                { value: 'manual', label: `Manual (${sourceCounts.manual})` }
-              ].map((filter) => (
-                <button
-                  key={filter.value}
-                  onClick={() => setSourceFilter(filter.value as any)}
-                  className={`h-8 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border ${
-                    sourceFilter === filter.value
-                      ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-500)]/10'
-                      : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-white hover:bg-slate-800'
-                  }`}
-                  style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-                >
-                  {filter.label}
-                </button>
-              ))}
+        <div className="mb-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
+            <span className="type-caption uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap mr-1">Sources:</span>
+            {[
+              { value: 'all', label: `All (${sourceCounts.all})` },
+              { value: 'ai_mcp', label: `Claude/MCP (${sourceCounts.ai_mcp})` },
+              { value: 'manual', label: `Manual (${sourceCounts.manual})` }
+            ].map((filter) => (
               <button
-                onClick={() => {
-                  if (selectedLeadIds.length > 0) {
-                    setSelectedLeadIds([]);
-                  } else {
-                    const batch = visibleLeads.slice(0, 20).map(l => l.id);
-                    setSelectedLeadIds(batch);
-                    if (visibleLeads.length > 20) {
-                      toast.success('Selected first 20 leads for bulk outreach.');
-                    }
+                key={filter.value}
+                onClick={() => setSourceFilter(filter.value as any)}
+                className={`h-7 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border ${
+                  sourceFilter === filter.value
+                    ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-500)]/10'
+                    : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-white hover:bg-slate-800'
+                }`}
+                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              >
+                {filter.label}
+              </button>
+            ))}
+
+            <button
+              onClick={() => {
+                if (selectedLeadIds.length > 0) {
+                  setSelectedLeadIds([]);
+                } else {
+                  const batch = visibleLeads.slice(0, 20).map(l => l.id);
+                  setSelectedLeadIds(batch);
+                  if (visibleLeads.length > 20) {
+                    toast.success('Selected first 20 leads for bulk outreach.');
                   }
-                }}
-                className="h-8 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-[var(--brand-blue-400)] hover:bg-slate-800"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
-              </button>
-            </div>
-            {selectedLeadIds.length > 0 && (
-              <button
-                onClick={() => setShowOutreachModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white type-ui font-bold rounded-lg transition-all shadow-lg shadow-[var(--brand-blue-500)]/20 h-8 self-start sm:self-auto"
-                style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              >
-                <Sparkles className="w-3.5 h-3.5" /> Bulk Outreach ({selectedLeadIds.length})
-              </button>
-            )}
+                }
+              }}
+              className="h-7 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-[var(--brand-blue-400)] hover:bg-slate-800"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
+            </button>
+
           </div>
+
+          <HelpDisclosure title="Lead Execution Guide" label="Pipeline guide">
+            <CrmNextStepsPanel
+              heading="Lead execution"
+              subheading="Each card should move toward a clear decision: qualify, propose, win, or exit with a reason."
+              items={leadNextSteps}
+            />
+          </HelpDisclosure>
+        </div>
+
+        {selectedLeadIds.length > 0 && (
+          <ContextualBulkBar
+            selectedCount={selectedLeadIds.length}
+            itemLabel={{ singular: 'lead', plural: 'leads' }}
+            onClearSelection={() => setSelectedLeadIds([])}
+            actions={
+              <button
+                type="button"
+                onClick={() => setShowOutreachModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-blue-900/30"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Bulk Outreach</span>
+              </button>
+            }
+          />
+        )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {KANBAN_STAGES.map((stage) => (
               <div key={stage.id} className="px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900 type-caption text-slate-300 flex justify-between">
@@ -812,7 +828,6 @@ export default function KanbanBoard() {
               </div>
             ))}
           </div>
-        </div>
         <DndContext 
             sensors={sensors}
             collisionDetection={closestCorners}

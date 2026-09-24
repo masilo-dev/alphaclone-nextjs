@@ -9,7 +9,6 @@ import RecordPageShell from './RecordPageShell';
 import RecordFilesTab from './RecordFilesTab';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
-import { CRMNav } from './CRMNav';
 import { AccountFormModal } from './AccountFormModal';
 import { useTenant } from '@/contexts/TenantContext';
 import { CrmSyncToolbar } from './CrmSyncToolbar';
@@ -269,7 +268,6 @@ export default function AccountsPage() {
   return (
     <>
     <div className="p-4 space-y-4 overflow-y-auto pb-24">
-      <CRMNav pathname={pathname || '/dashboard/crm/accounts'} />
       <CrmSyncToolbar />
       <ListViewToolbar
         search={search}

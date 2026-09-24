@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
-import { CRMNav } from './CRMNav';
 import { usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
 
@@ -90,7 +89,6 @@ export default function FollowUpQueue() {
 
   return (
     <div className="space-y-4">
-      <CRMNav pathname={pathname || '/dashboard/crm/follow-ups'} />
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white flex items-center gap-2">

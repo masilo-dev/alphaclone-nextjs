@@ -38,6 +38,8 @@ export function canShowPlatformWelcomeBanner(userId: string): boolean {
   return isWelcomeSeen(userId) || onboardingDone;
 }
 
+import { getWalkthroughRecord, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
+
 /** Sync profile/auth onboarding flags into localStorage for returning users. */
 export async function resolveOnboardingGate(
   userId: string,
@@ -55,13 +57,17 @@ export async function resolveOnboardingGate(
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('onboarding_completed')
+    .select('onboarding_completed, walkthrough_completed')
     .eq('id', userId)
     .maybeSingle();
 
   const metadataComplete = userMetadata?.onboarding_completed === true;
   if (profile?.onboarding_completed || metadataComplete) {
     localStorage.setItem(onboardingKey(userId), 'true');
+  }
+
+  if (profile?.walkthrough_completed) {
+    setWalkthroughState(userId, 'completed');
   }
 
   let establishedWorkspace = false;
@@ -88,13 +94,16 @@ export async function resolveOnboardingGate(
   if (establishedWorkspace) {
     markWelcomeSeen(userId);
     localStorage.setItem(onboardingKey(userId), 'true');
-    localStorage.setItem(tourKey(userId), '1');
+    setWalkthroughState(userId, 'completed');
   }
+
+  const tourRecord = getWalkthroughRecord(userId);
+  const isTourDone = tourRecord.state === 'completed' || tourRecord.state === 'dismissed' || establishedWorkspace;
 
   return {
     welcomeSeen: isWelcomeSeen(userId),
     onboardingCompleted: localStorage.getItem(onboardingKey(userId)) === 'true',
-    tourCompleted: localStorage.getItem(tourKey(userId)) === '1',
+    tourCompleted: isTourDone,
     establishedWorkspace,
   };
 }

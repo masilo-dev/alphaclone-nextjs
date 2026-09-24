@@ -289,26 +289,26 @@ function escapeHtml(text: string): string {
 export function renderDocumentHtml(input: RenderDocumentInput): string {
   const theme = DOCUMENT_THEME_PRESETS[input.themeId || 'executive'];
   const branding = input.branding || { name: 'Your Business' };
-  const primary = branding.primaryColor || theme.primaryColor;
+  const primary = branding.primaryBrandColor || branding.primaryColor || theme.primaryColor || '#0f172a';
   const accent = theme.accentColor;
 
   const lineItemsHtml =
     input.lineItems && input.lineItems.length > 0
-      ? `<table style="width:100%;border-collapse:collapse;margin:24px 0;">
-          <thead><tr style="background:${primary};color:#fff;">
-            <th style="padding:12px;text-align:left;">Description</th>
-            <th style="padding:12px;text-align:right;">Qty</th>
-            <th style="padding:12px;text-align:right;">Rate</th>
-            <th style="padding:12px;text-align:right;">Amount</th>
+      ? `<table style="width:100%;border-collapse:collapse;margin:24px 0;" class="doc-table">
+          <thead><tr style="border-bottom:2px solid #cbd5e1;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">
+            <th style="padding:10px 12px;text-align:left;">Description</th>
+            <th style="padding:10px 12px;text-align:right;width:60px;">Qty</th>
+            <th style="padding:10px 12px;text-align:right;width:100px;">Rate</th>
+            <th style="padding:10px 12px;text-align:right;width:110px;">Amount</th>
           </tr></thead>
           <tbody>
             ${input.lineItems
               .map(
-                (item) => `<tr style="border-bottom:1px solid #e2e8f0;">
-              <td style="padding:12px;">${escapeHtml(item.description)}</td>
-              <td style="padding:12px;text-align:right;">${item.quantity}</td>
-              <td style="padding:12px;text-align:right;">$${item.rate.toFixed(2)}</td>
-              <td style="padding:12px;text-align:right;">$${item.amount.toFixed(2)}</td>
+                (item) => `<tr style="border-bottom:1px solid #f1f5f9;page-break-inside:avoid;break-inside:avoid;">
+              <td style="padding:12px;font-weight:500;color:#0f172a;">${escapeHtml(item.description)}</td>
+              <td style="padding:12px;text-align:right;color:#334155;font-family:monospace;">${item.quantity}</td>
+              <td style="padding:12px;text-align:right;color:#334155;font-family:monospace;">$${item.rate.toFixed(2)}</td>
+              <td style="padding:12px;text-align:right;font-weight:600;color:#0f172a;font-family:monospace;">$${item.amount.toFixed(2)}</td>
             </tr>`
               )
               .join('')}
@@ -330,8 +330,8 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
                   `<p style="margin:0 0 12px;text-align:justify;color:#334155;line-height:1.75;">${para.replace(/\n/g, '<br/>')}</p>`
               )
               .join('');
-        return `<section style="margin:28px 0;">
-        <h2 style="color:${primary};font-size:16px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid ${accent};padding-bottom:8px;margin:0 0 14px;">${escapeHtml(s.heading)}</h2>
+        return `<section style="margin:28px 0;page-break-inside:avoid;break-inside:avoid;">
+        <h2 style="color:${primary};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin:0 0 14px;">${escapeHtml(s.heading)}</h2>
         <div style="color:#334155;line-height:1.75;">${bodyHtml}</div>
       </section>`;
       })
@@ -340,22 +340,30 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   const isAgreement = ['contract'].includes(input.type);
   const showTotalBox = input.total != null && !isAgreement;
 
-  const headerHtml =
-    theme.headerStyle === 'cover' && !isAgreement
-      ? `<div style="background:${primary};color:#fff;padding:48px 40px;text-align:center;">
-          ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:60px;max-width:200px;width:auto;height:auto;object-fit:contain;margin-bottom:16px;" />` : `<strong style="font-size:20px;">${escapeHtml(branding.name || 'Unconfigured Business')}</strong>`}
-          <h1 style="font-size:28px;margin:0;">${escapeHtml(input.title)}</h1>
-          ${input.documentNumber ? `<p style="opacity:0.9;margin-top:8px;">#${escapeHtml(input.documentNumber)}</p>` : ''}
-        </div>`
-      : `<div style="background:${primary};color:#fff;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:40px;max-width:180px;width:auto;height:auto;object-fit:contain;margin-bottom:8px;" />` : `<strong style="font-size:20px;">${escapeHtml(branding.name || 'Unconfigured Business')}</strong>`}
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:22px;font-weight:bold;">${escapeHtml(input.title)}</div>
-            ${input.documentNumber ? `<div style="opacity:0.9;">#${escapeHtml(input.documentNumber)}</div>` : ''}
-          </div>
-        </div>`;
+  const logoOrWordmarkHtml = branding.logoUrl
+    ? `<div style="min-height:36px;display:flex;align-items:center;">
+        <img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:36px;max-width:160px;width:auto;height:auto;object-fit:contain;object-position:left;" />
+       </div>`
+    : `<div style="min-height:36px;display:flex;align-items:center;font-size:18px;font-weight:700;letter-spacing:-0.01em;color:${primary};">
+        ${escapeHtml(branding.name || 'Unconfigured Business')}
+       </div>`;
+
+  const headerHtml = `<div style="border-bottom:1px solid #e2e8f0;padding-bottom:24px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;page-break-inside:avoid;break-inside:avoid;">
+      <div style="max-width:55%;">
+        ${logoOrWordmarkHtml}
+        <div style="margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;">
+          ${branding.legalName && branding.legalName !== branding.name ? `<div style="font-weight:600;color:#334155;">${escapeHtml(branding.legalName)}</div>` : ''}
+          ${branding.businessAddress ? `<div>${escapeHtml(branding.businessAddress).replace(/\n/g, '<br/>')}</div>` : ''}
+          ${branding.taxNumber || branding.taxId ? `<div>Tax ID: ${escapeHtml(branding.taxNumber || branding.taxId || '')}</div>` : ''}
+          ${branding.businessEmail || branding.supportEmail ? `<div>${escapeHtml(branding.businessEmail || branding.supportEmail || '')}</div>` : ''}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;text-transform:uppercase;color:${primary};line-height:1.1;">${escapeHtml(input.title)}</div>
+        ${input.documentNumber ? `<div style="font-family:monospace;font-size:13px;font-weight:600;color:#64748b;margin-top:4px;">#${escapeHtml(input.documentNumber)}</div>` : ''}
+        ${input.status ? `<div style="margin-top:8px;"><span class="status-ribbon">${escapeHtml(input.status)}</span></div>` : ''}
+      </div>
+    </div>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -364,33 +372,37 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(input.title)} ${input.documentNumber ? `#${escapeHtml(input.documentNumber)}` : ''}</title>
   <style>
-    @page { size: A4; margin: 18mm 16mm; }
-    @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 8.5pt; color: #64748b; } }
-    body { font-family: ${theme.fontFamily}; margin: 0; padding: 0; color: #1e293b; background: #fff; }
-    .content { padding: 40px; max-width: 800px; margin: 0 auto; }
-    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-    .total-box { background: #f8fafc; border: 1px solid ${accent}; border-radius: 0; padding: 20px; text-align: right; margin-top: 24px; }
-    .total-amount { font-size: 28px; font-weight: bold; color: ${primary}; }
-    .status-ribbon { display: inline-block; padding: 4px 12px; border-radius: 2px; border: 1px solid ${accent}; color: ${primary}; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
-    h2 { page-break-after: avoid; }
-    .signature-block { page-break-inside: avoid; }
+    @page { size: A4; margin: 15mm 12mm; }
+    @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 8pt; color: #64748b; } }
+    body { font-family: ${theme.fontFamily}; margin: 0; padding: 0; color: #0f172a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .content { padding: 32px 40px; max-width: 820px; margin: 0 auto; box-sizing: border-box; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; page-break-inside: avoid; break-inside: avoid; }
+    .total-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; text-align: right; margin-top: 24px; page-break-inside: avoid; break-inside: avoid; }
+    .total-amount { font-size: 26px; font-weight: 800; color: ${primary}; font-family: monospace; }
+    .status-ribbon { display: inline-block; padding: 3px 10px; border-radius: 9999px; border: 1px solid #cbd5e1; color: #334155; font-size: 11px; font-weight: 600; text-transform: uppercase; background: #f8fafc; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #64748b; page-break-inside: avoid; break-inside: avoid; }
+    h2 { page-break-after: avoid; break-after: avoid; }
+    .signature-block { page-break-inside: avoid; break-inside: avoid; }
     table thead { display: table-header-group; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    @media print {
+      body { background: #fff !important; }
+      .content { padding: 0 !important; max-width: 100% !important; }
+    }
   </style>
 </head>
 <body>
-  ${headerHtml}
   <div class="content">
+    ${headerHtml}
     <div class="meta">
       <div>
-        <strong>Prepared for</strong><br/>
-        ${escapeHtml(input.clientName || 'Client')}<br/>
-        ${input.clientEmail ? escapeHtml(input.clientEmail) : ''}
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.05em;margin-bottom:6px;">Billed To / Recipient</div>
+        <div style="font-weight:600;font-size:15px;color:#0f172a;">${escapeHtml(input.clientName || 'Client')}</div>
+        ${input.clientEmail ? `<div style="font-size:12px;color:#475569;margin-top:2px;">${escapeHtml(input.clientEmail)}</div>` : ''}
       </div>
-      <div style="text-align:right;">
-        ${input.status ? `<span class="status-ribbon">${escapeHtml(input.status)}</span><br/><br/>` : ''}
-        ${input.issueDate ? `<strong>Date:</strong> ${escapeHtml(input.issueDate)}<br/>` : ''}
-        ${input.dueDate ? `<strong>Due:</strong> ${escapeHtml(input.dueDate)}<br/>` : ''}
+      <div style="text-align:right;font-size:12px;color:#334155;">
+        ${input.issueDate ? `<div style="margin-bottom:4px;"><span style="color:#64748b;">Issue Date:</span> <strong style="color:#0f172a;">${escapeHtml(input.issueDate)}</strong></div>` : ''}
+        ${input.dueDate ? `<div><span style="color:#64748b;">Due Date:</span> <strong style="color:#0f172a;">${escapeHtml(input.dueDate)}</strong></div>` : ''}
       </div>
     </div>
     ${sectionsHtml}
@@ -398,17 +410,22 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     ${
       showTotalBox
         ? `<div class="total-box">
-            <div style="color:#64748b;font-size:14px;">Total due</div>
+            <div style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;">Total Due</div>
             <div class="total-amount">$${input.total!.toFixed(2)}</div>
-            ${input.subtotal != null ? `<div style="color:#64748b;font-size:12px;margin-top:8px;">Subtotal: $${input.subtotal.toFixed(2)}${input.tax != null ? ` · Tax: $${input.tax.toFixed(2)}` : ''}</div>` : ''}
+            ${input.subtotal != null ? `<div style="color:#64748b;font-size:12px;margin-top:6px;">Subtotal: $${input.subtotal.toFixed(2)}${input.tax != null ? ` · Tax: $${input.tax.toFixed(2)}` : ''}</div>` : ''}
           </div>`
         : ''
     }
-    ${input.notes ? `<div style="margin-top:32px;padding:16px;border:1px solid #e2e8f0;"><strong>Notes</strong><p style="margin:8px 0 0;">${escapeHtml(input.notes)}</p></div>` : ''}
-    ${input.paymentInstructions && !isAgreement ? `<div style="margin-top:16px;"><strong>Payment details</strong><p style="margin:8px 0 0;">${escapeHtml(input.paymentInstructions)}</p></div>` : ''}
+    ${input.notes ? `<div style="margin-top:28px;padding:14px;border:1px solid #e2e8f0;border-radius:4px;page-break-inside:avoid;break-inside:avoid;"><strong style="font-size:12px;color:#334155;">Notes</strong><p style="margin:6px 0 0;font-size:12px;color:#64748b;line-height:1.6;">${escapeHtml(input.notes)}</p></div>` : ''}
+    ${input.paymentInstructions && !isAgreement ? `<div style="margin-top:16px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;page-break-inside:avoid;break-inside:avoid;"><strong style="font-size:12px;color:#334155;">Payment Details</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;line-height:1.6;">${escapeHtml(input.paymentInstructions)}</p></div>` : ''}
     <div class="footer">
-      ${escapeHtml(branding.name || 'Unconfigured Business')}
-      ${branding.supportEmail ? ` · ${escapeHtml(branding.supportEmail)}` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          ${escapeHtml(branding.name || 'Unconfigured Business')}
+          ${branding.supportEmail || branding.businessEmail ? ` · ${escapeHtml(branding.supportEmail || branding.businessEmail || '')}` : ''}
+          ${branding.taxNumber || branding.taxId ? ` · Tax: ${escapeHtml(branding.taxNumber || branding.taxId || '')}` : ''}
+        </div>
+      </div>
     </div>
   </div>
 </body>

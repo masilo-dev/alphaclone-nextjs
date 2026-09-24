@@ -33,7 +33,15 @@ export function isBonnieWorkerTickRunning(): boolean {
   return isTickRunning;
 }
 
-async function refreshQueueDepth(): Promise<void> {
+let lastQueueDepthCheck = 0;
+const QUEUE_DEPTH_INTERVAL_MS = 60_000;
+
+async function refreshQueueDepth(force = false): Promise<void> {
+  const now = Date.now();
+  if (!force && now - lastQueueDepthCheck < QUEUE_DEPTH_INTERVAL_MS) {
+    return;
+  }
+  lastQueueDepthCheck = now;
   try {
     const admin = createSupabaseAdminClient();
     const { count } = await admin
@@ -49,18 +57,20 @@ async function refreshQueueDepth(): Promise<void> {
 export default async function runBonnieWorker(options: BonnieWorkerOptions = {}): Promise<void> {
   const pollMs = Math.max(2_000, options.pollMs ?? Number(process.env.BONNIE_WORKER_POLL_MS || 5_000));
   let idleCycles = 0;
+  let consecutiveIdleTicks = 0;
 
-  async function tick(): Promise<void> {
-    if (options.isShuttingDown?.()) return;
+  async function tick(): Promise<boolean> {
+    if (options.isShuttingDown?.()) return false;
 
     if (isTickRunning) {
       console.warn('[bonnie-worker] tick skipped — previous tick still running');
-      return;
+      return false;
     }
 
     isTickRunning = true;
     incrementActiveWorkerTicks();
     const started = Date.now();
+    let hadActivity = false;
 
     try {
       if (!isDurableRuntimeEnabled()) {
@@ -70,15 +80,15 @@ export default async function runBonnieWorker(options: BonnieWorkerOptions = {})
             '[bonnie-worker] BONNIE_DURABLE_RUNTIME is not enabled; idle. Set BONNIE_DURABLE_RUNTIME=true on Railway.'
           );
         }
-        return;
+        return false;
       }
 
       if (isBackgroundJobHeapBlocked()) {
         console.warn('[bonnie-worker] tick deferred — memory pressure', backgroundJobBlockedReason());
-        return;
+        return false;
       }
 
-      await refreshQueueDepth();
+      await refreshQueueDepth(consecutiveIdleTicks === 0);
 
       const leases = await reclaimExpiredLeases(25);
       const outbox = await publishOutboxBatch(40);
@@ -87,6 +97,7 @@ export default async function runBonnieWorker(options: BonnieWorkerOptions = {})
       );
 
       if (work.processed > 0 || outbox.delivered > 0 || leases.reclaimed > 0) {
+        hadActivity = true;
         console.info('[bonnie-worker] tick', {
           durationMs: Date.now() - started,
           leases,
@@ -100,6 +111,8 @@ export default async function runBonnieWorker(options: BonnieWorkerOptions = {})
       isTickRunning = false;
       decrementActiveWorkerTicks();
     }
+
+    return hadActivity;
   }
 
   console.info('[bonnie-worker] starting sequential loop', {
@@ -110,13 +123,25 @@ export default async function runBonnieWorker(options: BonnieWorkerOptions = {})
 
   while (!options.isShuttingDown?.()) {
     const started = Date.now();
+    let hadActivity = false;
     try {
-      await tick();
+      hadActivity = await tick();
     } catch (err) {
       console.error('[bonnie-worker] loop error', err);
     }
+
+    if (hadActivity) {
+      consecutiveIdleTicks = 0;
+    } else {
+      consecutiveIdleTicks += 1;
+    }
+
     const elapsed = Date.now() - started;
-    const waitMs = Math.max(0, pollMs - elapsed);
+    // When idle, adaptively back off up to 30s to relieve Postgres connection & CPU pressure
+    const idleMultiplier = Math.min(Math.pow(1.4, Math.min(consecutiveIdleTicks, 6)), 6);
+    const targetInterval = hadActivity ? pollMs : Math.min(pollMs * idleMultiplier, 30_000);
+    const waitMs = Math.max(0, targetInterval - elapsed);
+
     if (waitMs > 0) {
       await sleep(waitMs);
     }

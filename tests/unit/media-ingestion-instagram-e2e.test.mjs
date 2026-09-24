@@ -67,7 +67,8 @@ test('provider fetch token is opaque, tenant-bound, expiring, and tamper evident
     tenant_id: TENANT, asset_id: ASSET, purpose: 'social_provider_fetch',
     expires_at: verifyProviderFetchToken(token).expires_at,
   });
-  assert.equal(verifyProviderFetchToken(`${token.slice(0, -1)}A`), null);
+  const tampered = token.endsWith('A') ? `${token.slice(0, -1)}B` : `${token.slice(0, -1)}A`;
+  assert.equal(verifyProviderFetchToken(tampered), null);
 });
 
 test('Instagram publisher uses canonical identity resolver and final media persistence', async () => {

@@ -14,6 +14,7 @@ import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDown, Info, Maximize2, Minimize2 } from 'lucide-react';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
+import { WorkspaceSwitcher } from '@/components/ui/workspace/WorkspaceSwitcher';
 
 export interface HubTab {
   label: string;
@@ -92,6 +93,21 @@ export default function HubShell({
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
+  // Large Capability. Narrow Context:
+  // Detect if user is on the module root / overview vs working in a focused sub-workspace
+  const isOverview =
+    !pathname ||
+    pathname === tabs[0]?.href ||
+    (moduleId ? pathname === `/dashboard/${moduleId}` : false);
+
+  const activeTab = tabs.find(
+    (tab) =>
+      pathname != null &&
+      (pathname === tab.href ||
+        pathname.startsWith(`${tab.href}/`) ||
+        pathname.startsWith(`${tab.href}?`))
+  ) || tabs[0];
+
   return (
     <div
       className={cn(
@@ -108,7 +124,7 @@ export default function HubShell({
       <div
         className={cn(
           'sticky top-0 z-20 flex-shrink-0 bg-[var(--ws-toolbar)] ac-workspace-toolbar border-b border-[var(--ws-border)]',
-          isInstalledMobileCompanion ? 'px-3 py-1.5' : 'px-4 py-2',
+          isInstalledMobileCompanion ? 'px-3 py-1.5' : isOverview ? 'px-4 py-2' : 'px-3.5 py-1.5',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
@@ -130,12 +146,28 @@ export default function HubShell({
               aria-hidden
             />
           )}
-          <div className="min-w-0">
-            <h1 className="type-caption font-bold tracking-tight text-[var(--ws-text-primary)]">{t(title)}</h1>
-            {description ? (
-              <p className="hidden type-card-description text-[var(--ws-text-muted)] lg:block">{t(description)}</p>
-            ) : null}
-          </div>
+
+          {isOverview ? (
+            <div className="min-w-0">
+              <h1 className="type-caption font-bold tracking-tight text-[var(--ws-text-primary)]">{t(title)}</h1>
+              {description ? (
+                <p className="hidden type-card-description text-[var(--ws-text-muted)] lg:block">{t(description)}</p>
+              ) : null}
+            </div>
+          ) : (
+            <div className="min-w-0 flex items-center">
+              <WorkspaceSwitcher
+                currentLabel={t(activeTab?.label || title)}
+                options={tabs.map((tab) => ({
+                  label: t(tab.label),
+                  href: tab.href,
+                }))}
+                currentHref={pathname || undefined}
+                moduleName={t(title)}
+              />
+            </div>
+          )}
+
           <div className="ml-auto flex items-center gap-1.5">
             {hubSteps?.length && !isInstalledMobileCompanion ? (
               <button
@@ -146,7 +178,7 @@ export default function HubShell({
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2 type-ui font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
               >
                 <Info className="h-3.5 w-3.5" aria-hidden />
-                <span className="hidden sm:inline">{t('Overview')}</span>
+                <span className="hidden sm:inline">{t('Guide')}</span>
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', overviewOpen && 'rotate-180')} aria-hidden />
               </button>
             ) : null}
@@ -163,49 +195,54 @@ export default function HubShell({
           </div>
         </div>
 
-        <ModuleJumpSelect
-          options={tabs.map((tab) => ({ label: t(tab.label), href: tab.href }))}
-          currentHref={pathname || undefined}
-          label={`${t('Switch section')}: ${t(title)}`}
-          onNavigate={(href) => router.push(href)}
-          className={cn(isInstalledMobileCompanion ? 'mt-1.5' : 'mt-2 md:hidden')}
-        />
+        {/* On overview pages, show the complete module sections tablist. On focused sub-workspaces, tabs are cleanly in the switcher dropdown */}
+        {isOverview && (
+          <ModuleJumpSelect
+            options={tabs.map((tab) => ({ label: t(tab.label), href: tab.href }))}
+            currentHref={pathname || undefined}
+            label={`${t('Switch section')}: ${t(title)}`}
+            onNavigate={(href) => router.push(href)}
+            className={cn(isInstalledMobileCompanion ? 'mt-1.5' : 'mt-2 md:hidden')}
+          />
+        )}
 
-        {!isInstalledMobileCompanion ? <div
-          className="flex gap-0 overflow-x-auto ios-scroll mt-1 -mx-1 px-1"
-          role="tablist"
-          aria-label={`${t(title)} · ${t('Sections')}`}
-        >
-          {tabs.map((tab) => {
-            const isActive =
-              pathname != null &&
-              (pathname === tab.href ||
-                pathname.startsWith(`${tab.href}/`) ||
-                pathname.startsWith(`${tab.href}?`));
-            const Icon = tab.icon;
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                role="tab"
-                aria-selected={isActive}
-                className={cn(
-                  WORKSPACE.tab.base,
-                  'flex-shrink-0 whitespace-nowrap relative',
-                  isActive && WORKSPACE.tab.active,
-                )}
-                style={
-                  isActive
-                    ? { borderBottomColor: accentColor, color: 'var(--ws-text-primary)' }
-                    : undefined
-                }
-              >
-                {Icon ? <Icon className="w-3.5 h-3.5" aria-hidden /> : null}
-                {t(tab.label)}
-              </Link>
-            );
-          })}
-        </div> : null}
+        {isOverview && !isInstalledMobileCompanion ? (
+          <div
+            className="flex gap-0 overflow-x-auto ios-scroll mt-1 -mx-1 px-1"
+            role="tablist"
+            aria-label={`${t(title)} · ${t('Sections')}`}
+          >
+            {tabs.map((tab) => {
+              const isActive =
+                pathname != null &&
+                (pathname === tab.href ||
+                  pathname.startsWith(`${tab.href}/`) ||
+                  pathname.startsWith(`${tab.href}?`));
+              const Icon = tab.icon;
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={cn(
+                    WORKSPACE.tab.base,
+                    'flex-shrink-0 whitespace-nowrap relative',
+                    isActive && WORKSPACE.tab.active,
+                  )}
+                  style={
+                    isActive
+                      ? { borderBottomColor: accentColor, color: 'var(--ws-text-primary)' }
+                      : undefined
+                  }
+                >
+                  {Icon ? <Icon className="w-3.5 h-3.5" aria-hidden /> : null}
+                  {t(tab.label)}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
 
         {hubSteps?.length && overviewOpen && !isInstalledMobileCompanion ? (
           <div id="module-overview">

@@ -33,6 +33,7 @@ import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
 import { resolveOnboardingGate } from '@/lib/onboarding/resolveOnboardingGate';
+import { canAutoStartWalkthrough, markAutoStartEvaluated, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
@@ -267,7 +268,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         if (!user?.id || typeof window === 'undefined') return;
 
         let cancelled = false;
-        const tourStorageKey = `business_tour_completed_${user.id}`;
 
         const resolveGates = async () => {
             const gate = await resolveOnboardingGate(
@@ -288,8 +288,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return;
             }
 
-            if (!gate.tourCompleted && !gate.establishedWorkspace && route === '/dashboard') {
-                const timer = window.setTimeout(() => setShowProductTour(true), 2000);
+            // Only auto-start once per browser session for brand-new users who haven't dismissed or completed
+            if (route === '/dashboard' && canAutoStartWalkthrough(user.id, gate.establishedWorkspace)) {
+                markAutoStartEvaluated(user.id);
+                const timer = window.setTimeout(() => setShowProductTour(true), 1500);
                 return () => window.clearTimeout(timer);
             }
         };
@@ -311,9 +313,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             setShowOnboarding(true);
             return;
         }
-        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
-            window.setTimeout(() => setShowProductTour(true), 1500);
-        }
     };
 
     const handleOnboardingComplete = (nextPath?: string) => {
@@ -327,21 +326,28 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             setActiveTab(nextPath);
             return;
         }
-        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
-            window.setTimeout(() => setShowProductTour(true), 1500);
-        }
     };
 
     const markTourCompleted = React.useCallback(() => {
-        if (typeof window === 'undefined' || !user?.id) return;
-        localStorage.setItem(`business_tour_completed_${user.id}`, '1');
-        localStorage.setItem(`tour_completed_${user.id}`, '1');
+        if (user?.id) {
+            setWalkthroughState(user.id, 'completed');
+        }
         setShowProductTour(false);
     }, [user?.id]);
 
-    // Tour could not find anything to point at: close it WITHOUT marking it
-    // completed, so it still auto-starts on the dashboard home later.
-    const dismissUnavailableTour = React.useCallback(() => setShowProductTour(false), []);
+    const markTourDismissed = React.useCallback(() => {
+        if (user?.id) {
+            setWalkthroughState(user.id, 'dismissed');
+        }
+        setShowProductTour(false);
+    }, [user?.id]);
+
+    const dismissUnavailableTour = React.useCallback(() => {
+        if (user?.id) {
+            markAutoStartEvaluated(user.id);
+        }
+        setShowProductTour(false);
+    }, [user?.id]);
 
     // Every explicit "Platform tour" press remounts the tour (new key) so it
     // restarts from step 1 even if a previous run is mid-way or got stuck open.
@@ -352,7 +358,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             window.setTimeout(() => {
                 setTourRunId((id) => id + 1);
                 setShowProductTour(true);
-            }, 350);
+            }, 400);
             return;
         }
         setTourRunId((id) => id + 1);
@@ -1534,7 +1540,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             <ProductTour
                 key={tourRunId}
                 isOpen={showProductTour}
+                userId={user.id}
                 onComplete={markTourCompleted}
+                onDismiss={markTourDismissed}
                 onUnavailable={dismissUnavailableTour}
                 userRole="tenant_admin"
             />

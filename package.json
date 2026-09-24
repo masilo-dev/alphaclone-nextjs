@@ -57,7 +57,8 @@
     "test:oauth-multiclient": "node --import tsx --test tests/unit/mcp-oauth-multiclient-isolation.test.mjs tests/unit/mcp-oauth-token-encryption.test.mjs tests/unit/email-gateway-and-quota.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "test:media-gateway": "node --import tsx --test tests/unit/mcp-connector-upgrade.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "test:tool-registry": "node --import tsx --test tests/unit/mcp-tool-registry-static-load.test.mjs tests/unit/mcp-tool-exposure-gate.test.mjs tests/unit/mcp-production-hardening.test.mjs",
-    "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs"
+    "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs",
+    "verify:production": "npm run typecheck && npm test && npm run validate:prod-guards && npm run validate:env"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.0",

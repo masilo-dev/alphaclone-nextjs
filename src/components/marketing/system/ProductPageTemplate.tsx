@@ -41,8 +41,10 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
         <MarketingContainer className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
             <p className="mkt-label mb-5">{t(feature.name)}</p>
-            <h1>{t(feature.hero)}</h1>
-            <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--marketing-text-secondary)]">
+            <h1 className="font-marketing-heading text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl md:text-5xl lg:text-6xl">
+              {t(feature.hero)}
+            </h1>
+            <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--marketing-text-secondary)] font-normal">
               {t(feature.summary)}
             </p>
             <CtaPair className="mt-8 justify-center" />

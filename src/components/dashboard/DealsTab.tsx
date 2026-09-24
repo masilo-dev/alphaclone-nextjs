@@ -36,7 +36,8 @@ import {
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
 import { showDealStageNextSteps } from '@/lib/dealStageActions';
 import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '@/components/common/showActionNextSteps';
-import { CRMNav } from './crm/CRMNav';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { ContextualBulkBar } from '@/components/ui/workspace';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
@@ -1230,40 +1231,43 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="pipeline">
-      <div className="px-4 pt-3 shrink-0 space-y-2.5">
-        <CRMNav pathname={pathname} />
+      <div className="px-4 pt-3 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <CrmSyncToolbar />
-        <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
-        <UniversalModuleExecutionHeader
-          moduleName="Deals & Sales Pipeline"
-          recordTitle="Opportunity Progression & Revenue Forecasting"
-          nextActionState={{
-            currentState: 'Opportunity Pipeline',
-            owner: user.name || user.email || 'Sales Lead',
-            nextAction: 'Advance deal stages → Draft quotes & contracts → Close won',
-            deadline: '7-day stage stall threshold',
-            blocker: deals.length === 0 ? 'No active deals' : null,
-            expectedOutcome: 'Closed won revenue & converted contracts',
-            outcomeStatus: totalPipelineValue > 0 ? 'verified' : 'pending',
-            verifiedResult: `$${totalPipelineValue.toLocaleString()} active open pipeline across ${deals.length} deals`,
-            authorityLevel: 'automatic_logged',
-          }}
-          questions={{
-            whatCameIn: `${deals.length} active deals totaling $${totalPipelineValue.toLocaleString()} in open opportunity value`,
-            whatDoesItMean: 'Sales opportunities in active proposal, negotiation, or qualification stages',
-            whatShouldHappen: 'Progress forward stage-by-stage, complete quotes, and execute contracts',
-            whoOwnsIt: user.name || user.email || 'Sales Lead',
-            canAlphaCloneAct: 'automatic_logged',
-            whatActuallyHappened: `${deals.length} deals actively tracked across board columns`,
-            didItProduceExpectedOutcome: totalPipelineValue > 0 ? 'YES' : 'IN_PROGRESS',
-            whatHappensNext: 'Generate invoice upon closing deal or send proposal follow-up',
-          }}
-          onExecuteNextAction={() => setShowCreateModal(true)}
-        />
-        <ExecutionDecisionGuide
-          steps={DEALS_EXECUTION_STEPS}
-          onNavigate={(href) => router.push(href)}
-        />
+        <HelpDisclosure title="Deals & Sales Pipeline Execution Guide" label="Pipeline guide">
+          <div className="space-y-3 pt-2">
+            <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+            <UniversalModuleExecutionHeader
+              moduleName="Deals & Sales Pipeline"
+              recordTitle="Opportunity Progression & Revenue Forecasting"
+              nextActionState={{
+                currentState: 'Opportunity Pipeline',
+                owner: user.name || user.email || 'Sales Lead',
+                nextAction: 'Advance deal stages → Draft quotes & contracts → Close won',
+                deadline: '7-day stage stall threshold',
+                blocker: deals.length === 0 ? 'No active deals' : null,
+                expectedOutcome: 'Closed won revenue & converted contracts',
+                outcomeStatus: totalPipelineValue > 0 ? 'verified' : 'pending',
+                verifiedResult: `$${totalPipelineValue.toLocaleString()} active open pipeline across ${deals.length} deals`,
+                authorityLevel: 'automatic_logged',
+              }}
+              questions={{
+                whatCameIn: `${deals.length} active deals totaling $${totalPipelineValue.toLocaleString()} in open opportunity value`,
+                whatDoesItMean: 'Sales opportunities in active proposal, negotiation, or qualification stages',
+                whatShouldHappen: 'Progress forward stage-by-stage, complete quotes, and execute contracts',
+                whoOwnsIt: user.name || user.email || 'Sales Lead',
+                canAlphaCloneAct: 'automatic_logged',
+                whatActuallyHappened: `${deals.length} deals actively tracked across board columns`,
+                didItProduceExpectedOutcome: totalPipelineValue > 0 ? 'YES' : 'IN_PROGRESS',
+                whatHappensNext: 'Generate invoice upon closing deal or send proposal follow-up',
+              }}
+              onExecuteNextAction={() => setShowCreateModal(true)}
+            />
+            <ExecutionDecisionGuide
+              steps={DEALS_EXECUTION_STEPS}
+              onNavigate={(href) => router.push(href)}
+            />
+          </div>
+        </HelpDisclosure>
       </div>
       <ModulePageLayout
         toolbar={(
@@ -1282,41 +1286,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          {selectedDealIds.size > 0 && (
-            <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-              <button
-                type="button"
-                onClick={() => setSelectedDealIds(new Set())}
-                className="h-7 px-3 rounded-full type-ui font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
-              >
-                Clear
-              </button>
-              {selectedDealIds.size === 1 && (
-                <button
-                  type="button"
-                  onClick={openSingleSelectedDeal}
-                  className="h-7 px-3 rounded-full type-ui font-bold text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 transition-colors hover:text-[var(--brand-blue-200)]"
-                >
-                  Open deal
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={handleBulkEmailDeals}
-                className="h-7 px-3 rounded-full type-ui font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
-              >
-                Follow-up ({selectedDealIds.size})
-              </button>
-              <button
-                type="button"
-                disabled={bulkDeleting}
-                onClick={handleBulkDeleteDeals}
-                className="h-7 px-3 rounded-full type-ui font-bold text-rose-300 border border-rose-500/30 transition-colors hover:text-rose-200 disabled:opacity-50"
-              >
-                {bulkDeleting ? 'Deleting…' : `Delete (${selectedDealIds.size})`}
-              </button>
-            </div>
-          )}
           {/* Switcher pills */}
           <div className="flex bg-slate-900/60 p-1 rounded-full border border-white/5 shadow-inner">
             <button
@@ -1407,6 +1376,43 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
         ) : (
           <>
+            {selectedDealIds.size > 0 && (
+              <div className="p-3 bg-slate-950/60 border-b border-white/5">
+                <ContextualBulkBar
+                  selectedCount={selectedDealIds.size}
+                  itemLabel={{ singular: 'deal', plural: 'deals' }}
+                  onClearSelection={() => setSelectedDealIds(new Set())}
+                  actions={
+                    <>
+                      {selectedDealIds.size === 1 && (
+                        <button
+                          type="button"
+                          onClick={openSingleSelectedDeal}
+                          className="h-7 px-2.5 rounded-lg text-xs font-semibold text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 hover:bg-[var(--brand-blue-500)]/10"
+                        >
+                          Open deal
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleBulkEmailDeals}
+                        className="h-7 px-2.5 rounded-lg text-xs font-semibold text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/10 flex items-center gap-1"
+                      >
+                        Follow-up
+                      </button>
+                      <button
+                        type="button"
+                        disabled={bulkDeleting}
+                        onClick={handleBulkDeleteDeals}
+                        className="h-7 px-2.5 rounded-lg text-xs font-semibold text-rose-300 border border-rose-500/30 hover:bg-rose-500/10 flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {bulkDeleting ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </>
+                  }
+                />
+              </div>
+            )}
             {viewMode === 'board' && renderBoard()}
             {viewMode === 'list' && renderList()}
             {viewMode === 'mobile-stage' && renderMobileStageList()}

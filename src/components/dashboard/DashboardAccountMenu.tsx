@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Globe, LogOut, Settings, Smartphone } from 'lucide-react';
+import { ChevronDown, Globe, LogOut, Settings, Smartphone, Sparkles } from 'lucide-react';
 import { User } from '@/types';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { usePWA } from '@/contexts/PWAContext';
 import { useIsMobile } from '@/hooks/useTouchGestures';
 import { Avatar } from '@/components/ui/Avatar';
+import { requestPlatformTour } from '@/components/dashboard/PlatformExecutionWelcome';
 
 interface DashboardAccountMenuProps {
   user: User;
@@ -101,6 +102,19 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             {t('Mobile app')}
           </button>
         ) : null}
+
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            setOpen(false);
+            requestPlatformTour();
+          }}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition-colors"
+        >
+          <Sparkles className="w-4 h-4 text-teal-500 dark:text-teal-400" />
+          {t('Platform tour')}
+        </button>
 
         <button
           type="button"

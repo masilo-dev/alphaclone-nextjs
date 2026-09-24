@@ -21,6 +21,8 @@ type LeadDirectoryRow = {
 export async function GET(req: NextRequest) {
   try {
     const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
+    const rawLimit = Number(req.nextUrl.searchParams.get('limit')) || 100;
+    const limit = Math.min(Math.max(rawLimit, 10), 250);
     const { admin } = await requireTenantAccess(tenantId, req);
     const since = new Date(Date.now() - 365 * 86400_000).toISOString();
 
@@ -31,33 +33,35 @@ export async function GET(req: NextRequest) {
         .eq('tenant_id', tenantId)
         .gte('occurred_at', since)
         .order('occurred_at', { ascending: false })
-        .limit(3000),
+        .limit(limit),
       admin
         .from('lead_outreach_log')
         .select('id,tenant_id,user_id,lead_id,lead_name,lead_email,subject,body_html,status,provider,sent_at,created_at,updated_at')
         .eq('tenant_id', tenantId)
         .gte('created_at', since)
         .order('created_at', { ascending: false })
-        .limit(3000),
+        .limit(limit),
       admin
         .from('email_webhook_events')
         .select('id,tenant_id,provider,event_type,recipient_email,provider_event_id,payload,processed_at')
         .eq('tenant_id', tenantId)
         .gte('processed_at', since)
         .order('processed_at', { ascending: false })
-        .limit(3000),
+        .limit(limit),
       admin
         .from('contacts')
         .select('id,full_name,first_name,last_name,email,created_at')
         .eq('tenant_id', tenantId)
         .not('email', 'is', null)
-        .limit(5000),
+        .order('created_at', { ascending: false })
+        .limit(Math.min(limit * 2, 300)),
       admin
         .from('leads')
         .select('id,business_name,contact_name,email,created_at')
         .eq('tenant_id', tenantId)
         .not('email', 'is', null)
-        .limit(5000),
+        .order('created_at', { ascending: false })
+        .limit(Math.min(limit * 2, 300)),
     ]);
 
     const errors = [eventsResult.error, logsResult.error, webhookResult.error, contactsResult.error, leadsResult.error]

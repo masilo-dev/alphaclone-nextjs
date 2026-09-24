@@ -27,13 +27,18 @@ export function hasSupabaseServiceRole(): boolean {
     return Boolean(getServiceRoleKey());
 }
 
-function createServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): SupabaseClient {
-    return createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        },
-    });
+let cachedServiceRoleClient: SupabaseClient | null = null;
+
+function getOrCreateServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): SupabaseClient {
+    if (!cachedServiceRoleClient) {
+        cachedServiceRoleClient = createClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            },
+        });
+    }
+    return cachedServiceRoleClient;
 }
 
 function createUserScopedClient(supabaseUrl: string, accessToken: string): SupabaseClient {
@@ -75,7 +80,15 @@ export function createSupabaseAdminClient(accessToken?: string): SupabaseClient 
     const serviceRoleKey = getServiceRoleKey();
 
     if (supabaseUrl && serviceRoleKey) {
-        return createServiceRoleClient(supabaseUrl, serviceRoleKey);
+        if (!accessToken) {
+            return getOrCreateServiceRoleClient(supabaseUrl, serviceRoleKey);
+        }
+        return createClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            },
+        });
     }
 
     if (supabaseUrl && accessToken) {
@@ -93,7 +106,7 @@ export async function resolveSupabaseAdminClient(): Promise<SupabaseClient> {
     const serviceRoleKey = getServiceRoleKey();
 
     if (supabaseUrl && serviceRoleKey) {
-        return createServiceRoleClient(supabaseUrl, serviceRoleKey);
+        return getOrCreateServiceRoleClient(supabaseUrl, serviceRoleKey);
     }
 
     if (supabaseUrl) {

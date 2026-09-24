@@ -59,6 +59,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bodyCache = useRef<Map<string, string>>(new Map());
+  const folderMessagesCache = useRef<Map<string, { data: UnifiedInboxMessage[]; timestamp: number }>>(new Map());
 
   const activeFolderId = useMemo(
     () => resolveFolderId(folders, folder),
@@ -91,8 +92,17 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   );
 
   const refresh = useCallback(
-    async (retried = false) => {
+    async (retried = false, forceRefresh = false) => {
       if (!enabled) return;
+
+      const cacheKey = `${tenantId || 'none'}:${folder}:${limit}`;
+      const cached = folderMessagesCache.current.get(cacheKey);
+      if (!forceRefresh && !retried && cached && Date.now() - cached.timestamp < 30_000) {
+        setEmails(cached.data);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -127,7 +137,9 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
         }
 
         const rows = Array.isArray(msgData) ? msgData : [];
-        setEmails(rows.map((row) => mapZohoMessage(row as Record<string, unknown>, folderId)));
+        const mapped = rows.map((row) => mapZohoMessage(row as Record<string, unknown>, folderId));
+        folderMessagesCache.current.set(cacheKey, { data: mapped, timestamp: Date.now() });
+        setEmails(mapped);
       } catch (refreshError) {
         const raw =
           refreshError instanceof Error ? refreshError.message : 'Failed to load Zoho mail';

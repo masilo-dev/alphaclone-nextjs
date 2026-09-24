@@ -224,6 +224,21 @@ function appendLeadStageMetadata(
     return nextMeta;
 }
 
+interface LeadCacheEntry {
+    leads: Lead[];
+    timestamp: number;
+}
+const LEADS_CACHE_TTL_MS = 30_000;
+const leadsCache = new Map<string, LeadCacheEntry>();
+
+export function invalidateLeadsCache(tenantId?: string) {
+    if (!tenantId) {
+        leadsCache.clear();
+        return;
+    }
+    leadsCache.delete(tenantId);
+}
+
 export const leadService = {
     /**
      * Get tenant ID with better error handling
@@ -268,9 +283,15 @@ export const leadService = {
     /**
      * Get leads for the current user
      */
-    async getLeads(): Promise<{ leads: Lead[]; error: string | null }> {
+    async getLeads(forceRefresh = false): Promise<{ leads: Lead[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+            if (!forceRefresh) {
+                const cached = leadsCache.get(tenantId);
+                if (cached && Date.now() - cached.timestamp < LEADS_CACHE_TTL_MS) {
+                    return { leads: cached.leads, error: null };
+                }
+            }
 
             const { data, error } = await supabase
                 .from('leads')
@@ -284,6 +305,7 @@ export const leadService = {
                 .map(normalizeLeadRecord)
                 .filter((lead: Lead) => !isTerminalLeadStage(lead.stage));
 
+            leadsCache.set(tenantId, { leads, timestamp: Date.now() });
             return { leads, error: null };
         } catch (err) {
             console.error('Error fetching leads:', err);
@@ -350,6 +372,7 @@ export const leadService = {
 
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
             void requestCrmBridgeSync(tenantId, 'lead', newLead.id);
+            invalidateLeadsCache(tenantId);
 
             return { lead: newLead, error: null };
         } catch (err) {
@@ -545,6 +568,7 @@ export const leadService = {
         }
 
         if (!error) {
+            invalidateLeadsCache(tenantId);
             void requestCrmBridgeSync(tenantId, 'lead', id);
         }
 
@@ -583,6 +607,7 @@ export const leadService = {
 
         const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
         if (!error && data && (data as { ok?: boolean }).ok) {
+            invalidateLeadsCache(tenantId);
             return { error: null };
         }
 
@@ -592,6 +617,7 @@ export const leadService = {
                 .delete()
                 .eq('id', id)
                 .eq('tenant_id', tenantId);
+            if (!directError) invalidateLeadsCache(tenantId);
             return { error: directError ? directError.message : error.message };
         }
 
@@ -602,15 +628,18 @@ export const leadService = {
                 .delete()
                 .eq('id', id)
                 .eq('tenant_id', tenantId);
+            if (!directError) invalidateLeadsCache(tenantId);
             return { error: directError ? directError.message : rpcError };
         }
 
+        invalidateLeadsCache(tenantId);
         return { error: null };
     },
 
     async bulkDeleteLeads(ids: string[]): Promise<{ error: string | null; count: number }> {
         if (!ids.length) return { error: null, count: 0 };
         const tenantId = this.getTenantId();
+        invalidateLeadsCache(tenantId);
         const uniqueIds = [...new Set(ids)];
         try {
             await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('lead', id)));

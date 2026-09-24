@@ -44,6 +44,8 @@ import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecision
 import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { ProjectWorkspaceDrawer } from '@/components/dashboard/projects/ProjectWorkspaceDrawer';
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
+import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { CardSkeleton } from '@/components/ui/workspace';
 import { isFinishedProject } from '@/lib/projects/projectEnums';
 import CreateInvoiceModal from '../CreateInvoiceModal';
 
@@ -268,9 +270,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     if (loading) {
         return (
             <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
-                <div className="flex flex-1 flex-col items-center justify-center gap-4 min-h-[320px]">
-                    <div className="w-12 h-12 border-4 border-[var(--brand-blue-500)]/20 border-t-[var(--brand-blue-500)] rounded-full animate-spin" />
-                    <div className="text-slate-500 type-ui animate-pulse">Loading projects...</div>
+                <PlatformExecutionWelcome userId={user.id} surface="projects" />
+                <div className="pt-2">
+                    <CardSkeleton count={6} />
                 </div>
             </div>
         );
@@ -278,13 +280,19 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     return (
         <div className="h-full min-h-0 flex flex-col overflow-hidden min-w-0" data-tour="projects-center">
-            <div className="shrink-0 space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:px-8 md:pt-8 md:pb-4">
+            <div className="shrink-0 space-y-3 sm:space-y-4 px-3 py-4 sm:px-5 sm:py-5 md:px-8 md:pt-6 md:pb-3">
             <PlatformExecutionWelcome userId={user.id} surface="projects" />
-            <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
-            <ExecutionDecisionGuide
-                steps={PROJECT_MANAGER_EXECUTION_STEPS}
-                onNavigate={(href) => router.push(href)}
-            />
+            <div className="flex justify-end">
+              <HelpDisclosure title="Projects Execution Guide" label="Projects guide">
+                <div className="space-y-3 pt-2">
+                  <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+                  <ExecutionDecisionGuide
+                    steps={PROJECT_MANAGER_EXECUTION_STEPS}
+                    onNavigate={(href) => router.push(href)}
+                  />
+                </div>
+              </HelpDisclosure>
+            </div>
 
             {/* Project created success CTA */}
             <AnimatePresence>

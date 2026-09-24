@@ -65,11 +65,24 @@ function statsUrl(endpoint: string, tenantId: string, period?: string): string {
   return `${endpoint}${sep}tenantId=${encodeURIComponent(tenantId)}${period ? `&period=${encodeURIComponent(period)}` : ''}`;
 }
 
-/** Warm sessionStorage cache for overview + common hub stats. */
-export function prefetchDashboardStats(tenantId: string, endpoints: string[]) {
+const CRITICAL_PREFETCH_ENDPOINTS = [
+  '/api/dashboard/overview',
+  '/api/crm/stats',
+];
+
+const SECONDARY_PREFETCH_ENDPOINTS = [
+  '/api/invoices/stats',
+  '/api/projects/stats',
+  '/api/leads/stats',
+  '/api/deals/stats',
+];
+
+/** Warm sessionStorage cache for overview + primary hub stats without choking network */
+export function prefetchDashboardStats(tenantId: string, endpoints: string[] = CRITICAL_PREFETCH_ENDPOINTS) {
   if (typeof window === 'undefined' || !tenantId) return;
-  for (const endpoint of endpoints) {
-    if (readClientCache(endpoint, tenantId)) continue;
+
+  const fetchEndpoint = (endpoint: string) => {
+    if (readClientCache(endpoint, tenantId)) return;
     void fetch(statsUrl(endpoint, tenantId), { credentials: 'include' })
       .then(async (res) => {
         if (!res.ok) return;
@@ -78,30 +91,33 @@ export function prefetchDashboardStats(tenantId: string, endpoints: string[]) {
         writeClientCache(endpoint, tenantId, normalizeHubStats(raw));
       })
       .catch(() => undefined);
+  };
+
+  // 1. Fetch critical endpoints immediately
+  for (const endpoint of endpoints) {
+    fetchEndpoint(endpoint);
+  }
+
+  // 2. Fetch secondary endpoints only when idle, staggered by 300ms
+  const scheduleSecondary = () => {
+    SECONDARY_PREFETCH_ENDPOINTS.forEach((endpoint, index) => {
+      window.setTimeout(() => {
+        fetchEndpoint(endpoint);
+      }, (index + 1) * 300);
+    });
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(scheduleSecondary, { timeout: 4000 });
+  } else {
+    window.setTimeout(scheduleSecondary, 800);
   }
 }
-
-const PREFETCH_ENDPOINTS = [
-  '/api/dashboard/overview',
-  '/api/crm/stats',
-  '/api/outreach/stats',
-  '/api/invoices/stats',
-  '/api/contracts/stats',
-  '/api/projects/stats',
-  '/api/social/stats',
-  '/api/deals/stats',
-  '/api/tasks/stats',
-  '/api/quotes/stats',
-  '/api/leads/stats',
-  '/api/calendar/stats',
-  '/api/accounting/stats',
-  '/api/campaigns/stats',
-];
 
 export function usePrefetchDashboardStats(tenantId: string | undefined) {
   useEffect(() => {
     if (!tenantId) return;
-    prefetchDashboardStats(tenantId, PREFETCH_ENDPOINTS);
+    prefetchDashboardStats(tenantId);
   }, [tenantId]);
 }
 

@@ -402,7 +402,7 @@ export const microsoftGraphService = {
             ? 'junkemail'
             : 'inbox';
     const data = await graphRequest<{ value: any[] }>(
-      `/me/mailFolders/${folderPath}/messages?$top=${limit}&$orderby=receivedDateTime DESC`
+      `/me/mailFolders/${folderPath}/messages?$top=${limit}&$orderby=receivedDateTime DESC&$select=id,conversationId,subject,from,toRecipients,bodyPreview,receivedDateTime,isRead,hasAttachments,webLink`
     );
     return data.value.map(mapEmail);
   },
