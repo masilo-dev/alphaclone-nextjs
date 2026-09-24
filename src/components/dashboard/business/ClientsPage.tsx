@@ -1662,10 +1662,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         icon={Briefcase}
                                                         title="No projects linked to this client"
                                                         description="Create a project to track milestones, deliverables, and budgets for this client."
-                                                        action={{
-                                                            label: "Go to Projects",
-                                                            onClick: () => router.push('/dashboard/projects')
-                                                        }}
+                                                        actionLabel="Go to Projects"
+                                                        onAction={() => router.push('/dashboard/projects')}
                                                         className="py-10"
                                                     />
                                                 ) : (
@@ -1728,10 +1726,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         icon={FileCheck}
                                                         title="No contracts found"
                                                         description="Draft proposals and binding agreements for this client."
-                                                        action={{
-                                                            label: "Go to Contracts",
-                                                            onClick: () => router.push('/dashboard/business?tab=contracts')
-                                                        }}
+                                                        actionLabel="Go to Contracts"
+                                                        onAction={() => router.push('/dashboard/business?tab=contracts')}
                                                         className="py-10"
                                                     />
                                                 ) : (
