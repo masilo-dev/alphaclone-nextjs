@@ -72,21 +72,26 @@ export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffec
 // --- Badge ---
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'success' | 'warning' | 'neutral' | 'error' | 'blue';
+  variant?: 'success' | 'warning' | 'neutral' | 'error' | 'blue' | 'default' | 'secondary' | 'outline';
   className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
-  const variants = {
+  const variants: Record<string, string> = {
     success: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]",
     warning: "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
     neutral: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
     error: "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_28%,transparent)]",
     blue: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
+    default: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
+    secondary: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
+    outline: "bg-transparent text-[var(--text-secondary)] border-[var(--border-default)]",
   };
 
+  const resolvedClass = variants[variant] || variants.neutral;
+
   return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full type-ui font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full type-ui font-medium border whitespace-nowrap ${resolvedClass} ${className}`}>
       {children}
     </span>
   );

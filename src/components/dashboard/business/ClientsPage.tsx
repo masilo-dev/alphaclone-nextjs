@@ -1673,7 +1673,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <div className="flex items-center gap-2">
                                                                     <Briefcase className="w-4 h-4 text-[var(--brand-blue-400)]" />
                                                                     <h4 className="type-caption font-bold text-slate-200">{proj.name}</h4>
-                                                                    <Badge variant={proj.status === 'completed' ? 'success' : proj.status === 'in_progress' ? 'default' : 'secondary'}>
+                                                                    <Badge variant={proj.status === 'completed' ? 'success' : proj.status === 'in_progress' ? 'blue' : 'neutral'}>
                                                                         {proj.status?.replace(/_/g, ' ') || 'active'}
                                                                     </Badge>
                                                                 </div>
@@ -1737,7 +1737,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <div className="flex items-center gap-2">
                                                                     <FileCheck className="w-4 h-4 text-emerald-400" />
                                                                     <h4 className="type-caption font-bold text-slate-200">{contract.title}</h4>
-                                                                    <Badge variant={contract.status === 'signed' ? 'success' : contract.status === 'pending' ? 'warning' : 'secondary'}>
+                                                                    <Badge variant={contract.status === 'signed' ? 'success' : contract.status === 'pending' ? 'warning' : 'neutral'}>
                                                                         {contract.status || 'draft'}
                                                                     </Badge>
                                                                 </div>
