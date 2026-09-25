@@ -293,15 +293,26 @@ export const leadService = {
                 }
             }
 
-            const { data, error } = await supabase
-                .from('leads')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false });
+            // Supabase/PostgREST commonly caps a single response. Page deterministically so
+            // large CRM workspaces never silently stop at the first 1,000 records.
+            const rows: any[] = [];
+            const batchSize = 1000;
+            for (let from = 0; ; from += batchSize) {
+                const { data, error } = await supabase
+                    .from('leads')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .order('created_at', { ascending: false })
+                    .order('id', { ascending: false })
+                    .range(from, from + batchSize - 1);
 
-            if (error) throw error;
+                if (error) throw error;
+                const batch = data || [];
+                rows.push(...batch);
+                if (batch.length < batchSize) break;
+            }
 
-            const leads: Lead[] = (data || [])
+            const leads: Lead[] = rows
                 .map(normalizeLeadRecord)
                 .filter((lead: Lead) => !isTerminalLeadStage(lead.stage));
 
