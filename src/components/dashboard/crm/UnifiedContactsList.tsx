@@ -26,7 +26,7 @@ export default function UnifiedContactsList({
   const load = useCallback(async () => {
     setLoading(true);
     const { contacts: rows, error } = await contactService.getUnifiedContactsList({
-      limit: 200,
+      limit: 10000,
       search: search.trim() || undefined,
     });
     if (error) toast.error(error);
