@@ -6,49 +6,49 @@
       {
         "actionName": "Navigate to Dashboard",
         "success": true,
-        "clickTime": 1185,
-        "responseTime": 1187,
-        "totalTime": 1489,
+        "clickTime": 989,
+        "responseTime": 993,
+        "totalTime": 1295,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to CRM Overview",
         "success": true,
-        "clickTime": 2891,
-        "responseTime": 2892,
-        "totalTime": 3202,
+        "clickTime": 3624,
+        "responseTime": 3625,
+        "totalTime": 3929,
         "category": "POOR"
       },
       {
         "actionName": "Open Contacts / Clients Tab",
         "success": true,
-        "clickTime": 832,
-        "responseTime": 836,
-        "totalTime": 1137,
+        "clickTime": 765,
+        "responseTime": 766,
+        "totalTime": 1067,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Search Input Interaction",
         "success": true,
-        "clickTime": 13,
-        "responseTime": 13,
-        "totalTime": 314,
+        "clickTime": 6,
+        "responseTime": 7,
+        "totalTime": 307,
         "category": "EXCELLENT"
       },
       {
         "actionName": "Open Record Detail / Row Interaction",
         "success": true,
-        "clickTime": 5,
-        "responseTime": 6,
+        "clickTime": 4,
+        "responseTime": 5,
         "totalTime": 306,
         "category": "EXCELLENT"
       },
       {
         "actionName": "Back Navigation to CRM",
         "success": true,
-        "clickTime": 409,
-        "responseTime": 410,
-        "totalTime": 710,
+        "clickTime": 405,
+        "responseTime": 405,
+        "totalTime": 706,
         "category": "GOOD"
       }
     ]
@@ -60,34 +60,34 @@
       {
         "actionName": "Navigate to Leads Board",
         "success": true,
-        "clickTime": 810,
-        "responseTime": 812,
-        "totalTime": 1115,
+        "clickTime": 1066,
+        "responseTime": 1066,
+        "totalTime": 1367,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Switch to Lead Finder",
         "success": true,
-        "clickTime": 1035,
-        "responseTime": 1036,
-        "totalTime": 1338,
+        "clickTime": 1137,
+        "responseTime": 1138,
+        "totalTime": 1439,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to Deals Pipeline",
         "success": true,
-        "clickTime": 1002,
-        "responseTime": 1003,
-        "totalTime": 1304,
+        "clickTime": 1194,
+        "responseTime": 1195,
+        "totalTime": 1497,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Interact with Deals View Controls",
         "success": true,
-        "clickTime": 30,
-        "responseTime": 31,
-        "totalTime": 331,
-        "category": "EXCELLENT"
+        "clickTime": 231,
+        "responseTime": 233,
+        "totalTime": 539,
+        "category": "GOOD"
       }
     ]
   },
@@ -98,33 +98,33 @@
       {
         "actionName": "Navigate to Accounting",
         "success": true,
-        "clickTime": 707,
-        "responseTime": 708,
-        "totalTime": 1008,
+        "clickTime": 972,
+        "responseTime": 973,
+        "totalTime": 1274,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Open Invoice Manager",
         "success": true,
-        "clickTime": 1211,
-        "responseTime": 1211,
-        "totalTime": 1512,
+        "clickTime": 1107,
+        "responseTime": 1108,
+        "totalTime": 1408,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to Quotes & Proposals",
         "success": true,
-        "clickTime": 1002,
-        "responseTime": 1002,
-        "totalTime": 1304,
+        "clickTime": 1018,
+        "responseTime": 1018,
+        "totalTime": 1322,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Open Cash Flow Forecast",
         "success": true,
-        "clickTime": 1116,
-        "responseTime": 1116,
-        "totalTime": 1417,
+        "clickTime": 1299,
+        "responseTime": 1300,
+        "totalTime": 1600,
         "category": "ACCEPTABLE"
       }
     ]
@@ -136,34 +136,34 @@
       {
         "actionName": "Navigate to Social Overview",
         "success": true,
-        "clickTime": 870,
-        "responseTime": 874,
-        "totalTime": 1175,
+        "clickTime": 982,
+        "responseTime": 983,
+        "totalTime": 1283,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to LinkedIn Hub",
         "success": true,
-        "clickTime": 1036,
-        "responseTime": 1037,
-        "totalTime": 1337,
+        "clickTime": 1251,
+        "responseTime": 1251,
+        "totalTime": 1552,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to Facebook Hub",
         "success": true,
-        "clickTime": 1061,
-        "responseTime": 1062,
-        "totalTime": 1363,
+        "clickTime": 1084,
+        "responseTime": 1085,
+        "totalTime": 1385,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Open Compose & Safe Input Test",
         "success": true,
-        "clickTime": 594,
-        "responseTime": 595,
-        "totalTime": 896,
-        "category": "GOOD"
+        "clickTime": 802,
+        "responseTime": 803,
+        "totalTime": 1105,
+        "category": "ACCEPTABLE"
       }
     ]
   },
@@ -174,25 +174,25 @@
       {
         "actionName": "Navigate to Projects",
         "success": true,
-        "clickTime": 801,
-        "responseTime": 802,
-        "totalTime": 1105,
+        "clickTime": 716,
+        "responseTime": 716,
+        "totalTime": 1017,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Navigate to Tasks Board",
         "success": true,
-        "clickTime": 1230,
-        "responseTime": 1231,
-        "totalTime": 1539,
+        "clickTime": 1349,
+        "responseTime": 1350,
+        "totalTime": 1651,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Interact with Task Filter/Tabs",
         "success": true,
-        "clickTime": 123,
-        "responseTime": 123,
-        "totalTime": 425,
+        "clickTime": 24,
+        "responseTime": 25,
+        "totalTime": 326,
         "category": "EXCELLENT"
       }
     ]
@@ -204,17 +204,17 @@
       {
         "actionName": "Navigate to Contracts",
         "success": true,
-        "clickTime": 862,
-        "responseTime": 862,
-        "totalTime": 1165,
+        "clickTime": 873,
+        "responseTime": 874,
+        "totalTime": 1175,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Open Contract Manager",
         "success": true,
-        "clickTime": 1092,
-        "responseTime": 1093,
-        "totalTime": 1395,
+        "clickTime": 1007,
+        "responseTime": 1008,
+        "totalTime": 1309,
         "category": "ACCEPTABLE"
       }
     ]
@@ -226,25 +226,25 @@
       {
         "actionName": "Navigate to Settings",
         "success": true,
-        "clickTime": 1112,
-        "responseTime": 1112,
-        "totalTime": 1414,
+        "clickTime": 812,
+        "responseTime": 813,
+        "totalTime": 1114,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Open Integration Marketplace",
         "success": true,
-        "clickTime": 1237,
-        "responseTime": 1239,
-        "totalTime": 1539,
+        "clickTime": 1108,
+        "responseTime": 1109,
+        "totalTime": 1410,
         "category": "ACCEPTABLE"
       },
       {
         "actionName": "Search Integration in Marketplace",
         "success": true,
-        "clickTime": 78,
-        "responseTime": 80,
-        "totalTime": 380,
+        "clickTime": 41,
+        "responseTime": 42,
+        "totalTime": 343,
         "category": "EXCELLENT"
       }
     ]

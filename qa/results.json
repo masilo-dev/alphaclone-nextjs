@@ -1592,49 +1592,49 @@
         {
           "actionName": "Navigate to Dashboard",
           "success": true,
-          "clickTime": 1185,
-          "responseTime": 1187,
-          "totalTime": 1489,
+          "clickTime": 989,
+          "responseTime": 993,
+          "totalTime": 1295,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to CRM Overview",
           "success": true,
-          "clickTime": 2891,
-          "responseTime": 2892,
-          "totalTime": 3202,
+          "clickTime": 3624,
+          "responseTime": 3625,
+          "totalTime": 3929,
           "category": "POOR"
         },
         {
           "actionName": "Open Contacts / Clients Tab",
           "success": true,
-          "clickTime": 832,
-          "responseTime": 836,
-          "totalTime": 1137,
+          "clickTime": 765,
+          "responseTime": 766,
+          "totalTime": 1067,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Search Input Interaction",
           "success": true,
-          "clickTime": 13,
-          "responseTime": 13,
-          "totalTime": 314,
+          "clickTime": 6,
+          "responseTime": 7,
+          "totalTime": 307,
           "category": "EXCELLENT"
         },
         {
           "actionName": "Open Record Detail / Row Interaction",
           "success": true,
-          "clickTime": 5,
-          "responseTime": 6,
+          "clickTime": 4,
+          "responseTime": 5,
           "totalTime": 306,
           "category": "EXCELLENT"
         },
         {
           "actionName": "Back Navigation to CRM",
           "success": true,
-          "clickTime": 409,
-          "responseTime": 410,
-          "totalTime": 710,
+          "clickTime": 405,
+          "responseTime": 405,
+          "totalTime": 706,
           "category": "GOOD"
         }
       ]
@@ -1646,34 +1646,34 @@
         {
           "actionName": "Navigate to Leads Board",
           "success": true,
-          "clickTime": 810,
-          "responseTime": 812,
-          "totalTime": 1115,
+          "clickTime": 1066,
+          "responseTime": 1066,
+          "totalTime": 1367,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Switch to Lead Finder",
           "success": true,
-          "clickTime": 1035,
-          "responseTime": 1036,
-          "totalTime": 1338,
+          "clickTime": 1137,
+          "responseTime": 1138,
+          "totalTime": 1439,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to Deals Pipeline",
           "success": true,
-          "clickTime": 1002,
-          "responseTime": 1003,
-          "totalTime": 1304,
+          "clickTime": 1194,
+          "responseTime": 1195,
+          "totalTime": 1497,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Interact with Deals View Controls",
           "success": true,
-          "clickTime": 30,
-          "responseTime": 31,
-          "totalTime": 331,
-          "category": "EXCELLENT"
+          "clickTime": 231,
+          "responseTime": 233,
+          "totalTime": 539,
+          "category": "GOOD"
         }
       ]
     },
@@ -1684,33 +1684,33 @@
         {
           "actionName": "Navigate to Accounting",
           "success": true,
-          "clickTime": 707,
-          "responseTime": 708,
-          "totalTime": 1008,
+          "clickTime": 972,
+          "responseTime": 973,
+          "totalTime": 1274,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Open Invoice Manager",
           "success": true,
-          "clickTime": 1211,
-          "responseTime": 1211,
-          "totalTime": 1512,
+          "clickTime": 1107,
+          "responseTime": 1108,
+          "totalTime": 1408,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to Quotes & Proposals",
           "success": true,
-          "clickTime": 1002,
-          "responseTime": 1002,
-          "totalTime": 1304,
+          "clickTime": 1018,
+          "responseTime": 1018,
+          "totalTime": 1322,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Open Cash Flow Forecast",
           "success": true,
-          "clickTime": 1116,
-          "responseTime": 1116,
-          "totalTime": 1417,
+          "clickTime": 1299,
+          "responseTime": 1300,
+          "totalTime": 1600,
           "category": "ACCEPTABLE"
         }
       ]
@@ -1722,34 +1722,34 @@
         {
           "actionName": "Navigate to Social Overview",
           "success": true,
-          "clickTime": 870,
-          "responseTime": 874,
-          "totalTime": 1175,
+          "clickTime": 982,
+          "responseTime": 983,
+          "totalTime": 1283,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to LinkedIn Hub",
           "success": true,
-          "clickTime": 1036,
-          "responseTime": 1037,
-          "totalTime": 1337,
+          "clickTime": 1251,
+          "responseTime": 1251,
+          "totalTime": 1552,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to Facebook Hub",
           "success": true,
-          "clickTime": 1061,
-          "responseTime": 1062,
-          "totalTime": 1363,
+          "clickTime": 1084,
+          "responseTime": 1085,
+          "totalTime": 1385,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Open Compose & Safe Input Test",
           "success": true,
-          "clickTime": 594,
-          "responseTime": 595,
-          "totalTime": 896,
-          "category": "GOOD"
+          "clickTime": 802,
+          "responseTime": 803,
+          "totalTime": 1105,
+          "category": "ACCEPTABLE"
         }
       ]
     },
@@ -1760,25 +1760,25 @@
         {
           "actionName": "Navigate to Projects",
           "success": true,
-          "clickTime": 801,
-          "responseTime": 802,
-          "totalTime": 1105,
+          "clickTime": 716,
+          "responseTime": 716,
+          "totalTime": 1017,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Navigate to Tasks Board",
           "success": true,
-          "clickTime": 1230,
-          "responseTime": 1231,
-          "totalTime": 1539,
+          "clickTime": 1349,
+          "responseTime": 1350,
+          "totalTime": 1651,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Interact with Task Filter/Tabs",
           "success": true,
-          "clickTime": 123,
-          "responseTime": 123,
-          "totalTime": 425,
+          "clickTime": 24,
+          "responseTime": 25,
+          "totalTime": 326,
           "category": "EXCELLENT"
         }
       ]
@@ -1790,17 +1790,17 @@
         {
           "actionName": "Navigate to Contracts",
           "success": true,
-          "clickTime": 862,
-          "responseTime": 862,
-          "totalTime": 1165,
+          "clickTime": 873,
+          "responseTime": 874,
+          "totalTime": 1175,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Open Contract Manager",
           "success": true,
-          "clickTime": 1092,
-          "responseTime": 1093,
-          "totalTime": 1395,
+          "clickTime": 1007,
+          "responseTime": 1008,
+          "totalTime": 1309,
           "category": "ACCEPTABLE"
         }
       ]
@@ -1812,25 +1812,25 @@
         {
           "actionName": "Navigate to Settings",
           "success": true,
-          "clickTime": 1112,
-          "responseTime": 1112,
-          "totalTime": 1414,
+          "clickTime": 812,
+          "responseTime": 813,
+          "totalTime": 1114,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Open Integration Marketplace",
           "success": true,
-          "clickTime": 1237,
-          "responseTime": 1239,
-          "totalTime": 1539,
+          "clickTime": 1108,
+          "responseTime": 1109,
+          "totalTime": 1410,
           "category": "ACCEPTABLE"
         },
         {
           "actionName": "Search Integration in Marketplace",
           "success": true,
-          "clickTime": 78,
-          "responseTime": 80,
-          "totalTime": 380,
+          "clickTime": 41,
+          "responseTime": 42,
+          "totalTime": 343,
           "category": "EXCELLENT"
         }
       ]
@@ -1841,40 +1841,41 @@
       {
         "actionName": "Super Admin Command Center (/dashboard)",
         "success": true,
-        "clickTime": 4196,
-        "responseTime": 4203,
-        "totalTime": 4504,
+        "clickTime": 4098,
+        "responseTime": 4101,
+        "totalTime": 4401,
         "category": "POOR"
       },
       {
         "actionName": "Command Center Refresh Action",
         "success": true,
-        "clickTime": 4062,
-        "responseTime": 4064,
-        "totalTime": 4366,
+        "clickTime": 3141,
+        "responseTime": 3142,
+        "totalTime": 3443,
         "category": "POOR"
       },
       {
         "actionName": "Super Admin Tenants Hub (/dashboard/admin/tenants)",
-        "success": false,
-        "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('a[href*=\"tenants\"], button:has-text(\"Tenants\")').first()\n    - locator resolved to <button class=\"ac-workspace-nav-item  gap-2.5 group relative touch-manipulation\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    55 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-        "totalTime": 30112,
-        "category": "CRITICAL"
+        "success": true,
+        "clickTime": 2369,
+        "responseTime": 2370,
+        "totalTime": 2671,
+        "category": "WARNING"
       },
       {
         "actionName": "Super Admin Ops & Logs (/dashboard/admin/operations)",
         "success": true,
-        "clickTime": 3538,
-        "responseTime": 3539,
-        "totalTime": 3842,
+        "clickTime": 3226,
+        "responseTime": 3227,
+        "totalTime": 3528,
         "category": "POOR"
       },
       {
         "actionName": "Super Admin Executive Analytics (/dashboard/executive)",
         "success": true,
-        "clickTime": 2886,
-        "responseTime": 2887,
-        "totalTime": 3187,
+        "clickTime": 3319,
+        "responseTime": 3322,
+        "totalTime": 3630,
         "category": "POOR"
       }
     ],
@@ -1882,33 +1883,33 @@
       {
         "actionName": "Tenant Operations Home (/dashboard/operations)",
         "success": true,
-        "clickTime": 3169,
-        "responseTime": 3170,
-        "totalTime": 3471,
+        "clickTime": 2898,
+        "responseTime": 2899,
+        "totalTime": 3199,
         "category": "POOR"
       },
       {
         "actionName": "Tenant CRM Workspace (/dashboard/crm/workspace)",
         "success": true,
-        "clickTime": 3179,
-        "responseTime": 3179,
-        "totalTime": 3480,
+        "clickTime": 3119,
+        "responseTime": 3120,
+        "totalTime": 3421,
         "category": "POOR"
       },
       {
         "actionName": "Tenant Billing Hub (/dashboard/business/billing)",
         "success": true,
-        "clickTime": 3008,
-        "responseTime": 3009,
-        "totalTime": 3309,
+        "clickTime": 2830,
+        "responseTime": 2831,
+        "totalTime": 3131,
         "category": "POOR"
       },
       {
         "actionName": "Tenant Settings (/dashboard/business/settings)",
         "success": true,
-        "clickTime": 3290,
-        "responseTime": 3302,
-        "totalTime": 3603,
+        "clickTime": 3040,
+        "responseTime": 3041,
+        "totalTime": 3343,
         "category": "POOR"
       }
     ],
@@ -1916,61 +1917,45 @@
       {
         "actionName": "Client Portal Login Screen (/portal-login)",
         "success": true,
-        "clickTime": 2057,
-        "responseTime": 2059,
-        "totalTime": 2359,
+        "clickTime": 1789,
+        "responseTime": 1790,
+        "totalTime": 2098,
         "category": "WARNING"
       },
       {
         "actionName": "Portal Login Inputs Interaction",
         "success": true,
-        "clickTime": 271,
-        "responseTime": 272,
-        "totalTime": 573,
+        "clickTime": 293,
+        "responseTime": 294,
+        "totalTime": 596,
         "category": "GOOD"
       },
       {
         "actionName": "Live Client Portal (/portal/b4c6c01b-4461-4022-8577-0ccc0f50bd9a)",
         "success": true,
-        "clickTime": 3946,
-        "responseTime": 3947,
-        "totalTime": 4248,
+        "clickTime": 4171,
+        "responseTime": 4172,
+        "totalTime": 4473,
         "category": "POOR"
       },
       {
         "actionName": "Client Portal Tab: projects",
         "success": true,
-        "clickTime": 25,
-        "responseTime": 26,
-        "totalTime": 329,
+        "clickTime": 39,
+        "responseTime": 40,
+        "totalTime": 341,
         "category": "EXCELLENT"
       },
       {
         "actionName": "Client Portal Tab: invoices",
         "success": true,
-        "clickTime": 4,
-        "responseTime": 5,
-        "totalTime": 306,
+        "clickTime": 6,
+        "responseTime": 6,
+        "totalTime": 307,
         "category": "EXCELLENT"
       },
       {
         "actionName": "Client Portal Tab: quotes",
-        "success": true,
-        "clickTime": 4,
-        "responseTime": 5,
-        "totalTime": 305,
-        "category": "EXCELLENT"
-      },
-      {
-        "actionName": "Client Portal Tab: contracts",
-        "success": true,
-        "clickTime": 3,
-        "responseTime": 4,
-        "totalTime": 305,
-        "category": "EXCELLENT"
-      },
-      {
-        "actionName": "Client Portal Tab: documents",
         "success": true,
         "clickTime": 6,
         "responseTime": 7,
@@ -1978,11 +1963,27 @@
         "category": "EXCELLENT"
       },
       {
+        "actionName": "Client Portal Tab: contracts",
+        "success": true,
+        "clickTime": 11,
+        "responseTime": 12,
+        "totalTime": 314,
+        "category": "EXCELLENT"
+      },
+      {
+        "actionName": "Client Portal Tab: documents",
+        "success": true,
+        "clickTime": 8,
+        "responseTime": 9,
+        "totalTime": 311,
+        "category": "EXCELLENT"
+      },
+      {
         "actionName": "Client Portal Tab: messages",
         "success": true,
-        "clickTime": 6,
-        "responseTime": 6,
-        "totalTime": 307,
+        "clickTime": 12,
+        "responseTime": 13,
+        "totalTime": 314,
         "category": "EXCELLENT"
       }
     ]
@@ -2152,44 +2153,11 @@
     }
   },
   "walkthrough": {
-    "tourSteps": [
-      {
-        "step": 1,
-        "label": "Next (1/7)",
-        "latencyMs": 988
-      },
-      {
-        "step": 2,
-        "label": "Next (2/7)",
-        "latencyMs": 979
-      },
-      {
-        "step": 3,
-        "label": "Next (3/7)",
-        "latencyMs": 905
-      },
-      {
-        "step": 4,
-        "label": "Next (3/7)",
-        "latencyMs": 921
-      },
-      {
-        "step": 5,
-        "label": "Next (3/7)",
-        "latencyMs": 935
-      },
-      {
-        "step": 6,
-        "label": "Next (3/7)",
-        "latencyMs": 904
-      },
-      {
-        "step": 7,
-        "label": "Next (3/7)",
-        "latencyMs": 941
-      }
-    ],
-    "completedCleanly": false
+    "steps": [],
+    "blinkingDetected": false,
+    "staleOverlayDetected": false,
+    "controlsWorked": true,
+    "triggerVisible": false
   },
   "stress": {
     "totalRequestsLogged": 4352,
@@ -2475,18 +2443,18 @@
       "path": "/dashboard",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
         "totalButtons": 44,
         "namelessButtonsCount": 1,
         "totalInputs": 0,
         "unlabelledInputsCount": 0,
-        "headingsCount": 4,
+        "headingsCount": 5,
         "headingsHierarchy": [
           {
             "tag": "H2",
@@ -2495,6 +2463,10 @@
           {
             "tag": "H1",
             "text": "Command Center"
+          },
+          {
+            "tag": "H2",
+            "text": "Missing or optional keys"
           },
           {
             "tag": "H2",
@@ -2513,19 +2485,44 @@
       "path": "/dashboard/crm",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
-        "totalButtons": 44,
+        "totalButtons": 56,
         "namelessButtonsCount": 1,
         "totalInputs": 0,
         "unlabelledInputsCount": 0,
-        "headingsCount": 0,
-        "headingsHierarchy": []
+        "headingsCount": 7,
+        "headingsHierarchy": [
+          {
+            "tag": "H3",
+            "text": "Volume breakdown"
+          },
+          {
+            "tag": "H3",
+            "text": "Status mix"
+          },
+          {
+            "tag": "H3",
+            "text": "Recent activity"
+          },
+          {
+            "tag": "H3",
+            "text": "Deals closed"
+          },
+          {
+            "tag": "H3",
+            "text": "Add or import contacts"
+          },
+          {
+            "tag": "H3",
+            "text": "Decide if it is real"
+          }
+        ]
       },
       "status": "WARNING"
     },
@@ -2534,40 +2531,66 @@
       "path": "/dashboard/contacts",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
-        "totalButtons": 0,
-        "namelessButtonsCount": 0,
-        "totalInputs": 0,
+        "totalButtons": 44,
+        "namelessButtonsCount": 1,
+        "totalInputs": 1,
         "unlabelledInputsCount": 0,
-        "headingsCount": 0,
-        "headingsHierarchy": []
+        "headingsCount": 2,
+        "headingsHierarchy": [
+          {
+            "tag": "H3",
+            "text": "Unified directory"
+          },
+          {
+            "tag": "H3",
+            "text": "No contacts yet"
+          }
+        ]
       },
-      "status": "PASS"
+      "status": "WARNING"
     },
     {
       "route": "Leads",
       "path": "/dashboard/leads",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
-        "totalButtons": 40,
-        "namelessButtonsCount": 1,
+        "totalButtons": 46,
+        "namelessButtonsCount": 2,
         "totalInputs": 0,
         "unlabelledInputsCount": 0,
-        "headingsCount": 0,
-        "headingsHierarchy": []
+        "headingsCount": 4,
+        "headingsHierarchy": [
+          {
+            "tag": "H3",
+            "text": "Discovered0"
+          },
+          {
+            "tag": "H3",
+            "text": "Qualified0"
+          },
+          {
+            "tag": "H3",
+            "text": "Proposal0"
+          },
+          {
+            "tag": "H3",
+            "text": "Negotiation0"
+          }
+        ]
       },
       "status": "WARNING"
     },
@@ -2576,11 +2599,11 @@
       "path": "/dashboard/accounting",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
         "totalButtons": 40,
@@ -2597,14 +2620,14 @@
       "path": "/dashboard/business/settings",
       "tabFocusCount": 15,
       "firstFocusedElements": [
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/",
-        "BODY[]: {\"@context\":\"https:/"
+        "A[]: Skip to main content",
+        "BUTTON[button]: Collapse navigation",
+        "BUTTON[submit]: Admin Panel",
+        "BUTTON[button]: Operations",
+        "BUTTON[submit]: Command Center"
       ],
       "domAudit": {
-        "totalButtons": 69,
+        "totalButtons": 70,
         "namelessButtonsCount": 9,
         "totalInputs": 2,
         "unlabelledInputsCount": 2,
@@ -2643,18 +2666,18 @@
       "path": "/pricing",
       "tabFocusCount": 15,
       "firstFocusedElements": [
+        "BODY[]: {\"@context\":\"https:/",
         "A[]: Skip to main content",
         "A[]: AlphaCloneSYSTEMS",
         "BUTTON[button]: Product",
-        "BUTTON[button]: Solutions",
-        "A[]: Integrations"
+        "BUTTON[button]: Solutions"
       ],
       "domAudit": {
-        "totalButtons": 15,
+        "totalButtons": 12,
         "namelessButtonsCount": 0,
         "totalInputs": 1,
         "unlabelledInputsCount": 0,
-        "headingsCount": 13,
+        "headingsCount": 12,
         "headingsHierarchy": [
           {
             "tag": "H1",
@@ -2696,11 +2719,11 @@
         "A[]: Integrations"
       ],
       "domAudit": {
-        "totalButtons": 10,
+        "totalButtons": 7,
         "namelessButtonsCount": 0,
         "totalInputs": 8,
         "unlabelledInputsCount": 0,
-        "headingsCount": 4,
+        "headingsCount": 3,
         "headingsHierarchy": [
           {
             "tag": "H1",
@@ -2713,10 +2736,6 @@
           {
             "tag": "H2",
             "text": "Send a Message"
-          },
-          {
-            "tag": "H4",
-            "text": "Your privacy choices"
           }
         ]
       },

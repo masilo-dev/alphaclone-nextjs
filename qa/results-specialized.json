@@ -3,40 +3,41 @@
     {
       "actionName": "Super Admin Command Center (/dashboard)",
       "success": true,
-      "clickTime": 4196,
-      "responseTime": 4203,
-      "totalTime": 4504,
+      "clickTime": 4098,
+      "responseTime": 4101,
+      "totalTime": 4401,
       "category": "POOR"
     },
     {
       "actionName": "Command Center Refresh Action",
       "success": true,
-      "clickTime": 4062,
-      "responseTime": 4064,
-      "totalTime": 4366,
+      "clickTime": 3141,
+      "responseTime": 3142,
+      "totalTime": 3443,
       "category": "POOR"
     },
     {
       "actionName": "Super Admin Tenants Hub (/dashboard/admin/tenants)",
-      "success": false,
-      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('a[href*=\"tenants\"], button:has-text(\"Tenants\")').first()\n    - locator resolved to <button class=\"ac-workspace-nav-item  gap-2.5 group relative touch-manipulation\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    55 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div role=\"presentation\" data-test-id=\"overlay\" class=\"react-joyride__overlay\"></div> from <div id=\"react-joyride-portal\">…</div> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n",
-      "totalTime": 30112,
-      "category": "CRITICAL"
+      "success": true,
+      "clickTime": 2369,
+      "responseTime": 2370,
+      "totalTime": 2671,
+      "category": "WARNING"
     },
     {
       "actionName": "Super Admin Ops & Logs (/dashboard/admin/operations)",
       "success": true,
-      "clickTime": 3538,
-      "responseTime": 3539,
-      "totalTime": 3842,
+      "clickTime": 3226,
+      "responseTime": 3227,
+      "totalTime": 3528,
       "category": "POOR"
     },
     {
       "actionName": "Super Admin Executive Analytics (/dashboard/executive)",
       "success": true,
-      "clickTime": 2886,
-      "responseTime": 2887,
-      "totalTime": 3187,
+      "clickTime": 3319,
+      "responseTime": 3322,
+      "totalTime": 3630,
       "category": "POOR"
     }
   ],
@@ -44,33 +45,33 @@
     {
       "actionName": "Tenant Operations Home (/dashboard/operations)",
       "success": true,
-      "clickTime": 3169,
-      "responseTime": 3170,
-      "totalTime": 3471,
+      "clickTime": 2898,
+      "responseTime": 2899,
+      "totalTime": 3199,
       "category": "POOR"
     },
     {
       "actionName": "Tenant CRM Workspace (/dashboard/crm/workspace)",
       "success": true,
-      "clickTime": 3179,
-      "responseTime": 3179,
-      "totalTime": 3480,
+      "clickTime": 3119,
+      "responseTime": 3120,
+      "totalTime": 3421,
       "category": "POOR"
     },
     {
       "actionName": "Tenant Billing Hub (/dashboard/business/billing)",
       "success": true,
-      "clickTime": 3008,
-      "responseTime": 3009,
-      "totalTime": 3309,
+      "clickTime": 2830,
+      "responseTime": 2831,
+      "totalTime": 3131,
       "category": "POOR"
     },
     {
       "actionName": "Tenant Settings (/dashboard/business/settings)",
       "success": true,
-      "clickTime": 3290,
-      "responseTime": 3302,
-      "totalTime": 3603,
+      "clickTime": 3040,
+      "responseTime": 3041,
+      "totalTime": 3343,
       "category": "POOR"
     }
   ],
@@ -78,61 +79,45 @@
     {
       "actionName": "Client Portal Login Screen (/portal-login)",
       "success": true,
-      "clickTime": 2057,
-      "responseTime": 2059,
-      "totalTime": 2359,
+      "clickTime": 1789,
+      "responseTime": 1790,
+      "totalTime": 2098,
       "category": "WARNING"
     },
     {
       "actionName": "Portal Login Inputs Interaction",
       "success": true,
-      "clickTime": 271,
-      "responseTime": 272,
-      "totalTime": 573,
+      "clickTime": 293,
+      "responseTime": 294,
+      "totalTime": 596,
       "category": "GOOD"
     },
     {
       "actionName": "Live Client Portal (/portal/b4c6c01b-4461-4022-8577-0ccc0f50bd9a)",
       "success": true,
-      "clickTime": 3946,
-      "responseTime": 3947,
-      "totalTime": 4248,
+      "clickTime": 4171,
+      "responseTime": 4172,
+      "totalTime": 4473,
       "category": "POOR"
     },
     {
       "actionName": "Client Portal Tab: projects",
       "success": true,
-      "clickTime": 25,
-      "responseTime": 26,
-      "totalTime": 329,
+      "clickTime": 39,
+      "responseTime": 40,
+      "totalTime": 341,
       "category": "EXCELLENT"
     },
     {
       "actionName": "Client Portal Tab: invoices",
       "success": true,
-      "clickTime": 4,
-      "responseTime": 5,
-      "totalTime": 306,
+      "clickTime": 6,
+      "responseTime": 6,
+      "totalTime": 307,
       "category": "EXCELLENT"
     },
     {
       "actionName": "Client Portal Tab: quotes",
-      "success": true,
-      "clickTime": 4,
-      "responseTime": 5,
-      "totalTime": 305,
-      "category": "EXCELLENT"
-    },
-    {
-      "actionName": "Client Portal Tab: contracts",
-      "success": true,
-      "clickTime": 3,
-      "responseTime": 4,
-      "totalTime": 305,
-      "category": "EXCELLENT"
-    },
-    {
-      "actionName": "Client Portal Tab: documents",
       "success": true,
       "clickTime": 6,
       "responseTime": 7,
@@ -140,11 +125,27 @@
       "category": "EXCELLENT"
     },
     {
+      "actionName": "Client Portal Tab: contracts",
+      "success": true,
+      "clickTime": 11,
+      "responseTime": 12,
+      "totalTime": 314,
+      "category": "EXCELLENT"
+    },
+    {
+      "actionName": "Client Portal Tab: documents",
+      "success": true,
+      "clickTime": 8,
+      "responseTime": 9,
+      "totalTime": 311,
+      "category": "EXCELLENT"
+    },
+    {
       "actionName": "Client Portal Tab: messages",
       "success": true,
-      "clickTime": 6,
-      "responseTime": 6,
-      "totalTime": 307,
+      "clickTime": 12,
+      "responseTime": 13,
+      "totalTime": 314,
       "category": "EXCELLENT"
     }
   ]

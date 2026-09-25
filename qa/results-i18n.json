@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-24T19:39:26.620Z",
+  "timestamp": "2026-09-25T11:13:10.276Z",
   "targetUrl": "https://alphaclonesystems.com",
   "languagesTested": [
     "en",
@@ -11,7 +11,7 @@
       "hasLanguageSwitcher": true,
       "enToEs": {
         "success": true,
-        "latencyMs": 834,
+        "latencyMs": 818,
         "langAttribute": "es",
         "storageValue": "es",
         "navSample": [
@@ -28,7 +28,7 @@
       "switcherType": "account-menu",
       "enToEs": {
         "success": true,
-        "latencyMs": 1048,
+        "latencyMs": 1044,
         "langAttribute": "es",
         "sidebarSample": []
       }
@@ -37,7 +37,7 @@
       "hasDedicatedLanguageControl": false
     },
     "clientPortal": {
-      "langAttribute": "es",
+      "langAttribute": "en",
       "hasLanguageControl": false
     }
   },
@@ -45,7 +45,7 @@
     "switchesTested": 4,
     "successfulSwitches": 3,
     "persistedAcrossReload": 1,
-    "averageSwitchLatencyMs": 8428
+    "averageSwitchLatencyMs": 925
   },
   "translationsSampled": [],
   "untranslatedStringsFound": [],

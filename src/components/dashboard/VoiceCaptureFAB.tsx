@@ -202,7 +202,10 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
     if (!isActive) {
         return (
             <button
+                type="button"
                 onClick={toggleVoice}
+                aria-label="Activate voice assistant"
+                title="Activate voice assistant"
                 className="fixed bottom-6 left-6 z-50 w-12 h-12 bg-slate-900 border border-teal-500/50 text-teal-400 rounded-full shadow-2xl shadow-teal-500/20 flex items-center justify-center active:scale-95 transition-transform group"
             >
                 <Mic className="w-5 h-5 group-hover:scale-110 transition-transform" />

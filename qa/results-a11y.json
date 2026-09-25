@@ -4,18 +4,18 @@
     "path": "/dashboard",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
       "totalButtons": 44,
       "namelessButtonsCount": 1,
       "totalInputs": 0,
       "unlabelledInputsCount": 0,
-      "headingsCount": 4,
+      "headingsCount": 5,
       "headingsHierarchy": [
         {
           "tag": "H2",
@@ -24,6 +24,10 @@
         {
           "tag": "H1",
           "text": "Command Center"
+        },
+        {
+          "tag": "H2",
+          "text": "Missing or optional keys"
         },
         {
           "tag": "H2",
@@ -42,19 +46,44 @@
     "path": "/dashboard/crm",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
-      "totalButtons": 44,
+      "totalButtons": 56,
       "namelessButtonsCount": 1,
       "totalInputs": 0,
       "unlabelledInputsCount": 0,
-      "headingsCount": 0,
-      "headingsHierarchy": []
+      "headingsCount": 7,
+      "headingsHierarchy": [
+        {
+          "tag": "H3",
+          "text": "Volume breakdown"
+        },
+        {
+          "tag": "H3",
+          "text": "Status mix"
+        },
+        {
+          "tag": "H3",
+          "text": "Recent activity"
+        },
+        {
+          "tag": "H3",
+          "text": "Deals closed"
+        },
+        {
+          "tag": "H3",
+          "text": "Add or import contacts"
+        },
+        {
+          "tag": "H3",
+          "text": "Decide if it is real"
+        }
+      ]
     },
     "status": "WARNING"
   },
@@ -63,40 +92,66 @@
     "path": "/dashboard/contacts",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
-      "totalButtons": 0,
-      "namelessButtonsCount": 0,
-      "totalInputs": 0,
+      "totalButtons": 44,
+      "namelessButtonsCount": 1,
+      "totalInputs": 1,
       "unlabelledInputsCount": 0,
-      "headingsCount": 0,
-      "headingsHierarchy": []
+      "headingsCount": 2,
+      "headingsHierarchy": [
+        {
+          "tag": "H3",
+          "text": "Unified directory"
+        },
+        {
+          "tag": "H3",
+          "text": "No contacts yet"
+        }
+      ]
     },
-    "status": "PASS"
+    "status": "WARNING"
   },
   {
     "route": "Leads",
     "path": "/dashboard/leads",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
-      "totalButtons": 40,
-      "namelessButtonsCount": 1,
+      "totalButtons": 46,
+      "namelessButtonsCount": 2,
       "totalInputs": 0,
       "unlabelledInputsCount": 0,
-      "headingsCount": 0,
-      "headingsHierarchy": []
+      "headingsCount": 4,
+      "headingsHierarchy": [
+        {
+          "tag": "H3",
+          "text": "Discovered0"
+        },
+        {
+          "tag": "H3",
+          "text": "Qualified0"
+        },
+        {
+          "tag": "H3",
+          "text": "Proposal0"
+        },
+        {
+          "tag": "H3",
+          "text": "Negotiation0"
+        }
+      ]
     },
     "status": "WARNING"
   },
@@ -105,11 +160,11 @@
     "path": "/dashboard/accounting",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
       "totalButtons": 40,
@@ -126,14 +181,14 @@
     "path": "/dashboard/business/settings",
     "tabFocusCount": 15,
     "firstFocusedElements": [
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/",
-      "BODY[]: {\"@context\":\"https:/"
+      "A[]: Skip to main content",
+      "BUTTON[button]: Collapse navigation",
+      "BUTTON[submit]: Admin Panel",
+      "BUTTON[button]: Operations",
+      "BUTTON[submit]: Command Center"
     ],
     "domAudit": {
-      "totalButtons": 69,
+      "totalButtons": 70,
       "namelessButtonsCount": 9,
       "totalInputs": 2,
       "unlabelledInputsCount": 2,
@@ -172,18 +227,18 @@
     "path": "/pricing",
     "tabFocusCount": 15,
     "firstFocusedElements": [
+      "BODY[]: {\"@context\":\"https:/",
       "A[]: Skip to main content",
       "A[]: AlphaCloneSYSTEMS",
       "BUTTON[button]: Product",
-      "BUTTON[button]: Solutions",
-      "A[]: Integrations"
+      "BUTTON[button]: Solutions"
     ],
     "domAudit": {
-      "totalButtons": 15,
+      "totalButtons": 12,
       "namelessButtonsCount": 0,
       "totalInputs": 1,
       "unlabelledInputsCount": 0,
-      "headingsCount": 13,
+      "headingsCount": 12,
       "headingsHierarchy": [
         {
           "tag": "H1",
@@ -225,11 +280,11 @@
       "A[]: Integrations"
     ],
     "domAudit": {
-      "totalButtons": 10,
+      "totalButtons": 7,
       "namelessButtonsCount": 0,
       "totalInputs": 8,
       "unlabelledInputsCount": 0,
-      "headingsCount": 4,
+      "headingsCount": 3,
       "headingsHierarchy": [
         {
           "tag": "H1",
@@ -242,10 +297,6 @@
         {
           "tag": "H2",
           "text": "Send a Message"
-        },
-        {
-          "tag": "H4",
-          "text": "Your privacy choices"
         }
       ]
     },

@@ -1,11 +1,13 @@
 {
-  "totalModulesTested": 89,
-  "totalScreensTested": 89,
-  "totalInteractionsAttempted": 135,
-  "passCount": 135,
-  "failCount": 0,
-  "slowCount": 0,
-  "criticalCount": 0,
+  "discoveredRoutesCount": 104,
+  "testedRoutesCount": 93,
   "routeCoveragePercent": "89%",
-  "workflowCoveragePercent": "100%"
+  "totalModulesAudited": 105,
+  "totalScreensTested": 93,
+  "totalInteractionsAttempted": 146,
+  "passedInteractions": 148,
+  "failedInteractions": 87,
+  "slowInteractions": 10,
+  "criticalInteractions": 1,
+  "workflowCoveragePercent": "100% (7/7 User Journeys + 3 Specialized Surfaces + Live Email Delivery)"
 }

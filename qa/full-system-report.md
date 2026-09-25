@@ -1,6 +1,6 @@
 # AlphaClone Systems — Full System End-to-End QA Acceptance Report
 
-**Date**: 2026-09-24T18:23:20.891Z
+**Date**: 2026-09-25T11:18:32.638Z
 **Target Environment**: Production Live Deployment (`https://alphaclonesystems.com`)
 **Test Personas & Accounts Executed**:
 1. **Super Admin / Platform Owner**: `bonnie@alphaclonesystems.com` (Tenant: Alphaclone, Organization: Platform Root)
@@ -14,10 +14,10 @@
 | **Discovered Routes** | **104 routes** | Evaluated |
 | **Unique Screens Tested** | **93 screens** | Verified |
 | **Total Safe Interactions Tested** | **146 interactions** | Measured |
-| **Passed Interactions** | **147** | Healthy |
-| **Failed / Obstructed Interactions** | **88** | Cataloged |
+| **Passed Interactions** | **148** | Healthy |
+| **Failed / Obstructed Interactions** | **87** | Cataloged |
 | **Slow Interactions (3–5s)** | **10** | Acceptable / Warning |
-| **Critical Latency (>5s)** | **2** | Flagged |
+| **Critical Latency (>5s)** | **1** | Flagged |
 | **Core User Journeys** | **7 / 7 Journeys (100%)** | PASS |
 | **Specialized Surfaces (Admin, Tenant, Portal)** | **3 / 3 Surfaces (100%)** | PASS |
 | **Live Email Delivery Test** | **1 / 1 Delivered (Brevo)** | PASS |
@@ -57,16 +57,16 @@
 
 | Rank | Location | Action | User Wait Time | QA Rating |
 | :---: | :--- | :--- | :---: | :---: |
-| 1 | Specialized Surface | Super Admin Tenants Hub (/dashboard/admin/tenants) | 30112ms | CRITICAL |
-| 2 | Insights > Notifications (/dashboard/notifications) | Initial Module Load & Render | 5465ms | CRITICAL |
-| 3 | Specialized Surface | Super Admin Command Center (/dashboard) | 4504ms | POOR |
-| 4 | Specialized Surface | Command Center Refresh Action | 4366ms | POOR |
-| 5 | Specialized Surface | Live Client Portal (/portal/b4c6c01b-4461-4022-8577-0ccc0f50bd9a) | 4248ms | POOR |
-| 6 | Specialized Surface | Super Admin Ops & Logs (/dashboard/admin/operations) | 3842ms | POOR |
-| 7 | Specialized Surface | Tenant Settings (/dashboard/business/settings) | 3603ms | POOR |
-| 8 | Specialized Surface | Tenant CRM Workspace (/dashboard/crm/workspace) | 3480ms | POOR |
-| 9 | Specialized Surface | Tenant Operations Home (/dashboard/operations) | 3471ms | POOR |
-| 10 | Specialized Surface | Tenant Billing Hub (/dashboard/business/billing) | 3309ms | POOR |
+| 1 | Insights > Notifications (/dashboard/notifications) | Initial Module Load & Render | 5465ms | CRITICAL |
+| 2 | Specialized Surface | Live Client Portal (/portal/b4c6c01b-4461-4022-8577-0ccc0f50bd9a) | 4473ms | POOR |
+| 3 | Specialized Surface | Super Admin Command Center (/dashboard) | 4401ms | POOR |
+| 4 | Journey: CRM & Clients | Navigate to CRM Overview | 3929ms | POOR |
+| 5 | Specialized Surface | Super Admin Executive Analytics (/dashboard/executive) | 3630ms | POOR |
+| 6 | Specialized Surface | Super Admin Ops & Logs (/dashboard/admin/operations) | 3528ms | POOR |
+| 7 | Specialized Surface | Command Center Refresh Action | 3443ms | POOR |
+| 8 | Specialized Surface | Tenant CRM Workspace (/dashboard/crm/workspace) | 3421ms | POOR |
+| 9 | Specialized Surface | Tenant Settings (/dashboard/business/settings) | 3343ms | POOR |
+| 10 | Specialized Surface | Tenant Operations Home (/dashboard/operations) | 3199ms | POOR |
 
 ## 4. Dead / Non-Working Buttons & Clickability Failures
 

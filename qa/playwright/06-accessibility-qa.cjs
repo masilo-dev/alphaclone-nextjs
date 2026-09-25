@@ -31,8 +31,9 @@ async function runA11yQA() {
     console.log(`Testing A11y on: ${r.name} (${r.path})`);
     try {
       await page.goto(r.path, { waitUntil: 'domcontentloaded', timeout: 35000 });
+      await page.waitForSelector('button, a[href]', { timeout: 10000 }).catch(() => null);
       await dismissCommonModals(page);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1500);
 
       // 1. Keyboard tab order test
       let tabFocusCount = 0;

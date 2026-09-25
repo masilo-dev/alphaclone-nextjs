@@ -15,11 +15,11 @@
         },
         "tapTargets": {
           "total": 55,
-          "countSmall": 22,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -36,11 +36,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -56,12 +54,12 @@
           "clientWidth": 320
         },
         "tapTargets": {
-          "total": 44,
-          "countSmall": 20,
+          "total": 48,
+          "countSmall": 4,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (97x34px): \"Contacts\"",
+            "A (100x34px): \"Outreach\""
           ]
         },
         "mobileNavWorked": true,
@@ -78,11 +76,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -99,11 +95,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (100x32px): \"Admin Panel\"",
-            "BUTTON (100x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -120,11 +114,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -140,12 +132,10 @@
           "clientWidth": 320
         },
         "tapTargets": {
-          "total": 41,
-          "countSmall": 20,
+          "total": 57,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (100x32px): \"Admin Panel\"",
-            "BUTTON (100x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -169,11 +159,11 @@
         },
         "tapTargets": {
           "total": 55,
-          "countSmall": 22,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -190,11 +180,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -210,12 +198,10 @@
           "clientWidth": 360
         },
         "tapTargets": {
-          "total": 44,
-          "countSmall": 20,
+          "total": 41,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (58x32px): \"Admin Panel\"",
-            "BUTTON (58x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -232,11 +218,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -253,11 +237,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -274,11 +256,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -295,11 +275,9 @@
         },
         "tapTargets": {
           "total": 57,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -323,11 +301,11 @@
         },
         "tapTargets": {
           "total": 55,
-          "countSmall": 22,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -344,11 +322,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -365,11 +341,9 @@
         },
         "tapTargets": {
           "total": 44,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -386,11 +360,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -407,11 +379,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -428,11 +398,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -448,12 +416,10 @@
           "clientWidth": 375
         },
         "tapTargets": {
-          "total": 57,
-          "countSmall": 20,
+          "total": 64,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -477,11 +443,11 @@
         },
         "tapTargets": {
           "total": 55,
-          "countSmall": 22,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -498,11 +464,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (101x32px): \"Admin Panel\"",
-            "BUTTON (101x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -519,11 +483,9 @@
         },
         "tapTargets": {
           "total": 44,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -540,11 +502,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -561,11 +521,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -582,11 +540,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -603,11 +559,9 @@
         },
         "tapTargets": {
           "total": 57,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -630,12 +584,12 @@
           "clientWidth": 412
         },
         "tapTargets": {
-          "total": 41,
-          "countSmall": 20,
+          "total": 55,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -652,11 +606,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -673,11 +625,9 @@
         },
         "tapTargets": {
           "total": 44,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (101x32px): \"Admin Panel\"",
-            "BUTTON (101x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -693,12 +643,10 @@
           "clientWidth": 412
         },
         "tapTargets": {
-          "total": 41,
-          "countSmall": 20,
+          "total": 43,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -715,11 +663,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -736,11 +682,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -757,11 +701,9 @@
         },
         "tapTargets": {
           "total": 57,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -785,11 +727,11 @@
         },
         "tapTargets": {
           "total": 55,
-          "countSmall": 22,
+          "countSmall": 3,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (154x20px): \"Open tenant manager \"",
+            "A (177x20px): \"Open operations cons\""
           ]
         },
         "mobileNavWorked": true,
@@ -806,11 +748,9 @@
         },
         "tapTargets": {
           "total": 54,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -827,11 +767,9 @@
         },
         "tapTargets": {
           "total": 44,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -848,11 +786,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (150x32px): \"Admin Panel\"",
-            "BUTTON (150x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -869,11 +805,9 @@
         },
         "tapTargets": {
           "total": 41,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -890,11 +824,9 @@
         },
         "tapTargets": {
           "total": 45,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -911,11 +843,9 @@
         },
         "tapTargets": {
           "total": 57,
-          "countSmall": 20,
+          "countSmall": 1,
           "samples": [
-            "A (1x1px): \"Skip to main content\"",
-            "BUTTON (44x32px): \"Admin Panel\"",
-            "BUTTON (44x32px): \"Operations\""
+            "A (1x1px): \"Skip to main content\""
           ]
         },
         "mobileNavWorked": true,
@@ -1047,8 +977,8 @@
           "countSmall": 20,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
-            "BUTTON (203x32px): \"Admin Panel\"",
-            "BUTTON (203x32px): \"Operations\""
+            "BUTTON (44x32px): \"Admin Panel\"",
+            "BUTTON (44x32px): \"Operations\""
           ]
         },
         "mobileNavWorked": false,
@@ -1197,8 +1127,8 @@
           "clientWidth": 1280
         },
         "tapTargets": {
-          "total": 44,
-          "countSmall": 20,
+          "total": 56,
+          "countSmall": 21,
           "samples": [
             "A (1x1px): \"Skip to main content\"",
             "BUTTON (203x34px): \"Admin Panel\"",

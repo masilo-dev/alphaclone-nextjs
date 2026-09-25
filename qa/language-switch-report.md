@@ -1,6 +1,6 @@
 # AlphaClone Systems — Language Switcher & Full System i18n Audit Report
 
-**Date**: 2026-09-24T19:39:26.620Z
+**Date**: 2026-09-25T11:13:10.276Z
 **Target URL**: https://alphaclonesystems.com
 **Languages Evaluated**: en, es, pl
 
@@ -11,21 +11,21 @@
 | **Language Switches Tested** | **4 switches** | Verified |
 | **Successful Visual & State Transitions** | **3 / 4** | WARN |
 | **State Persisted Across Hard Reloads** | **1 instances** | PASS |
-| **Average Switch Latency** | **8428ms** | FAST (<1s) |
+| **Average Switch Latency** | **925ms** | FAST (<1s) |
 | **Visual Screenshots Captured** | **12 visual captures** | Cataloged |
 
 ## 2. Surfaces Audited (Inside & Out)
 
 ### Public Marketing Site (Outside)
 - **Header Language Switcher**: Present & Functional
-- **English -> Spanish Transition**: PASS (834ms)
+- **English -> Spanish Transition**: PASS (818ms)
 - **HTML Lang Attribute**: Updated to `es`
 - **Storage Key**: `ac-language` = `es`
 - **Sample Spanish Nav**: ["AlphaClone\nSYSTEMS","Integraciones","Precios","Acerca de","Iniciar sesión"]
 
 ### Authenticated Dashboard & Workspaces (Inside)
 - **Account Menu Language Selector**: Present & Functional
-- **English -> Spanish Transition**: PASS (1048ms)
+- **English -> Spanish Transition**: PASS (1044ms)
 - **HTML Lang Attribute**: Updated to `es`
 - **Sample Spanish Sidebar**: []
 
@@ -33,7 +33,7 @@
 - **Language Preference Controls**: Managed via Account Menu
 
 ### Client Portal
-- **Portal Lang**: `es`
+- **Portal Lang**: `en`
 - **Dedicated Portal Switcher**: Inherits Browser/Global
 
 ## 3. Visual Screenshot Catalog
