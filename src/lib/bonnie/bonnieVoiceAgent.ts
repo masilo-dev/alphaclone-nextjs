@@ -23,6 +23,7 @@ export async function runBonnieVoiceAgent(params: {
   transcript: string;
   pathname?: string;
   moduleContext?: BonnieModuleId;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }): Promise<BonnieVoiceResult> {
   const transcript = params.transcript.trim();
   if (!transcript) {
@@ -58,6 +59,7 @@ export async function runBonnieVoiceAgent(params: {
     tenantId: params.tenantId,
     userId: params.userId,
     instruction: normalizedInstruction,
+    history: params.history,
     pathname: params.pathname,
     moduleContext: params.moduleContext,
   });

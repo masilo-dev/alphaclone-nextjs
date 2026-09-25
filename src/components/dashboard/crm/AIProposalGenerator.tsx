@@ -23,10 +23,41 @@ export function AIProposalGenerator() {
 
   const totalValue = items.reduce((sum, item) => sum + item.hours * item.rate, 0);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setGenerating(true);
-    setTimeout(() => {
-      const generated = `# PROJECT PROPOSAL: ${projectTitle.toUpperCase()}
+    const prompt = `You are a professional business proposal writer. Generate a structured, client-ready proposal document in markdown format.
+
+Client Name: ${clientName}
+Project Title: ${projectTitle}
+Line Items:
+${items.map(i => `- ${i.name}: ${i.hours} hours @ $${i.rate}/hr = $${(i.hours * i.rate).toLocaleString()}`).join('\n')}
+Total Value: $${totalValue.toLocaleString()} USD
+
+Instructions:
+- Write a compelling executive summary tailored to the client
+- Include a clear scope of work section with the line items above  
+- Add professional terms & conditions
+- Keep language business-professional and persuasive
+- Format in clean markdown suitable for PDF export`;
+
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, maxTokens: 1200 }),
+      });
+      if (!res.ok) throw new Error('Generation failed');
+      const data = await res.json();
+      const generated = data.content || data.text || data.response || '';
+      if (generated) {
+        setProposalMarkdown(generated.trim());
+        toast.success('AI-generated proposal ready.');
+      } else {
+        throw new Error('Empty response');
+      }
+    } catch {
+      // Fallback: generate locally from fields
+      const fallback = `# PROJECT PROPOSAL: ${projectTitle.toUpperCase()}
 **Prepared For:** ${clientName}
 **Date:** ${new Date().toLocaleDateString()}
 **Estimated Total:** $${totalValue.toLocaleString()} USD
@@ -34,7 +65,7 @@ export function AIProposalGenerator() {
 ---
 
 ## 1. Executive Summary
-AlphaClone Systems proposes a comprehensive digital transformation initiative tailored for **${clientName}**. Our solution modernizes infrastructure, automates lead outreach, and integrates zero-cost enterprise management tools.
+We propose a comprehensive solution tailored for **${clientName}**. Our approach modernises your infrastructure and delivers measurable business outcomes aligned to your goals.
 
 ## 2. Scope of Work & Pricing Breakdown
 ${items.map(i => `- **${i.name}**: ${i.hours} hours @ $${i.rate}/hr = **$${(i.hours * i.rate).toLocaleString()}**`).join('\n')}
@@ -44,11 +75,11 @@ ${items.map(i => `- **${i.name}**: ${i.hours} hours @ $${i.rate}/hr = **$${(i.ho
 
 ## 3. Terms & Acceptance
 This proposal remains valid for 30 days. Upon acceptance, an official contract will be executed for digital signature.`;
-
-      setProposalMarkdown(generated);
+      setProposalMarkdown(fallback);
+      toast.success('Proposal generated from your inputs.');
+    } finally {
       setGenerating(false);
-      toast.success('Proposal template filled from the fields you entered.');
-    }, 600);
+    }
   };
 
   const handleCopy = () => {

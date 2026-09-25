@@ -92,6 +92,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   /** Module-tag: user can pin any conversation to a BonnieModuleId (CRM/Leads/Finance/etc.) */
   const [conversationModuleTag, setConversationModuleTag] = useState<BonnieModuleId | 'general' | null>(null);
+  /** Controls the inline module-picker dropdown (replaces window.prompt) */
+  const [showModulePicker, setShowModulePicker] = useState(false);
   /** KEEP-ALIVE ping: while Bonnie is executing, periodically touch our API so server connections
    *  (SSE / Railway proxy / Supabase realtime) do not drop from idle. 0 = not running. */
   const keepAliveTimerRef = React.useRef<number | null>(null);
@@ -445,69 +447,102 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                 {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
                 {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
               </Text>
-              {/* Module tag pin — user can lock this conversation to any module so routing/planning never drifts */}
-              <Box
-                as="span"
-                display="inline-flex"
-                alignItems="center"
-                gap={1}
-                px={1.5}
-                py={0.5}
-                borderRadius="6px"
-                fontSize="var(--type-caption-size)"
-                fontWeight="700"
-                letterSpacing="0.02em"
-                color={conversationModuleTag ? 'white' : 'gray.500'}
-                bg={conversationModuleTag ? 'teal.500/20' : 'whiteAlpha.50'}
-                borderWidth={conversationModuleTag ? '1px' : 0}
-                borderColor={conversationModuleTag ? 'teal.500/40' : 'transparent'}
-                title={conversationModuleTag ? `Pinned to ${BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag}` : 'Auto-detected module (click to pin)'}
-                _hover={{ cursor: 'pointer', bg: conversationModuleTag ? 'teal.500/30' : 'whiteAlpha.100' }}
-                onClick={() => {
-                  const mods = Object.keys(BONNIE_MODULE_HINTS) as BonnieModuleId[];
-                  const current = conversationModuleTag;
-                  const currentIdx = mods.indexOf(current as BonnieModuleId);
-                  const next = current ? null : mods[0];
-                  const options = mods.map((m, idx) => `${idx + 1}. ${BONNIE_MODULE_HINTS[m]?.label || m}`).join('\n');
-                  const choice = window.prompt(
-                    conversationModuleTag
-                      ? `Pinned: ${BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag}.\n\nUnpin (OK) or enter a number to switch:\n\n${options}`
-                      : `Choose module to pin this conversation to (leave empty to unpin):\n\n${options}`,
-                    conversationModuleTag ? '' : String(currentIdx < 0 ? 1 : currentIdx + 1),
-                  );
-                  if (choice === null) return;
-                  const trimmed = choice.trim();
-                  if (!trimmed || trimmed === '0') { setConversationModuleTag(null); toast.success('Module pin cleared'); return; }
-                  const idx = Number.parseInt(trimmed, 10);
-                  if (Number.isInteger(idx) && idx >= 1 && idx <= mods.length) {
-                    setConversationModuleTag(mods[idx - 1]);
-                    toast.success(`Pinned to ${BONNIE_MODULE_HINTS[mods[idx - 1]]?.label || mods[idx - 1]}`);
-                    return;
-                  }
-                  const named = (mods as string[]).find((m) => m.toLowerCase() === trimmed.toLowerCase());
-                  if (named) {
-                    setConversationModuleTag(named as BonnieModuleId);
-                    toast.success(`Pinned to ${BONNIE_MODULE_HINTS[named as BonnieModuleId]?.label || named}`);
-                    return;
-                  }
-                  toast.error('Module not found. Use the number or the module id.');
-                }}
-              >
-                <TagIcon size={10} />
-                {conversationModuleTag
-                  ? BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag
-                  : effectiveModule === 'general'
-                  ? 'General (auto)'
-                  : `${BONNIE_MODULE_HINTS[effectiveModule as BonnieModuleId]?.label || effectiveModule} (auto)`}
-                {conversationModuleTag ? (
-                  <XIcon
-                    size={9}
-                    onClick={(e: any) => { e.stopPropagation(); setConversationModuleTag(null); toast.success('Pin cleared'); }}
-                  />
-                ) : null}
+              {/* Module tag pin — inline dropdown replaces window.prompt */}
+              <Box as="span" position="relative" display="inline-flex" alignItems="center">
+                <Box
+                  as="span"
+                  display="inline-flex"
+                  alignItems="center"
+                  gap={1}
+                  px={1.5}
+                  py={0.5}
+                  borderRadius="6px"
+                  fontSize="var(--type-caption-size)"
+                  fontWeight="700"
+                  letterSpacing="0.02em"
+                  color={conversationModuleTag ? 'white' : 'gray.500'}
+                  bg={conversationModuleTag ? 'teal.500/20' : 'whiteAlpha.50'}
+                  borderWidth={conversationModuleTag ? '1px' : 0}
+                  borderColor={conversationModuleTag ? 'teal.500/40' : 'transparent'}
+                  title={conversationModuleTag ? `Pinned to ${BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag}` : 'Click to pin to a module'}
+                  _hover={{ cursor: 'pointer', bg: conversationModuleTag ? 'teal.500/30' : 'whiteAlpha.100' }}
+                  onClick={() => setShowModulePicker((v) => !v)}
+                >
+                  <TagIcon size={10} />
+                  {conversationModuleTag
+                    ? BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag
+                    : effectiveModule === 'general'
+                    ? 'General (auto)'
+                    : `${BONNIE_MODULE_HINTS[effectiveModule as BonnieModuleId]?.label || effectiveModule} (auto)`}
+                  {conversationModuleTag ? (
+                    <XIcon
+                      size={9}
+                      onClick={(e: any) => { e.stopPropagation(); setConversationModuleTag(null); setShowModulePicker(false); toast.success('Pin cleared'); }}
+                    />
+                  ) : null}
+                </Box>
+                {showModulePicker && (
+                  <Box
+                    position="absolute"
+                    top="calc(100% + 4px)"
+                    left="0"
+                    zIndex={9999}
+                    bg="gray.900"
+                    border="1px solid"
+                    borderColor="whiteAlpha.200"
+                    borderRadius="10px"
+                    boxShadow="0 8px 32px rgba(0,0,0,0.6)"
+                    minW="200px"
+                    maxH="260px"
+                    overflowY="auto"
+                    py={1}
+                    onClick={(e: any) => e.stopPropagation()}
+                  >
+                    {conversationModuleTag && (
+                      <Box
+                        as="button"
+                        display="block"
+                        w="full"
+                        textAlign="left"
+                        px={3}
+                        py={1.5}
+                        fontSize="var(--type-caption-size)"
+                        fontWeight="600"
+                        color="red.300"
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={() => { setConversationModuleTag(null); setShowModulePicker(false); toast.success('Module pin cleared'); }}
+                      >
+                        ✕ Unpin module
+                      </Box>
+                    )}
+                    {(Object.keys(BONNIE_MODULE_HINTS) as BonnieModuleId[]).map((mod) => (
+                      <Box
+                        key={mod}
+                        as="button"
+                        display="block"
+                        w="full"
+                        textAlign="left"
+                        px={3}
+                        py={1.5}
+                        fontSize="var(--type-caption-size)"
+                        fontWeight={conversationModuleTag === mod ? '700' : '500'}
+                        color={conversationModuleTag === mod ? 'teal.300' : 'gray.200'}
+                        _hover={{ bg: 'whiteAlpha.100' }}
+                        onClick={() => {
+                          setConversationModuleTag(mod);
+                          setShowModulePicker(false);
+                          toast.success(`Pinned to ${BONNIE_MODULE_HINTS[mod]?.label || mod}`);
+                        }}
+                      >
+                        {conversationModuleTag === mod ? '✓ ' : ''}{BONNIE_MODULE_HINTS[mod]?.label || mod}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Flex>
           </Box>
+
           <HStack spacing={1}>
             {!isPopout && (
               <IconButton

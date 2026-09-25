@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
             conversationId: conversationId ?? undefined,
             history: history
               .filter((m: any) => m?.role && m?.content)
-              .slice(-8)
+              .slice(-16)
               .map((m: any) => ({
                 role: m.role === 'assistant' ? 'assistant' : 'user',
                 content: String(m.content),

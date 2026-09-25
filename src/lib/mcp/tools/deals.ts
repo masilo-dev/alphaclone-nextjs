@@ -59,12 +59,18 @@ registerTool('deals', {
     tenant_id: z.string().uuid().optional(),
     stage: z.string().optional(),
     owner_id: z.string().uuid().optional(),
+    client_id: z.string().uuid().optional(),
+    contact_id: z.string().uuid().optional(),
+    search: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       stage: { type: 'string', description: 'Filter by deal stage' },
       owner_id: { type: 'string', format: 'uuid', description: 'Filter by owner user ID' },
+      client_id: { type: 'string', format: 'uuid', description: 'Filter by CRM client / contact UUID' },
+      contact_id: { type: 'string', format: 'uuid', description: 'Alias for client_id — filter by contact UUID' },
+      search: { type: 'string', description: 'Full-text search across deal name' },
     },
     required: [],
   },
@@ -82,6 +88,13 @@ registerTool('deals', {
     }
     if (args.owner_id) {
       query = query.eq('owner_id', args.owner_id);
+    }
+    const entityId = args.client_id || args.contact_id;
+    if (entityId) {
+      query = query.eq('contact_id', entityId);
+    }
+    if (args.search) {
+      query = query.ilike('name', `%${args.search}%`);
     }
 
     const { data, error } = await query;

@@ -450,7 +450,30 @@ export default function BonnieChatPanel({
 
     const history = messages
       .filter((m) => m.id !== 'intro')
-      .map((m) => ({ role: m.role, content: m.text }));
+      .map((m) => {
+        let content = m.text;
+        if (m.role === 'assistant') {
+          const parts: string[] = [];
+          if (content) parts.push(content);
+          if (m.approval?.preview?.draft) {
+            parts.push(
+              `[Draft Pending Approval for ${m.approval.tool}${
+                m.approval.preview.target ? ` to ${m.approval.preview.target}` : ''
+              }]:\n${m.approval.preview.draft}`
+            );
+          }
+          if (m.tools && m.tools.length > 0) {
+            const toolSummaries = m.tools
+              .map((t) => `${t.tool}: ${t.summary}`)
+              .filter(Boolean);
+            if (toolSummaries.length > 0) {
+              parts.push(`[Data/Actions]:\n${toolSummaries.join('\n')}`);
+            }
+          }
+          content = parts.join('\n\n');
+        }
+        return { role: m.role, content };
+      });
 
     const phaseTimer = window.setTimeout(() => setAgentPhase('executing'), 1200);
     // Reset plan/timeline for new request

@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
     const tenantId = String(body.tenantId || '').trim();
     const transcript = String(body.transcript || body.text || '').trim();
     const pathname = body.pathname ? String(body.pathname) : undefined;
+    const history = Array.isArray(body.history) ? body.history : [];
 
     if (!tenantId || !transcript) {
       return NextResponse.json({ error: 'tenantId and transcript required' }, { status: 400 });
@@ -29,6 +30,13 @@ export async function POST(req: NextRequest) {
       transcript,
       pathname,
       moduleContext: resolveBonnieModuleFromPath(pathname || ''),
+      history: history
+        .filter((m: any) => m?.role && m?.content)
+        .slice(-8)
+        .map((m: any) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: String(m.content),
+        })),
     });
 
     return NextResponse.json({ success: true, ...result });

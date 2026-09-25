@@ -10,6 +10,7 @@ import {
 import { getBonnieWorkspaceSnapshot } from '@/lib/bonnie/bonnieWorkspaceSnapshot';
 import type { BonnieToolCall, BonnieToolResult } from '@/lib/bonnie/bonnieToolExecutor';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resumeApprovedTool } from '@/lib/bonnie/resumeApprovedTool';
 import { suggestToolsForQuestion } from '@/lib/bonnie/bonnieTenantDataRules';
 import { warmBonnieWorkspaceContext, formatWarmContextBlock } from '@/lib/bonnie/bonnieWarmContext';
 import { sanitizeBonnieResponse, BONNIE_ANTI_HEDGE_INSTRUCTION } from '@/lib/bonnie/bonnieResponseSanitizer';
@@ -74,12 +75,48 @@ function parseJsonPlan(raw: string): BonniePlan {
   return JSON.parse(jsonText) as BonniePlan;
 }
 
+export function looksLikeApprovalIntent(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return false;
+  if (
+    /^(yes|yep|yeah|sure|y|ok send|ok do it|send it|post it|publish it|do it|go ahead|approved|approve|looks good|sounds good|confirm|confirmed|proceed|execute|lgtm|please send|please do|send now|post now|publish now)[!.?\s]*$/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(approved?|go ahead|send it|post it|publish it|proceed with|confirmed?|execute (it|this)|looks good,? (send|post|publish|do it))\b/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function looksLikeRejectionIntent(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return false;
+  if (
+    /^(no|nope|cancel|reject|rejected|stop|don't send|dont send|abort|nevermind|never mind)[!.?\s]*$/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  if (/\b(reject(ed)?|cancel (it|this)|don't (send|post|publish|execute)|abort)\b/i.test(t)) {
+    return true;
+  }
+  return false;
+}
+
 /** Only skip tools for pure greetings — everything else uses the tool loop with tenant data. */
 function looksLikePureChitchat(text: string): boolean {
   const t = text.trim();
   if (!t) return true;
+  if (looksLikeApprovalIntent(t) || looksLikeRejectionIntent(t) || looksLikeActionInstruction(t)) return false;
   if (t.length <= 3) return true;
-  if (looksLikeActionInstruction(t)) return false;
   return /^(hi|hello|hey|thanks|thank you|ok|okay|bye|goodbye|good morning|good night)[!.?\s]*$/i.test(t);
 }
 
@@ -294,7 +331,7 @@ ${instruction}${priorBlock}
 Plan like a power agent (Cursor/Devin style): fetch tenant data with tools when needed — never ask yes/no to read. Execute end-to-end until done or approval is queued. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
 
   const model = 'deepseek-chat';
-  const raw = history?.length && round === 0
+  const raw = history?.length
     ? await chatDeepSeek(history, userBlock, {
         systemPrompt,
         model,
@@ -518,6 +555,176 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   onActivity?.('reading', { module: moduleId, source: 'workspace_context' });
   const { snapshot, warmResults } = await warmBonnieWorkspaceContext(tenantId, userId, moduleId);
   onActivity?.('planning', { module: moduleId, contextTools: warmResults.length });
+  // ── Natural Language Approval / Rejection Interception ───────────────────
+  if (looksLikeApprovalIntent(instruction)) {
+    const admin = createSupabaseAdminClient();
+    let pendingApproval: any = null;
+
+    if (conversationId) {
+      const { data: convApprovals } = await admin
+        .from('autonomous_runner_approvals')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('conversation_id', conversationId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (convApprovals && convApprovals.length > 0) {
+        pendingApproval = convApprovals[0];
+      }
+    }
+
+    if (!pendingApproval) {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const { data: recentApprovals } = await admin
+        .from('autonomous_runner_approvals')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pending')
+        .gte('created_at', twoHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (recentApprovals && recentApprovals.length > 0) {
+        pendingApproval = recentApprovals[0];
+      }
+    }
+
+    if (pendingApproval) {
+      onActivity?.('executing', { mode: 'natural_approval', approvalId: pendingApproval.id });
+      void wfUpdate({ status: 'running' });
+
+      const resumed = await resumeApprovedTool({
+        tenantId,
+        userId,
+        approvalId: pendingApproval.id,
+      });
+
+      const payload = (pendingApproval.payload || {}) as Record<string, unknown>;
+      const toolName = String(payload.tool_name || pendingApproval.action_key || 'Action').replace(
+        /^(bonnie|mcp|playbook):/,
+        ''
+      );
+
+      if (resumed.success) {
+        const toolResult = resumed.result;
+        const confirmationText = toolResult?.summary
+          ? `Approved and executed: ${toolResult.summary}`
+          : `Approved and executed "${toolName}" successfully.`;
+
+        void wfUpdate({
+          status: 'completed',
+          finalResponse: confirmationText,
+          executionStatus: 'executed',
+          toolResults: toolResult ? [toolResult] : [],
+          completedAt: true,
+        });
+
+        return {
+          response: confirmationText,
+          success: true,
+          provider,
+          model,
+          toolResults: toolResult ? [toolResult] : [],
+          logs: [`Natural approval executed for ${pendingApproval.id} (${toolName})`],
+          rounds: 1,
+          executionStatus: 'executed',
+          workflowId: workflowId ?? undefined,
+        };
+      } else {
+        const errorMsg = resumed.error || `Execution failed for ${toolName}`;
+        void wfUpdate({
+          status: 'failed',
+          finalResponse: errorMsg,
+          executionStatus: 'planning_failed',
+          completedAt: true,
+        });
+
+        return {
+          response: `Failed to execute approved action "${toolName}": ${errorMsg}`,
+          success: false,
+          provider,
+          model,
+          toolResults: resumed.result ? [resumed.result] : [],
+          logs: [`Natural approval failed for ${pendingApproval.id}: ${errorMsg}`],
+          rounds: 1,
+          executionStatus: 'planning_failed',
+          workflowId: workflowId ?? undefined,
+        };
+      }
+    }
+  }
+
+  if (looksLikeRejectionIntent(instruction)) {
+    const admin = createSupabaseAdminClient();
+    let pendingApproval: any = null;
+
+    if (conversationId) {
+      const { data: convApprovals } = await admin
+        .from('autonomous_runner_approvals')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('conversation_id', conversationId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (convApprovals && convApprovals.length > 0) {
+        pendingApproval = convApprovals[0];
+      }
+    }
+
+    if (!pendingApproval) {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const { data: recentApprovals } = await admin
+        .from('autonomous_runner_approvals')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pending')
+        .gte('created_at', twoHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (recentApprovals && recentApprovals.length > 0) {
+        pendingApproval = recentApprovals[0];
+      }
+    }
+
+    if (pendingApproval) {
+      const payload = (pendingApproval.payload || {}) as Record<string, unknown>;
+      const toolName = String(payload.tool_name || pendingApproval.action_key || 'Action').replace(
+        /^(bonnie|mcp|playbook):/,
+        ''
+      );
+      const editHistory = Array.isArray(pendingApproval.edit_history) ? pendingApproval.edit_history : [];
+
+      await admin
+        .from('autonomous_runner_approvals')
+        .update({
+          status: 'rejected',
+          edit_history: [
+            ...editHistory,
+            { timestamp: new Date().toISOString(), action: 'rejected_via_chat', rejected_by: userId },
+          ],
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pendingApproval.id)
+        .eq('tenant_id', tenantId);
+
+      const response = `Cancelled. I have rejected the pending action "${toolName}".`;
+      void wfUpdate({ status: 'completed', finalResponse: response, executionStatus: 'executed', completedAt: true });
+
+      return {
+        response,
+        success: true,
+        provider,
+        model,
+        toolResults: [],
+        logs: [`Pending action ${pendingApproval.id} (${toolName}) rejected via natural language.`],
+        rounds: 1,
+        executionStatus: 'executed',
+        workflowId: workflowId ?? undefined,
+      };
+    }
+  }
+
   const conversationMode = detectConversationMode(instruction);
 
   if (conversationMode === 'briefing') {

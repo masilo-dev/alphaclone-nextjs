@@ -46,7 +46,9 @@ registerTool('invoicing', {
   description: 'Create a new invoice. Generates a Stripe payment link when Connect is active. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
-    client_id: z.string().uuid(),
+    client_id: z.string().uuid().optional(),
+    client_name: z.string().optional(),
+    customer_name: z.string().optional(),
     amount: z.number().positive(),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional().default('draft'),
     due_date: z.string().optional(),
@@ -60,7 +62,9 @@ registerTool('invoicing', {
   jsonSchema: {
     type: 'object',
     properties: {
-      client_id: { type: 'string', format: 'uuid' },
+      client_id: { type: 'string', format: 'uuid', description: 'Client UUID (preferred). If unknown, supply client_name or customer_name and the system will resolve it.' },
+      client_name: { type: 'string', description: 'Client display name — used to resolve client_id when UUID is not known.' },
+      customer_name: { type: 'string', description: 'Alias for client_name.' },
       amount: { type: 'number', description: 'Total invoice amount' },
       status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'], default: 'draft' },
       due_date: { type: 'string', format: 'date-time' },
@@ -71,20 +75,60 @@ registerTool('invoicing', {
       payment_reference: { type: 'string' },
       bank_details: { type: 'string' },
     },
-    required: ['client_id', 'amount'],
+    required: ['amount'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     if (args.status === 'paid') {
       throw new Error(
         'INVOICE_PAYMENT_EVIDENCE_REQUIRED: use reconcile_payment or the invoice payment endpoint',
       );
     }
     const supabase = createSupabaseAdminClient();
+    const tenantId = args.tenant_id || ctx.tenantId;
+    if (!tenantId) throw new Error('tenant_id is required');
+
+    // Resolve client_id from name if not provided directly
+    let clientId = args.client_id;
+    if (!clientId) {
+      const nameQuery = String(args.client_name || args.customer_name || '').trim();
+      if (!nameQuery) throw new Error('client_id or client_name/customer_name is required to create an invoice');
+
+      // Try contacts table first
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .ilike('name', `%${nameQuery}%`)
+        .limit(1);
+      if (contacts && contacts.length > 0) {
+        clientId = contacts[0].id;
+      }
+
+      // Fall back to business_clients
+      if (!clientId) {
+        const { data: bizClients } = await supabase
+          .from('business_clients')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .ilike('name', `%${nameQuery}%`)
+          .limit(1);
+        if (bizClients && bizClients.length > 0) {
+          clientId = bizClients[0].id;
+        }
+      }
+
+      if (!clientId) {
+        throw new Error(
+          `Could not find a client matching "${nameQuery}". Please check the name or provide the client UUID directly.`,
+        );
+      }
+    }
+
     const { insertBusinessInvoiceSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
 
     const { data, error } = await insertBusinessInvoiceSchemaCompat(supabase, {
-      tenant_id: args.tenant_id!,
-      client_id: args.client_id,
+      tenant_id: tenantId,
+      client_id: clientId,
       amount: args.amount,
       status: args.status,
       due_date: args.due_date,
@@ -99,7 +143,7 @@ registerTool('invoicing', {
     if (error) throw error;
 
     const payment = await ensureInvoicePaymentLink({
-      tenantId: args.tenant_id!, // guaranteed by session injection via forceSessionArgs
+      tenantId,
       invoiceId: data.id,
     });
 
