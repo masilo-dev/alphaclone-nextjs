@@ -1,17 +1,56 @@
 {
-  "generated_at": "2026-09-02T10:01:09.149Z",
+  "generated_at": "2026-09-25T11:34:06.489Z",
   "audit_prefix": "MCP_AUDIT_20260826",
   "phase": "1-4_inventory_static_safe_execution",
   "expected_tools_baseline": 518,
-  "discovered_tools": 530,
-  "implemented_tools": 530,
+  "discovered_tools": 568,
+  "implemented_tools": 568,
   "registry_route_tools": 7,
   "count_reconciliation": {
     "expected_baseline": 518,
-    "runtime_discovered": 530,
-    "delta": 12,
-    "delta_tools": [],
-    "explanation": "Runtime catalog has 530 tools; baseline 518 reflects chatgpt-app-submission.json (530 entries). Delta: none.",
+    "runtime_discovered": 568,
+    "delta": 50,
+    "delta_tools": [
+      "approve_chase_action",
+      "cancel_research_job",
+      "create_media_upload_session",
+      "crm_pipeline_report",
+      "finalize_media_upload",
+      "find_duplicate_clients",
+      "get_bulk_job_status",
+      "get_chase_brief",
+      "get_chase_health",
+      "get_chase_item",
+      "get_daily_project_brief",
+      "get_mailbox_health_status",
+      "get_outbound_overview",
+      "get_outreach_thread",
+      "get_project_intelligence",
+      "get_research_job",
+      "get_research_results",
+      "get_social_content_recommendations",
+      "handle_lead_objection",
+      "import_research_leads",
+      "list_chase_items",
+      "list_outbound_icps",
+      "list_overdue_or_blocked_projects",
+      "list_projects_waiting_on_approval",
+      "list_projects_waiting_on_payment",
+      "merge_client_identities",
+      "qualify_outbound_lead",
+      "qualify_research_results",
+      "read_outreach_inbox",
+      "reassign_chase",
+      "research_businesses",
+      "run_chase_scan",
+      "snooze_chase",
+      "start_chase",
+      "stop_chase",
+      "update_chase_policy",
+      "upload_media_chunk",
+      "verify_outbound_email"
+    ],
+    "explanation": "Runtime catalog has 568 tools; baseline 518 reflects chatgpt-app-submission.json (530 entries). Delta: approve_chase_action, cancel_research_job, create_media_upload_session, crm_pipeline_report, finalize_media_upload, find_duplicate_clients, get_bulk_job_status, get_chase_brief, get_chase_health, get_chase_item, get_daily_project_brief, get_mailbox_health_status, get_outbound_overview, get_outreach_thread, get_project_intelligence, get_research_job, get_research_results, get_social_content_recommendations, handle_lead_objection, import_research_leads, list_chase_items, list_outbound_icps, list_overdue_or_blocked_projects, list_projects_waiting_on_approval, list_projects_waiting_on_payment, merge_client_identities, qualify_outbound_lead, qualify_research_results, read_outreach_inbox, reassign_chase, research_businesses, run_chase_scan, snooze_chase, start_chase, stop_chase, update_chase_policy, upload_media_chunk, verify_outbound_email.",
     "duplicate_names": [],
     "orphaned_registry_tools": [],
     "catalog_only_tools": []
@@ -25,16 +64,16 @@
   },
   "totals": {
     "tools_executed": 0,
-    "tools_passed": 198,
+    "tools_passed": 218,
     "tools_failed": 0,
-    "tools_blocked_by_safety": 332,
+    "tools_blocked_by_safety": 350,
     "tools_blocked_missing_credentials": 0,
     "tools_blocked_provider": 0,
     "tools_not_executable": 0,
     "tools_static_fail": 0,
-    "pass_percentage": 37.4,
-    "BLOCKED_BY_SAFETY": 332,
-    "PASS": 198
+    "pass_percentage": 38.4,
+    "BLOCKED_BY_SAFETY": 350,
+    "PASS": 218
   },
   "failures_by_root_cause": {},
   "execution_log_sample": [],
@@ -275,6 +314,24 @@
     },
     {
       "index": 14,
+      "tool": "approve_chase_action",
+      "tool_id": "alphaclone.mcp.approve_chase_action",
+      "module": "approvals",
+      "risk": "high",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-175e65d933f7",
+      "root_cause": "write_tool_requires_approval_and_--execute-write",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 15,
       "tool": "approve_document",
       "tool_id": "alphaclone.mcp.approve_document",
       "module": "approvals",
@@ -292,7 +349,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 15,
+      "index": 16,
       "tool": "approve_dream_update",
       "tool_id": "alphaclone.mcp.approve_dream_update",
       "module": "approvals",
@@ -310,7 +367,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 16,
+      "index": 17,
       "tool": "approve_pending_action",
       "tool_id": "alphaclone.mcp.approve_pending_action",
       "module": "approvals",
@@ -328,7 +385,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 17,
+      "index": 18,
       "tool": "approve_workflow_step",
       "tool_id": "alphaclone.mcp.approve_workflow_step",
       "module": "approvals",
@@ -346,7 +403,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 18,
+      "index": 19,
       "tool": "archive_document",
       "tool_id": "alphaclone.mcp.archive_document",
       "module": "documents",
@@ -364,7 +421,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 19,
+      "index": 20,
       "tool": "ask_bonnie_operations",
       "tool_id": "alphaclone.mcp.ask_bonnie_operations",
       "module": "bonnie",
@@ -382,7 +439,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 20,
+      "index": 21,
       "tool": "audit_platform",
       "tool_id": "alphaclone.mcp.audit_platform",
       "module": "admin",
@@ -400,7 +457,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 21,
+      "index": 22,
       "tool": "auto_create_lead_from_message",
       "tool_id": "alphaclone.mcp.auto_create_lead_from_message",
       "module": "leads",
@@ -418,7 +475,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 22,
+      "index": 23,
       "tool": "automate_expense_entry",
       "tool_id": "alphaclone.mcp.automate_expense_entry",
       "module": "workspace",
@@ -436,7 +493,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 23,
+      "index": 24,
       "tool": "autonomous_reply",
       "tool_id": "alphaclone.mcp.autonomous_reply",
       "module": "email",
@@ -454,7 +511,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 24,
+      "index": 25,
       "tool": "award_points",
       "tool_id": "alphaclone.mcp.award_points",
       "module": "workspace",
@@ -472,7 +529,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 25,
+      "index": 26,
       "tool": "backfill_contact_phone_country_codes",
       "tool_id": "alphaclone.mcp.backfill_contact_phone_country_codes",
       "module": "contacts",
@@ -490,7 +547,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 26,
+      "index": 27,
       "tool": "book_calendar_meeting",
       "tool_id": "alphaclone.mcp.book_calendar_meeting",
       "module": "calendar",
@@ -508,7 +565,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 27,
+      "index": 28,
       "tool": "bulk_add_to_segment",
       "tool_id": "alphaclone.mcp.bulk_add_to_segment",
       "module": "workspace",
@@ -526,7 +583,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 28,
+      "index": 29,
       "tool": "bulk_archive_leads",
       "tool_id": "alphaclone.mcp.bulk_archive_leads",
       "module": "leads",
@@ -544,7 +601,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 29,
+      "index": 30,
       "tool": "bulk_assign_campaign",
       "tool_id": "alphaclone.mcp.bulk_assign_campaign",
       "module": "social",
@@ -562,7 +619,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 30,
+      "index": 31,
       "tool": "bulk_create_leads",
       "tool_id": "alphaclone.mcp.bulk_create_leads",
       "module": "leads",
@@ -580,7 +637,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 31,
+      "index": 32,
       "tool": "bulk_update_leads",
       "tool_id": "alphaclone.mcp.bulk_update_leads",
       "module": "leads",
@@ -598,7 +655,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 32,
+      "index": 33,
       "tool": "bulk_update_records",
       "tool_id": "alphaclone.mcp.bulk_update_records",
       "module": "workspace",
@@ -616,7 +673,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 33,
+      "index": 34,
       "tool": "bulk_upload_media",
       "tool_id": "alphaclone.mcp.bulk_upload_media",
       "module": "media",
@@ -634,7 +691,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 34,
+      "index": 35,
       "tool": "bulk_upsert_contacts",
       "tool_id": "alphaclone.mcp.bulk_upsert_contacts",
       "module": "contacts",
@@ -652,7 +709,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 35,
+      "index": 36,
       "tool": "business_memory_graph",
       "tool_id": "alphaclone.mcp.business_memory_graph",
       "module": "bonnie",
@@ -670,7 +727,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 36,
+      "index": 37,
       "tool": "calcom_health",
       "tool_id": "alphaclone.mcp.calcom_health",
       "module": "health",
@@ -688,7 +745,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 37,
+      "index": 38,
       "tool": "calendly_health",
       "tool_id": "alphaclone.mcp.calendly_health",
       "module": "health",
@@ -706,7 +763,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 38,
+      "index": 39,
       "tool": "campaign_brief",
       "tool_id": "alphaclone.mcp.campaign_brief",
       "module": "social",
@@ -724,7 +781,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 39,
+      "index": 40,
       "tool": "campaign_diagnose",
       "tool_id": "alphaclone.mcp.campaign_diagnose",
       "module": "social",
@@ -742,7 +799,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 40,
+      "index": 41,
       "tool": "campaign_metrics",
       "tool_id": "alphaclone.mcp.campaign_metrics",
       "module": "reporting",
@@ -760,7 +817,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 41,
+      "index": 42,
       "tool": "campaigns",
       "tool_id": "alphaclone.mcp.campaigns",
       "module": "social",
@@ -778,7 +835,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 42,
+      "index": 43,
       "tool": "cancel_meeting",
       "tool_id": "alphaclone.mcp.cancel_meeting",
       "module": "calendar",
@@ -796,7 +853,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 43,
+      "index": 44,
+      "tool": "cancel_research_job",
+      "tool_id": "alphaclone.mcp.cancel_research_job",
+      "module": "search",
+      "risk": "critical",
+      "test_performed": "static_contract_destructive_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-bacbccf5e6f0",
+      "root_cause": "destructive_tool_requires_--execute-write_in_staging",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 45,
       "tool": "cancel_run",
       "tool_id": "alphaclone.mcp.cancel_run",
       "module": "workspace",
@@ -814,7 +889,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 44,
+      "index": 46,
       "tool": "capture_linkedin_comment_leads",
       "tool_id": "alphaclone.mcp.capture_linkedin_comment_leads",
       "module": "leads",
@@ -832,7 +907,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 45,
+      "index": 47,
       "tool": "change_pipeline_stage",
       "tool_id": "alphaclone.mcp.change_pipeline_stage",
       "module": "crm",
@@ -850,7 +925,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 46,
+      "index": 48,
       "tool": "chase_contract_signature",
       "tool_id": "alphaclone.mcp.chase_contract_signature",
       "module": "documents",
@@ -868,7 +943,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 47,
+      "index": 49,
       "tool": "check_mcp_execution_readiness",
       "tool_id": "alphaclone.mcp.check_mcp_execution_readiness",
       "module": "health",
@@ -886,7 +961,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 48,
+      "index": 50,
       "tool": "classify_outreach_reply",
       "tool_id": "alphaclone.mcp.classify_outreach_reply",
       "module": "email",
@@ -904,7 +979,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 49,
+      "index": 51,
       "tool": "client_pulse",
       "tool_id": "alphaclone.mcp.client_pulse",
       "module": "contacts",
@@ -922,7 +997,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 50,
+      "index": 52,
       "tool": "compare_contract_versions",
       "tool_id": "alphaclone.mcp.compare_contract_versions",
       "module": "documents",
@@ -940,7 +1015,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 51,
+      "index": 53,
       "tool": "compare_document_versions",
       "tool_id": "alphaclone.mcp.compare_document_versions",
       "module": "documents",
@@ -958,7 +1033,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 52,
+      "index": 54,
       "tool": "compare_versions",
       "tool_id": "alphaclone.mcp.compare_versions",
       "module": "health",
@@ -976,7 +1051,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 53,
+      "index": 55,
       "tool": "connected_accounts",
       "tool_id": "alphaclone.mcp.connected_accounts",
       "module": "integrations",
@@ -994,7 +1069,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 54,
+      "index": 56,
       "tool": "conversions",
       "tool_id": "alphaclone.mcp.conversions",
       "module": "health",
@@ -1012,7 +1087,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 55,
+      "index": 57,
       "tool": "convert_quote_to_invoice",
       "tool_id": "alphaclone.mcp.convert_quote_to_invoice",
       "module": "invoices",
@@ -1030,7 +1105,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 56,
+      "index": 58,
       "tool": "create_bank_account",
       "tool_id": "alphaclone.mcp.create_bank_account",
       "module": "integrations",
@@ -1048,7 +1123,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 57,
+      "index": 59,
       "tool": "create_bulk_email_batch",
       "tool_id": "alphaclone.mcp.create_bulk_email_batch",
       "module": "email",
@@ -1066,7 +1141,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 58,
+      "index": 60,
       "tool": "create_bulk_email_campaign",
       "tool_id": "alphaclone.mcp.create_bulk_email_campaign",
       "module": "social",
@@ -1084,7 +1159,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 59,
+      "index": 61,
       "tool": "create_business_event",
       "tool_id": "alphaclone.mcp.create_business_event",
       "module": "calendar",
@@ -1102,7 +1177,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 60,
+      "index": 62,
       "tool": "create_client",
       "tool_id": "alphaclone.mcp.create_client",
       "module": "contacts",
@@ -1120,7 +1195,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 61,
+      "index": 63,
       "tool": "create_client_portal_event",
       "tool_id": "alphaclone.mcp.create_client_portal_event",
       "module": "calendar",
@@ -1138,7 +1213,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 62,
+      "index": 64,
       "tool": "create_contact",
       "tool_id": "alphaclone.mcp.create_contact",
       "module": "contacts",
@@ -1156,7 +1231,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 63,
+      "index": 65,
       "tool": "create_contract",
       "tool_id": "alphaclone.mcp.create_contract",
       "module": "documents",
@@ -1174,7 +1249,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 64,
+      "index": 66,
       "tool": "create_contract_template",
       "tool_id": "alphaclone.mcp.create_contract_template",
       "module": "documents",
@@ -1192,7 +1267,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 65,
+      "index": 67,
       "tool": "create_contract_version",
       "tool_id": "alphaclone.mcp.create_contract_version",
       "module": "documents",
@@ -1210,7 +1285,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 66,
+      "index": 68,
       "tool": "create_deal",
       "tool_id": "alphaclone.mcp.create_deal",
       "module": "revenue",
@@ -1228,7 +1303,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 67,
+      "index": 69,
       "tool": "create_document",
       "tool_id": "alphaclone.mcp.create_document",
       "module": "documents",
@@ -1246,7 +1321,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 68,
+      "index": 70,
       "tool": "create_document_version",
       "tool_id": "alphaclone.mcp.create_document_version",
       "module": "documents",
@@ -1264,7 +1339,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 69,
+      "index": 71,
       "tool": "create_email_draft",
       "tool_id": "alphaclone.mcp.create_email_draft",
       "module": "social",
@@ -1282,7 +1357,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 70,
+      "index": 72,
       "tool": "create_email_sequence",
       "tool_id": "alphaclone.mcp.create_email_sequence",
       "module": "email",
@@ -1300,7 +1375,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 71,
+      "index": 73,
       "tool": "create_expense",
       "tool_id": "alphaclone.mcp.create_expense",
       "module": "workspace",
@@ -1318,7 +1393,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 72,
+      "index": 74,
       "tool": "create_follow_up",
       "tool_id": "alphaclone.mcp.create_follow_up",
       "module": "contacts",
@@ -1336,7 +1411,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 73,
+      "index": 75,
       "tool": "create_in_app_notification",
       "tool_id": "alphaclone.mcp.create_in_app_notification",
       "module": "workspace",
@@ -1354,7 +1429,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 74,
+      "index": 76,
       "tool": "create_invoice",
       "tool_id": "alphaclone.mcp.create_invoice",
       "module": "invoices",
@@ -1372,7 +1447,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 75,
+      "index": 77,
       "tool": "create_invoice_collection_mission",
       "tool_id": "alphaclone.mcp.create_invoice_collection_mission",
       "module": "invoices",
@@ -1390,7 +1465,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 76,
+      "index": 78,
       "tool": "create_journal_entry",
       "tool_id": "alphaclone.mcp.create_journal_entry",
       "module": "workspace",
@@ -1408,7 +1483,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 77,
+      "index": 79,
       "tool": "create_lead",
       "tool_id": "alphaclone.mcp.create_lead",
       "module": "leads",
@@ -1426,7 +1501,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 78,
+      "index": 80,
       "tool": "create_leads",
       "tool_id": "alphaclone.mcp.create_leads",
       "module": "leads",
@@ -1444,7 +1519,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 79,
+      "index": 81,
       "tool": "create_linkedin_comment",
       "tool_id": "alphaclone.mcp.create_linkedin_comment",
       "module": "social",
@@ -1462,7 +1537,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 80,
+      "index": 82,
       "tool": "create_linkedin_event",
       "tool_id": "alphaclone.mcp.create_linkedin_event",
       "module": "calendar",
@@ -1480,7 +1555,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 81,
+      "index": 83,
       "tool": "create_linkedin_post",
       "tool_id": "alphaclone.mcp.create_linkedin_post",
       "module": "social",
@@ -1498,7 +1573,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 82,
+      "index": 84,
       "tool": "create_linkedin_reaction",
       "tool_id": "alphaclone.mcp.create_linkedin_reaction",
       "module": "social",
@@ -1516,7 +1591,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 83,
+      "index": 85,
+      "tool": "create_media_upload_session",
+      "tool_id": "alphaclone.mcp.create_media_upload_session",
+      "module": "media",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-e37a816ebcf9",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 86,
       "tool": "create_meeting",
       "tool_id": "alphaclone.mcp.create_meeting",
       "module": "calendar",
@@ -1534,7 +1627,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 84,
+      "index": 87,
       "tool": "create_post",
       "tool_id": "alphaclone.mcp.create_post",
       "module": "social",
@@ -1552,7 +1645,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 85,
+      "index": 88,
       "tool": "create_post_with_ai_image",
       "tool_id": "alphaclone.mcp.create_post_with_ai_image",
       "module": "media",
@@ -1570,7 +1663,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 86,
+      "index": 89,
       "tool": "create_project",
       "tool_id": "alphaclone.mcp.create_project",
       "module": "projects",
@@ -1588,7 +1681,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 87,
+      "index": 90,
       "tool": "create_project_task",
       "tool_id": "alphaclone.mcp.create_project_task",
       "module": "tasks",
@@ -1606,7 +1699,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 88,
+      "index": 91,
       "tool": "create_quote",
       "tool_id": "alphaclone.mcp.create_quote",
       "module": "revenue",
@@ -1624,7 +1717,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 89,
+      "index": 92,
       "tool": "create_reconciliation_session",
       "tool_id": "alphaclone.mcp.create_reconciliation_session",
       "module": "workspace",
@@ -1642,7 +1735,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 90,
+      "index": 93,
       "tool": "create_social_post",
       "tool_id": "alphaclone.mcp.create_social_post",
       "module": "social",
@@ -1660,7 +1753,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 91,
+      "index": 94,
       "tool": "create_social_post_with_ai_image",
       "tool_id": "alphaclone.mcp.create_social_post_with_ai_image",
       "module": "media",
@@ -1678,7 +1771,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 92,
+      "index": 95,
       "tool": "create_social_post_with_media",
       "tool_id": "alphaclone.mcp.create_social_post_with_media",
       "module": "media",
@@ -1696,7 +1789,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 93,
+      "index": 96,
       "tool": "create_subscription_checkout",
       "tool_id": "alphaclone.mcp.create_subscription_checkout",
       "module": "revenue",
@@ -1714,7 +1807,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 94,
+      "index": 97,
       "tool": "create_task",
       "tool_id": "alphaclone.mcp.create_task",
       "module": "tasks",
@@ -1732,7 +1825,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 95,
+      "index": 98,
       "tool": "create_tasks_batch",
       "tool_id": "alphaclone.mcp.create_tasks_batch",
       "module": "tasks",
@@ -1750,7 +1843,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 96,
+      "index": 99,
       "tool": "create_ticket",
       "tool_id": "alphaclone.mcp.create_ticket",
       "module": "support",
@@ -1768,7 +1861,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 97,
+      "index": 100,
       "tool": "create_vendor_bill",
       "tool_id": "alphaclone.mcp.create_vendor_bill",
       "module": "workspace",
@@ -1786,7 +1879,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 98,
+      "index": 101,
+      "tool": "crm_pipeline_report",
+      "tool_id": "alphaclone.mcp.crm_pipeline_report",
+      "module": "reporting",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-492102be8354",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 102,
       "tool": "customer_report",
       "tool_id": "alphaclone.mcp.customer_report",
       "module": "reporting",
@@ -1804,7 +1915,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 99,
+      "index": 103,
       "tool": "dashboard_metrics",
       "tool_id": "alphaclone.mcp.dashboard_metrics",
       "module": "reporting",
@@ -1822,7 +1933,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 100,
+      "index": 104,
       "tool": "deal_to_cash_flow",
       "tool_id": "alphaclone.mcp.deal_to_cash_flow",
       "module": "revenue",
@@ -1840,7 +1951,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 101,
+      "index": 105,
       "tool": "decline_document",
       "tool_id": "alphaclone.mcp.decline_document",
       "module": "documents",
@@ -1858,7 +1969,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 102,
+      "index": 106,
       "tool": "deepseek_health",
       "tool_id": "alphaclone.mcp.deepseek_health",
       "module": "health",
@@ -1876,7 +1987,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 103,
+      "index": 107,
       "tool": "define_outcome",
       "tool_id": "alphaclone.mcp.define_outcome",
       "module": "bonnie",
@@ -1894,7 +2005,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 104,
+      "index": 108,
       "tool": "delete_contact",
       "tool_id": "alphaclone.mcp.delete_contact",
       "module": "contacts",
@@ -1912,7 +2023,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 105,
+      "index": 109,
       "tool": "delete_facebook_post",
       "tool_id": "alphaclone.mcp.delete_facebook_post",
       "module": "social",
@@ -1930,7 +2041,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 106,
+      "index": 110,
       "tool": "delete_lead",
       "tool_id": "alphaclone.mcp.delete_lead",
       "module": "leads",
@@ -1948,7 +2059,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 107,
+      "index": 111,
       "tool": "delete_media",
       "tool_id": "alphaclone.mcp.delete_media",
       "module": "media",
@@ -1966,7 +2077,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 108,
+      "index": 112,
       "tool": "delete_media_asset",
       "tool_id": "alphaclone.mcp.delete_media_asset",
       "module": "media",
@@ -1984,7 +2095,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 109,
+      "index": 113,
       "tool": "delete_post",
       "tool_id": "alphaclone.mcp.delete_post",
       "module": "social",
@@ -2002,7 +2113,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 110,
+      "index": 114,
       "tool": "delete_social_post",
       "tool_id": "alphaclone.mcp.delete_social_post",
       "module": "social",
@@ -2020,7 +2131,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 111,
+      "index": 115,
       "tool": "disable_whatsapp_chatbot",
       "tool_id": "alphaclone.mcp.disable_whatsapp_chatbot",
       "module": "workspace",
@@ -2038,7 +2149,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 112,
+      "index": 116,
       "tool": "dispatch_tool",
       "tool_id": "alphaclone.mcp.dispatch_tool",
       "module": "workspace",
@@ -2056,7 +2167,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 113,
+      "index": 117,
       "tool": "document_qa",
       "tool_id": "alphaclone.mcp.document_qa",
       "module": "documents",
@@ -2074,7 +2185,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 114,
+      "index": 118,
       "tool": "document_url_qa",
       "tool_id": "alphaclone.mcp.document_url_qa",
       "module": "documents",
@@ -2092,7 +2203,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 115,
+      "index": 119,
       "tool": "document_versions",
       "tool_id": "alphaclone.mcp.document_versions",
       "module": "documents",
@@ -2110,7 +2221,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 116,
+      "index": 120,
       "tool": "draft_reply",
       "tool_id": "alphaclone.mcp.draft_reply",
       "module": "social",
@@ -2128,7 +2239,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 117,
+      "index": 121,
       "tool": "drafts",
       "tool_id": "alphaclone.mcp.drafts",
       "module": "social",
@@ -2146,7 +2257,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 118,
+      "index": 122,
       "tool": "email_campaigns",
       "tool_id": "alphaclone.mcp.email_campaigns",
       "module": "social",
@@ -2164,7 +2275,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 119,
+      "index": 123,
       "tool": "enable_lead_auto_outreach",
       "tool_id": "alphaclone.mcp.enable_lead_auto_outreach",
       "module": "leads",
@@ -2182,7 +2293,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 120,
+      "index": 124,
       "tool": "enable_whatsapp_chatbot",
       "tool_id": "alphaclone.mcp.enable_whatsapp_chatbot",
       "module": "workspace",
@@ -2200,7 +2311,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 121,
+      "index": 125,
       "tool": "engagement_report",
       "tool_id": "alphaclone.mcp.engagement_report",
       "module": "reporting",
@@ -2218,7 +2329,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 122,
+      "index": 126,
       "tool": "enroll_contact_in_sequence",
       "tool_id": "alphaclone.mcp.enroll_contact_in_sequence",
       "module": "contacts",
@@ -2236,7 +2347,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 123,
+      "index": 127,
       "tool": "escalate_ticket",
       "tool_id": "alphaclone.mcp.escalate_ticket",
       "module": "support",
@@ -2254,7 +2365,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 124,
+      "index": 128,
       "tool": "evaluate_business_ai_readiness",
       "tool_id": "alphaclone.mcp.evaluate_business_ai_readiness",
       "module": "health",
@@ -2272,7 +2383,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 125,
+      "index": 129,
       "tool": "events",
       "tool_id": "alphaclone.mcp.events",
       "module": "calendar",
@@ -2290,7 +2401,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 126,
+      "index": 130,
       "tool": "execute_action",
       "tool_id": "alphaclone.mcp.execute_action",
       "module": "workspace",
@@ -2308,7 +2419,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 127,
+      "index": 131,
       "tool": "execute_internal_tool",
       "tool_id": "alphaclone.mcp.execute_internal_tool",
       "module": "workspace",
@@ -2326,7 +2437,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 128,
+      "index": 132,
       "tool": "execute_strategic_intelligence",
       "tool_id": "alphaclone.mcp.execute_strategic_intelligence",
       "module": "workspace",
@@ -2344,7 +2455,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 129,
+      "index": 133,
       "tool": "export_document_record",
       "tool_id": "alphaclone.mcp.export_document_record",
       "module": "documents",
@@ -2362,7 +2473,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 130,
+      "index": 134,
       "tool": "export_to_google_workspace",
       "tool_id": "alphaclone.mcp.export_to_google_workspace",
       "module": "integrations",
@@ -2380,7 +2491,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 131,
+      "index": 135,
       "tool": "fetch",
       "tool_id": "alphaclone.mcp.fetch",
       "module": "search",
@@ -2398,7 +2509,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 132,
+      "index": 136,
+      "tool": "finalize_media_upload",
+      "tool_id": "alphaclone.mcp.finalize_media_upload",
+      "module": "media",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-0e6bd85b1401",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 137,
       "tool": "find_and_qualify_leads",
       "tool_id": "alphaclone.mcp.find_and_qualify_leads",
       "module": "leads",
@@ -2416,7 +2545,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 133,
+      "index": 138,
+      "tool": "find_duplicate_clients",
+      "tool_id": "alphaclone.mcp.find_duplicate_clients",
+      "module": "search",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-f10c7e322378",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "email_provider",
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 139,
       "tool": "funnels",
       "tool_id": "alphaclone.mcp.funnels",
       "module": "marketing",
@@ -2434,7 +2581,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 134,
+      "index": 140,
       "tool": "generate_ai_image",
       "tool_id": "alphaclone.mcp.generate_ai_image",
       "module": "media",
@@ -2452,7 +2599,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 135,
+      "index": 141,
       "tool": "generate_business_report",
       "tool_id": "alphaclone.mcp.generate_business_report",
       "module": "reporting",
@@ -2470,7 +2617,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 136,
+      "index": 142,
       "tool": "generate_contract_draft",
       "tool_id": "alphaclone.mcp.generate_contract_draft",
       "module": "documents",
@@ -2488,7 +2635,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 137,
+      "index": 143,
       "tool": "generate_contract_signing_token",
       "tool_id": "alphaclone.mcp.generate_contract_signing_token",
       "module": "documents",
@@ -2506,7 +2653,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 138,
+      "index": 144,
       "tool": "generate_expense_report",
       "tool_id": "alphaclone.mcp.generate_expense_report",
       "module": "reporting",
@@ -2524,7 +2671,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 139,
+      "index": 145,
       "tool": "generate_grok_video",
       "tool_id": "alphaclone.mcp.generate_grok_video",
       "module": "media",
@@ -2542,7 +2689,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 140,
+      "index": 146,
       "tool": "generate_image",
       "tool_id": "alphaclone.mcp.generate_image",
       "module": "media",
@@ -2560,7 +2707,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 141,
+      "index": 147,
       "tool": "generate_market_authority_report",
       "tool_id": "alphaclone.mcp.generate_market_authority_report",
       "module": "reporting",
@@ -2578,7 +2725,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 142,
+      "index": 148,
       "tool": "generate_outreach_draft",
       "tool_id": "alphaclone.mcp.generate_outreach_draft",
       "module": "social",
@@ -2596,7 +2743,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 143,
+      "index": 149,
       "tool": "generate_viral_video_script",
       "tool_id": "alphaclone.mcp.generate_viral_video_script",
       "module": "media",
@@ -2614,7 +2761,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 144,
+      "index": 150,
       "tool": "get_account_overview",
       "tool_id": "alphaclone.mcp.get_account_overview",
       "module": "integrations",
@@ -2632,7 +2779,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 145,
+      "index": 151,
       "tool": "get_accounts_payable_aging",
       "tool_id": "alphaclone.mcp.get_accounts_payable_aging",
       "module": "integrations",
@@ -2650,7 +2797,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 146,
+      "index": 152,
       "tool": "get_accounts_receivable_aging",
       "tool_id": "alphaclone.mcp.get_accounts_receivable_aging",
       "module": "integrations",
@@ -2668,7 +2815,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 147,
+      "index": 153,
       "tool": "get_action_status",
       "tool_id": "alphaclone.mcp.get_action_status",
       "module": "health",
@@ -2686,7 +2833,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 148,
+      "index": 154,
       "tool": "get_agentic_os_status",
       "tool_id": "alphaclone.mcp.get_agentic_os_status",
       "module": "health",
@@ -2704,7 +2851,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 149,
+      "index": 155,
       "tool": "get_api_health",
       "tool_id": "alphaclone.mcp.get_api_health",
       "module": "health",
@@ -2722,7 +2869,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 150,
+      "index": 156,
       "tool": "get_audit_logs",
       "tool_id": "alphaclone.mcp.get_audit_logs",
       "module": "admin",
@@ -2740,7 +2887,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 151,
+      "index": 157,
       "tool": "get_automation_health",
       "tool_id": "alphaclone.mcp.get_automation_health",
       "module": "workflows",
@@ -2758,7 +2905,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 152,
+      "index": 158,
       "tool": "get_balance_sheet",
       "tool_id": "alphaclone.mcp.get_balance_sheet",
       "module": "workspace",
@@ -2776,7 +2923,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 153,
+      "index": 159,
       "tool": "get_bank_accounts",
       "tool_id": "alphaclone.mcp.get_bank_accounts",
       "module": "integrations",
@@ -2794,7 +2941,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 154,
+      "index": 160,
       "tool": "get_batch_job_status",
       "tool_id": "alphaclone.mcp.get_batch_job_status",
       "module": "health",
@@ -2812,7 +2959,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 155,
+      "index": 161,
+      "tool": "get_bulk_job_status",
+      "tool_id": "alphaclone.mcp.get_bulk_job_status",
+      "module": "health",
+      "risk": "high",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-bff377f9a627",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 162,
       "tool": "get_business_ai_state",
       "tool_id": "alphaclone.mcp.get_business_ai_state",
       "module": "bonnie",
@@ -2830,7 +2995,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 156,
+      "index": 163,
       "tool": "get_business_digital_twin",
       "tool_id": "alphaclone.mcp.get_business_digital_twin",
       "module": "bonnie",
@@ -2848,7 +3013,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 157,
+      "index": 164,
       "tool": "get_business_events",
       "tool_id": "alphaclone.mcp.get_business_events",
       "module": "calendar",
@@ -2866,7 +3031,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 158,
+      "index": 165,
       "tool": "get_business_health_summary",
       "tool_id": "alphaclone.mcp.get_business_health_summary",
       "module": "health",
@@ -2884,7 +3049,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 159,
+      "index": 166,
       "tool": "get_business_snapshot",
       "tool_id": "alphaclone.mcp.get_business_snapshot",
       "module": "workspace",
@@ -2902,7 +3067,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 160,
+      "index": 167,
       "tool": "get_calendly_status",
       "tool_id": "alphaclone.mcp.get_calendly_status",
       "module": "health",
@@ -2920,7 +3085,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 161,
+      "index": 168,
       "tool": "get_cash_flow_statement",
       "tool_id": "alphaclone.mcp.get_cash_flow_statement",
       "module": "workspace",
@@ -2938,7 +3103,61 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 162,
+      "index": 169,
+      "tool": "get_chase_brief",
+      "tool_id": "alphaclone.mcp.get_chase_brief",
+      "module": "workspace",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-c8a161254cdc",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 170,
+      "tool": "get_chase_health",
+      "tool_id": "alphaclone.mcp.get_chase_health",
+      "module": "health",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-000d0b99a0fe",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 171,
+      "tool": "get_chase_item",
+      "tool_id": "alphaclone.mcp.get_chase_item",
+      "module": "workspace",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-24ff9f02ed54",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 172,
       "tool": "get_chatbot_conversations",
       "tool_id": "alphaclone.mcp.get_chatbot_conversations",
       "module": "workspace",
@@ -2956,7 +3175,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 163,
+      "index": 173,
       "tool": "get_chatbot_performance",
       "tool_id": "alphaclone.mcp.get_chatbot_performance",
       "module": "workspace",
@@ -2974,7 +3193,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 164,
+      "index": 174,
       "tool": "get_chatbot_persona",
       "tool_id": "alphaclone.mcp.get_chatbot_persona",
       "module": "workspace",
@@ -2992,7 +3211,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 165,
+      "index": 175,
       "tool": "get_client_by_id",
       "tool_id": "alphaclone.mcp.get_client_by_id",
       "module": "contacts",
@@ -3010,7 +3229,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 166,
+      "index": 176,
       "tool": "get_client_email_history",
       "tool_id": "alphaclone.mcp.get_client_email_history",
       "module": "contacts",
@@ -3028,7 +3247,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 167,
+      "index": 177,
       "tool": "get_client_history",
       "tool_id": "alphaclone.mcp.get_client_history",
       "module": "contacts",
@@ -3046,7 +3265,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 168,
+      "index": 178,
       "tool": "get_clients",
       "tool_id": "alphaclone.mcp.get_clients",
       "module": "contacts",
@@ -3064,7 +3283,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 169,
+      "index": 179,
       "tool": "get_contact_activity",
       "tool_id": "alphaclone.mcp.get_contact_activity",
       "module": "contacts",
@@ -3082,7 +3301,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 170,
+      "index": 180,
       "tool": "get_contacts",
       "tool_id": "alphaclone.mcp.get_contacts",
       "module": "contacts",
@@ -3100,7 +3319,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 171,
+      "index": 181,
       "tool": "get_contract_approvals",
       "tool_id": "alphaclone.mcp.get_contract_approvals",
       "module": "approvals",
@@ -3118,7 +3337,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 172,
+      "index": 182,
       "tool": "get_contract_templates",
       "tool_id": "alphaclone.mcp.get_contract_templates",
       "module": "documents",
@@ -3136,7 +3355,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 173,
+      "index": 183,
       "tool": "get_contract_versions",
       "tool_id": "alphaclone.mcp.get_contract_versions",
       "module": "documents",
@@ -3154,7 +3373,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 174,
+      "index": 184,
       "tool": "get_contracts",
       "tool_id": "alphaclone.mcp.get_contracts",
       "module": "documents",
@@ -3172,7 +3391,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 175,
+      "index": 185,
       "tool": "get_conversation",
       "tool_id": "alphaclone.mcp.get_conversation",
       "module": "workspace",
@@ -3190,7 +3409,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 176,
+      "index": 186,
       "tool": "get_current_user",
       "tool_id": "alphaclone.mcp.get_current_user",
       "module": "workspace",
@@ -3208,7 +3427,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 177,
+      "index": 187,
+      "tool": "get_daily_project_brief",
+      "tool_id": "alphaclone.mcp.get_daily_project_brief",
+      "module": "projects",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-8c175039aaef",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 188,
       "tool": "get_dashboard_stats",
       "tool_id": "alphaclone.mcp.get_dashboard_stats",
       "module": "reporting",
@@ -3226,7 +3463,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 178,
+      "index": 189,
       "tool": "get_deals",
       "tool_id": "alphaclone.mcp.get_deals",
       "module": "revenue",
@@ -3244,7 +3481,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 179,
+      "index": 190,
       "tool": "get_delivery_status",
       "tool_id": "alphaclone.mcp.get_delivery_status",
       "module": "health",
@@ -3262,7 +3499,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 180,
+      "index": 191,
       "tool": "get_document",
       "tool_id": "alphaclone.mcp.get_document",
       "module": "documents",
@@ -3280,7 +3517,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 181,
+      "index": 192,
       "tool": "get_document_timeline",
       "tool_id": "alphaclone.mcp.get_document_timeline",
       "module": "documents",
@@ -3298,7 +3535,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 182,
+      "index": 193,
       "tool": "get_documents",
       "tool_id": "alphaclone.mcp.get_documents",
       "module": "documents",
@@ -3316,7 +3553,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 183,
+      "index": 194,
       "tool": "get_dream_sessions",
       "tool_id": "alphaclone.mcp.get_dream_sessions",
       "module": "bonnie",
@@ -3334,7 +3571,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 184,
+      "index": 195,
       "tool": "get_email_campaign_delivery_status",
       "tool_id": "alphaclone.mcp.get_email_campaign_delivery_status",
       "module": "health",
@@ -3352,7 +3589,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 185,
+      "index": 196,
       "tool": "get_email_campaign_stats",
       "tool_id": "alphaclone.mcp.get_email_campaign_stats",
       "module": "social",
@@ -3370,7 +3607,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 186,
+      "index": 197,
       "tool": "get_environment",
       "tool_id": "alphaclone.mcp.get_environment",
       "module": "health",
@@ -3388,7 +3625,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 187,
+      "index": 198,
       "tool": "get_execution_assurance_report",
       "tool_id": "alphaclone.mcp.get_execution_assurance_report",
       "module": "reporting",
@@ -3406,7 +3643,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 188,
+      "index": 199,
       "tool": "get_expenses",
       "tool_id": "alphaclone.mcp.get_expenses",
       "module": "workspace",
@@ -3424,7 +3661,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 189,
+      "index": 200,
       "tool": "get_facebook_identities",
       "tool_id": "alphaclone.mcp.get_facebook_identities",
       "module": "social",
@@ -3442,7 +3679,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 190,
+      "index": 201,
       "tool": "get_facebook_page_capabilities",
       "tool_id": "alphaclone.mcp.get_facebook_page_capabilities",
       "module": "search",
@@ -3460,7 +3697,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 191,
+      "index": 202,
       "tool": "get_facebook_post_insights",
       "tool_id": "alphaclone.mcp.get_facebook_post_insights",
       "module": "social",
@@ -3478,7 +3715,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 192,
+      "index": 203,
       "tool": "get_facebook_token",
       "tool_id": "alphaclone.mcp.get_facebook_token",
       "module": "social",
@@ -3496,7 +3733,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 193,
+      "index": 204,
       "tool": "get_failure_report",
       "tool_id": "alphaclone.mcp.get_failure_report",
       "module": "reporting",
@@ -3514,7 +3751,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 194,
+      "index": 205,
       "tool": "get_feature_flags",
       "tool_id": "alphaclone.mcp.get_feature_flags",
       "module": "health",
@@ -3532,7 +3769,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 195,
+      "index": 206,
       "tool": "get_file_download_url",
       "tool_id": "alphaclone.mcp.get_file_download_url",
       "module": "documents",
@@ -3550,7 +3787,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 196,
+      "index": 207,
       "tool": "get_finance_snapshot",
       "tool_id": "alphaclone.mcp.get_finance_snapshot",
       "module": "finance",
@@ -3568,7 +3805,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 197,
+      "index": 208,
       "tool": "get_gamification_leaderboard",
       "tool_id": "alphaclone.mcp.get_gamification_leaderboard",
       "module": "leads",
@@ -3586,7 +3823,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 198,
+      "index": 209,
       "tool": "get_inventory_items",
       "tool_id": "alphaclone.mcp.get_inventory_items",
       "module": "finance",
@@ -3604,7 +3841,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 199,
+      "index": 210,
       "tool": "get_invoice_line_items",
       "tool_id": "alphaclone.mcp.get_invoice_line_items",
       "module": "invoices",
@@ -3622,7 +3859,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 200,
+      "index": 211,
       "tool": "get_invoices",
       "tool_id": "alphaclone.mcp.get_invoices",
       "module": "invoices",
@@ -3640,7 +3877,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 201,
+      "index": 212,
       "tool": "get_leads",
       "tool_id": "alphaclone.mcp.get_leads",
       "module": "leads",
@@ -3658,7 +3895,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 202,
+      "index": 213,
       "tool": "get_linkedin_ad_accounts",
       "tool_id": "alphaclone.mcp.get_linkedin_ad_accounts",
       "module": "integrations",
@@ -3676,7 +3913,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 203,
+      "index": 214,
       "tool": "get_linkedin_ad_campaigns",
       "tool_id": "alphaclone.mcp.get_linkedin_ad_campaigns",
       "module": "social",
@@ -3694,7 +3931,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 204,
+      "index": 215,
       "tool": "get_linkedin_identities",
       "tool_id": "alphaclone.mcp.get_linkedin_identities",
       "module": "social",
@@ -3712,7 +3949,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 205,
+      "index": 216,
       "tool": "get_linkedin_member_profile",
       "tool_id": "alphaclone.mcp.get_linkedin_member_profile",
       "module": "documents",
@@ -3730,7 +3967,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 206,
+      "index": 217,
       "tool": "get_linkedin_post_stats",
       "tool_id": "alphaclone.mcp.get_linkedin_post_stats",
       "module": "social",
@@ -3748,7 +3985,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 207,
+      "index": 218,
       "tool": "get_linkedin_posts",
       "tool_id": "alphaclone.mcp.get_linkedin_posts",
       "module": "social",
@@ -3766,7 +4003,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 208,
+      "index": 219,
+      "tool": "get_mailbox_health_status",
+      "tool_id": "alphaclone.mcp.get_mailbox_health_status",
+      "module": "health",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-90bd9232fa89",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 220,
       "tool": "get_media",
       "tool_id": "alphaclone.mcp.get_media",
       "module": "media",
@@ -3784,7 +4039,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 209,
+      "index": 221,
       "tool": "get_media_asset",
       "tool_id": "alphaclone.mcp.get_media_asset",
       "module": "media",
@@ -3802,7 +4057,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 210,
+      "index": 222,
       "tool": "get_meetings",
       "tool_id": "alphaclone.mcp.get_meetings",
       "module": "calendar",
@@ -3820,7 +4075,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 211,
+      "index": 223,
       "tool": "get_momentum_score",
       "tool_id": "alphaclone.mcp.get_momentum_score",
       "module": "workspace",
@@ -3838,7 +4093,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 212,
+      "index": 224,
       "tool": "get_nexus_memory",
       "tool_id": "alphaclone.mcp.get_nexus_memory",
       "module": "bonnie",
@@ -3856,7 +4111,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 213,
+      "index": 225,
       "tool": "get_orchestration_history",
       "tool_id": "alphaclone.mcp.get_orchestration_history",
       "module": "workflows",
@@ -3874,7 +4129,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 214,
+      "index": 226,
+      "tool": "get_outbound_overview",
+      "tool_id": "alphaclone.mcp.get_outbound_overview",
+      "module": "workspace",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-26006e1f2b2d",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 227,
       "tool": "get_outcome_status",
       "tool_id": "alphaclone.mcp.get_outcome_status",
       "module": "health",
@@ -3892,7 +4165,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 215,
+      "index": 228,
+      "tool": "get_outreach_thread",
+      "tool_id": "alphaclone.mcp.get_outreach_thread",
+      "module": "email",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-53b23b784f09",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "email_provider",
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 229,
       "tool": "get_pipeline_summary",
       "tool_id": "alphaclone.mcp.get_pipeline_summary",
       "module": "crm",
@@ -3910,7 +4201,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 216,
+      "index": 230,
       "tool": "get_platform_status",
       "tool_id": "alphaclone.mcp.get_platform_status",
       "module": "health",
@@ -3928,7 +4219,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 217,
+      "index": 231,
       "tool": "get_pnl_statement",
       "tool_id": "alphaclone.mcp.get_pnl_statement",
       "module": "workspace",
@@ -3946,7 +4237,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 218,
+      "index": 232,
       "tool": "get_post_analytics",
       "tool_id": "alphaclone.mcp.get_post_analytics",
       "module": "reporting",
@@ -3964,7 +4255,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 219,
+      "index": 233,
       "tool": "get_post_status",
       "tool_id": "alphaclone.mcp.get_post_status",
       "module": "health",
@@ -3982,7 +4273,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 220,
+      "index": 234,
       "tool": "get_project_details",
       "tool_id": "alphaclone.mcp.get_project_details",
       "module": "projects",
@@ -4000,7 +4291,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 221,
+      "index": 235,
+      "tool": "get_project_intelligence",
+      "tool_id": "alphaclone.mcp.get_project_intelligence",
+      "module": "projects",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-c601d8f22ddf",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 236,
       "tool": "get_project_milestones",
       "tool_id": "alphaclone.mcp.get_project_milestones",
       "module": "projects",
@@ -4018,7 +4327,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 222,
+      "index": 237,
       "tool": "get_project_summary",
       "tool_id": "alphaclone.mcp.get_project_summary",
       "module": "projects",
@@ -4036,7 +4345,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 223,
+      "index": 238,
       "tool": "get_project_tasks",
       "tool_id": "alphaclone.mcp.get_project_tasks",
       "module": "tasks",
@@ -4054,7 +4363,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 224,
+      "index": 239,
       "tool": "get_project_timeline",
       "tool_id": "alphaclone.mcp.get_project_timeline",
       "module": "projects",
@@ -4072,7 +4381,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 225,
+      "index": 240,
       "tool": "get_projects",
       "tool_id": "alphaclone.mcp.get_projects",
       "module": "projects",
@@ -4090,7 +4399,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 226,
+      "index": 241,
       "tool": "get_quotes",
       "tool_id": "alphaclone.mcp.get_quotes",
       "module": "revenue",
@@ -4108,7 +4417,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 227,
+      "index": 242,
       "tool": "get_recent_errors",
       "tool_id": "alphaclone.mcp.get_recent_errors",
       "module": "health",
@@ -4126,7 +4435,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 228,
+      "index": 243,
       "tool": "get_recent_messages",
       "tool_id": "alphaclone.mcp.get_recent_messages",
       "module": "email",
@@ -4144,7 +4453,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 229,
+      "index": 244,
       "tool": "get_reconciliation_sessions",
       "tool_id": "alphaclone.mcp.get_reconciliation_sessions",
       "module": "workspace",
@@ -4162,7 +4471,43 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 230,
+      "index": 245,
+      "tool": "get_research_job",
+      "tool_id": "alphaclone.mcp.get_research_job",
+      "module": "search",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-e12419beb2d3",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 246,
+      "tool": "get_research_results",
+      "tool_id": "alphaclone.mcp.get_research_results",
+      "module": "search",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-3c9a1f0f032b",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 247,
       "tool": "get_revenue_summary",
       "tool_id": "alphaclone.mcp.get_revenue_summary",
       "module": "revenue",
@@ -4180,7 +4525,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 231,
+      "index": 248,
       "tool": "get_run_status",
       "tool_id": "alphaclone.mcp.get_run_status",
       "module": "health",
@@ -4198,7 +4543,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 232,
+      "index": 249,
       "tool": "get_scheduled_posts",
       "tool_id": "alphaclone.mcp.get_scheduled_posts",
       "module": "social",
@@ -4216,7 +4561,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 233,
+      "index": 250,
       "tool": "get_scraper_leads",
       "tool_id": "alphaclone.mcp.get_scraper_leads",
       "module": "leads",
@@ -4234,7 +4579,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 234,
+      "index": 251,
       "tool": "get_sequence_stats",
       "tool_id": "alphaclone.mcp.get_sequence_stats",
       "module": "marketing",
@@ -4252,7 +4597,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 235,
+      "index": 252,
       "tool": "get_signature_status",
       "tool_id": "alphaclone.mcp.get_signature_status",
       "module": "health",
@@ -4270,7 +4615,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 236,
+      "index": 253,
       "tool": "get_social_accounts",
       "tool_id": "alphaclone.mcp.get_social_accounts",
       "module": "integrations",
@@ -4288,7 +4633,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 237,
+      "index": 254,
+      "tool": "get_social_content_recommendations",
+      "tool_id": "alphaclone.mcp.get_social_content_recommendations",
+      "module": "social",
+      "risk": "medium",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-799337716ffe",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "linkedin",
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 255,
       "tool": "get_social_identities",
       "tool_id": "alphaclone.mcp.get_social_identities",
       "module": "social",
@@ -4306,7 +4669,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 238,
+      "index": 256,
       "tool": "get_social_post",
       "tool_id": "alphaclone.mcp.get_social_post",
       "module": "social",
@@ -4324,7 +4687,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 239,
+      "index": 257,
       "tool": "get_social_post_insights",
       "tool_id": "alphaclone.mcp.get_social_post_insights",
       "module": "social",
@@ -4342,7 +4705,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 240,
+      "index": 258,
       "tool": "get_social_posts",
       "tool_id": "alphaclone.mcp.get_social_posts",
       "module": "social",
@@ -4360,7 +4723,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 241,
+      "index": 259,
       "tool": "get_strategic_plan",
       "tool_id": "alphaclone.mcp.get_strategic_plan",
       "module": "workspace",
@@ -4378,7 +4741,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 242,
+      "index": 260,
       "tool": "get_system_health",
       "tool_id": "alphaclone.mcp.get_system_health",
       "module": "health",
@@ -4396,7 +4759,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 243,
+      "index": 261,
       "tool": "get_tasks",
       "tool_id": "alphaclone.mcp.get_tasks",
       "module": "tasks",
@@ -4414,7 +4777,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 244,
+      "index": 262,
       "tool": "get_tenant_messages",
       "tool_id": "alphaclone.mcp.get_tenant_messages",
       "module": "email",
@@ -4432,7 +4795,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 245,
+      "index": 263,
       "tool": "get_throughput_report",
       "tool_id": "alphaclone.mcp.get_throughput_report",
       "module": "reporting",
@@ -4450,7 +4813,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 246,
+      "index": 264,
       "tool": "get_ticket_stats",
       "tool_id": "alphaclone.mcp.get_ticket_stats",
       "module": "support",
@@ -4468,7 +4831,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 247,
+      "index": 265,
       "tool": "get_tickets",
       "tool_id": "alphaclone.mcp.get_tickets",
       "module": "support",
@@ -4486,7 +4849,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 248,
+      "index": 266,
       "tool": "get_today_operational_hud",
       "tool_id": "alphaclone.mcp.get_today_operational_hud",
       "module": "workspace",
@@ -4504,7 +4867,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 249,
+      "index": 267,
       "tool": "get_user_points",
       "tool_id": "alphaclone.mcp.get_user_points",
       "module": "workspace",
@@ -4522,7 +4885,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 250,
+      "index": 268,
       "tool": "get_vendor_bills",
       "tool_id": "alphaclone.mcp.get_vendor_bills",
       "module": "workspace",
@@ -4540,7 +4903,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 251,
+      "index": 269,
       "tool": "get_version",
       "tool_id": "alphaclone.mcp.get_version",
       "module": "health",
@@ -4558,7 +4921,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 252,
+      "index": 270,
       "tool": "get_whatsapp_status",
       "tool_id": "alphaclone.mcp.get_whatsapp_status",
       "module": "health",
@@ -4576,7 +4939,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 253,
+      "index": 271,
       "tool": "get_workflow",
       "tool_id": "alphaclone.mcp.get_workflow",
       "module": "workflows",
@@ -4594,7 +4957,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 254,
+      "index": 272,
       "tool": "get_workflow_run",
       "tool_id": "alphaclone.mcp.get_workflow_run",
       "module": "workflows",
@@ -4612,7 +4975,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 255,
+      "index": 273,
       "tool": "get_workspace_widgets",
       "tool_id": "alphaclone.mcp.get_workspace_widgets",
       "module": "workspace",
@@ -4630,7 +4993,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 256,
+      "index": 274,
       "tool": "get_x_profile",
       "tool_id": "alphaclone.mcp.get_x_profile",
       "module": "documents",
@@ -4648,7 +5011,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 257,
+      "index": 275,
       "tool": "get_x_timeline",
       "tool_id": "alphaclone.mcp.get_x_timeline",
       "module": "social",
@@ -4666,7 +5029,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 258,
+      "index": 276,
       "tool": "get_zoho_mail_messages",
       "tool_id": "alphaclone.mcp.get_zoho_mail_messages",
       "module": "integrations",
@@ -4684,7 +5047,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 259,
+      "index": 277,
       "tool": "get_zoho_mail_thread",
       "tool_id": "alphaclone.mcp.get_zoho_mail_thread",
       "module": "integrations",
@@ -4702,7 +5065,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 260,
+      "index": 278,
       "tool": "github_health",
       "tool_id": "alphaclone.mcp.github_health",
       "module": "health",
@@ -4720,7 +5083,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 261,
+      "index": 279,
       "tool": "gmail_get_thread",
       "tool_id": "alphaclone.mcp.gmail_get_thread",
       "module": "integrations",
@@ -4738,7 +5101,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 262,
+      "index": 280,
       "tool": "gmail_health",
       "tool_id": "alphaclone.mcp.gmail_health",
       "module": "health",
@@ -4756,7 +5119,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 263,
+      "index": 281,
       "tool": "gmail_list_threads",
       "tool_id": "alphaclone.mcp.gmail_list_threads",
       "module": "integrations",
@@ -4774,7 +5137,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 264,
+      "index": 282,
       "tool": "gmail_send_email",
       "tool_id": "alphaclone.mcp.gmail_send_email",
       "module": "integrations",
@@ -4792,7 +5155,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 265,
+      "index": 283,
       "tool": "google_calendar_health",
       "tool_id": "alphaclone.mcp.google_calendar_health",
       "module": "calendar",
@@ -4810,7 +5173,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 266,
+      "index": 284,
       "tool": "growth_report",
       "tool_id": "alphaclone.mcp.growth_report",
       "module": "reporting",
@@ -4828,7 +5191,43 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 267,
+      "index": 285,
+      "tool": "handle_lead_objection",
+      "tool_id": "alphaclone.mcp.handle_lead_objection",
+      "module": "leads",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-261e744e52cb",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 286,
+      "tool": "import_research_leads",
+      "tool_id": "alphaclone.mcp.import_research_leads",
+      "module": "leads",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-6c625b8e9a0c",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 287,
       "tool": "ingest_document",
       "tool_id": "alphaclone.mcp.ingest_document",
       "module": "documents",
@@ -4846,7 +5245,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 268,
+      "index": 288,
       "tool": "inspect_agent_reasoning",
       "tool_id": "alphaclone.mcp.inspect_agent_reasoning",
       "module": "search",
@@ -4864,7 +5263,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 269,
+      "index": 289,
       "tool": "inspect_embeddings",
       "tool_id": "alphaclone.mcp.inspect_embeddings",
       "module": "search",
@@ -4882,7 +5281,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 270,
+      "index": 290,
       "tool": "inspect_executor",
       "tool_id": "alphaclone.mcp.inspect_executor",
       "module": "search",
@@ -4900,7 +5299,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 271,
+      "index": 291,
       "tool": "inspect_memory",
       "tool_id": "alphaclone.mcp.inspect_memory",
       "module": "search",
@@ -4918,7 +5317,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 272,
+      "index": 292,
       "tool": "inspect_planner",
       "tool_id": "alphaclone.mcp.inspect_planner",
       "module": "search",
@@ -4936,7 +5335,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 273,
+      "index": 293,
       "tool": "inspect_prompts",
       "tool_id": "alphaclone.mcp.inspect_prompts",
       "module": "search",
@@ -4954,7 +5353,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 274,
+      "index": 294,
       "tool": "inspect_rag",
       "tool_id": "alphaclone.mcp.inspect_rag",
       "module": "search",
@@ -4972,7 +5371,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 275,
+      "index": 295,
       "tool": "inspect_scheduler",
       "tool_id": "alphaclone.mcp.inspect_scheduler",
       "module": "search",
@@ -4990,7 +5389,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 276,
+      "index": 296,
       "tool": "inspect_task_queue",
       "tool_id": "alphaclone.mcp.inspect_task_queue",
       "module": "tasks",
@@ -5008,7 +5407,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 277,
+      "index": 297,
       "tool": "inspect_tools",
       "tool_id": "alphaclone.mcp.inspect_tools",
       "module": "search",
@@ -5026,7 +5425,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 278,
+      "index": 298,
       "tool": "inspect_vector_store",
       "tool_id": "alphaclone.mcp.inspect_vector_store",
       "module": "search",
@@ -5044,7 +5443,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 279,
+      "index": 299,
       "tool": "integrations_status",
       "tool_id": "alphaclone.mcp.integrations_status",
       "module": "health",
@@ -5062,7 +5461,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 280,
+      "index": 300,
       "tool": "invoices",
       "tool_id": "alphaclone.mcp.invoices",
       "module": "invoices",
@@ -5080,7 +5479,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 281,
+      "index": 301,
       "tool": "kickoff_project_automation",
       "tool_id": "alphaclone.mcp.kickoff_project_automation",
       "module": "workflows",
@@ -5098,7 +5497,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 282,
+      "index": 302,
       "tool": "landing_pages",
       "tool_id": "alphaclone.mcp.landing_pages",
       "module": "marketing",
@@ -5116,7 +5515,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 283,
+      "index": 303,
       "tool": "list_capabilities",
       "tool_id": "alphaclone.mcp.list_capabilities",
       "module": "search",
@@ -5134,7 +5533,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 284,
+      "index": 304,
+      "tool": "list_chase_items",
+      "tool_id": "alphaclone.mcp.list_chase_items",
+      "module": "workspace",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-c6c20d798df3",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 305,
       "tool": "list_companies",
       "tool_id": "alphaclone.mcp.list_companies",
       "module": "companies",
@@ -5152,7 +5569,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 285,
+      "index": 306,
       "tool": "list_contacts",
       "tool_id": "alphaclone.mcp.list_contacts",
       "module": "contacts",
@@ -5170,7 +5587,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 286,
+      "index": 307,
       "tool": "list_conversations",
       "tool_id": "alphaclone.mcp.list_conversations",
       "module": "workspace",
@@ -5188,7 +5605,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 287,
+      "index": 308,
       "tool": "list_department_agents",
       "tool_id": "alphaclone.mcp.list_department_agents",
       "module": "bonnie",
@@ -5206,7 +5623,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 288,
+      "index": 309,
       "tool": "list_document_versions",
       "tool_id": "alphaclone.mcp.list_document_versions",
       "module": "documents",
@@ -5224,7 +5641,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 289,
+      "index": 310,
       "tool": "list_email_accounts",
       "tool_id": "alphaclone.mcp.list_email_accounts",
       "module": "integrations",
@@ -5242,7 +5659,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 290,
+      "index": 311,
       "tool": "list_event_subscriptions",
       "tool_id": "alphaclone.mcp.list_event_subscriptions",
       "module": "revenue",
@@ -5260,7 +5677,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 291,
+      "index": 312,
       "tool": "list_files",
       "tool_id": "alphaclone.mcp.list_files",
       "module": "documents",
@@ -5278,7 +5695,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 292,
+      "index": 313,
       "tool": "list_leads",
       "tool_id": "alphaclone.mcp.list_leads",
       "module": "leads",
@@ -5296,7 +5713,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 293,
+      "index": 314,
       "tool": "list_media_assets",
       "tool_id": "alphaclone.mcp.list_media_assets",
       "module": "media",
@@ -5314,7 +5731,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 294,
+      "index": 315,
       "tool": "list_modules",
       "tool_id": "alphaclone.mcp.list_modules",
       "module": "workspace",
@@ -5332,7 +5749,43 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 295,
+      "index": 316,
+      "tool": "list_outbound_icps",
+      "tool_id": "alphaclone.mcp.list_outbound_icps",
+      "module": "workspace",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-9f8134a1f12b",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 317,
+      "tool": "list_overdue_or_blocked_projects",
+      "tool_id": "alphaclone.mcp.list_overdue_or_blocked_projects",
+      "module": "projects",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-3b51484720c3",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 318,
       "tool": "list_pending_approvals",
       "tool_id": "alphaclone.mcp.list_pending_approvals",
       "module": "approvals",
@@ -5350,7 +5803,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 296,
+      "index": 319,
       "tool": "list_playbooks",
       "tool_id": "alphaclone.mcp.list_playbooks",
       "module": "workflows",
@@ -5368,7 +5821,43 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 297,
+      "index": 320,
+      "tool": "list_projects_waiting_on_approval",
+      "tool_id": "alphaclone.mcp.list_projects_waiting_on_approval",
+      "module": "approvals",
+      "risk": "low",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-f2e887ac3e65",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 321,
+      "tool": "list_projects_waiting_on_payment",
+      "tool_id": "alphaclone.mcp.list_projects_waiting_on_payment",
+      "module": "payments",
+      "risk": "high",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-b98e3a6b2b3c",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "stripe",
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 322,
       "tool": "list_scheduled_social_posts",
       "tool_id": "alphaclone.mcp.list_scheduled_social_posts",
       "module": "social",
@@ -5386,7 +5875,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 298,
+      "index": 323,
       "tool": "list_skills",
       "tool_id": "alphaclone.mcp.list_skills",
       "module": "bonnie",
@@ -5404,7 +5893,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 299,
+      "index": 324,
       "tool": "list_supported_outcomes",
       "tool_id": "alphaclone.mcp.list_supported_outcomes",
       "module": "support",
@@ -5422,7 +5911,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 300,
+      "index": 325,
       "tool": "list_tools",
       "tool_id": "alphaclone.mcp.list_tools",
       "module": "search",
@@ -5440,7 +5929,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 301,
+      "index": 326,
       "tool": "list_workflows",
       "tool_id": "alphaclone.mcp.list_workflows",
       "module": "workflows",
@@ -5458,7 +5947,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 302,
+      "index": 327,
       "tool": "load_module_tools",
       "tool_id": "alphaclone.mcp.load_module_tools",
       "module": "search",
@@ -5476,7 +5965,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 303,
+      "index": 328,
       "tool": "load_skill",
       "tool_id": "alphaclone.mcp.load_skill",
       "module": "bonnie",
@@ -5494,7 +5983,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 304,
+      "index": 329,
       "tool": "log_contact_activity",
       "tool_id": "alphaclone.mcp.log_contact_activity",
       "module": "contacts",
@@ -5512,7 +6001,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 305,
+      "index": 330,
       "tool": "mark_invoice_paid",
       "tool_id": "alphaclone.mcp.mark_invoice_paid",
       "module": "invoices",
@@ -5530,7 +6019,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 306,
+      "index": 331,
       "tool": "mark_message_read",
       "tool_id": "alphaclone.mcp.mark_message_read",
       "module": "email",
@@ -5548,7 +6037,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 307,
+      "index": 332,
+      "tool": "merge_client_identities",
+      "tool_id": "alphaclone.mcp.merge_client_identities",
+      "module": "contacts",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-2ad9a8440d87",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 333,
       "tool": "microsoft_connection_diagnostic",
       "tool_id": "alphaclone.mcp.microsoft_connection_diagnostic",
       "module": "integrations",
@@ -5566,7 +6073,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 308,
+      "index": 334,
       "tool": "microsoft_create_chat",
       "tool_id": "alphaclone.mcp.microsoft_create_chat",
       "module": "integrations",
@@ -5584,7 +6091,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 309,
+      "index": 335,
       "tool": "microsoft_create_event",
       "tool_id": "alphaclone.mcp.microsoft_create_event",
       "module": "calendar",
@@ -5602,7 +6109,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 310,
+      "index": 336,
       "tool": "microsoft_create_meeting",
       "tool_id": "alphaclone.mcp.microsoft_create_meeting",
       "module": "integrations",
@@ -5620,7 +6127,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 311,
+      "index": 337,
       "tool": "microsoft_create_task",
       "tool_id": "alphaclone.mcp.microsoft_create_task",
       "module": "tasks",
@@ -5638,7 +6145,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 312,
+      "index": 338,
       "tool": "microsoft_get_calendar",
       "tool_id": "alphaclone.mcp.microsoft_get_calendar",
       "module": "calendar",
@@ -5656,7 +6163,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 313,
+      "index": 339,
       "tool": "microsoft_get_chats",
       "tool_id": "alphaclone.mcp.microsoft_get_chats",
       "module": "integrations",
@@ -5674,7 +6181,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 314,
+      "index": 340,
       "tool": "microsoft_get_contacts",
       "tool_id": "alphaclone.mcp.microsoft_get_contacts",
       "module": "contacts",
@@ -5692,7 +6199,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 315,
+      "index": 341,
       "tool": "microsoft_get_emails",
       "tool_id": "alphaclone.mcp.microsoft_get_emails",
       "module": "integrations",
@@ -5710,7 +6217,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 316,
+      "index": 342,
       "tool": "microsoft_get_joined_teams",
       "tool_id": "alphaclone.mcp.microsoft_get_joined_teams",
       "module": "integrations",
@@ -5728,7 +6235,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 317,
+      "index": 343,
       "tool": "microsoft_get_tasks",
       "tool_id": "alphaclone.mcp.microsoft_get_tasks",
       "module": "tasks",
@@ -5746,7 +6253,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 318,
+      "index": 344,
       "tool": "microsoft_get_team_channels",
       "tool_id": "alphaclone.mcp.microsoft_get_team_channels",
       "module": "integrations",
@@ -5764,7 +6271,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 319,
+      "index": 345,
       "tool": "microsoft_get_teams_messages",
       "tool_id": "alphaclone.mcp.microsoft_get_teams_messages",
       "module": "integrations",
@@ -5782,7 +6289,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 320,
+      "index": 346,
       "tool": "microsoft_send_channel_message",
       "tool_id": "alphaclone.mcp.microsoft_send_channel_message",
       "module": "integrations",
@@ -5800,7 +6307,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 321,
+      "index": 347,
       "tool": "microsoft_send_chat_message",
       "tool_id": "alphaclone.mcp.microsoft_send_chat_message",
       "module": "integrations",
@@ -5818,7 +6325,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 322,
+      "index": 348,
       "tool": "microsoft_send_email",
       "tool_id": "alphaclone.mcp.microsoft_send_email",
       "module": "integrations",
@@ -5836,7 +6343,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 323,
+      "index": 349,
       "tool": "microsoft_upload_file",
       "tool_id": "alphaclone.mcp.microsoft_upload_file",
       "module": "documents",
@@ -5854,7 +6361,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 324,
+      "index": 350,
       "tool": "monitor_campaign_health",
       "tool_id": "alphaclone.mcp.monitor_campaign_health",
       "module": "health",
@@ -5872,7 +6379,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 325,
+      "index": 351,
       "tool": "move_deal_stage",
       "tool_id": "alphaclone.mcp.move_deal_stage",
       "module": "revenue",
@@ -5890,7 +6397,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 326,
+      "index": 352,
       "tool": "negotiate_capabilities",
       "tool_id": "alphaclone.mcp.negotiate_capabilities",
       "module": "search",
@@ -5908,7 +6415,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 327,
+      "index": 353,
       "tool": "nexus_calendar_nexus",
       "tool_id": "alphaclone.mcp.nexus_calendar_nexus",
       "module": "calendar",
@@ -5921,12 +6428,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": null,
+      "downstream_service": "email_provider",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 328,
+      "index": 354,
       "tool": "nexus_content_synthesis",
       "tool_id": "alphaclone.mcp.nexus_content_synthesis",
       "module": "bonnie",
@@ -5944,7 +6451,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 329,
+      "index": 355,
       "tool": "nexus_contract_drafter",
       "tool_id": "alphaclone.mcp.nexus_contract_drafter",
       "module": "documents",
@@ -5962,7 +6469,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 330,
+      "index": 356,
       "tool": "nexus_design_audit",
       "tool_id": "alphaclone.mcp.nexus_design_audit",
       "module": "admin",
@@ -5980,7 +6487,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 331,
+      "index": 357,
       "tool": "nexus_email_triage",
       "tool_id": "alphaclone.mcp.nexus_email_triage",
       "module": "bonnie",
@@ -5998,7 +6505,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 332,
+      "index": 358,
       "tool": "nexus_invoice_chasing",
       "tool_id": "alphaclone.mcp.nexus_invoice_chasing",
       "module": "invoices",
@@ -6016,7 +6523,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 333,
+      "index": 359,
       "tool": "nexus_lead_enrichment",
       "tool_id": "alphaclone.mcp.nexus_lead_enrichment",
       "module": "leads",
@@ -6029,12 +6536,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": null,
+      "downstream_service": "email_provider",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 334,
+      "index": 360,
       "tool": "nexus_market_pulse",
       "tool_id": "alphaclone.mcp.nexus_market_pulse",
       "module": "bonnie",
@@ -6052,7 +6559,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 335,
+      "index": 361,
       "tool": "nexus_meeting_intelligence",
       "tool_id": "alphaclone.mcp.nexus_meeting_intelligence",
       "module": "bonnie",
@@ -6070,7 +6577,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 336,
+      "index": 362,
       "tool": "nexus_month_end_close",
       "tool_id": "alphaclone.mcp.nexus_month_end_close",
       "module": "bonnie",
@@ -6088,7 +6595,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 337,
+      "index": 363,
       "tool": "nexus_onboarding_flow",
       "tool_id": "alphaclone.mcp.nexus_onboarding_flow",
       "module": "bonnie",
@@ -6106,7 +6613,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 338,
+      "index": 364,
       "tool": "nexus_payroll_sync",
       "tool_id": "alphaclone.mcp.nexus_payroll_sync",
       "module": "bonnie",
@@ -6124,7 +6631,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 339,
+      "index": 365,
       "tool": "nexus_project_architect",
       "tool_id": "alphaclone.mcp.nexus_project_architect",
       "module": "projects",
@@ -6142,7 +6649,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 340,
+      "index": 366,
       "tool": "nexus_sales_campaign",
       "tool_id": "alphaclone.mcp.nexus_sales_campaign",
       "module": "social",
@@ -6160,7 +6667,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 341,
+      "index": 367,
       "tool": "nexus_strategic_orchestrator",
       "tool_id": "alphaclone.mcp.nexus_strategic_orchestrator",
       "module": "workflows",
@@ -6178,7 +6685,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 342,
+      "index": 368,
       "tool": "nexus_support_triage",
       "tool_id": "alphaclone.mcp.nexus_support_triage",
       "module": "bonnie",
@@ -6196,7 +6703,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 343,
+      "index": 369,
       "tool": "onboard_user_automation",
       "tool_id": "alphaclone.mcp.onboard_user_automation",
       "module": "workflows",
@@ -6214,7 +6721,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 344,
+      "index": 370,
       "tool": "openai_health",
       "tool_id": "alphaclone.mcp.openai_health",
       "module": "health",
@@ -6232,7 +6739,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 345,
+      "index": 371,
       "tool": "opportunities",
       "tool_id": "alphaclone.mcp.opportunities",
       "module": "finance",
@@ -6250,7 +6757,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 346,
+      "index": 372,
       "tool": "orchestrate_meeting_workflow",
       "tool_id": "alphaclone.mcp.orchestrate_meeting_workflow",
       "module": "workflows",
@@ -6268,7 +6775,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 347,
+      "index": 373,
       "tool": "orchestrate_task",
       "tool_id": "alphaclone.mcp.orchestrate_task",
       "module": "workflows",
@@ -6286,7 +6793,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 348,
+      "index": 374,
       "tool": "owner_autopilot_queue",
       "tool_id": "alphaclone.mcp.owner_autopilot_queue",
       "module": "bonnie",
@@ -6304,7 +6811,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 349,
+      "index": 375,
       "tool": "parse_lead_criteria",
       "tool_id": "alphaclone.mcp.parse_lead_criteria",
       "module": "leads",
@@ -6322,7 +6829,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 350,
+      "index": 376,
       "tool": "payments",
       "tool_id": "alphaclone.mcp.payments",
       "module": "payments",
@@ -6340,7 +6847,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 351,
+      "index": 377,
       "tool": "pipeline_status",
       "tool_id": "alphaclone.mcp.pipeline_status",
       "module": "health",
@@ -6358,7 +6865,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 352,
+      "index": 378,
       "tool": "place_legal_hold",
       "tool_id": "alphaclone.mcp.place_legal_hold",
       "module": "admin",
@@ -6376,7 +6883,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 353,
+      "index": 379,
       "tool": "plan_social_calendar",
       "tool_id": "alphaclone.mcp.plan_social_calendar",
       "module": "calendar",
@@ -6394,7 +6901,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 354,
+      "index": 380,
       "tool": "post_x_tweet",
       "tool_id": "alphaclone.mcp.post_x_tweet",
       "module": "social",
@@ -6412,7 +6919,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 355,
+      "index": 381,
       "tool": "predict_deal_win_probability",
       "tool_id": "alphaclone.mcp.predict_deal_win_probability",
       "module": "revenue",
@@ -6430,7 +6937,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 356,
+      "index": 382,
       "tool": "preflight_social_publish",
       "tool_id": "alphaclone.mcp.preflight_social_publish",
       "module": "social",
@@ -6448,7 +6955,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 357,
+      "index": 383,
       "tool": "prepare_contract_renewal",
       "tool_id": "alphaclone.mcp.prepare_contract_renewal",
       "module": "documents",
@@ -6466,7 +6973,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 358,
+      "index": 384,
       "tool": "preview_document",
       "tool_id": "alphaclone.mcp.preview_document",
       "module": "documents",
@@ -6484,7 +6991,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 359,
+      "index": 385,
       "tool": "publish_facebook_album",
       "tool_id": "alphaclone.mcp.publish_facebook_album",
       "module": "social",
@@ -6502,7 +7009,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 360,
+      "index": 386,
       "tool": "publish_facebook_multi_photo",
       "tool_id": "alphaclone.mcp.publish_facebook_multi_photo",
       "module": "social",
@@ -6520,7 +7027,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 361,
+      "index": 387,
       "tool": "publish_facebook_photo",
       "tool_id": "alphaclone.mcp.publish_facebook_photo",
       "module": "social",
@@ -6538,7 +7045,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 362,
+      "index": 388,
       "tool": "publish_facebook_reel",
       "tool_id": "alphaclone.mcp.publish_facebook_reel",
       "module": "social",
@@ -6556,7 +7063,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 363,
+      "index": 389,
       "tool": "publish_facebook_video",
       "tool_id": "alphaclone.mcp.publish_facebook_video",
       "module": "media",
@@ -6574,7 +7081,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 364,
+      "index": 390,
       "tool": "publish_instagram_carousel",
       "tool_id": "alphaclone.mcp.publish_instagram_carousel",
       "module": "social",
@@ -6592,7 +7099,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 365,
+      "index": 391,
       "tool": "publish_instagram_photo",
       "tool_id": "alphaclone.mcp.publish_instagram_photo",
       "module": "social",
@@ -6610,7 +7117,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 366,
+      "index": 392,
       "tool": "publish_instagram_reel",
       "tool_id": "alphaclone.mcp.publish_instagram_reel",
       "module": "social",
@@ -6628,7 +7135,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 367,
+      "index": 393,
       "tool": "publish_linkedin_document",
       "tool_id": "alphaclone.mcp.publish_linkedin_document",
       "module": "documents",
@@ -6646,7 +7153,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 368,
+      "index": 394,
       "tool": "publish_linkedin_image",
       "tool_id": "alphaclone.mcp.publish_linkedin_image",
       "module": "media",
@@ -6664,7 +7171,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 369,
+      "index": 395,
       "tool": "publish_now",
       "tool_id": "alphaclone.mcp.publish_now",
       "module": "workspace",
@@ -6682,7 +7189,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 370,
+      "index": 396,
       "tool": "publish_post",
       "tool_id": "alphaclone.mcp.publish_post",
       "module": "social",
@@ -6700,7 +7207,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 371,
+      "index": 397,
       "tool": "publish_social_post",
       "tool_id": "alphaclone.mcp.publish_social_post",
       "module": "social",
@@ -6718,7 +7225,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 372,
+      "index": 398,
       "tool": "publish_x_image",
       "tool_id": "alphaclone.mcp.publish_x_image",
       "module": "media",
@@ -6736,7 +7243,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 373,
+      "index": 399,
       "tool": "publish_x_video",
       "tool_id": "alphaclone.mcp.publish_x_video",
       "module": "media",
@@ -6754,7 +7261,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 374,
+      "index": 400,
       "tool": "qualify_crm_leads",
       "tool_id": "alphaclone.mcp.qualify_crm_leads",
       "module": "leads",
@@ -6772,7 +7279,43 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 375,
+      "index": 401,
+      "tool": "qualify_outbound_lead",
+      "tool_id": "alphaclone.mcp.qualify_outbound_lead",
+      "module": "leads",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-b4c6e6246c61",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 402,
+      "tool": "qualify_research_results",
+      "tool_id": "alphaclone.mcp.qualify_research_results",
+      "module": "search",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-8b0881f251a6",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "email_provider",
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 403,
       "tool": "queue_email_campaign_send",
       "tool_id": "alphaclone.mcp.queue_email_campaign_send",
       "module": "social",
@@ -6790,7 +7333,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 376,
+      "index": 404,
       "tool": "quotes",
       "tool_id": "alphaclone.mcp.quotes",
       "module": "revenue",
@@ -6808,7 +7351,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 377,
+      "index": 405,
       "tool": "railway_health",
       "tool_id": "alphaclone.mcp.railway_health",
       "module": "health",
@@ -6826,7 +7369,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 378,
+      "index": 406,
       "tool": "read_email_content",
       "tool_id": "alphaclone.mcp.read_email_content",
       "module": "email",
@@ -6844,7 +7387,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 379,
+      "index": 407,
       "tool": "read_emails",
       "tool_id": "alphaclone.mcp.read_emails",
       "module": "email",
@@ -6862,7 +7405,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 380,
+      "index": 408,
+      "tool": "read_outreach_inbox",
+      "tool_id": "alphaclone.mcp.read_outreach_inbox",
+      "module": "email",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-eef773d81a70",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 409,
       "tool": "read_url_content",
       "tool_id": "alphaclone.mcp.read_url_content",
       "module": "workspace",
@@ -6880,7 +7441,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 381,
+      "index": 410,
+      "tool": "reassign_chase",
+      "tool_id": "alphaclone.mcp.reassign_chase",
+      "module": "workspace",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-35aa2a998540",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 411,
       "tool": "recommend_next_steps",
       "tool_id": "alphaclone.mcp.recommend_next_steps",
       "module": "bonnie",
@@ -6898,7 +7477,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 382,
+      "index": 412,
       "tool": "reconcile_execution_receipts",
       "tool_id": "alphaclone.mcp.reconcile_execution_receipts",
       "module": "payments",
@@ -6916,7 +7495,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 383,
+      "index": 413,
       "tool": "reconcile_outreach_vs_logs",
       "tool_id": "alphaclone.mcp.reconcile_outreach_vs_logs",
       "module": "email",
@@ -6934,7 +7513,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 384,
+      "index": 414,
       "tool": "reconcile_payment",
       "tool_id": "alphaclone.mcp.reconcile_payment",
       "module": "payments",
@@ -6952,7 +7531,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 385,
+      "index": 415,
       "tool": "record_document_view",
       "tool_id": "alphaclone.mcp.record_document_view",
       "module": "documents",
@@ -6970,7 +7549,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 386,
+      "index": 416,
       "tool": "refresh_business_digital_twin",
       "tool_id": "alphaclone.mcp.refresh_business_digital_twin",
       "module": "bonnie",
@@ -6988,7 +7567,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 387,
+      "index": 417,
       "tool": "reject_document",
       "tool_id": "alphaclone.mcp.reject_document",
       "module": "approvals",
@@ -7006,7 +7585,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 388,
+      "index": 418,
       "tool": "reject_pending_action",
       "tool_id": "alphaclone.mcp.reject_pending_action",
       "module": "approvals",
@@ -7024,7 +7603,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 389,
+      "index": 419,
       "tool": "reject_workflow_step",
       "tool_id": "alphaclone.mcp.reject_workflow_step",
       "module": "approvals",
@@ -7042,7 +7621,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 390,
+      "index": 420,
       "tool": "release_legal_hold",
       "tool_id": "alphaclone.mcp.release_legal_hold",
       "module": "admin",
@@ -7060,7 +7639,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 391,
+      "index": 421,
       "tool": "reminders",
       "tool_id": "alphaclone.mcp.reminders",
       "module": "calendar",
@@ -7078,7 +7657,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 392,
+      "index": 422,
       "tool": "render_document",
       "tool_id": "alphaclone.mcp.render_document",
       "module": "documents",
@@ -7096,7 +7675,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 393,
+      "index": 423,
       "tool": "reorder_widgets",
       "tool_id": "alphaclone.mcp.reorder_widgets",
       "module": "workspace",
@@ -7114,7 +7693,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 394,
+      "index": 424,
       "tool": "reply_to_email",
       "tool_id": "alphaclone.mcp.reply_to_email",
       "module": "email",
@@ -7132,7 +7711,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 395,
+      "index": 425,
       "tool": "reply_to_x_tweet",
       "tool_id": "alphaclone.mcp.reply_to_x_tweet",
       "module": "social",
@@ -7150,7 +7729,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 396,
+      "index": 426,
       "tool": "reply_to_zoho_mail",
       "tool_id": "alphaclone.mcp.reply_to_zoho_mail",
       "module": "integrations",
@@ -7168,7 +7747,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 397,
+      "index": 427,
       "tool": "request_changes",
       "tool_id": "alphaclone.mcp.request_changes",
       "module": "approvals",
@@ -7186,7 +7765,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 398,
+      "index": 428,
       "tool": "request_contract_approval",
       "tool_id": "alphaclone.mcp.request_contract_approval",
       "module": "approvals",
@@ -7204,7 +7783,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 399,
+      "index": 429,
       "tool": "request_outcome",
       "tool_id": "alphaclone.mcp.request_outcome",
       "module": "bonnie",
@@ -7222,7 +7801,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 400,
+      "index": 430,
+      "tool": "research_businesses",
+      "tool_id": "alphaclone.mcp.research_businesses",
+      "module": "search",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-fa3cb58c8af3",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "email_provider",
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 431,
       "tool": "restart_service",
       "tool_id": "alphaclone.mcp.restart_service",
       "module": "admin",
@@ -7240,7 +7837,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 401,
+      "index": 432,
       "tool": "restore_document",
       "tool_id": "alphaclone.mcp.restore_document",
       "module": "documents",
@@ -7258,7 +7855,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 402,
+      "index": 433,
       "tool": "resume_workflow",
       "tool_id": "alphaclone.mcp.resume_workflow",
       "module": "workflows",
@@ -7276,7 +7873,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 403,
+      "index": 434,
       "tool": "retrieve_document",
       "tool_id": "alphaclone.mcp.retrieve_document",
       "module": "documents",
@@ -7294,7 +7891,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 404,
+      "index": 435,
       "tool": "retry_run_step",
       "tool_id": "alphaclone.mcp.retry_run_step",
       "module": "workspace",
@@ -7312,7 +7909,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 405,
+      "index": 436,
       "tool": "retry_social_post",
       "tool_id": "alphaclone.mcp.retry_social_post",
       "module": "social",
@@ -7330,7 +7927,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 406,
+      "index": 437,
       "tool": "revenue_dashboard",
       "tool_id": "alphaclone.mcp.revenue_dashboard",
       "module": "revenue",
@@ -7348,7 +7945,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 407,
+      "index": 438,
       "tool": "revenue_recovery_agent",
       "tool_id": "alphaclone.mcp.revenue_recovery_agent",
       "module": "revenue",
@@ -7366,7 +7963,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 408,
+      "index": 439,
       "tool": "revenue_report",
       "tool_id": "alphaclone.mcp.revenue_report",
       "module": "revenue",
@@ -7384,7 +7981,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 409,
+      "index": 440,
       "tool": "review_contract_approval",
       "tool_id": "alphaclone.mcp.review_contract_approval",
       "module": "approvals",
@@ -7402,7 +7999,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 410,
+      "index": 441,
       "tool": "run_autonomous_scan",
       "tool_id": "alphaclone.mcp.run_autonomous_scan",
       "module": "workspace",
@@ -7420,7 +8017,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 411,
+      "index": 442,
+      "tool": "run_chase_scan",
+      "tool_id": "alphaclone.mcp.run_chase_scan",
+      "module": "workspace",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-75530d695967",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 443,
       "tool": "run_chief_of_staff_routine",
       "tool_id": "alphaclone.mcp.run_chief_of_staff_routine",
       "module": "workspace",
@@ -7438,7 +8053,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 412,
+      "index": 444,
       "tool": "run_cognitive_loop",
       "tool_id": "alphaclone.mcp.run_cognitive_loop",
       "module": "bonnie",
@@ -7456,7 +8071,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 413,
+      "index": 445,
       "tool": "run_growth_lifecycle",
       "tool_id": "alphaclone.mcp.run_growth_lifecycle",
       "module": "bonnie",
@@ -7474,7 +8089,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 414,
+      "index": 446,
       "tool": "run_mcp_agent_workflow",
       "tool_id": "alphaclone.mcp.run_mcp_agent_workflow",
       "module": "workflows",
@@ -7492,7 +8107,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 415,
+      "index": 447,
       "tool": "run_playbook",
       "tool_id": "alphaclone.mcp.run_playbook",
       "module": "workflows",
@@ -7510,7 +8125,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 416,
+      "index": 448,
       "tool": "run_strategic_pnl_audit",
       "tool_id": "alphaclone.mcp.run_strategic_pnl_audit",
       "module": "admin",
@@ -7528,7 +8143,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 417,
+      "index": 449,
       "tool": "run_workflow",
       "tool_id": "alphaclone.mcp.run_workflow",
       "module": "workflows",
@@ -7546,7 +8161,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 418,
+      "index": 450,
       "tool": "save_contract",
       "tool_id": "alphaclone.mcp.save_contract",
       "module": "documents",
@@ -7564,7 +8179,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 419,
+      "index": 451,
       "tool": "schedule_post",
       "tool_id": "alphaclone.mcp.schedule_post",
       "module": "social",
@@ -7582,7 +8197,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 420,
+      "index": 452,
       "tool": "schedule_social_automation",
       "tool_id": "alphaclone.mcp.schedule_social_automation",
       "module": "workflows",
@@ -7600,7 +8215,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 421,
+      "index": 453,
       "tool": "schedule_social_post",
       "tool_id": "alphaclone.mcp.schedule_social_post",
       "module": "social",
@@ -7618,7 +8233,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 422,
+      "index": 454,
       "tool": "scheduled_posts",
       "tool_id": "alphaclone.mcp.scheduled_posts",
       "module": "social",
@@ -7636,7 +8251,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 423,
+      "index": 455,
       "tool": "score_deal",
       "tool_id": "alphaclone.mcp.score_deal",
       "module": "revenue",
@@ -7654,7 +8269,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 424,
+      "index": 456,
       "tool": "search",
       "tool_id": "alphaclone.mcp.search",
       "module": "search",
@@ -7672,7 +8287,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 425,
+      "index": 457,
       "tool": "search_clients",
       "tool_id": "alphaclone.mcp.search_clients",
       "module": "search",
@@ -7690,7 +8305,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 426,
+      "index": 458,
       "tool": "search_contacts",
       "tool_id": "alphaclone.mcp.search_contacts",
       "module": "contacts",
@@ -7708,7 +8323,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 427,
+      "index": 459,
       "tool": "search_documents",
       "tool_id": "alphaclone.mcp.search_documents",
       "module": "documents",
@@ -7726,7 +8341,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 428,
+      "index": 460,
       "tool": "search_documents_os",
       "tool_id": "alphaclone.mcp.search_documents_os",
       "module": "documents",
@@ -7744,7 +8359,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 429,
+      "index": 461,
       "tool": "search_emails",
       "tool_id": "alphaclone.mcp.search_emails",
       "module": "search",
@@ -7762,7 +8377,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 430,
+      "index": 462,
       "tool": "search_facebook_leads",
       "tool_id": "alphaclone.mcp.search_facebook_leads",
       "module": "leads",
@@ -7780,7 +8395,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 431,
+      "index": 463,
       "tool": "search_leads",
       "tool_id": "alphaclone.mcp.search_leads",
       "module": "leads",
@@ -7798,7 +8413,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 432,
+      "index": 464,
       "tool": "search_tools",
       "tool_id": "alphaclone.mcp.search_tools",
       "module": "search",
@@ -7816,7 +8431,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 433,
+      "index": 465,
       "tool": "search_x_tweets",
       "tool_id": "alphaclone.mcp.search_x_tweets",
       "module": "search",
@@ -7834,7 +8449,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 434,
+      "index": 466,
       "tool": "search_x_users",
       "tool_id": "alphaclone.mcp.search_x_users",
       "module": "search",
@@ -7852,7 +8467,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 435,
+      "index": 467,
       "tool": "segment_clients_by_criteria",
       "tool_id": "alphaclone.mcp.segment_clients_by_criteria",
       "module": "contacts",
@@ -7870,7 +8485,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 436,
+      "index": 468,
       "tool": "send_batch_outreach",
       "tool_id": "alphaclone.mcp.send_batch_outreach",
       "module": "email",
@@ -7888,7 +8503,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 437,
+      "index": 469,
       "tool": "send_bulk_email",
       "tool_id": "alphaclone.mcp.send_bulk_email",
       "module": "email",
@@ -7906,7 +8521,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 438,
+      "index": 470,
       "tool": "send_bulk_email_campaign",
       "tool_id": "alphaclone.mcp.send_bulk_email_campaign",
       "module": "social",
@@ -7919,12 +8534,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": "email_provider",
+      "downstream_service": "google",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 439,
+      "index": 471,
       "tool": "send_contract",
       "tool_id": "alphaclone.mcp.send_contract",
       "module": "documents",
@@ -7942,7 +8557,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 440,
+      "index": 472,
       "tool": "send_document",
       "tool_id": "alphaclone.mcp.send_document",
       "module": "documents",
@@ -7960,7 +8575,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 441,
+      "index": 473,
       "tool": "send_document_to_claude",
       "tool_id": "alphaclone.mcp.send_document_to_claude",
       "module": "documents",
@@ -7978,7 +8593,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 442,
+      "index": 474,
       "tool": "send_email",
       "tool_id": "alphaclone.mcp.send_email",
       "module": "email",
@@ -7996,7 +8611,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 443,
+      "index": 475,
       "tool": "send_for_signature",
       "tool_id": "alphaclone.mcp.send_for_signature",
       "module": "documents",
@@ -8014,7 +8629,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 444,
+      "index": 476,
       "tool": "send_invoice",
       "tool_id": "alphaclone.mcp.send_invoice",
       "module": "invoices",
@@ -8032,7 +8647,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 445,
+      "index": 477,
       "tool": "send_message",
       "tool_id": "alphaclone.mcp.send_message",
       "module": "email",
@@ -8050,7 +8665,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 446,
+      "index": 478,
       "tool": "send_project_email",
       "tool_id": "alphaclone.mcp.send_project_email",
       "module": "projects",
@@ -8063,12 +8678,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": "zoho",
+      "downstream_service": "email_provider",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 447,
+      "index": 479,
       "tool": "send_quote",
       "tool_id": "alphaclone.mcp.send_quote",
       "module": "revenue",
@@ -8086,7 +8701,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 448,
+      "index": 480,
       "tool": "send_receipt",
       "tool_id": "alphaclone.mcp.send_receipt",
       "module": "payments",
@@ -8104,7 +8719,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 449,
+      "index": 481,
       "tool": "send_task_email",
       "tool_id": "alphaclone.mcp.send_task_email",
       "module": "tasks",
@@ -8122,7 +8737,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 450,
+      "index": 482,
       "tool": "send_tenant_message",
       "tool_id": "alphaclone.mcp.send_tenant_message",
       "module": "email",
@@ -8140,7 +8755,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 451,
+      "index": 483,
       "tool": "send_transactional_email",
       "tool_id": "alphaclone.mcp.send_transactional_email",
       "module": "email",
@@ -8158,7 +8773,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 452,
+      "index": 484,
       "tool": "send_whatsapp_message",
       "tool_id": "alphaclone.mcp.send_whatsapp_message",
       "module": "email",
@@ -8176,7 +8791,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 453,
+      "index": 485,
       "tool": "send_x_dm",
       "tool_id": "alphaclone.mcp.send_x_dm",
       "module": "social",
@@ -8194,7 +8809,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 454,
+      "index": 486,
       "tool": "set_chatbot_handoff_rules",
       "tool_id": "alphaclone.mcp.set_chatbot_handoff_rules",
       "module": "workspace",
@@ -8212,7 +8827,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 455,
+      "index": 487,
       "tool": "set_outreach_limits",
       "tool_id": "alphaclone.mcp.set_outreach_limits",
       "module": "email",
@@ -8230,7 +8845,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 456,
+      "index": 488,
       "tool": "set_task_recurrence",
       "tool_id": "alphaclone.mcp.set_task_recurrence",
       "module": "tasks",
@@ -8248,7 +8863,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 457,
+      "index": 489,
       "tool": "show_related_records",
       "tool_id": "alphaclone.mcp.show_related_records",
       "module": "workspace",
@@ -8266,7 +8881,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 458,
+      "index": 490,
+      "tool": "snooze_chase",
+      "tool_id": "alphaclone.mcp.snooze_chase",
+      "module": "workspace",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-203a0a0bf93b",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 491,
       "tool": "solo_owner_operator_brief",
       "tool_id": "alphaclone.mcp.solo_owner_operator_brief",
       "module": "bonnie",
@@ -8284,7 +8917,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 459,
+      "index": 492,
       "tool": "solo_owner_time_savings_meter",
       "tool_id": "alphaclone.mcp.solo_owner_time_savings_meter",
       "module": "bonnie",
@@ -8302,7 +8935,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 460,
+      "index": 493,
       "tool": "solo_owner_value_map",
       "tool_id": "alphaclone.mcp.solo_owner_value_map",
       "module": "bonnie",
@@ -8320,7 +8953,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 461,
+      "index": 494,
+      "tool": "start_chase",
+      "tool_id": "alphaclone.mcp.start_chase",
+      "module": "workspace",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-7c6ed691a473",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 495,
       "tool": "start_contract_lifecycle",
       "tool_id": "alphaclone.mcp.start_contract_lifecycle",
       "module": "documents",
@@ -8338,7 +8989,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 462,
+      "index": 496,
       "tool": "start_email_campaign",
       "tool_id": "alphaclone.mcp.start_email_campaign",
       "module": "social",
@@ -8356,7 +9007,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 463,
+      "index": 497,
       "tool": "start_invoice_lifecycle",
       "tool_id": "alphaclone.mcp.start_invoice_lifecycle",
       "module": "invoices",
@@ -8374,7 +9025,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 464,
+      "index": 498,
       "tool": "start_lead_campaign",
       "tool_id": "alphaclone.mcp.start_lead_campaign",
       "module": "leads",
@@ -8392,7 +9043,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 465,
+      "index": 499,
       "tool": "start_lead_nurture",
       "tool_id": "alphaclone.mcp.start_lead_nurture",
       "module": "leads",
@@ -8410,7 +9061,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 466,
+      "index": 500,
+      "tool": "stop_chase",
+      "tool_id": "alphaclone.mcp.stop_chase",
+      "module": "workspace",
+      "risk": "critical",
+      "test_performed": "static_contract_destructive_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-da49e13d4d6c",
+      "root_cause": "destructive_tool_requires_--execute-write_in_staging",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 501,
       "tool": "stop_workflow",
       "tool_id": "alphaclone.mcp.stop_workflow",
       "module": "workflows",
@@ -8428,7 +9097,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 467,
+      "index": 502,
       "tool": "store_facebook_token",
       "tool_id": "alphaclone.mcp.store_facebook_token",
       "module": "social",
@@ -8446,7 +9115,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 468,
+      "index": 503,
       "tool": "stripe_health",
       "tool_id": "alphaclone.mcp.stripe_health",
       "module": "health",
@@ -8464,7 +9133,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 469,
+      "index": 504,
       "tool": "submit_for_review",
       "tool_id": "alphaclone.mcp.submit_for_review",
       "module": "approvals",
@@ -8482,7 +9151,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 470,
+      "index": 505,
       "tool": "subscribe_events",
       "tool_id": "alphaclone.mcp.subscribe_events",
       "module": "calendar",
@@ -8500,7 +9169,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 471,
+      "index": 506,
       "tool": "subscriptions",
       "tool_id": "alphaclone.mcp.subscriptions",
       "module": "revenue",
@@ -8518,7 +9187,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 472,
+      "index": 507,
       "tool": "summarize_ticket",
       "tool_id": "alphaclone.mcp.summarize_ticket",
       "module": "support",
@@ -8536,7 +9205,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 473,
+      "index": 508,
       "tool": "summarize_workspace",
       "tool_id": "alphaclone.mcp.summarize_workspace",
       "module": "workspace",
@@ -8554,7 +9223,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 474,
+      "index": 509,
       "tool": "supabase_health",
       "tool_id": "alphaclone.mcp.supabase_health",
       "module": "health",
@@ -8572,7 +9241,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 475,
+      "index": 510,
       "tool": "supersede_document",
       "tool_id": "alphaclone.mcp.supersede_document",
       "module": "documents",
@@ -8590,7 +9259,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 476,
+      "index": 511,
       "tool": "supervise_task",
       "tool_id": "alphaclone.mcp.supervise_task",
       "module": "tasks",
@@ -8608,7 +9277,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 477,
+      "index": 512,
       "tool": "sync_all_inboxes",
       "tool_id": "alphaclone.mcp.sync_all_inboxes",
       "module": "workspace",
@@ -8626,7 +9295,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 478,
+      "index": 513,
       "tool": "sync_calendly_events",
       "tool_id": "alphaclone.mcp.sync_calendly_events",
       "module": "calendar",
@@ -8644,7 +9313,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 479,
+      "index": 514,
       "tool": "sync_knowledge_graph",
       "tool_id": "alphaclone.mcp.sync_knowledge_graph",
       "module": "bonnie",
@@ -8662,7 +9331,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 480,
+      "index": 515,
       "tool": "task_create",
       "tool_id": "alphaclone.mcp.task_create",
       "module": "tasks",
@@ -8680,7 +9349,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 481,
+      "index": 516,
       "tool": "task_delete",
       "tool_id": "alphaclone.mcp.task_delete",
       "module": "tasks",
@@ -8698,7 +9367,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 482,
+      "index": 517,
       "tool": "task_get_results",
       "tool_id": "alphaclone.mcp.task_get_results",
       "module": "tasks",
@@ -8716,7 +9385,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 483,
+      "index": 518,
       "tool": "task_list",
       "tool_id": "alphaclone.mcp.task_list",
       "module": "tasks",
@@ -8734,7 +9403,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 484,
+      "index": 519,
       "tool": "task_pause",
       "tool_id": "alphaclone.mcp.task_pause",
       "module": "tasks",
@@ -8752,7 +9421,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 485,
+      "index": 520,
       "tool": "task_resume",
       "tool_id": "alphaclone.mcp.task_resume",
       "module": "tasks",
@@ -8770,7 +9439,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 486,
+      "index": 521,
       "tool": "tasks",
       "tool_id": "alphaclone.mcp.tasks",
       "module": "tasks",
@@ -8788,7 +9457,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 487,
+      "index": 522,
       "tool": "toggle_widget_visibility",
       "tool_id": "alphaclone.mcp.toggle_widget_visibility",
       "module": "workspace",
@@ -8806,7 +9475,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 488,
+      "index": 523,
       "tool": "train_chatbot",
       "tool_id": "alphaclone.mcp.train_chatbot",
       "module": "workspace",
@@ -8824,7 +9493,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 489,
+      "index": 524,
       "tool": "trigger_bonnie_dream",
       "tool_id": "alphaclone.mcp.trigger_bonnie_dream",
       "module": "bonnie",
@@ -8842,7 +9511,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 490,
+      "index": 525,
       "tool": "trigger_deal_automation",
       "tool_id": "alphaclone.mcp.trigger_deal_automation",
       "module": "revenue",
@@ -8860,7 +9529,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 491,
+      "index": 526,
       "tool": "trust_ledger",
       "tool_id": "alphaclone.mcp.trust_ledger",
       "module": "bonnie",
@@ -8878,7 +9547,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 492,
+      "index": 527,
       "tool": "unsubscribe_event",
       "tool_id": "alphaclone.mcp.unsubscribe_event",
       "module": "calendar",
@@ -8896,7 +9565,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 493,
+      "index": 528,
       "tool": "update_business_ai_state",
       "tool_id": "alphaclone.mcp.update_business_ai_state",
       "module": "bonnie",
@@ -8914,7 +9583,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 494,
+      "index": 529,
+      "tool": "update_chase_policy",
+      "tool_id": "alphaclone.mcp.update_chase_policy",
+      "module": "workspace",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-081029778f8c",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 530,
       "tool": "update_chatbot_persona",
       "tool_id": "alphaclone.mcp.update_chatbot_persona",
       "module": "workspace",
@@ -8932,7 +9619,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 495,
+      "index": 531,
       "tool": "update_client",
       "tool_id": "alphaclone.mcp.update_client",
       "module": "contacts",
@@ -8950,7 +9637,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 496,
+      "index": 532,
       "tool": "update_client_metadata",
       "tool_id": "alphaclone.mcp.update_client_metadata",
       "module": "contacts",
@@ -8968,7 +9655,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 497,
+      "index": 533,
       "tool": "update_client_status_batch",
       "tool_id": "alphaclone.mcp.update_client_status_batch",
       "module": "health",
@@ -8986,7 +9673,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 498,
+      "index": 534,
       "tool": "update_company",
       "tool_id": "alphaclone.mcp.update_company",
       "module": "companies",
@@ -9004,7 +9691,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 499,
+      "index": 535,
       "tool": "update_contact",
       "tool_id": "alphaclone.mcp.update_contact",
       "module": "contacts",
@@ -9022,7 +9709,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 500,
+      "index": 536,
       "tool": "update_contract_status",
       "tool_id": "alphaclone.mcp.update_contract_status",
       "module": "documents",
@@ -9040,7 +9727,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 501,
+      "index": 537,
       "tool": "update_deal",
       "tool_id": "alphaclone.mcp.update_deal",
       "module": "revenue",
@@ -9058,7 +9745,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 502,
+      "index": 538,
       "tool": "update_document",
       "tool_id": "alphaclone.mcp.update_document",
       "module": "documents",
@@ -9076,7 +9763,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 503,
+      "index": 539,
       "tool": "update_inventory_stock",
       "tool_id": "alphaclone.mcp.update_inventory_stock",
       "module": "finance",
@@ -9094,7 +9781,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 504,
+      "index": 540,
       "tool": "update_invoice",
       "tool_id": "alphaclone.mcp.update_invoice",
       "module": "invoices",
@@ -9112,7 +9799,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 505,
+      "index": 541,
       "tool": "update_invoice_status",
       "tool_id": "alphaclone.mcp.update_invoice_status",
       "module": "invoices",
@@ -9130,7 +9817,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 506,
+      "index": 542,
       "tool": "update_lead",
       "tool_id": "alphaclone.mcp.update_lead",
       "module": "leads",
@@ -9148,7 +9835,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 507,
+      "index": 543,
       "tool": "update_lead_status",
       "tool_id": "alphaclone.mcp.update_lead_status",
       "module": "leads",
@@ -9166,7 +9853,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 508,
+      "index": 544,
       "tool": "update_project",
       "tool_id": "alphaclone.mcp.update_project",
       "module": "projects",
@@ -9184,7 +9871,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 509,
+      "index": 545,
       "tool": "update_project_status",
       "tool_id": "alphaclone.mcp.update_project_status",
       "module": "projects",
@@ -9202,7 +9889,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 510,
+      "index": 546,
       "tool": "update_project_task",
       "tool_id": "alphaclone.mcp.update_project_task",
       "module": "tasks",
@@ -9220,7 +9907,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 511,
+      "index": 547,
       "tool": "update_quote",
       "tool_id": "alphaclone.mcp.update_quote",
       "module": "revenue",
@@ -9238,7 +9925,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 512,
+      "index": 548,
       "tool": "update_task",
       "tool_id": "alphaclone.mcp.update_task",
       "module": "tasks",
@@ -9256,7 +9943,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 513,
+      "index": 549,
       "tool": "update_ticket",
       "tool_id": "alphaclone.mcp.update_ticket",
       "module": "support",
@@ -9274,7 +9961,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 514,
+      "index": 550,
       "tool": "upload_document",
       "tool_id": "alphaclone.mcp.upload_document",
       "module": "documents",
@@ -9292,7 +9979,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 515,
+      "index": 551,
       "tool": "upload_file",
       "tool_id": "alphaclone.mcp.upload_file",
       "module": "documents",
@@ -9310,7 +9997,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 516,
+      "index": 552,
       "tool": "upload_media",
       "tool_id": "alphaclone.mcp.upload_media",
       "module": "media",
@@ -9323,12 +10010,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": null,
+      "downstream_service": "openai",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 517,
+      "index": 553,
       "tool": "upload_media_asset",
       "tool_id": "alphaclone.mcp.upload_media_asset",
       "module": "media",
@@ -9346,7 +10033,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 518,
+      "index": 554,
+      "tool": "upload_media_chunk",
+      "tool_id": "alphaclone.mcp.upload_media_chunk",
+      "module": "media",
+      "risk": "medium",
+      "test_performed": "static_contract_write_blocked",
+      "result": "BLOCKED_BY_SAFETY",
+      "duration_ms": 0,
+      "evidence_id": "ev-f3d23c4f8fab",
+      "root_cause": "write_tool_blocked_by_audit_policy",
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": null,
+      "read_write": "write",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 555,
       "tool": "upload_social_media",
       "tool_id": "alphaclone.mcp.upload_social_media",
       "module": "media",
@@ -9359,12 +10064,12 @@
       "repair": null,
       "retest": "pending",
       "mcp_server": "alphaclone-systems",
-      "downstream_service": null,
+      "downstream_service": "openai",
       "read_write": "write",
       "executable_via": "tool-registry"
     },
     {
-      "index": 519,
+      "index": 556,
       "tool": "upsert_nexus_memory",
       "tool_id": "alphaclone.mcp.upsert_nexus_memory",
       "module": "bonnie",
@@ -9382,7 +10087,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 520,
+      "index": 557,
       "tool": "validate_document",
       "tool_id": "alphaclone.mcp.validate_document",
       "module": "documents",
@@ -9400,7 +10105,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 521,
+      "index": 558,
       "tool": "verify_invoice_sent",
       "tool_id": "alphaclone.mcp.verify_invoice_sent",
       "module": "invoices",
@@ -9418,7 +10123,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 522,
+      "index": 559,
       "tool": "verify_lead_created",
       "tool_id": "alphaclone.mcp.verify_lead_created",
       "module": "leads",
@@ -9436,7 +10141,25 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 523,
+      "index": 560,
+      "tool": "verify_outbound_email",
+      "tool_id": "alphaclone.mcp.verify_outbound_email",
+      "module": "email",
+      "risk": "medium",
+      "test_performed": "static_contract_registry_parity",
+      "result": "PASS",
+      "duration_ms": 0,
+      "evidence_id": "ev-f409a9f21dc1",
+      "root_cause": null,
+      "repair": null,
+      "retest": "pending",
+      "mcp_server": "alphaclone-systems",
+      "downstream_service": "email_provider",
+      "read_write": "read",
+      "executable_via": "tool-registry"
+    },
+    {
+      "index": 561,
       "tool": "verify_outreach_delivery",
       "tool_id": "alphaclone.mcp.verify_outreach_delivery",
       "module": "email",
@@ -9454,7 +10177,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 524,
+      "index": 562,
       "tool": "verify_social_post_published",
       "tool_id": "alphaclone.mcp.verify_social_post_published",
       "module": "social",
@@ -9472,7 +10195,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 525,
+      "index": 563,
       "tool": "voice_action_router",
       "tool_id": "alphaclone.mcp.voice_action_router",
       "module": "workspace",
@@ -9490,7 +10213,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 526,
+      "index": 564,
       "tool": "void_document",
       "tool_id": "alphaclone.mcp.void_document",
       "module": "documents",
@@ -9508,7 +10231,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 527,
+      "index": 565,
       "tool": "write_audit_log",
       "tool_id": "alphaclone.mcp.write_audit_log",
       "module": "admin",
@@ -9526,7 +10249,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 528,
+      "index": 566,
       "tool": "write_task_note",
       "tool_id": "alphaclone.mcp.write_task_note",
       "module": "tasks",
@@ -9544,7 +10267,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 529,
+      "index": 567,
       "tool": "x_connection_diagnostic",
       "tool_id": "alphaclone.mcp.x_connection_diagnostic",
       "module": "social",
@@ -9562,7 +10285,7 @@
       "executable_via": "tool-registry"
     },
     {
-      "index": 530,
+      "index": 568,
       "tool": "zoho_health",
       "tool_id": "alphaclone.mcp.zoho_health",
       "module": "health",
