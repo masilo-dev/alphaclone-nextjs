@@ -449,6 +449,18 @@ html.dark {
   color-scheme: dark;
 }
 
+html.light {
+  --background: #F6F7F9;
+  --foreground: #0F172A;
+  color-scheme: light;
+}
+
+html.dark {
+  --background: #020D1A;
+  --foreground: #f8fafc;
+  color-scheme: dark;
+}
+
 html {
   overflow-x: clip;
 }

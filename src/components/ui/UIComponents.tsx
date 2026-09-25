@@ -3,6 +3,7 @@ import { useBlurValidation } from '@/hooks/useBlurValidation';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 import { WORKSPACE } from '@/constants/design';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- Button ---
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,7 +34,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   type = 'button',
   ...props
 }, ref) => {
+  const { t } = useLanguage();
   const isActuallyDisabled = Boolean(disabled || isLoading);
+  const renderedChildren = typeof children === 'string' ? t(children) : children;
 
   const baseStyles =
     'inline-flex items-center justify-center font-medium transition-all select-none touch-manipulation ' +
@@ -74,7 +77,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
     >
       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
       {!isLoading && icon && <span className="mr-2 flex items-center" aria-hidden="true">{icon}</span>}
-      {children}
+      {renderedChildren}
     </button>
   );
 });
@@ -134,6 +137,9 @@ interface BadgeProps {
 }
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
+  const { t } = useLanguage();
+  const renderedChildren = typeof children === 'string' ? t(children) : children;
+
   const variants: Record<string, string> = {
     success: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]",
     warning: "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
@@ -149,7 +155,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
 
   return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full type-ui font-medium border whitespace-nowrap ${resolvedClass} ${className}`}>
-      {children}
+      {renderedChildren}
     </span>
   );
 };
@@ -276,6 +282,8 @@ export const Modal: React.FC<ModalProps> = ({
   containerClassName = '',
   className = ''
 }) => {
+  const { t } = useLanguage();
+  const renderedTitle = title ? t(title) : undefined;
   const titleId = React.useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -332,11 +340,11 @@ export const Modal: React.FC<ModalProps> = ({
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
-          <h3 id={titleId} className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
+          <h3 id={titleId} className="text-lg font-semibold text-[var(--text-primary)]">{renderedTitle}</h3>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close dialog"
+            aria-label={t('Close dialog')}
             className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--surface-hover)] ${WORKSPACE.panel.radius}`}
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -406,9 +414,15 @@ export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ 
   <tr className={`border-b border-[var(--ws-border)] transition-colors hover:bg-[var(--ws-hover)] data-[state=selected]:bg-[var(--ws-active)] ${className}`} {...props} />
 );
 
-export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <th className={`h-11 px-4 text-left align-middle font-semibold type-caption tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
-);
+export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className = '', children, ...props }) => {
+  const { t } = useLanguage();
+  const renderedChildren = typeof children === 'string' ? t(children) : children;
+  return (
+    <th className={`h-11 px-4 text-left align-middle font-semibold type-caption tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+      {renderedChildren}
+    </th>
+  );
+};
 
 export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
   <td className={`px-4 py-3 align-middle type-table-cell text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
@@ -430,6 +444,7 @@ interface DropdownProps {
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'right', className = '' }) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -497,7 +512,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
                 }`}
               >
                 {item.icon && <span className="shrink-0" aria-hidden="true">{item.icon}</span>}
-                {item.label}
+                {t(item.label)}
               </button>
             ))}
           </div>

@@ -15,6 +15,7 @@ import {
 import type { UserRole } from '@/types';
 import { ENTERPRISE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MobileCreateSheetProps {
   open: boolean;
@@ -24,6 +25,8 @@ interface MobileCreateSheetProps {
 }
 
 export function MobileCreateSheet({ open, onClose, userRole, onNavigate }: MobileCreateSheetProps) {
+  const { t } = useLanguage();
+
   if (!open) return null;
 
   const isTenant = userRole === 'tenant_admin' || userRole === 'business_dashboard';
@@ -45,15 +48,15 @@ export function MobileCreateSheet({ open, onClose, userRole, onNavigate }: Mobil
 
   return (
     <div className="ac-responsive-create-sheet md:hidden fixed inset-0 z-[1210] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-create-title">
-      <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label="Close create menu" onClick={onClose} />
+      <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label={t('Close create menu')} onClick={onClose} />
       <div className="ac-v3-sheet relative mt-auto flex max-h-[82dvh] flex-col rounded-t-[22px] border border-[var(--border-default)] pb-safe">
         <div className="flex items-center justify-between border-b border-[var(--border-default)] px-4 pb-3 pt-4">
-          <h2 id="mobile-create-title" className="text-base font-semibold text-[var(--text-primary)]">Create</h2>
+          <h2 id="mobile-create-title" className="text-base font-semibold text-[var(--text-primary)]">{t('Create')}</h2>
           <button
             type="button"
             onClick={onClose}
             className={cn(ENTERPRISE.touchTarget, 'rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]')}
-            aria-label="Close"
+            aria-label={t('Close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -72,7 +75,7 @@ export function MobileCreateSheet({ open, onClose, userRole, onNavigate }: Mobil
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--ac-accent)_12%,transparent)] text-[var(--ac-accent)]">
                   <Icon className="h-5 w-5" aria-hidden />
                 </span>
-                <span className="mt-3 type-ui font-semibold text-[var(--text-primary)]">{action.label}</span>
+                <span className="mt-3 type-ui font-semibold text-[var(--text-primary)]">{t(action.label)}</span>
               </button>
             );
           })}

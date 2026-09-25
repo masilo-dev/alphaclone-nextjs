@@ -1019,6 +1019,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div className="space-y-1.5">
                         <label className="type-caption text-slate-500 uppercase font-black">{translate('Your language')}</label>
                         <select
+                            name="language"
+                            data-testid="language-select"
+                            aria-label={translate('Your language')}
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as typeof language)}
                             className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white outline-none"

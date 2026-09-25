@@ -31,8 +31,31 @@ const LanguageContext = createContext<LanguageContextType>({
 export const useLanguage = (): LanguageContextType => useContext(LanguageContext);
 
 export const getStoredLanguage = (userId?: string | null): SupportedLanguage => {
+    if (typeof window === 'undefined') return 'en';
+
+    // 1. Check scoped/unscoped localStorage
     const stored = readUserPrefKey(LANGUAGE_STORAGE_KEY, userId) as SupportedLanguage | null;
     if (stored && LANGUAGES.some((l) => l.code === stored)) return stored;
+
+    // 2. Check cookie
+    try {
+        const match = document.cookie.match(/(?:^|;\s*)ac-language=([^;]+)/);
+        if (match && match[1]) {
+            const cookieLang = decodeURIComponent(match[1]) as SupportedLanguage;
+            if (LANGUAGES.some((l) => l.code === cookieLang)) return cookieLang;
+        }
+    } catch {
+        /* ignore */
+    }
+
+    // 3. Check html tag if already set by inline script
+    try {
+        const htmlLang = document.documentElement.lang as SupportedLanguage;
+        if (htmlLang && LANGUAGES.some((l) => l.code === htmlLang)) return htmlLang;
+    } catch {
+        /* ignore */
+    }
+
     return 'en';
 };
 
@@ -43,10 +66,21 @@ function isSupportedLanguage(value: unknown): value is SupportedLanguage {
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
     const userId = user?.id ?? null;
-    const [language, setLanguageState] = useState<SupportedLanguage>('en');
+
+    // Synchronous initial value to eliminate English-to-Polish / English-to-Spanish flash on load
+    const [language, setLanguageState] = useState<SupportedLanguage>(() => {
+        if (typeof window !== 'undefined') {
+            return getStoredLanguage(null);
+        }
+        return 'en';
+    });
 
     useEffect(() => {
-        setLanguageState(getStoredLanguage(userId));
+        const stored = getStoredLanguage(userId);
+        setLanguageState(stored);
+        if (typeof document !== 'undefined') {
+            document.documentElement.lang = stored;
+        }
     }, [userId]);
 
     useEffect(() => {
@@ -54,6 +88,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             const detail = (event as CustomEvent).detail;
             if (isSupportedLanguage(detail?.language)) {
                 setLanguageState(detail.language);
+                if (typeof document !== 'undefined') {
+                    document.documentElement.lang = detail.language;
+                }
             }
         };
         window.addEventListener('ac-language-changed', onLanguageChanged);
@@ -68,6 +105,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const setLanguage = useCallback(
         (lang: SupportedLanguage, opts?: { skipServer?: boolean }) => {
             writeUserPrefKey(LANGUAGE_STORAGE_KEY, lang, userId);
+            try {
+                document.cookie = `ac-language=${encodeURIComponent(lang)};path=/;max-age=31536000;SameSite=Lax`;
+            } catch {
+                /* ignore */
+            }
             setLanguageState(lang);
             if (typeof document !== 'undefined') {
                 document.documentElement.lang = lang;
@@ -99,9 +141,5 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         [language, setLanguage, meta.label, meta.code, t],
     );
 
-    return (
-        <LanguageContext.Provider value={value}>
-            {children}
-        </LanguageContext.Provider>
-    );
+    return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 };

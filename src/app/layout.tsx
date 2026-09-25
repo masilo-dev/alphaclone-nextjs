@@ -71,8 +71,8 @@ export const viewport: Viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#07152f" },
+    { media: "(prefers-color-scheme: light)", color: "#020D1A" },
+    { media: "(prefers-color-scheme: dark)", color: "#020D1A" },
   ],
 };
 
@@ -116,7 +116,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         <link rel="apple-touch-startup-image" href="/logo.png" />
-        <link rel="mask-icon" href="/favicon-192x192.png" color="#212446" />
+        <link rel="mask-icon" href="/favicon-192x192.png" color="#020D1A" />
+        <script
+          id="ac-anti-flash-init"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ac-language=([^;]+)/);var l=m?decodeURIComponent(m[1]):null;if(!l){l=localStorage.getItem('ac-language')||'en';}if(l&&('en'===l||'es'===l||'pl'===l)){document.documentElement.lang=l;}var t=null;try{t=localStorage.getItem('alphaclone:user-pref:ac-theme')||localStorage.getItem('ac-theme')||localStorage.getItem('theme-mode');}catch(te){}var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var isDark=t==='dark'?true:(t==='light'?false:(t==='auto'||t==='system'?prefersDark:true));if(isDark){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.style.colorScheme='dark';document.documentElement.style.backgroundColor='#020D1A';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#F6F7F9';}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body suppressHydrationWarning className="antialiased text-base font-sans touch-action-manipulation overscroll-behavior-none" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none', touchAction: 'manipulation', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility' }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }} />

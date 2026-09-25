@@ -27,7 +27,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
             scale: mode === 'opening' ? 1.5 : 1,
             transition: { duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }
           }}
-          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[#050B1E] overflow-hidden ${className}`}
+          className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[#020D1A] overflow-hidden ${className}`}
         >
           {/* Animated Background */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-transparent" />
@@ -36,7 +36,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
             animate={{ rotate: 360 }}
             transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
             style={{
-              background: 'conic-gradient(from 0deg, transparent, rgba(20,184,166,0.25), transparent, rgba(59,130,246,0.15), transparent)',
+              background: 'conic-gradient(from 0deg, transparent, rgba(65,153,164,0.2), transparent, rgba(65,153,164,0.06), transparent)',
             }}
           />
           

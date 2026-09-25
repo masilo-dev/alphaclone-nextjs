@@ -20,6 +20,7 @@ export function applyAcThemeClass(t: AcThemeMode): void {
     root.classList.toggle('dark', isDark);
     root.classList.toggle('light', !isDark);
     root.style.colorScheme = isDark ? 'dark' : 'light';
+    root.style.backgroundColor = isDark ? '#020D1A' : '#F6F7F9';
     try {
         window.dispatchEvent(new CustomEvent('ac-theme-changed', { detail: { mode: t } }));
     } catch {

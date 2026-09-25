@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
-    background_color: '#212446',
-    theme_color: '#212446',
+    background_color: '#020D1A',
+    theme_color: '#020D1A',
     orientation: 'any',
     icons: [
       { src: '/favicon-48x48.png', sizes: '48x48', type: 'image/png', purpose: 'any' },

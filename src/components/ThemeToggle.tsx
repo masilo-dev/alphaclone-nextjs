@@ -42,34 +42,43 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
     };
 
     return (
-        <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-[var(--surface-secondary)] border border-[var(--border-default)] rounded-lg p-1 transition-colors">
             <button
+                type="button"
                 onClick={() => handleThemeChange('light')}
-                className={`p-2 rounded-md transition-colors ${theme === 'light'
-                        ? 'bg-slate-700 text-yellow-400'
-                        : 'text-slate-400 hover:text-white'
-                    } `}
+                className={`p-2 rounded-md transition-all ${
+                    theme === 'light'
+                        ? 'bg-[var(--surface-elevated)] shadow-sm text-amber-500 font-medium'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                }`}
                 title="Light mode"
+                aria-label="Light mode"
             >
                 <Sun className="w-4 h-4" />
             </button>
             <button
+                type="button"
                 onClick={() => handleThemeChange('dark')}
-                className={`p-2 rounded-md transition-colors ${theme === 'dark'
-                        ? 'bg-slate-700 text-blue-400'
-                        : 'text-slate-400 hover:text-white'
-                    } `}
+                className={`p-2 rounded-md transition-all ${
+                    theme === 'dark'
+                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,#4199A4)] font-medium'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                }`}
                 title="Dark mode"
+                aria-label="Dark mode"
             >
                 <Moon className="w-4 h-4" />
             </button>
             <button
+                type="button"
                 onClick={() => handleThemeChange('auto')}
-                className={`p-2 rounded-md transition-colors ${theme === 'auto'
-                        ? 'bg-slate-700 text-teal-400'
-                        : 'text-slate-400 hover:text-white'
-                    } `}
+                className={`p-2 rounded-md transition-all ${
+                    theme === 'auto'
+                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,#4199A4)] font-medium'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
+                }`}
                 title="Auto (system)"
+                aria-label="Auto (system)"
             >
                 <Monitor className="w-4 h-4" />
             </button>

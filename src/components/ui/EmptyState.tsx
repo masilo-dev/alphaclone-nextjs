@@ -11,6 +11,7 @@ import {
   type EmptyStateModuleId,
   type EmptyStateQuickAction,
 } from '@/config/emptyStatePresets';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -43,6 +44,7 @@ export function EmptyState({
   templateLinks,
   importOptions,
 }: EmptyStateProps) {
+  const { t } = useLanguage();
   const hasExtras =
     (quickActions && quickActions.length > 0) ||
     bonnieSuggestion ||
@@ -59,8 +61,8 @@ export function EmptyState({
       <div className="w-11 h-11 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-hover)] flex items-center justify-center mb-4">
         <Icon className="w-5 h-5 text-teal-400/90" strokeWidth={1.5} />
       </div>
-      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2 text-base')}>{title}</h3>
-      <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed mb-6 max-w-sm">{description}</p>
+      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2 text-base')}>{t(title)}</h3>
+      <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed mb-6 max-w-sm">{t(description)}</p>
       {action}
       {!action && actionLabel && onAction && (
         <button
@@ -68,7 +70,7 @@ export function EmptyState({
           onClick={onAction}
           className="ac-workspace-action-btn ac-workspace-action-btn--primary min-h-9 px-4"
         >
-          {actionLabel}
+          {t(actionLabel)}
         </button>
       )}
 
@@ -77,7 +79,7 @@ export function EmptyState({
           {bonnieSuggestion ? (
             <div className="ac-workspace-panel p-3 flex items-start gap-2 border border-teal-500/20">
               <Bot className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <p className="type-card-description text-[var(--ws-text-secondary)]">{bonnieSuggestion}</p>
+              <p className="type-card-description text-[var(--ws-text-secondary)]">{t(bonnieSuggestion)}</p>
             </div>
           ) : null}
 
@@ -90,7 +92,7 @@ export function EmptyState({
                     href={qa.href}
                     className="ac-workspace-action-btn ac-workspace-action-btn--secondary type-ui min-h-8 px-3"
                   >
-                    {qa.label}
+                    {t(qa.label)}
                   </Link>
                 ) : (
                   <button
@@ -99,7 +101,7 @@ export function EmptyState({
                     onClick={qa.onAction}
                     className="ac-workspace-action-btn ac-workspace-action-btn--secondary type-ui min-h-8 px-3"
                   >
-                    {qa.label}
+                    {t(qa.label)}
                   </button>
                 )
               )}

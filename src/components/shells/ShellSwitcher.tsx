@@ -12,12 +12,27 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
     const { isPWA, isLoading } = usePWA();
     const pathname = usePathname();
 
-    // Landing / booking / meet are always marketing shell — skip PWA splash for faster access.
-    if (!isPWA && (pathname === '/' || pathname?.startsWith('/book') || pathname?.startsWith('/meet'))) {
+    const isPublicRoute =
+        !pathname ||
+        pathname === '/' ||
+        pathname.startsWith('/about') ||
+        pathname.startsWith('/pricing') ||
+        pathname.startsWith('/faq') ||
+        pathname.startsWith('/book') ||
+        pathname.startsWith('/meet') ||
+        pathname.startsWith('/who-we-serve') ||
+        pathname.startsWith('/blog') ||
+        pathname.startsWith('/contact') ||
+        pathname.startsWith('/legal') ||
+        pathname.startsWith('/privacy') ||
+        pathname.startsWith('/terms') ||
+        pathname.startsWith('/portal');
+
+    if (!isPWA && isPublicRoute) {
         return <MarketingShell>{children}</MarketingShell>;
     }
 
-    if (isLoading) {
+    if (isLoading && isPWA) {
         return <Splash />;
     }
 

@@ -7,6 +7,7 @@ import { getMoreCatalogue } from '@/config/responsive/mobileNav';
 import { getCompanionCapabilityForPath } from '@/config/pwaCompanionCapabilities';
 import { ENTERPRISE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MobileMoreSheetProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface MobileMoreSheetProps {
  * compressed desktop navigation tree.
  */
 export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileMoreSheetProps) {
+  const { t } = useLanguage();
   const groups = getMoreCatalogue(userRole);
 
   if (!open) return null;
@@ -32,15 +34,15 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
 
   return (
     <div className="ac-responsive-more-sheet md:hidden fixed inset-0 z-[1200] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
-      <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label="Close module catalogue" onClick={onClose} />
+      <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label={t('Close module catalogue')} onClick={onClose} />
       <div className="ac-v3-sheet relative mt-auto max-h-[88dvh] flex flex-col rounded-t-[22px] border border-[var(--border-default)] pb-safe">
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-default)]">
-          <h2 id="mobile-more-title" className="text-base font-semibold text-[var(--text-primary)]">More</h2>
+          <h2 id="mobile-more-title" className="text-base font-semibold text-[var(--text-primary)]">{t('More')}</h2>
           <button
             type="button"
             onClick={onClose}
             className={cn(ENTERPRISE.touchTarget, 'rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]')}
-            aria-label="Close"
+            aria-label={t('Close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -50,7 +52,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
           {groups.map((group) => (
             <section key={group.id} aria-labelledby={`more-group-${group.id}`}>
               <h3 id={`more-group-${group.id}`} className="type-caption font-semibold tracking-wide text-[var(--text-muted)] mb-2">
-                {group.label}
+                {t(group.label)}
               </h3>
               <ul className="grid grid-cols-1 gap-1">
                 {group.items.map((item) => {
@@ -67,9 +69,9 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                           <Icon className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block font-medium truncate">{item.label}</span>
+                          <span className="block font-medium truncate">{t(item.label)}</span>
                           {capability.level === 'DESKTOP' ? (
-                            <span className="block type-ui leading-4 text-[var(--text-muted)]">Use on laptop</span>
+                            <span className="block type-ui leading-4 text-[var(--text-muted)]">{t('Use on laptop')}</span>
                           ) : null}
                         </span>
                       </button>
@@ -84,5 +86,3 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
     </div>
   );
 }
-
-export default MobileMoreSheet;

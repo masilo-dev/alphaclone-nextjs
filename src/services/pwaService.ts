@@ -35,10 +35,7 @@ export const pwaService = {
             return false;
         }
 
-        // Chromium exposes an actual install prompt through beforeinstallprompt.
-        // Service-worker support alone does not mean a native install prompt exists
-        // (notably on Safari/iOS, where installation is performed from the Share menu).
-        return Boolean((window as any).deferredPrompt);
+        return Boolean((window as any).deferredPrompt) || (/iPad|iPhone|iPod/.test(navigator.userAgent || '') && !('MSStream' in window));
     },
 
     /**

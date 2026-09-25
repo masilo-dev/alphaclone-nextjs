@@ -200,7 +200,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
         const tenantAdminSteps: Step[] = [
             {
-                target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"]',
+                target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"]',
                 title: t('Welcome to AlphaClone'),
                 content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
                 placement: 'center',
@@ -258,7 +258,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
         const platformOwnerSteps: Step[] = [
             {
-                target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"]',
+                target: '[data-tour="platform-owner-home"], [data-tour="navigation"]',
                 title: t('Platform Command'),
                 content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
                 placement: 'center',
@@ -400,10 +400,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
         } else if (type === EVENTS.ERROR) {
             console.warn('[ProductTour] Joyride error encountered, dismissing cleanly');
             completeTour(true);
-        } else if (
-            type === EVENTS.STEP_AFTER ||
-            ((action === ACTIONS.NEXT || action === ACTIONS.PREV) && type === EVENTS.TOOLTIP)
-        ) {
+        } else if (type === EVENTS.STEP_AFTER) {
             const delta = action === ACTIONS.PREV ? -1 : 1;
             const nextIndex = Math.max(0, index + delta);
             if (nextIndex >= mountedSteps.length) {
@@ -431,11 +428,11 @@ const ProductTour: React.FC<ProductTourProps> = ({
             callback={handleJoyrideCallback}
             styles={{
                 options: {
-                    primaryColor: '#356AF4',
+                    primaryColor: '#4199A4',
                     textColor: isDark ? '#F1F5F9' : '#0F172A',
-                    backgroundColor: isDark ? '#171A26' : '#FFFFFF',
-                    overlayColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(15, 23, 42, 0.55)',
-                    arrowColor: isDark ? '#171A26' : '#FFFFFF',
+                    backgroundColor: isDark ? '#0D1526' : '#FFFFFF',
+                    overlayColor: isDark ? 'rgba(2, 13, 26, 0.78)' : 'rgba(15, 23, 42, 0.55)',
+                    arrowColor: isDark ? '#0D1526' : '#FFFFFF',
                     zIndex: 10000,
                 },
                 spotlight: {
@@ -444,9 +441,11 @@ const ProductTour: React.FC<ProductTourProps> = ({
                 tooltip: {
                     borderRadius: '14px',
                     padding: '22px 24px',
-                    backgroundColor: isDark ? '#171A26' : '#FFFFFF',
-                    border: isDark ? '1px solid #282F45' : '1px solid #E2E8F0',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+                    backgroundColor: isDark ? '#0D1526' : '#FFFFFF',
+                    border: isDark ? '1px solid rgba(65, 153, 164, 0.25)' : '1px solid rgba(33, 36, 70, 0.14)',
+                    boxShadow: isDark
+                        ? '0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
+                        : '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
                     maxWidth: '420px',
                     pointerEvents: 'auto',
                 },
@@ -467,7 +466,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
                     padding: '0 0 14px 0',
                 },
                 buttonNext: {
-                    backgroundColor: '#356AF4',
+                    backgroundColor: '#4199A4',
                     color: '#FFFFFF',
                     borderRadius: '8px',
                     padding: '9px 18px',
@@ -475,7 +474,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
                     fontWeight: 600,
                     outline: 'none',
                     cursor: 'pointer',
-                    boxShadow: '0 1px 2px 0 rgba(53, 106, 244, 0.35)',
+                    boxShadow: '0 1px 3px 0 rgba(65, 153, 164, 0.35)',
                 },
                 buttonBack: {
                     color: isDark ? '#94A3B8' : '#64748B',

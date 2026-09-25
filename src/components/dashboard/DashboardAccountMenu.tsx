@@ -21,7 +21,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const { language, setLanguage, t } = useLanguage();
-  const { isPWA } = usePWA();
+  const { isPWA, canInstall, isInstalled, hasNativePrompt, promptInstall } = usePWA();
   const isMobile = useIsMobile();
   const showMobileApp = isPWA || isMobile;
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
@@ -128,6 +128,25 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
           <Settings className="w-4 h-4 text-[var(--text-muted)]" />
           {t('Settings')}
         </button>
+
+        {canInstall && !isInstalled && !isPWA && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={async () => {
+              setOpen(false);
+              if (hasNativePrompt) {
+                await promptInstall();
+              } else if (onPwaSettings) {
+                onPwaSettings();
+              }
+            }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--ac-accent,#356AF4)] hover:bg-[var(--surface-hover)] transition-colors font-medium border-t border-[var(--border-default)]"
+          >
+            <Smartphone className="w-4 h-4 text-[var(--ac-accent,#356AF4)]" />
+            {t('Install AlphaClone')}
+          </button>
+        )}
 
         <div className="px-3 py-2.5 border-t border-[var(--border-default)] bg-[var(--surface-secondary)]">
           <label className="flex items-center gap-2 type-caption font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">

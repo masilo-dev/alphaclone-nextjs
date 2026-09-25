@@ -31,14 +31,18 @@ function isWelcomeSeen(userId: string) {
   );
 }
 
-/** Inline welcome banner after welcome modal or onboarding is complete. */
+import { getWalkthroughRecord, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
+
+/** Inline welcome banner after welcome modal or onboarding is complete. Suppressed if walkthrough completed or dismissed. */
 export function canShowPlatformWelcomeBanner(userId: string): boolean {
   if (typeof window === 'undefined' || !userId) return false;
+  const tourRecord = getWalkthroughRecord(userId);
+  if (tourRecord.state === 'completed' || tourRecord.state === 'dismissed') {
+    return false;
+  }
   const onboardingDone = localStorage.getItem(onboardingKey(userId)) === 'true';
   return isWelcomeSeen(userId) || onboardingDone;
 }
-
-import { getWalkthroughRecord, setWalkthroughState } from '@/lib/onboarding/walkthroughService';
 
 /** Sync profile/auth onboarding flags into localStorage for returning users. */
 export async function resolveOnboardingGate(

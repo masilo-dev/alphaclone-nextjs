@@ -1296,6 +1296,57 @@ const ES: Record<string, string> = {
     'Zoho Campaigns': 'Campañas de Zoho',
     'Exit focus mode': 'Salir del modo de enfoque',
     'Focus this module': 'Enfocar este módulo',
+
+    // PWA & Installation
+    'Install AlphaClone': 'Instalar AlphaClone',
+    'Install App': 'Instalar aplicación',
+    'Installing...': 'Instalando...',
+    'Access your business from anywhere. AlphaClone opens like an app with the mobile Companion experience.': 'Accede a tu negocio desde cualquier lugar. AlphaClone se abre como una aplicación con la experiencia móvil Companion.',
+    'On iPhone or iPad, open Share and choose Add to Home Screen to install AlphaClone.': 'En iPhone o iPad, abre Compartir y selecciona Añadir a pantalla de inicio para instalar AlphaClone.',
+    'On iPhone or iPad, tap the Share icon and choose Add to Home Screen to install AlphaClone.': 'En iPhone o iPad, toca el icono Compartir y selecciona Añadir a pantalla de inicio para instalar AlphaClone.',
+    'Add AlphaClone to your phone or computer from your browser menu for a focused app experience.': 'Añade AlphaClone a tu teléfono u ordenador desde el menú del navegador para una experiencia de app optimizada.',
+
+    // Mobile Navigation & Sheets
+    'Add client': 'Añadir cliente',
+    'Email client': 'Enviar correo al cliente',
+    'New task': 'Nueva tarea',
+    'New meeting': 'Nueva reunión',
+    'New deal': 'Nuevo trato',
+    'New project': 'Nuevo proyecto',
+    'Social post': 'Publicación social',
+    'Close create menu': 'Cerrar menú de creación',
+    'Close module catalogue': 'Cerrar catálogo de módulos',
+
+    // Shared UI Actions & Status Badges
+    'Save': 'Guardar',
+    'Edit': 'Editar',
+    'Add': 'Añadir',
+    'Filter': 'Filtrar',
+    'Clear': 'Limpiar',
+    'Export': 'Exportar',
+    'Import': 'Importar',
+    'Download': 'Descargar',
+    'Upload': 'Subir',
+    'View': 'Ver',
+    'Actions': 'Acciones',
+    'Date': 'Fecha',
+    'Amount': 'Cantidad',
+    'Phone': 'Teléfono',
+    'Role': 'Rol',
+    'Unpaid': 'Sin pagar',
+    'Success': 'Éxito',
+    'Error': 'Error',
+    'Warning': 'Advertencia',
+    'Info': 'Información',
+    'Loading...': 'Cargando...',
+    'Loading…': 'Cargando…',
+    'No data available': 'No hay datos disponibles',
+    'No results found': 'No se encontraron resultados',
+    'No clients yet': 'Aún no hay clientes',
+    'No projects found': 'No se encontraron proyectos',
+    'No invoices created': 'No hay facturas creadas',
+    'No tasks scheduled': 'No hay tareas programadas',
+    'No notifications': 'Sin notificaciones',
 };
 
 const PL: Record<string, string> = {
@@ -2585,10 +2636,64 @@ const PL: Record<string, string> = {
     'Zoho Campaigns': 'Kampanie Zoho',
     'Exit focus mode': 'Wyjdź z trybu skupienia',
     'Focus this module': 'Skup się na tym module',
+
+    // PWA & Installation
+    'Install AlphaClone': 'Zainstaluj AlphaClone',
+    'Install App': 'Zainstaluj aplikację',
+    'Installing...': 'Instalowanie...',
+    'Access your business from anywhere. AlphaClone opens like an app with the mobile Companion experience.': 'Uzyskaj dostęp do swojej firmy z dowolnego miejsca. AlphaClone otwiera się jak aplikacja mobilna Companion.',
+    'On iPhone or iPad, open Share and choose Add to Home Screen to install AlphaClone.': 'Na telefonie iPhone lub tablecie iPad otwórz Udostępnij i wybierz Do ekranu początkowego, aby zainstalować AlphaClone.',
+    'On iPhone or iPad, tap the Share icon and choose Add to Home Screen to install AlphaClone.': 'Na telefonie iPhone lub tablecie iPad dotknij ikony Udostępnij i wybierz Do ekranu początkowego, aby zainstalować AlphaClone.',
+    'Add AlphaClone to your phone or computer from your browser menu for a focused app experience.': 'Dodaj AlphaClone do telefonu lub komputera z menu przeglądarki, aby uzyskać dedykowaną aplikację.',
+
+    // Mobile Navigation & Sheets
+    'Add client': 'Dodaj klienta',
+    'Email client': 'Napisz do klienta',
+    'New task': 'Nowe zadanie',
+    'New meeting': 'Nowe spotkanie',
+    'New deal': 'Nowa transakcja',
+    'New project': 'Nowy projekt',
+    'Social post': 'Post w mediach',
+    'Close create menu': 'Zamknij menu tworzenia',
+    'Close module catalogue': 'Zamknij katalog modułów',
+
+    // Shared UI Actions & Status Badges
+    'Save': 'Zapisz',
+    'Edit': 'Edytuj',
+    'Add': 'Dodaj',
+    'Filter': 'Filtruj',
+    'Clear': 'Wyczyść',
+    'Export': 'Eksportuj',
+    'Import': 'Importuj',
+    'Download': 'Pobierz',
+    'Upload': 'Prześlij',
+    'View': 'Pokaż',
+    'Actions': 'Działania',
+    'Date': 'Data',
+    'Amount': 'Kwota',
+    'Phone': 'Telefon',
+    'Role': 'Rola',
+    'Unpaid': 'Nieopłacony',
+    'Success': 'Sukces',
+    'Error': 'Błąd',
+    'Warning': 'Ostrzeżenie',
+    'Info': 'Informacja',
+    'Loading...': 'Ładowanie...',
+    'Loading…': 'Ładowanie…',
+    'No data available': 'Brak dostępnych danych',
+    'No results found': 'Nie znaleziono wyników',
+    'No clients yet': 'Brak klientów',
+    'No projects found': 'Nie znaleziono projektów',
+    'No invoices created': 'Brak utworzonych faktur',
+    'No tasks scheduled': 'Brak zaplanowanych zadań',
+    'No notifications': 'Brak powiadomień',
 };
 
 export function uiTranslate(lang: SupportedLanguage, text: string): string {
-    if (lang === 'en') return text;
+    if (!text || lang === 'en') return text;
     const table = lang === 'es' ? ES : PL;
-    return table[text] ?? text;
+    if (table[text]) return table[text];
+    const trimmed = text.trim();
+    if (table[trimmed]) return table[trimmed];
+    return text;
 }

@@ -1,8 +1,20 @@
 import 'server-only';
 import Browserbase from '@browserbasehq/sdk';
 import { isRailwayHost } from '@/config/railwayWorkload';
-import { chromium, Browser, Page } from 'playwright-core';
-import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
+import type { Browser, Page } from 'playwright-core';
+import type { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
+
+async function getChromium() {
+  const modName = 'playwright-core';
+  const { chromium } = await import(/* webpackIgnore: true */ modName);
+  return chromium;
+}
+
+async function getPuppeteer() {
+  const modName = 'puppeteer-core';
+  const mod = await import(/* webpackIgnore: true */ modName);
+  return ((mod as any).default || mod) as typeof import('puppeteer-core');
+}
 
 
 /**
@@ -35,6 +47,7 @@ async function launchViaBrowserbase(): Promise<{ browser: Browser; sessionId: st
       timeout: 900, // 15 min max
     });
 
+    const chromium = await getChromium();
     const browser = await chromium.connectOverCDP(session.connectUrl, {
       timeout: 20_000, // Faster timeout for connection
     });
@@ -50,6 +63,7 @@ async function launchViaBrowserbase(): Promise<{ browser: Browser; sessionId: st
 }
 
 async function launchViaCDP(endpoints: string[]): Promise<Browser> {
+  const chromium = await getChromium();
   const shuffled = [...endpoints].sort(() => Math.random() - 0.5);
   for (const url of shuffled) {
     try {
@@ -97,6 +111,7 @@ async function launchLocal(): Promise<Browser> {
         'Set BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID.'
     );
   }
+  const chromium = await getChromium();
   const executablePath = resolveLocalChromeExecutable();
   console.log(
     `[BrowserManager] Using local Chromium${executablePath ? ` (${executablePath})` : ' (Playwright bundled)'}`
@@ -229,6 +244,7 @@ export class BrowserManager {
    * Connects to Browserbase via CDP. Returns { page, close }.
    */
   static async createPuppeteerPage(): Promise<{ page: PuppeteerPage; close: () => Promise<void> }> {
+    const puppeteer = await getPuppeteer();
     const apiKey = process.env.BROWSERBASE_API_KEY?.trim();
     const wsEndpoint = process.env.BROWSER_WS_ENDPOINT?.split(',')[0]?.trim();
 

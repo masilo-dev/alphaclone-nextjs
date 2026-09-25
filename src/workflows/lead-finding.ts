@@ -1,7 +1,6 @@
 import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
-import { hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
+import type { LeadResult } from '@/lib/scraper/freeLeadSearch';
 import { leadNurtureWorkflow } from './lead-nurture';
 import { enrichLeadData } from '@/services/unifiedAIService';
 
@@ -75,6 +74,10 @@ function scoreLead(row: LeadResult): number {
 }
 
 async function discoverLeads(query: string, location: string): Promise<LeadResult[]> {
+  const [{ runLeadStep }, { hasRemoteBrowserConfigured }] = await Promise.all([
+    import('@/lib/scraper/freeLeadSearch'),
+    import('@/lib/scraper/browserSerpLeads'),
+  ]);
   let step: 'init' | 'fallbacks' | 'browser' | 'finalize' | 'completed' = 'init';
   let partialResults: LeadResult[] = [];
   let finalResults: LeadResult[] = [];
