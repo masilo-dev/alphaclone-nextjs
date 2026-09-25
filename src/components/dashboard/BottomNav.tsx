@@ -6,7 +6,7 @@ import { Briefcase, House, Layers, Mail, Plus } from 'lucide-react';
 import { MOBILE_BOTTOM_DESTINATIONS, isMobileBottomActive } from '@/config/responsive/mobileNav';
 import { usePWA } from '@/contexts/PWAContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import MobileMoreSheet from './responsive/MobileMoreSheet';
+import { MobileMoreSheet } from './responsive/MobileMoreSheet';
 import MobileCreateSheet from './responsive/MobileCreateSheet';
 
 interface BottomNavProps {
