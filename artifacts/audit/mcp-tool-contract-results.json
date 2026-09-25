@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-24T14:18:03.504Z",
-  "total_tools": 568,
-  "passed": 511,
+  "generated_at": "2026-09-25T11:20:32.490Z",
+  "total_tools": 564,
+  "passed": 507,
   "failed": 0,
   "skipped": 57,
   "before_failure_count": 8,
@@ -504,15 +504,6 @@
     },
     {
       "tool": "conversions",
-      "classification": "read-only",
-      "registered": true,
-      "has_schema": true,
-      "status": "passed",
-      "reason": null,
-      "envelope_sample_valid": true
-    },
-    {
-      "tool": "convert_quote_to_invoice",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1872,15 +1863,6 @@
     },
     {
       "tool": "get_gamification_leaderboard",
-      "classification": "read-only",
-      "registered": true,
-      "has_schema": true,
-      "status": "passed",
-      "reason": null,
-      "envelope_sample_valid": true
-    },
-    {
-      "tool": "get_inventory_items",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4850,25 +4832,7 @@
       "envelope_sample_valid": true
     },
     {
-      "tool": "update_inventory_stock",
-      "classification": "update",
-      "registered": true,
-      "has_schema": true,
-      "status": "passed",
-      "reason": null,
-      "envelope_sample_valid": true
-    },
-    {
       "tool": "update_invoice",
-      "classification": "financial",
-      "registered": true,
-      "has_schema": true,
-      "status": "passed",
-      "reason": null,
-      "envelope_sample_valid": true
-    },
-    {
-      "tool": "update_invoice_status",
       "classification": "financial",
       "registered": true,
       "has_schema": true,
