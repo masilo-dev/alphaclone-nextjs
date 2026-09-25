@@ -1,20 +1,18 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, BarChart3, TrendingUp, Receipt, FileText, Briefcase } from 'lucide-react';
+import { DollarSign, BarChart3, TrendingUp, Receipt } from 'lucide-react';
 import HubShell from './HubShell';
 
+// Keep this list aligned 1:1 with the Money group in TENANT_ADMIN_NAV_ITEMS.
+// A module must never expose a second, competing navigation taxonomy.
 const MONEY_TABS = [
+  { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: DollarSign },
+  { label: 'Billing overview', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
-  { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
-  { label: 'Bills', href: '/dashboard/accounting/bills', icon: Receipt },
-  { label: 'Vendors', href: '/dashboard/vendors', icon: Briefcase },
-  { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
-  { label: 'Invoice manager', href: '/dashboard/business/billing/manage', icon: FileText },
-  { label: 'Invoices', href: '/dashboard/business/invoices', icon: Receipt },
   { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
-  { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
   { label: 'Cash flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
+  { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
 ];
 
 interface MoneyHubProps {
