@@ -68,10 +68,11 @@ export function UniversalModuleExecutionHeader({
   className = '',
 }: UniversalModuleExecutionHeaderProps) {
   const [show8Questions, setShow8Questions] = useState(false);
+  const [showExecutionDetails, setShowExecutionDetails] = useState(false);
   const { showGuidance } = useProgressiveGuidance(`execution:${moduleName}`);
   const authority = AUTHORITY_CONFIG[nextActionState.authorityLevel] || AUTHORITY_CONFIG.automatic_logged;
 
-  if (!showGuidance) {
+  if (!showGuidance || !showExecutionDetails) {
     return (
       <div className={`flex min-w-0 items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/65 px-3 py-2 ${className}`}>
         <div className="min-w-0 flex-1">
@@ -82,6 +83,16 @@ export function UniversalModuleExecutionHeader({
             {nextActionState.nextAction || recordTitle}
           </p>
         </div>
+        {showGuidance ? (
+          <button
+            type="button"
+            onClick={() => setShowExecutionDetails(true)}
+            className="inline-flex h-9 shrink-0 items-center rounded-lg border border-slate-700 px-3 type-caption font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
+            aria-label={`Show ${moduleName} execution details`}
+          >
+            Details
+          </button>
+        ) : null}
         {onExecuteNextAction ? (
           <button
             type="button"
@@ -124,6 +135,17 @@ export function UniversalModuleExecutionHeader({
           </div>
         </div>
 
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShow8Questions(false);
+              setShowExecutionDetails(false);
+            }}
+            className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-2 type-caption font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
+          >
+            Hide details
+          </button>
         {onExecuteNextAction && (
           <button
             type="button"
@@ -134,6 +156,7 @@ export function UniversalModuleExecutionHeader({
             <ArrowRight className="h-4 w-4" />
           </button>
         )}
+        </div>
       </div>
 
       {/* Operational 7-Field Grid */}
