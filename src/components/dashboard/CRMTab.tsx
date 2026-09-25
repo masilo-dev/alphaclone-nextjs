@@ -1696,7 +1696,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     try {
       const [leadsResult, unifiedResult] = await Promise.all([
         leadService.getLeads(),
-        contactService.getUnifiedContactsList({ limit: 500 }),
+        contactService.getUnifiedContactsList({ limit: 10000 }),
       ]);
 
       if (leadsResult.error) {
@@ -2208,7 +2208,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   useInfiniteScroll(crmListRef, loadMoreEntities, {
     enabled: leadsView === 'list' && filteredEntities.length > visibleCount,
   });
-  const visibleEntities = filteredEntities.slice(0, visibleCount);
+  const visibleEntities = filteredEntities;
 
   const allBulkSelected =
     bulkSelectTargetKeys.length > 0 && bulkSelectTargetKeys.every((k) => selectedKeys.has(k));
