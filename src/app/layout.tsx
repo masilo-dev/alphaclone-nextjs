@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { Suspense } from "react";
 
 import "./globals.css";
@@ -11,19 +10,6 @@ import "@/styles/accessibility.css";
 import "@/styles/apple-fluid-system.css";
 import "@/styles/crisp-product-ui.css";
 import { Providers } from "@/components/Providers";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter-next",
-  weight: ["400", "500", "600", "700", "800"],
-});
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-plus-jakarta-next",
-  weight: ["500", "600", "700", "800"],
-});
 
 import { PWAProvider } from "@/contexts/PWAContext";
 import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
