@@ -64,15 +64,32 @@ defineConnectorTool({
     required: ['prompt'],
   },
   handler: async (args) => {
-    const text = args.prompt.toLowerCase();
-    const criteria = {
-      industry: text.includes('tech') ? 'technology' : text.includes('health') ? 'healthcare' : 'general',
-      location: text.includes('us') || text.includes('united states') ? 'United States' : 'Global',
-      job_titles: ['CEO', 'Founder', 'VP of Sales', 'Operations Director'],
-      company_size: '10-50 employees',
-    };
-
-    return okResult('parse_lead_criteria', { raw_prompt: args.prompt, criteria });
+    try {
+      const { parseLeadIntentFromChat } = await import('@/lib/scraper/parseLeadIntent');
+      const { intent, assistantReply } = await parseLeadIntentFromChat(args.prompt);
+      return okResult('parse_lead_criteria', {
+        raw_prompt: args.prompt,
+        criteria: {
+          industry: intent.industry.join(', ') || intent.niche || 'general',
+          location: [intent.location.city, intent.location.country].filter(Boolean).join(', ') || 'Global',
+          job_titles: intent.title_keywords.length > 0 ? intent.title_keywords : ['CEO', 'Founder', 'Owner'],
+          company_size: intent.company_size_range ? `${intent.company_size_range.min || 1}-${intent.company_size_range.max || 50} employees` : '1-50 employees',
+          sources: intent.sources,
+          search_query: intent.search_query,
+          min_score: intent.min_score_threshold,
+        },
+        summary: intent.summary || assistantReply,
+      });
+    } catch {
+      const text = args.prompt.toLowerCase();
+      const criteria = {
+        industry: text.includes('tech') ? 'technology' : text.includes('health') ? 'healthcare' : text.includes('plumb') ? 'plumbing' : 'general',
+        location: text.includes('austin') ? 'Austin, United States' : text.includes('us') || text.includes('united states') ? 'United States' : 'Global',
+        job_titles: ['CEO', 'Founder', 'VP of Sales', 'Operations Director'],
+        company_size: '10-50 employees',
+      };
+      return okResult('parse_lead_criteria', { raw_prompt: args.prompt, criteria });
+    }
   },
 });
 

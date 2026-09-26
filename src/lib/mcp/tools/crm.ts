@@ -584,3 +584,65 @@ registerTool('crm', {
     });
   },
 });
+
+// 12. get_customer_360
+registerTool('crm', {
+  name: 'get_customer_360',
+  description:
+    'Retrieve complete Customer 360 relationship graph for a contact or client (identity, deals, invoices, projects, contracts, and activity timeline). Accepts an email address, contact UUID, client UUID, or contact/business name.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    identifier: z.string().min(1).describe('Email address, Contact/Client UUID, or Contact/Business Name'),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid', description: 'Tenant UUID' },
+      identifier: {
+        type: 'string',
+        description: 'Customer identifier: email address, UUID, or full name',
+      },
+    },
+    required: ['tenant_id', 'identifier'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { customer360Service } = await import('@/services/intelligence/customer360Service');
+
+    let targetEmail = args.identifier.trim();
+
+    // If identifier is not an email, resolve via contacts or business_clients
+    if (!targetEmail.includes('@')) {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetEmail);
+      if (isUuid) {
+        const [{ data: contact }, { data: client }, { data: lead }] = await Promise.all([
+          supabase.from('contacts').select('email').eq('tenant_id', args.tenant_id).eq('id', targetEmail).maybeSingle(),
+          supabase.from('business_clients').select('email').eq('tenant_id', args.tenant_id).eq('id', targetEmail).maybeSingle(),
+          supabase.from('leads').select('email').eq('tenant_id', args.tenant_id).eq('id', targetEmail).maybeSingle(),
+        ]);
+        targetEmail = contact?.email || client?.email || lead?.email || '';
+      } else {
+        // Name-based lookup
+        const [{ data: contacts }, { data: clients }, { data: leads }] = await Promise.all([
+          supabase.from('contacts').select('email').eq('tenant_id', args.tenant_id).or(`first_name.ilike.%${targetEmail}%,last_name.ilike.%${targetEmail}%`).not('email', 'is', null).limit(1),
+          supabase.from('business_clients').select('email').eq('tenant_id', args.tenant_id).ilike('name', `%${targetEmail}%`).not('email', 'is', null).limit(1),
+          supabase.from('leads').select('email').eq('tenant_id', args.tenant_id).ilike('business_name', `%${targetEmail}%`).not('email', 'is', null).limit(1),
+        ]);
+        targetEmail = contacts?.[0]?.email || clients?.[0]?.email || leads?.[0]?.email || '';
+      }
+    }
+
+    if (!targetEmail) {
+      return {
+        found: false,
+        error: `Could not resolve a customer email for identifier: "${args.identifier}"`,
+      };
+    }
+
+    const profile = await customer360Service.buildProfile(supabase, args.tenant_id, targetEmail);
+    return {
+      found: true,
+      profile,
+    };
+  },
+});

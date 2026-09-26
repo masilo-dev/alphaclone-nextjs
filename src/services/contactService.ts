@@ -277,9 +277,36 @@ export const contactService = {
                     ? (JSON.parse(data) as { contact_id?: string; client_id?: string })
                     : (data as { contact_id?: string; client_id?: string } | null);
 
+            const contactId = payload?.contact_id || null;
+            const clientId = payload?.client_id || undefined;
+
+            // Guarantee bidirectional linkage between business_clients and contacts
+            if (clientId && contactId) {
+                await supabase
+                    .from('business_clients')
+                    .update({ crm_contact_id: contactId })
+                    .eq('id', clientId);
+            }
+
+            // Guarantee clean contact person name if contactName was provided.
+            // Note: full_name is a GENERATED ALWAYS column — update only first_name/last_name.
+            if (options?.contactName && contactId) {
+                const trimmed = options.contactName.trim();
+                const spaceIdx = trimmed.indexOf(' ');
+                const firstName = spaceIdx > 0 ? trimmed.slice(0, spaceIdx) : trimmed;
+                const lastName = spaceIdx > 0 ? trimmed.slice(spaceIdx + 1) : '';
+                await supabase
+                    .from('contacts')
+                    .update({
+                        first_name: firstName,
+                        last_name: lastName,
+                    })
+                    .eq('id', contactId);
+            }
+
             return {
-                contactId: payload?.contact_id || null,
-                clientId: payload?.client_id || undefined,
+                contactId,
+                clientId,
                 error: null,
             };
         } catch (err: any) {

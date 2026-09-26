@@ -338,7 +338,17 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             return;
         }
         void loadClients(true);
-    }, [currentTenant, pathname, showArchived]); // searchTerm is omitted to avoid re-fetching on every keystroke; we'll use a manual search button or debounce if needed
+    }, [currentTenant, pathname, showArchived]);
+
+    // Debounced server fetch when user types into the search bar
+    useEffect(() => {
+        if (!currentTenant) return;
+        if (!searchTerm.trim()) return;
+        const timer = setTimeout(() => {
+            void loadClients(true);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [searchTerm, currentTenant]);
 
     usePullToRefreshListener(() => loadClients(true), Boolean(currentTenant));
 
@@ -480,8 +490,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         if (selectedStage !== 'all') {
             filtered = filtered.filter((c) => c.salesStage === selectedStage);
         }
+        if (searchTerm.trim()) {
+            const term = searchTerm.trim().toLowerCase();
+            filtered = filtered.filter((c) =>
+                (c.name && c.name.toLowerCase().includes(term)) ||
+                (c.email && c.email.toLowerCase().includes(term)) ||
+                (c.phone && c.phone.toLowerCase().includes(term)) ||
+                (c.company && c.company.toLowerCase().includes(term)) ||
+                (c.industry && c.industry.toLowerCase().includes(term)) ||
+                (c.location && c.location.toLowerCase().includes(term))
+            );
+        }
         setFilteredClients(filtered);
-    }, [clients, selectedStage]);
+    }, [clients, selectedStage, searchTerm]);
 
     const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
     const activeClientsCount = clients.filter((c) => c.salesStage !== 'lost').length;
@@ -716,11 +737,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setSelectedClientIds([]);
             return;
         }
-        const batch = filteredClients.slice(0, 500).map((c) => c.id);
+        const batch = filteredClients.map((c) => c.id);
         setSelectedClientIds(batch);
-        if (filteredClients.length > 500) {
-            toast('Selected first 500 contacts (maximum).', { icon: 'ℹ️' });
-        }
     };
 
     const renderBulkSelectRow = () => (
@@ -735,7 +753,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 ) : (
                     <Square className="w-4 h-4" />
                 )}
-                {allFilteredClientsSelected ? 'Deselect all' : `Select all (${Math.min(filteredClients.length, 500)})`}
+                {allFilteredClientsSelected ? 'Deselect all' : `Select all (${filteredClients.length})`}
             </button>
             {selectedClientIds.length > 0 && (
                 <button

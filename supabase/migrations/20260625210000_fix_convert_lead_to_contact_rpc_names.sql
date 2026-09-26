@@ -33,13 +33,19 @@ BEGIN
         RAISE EXCEPTION 'Lead already converted';
     END IF;
 
-    v_full_name := COALESCE(NULLIF(trim(contact_name_override), ''), v_lead_record.business_name, 'Contact');
-    v_first_name := split_part(v_full_name, ' ', 1);
+    v_full_name := COALESCE(
+        NULLIF(trim(contact_name_override), ''),
+        NULLIF(trim(v_lead_record.metadata->>'contact_name'), ''),
+        NULLIF(trim(v_lead_record.metadata->>'contactName'), ''),
+        v_lead_record.business_name,
+        'Contact'
+    );
     IF position(' ' in v_full_name) > 0 THEN
+        v_first_name := split_part(v_full_name, ' ', 1);
         v_last_name := substring(v_full_name from position(' ' in v_full_name) + 1);
     ELSE
-        v_first_name := 'Contact';
-        v_last_name := v_full_name;
+        v_first_name := v_full_name;
+        v_last_name := '';
     END IF;
 
     IF create_company AND company_name IS NOT NULL THEN
@@ -100,6 +106,7 @@ BEGIN
         is_active,
         industry,
         website,
+        crm_contact_id,
         created_at,
         updated_at
     ) VALUES (
@@ -120,6 +127,7 @@ BEGIN
         true,
         v_lead_record.industry,
         v_lead_record.website,
+        v_new_contact_id,
         NOW(),
         NOW()
     ) RETURNING id INTO v_new_client_id;
