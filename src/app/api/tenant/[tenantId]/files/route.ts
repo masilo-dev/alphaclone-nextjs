@@ -124,7 +124,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
 
     if (dbError) {
       console.error('[tenant/files] file_uploads insert:', dbError);
-      await supabaseAdmin.storage.from('uploads').remove([storagePath]).catch(() => undefined);
+      try {
+        await supabaseAdmin.storage.from('uploads').remove([storagePath]);
+      } catch {
+        // Best-effort cleanup after database failure.
+      }
       return NextResponse.json(
         { error: 'Failed to record upload in database', detail: dbError.message },
         { status: 500 }
@@ -165,7 +169,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     if (documentError) {
       console.error('[tenant/files] shared document insert:', documentError);
       await supabaseAdmin.from('file_uploads').delete().eq('tenant_id', tenantId).eq('id', fileRecord.id);
-      await supabaseAdmin.storage.from('uploads').remove([storagePath]).catch(() => undefined);
+      try {
+        await supabaseAdmin.storage.from('uploads').remove([storagePath]);
+      } catch {
+        // Best-effort cleanup after document registration failure.
+      }
       return NextResponse.json({ error: 'Failed to register shared document' }, { status: 500 });
     }
 
@@ -195,22 +203,27 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     });
 
     const vaultTagged = tags.includes('vault');
-    await queueDocumentIntelligence(
-      supabaseAdmin,
-      tenantId,
-      documentRecord.id,
-      user.id
-    ).catch((error) =>
-      console.error('[tenant/files] auto-index failed', error instanceof Error ? error.message : error)
-    );
+    try {
+      await queueDocumentIntelligence(
+        supabaseAdmin,
+        tenantId,
+        documentRecord.id,
+        user.id
+      );
+    } catch (error) {
+      console.error('[tenant/files] auto-index failed', error instanceof Error ? error.message : error);
+    }
 
     if (!vaultTagged) {
-      await supabaseAdmin
-        .from('file_uploads')
-        .update({ tags: [...tags, 'vault', 'indexed'] })
-        .eq('tenant_id', tenantId)
-        .eq('id', fileRecord.id)
-        .catch(() => undefined);
+      try {
+        await supabaseAdmin
+          .from('file_uploads')
+          .update({ tags: [...tags, 'vault', 'indexed'] })
+          .eq('tenant_id', tenantId)
+          .eq('id', fileRecord.id);
+      } catch {
+        // Best-effort metadata update; the upload itself has succeeded.
+      }
     }
 
     const proxiedUrl = `/api/storage/uploads/${storagePath}`;
