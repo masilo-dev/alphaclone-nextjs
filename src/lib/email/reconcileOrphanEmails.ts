@@ -25,6 +25,7 @@ export async function reconcileOrphanEmails(
   let matchedContacts = 0;
   let matchedClients = 0;
   const errors: string[] = [];
+  let lastRecipientId: string | null = null;
 
   for (let batchIdx = 0; batchIdx < maxBatches; batchIdx++) {
     let query = supabase
@@ -32,7 +33,12 @@ export async function reconcileOrphanEmails(
       .select('id, message_id, tenant_id, email_address, contact_id')
       .is('contact_id', null)
       .not('email_address', 'is', null)
+      .order('id', { ascending: true })
       .limit(batchSize);
+
+    if (lastRecipientId) {
+      query = query.gt('id', lastRecipientId);
+    }
 
     if (options?.tenantId) {
       query = query.eq('tenant_id', options.tenantId);
@@ -49,6 +55,7 @@ export async function reconcileOrphanEmails(
     }
 
     totalScanned += recipients.length;
+    lastRecipientId = recipients[recipients.length - 1].id;
 
     // Cache unique emails to look up in batch
     const emailsByTenant = new Map<string, Set<string>>();

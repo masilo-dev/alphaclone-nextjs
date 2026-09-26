@@ -336,11 +336,11 @@ async function runSarahLifecycleQA() {
 
     // Run reconciliation engine
     const { reconcileOrphanEmails } = require('../../src/lib/email/reconcileOrphanEmails.ts');
-    const recReport = await reconcileOrphanEmails(supabase, TENANT_ID, { batchSize: 50, dryRun: false });
+    const recReport = await reconcileOrphanEmails(supabase, { tenantId: TENANT_ID, batchSize: 50, maxBatches: 10 });
     console.log(`  Reconciliation engine processed:
-    - Scanned:          ${recReport.scannedMessages} messages
+    - Scanned:          ${recReport.totalScanned} recipients
     - Updated:          ${recReport.updatedMessages} messages
-    - Linked Contacts:  ${recReport.linkedContacts}`);
+    - Linked Contacts:  ${recReport.matchedContacts}`);
 
     // Verify orphan message is now linked
     const { data: recheckedMsg } = await supabase
