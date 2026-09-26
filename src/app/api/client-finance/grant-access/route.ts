@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
       .update({
         client_portal_password_hash: passwordHash,
         client_portal_password_set_at: now,
+        // Granting portal access is an explicit admin action; ensure the client can authenticate.
+        is_active: true,
         updated_at: now,
       })
       .eq('id', clientId)
