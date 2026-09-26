@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { clientId, tenantId, password } = parsed.data;
 
     const { admin, user } = await requireTenantAccess(tenantId, req);
-    await requireTenantRole(tenantId, ['owner', 'admin', 'billing_manager'], req);
+    await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin', 'billing_manager'], req);
 
     const strength = validateClientPortalPasswordStrength(password);
     if (!strength.ok) {
