@@ -496,7 +496,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 (c.name && c.name.toLowerCase().includes(term)) ||
                 (c.email && c.email.toLowerCase().includes(term)) ||
                 (c.phone && c.phone.toLowerCase().includes(term)) ||
-                (c.company && c.company.toLowerCase().includes(term)) ||
                 (c.industry && c.industry.toLowerCase().includes(term)) ||
                 (c.location && c.location.toLowerCase().includes(term))
             );
