@@ -103,6 +103,21 @@ export async function handlePublishSocialPost(
   const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
 
   const platformHint = args.target?.integration || args.platform;
+  const requestedIdentityTypeHint = args.target?.identity_type || args.identity_type;
+  const providerForIdentityType =
+    requestedIdentityTypeHint?.startsWith('instagram_') ? 'instagram' :
+    requestedIdentityTypeHint?.startsWith('linkedin_') ? 'linkedin' :
+    requestedIdentityTypeHint === 'facebook_page' ? 'facebook' :
+    undefined;
+  if (platformHint && providerForIdentityType && platformHint !== providerForIdentityType) {
+    return toMcpContent(
+      errorResult(
+        toolName,
+        'SOCIAL_DESTINATION_MISMATCH',
+        `platform=${platformHint} conflicts with identity_type=${requestedIdentityTypeHint}`
+      )
+    );
+  }
   if (args.post_as === 'all_pages') {
     return toMcpContent(
       errorResult(

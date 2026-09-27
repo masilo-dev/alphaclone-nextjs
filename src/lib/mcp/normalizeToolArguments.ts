@@ -15,6 +15,7 @@ const EMAIL_TOOLS = new Set([
   'send_outreach_email',
   'reply_to_email',
   'generate_outreach_draft',
+  'create_bulk_email_campaign',
   'queue_email_campaign_send',
   'send_bulk_email_campaign',
 ]);
@@ -110,6 +111,16 @@ export async function normalizeToolArguments(
 
   if (needsAutoIdempotency(toolName) && !firstNonEmpty(args.idempotency_key, args.idempotencyKey)) {
     args.idempotency_key = `mcp-${toolName}-${randomUUID()}`;
+  }
+
+  if (toolName === 'create_bulk_email_campaign') {
+    const rawAudience = firstNonEmpty(args.target_audience, args.audience, args.list_type, args.segment)?.toLowerCase().replace(/[\s-]+/g, '_');
+    const audienceAliases: Record<string, 'all_leads' | 'all_clients'> = {
+      leads: 'all_leads', lead: 'all_leads', all_leads: 'all_leads', allleads: 'all_leads',
+      clients: 'all_clients', client: 'all_clients', customers: 'all_clients', customer: 'all_clients',
+      all_clients: 'all_clients', allclients: 'all_clients', all_customers: 'all_clients',
+    };
+    if (rawAudience && audienceAliases[rawAudience]) args.target_audience = audienceAliases[rawAudience];
   }
 
   if (EMAIL_TOOLS.has(toolName)) {
