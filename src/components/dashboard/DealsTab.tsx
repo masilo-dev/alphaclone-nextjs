@@ -546,6 +546,7 @@ const DealDetail: React.FC<{
 // ── Main DealsTab ──────────────────────────────────────────────────────────────
 const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const router = useRouter();
+  const relationship = useRelationship();
   const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
@@ -654,7 +655,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
     const subject = recipients.length === 1 ? 'Deal follow-up' : 'Pipeline follow-up';
     router.push(relationship.withRelationship(buildMailComposeUrl(recipients, subject)));
-  }, [deals, router, selectedDealIds]);
+  }, [deals, relationship, router, selectedDealIds]);
 
   // Detect responsive view mode on load
   useEffect(() => {
