@@ -43,7 +43,7 @@ registerTool('gap-crm', {
       email
         ? supabase.from('lead_outreach_log').select('id, status, subject, campaign_name, created_at, sent_at, lead_email').eq('tenant_id', args.tenant_id).ilike('lead_email', email).order('created_at', { ascending: false }).limit(10)
         : Promise.resolve({ data: [] as Record<string, unknown>[] }),
-      supabase.from('client_notes').select('id, content, created_at').eq('client_id', args.client_id).eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(10),
+      supabase.from('client_notes').select('id, content, created_at').eq('related_id', args.client_id).eq('tenant_id', args.tenant_id).eq('type', 'client_note').order('created_at', { ascending: false }).limit(10),
     ]);
     const outreach = outreachResult.data || [];
     return { content: [{ type: 'text', text: JSON.stringify({ client_id: args.client_id, invoices: invoices || [], outreach, notes: notes || [] }, null, 2) }] };

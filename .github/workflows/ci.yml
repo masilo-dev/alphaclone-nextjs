@@ -42,6 +42,8 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -57,14 +59,11 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --audit-level=critical
-        continue-on-error: true
+        run: npm audit --audit-level=high
 
       - name: Check for known vulnerabilities
         uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        if: ${{ env.SNYK_TOKEN != '' }}
         with:
           args: --severity-threshold=high
 
@@ -108,6 +107,14 @@ jobs:
             echo "❌ Build failed - .next directory not found"
             exit 1
           fi
+
+      - name: Upload production build for browser tests
+        uses: actions/upload-artifact@v6
+        with:
+          name: next-build-${{ github.sha }}
+          path: .next
+          if-no-files-found: error
+          retention-days: 1
 
   # ============================================================================
   # Database Migration Validation
@@ -171,17 +178,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Download production build for browser tests
+        uses: actions/download-artifact@v7
+        with:
+          name: next-build-${{ github.sha }}
+          path: .next
+
       - name: Run unit tests
-        run: npm test --if-present
+        run: npm test
 
       - name: Validate MCP execution layer
         run: npm run validate:mcp-execution
 
       - name: Run E2E tests
-        run: npm run test:e2e --if-present
+        run: npm run test:e2e
         env:
           BASE_URL: http://localhost:3000
-        continue-on-error: true
 
   # ============================================================================
   # Platform pentest smoke (requires running server)
@@ -241,23 +253,27 @@ jobs:
           echo "Pentest:    ${{ needs.pentest.result }}"
 
           failed=0
-          if [[ "${{ needs.quality.result }}" == "failure" ]]; then
+          if [[ "${{ needs.quality.result }}" != "success" ]]; then
             echo "FAILED: quality (lint / typecheck / format)"
             failed=1
           fi
-          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "FAILED: security (npm audit / Snyk when configured)"
+            failed=1
+          fi
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
             echo "FAILED: build"
             failed=1
           fi
-          if [[ "${{ needs.migrations.result }}" == "failure" ]]; then
+          if [[ "${{ needs.migrations.result }}" != "success" ]]; then
             echo "FAILED: migrations"
             failed=1
           fi
-          if [[ "${{ needs.test.result }}" == "failure" ]]; then
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
             echo "FAILED: tests"
             failed=1
           fi
-          if [[ "${{ needs.pentest.result }}" == "failure" ]]; then
+          if [[ "${{ needs.pentest.result }}" != "success" ]]; then
             echo "FAILED: pentest"
             failed=1
           fi

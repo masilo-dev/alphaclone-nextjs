@@ -23,7 +23,7 @@ BEGIN
   END IF;
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() 
+    WHERE id = auth.uid()
       AND (account_status IS NULL OR account_status = 'active')
       AND lower(COALESCE(role::text, '')) IN ('super_admin', 'admin', 'platform_admin', 'platform_owner')
   );

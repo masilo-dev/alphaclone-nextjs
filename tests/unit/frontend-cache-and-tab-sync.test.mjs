@@ -20,7 +20,7 @@ describe('Frontend Cache & Tab Return Synchronization', () => {
 
     it('enforces throttling on broadcastTabVisible unless forced', async () => {
       const { broadcastTabVisible } = await import('../../src/lib/sync/tabFocusCoordinator.ts');
-      
+
       // Mock window and dispatchEvent
       let dispatchedCount = 0;
       const originalWindow = globalThis.window;

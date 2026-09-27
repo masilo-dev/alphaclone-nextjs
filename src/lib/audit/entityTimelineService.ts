@@ -128,9 +128,10 @@ export async function buildLeadTimeline(
     fetchAuditTimelineItems(admin, tenantId, leadId),
     admin
       .from('lead_audit_logs')
-      .select('id, action, description, created_at, metadata')
-      .eq('tenant_id', tenantId)
-      .eq('lead_id', leadId)
+      .select('id, action, created_at, after_data')
+      .eq('workspace_id', tenantId)
+      .eq('entity_type', 'lead')
+      .eq('entity_id', leadId)
       .order('created_at', { ascending: false })
       .limit(30),
   ]);
@@ -138,13 +139,16 @@ export async function buildLeadTimeline(
   items.push(...outreachItems, ...auditItems);
 
   for (const row of leadAuditRows.data || []) {
+    const afterData = row.after_data && typeof row.after_data === 'object'
+      ? row.after_data as Record<string, unknown>
+      : {};
     items.push({
       id: `lead-audit-${row.id}`,
       timestamp: row.created_at,
       category: 'lead_activity',
       title: row.action || 'Lead updated',
-      description: row.description || '',
-      source_label: formatAttributionLabel(attributionFromMetadata(row.metadata as Record<string, unknown>)),
+      description: typeof afterData.description === 'string' ? afterData.description : 'Lead record updated',
+      source_label: 'AlphaClone UI',
     });
   }
 

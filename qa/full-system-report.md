@@ -125,4 +125,3 @@ As explicitly requested, the Tenant Dashboard was tested end-to-end under the re
    - Cache `profiles` and `user_preferences` queries across route navigations to reduce redundant network queries from 90 to 1.
 4. **[P3-1 Fix] Expand Touch Targets & Form Field ARIA Labels**:
    - Add minimum `min-h-[44px] min-w-[44px]` touch wrappers to mobile table actions and explicit `aria-label` attributes to search inputs.
-

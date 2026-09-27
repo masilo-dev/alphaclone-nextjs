@@ -34,7 +34,7 @@ const ALL_TARGETS = [
 // Helper to determine if an interactive control is safe to click
 function isSafeControl(text, ariaLabel, tagName, type) {
   const combined = `${text} ${ariaLabel || ''} ${type || ''}`.toLowerCase();
-  
+
   // Destructive terms to avoid
   const unsafePatterns = [
     'delete', 'remove', 'destroy', 'cancel subscription', 'terminate',

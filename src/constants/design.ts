@@ -298,4 +298,3 @@ export const WORKSPACE_FOCUS = {
     panel: 'rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)]/90 backdrop-blur-sm p-4 text-[var(--ws-text-secondary)] shadow-sm animate-fade-in',
   },
 } as const;
-

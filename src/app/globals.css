@@ -1550,7 +1550,7 @@ body {
   .marketing-theme h1 {
     font-size: var(--text-5xl);
   }
-  
+
   .marketing-theme h2 {
     font-size: var(--text-4xl);
   }
@@ -2775,7 +2775,7 @@ html.light textarea::placeholder {
     content-visibility: auto;
     contain-intrinsic-size: 1px 400px;
   }
-  
+
   /* Reduce heavy filter/backdrop work on mobile GPUs */
   .mkt-surface,
   .mkt-surface-elevated,
@@ -2788,7 +2788,7 @@ html.light textarea::placeholder {
   /* ── Phone Viewport Text Density & PWA Layout Protection (<768px) ── */
 
   /* Keep html font-size standard (1rem = 16px) so PWA shells, drawers, and grids do not shrink */
-  
+
   body {
     font-size: var(--type-input-size);
     line-height: var(--leading-ui);
@@ -3153,4 +3153,3 @@ html:not([data-product-tour-active="true"]) .__floater {
 [data-framer-exit] {
   pointer-events: none !important;
 }
-

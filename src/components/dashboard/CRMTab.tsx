@@ -26,9 +26,7 @@ import { missedCallsService } from '@/services/missedCallsService';
 import OnlineStatusBadge from './OnlineStatusBadge';
 import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
-import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { resolveCrmCommandActions } from '@/lib/behavioral/crmPrimaryAction';
-import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
 import { PipelineForecastPanel } from './crm/PipelineForecastPanel';
 import { OutreachSequencePanel } from './crm/OutreachSequencePanel';
 import { AIProposalGenerator } from './crm/AIProposalGenerator';
@@ -40,26 +38,19 @@ import { showActionNextSteps, celebrateWinRitual, XP_TIERS } from '../common/sho
 import { BulkTeamMessageModal } from './crm/BulkTeamMessageModal';
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
 import { CRMActionChips } from './crm/CRMActionChips';
-import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
-import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { StandardStatusBadge, resolveStatusVariant, SocialPlatformIcon } from '@/components/ui/design-system';
 import { leadService } from '../../services/leadService';
 import { businessClientService } from '../../services/businessClientService';
 import { contactService } from '../../services/contactService';
 import { dealService } from '../../services/dealService';
-import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { ModuleFrame, RecordHeader, AskBonnieButton } from '@/components/ui/os';
-import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
-import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
-import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
-import { CRM_WORKSPACE_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1581,15 +1572,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
   }, [pathname, router, searchParams]);
 
-  useEffect(() => {
-    const contactId = searchParams?.get('contactId')?.trim();
-    if (!contactId) return;
-    router.replace(
-      `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contactId)}`,
-      { scroll: false }
-    );
-  }, [router, searchParams]);
-
   const closeCreateDrawer = useCallback(() => {
     setIsCreateOpen(false);
     stripQuickAddParam();
@@ -2196,13 +2178,26 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     return list;
   }, [leads, clients]);
 
+  useEffect(() => {
+    const contactId = searchParams?.get('contactId')?.trim();
+    if (!contactId || loading) return;
+    const match = entities.find((entity) => entity.id === contactId);
+    if (match) {
+      setSubView(match.type === 'lead' ? 'leads' : match.type === 'client' ? 'clients' : 'contacts');
+      setSelectedEntity(match);
+      return;
+    }
+    if (pathname === '/dashboard/crm/workspace') {
+      router.replace(`/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contactId)}`, { scroll: false });
+    }
+  }, [entities, loading, pathname, router, searchParams]);
+
   // Filtering Logic
   const filteredEntities = entities.filter(ent => {
     // 1. Subview Tab filter
     if (subView === 'leads' && ent.type !== 'lead') return false;
     if (subView === 'clients' && ent.type !== 'client') return false;
     if (subView === 'contacts' && (ent.type !== 'client' && ent.type !== 'contact')) return false;
-
     // 2. Status pill filter (leads only)
     if (subView === 'leads' && filter !== 'all' && ent.status !== filter) return false;
 
@@ -2288,12 +2283,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
   }, [router]);
 
-  const crmStats = React.useMemo<ModuleStat[]>(() => [
-    { label: t('Leads Pool'), value: totalLeadsCount.toLocaleString(), sub: t('In the funnel'), Icon: Target, accent: 'purple' },
-    { label: t('Customers'), value: activeClientsCount.toLocaleString(), sub: t('Won accounts'), Icon: UserCheck, accent: 'emerald' },
-    { label: t('Active Book'), value: `$${totalClientValue.toLocaleString()}`, sub: t('Customer value'), Icon: DollarSign, accent: 'emerald' },
-  ], [t, totalLeadsCount, activeClientsCount, totalClientValue]);
-
   return (
     <ModuleFrame
       moduleId="crm"
@@ -2301,15 +2290,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       className="flex min-h-0 flex-col ac-scroll-full ac-enterprise-module select-none relative"
     >
       <ModulePageLayout
-        className="gap-5"
+        className="gap-3"
         header={(
-          <div className="space-y-3 shrink-0">
+          <div className="shrink-0">
             <div className="ac-workspace-panel rounded-2xl px-3 py-3">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 type-caption font-bold uppercase tracking-caps text-slate-500">
-                  Command bar
-                </span>
-              </div>
               <div className="flex flex-wrap items-center gap-1.5">
                 {[crmCommandActions.primary, ...crmCommandActions.secondary].map((action) => {
                   const isPrimary = action.variant === 'primary';
@@ -2328,54 +2312,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     </button>
                   );
                 })}
-                <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
-              </div>
-              <div className="mt-2">
-                <CrmSyncToolbar />
               </div>
             </div>
-            <UniversalModuleExecutionHeader
-              moduleName="CRM & Relationship Management"
-              recordTitle="Customer Lifecycle & Lead Qualification Pipeline"
-              nextActionState={{
-                currentState: subView === 'leads' ? 'Leads Pipeline' : subView === 'clients' ? 'Client Accounts' : 'Contact Directory',
-                owner: user.name || user.email || 'CRM Team Lead',
-                nextAction: 'Qualify inbound leads → Move to Deals pipeline → Engage contacts',
-                deadline: '24-hour SLA response',
-                blocker: totalLeadsCount === 0 ? 'No active leads in pipeline' : null,
-                expectedOutcome: 'Converted leads into qualified sales opportunities & client accounts',
-                outcomeStatus: activeClientsCount > 0 ? 'verified' : 'pending',
-                verifiedResult: activeClientsCount > 0 ? `${activeClientsCount} active clients ($${totalClientValue.toLocaleString()})` : 'Awaiting conversion verification',
-                authorityLevel: 'automatic_logged',
-              }}
-              questions={{
-                whatCameIn: `Inbound leads and client relationship records (${totalLeadsCount} active leads, ${activeClientsCount} clients)`,
-                whatDoesItMean: 'Prospects and clients requiring systematic outreach, qualification, and relationship nurturing',
-                whatShouldHappen: 'Outreach via email/phone, qualification, and stage progression to deals pipeline',
-                whoOwnsIt: user.name || user.email || 'CRM Team Lead',
-                canAlphaCloneAct: 'automatic_logged',
-                whatActuallyHappened: `${totalLeadsCount} leads processed across status stages`,
-                didItProduceExpectedOutcome: activeClientsCount > 0 ? 'YES' : 'IN_PROGRESS',
-                whatHappensNext: 'Advance qualified leads to pipeline deals or schedule follow-up outreach',
-              }}
-              onExecuteNextAction={() => setIsCreateOpen(true)}
-            />
           </div>
         )}
-        stats={(
-          <>
-            <div>
-              <ModuleStatCards stats={crmStats} hub="crm" className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
-            </div>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-              <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
-              <div className="ac-workspace-panel rounded-xl p-3">
-                <p className="mb-2 type-caption font-bold uppercase tracking-caps text-indigo-300">Client pulse</p>
-                <ClientPulsePanel compact />
-              </div>
-            </div>
-          </>
-        )}
+        stats={null}
         toolbar={(
           <>
             <div className="flex overflow-x-auto border-b border-white/5 ios-scroll">
@@ -2402,13 +2343,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 </button>
               ))}
             </div>
-            <div className="space-y-3 pt-3">
+            <div className="space-y-2 pt-2">
         {isTeamsConnected && (
-          <div className="ac-workspace-panel flex items-center justify-between rounded-xl px-3 py-2">
-            <div>
-              <p className="type-card-description font-bold text-blue-200">Outlook Contact Sync</p>
-              <p className="type-card-description text-slate-400">Import Microsoft contacts into the existing CRM.</p>
-            </div>
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={handleSyncOutlookContacts}
@@ -2473,11 +2410,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               Import pool
             </button>
           </div>
-          <p className="hidden sm:block type-card-description text-slate-500 pt-0.5">
-            {leadsView === 'board'
-              ? <>Tip: <span className="text-[var(--brand-blue-300)] font-semibold">drag a card</span> between columns to move a lead across the pipeline.</>
-              : <>Tip: hover a lead to <span className="text-amber-400 font-semibold">contact</span>, <span className="text-[var(--brand-blue-300)] font-semibold">qualify</span> or <span className="text-rose-400 font-semibold">disqualify</span> it — or swipe on mobile.</>}
-          </p>
           </>
         )}
 
@@ -2581,7 +2513,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             <LeadKanban
             leads={filteredKanbanLeads}
             onUpdate={handleStatusUpdate}
-            onSelect={(l) => setSelectedEntity(entities.find(e => e.id === l.id) || null)}
+              onSelect={(l) => setSelectedEntity(entities.find(e => e.id === l.id) || null)}
             onSendEmail={(lead) => openEmailCompose(lead)}
             selectedKeys={selectedKeys}
             onToggleSelect={toggleLeadSelection}
@@ -2687,10 +2619,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             ) : null}
           </>
         )}
-        <ExecutionDecisionGuide
-          steps={CRM_WORKSPACE_EXECUTION_STEPS}
-          className="mt-8 mb-6"
-        />
       </div>
       </ModulePageLayout>
 

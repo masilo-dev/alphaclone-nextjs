@@ -30,7 +30,6 @@ import { resolveDealStagePrimaryAction } from '@/lib/behavioral/dealStagePrimary
 import {
   getDealStageProgress,
   getForwardStageTarget,
-  PIPELINE_FORWARD_ONLY_HINT,
   assertDealStageTransition,
 } from '@/lib/stageProgression';
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
@@ -39,12 +38,7 @@ import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '@/compone
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 import { ContextualBulkBar } from '@/components/ui/workspace';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
-import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
-import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
-import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
-import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 import { useRelationship } from '@/contexts/RelationshipContext';
 
@@ -497,7 +491,7 @@ const DealDetail: React.FC<{
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')}
+              onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')}
               className="min-h-11 px-3 type-ui text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
             >
               Open customer
@@ -527,7 +521,7 @@ const DealDetail: React.FC<{
       ) : (
       <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
         <div className="flex divide-x divide-white/5 overflow-x-auto">
-          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Customer</button>
+          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Customer</button>
           <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Quote</button>
           <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Follow-up</button>
         </div>
@@ -1236,37 +1230,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="pipeline">
       <div className="px-4 pt-3 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <CrmSyncToolbar />
-        <HelpDisclosure title="Deals & Sales Pipeline Execution Guide" label="Pipeline guide">
-          <div className="space-y-3 pt-2">
-            <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
-            <UniversalModuleExecutionHeader
-              moduleName="Deals & Sales Pipeline"
-              recordTitle="Opportunity Progression & Revenue Forecasting"
-              nextActionState={{
-                currentState: 'Opportunity Pipeline',
-                owner: user.name || user.email || 'Sales Lead',
-                nextAction: 'Advance deal stages → Draft quotes & contracts → Close won',
-                deadline: '7-day stage stall threshold',
-                blocker: deals.length === 0 ? 'No active deals' : null,
-                expectedOutcome: 'Closed won revenue & converted contracts',
-                outcomeStatus: totalPipelineValue > 0 ? 'verified' : 'pending',
-                verifiedResult: `$${totalPipelineValue.toLocaleString()} active open pipeline across ${deals.length} deals`,
-                authorityLevel: 'automatic_logged',
-              }}
-              questions={{
-                whatCameIn: `${deals.length} active deals totaling $${totalPipelineValue.toLocaleString()} in open opportunity value`,
-                whatDoesItMean: 'Sales opportunities in active proposal, negotiation, or qualification stages',
-                whatShouldHappen: 'Progress forward stage-by-stage, complete quotes, and execute contracts',
-                whoOwnsIt: user.name || user.email || 'Sales Lead',
-                canAlphaCloneAct: 'automatic_logged',
-                whatActuallyHappened: `${deals.length} deals actively tracked across board columns`,
-                didItProduceExpectedOutcome: totalPipelineValue > 0 ? 'YES' : 'IN_PROGRESS',
-                whatHappensNext: 'Generate invoice upon closing deal or send proposal follow-up',
-              }}
-              onExecuteNextAction={() => setShowCreateModal(true)}
-            />
-          </div>
-        </HelpDisclosure>
       </div>
       <ModulePageLayout
         toolbar={(
@@ -1278,9 +1241,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             {pipelineHealth != null && (
               <> • Avg progress <span className="text-[var(--brand-blue-500)] font-semibold tabular-nums">{pipelineHealth}%</span></>
             )}
-          </p>
-          <p className="type-card-description text-[var(--ws-text-disabled)] mt-1 max-w-md leading-relaxed">
-            {PIPELINE_FORWARD_ONLY_HINT} Click any deal card to open full details.
           </p>
         </div>
 
@@ -1415,10 +1375,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             {viewMode === 'board' && renderBoard()}
             {viewMode === 'list' && renderList()}
             {viewMode === 'mobile-stage' && renderMobileStageList()}
-            <ExecutionDecisionGuide
-              steps={DEALS_EXECUTION_STEPS}
-              className="mt-8 mb-6 mx-4"
-            />
           </>
         )}
       </div>

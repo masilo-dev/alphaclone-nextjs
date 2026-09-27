@@ -11,7 +11,7 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   ],
   crm: [
     { id: 'overview', label: 'Overview', href: '/dashboard/crm' },
-    { id: 'contacts', label: 'Contacts', href: '/dashboard/crm/unified-contacts' },
+    { id: 'contacts', label: 'Contacts', href: '/dashboard/contacts' },
     { id: 'companies', label: 'Companies', href: '/dashboard/crm/accounts' },
     { id: 'workspace', label: 'Workspace', href: '/dashboard/crm/workspace' },
     { id: 'followups', label: 'Activities', href: '/dashboard/crm/follow-ups' },

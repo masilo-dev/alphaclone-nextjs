@@ -17,24 +17,21 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - name: Wait for Railway deploy
-        run: sleep 45
-
-      - name: Check production health
+      - name: Wait for Railway deployment and check readiness
         run: |
           url="https://alphaclonesystems.com"
-          echo "Checking $url"
-
-          status=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
-          if [ "$status" -ne 200 ]; then
-            echo "Main page returned HTTP $status"
-            exit 1
-          fi
-          echo "Main page OK (HTTP $status)"
-
-          api_status=$(curl -o /dev/null -s -w "%{http_code}\n" "$url/api/health" || echo "000")
-          if [ "$api_status" -ne 200 ]; then
-            echo "API health returned HTTP $api_status"
-            exit 1
-          fi
-          echo "API health OK (HTTP $api_status)"
+          deadline=$((SECONDS + 900))
+          attempt=0
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            root_status=$(curl --connect-timeout 10 --max-time 20 -o /dev/null -s -w "%{http_code}" "$url" || true)
+            ready_status=$(curl --connect-timeout 10 --max-time 20 -o /dev/null -s -w "%{http_code}" "$url/api/readiness" || true)
+            echo "Attempt $attempt: root=$root_status readiness=$ready_status"
+            if [ "$root_status" = "200" ] && [ "$ready_status" = "200" ]; then
+              echo "Production page and readiness endpoint are healthy."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "Production did not become ready within 15 minutes."
+          exit 1

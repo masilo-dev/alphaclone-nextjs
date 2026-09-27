@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     Search, Filter, Plus, Mail, Phone, Building2, MoreHorizontal,
@@ -22,6 +23,7 @@ type ContactStatus = 'active' | 'inactive' | 'unsubscribed' | 'bounced';
 interface ContactsListProps {
     onEditContact?: (contact: ContactWithCompany) => void;
     onCreateContact?: () => void;
+    highlightContactId?: string | null;
 }
 
 const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgColor: string }> = {
@@ -31,8 +33,9 @@ const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgCol
     bounced: { label: 'Bounced', color: 'text-red-400', bgColor: 'bg-red-500/20' },
 };
 
-export default function ContactsList({ onEditContact, onCreateContact }: ContactsListProps) {
+export default function ContactsList({ onEditContact, onCreateContact, highlightContactId }: ContactsListProps) {
     const { user } = useAuth();
+    const searchParams = useSearchParams();
     const [contacts, setContacts] = useState<ContactWithCompany[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -53,6 +56,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [exporting, setExporting] = useState(false);
     const [timelineContact, setTimelineContact] = useState<ContactWithCompany | null>(null);
     const [previewContact, setPreviewContact] = useState<ContactWithCompany | null>(null);
+    const requestedContactId = highlightContactId ?? searchParams?.get('contactId');
 
     const loadContacts = useCallback(async () => {
         try {
@@ -81,6 +85,21 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     useEffect(() => {
         loadContacts();
     }, [loadContacts]);
+
+    useEffect(() => {
+        if (!requestedContactId) return;
+        const match = contacts.find((contact) => contact.id === requestedContactId);
+        if (match) {
+            setPreviewContact(match);
+            return;
+        }
+        if (loading) return;
+        let cancelled = false;
+        void contactService.getContact(requestedContactId).then(({ contact }) => {
+            if (!cancelled && contact) setPreviewContact(contact);
+        });
+        return () => { cancelled = true; };
+    }, [requestedContactId, contacts, loading]);
 
     useEffect(() => {
         setSelectedIds([]);

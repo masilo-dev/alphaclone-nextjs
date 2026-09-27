@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRelationship } from '@/contexts/RelationshipContext';
-import { 
-    DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
-    AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
+import {
+    DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock,
+    AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar,
     Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square, TrendingUp, Copy, Lock, Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -55,7 +55,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     const { isInstalledMobileCompanion } = useDeviceExperience();
     const { confirm: confirmDialog } = useConfirmDialog();
-    
+
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
@@ -420,31 +420,31 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </div>
                   </HelpDisclosure>
                   <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll rounded-xl border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                    <button 
+                    <button
                       onClick={() => setActiveTab('invoices')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                     >
                       Billing
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('aging')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                     >
                       Aging Report
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('reminders')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                     >
                       Reminders
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('recurring')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                     >
                       Recurring
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('services')}
                       className={`flex-none h-8 px-3 rounded-lg font-semibold type-ui border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                     >
@@ -630,30 +630,30 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     <ResponsiveContainer width="100%" height="82%" minWidth={0} minHeight={200}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                            <XAxis 
-                                dataKey="date" 
-                                stroke="#4b5563" 
-                                fontSize={10} 
+                            <XAxis
+                                dataKey="date"
+                                stroke="#4b5563"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                             />
-                            <YAxis 
-                                stroke="#4b5563" 
-                                fontSize={10} 
+                            <YAxis
+                                stroke="#4b5563"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                                 tickFormatter={(val: number) => `$${val}`}
                             />
-                            <Tooltip 
+                            <Tooltip
                                 contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}
                                 itemStyle={{ color: '#5F8FFF' }}
                             />
-                            <Line 
-                                type="monotone" 
-                                dataKey="revenue" 
-                                stroke="#356AF4" 
-                                strokeWidth={2} 
-                                dot={false} 
+                            <Line
+                                type="monotone"
+                                dataKey="revenue"
+                                stroke="#356AF4"
+                                strokeWidth={2}
+                                dot={false}
                                 activeDot={{ r: 4, strokeWidth: 0 }}
                             />
                         </LineChart>
@@ -858,9 +858,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 {/* Mobile / Tablet Cards View */}
                 <div className="space-y-3 block md:hidden">
                     {filteredInvoices.map(inv => (
-                        <Card 
-                            key={inv.id} 
-                            onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
+                        <Card
+                            key={inv.id}
+                            onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }}
                             className={`p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer ${
                                 selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-[var(--brand-blue-500)]/40' : ''
                             }`}
@@ -944,7 +944,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             <div className="flex justify-center py-2 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
                                 <div className="w-10 h-1 bg-white/20 rounded-full" />
                             </div>
-                            
+
                             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar pb-10 space-y-5">
                                 <div className="flex justify-between items-start">
                                     <div>

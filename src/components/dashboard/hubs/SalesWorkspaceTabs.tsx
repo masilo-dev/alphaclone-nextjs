@@ -62,6 +62,7 @@ function isContactsRoute(pathname: string): boolean {
 
 export function isSalesWorkspaceTabActive(pathname: string, href: string): boolean {
   if (href === '/dashboard/contacts') return isContactsRoute(pathname);
+  if (href === '/dashboard/crm') return pathname === '/dashboard/crm';
   if (href === '/dashboard/crm/workspace') return pathname === '/dashboard/crm/workspace';
   if (href === '/dashboard/crm/accounts') {
     return pathname === '/dashboard/crm/accounts' || pathname.startsWith('/dashboard/crm/accounts/');

@@ -260,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             clearTimeout(safetyTimeout);
             clearTimeout(runBackupInit);
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     // Refresh stored session when returning to the tab ONLY if the token is close
     // to expiring (within 5 minutes) or already expired, avoiding redundant network

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { offlineService } from '@/services/offlineService';
 import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
@@ -36,7 +36,6 @@ import {
     Send,
     DollarSign,
     UserCheck,
-    Target,
     CheckSquare,
     Square,
     Briefcase,
@@ -47,6 +46,7 @@ import {
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
+import { WORKSPACE } from '@/constants/design';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContextPanel';
@@ -62,8 +62,6 @@ import CRMTab from '../CRMTab';
 import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import { launchFunnelService } from '@/services/launchFunnelService';
-import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
-import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
@@ -393,9 +391,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             }
 
             if (resolved.kind === 'contacts_only') {
-                setDirectoryView('email');
                 router.replace(
-                    `/dashboard/crm/unified-contacts?directory=email&contactId=${encodeURIComponent(resolved.contactId)}`,
+                    `/dashboard/contacts?directory=email&contactId=${encodeURIComponent(resolved.contactId)}`,
                     { scroll: false }
                 );
                 return;
@@ -446,43 +443,33 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     };
 
     const directorySwitcher = (
-        <div className="space-y-2">
-            <div className="flex gap-1 p-1 bg-slate-900/80 border border-slate-800 rounded-xl w-full sm:w-fit">
+        <div>
+            <div className={`${WORKSPACE.tab.base} flex w-full gap-1 sm:w-fit`} role="group" aria-label="Contact directory view">
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('unified')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
-                        directoryView === 'unified' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
-                    }`}
+                    aria-pressed={directoryView === 'unified'}
+                    className={`${WORKSPACE.tab.base} flex-1 sm:flex-none ${directoryView === 'unified' ? WORKSPACE.tab.active : ''}`}
                 >
                     Unified
                 </button>
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('sales')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
-                        directoryView === 'sales' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
-                    }`}
+                    aria-pressed={directoryView === 'sales'}
+                    className={`${WORKSPACE.tab.base} flex-1 sm:flex-none ${directoryView === 'sales' ? WORKSPACE.tab.active : ''}`}
                 >
                     Sales pipeline
                 </button>
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('email')}
-                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-caption sm:text-sm font-semibold transition-colors ${
-                        directoryView === 'email' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
-                    }`}
+                    aria-pressed={directoryView === 'email'}
+                    className={`${WORKSPACE.tab.base} flex-1 sm:flex-none ${directoryView === 'email' ? WORKSPACE.tab.active : ''}`}
                 >
                     Email list
                 </button>
             </div>
-            <p className="type-card-description text-slate-500 leading-relaxed">
-                {directoryView === 'unified'
-                    ? 'Merged CRM + sales directory. Search and deep links resolve here first.'
-                    : directoryView === 'sales'
-                    ? 'Clients and prospects in your pipeline — tie to deals, invoices, and outreach.'
-                    : 'Imported and campaign contacts for email and SMS. These are separate from sales pipeline records.'}
-            </p>
         </div>
     );
 
@@ -503,45 +490,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
         setFilteredClients(filtered);
     }, [clients, selectedStage, searchTerm]);
-
-    const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
-    const activeClientsCount = clients.filter((c) => c.salesStage !== 'lost').length;
-    const customerCount = clients.filter((c) => c.salesStage === 'customer').length;
-    const prospectCount = clients.filter((c) => c.salesStage === 'prospect').length;
-
-    const contactStats = useMemo<ModuleStat[]>(
-        () => [
-            {
-                label: 'Total Contacts',
-                value: totalCount || clients.length,
-                sub: `${customerCount} customers`,
-                Icon: Users,
-                accent: 'blue',
-            },
-            {
-                label: 'Pipeline Value',
-                value: `$${totalClientValue.toLocaleString()}`,
-                sub: 'Combined contact value',
-                Icon: DollarSign,
-                accent: 'emerald',
-            },
-            {
-                label: 'Active',
-                value: activeClientsCount,
-                sub: 'Excluding lost',
-                Icon: UserCheck,
-                accent: 'blue',
-            },
-            {
-                label: 'Prospects',
-                value: prospectCount,
-                sub: `${clients.filter((c) => c.salesStage === 'lead').length} leads`,
-                Icon: Target,
-                accent: 'purple',
-            },
-        ],
-        [clients, totalCount, totalClientValue, activeClientsCount, customerCount, prospectCount]
-    );
 
     const handleAddClient = async (clientData: Partial<BusinessClient>) => {
         if (!currentTenant) return;
@@ -862,10 +810,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (isContactsRoute && directoryView === 'email') {
         return (
-            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
+            <div className="space-y-3 w-full min-w-0 ac-scroll-full ac-enterprise-module">
                 {directorySwitcher}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Email contacts</h1>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Select a contact to open its details without leaving this list.</p>
+                    </div>
+                </div>
                 <Suspense fallback={crmSectionFallback}>
-                    <ContactsList />
+                    <ContactsList highlightContactId={contactParam} />
                 </Suspense>
             </div>
         );
@@ -873,7 +827,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (isContactsRoute && directoryView === 'unified') {
         return (
-            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
+            <div className="space-y-3 w-full min-w-0 ac-scroll-full ac-enterprise-module">
                 {directorySwitcher}
                 <Suspense fallback={crmSectionFallback}>
                     <UnifiedContactsList
@@ -882,7 +836,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             const { client } = await businessClientService.getClient(clientId);
                             if (client) openContactDetail(client);
                         }}
-                        onOpenContact={() => setDirectoryViewAndUrl('email')}
+                        onOpenContact={(contactId) => {
+                            router.push(`/dashboard/contacts?directory=email&contactId=${encodeURIComponent(contactId)}`, { scroll: false });
+                        }}
                     />
                 </Suspense>
             </div>
@@ -899,13 +855,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         return (
             <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
                 {isContactsRoute && directorySwitcher}
-                <div className="flex justify-end">
-                    <HelpDisclosure title="Customer Success Intelligence" label="CRM guidance">
-                        <div className="pt-2">
-                            <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
-                        </div>
-                    </HelpDisclosure>
-                </div>
                 {/* Simplified Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
@@ -924,9 +873,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         </Button>
                     </div>
                 </div>
-
-                {/* Quick Stats for Solo Owner */}
-                <ModuleStatCards stats={contactStats} hub="leads" />
 
                 {/* Simple Client List */}
                 <div className="space-y-2">
@@ -963,16 +909,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
+        <div className="space-y-3 w-full min-w-0 ac-scroll-full ac-enterprise-module">
             {directorySwitcher}
-            <div className="flex justify-end">
-                <HelpDisclosure title="Customer Success Intelligence" label="CRM guidance">
-                    <div className="pt-2">
-                        <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
-                    </div>
-                </HelpDisclosure>
-            </div>
-            <ModuleStatCards stats={contactStats} hub="leads" />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">

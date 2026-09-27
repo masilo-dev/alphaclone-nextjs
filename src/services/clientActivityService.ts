@@ -77,7 +77,7 @@ class ClientActivityService {
                     this.getClientPayments(clientId),
                     this.getClientProjects(clientId),
                     this.getClientFiles(clientId),
-                    this.getClientNotes(clientId),
+                    this.getClientNotes(clientId, client.tenant_id),
                     this.getCrmUnifiedActivities(clientId, client.tenant_id),
                     this.getClientPortalEvents(clientId),
                 ]);
@@ -163,12 +163,16 @@ class ClientActivityService {
     private async getClientMeetings(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('calendar_events')
-            .select('id, user_id, title, description, start_time, end_time, meeting_link, created_at')
+            .select('id, user_id, title, description, start_time, end_time, metadata, created_at')
             .or(`user_id.eq.${clientId},attendees.cs.{${clientId}}`)
             .order('start_time', { ascending: false })
             .limit(20);
 
-        return (data || []).map((event: any) => ({
+        return (data || []).map((event: any) => {
+            const metadata = event.metadata && typeof event.metadata === 'object'
+                ? event.metadata as Record<string, unknown>
+                : {};
+            return ({
             id: event.id,
             client_id: clientId,
             activity_type: 'meeting' as const,
@@ -178,11 +182,14 @@ class ClientActivityService {
                 event_id: event.id,
                 start_time: event.start_time,
                 end_time: event.end_time,
-                meeting_link: event.meeting_link,
+                meeting_link: typeof metadata.meeting_link === 'string'
+                    ? metadata.meeting_link
+                    : typeof metadata.meeting_url === 'string' ? metadata.meeting_url : null,
             },
             created_at: event.created_at,
             created_by: event.user_id,
-        }));
+        });
+        });
     }
 
     /**
@@ -191,7 +198,7 @@ class ClientActivityService {
     private async getClientContracts(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('contracts')
-            .select('id, client_id, title, status, signed_at, created_at, admin_id')
+            .select('id, client_id, title, status, signed_at, created_at, owner_user_id, owner_id, user_id')
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
 
@@ -207,7 +214,7 @@ class ClientActivityService {
                 signed_at: contract.signed_at,
             },
             created_at: contract.signed_at || contract.created_at,
-            created_by: contract.admin_id,
+            created_by: contract.owner_user_id || contract.owner_id || contract.user_id,
         }));
     }
 
@@ -217,7 +224,7 @@ class ClientActivityService {
     private async getClientPayments(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('business_invoices')
-            .select('id, client_id, status, total, notes, description, due_date, currency, currency_code, paid_at, created_at')
+            .select('id, client_id, status, total, notes, due_date, currency, currency_code, paid_at, created_at')
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
 
@@ -228,10 +235,10 @@ class ClientActivityService {
                 id: invoice.id,
                 client_id: clientId,
                 activity_type: (isPaid ? 'payment' : 'invoice') as any,
-                title: isPaid 
-                    ? `Payment received: $${amount.toLocaleString()}` 
+                title: isPaid
+                    ? `Payment received: $${amount.toLocaleString()}`
                     : `Invoice ${invoice.status.toUpperCase()}: $${amount.toLocaleString()}`,
-                description: `${invoice.notes || invoice.description || 'No description'}. Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}`,
+                description: `${invoice.notes || 'No description'}. Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}`,
                 metadata: {
                     invoice_id: invoice.id,
                     amount,
@@ -244,11 +251,13 @@ class ClientActivityService {
         });
     }
 
-    private async getClientNotes(clientId: string): Promise<ClientActivity[]> {
+    private async getClientNotes(clientId: string, tenantId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
             .from('client_notes')
-            .select('*')
-            .eq('client_id', clientId)
+            .select('id, title, description, content, user_id, owner_user_id, created_at')
+            .eq('tenant_id', tenantId)
+            .eq('related_id', clientId)
+            .eq('type', 'client_note')
             .order('created_at', { ascending: false });
 
         return (data || []).map((note: any) => ({
@@ -256,13 +265,13 @@ class ClientActivityService {
             client_id: clientId,
             activity_type: 'note' as const,
             title: note.title || 'Note added',
-            description: note.description,
+            description: note.description || note.content || '',
             metadata: {
                 note_id: note.id,
-                created_by: note.created_by,
+                created_by: note.owner_user_id || note.user_id,
             },
             created_at: note.created_at,
-            created_by: note.created_by,
+            created_by: note.owner_user_id || note.user_id,
         }));
     }
 
@@ -429,13 +438,27 @@ class ClientActivityService {
         createdBy: string
     ): Promise<{ activity: ClientActivity | null; error?: string }> {
         try {
+            const { data: client, error: clientError } = await supabase
+                .from('business_clients')
+                .select('tenant_id')
+                .eq('id', clientId)
+                .maybeSingle();
+
+            if (clientError || !client?.tenant_id) {
+                return { activity: null, error: clientError?.message || 'Client tenant could not be resolved' };
+            }
+
             const { data, error } = await supabase
                 .from('client_notes')
                 .insert({
-                    client_id: clientId,
+                    tenant_id: client.tenant_id,
+                    related_id: clientId,
+                    type: 'client_note',
+                    user_id: createdBy,
+                    owner_user_id: createdBy,
                     title,
                     description,
-                    created_by: createdBy,
+                    content: description,
                 })
                 .select()
                 .single();

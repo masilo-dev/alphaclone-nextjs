@@ -871,6 +871,10 @@ export const authService = {
         return supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
             console.log(`AuthService: State changed - Event: ${event}, UserID: ${session?.user?.id}`);
 
+            // Token rotation does not change the signed-in user. Rebuilding the
+            // profile and tenant state here makes returning to a tab unnecessarily slow.
+            if (event === 'TOKEN_REFRESHED') return;
+
             // Collapse rapid bursts of the same event (e.g. multiple SIGNED_IN on refresh)
             if (debounceTimer) clearTimeout(debounceTimer);
             pendingEvent = { event, session };

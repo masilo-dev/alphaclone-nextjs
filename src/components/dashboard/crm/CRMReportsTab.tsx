@@ -136,9 +136,6 @@ export default function CRMReportsTab() {
       <div>
         <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">CRM</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--ws-text-primary)]">Relationships & conversions</h1>
-        <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] max-w-2xl">
-          Lead health · qualification · funnel conversion · relationship engagement.
-        </p>
       </div>
 
       <section className="grid grid-cols-1 min-[576px]:grid-cols-3 gap-3 md:gap-4" aria-label="CRM KPIs">

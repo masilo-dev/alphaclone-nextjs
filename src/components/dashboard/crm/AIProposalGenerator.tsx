@@ -35,7 +35,7 @@ Total Value: $${totalValue.toLocaleString()} USD
 
 Instructions:
 - Write a compelling executive summary tailored to the client
-- Include a clear scope of work section with the line items above  
+- Include a clear scope of work section with the line items above
 - Add professional terms & conditions
 - Keep language business-professional and persuasive
 - Format in clean markdown suitable for PDF export`;

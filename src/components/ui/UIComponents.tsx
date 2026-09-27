@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useBlurValidation } from '@/hooks/useBlurValidation';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
-import { WORKSPACE } from '@/constants/design';
+import { createPortal } from 'react-dom';
+import { WORKSPACE, Z_INDEX } from '@/constants/design';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- Button ---
@@ -447,6 +448,23 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+
+  const updateMenuPosition = useCallback(() => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = 192;
+    const margin = 8;
+    const left = align === 'right'
+      ? Math.max(margin, Math.min(rect.right - width, window.innerWidth - width - margin))
+      : Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
+    const menuHeight = Math.min(items.length * 40 + 8, 320);
+    const top = rect.bottom + menuHeight + margin <= window.innerHeight
+      ? rect.bottom + margin
+      : Math.max(margin, rect.top - menuHeight - margin);
+    setMenuPosition({ top, left });
+  }, [align, items.length]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -476,9 +494,53 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    updateMenuPosition();
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
+
+  const menu = isOpen && menuPosition ? (
+    <div
+      role="menu"
+      style={{ position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192, maxHeight: 'min(20rem, calc(100vh - 1rem))' }}
+      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel)] ${WORKSPACE.panel.radius} ${WORKSPACE.action.secondary} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
+      data-layer="dropdown"
+      data-z-index={Z_INDEX.dropdown}
+    >
+      <div className="p-1 space-y-0.5">
+        {items.map((item, index) => (
+          <button
+            key={`${item.label}-${index}`}
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              item.onClick();
+              setIsOpen(false);
+            }}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 ${WORKSPACE.typography.sectionLabel} rounded-lg transition-colors ${
+              item.variant === 'danger'
+                ? 'text-[var(--state-danger,#ef4444)] hover:bg-[color-mix(in_srgb,var(--state-danger,#ef4444)_10%,transparent)]'
+                : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
+            }`}
+          >
+            {item.icon && <span className="shrink-0">{item.icon}</span>}
+            {t(item.label)}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <div
+        ref={triggerRef}
         role="button"
         tabIndex={0}
         aria-haspopup="menu"
@@ -490,35 +552,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
         {trigger}
       </div>
 
-      {isOpen && (
-        <div
-          role="menu"
-          className={`absolute z-[1000] mt-2 w-48 rounded-xl bg-[var(--ws-panel,#171A26)] border border-[var(--ws-border)] shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}
-        >
-          <div className="p-1 space-y-0.5">
-            {items.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  item.onClick();
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 type-ui font-medium rounded-lg transition-all duration-150 select-none cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] ${
-                  item.variant === 'danger'
-                    ? 'text-red-400 hover:bg-red-500/10'
-                    : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
-                }`}
-              >
-                {item.icon && <span className="shrink-0" aria-hidden="true">{item.icon}</span>}
-                {t(item.label)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {typeof document !== 'undefined' && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 };
-

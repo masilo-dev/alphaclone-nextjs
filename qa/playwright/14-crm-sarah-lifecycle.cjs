@@ -143,7 +143,7 @@ async function runSarahLifecycleQA() {
     // STEP 3: Convert Lead to Contact & Business Client
     // -------------------------------------------------------------------------
     console.log('\n[STEP 3] Converting Lead to Contact and Client (Testing Name Splitting & Linkage)...');
-    
+
     // Call the convert_lead_to_contact RPC
     const { data: rpcRes, error: rpcErr } = await supabase.rpc('convert_lead_to_contact', {
       lead_id: lead.id,

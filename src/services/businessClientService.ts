@@ -98,7 +98,7 @@ export const businessClientService = {
             const { data, count, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
             if (error) throw error;
             const result = { clients: (data || []).map(mapClient), count: count || 0, error: null };
-            
+
             clientsCache.set(cacheKey, { data: result, timestamp: Date.now() });
             for (const client of result.clients) {
                 singleClientCache.set(client.id, { data: client, timestamp: Date.now() });

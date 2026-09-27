@@ -111,11 +111,52 @@ export async function publishInstagramAssets(input: {
     idempotency_key: claimed.operation.idempotency_key, correlation_id: claimed.operation.correlation_id, provider_container_id: creationId,
   }).select('id').single();
   if (postError) throw new Error(`INSTAGRAM_PUBLISH_FAILED: operation record could not be persisted: ${postError.message}`);
-  const retryAfter = new Date(Date.now() + 15_000).toISOString();
+  const retryAfter = new Date(Date.now() + 5_000).toISOString();
   const { data: operation, error: operationError } = await admin.from('social_publish_operations').update({
     social_post_id: post.id, provider_container_id: creationId, state: 'provider_processing', retry_after: retryAfter, attempt_count: 1, updated_at: new Date().toISOString(),
   }).eq('id', claimed.operation.id).eq('tenant_id', input.tenantId).select('*').single();
   if (operationError) throw new Error(operationError.message);
+  // Meta may finish photo containers before its initial creation request returns.
+  // Publish synchronously when ready so a normal photo post does not wait for cron.
+  try {
+    const ready = await waitForInstagramContainerReady(creationId, token);
+    if (ready.status_code === 'FINISHED') {
+      const published = await graphJson(`https://graph.facebook.com/v21.0/${accountId}/media_publish`, {
+        creation_id: creationId, access_token: token,
+      });
+      const providerId = String(published.id || '');
+      if (!providerId) throw new Error('INSTAGRAM_MISSING_MEDIA_ID');
+      const verified = await graphJson(`https://graph.facebook.com/v21.0/${providerId}?fields=id,permalink,timestamp,username&access_token=${encodeURIComponent(token)}`);
+      if (String(verified.id || '') !== providerId) throw new Error('INSTAGRAM_VERIFICATION_FAILED');
+      const verifiedAt = new Date().toISOString();
+      const { error: postUpdateError } = await admin.from('social_posts').update({
+        status: 'published', instagram_post_id: providerId, provider_permalink: verified.permalink || null,
+        live_url: verified.permalink || null, published_at: verified.timestamp || verifiedAt,
+        verification_timestamp: verifiedAt, retry_safe: false,
+      }).eq('tenant_id', input.tenantId).eq('id', post.id);
+      if (postUpdateError) throw new Error(postUpdateError.message);
+      const { data: completed, error: completeError } = await admin.from('social_publish_operations').update({
+        state: 'published', provider_post_id: providerId, provider_permalink: verified.permalink || null,
+        provider_identity_verified: true, verification_timestamp: verifiedAt,
+        published_at: verified.timestamp || verifiedAt, retry_safe: false,
+        last_provider_response: { id: verified.id, permalink: verified.permalink, timestamp: verified.timestamp },
+        locked_by: null, locked_until: null, retry_after: null, updated_at: verifiedAt,
+      }).eq('id', operation.id).eq('tenant_id', input.tenantId).select('*').single();
+      if (completeError) throw new Error(completeError.message);
+      return operationReceipt(completed) as DirectPublishReceipt;
+    }
+    if (ready.status_code === 'ERROR' || ready.status_code === 'EXPIRED') {
+      const { data: failed } = await admin.from('social_publish_operations').update({
+        state: 'failed_terminal', retry_safe: true, failure_code: 'INSTAGRAM_CONTAINER_FAILED',
+        failure_message: String(ready.status || ready.status_code), last_provider_response: ready,
+        retry_after: null, updated_at: new Date().toISOString(),
+      }).eq('id', operation.id).eq('tenant_id', input.tenantId).select('*').single();
+      throw new Error(failed?.failure_message || 'INSTAGRAM_CONTAINER_FAILED');
+    }
+  } catch (error) {
+    // The durable reconciler remains responsible for transient Meta/API errors.
+    if (error instanceof Error && error.message.includes('INSTAGRAM_CONTAINER_FAILED')) throw error;
+  }
   return operationReceipt(operation) as DirectPublishReceipt;
 }
 

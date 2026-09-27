@@ -8,7 +8,6 @@ import { useTenant } from '@/contexts/TenantContext';
 import type { UnifiedContact } from '@/lib/crm/unifiedContacts';
 import EmptyState from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
-import CRMWorkspaceBridge from './CRMWorkspaceBridge';
 
 type Props = {
   onOpenClient?: (clientId: string) => void;
@@ -181,8 +180,7 @@ export default function UnifiedContactsList({
   }
 
   return (
-    <div className="space-y-4">
-      <CRMWorkspaceBridge active="contacts" compact />
+    <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="type-ui font-bold text-white">Unified directory</h3>

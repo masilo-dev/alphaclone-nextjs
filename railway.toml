@@ -12,7 +12,7 @@ buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=12288' npm run 
 # Start Next directly so missing optional env (Redis/Turnstile/etc.) cannot
 # prevent the process from listening — that was failing Railway healthchecks.
 startCommand = "npm start"
-healthcheckPath = "/api/health"
+healthcheckPath = "/api/readiness"
 healthcheckTimeout = 300
 restartPolicyType = "ALWAYS"
 restartPolicyMaxRetries = 10
