@@ -415,7 +415,17 @@ export function ProjectWorkspaceDrawer({
               {(clientEmail || clientName) && (
                 <div className="rounded-lg border border-white/5 bg-slate-900/40 p-4">
                   <p className="type-caption font-bold uppercase tracking-widest text-slate-400 mb-1">Client</p>
-                  <p className="type-card-description text-white font-semibold">{clientName || 'Linked client'}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!project.clientId) return;
+                      onClose();
+                      router.push(`/dashboard/crm/workspace?clientId=${encodeURIComponent(project.clientId)}`);
+                    }}
+                    className="type-card-description text-white font-semibold hover:text-[var(--brand-blue-300)] hover:underline text-left"
+                  >
+                    {clientName || 'Linked client'}
+                  </button>
                   {clientEmail ? (
                     <button
                       type="button"
@@ -460,7 +470,7 @@ export function ProjectWorkspaceDrawer({
                 </form>
               </div>
 
-              <a href="/dashboard/business/documents" className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl type-ui text-slate-300">
+              <a href={`/dashboard/business/documents?projectId=${encodeURIComponent(project.id)}${project.clientId ? `&clientId=${encodeURIComponent(project.clientId)}` : ""}`} className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl type-ui text-slate-300">
                 <FileText className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Open Document Hub
               </a>

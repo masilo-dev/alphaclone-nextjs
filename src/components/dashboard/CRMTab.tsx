@@ -780,7 +780,7 @@ const Client360Detail: React.FC<{
       <button
         onClick={() => {
           if (inDrawer) onBack();
-          router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance');
+          router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/billing/manage' : '/dashboard/finance'}?create=1&clientId=${encodeURIComponent(client.id)}`);
         }}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >

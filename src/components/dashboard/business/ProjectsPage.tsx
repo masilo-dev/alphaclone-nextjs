@@ -95,7 +95,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         const newVal = nextSearch.get('new');
         if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
             setShowAddModal(true);
-            router.replace('/dashboard/business/projects/manage', { scroll: false });
+            const clientId = searchParams.get('clientId');
+            const suffix = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
+            router.replace(`/dashboard/business/projects/manage${suffix}`, { scroll: false });
         }
         const projectId =
             nextSearch.get('project') ||

@@ -27,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
+import { businessClientService } from '@/services/businessClientService';
 import { projectService } from '@/services/projectService';
 import { useServicesCatalog, ServiceItem } from '@/hooks/useServicesCatalog';
 import toast from 'react-hot-toast';
@@ -52,6 +53,7 @@ interface EnhancedInvoiceModalProps {
   invoice?: any;
   mode: 'create' | 'edit' | 'send';
   onSuccess?: (invoice: any) => void;
+  initialClientId?: string;
 }
 
 interface InvoiceFormData {
@@ -86,7 +88,8 @@ export default function EnhancedInvoiceModal({
   onClose,
   invoice,
   mode,
-  onSuccess
+  onSuccess,
+  initialClientId
 }: EnhancedInvoiceModalProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -122,6 +125,21 @@ export default function EnhancedInvoiceModal({
   useEffect(() => {
     if (invoice?.id) setDraftInvoiceId(invoice.id);
   }, [invoice?.id]);
+
+  useEffect(() => {
+    if (!isOpen || mode !== 'create' || !initialClientId) return;
+    let cancelled = false;
+    void businessClientService.getClient(initialClientId).then(({ client }) => {
+      if (cancelled || !client) return;
+      setFormData((prev) => ({
+        ...prev,
+        clientId: client.id,
+        clientName: client.name || prev.clientName,
+        clientEmail: client.email || prev.clientEmail,
+      }));
+    });
+    return () => { cancelled = true; };
+  }, [isOpen, mode, initialClientId]);
 
   useEffect(() => {
     if (!invoice?.id || !isOpen) return;

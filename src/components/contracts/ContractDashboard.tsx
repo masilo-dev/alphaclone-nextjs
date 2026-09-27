@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../dashboard/OperationalWorkflowStrip';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
@@ -157,6 +157,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { confirm: confirmDialog } = useConfirmDialog();
     const [projectTypeOptions, setProjectTypeOptions] = useState<string[]>(() => getContractProjectTypeOptions());
@@ -426,7 +427,26 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
     useEffect(() => {
         if (currentTenant?.id) {
-            businessClientService.getClients(currentTenant.id).then(({ clients: c }) => setClients(c || []));
+            businessClientService.getClients(currentTenant.id).then(({ clients: c }) => {
+                const loadedClients = c || [];
+                setClients(loadedClients);
+                const deepLinkedClientId = searchParams.get('clientId');
+                if (deepLinkedClientId) {
+                    const picked = loadedClients.find((client) => client.id === deepLinkedClientId);
+                    if (picked) {
+                        setForm((prev) => ({
+                            ...prev,
+                            clientId: picked.id,
+                            clientName: picked.name || prev.clientName,
+                            clientCompany: String(picked.customFields?.company || picked.metadata?.company || ''),
+                            clientEmail: picked.email || prev.clientEmail,
+                            clientPhone: picked.phone || prev.clientPhone,
+                            clientAddress: picked.location || prev.clientAddress,
+                        }));
+                        setActiveView('new');
+                    }
+                }
+            });
             supabase.from('contracts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
                 .then(({ data }: { data: any[] | null }) => { setSavedContracts(data || []); setLoadingContracts(false); })
                 .catch(() => setLoadingContracts(false));

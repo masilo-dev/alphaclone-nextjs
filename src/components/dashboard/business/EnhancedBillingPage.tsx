@@ -210,7 +210,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         const newVal = searchParams.get('new');
         if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
             setShowCreateModal(true);
-            router.replace('/dashboard/business/billing/manage', { scroll: false });
+            const clientId = searchParams.get('clientId');
+            const suffix = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
+            router.replace(`/dashboard/business/billing/manage${suffix}`, { scroll: false });
         }
     }, [searchParams, router]);
 
@@ -1294,7 +1296,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 )}
             </AnimatePresence>
 
-            <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+            <EnhancedInvoiceModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                mode="create"
+                initialClientId={searchParams.get('clientId') || undefined}
+                onSuccess={loadInvoices}
+            />
             <InvoiceLifecycleDrawer invoiceId={lifecycleInvoiceId} tenantId={currentTenant?.id} open={Boolean(lifecycleInvoiceId)} onOpenChange={(open) => !open && setLifecycleInvoiceId(null)} />
             <EnhancedInvoiceModal
                 isOpen={Boolean(editingInvoice)}

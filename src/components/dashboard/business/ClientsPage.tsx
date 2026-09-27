@@ -1688,7 +1688,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         size="sm"
                                                         variant="outline"
                                                         icon={<Plus className="w-3.5 h-3.5" />}
-                                                        onClick={() => router.push('/dashboard/projects')}
+                                                        onClick={() => router.push(`/dashboard/projects?create=1&clientId=${encodeURIComponent(selectedClient.id)}`)}
                                                     >
                                                         New Project
                                                     </Button>
@@ -1703,7 +1703,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         title="No projects linked to this client"
                                                         description="Create a project to track milestones, deliverables, and budgets for this client."
                                                         actionLabel="Go to Projects"
-                                                        onAction={() => router.push('/dashboard/projects')}
+                                                        onAction={() => router.push(`/dashboard/projects?create=1&clientId=${encodeURIComponent(selectedClient.id)}`)}
                                                         className="py-10"
                                                     />
                                                 ) : (
@@ -2170,12 +2170,12 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
         {
             label: 'Schedule Meeting',
             icon: <Calendar className="w-4 h-4" />,
-            onClick: () => window.location.href = '/dashboard/calendar'
+            onClick: () => window.location.href = `/dashboard/calendar?clientId=${encodeURIComponent(client.id)}`
         },
         {
             label: 'View History',
             icon: <History className="w-4 h-4" />,
-            onClick: () => window.location.href = '/dashboard/reports'
+            onClick: () => onOpen?.(client)
         },
         {
             label: 'Edit Client',
