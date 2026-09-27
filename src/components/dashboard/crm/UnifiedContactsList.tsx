@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Building2, Mail, Phone, RefreshCw, Search, User } from 'lucide-react';
-import { contactService } from '@/services/contactService';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Building2, ChevronLeft, ChevronRight, Mail, Phone, RefreshCw, Search, User } from 'lucide-react';
+import { contactService, type ContactWithCompany } from '@/services/contactService';
+import { businessClientService, type BusinessClient } from '@/services/businessClientService';
+import { useTenant } from '@/contexts/TenantContext';
 import type { UnifiedContact } from '@/lib/crm/unifiedContacts';
 import EmptyState from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
@@ -14,40 +16,139 @@ type Props = {
   highlightContactId?: string | null;
 };
 
+const PAGE_SIZE = 50;
+
+function contactToUnified(contact: ContactWithCompany): UnifiedContact {
+  return {
+    id: contact.id,
+    tenant_id: contact.tenantId,
+    full_name: contact.fullName || `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Contact',
+    first_name: contact.firstName || '',
+    last_name: contact.lastName || '',
+    email: contact.email || null,
+    phone: contact.phone || null,
+    status: contact.status || 'active',
+    lifecycle_stage: contact.status || null,
+    company_id: contact.company?.id || null,
+    business_client_id: null,
+    source: 'contacts',
+    created_at: contact.createdAt,
+  };
+}
+
+function clientToUnified(client: BusinessClient, tenantId: string): UnifiedContact {
+  const name = (client.name || 'Contact').trim();
+  const parts = name.split(/\s+/);
+  return {
+    id: client.crmContactId || client.id,
+    tenant_id: tenantId,
+    full_name: name,
+    first_name: parts[0] || 'Contact',
+    last_name: parts.slice(1).join(' '),
+    email: client.email || null,
+    phone: client.phone || null,
+    status: 'active',
+    lifecycle_stage: client.salesStage === 'customer' ? 'customer' : client.salesStage || 'lead',
+    company_id: null,
+    business_client_id: client.id,
+    source: 'business_clients',
+    created_at: client.createdAt,
+  };
+}
+
 export default function UnifiedContactsList({
   onOpenClient,
   onOpenContact,
   highlightContactId,
 }: Props) {
+  const { currentTenant } = useTenant();
   const [contacts, setContacts] = useState<UnifiedContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [limit, setLimit] = useState(100);
+  const [page, setPage] = useState(1);
+  const [contactTotal, setContactTotal] = useState(0);
+  const [clientTotal, setClientTotal] = useState(0);
+  const [contactPages, setContactPages] = useState(1);
+  const [clientHasMore, setClientHasMore] = useState(false);
 
   const load = useCallback(async () => {
+    if (!currentTenant?.id) {
+      setContacts([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    const { contacts: rows, error } = await contactService.getUnifiedContactsList({
-      limit,
-      search: search.trim() || undefined,
-    });
-    if (error) toast.error(error);
-    setContacts(rows);
-    setLoading(false);
-  }, [search, limit]);
+    try {
+      const [contactResult, clientResult] = await Promise.all([
+        contactService.getContacts({
+          search: search.trim() || undefined,
+          page,
+          limit: PAGE_SIZE,
+          sort: 'created_at',
+          direction: 'desc',
+        }),
+        businessClientService.getClients(
+          currentTenant.id,
+          page,
+          PAGE_SIZE,
+          false,
+          search.trim()
+        ),
+      ]);
+
+      if (contactResult.error) throw new Error(contactResult.error);
+
+      const canonicalContacts = contactResult.contacts.map(contactToUnified);
+      const contactIds = new Set(canonicalContacts.map((row) => row.id));
+      const emails = new Set(
+        canonicalContacts
+          .map((row) => row.email?.trim().toLowerCase())
+          .filter((value): value is string => Boolean(value))
+      );
+
+      const salesOnly = clientResult.clients
+        .filter((client) => {
+          if (client.crmContactId && contactIds.has(client.crmContactId)) return false;
+          const email = client.email?.trim().toLowerCase();
+          if (email && emails.has(email)) return false;
+          return Boolean(client.email || client.phone);
+        })
+        .map((client) => clientToUnified(client, currentTenant.id));
+
+      const merged = [...canonicalContacts, ...salesOnly].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setContacts(merged);
+      setContactTotal(contactResult.pagination?.total ?? canonicalContacts.length);
+      setContactPages(contactResult.pagination?.pages ?? 1);
+      setClientTotal(clientResult.count ?? clientResult.clients.length);
+      setClientHasMore(clientResult.clients.length === PAGE_SIZE);
+    } catch (err) {
+      console.error('Failed to load unified contacts:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to load unified contacts');
+      setContacts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentTenant?.id, page, search]);
 
   useEffect(() => {
-    setLimit(100);
+    const timer = setTimeout(() => {
+      void load();
+    }, search.trim() ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [load, search]);
+
+  useEffect(() => {
+    setPage(1);
   }, [search]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   useEffect(() => {
     if (!highlightContactId || contacts.length === 0) return;
     const match = contacts.find(
-      (row) =>
-        row.id === highlightContactId || row.business_client_id === highlightContactId
+      (row) => row.id === highlightContactId || row.business_client_id === highlightContactId
     );
     if (!match) return;
     if (match.business_client_id) {
@@ -65,12 +166,16 @@ export default function UnifiedContactsList({
     onOpenContact?.(row.id);
   };
 
-  if (loading) {
+  const hasPrevious = page > 1;
+  const hasNext = page < contactPages || clientHasMore;
+  const estimatedTotal = useMemo(() => contactTotal + clientTotal, [contactTotal, clientTotal]);
+
+  if (loading && contacts.length === 0) {
     return (
       <EmptyState
         icon={User}
         title="Loading unified contacts"
-        description="Merging CRM contacts and sales clients into one directory."
+        description="Loading this page from CRM contacts and sales clients."
       />
     );
   }
@@ -82,7 +187,7 @@ export default function UnifiedContactsList({
         <div>
           <h3 className="type-ui font-bold text-white">Unified directory</h3>
           <p className="type-card-description text-slate-500">
-            Canonical CRM contacts merged with sales clients missing a linked row.
+            CRM contacts and sales clients in one paginated directory. No browser-side 1,000-record ceiling.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -91,7 +196,7 @@ export default function UnifiedContactsList({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search name or email"
+              placeholder="Search name, email or phone"
               className="w-full rounded-xl border border-white/10 bg-slate-950 py-2 pl-9 pr-3 type-ui text-white"
             />
           </div>
@@ -100,17 +205,25 @@ export default function UnifiedContactsList({
             onClick={() => void load()}
             className="inline-flex items-center gap-1 rounded-xl border border-white/10 px-3 py-2 type-caption font-bold text-slate-300"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-2 type-caption text-slate-500">
+        <span>
+          Page {page} · {contacts.length} shown
+          {estimatedTotal > 0 ? ` · ${estimatedTotal.toLocaleString()} source records` : ''}
+        </span>
+        <span>50 CRM + 50 sales records fetched per page</span>
+      </div>
+
       {contacts.length === 0 ? (
         <EmptyState
           icon={User}
-          title="No contacts yet"
-          description="Add a sales client or email contact to populate this directory."
+          title="No contacts on this page"
+          description={page > 1 ? 'Go back a page or change the search.' : 'Add a sales client or email contact to populate this directory.'}
         />
       ) : (
         <div className="space-y-2">
@@ -137,17 +250,30 @@ export default function UnifiedContactsList({
               </div>
             </button>
           ))}
-          {contacts.length >= limit && limit < 1000 ? (
-            <button
-              type="button"
-              onClick={() => setLimit((value) => Math.min(value + 100, 1000))}
-              className="mt-3 w-full rounded-xl border border-white/10 px-4 py-3 type-ui font-semibold text-slate-300 hover:border-teal-500/30"
-            >
-              Load 100 more
-            </button>
-          ) : null}
         </div>
       )}
+
+      <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <button
+          type="button"
+          disabled={!hasPrevious || loading}
+          onClick={() => setPage((value) => Math.max(1, value - 1))}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 type-ui font-semibold text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </button>
+        <span className="type-ui font-semibold text-slate-300">Page {page}</span>
+        <button
+          type="button"
+          disabled={!hasNext || loading}
+          onClick={() => setPage((value) => value + 1)}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 type-ui font-semibold text-slate-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
