@@ -63,6 +63,7 @@ import { businessClientService } from '@/services/businessClientService';
 import { contactService } from '@/services/contactService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
+import { useCustomer360 } from '@/contexts/Customer360Context';
 import ComposeEmailModal from './ComposeEmailModal';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import AiDraftReviewBanner from '../inbox/AiDraftReviewBanner';
@@ -229,6 +230,7 @@ function getSmartReplyChips(email: UnifiedInboxMessage) {
 export default function UnifiedInboxView({ defaultProvider, initialFolder }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
+  const { openCustomer } = useCustomer360();
   const { language, t } = useLanguage();
   const dateLocale = useMemo(() => languageToBcp47(language), [language]);
   const pathname = usePathname();
@@ -252,6 +254,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [loadingBody, setLoadingBody] = useState(false);
   const [emailClassification, setEmailClassification] = useState<EmailClassification>('Direct');
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
+  const [senderClientId, setSenderClientId] = useState<string | null>(null);
   const [creatingContact, setCreatingContact] = useState(false);
   const [readerExpanded, setReaderExpanded] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -622,6 +625,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   useEffect(() => {
     if (!selectedEmail?.from) {
       setSenderKnown(null);
+      setSenderClientId(null);
       setEmailClassification('Direct');
       return;
     }
@@ -639,9 +643,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           contactService.getContacts({ search: parsed.email }),
         ]);
         if (cancelled) return;
-        const isClient = (clients || []).some(
+        const matchedClient = (clients || []).find(
           (c) => c.email?.toLowerCase() === parsed.email.toLowerCase()
         );
+        const isClient = Boolean(matchedClient);
+        setSenderClientId(matchedClient?.id || null);
         const isLead = (contacts || []).some(
           (c) => c.email?.toLowerCase() === parsed.email.toLowerCase()
         );
@@ -655,6 +661,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       } catch {
         if (!cancelled) {
           setSenderKnown(false);
+          setSenderClientId(null);
           setEmailClassification(classifyEmailFromAddress(selectedEmail.from));
         }
       }
@@ -1151,7 +1158,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </h3>
                     {/* From + provider badge */}
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="type-card-description text-slate-400 truncate">{selectedEmail.from}</p>
+                      {senderClientId ? (
+                        <button type="button" onClick={() => openCustomer(senderClientId)} className="type-card-description text-left text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)] hover:underline truncate" title="Open Customer 360">{selectedEmail.from}</button>
+                      ) : (
+                        <p className="type-card-description text-slate-400 truncate">{selectedEmail.from}</p>
+                      )}
                       <span
                         className={`type-caption font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
                           provider === 'microsoft'

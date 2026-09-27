@@ -7,6 +7,7 @@ import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { initTabFocusCoordinator, TAB_VISIBLE_EVENT } from '@/lib/sync/tabFocusCoordinator';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { RelationshipProvider } from '@/contexts/RelationshipContext';
+import { Customer360Provider } from '@/contexts/Customer360Context';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { BonnieDrawerProvider } from '@/contexts/BonnieDrawerContext';
@@ -86,6 +87,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <TenantProvider>
                         <Suspense fallback={null}>
                           <RelationshipProvider>
+                            <Customer360Provider>
                             <BackgroundTaskProvider>
                           <BonnieDrawerProvider>
                             <BookingModalProvider>
@@ -95,6 +97,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                             </BookingModalProvider>
                           </BonnieDrawerProvider>
                             </BackgroundTaskProvider>
+                            </Customer360Provider>
                           </RelationshipProvider>
                         </Suspense>
                       </TenantProvider>
