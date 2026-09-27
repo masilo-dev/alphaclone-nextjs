@@ -325,6 +325,50 @@ export const leadService = {
     },
 
     /**
+     * Page through leads without materializing the entire tenant dataset in browser memory.
+     * Uses a stable created_at/id keyset cursor so performance does not degrade at high offsets.
+     */
+    async getLeadsPage(options?: {
+        limit?: number;
+        cursor?: { createdAt: string; id: string } | null;
+        search?: string;
+        stage?: string;
+        status?: string;
+    }): Promise<{
+        leads: Lead[];
+        error: string | null;
+        pageInfo: { nextCursor: { createdAt: string; id: string } | null; hasMore: boolean; total: number };
+    }> {
+        try {
+            const tenantId = this.getTenantId();
+            const limit = Math.max(1, Math.min(options?.limit ?? 50, 200));
+            const params = new URLSearchParams({ limit: String(limit) });
+            if (options?.cursor) params.set('cursor', btoa(JSON.stringify(options.cursor)));
+            if (options?.search) params.set('search', options.search);
+            if (options?.stage) params.set('stage', options.stage);
+            if (options?.status) params.set('status', options.status);
+
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/leads?${params.toString()}`, {
+                credentials: 'include',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Leads could not be loaded');
+
+            return {
+                leads: (payload.leads || []).map(normalizeLeadRecord),
+                error: null,
+                pageInfo: payload.pageInfo || { nextCursor: null, hasMore: false, total: 0 },
+            };
+        } catch (err) {
+            return {
+                leads: [],
+                error: err instanceof Error ? err.message : 'Unknown error',
+                pageInfo: { nextCursor: null, hasMore: false, total: 0 },
+            };
+        }
+    },
+
+    /**
      * Add a single lead
      */
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {

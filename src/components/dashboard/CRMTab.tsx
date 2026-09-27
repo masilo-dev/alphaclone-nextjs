@@ -2205,16 +2205,23 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       ? filteredKanbanLeads.map((l) => entityKey({ type: 'lead', id: l.id }))
       : filteredEntities.map(entityKey);
 
-  useInfiniteScroll(crmListRef, loadMoreEntities, {
-    enabled: leadsView === 'list' && filteredEntities.length > visibleCount,
-  });
-  const visibleEntities = filteredEntities;
+  useInfiniteScroll(
+    crmListRef,
+    subView === 'leads' && leadHasMore ? loadMoreLeadPage : loadMoreEntities,
+    {
+      enabled:
+        leadsView === 'list' &&
+        (subView === 'leads' ? leadHasMore : filteredEntities.length > visibleCount),
+    }
+  );
+  const visibleEntities =
+    subView === 'leads' ? filteredEntities : filteredEntities.slice(0, visibleCount);
 
   const allBulkSelected =
     bulkSelectTargetKeys.length > 0 && bulkSelectTargetKeys.every((k) => selectedKeys.has(k));
 
   // Calculate summaries for stats indicators
-  const totalLeadsCount = (leads || []).length;
+  const totalLeadsCount = leadTotal || (leads || []).length;
   const qualifiedLeadsCount = (leads || []).filter((l) => l.status === 'qualified').length;
   const activeClientsCount = (clients || []).filter(c => c.sales_stage === 'customer').length;
   const totalClientValue = (clients || []).filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
@@ -2621,15 +2628,24 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 ))}
               </div>
             </ResponsiveTableDesktop>
-            {filteredEntities.length > visibleCount && (
+            {subView === 'leads' && leadHasMore ? (
+              <button
+                type="button"
+                disabled={loadingMoreLeads}
+                onClick={() => void loadMoreLeadPage()}
+                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-slate-400 hover:text-white disabled:opacity-50 bg-slate-900/40 border-t border-white/5 transition-colors"
+              >
+                {loadingMoreLeads ? t('Loading more') : `${t('Showing')} ${leads.length.toLocaleString()} / ${leadTotal.toLocaleString()} — ${t('load more')}`}
+              </button>
+            ) : subView !== 'leads' && filteredEntities.length > visibleCount ? (
               <button
                 type="button"
                 onClick={loadMoreEntities}
                 className="w-full py-3 type-caption font-bold uppercase tracking-wider text-slate-400 hover:text-white bg-slate-900/40 border-t border-white/5 transition-colors"
               >
-                {t('Showing')} {visibleCount} / {filteredEntities.length} — {t('scroll to load more')}
+                {t('Showing')} {Math.min(visibleCount, filteredEntities.length)} / {filteredEntities.length} — {t('scroll to load more')}
               </button>
-            )}
+            ) : null}
           </>
         )}
         <ExecutionDecisionGuide

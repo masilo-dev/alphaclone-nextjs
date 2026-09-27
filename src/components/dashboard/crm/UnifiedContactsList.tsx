@@ -22,16 +22,21 @@ export default function UnifiedContactsList({
   const [contacts, setContacts] = useState<UnifiedContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [limit, setLimit] = useState(100);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { contacts: rows, error } = await contactService.getUnifiedContactsList({
-      limit: 10000,
+      limit,
       search: search.trim() || undefined,
     });
     if (error) toast.error(error);
     setContacts(rows);
     setLoading(false);
+  }, [search, limit]);
+
+  useEffect(() => {
+    setLimit(100);
   }, [search]);
 
   useEffect(() => {
@@ -132,6 +137,15 @@ export default function UnifiedContactsList({
               </div>
             </button>
           ))}
+          {contacts.length >= limit && limit < 1000 ? (
+            <button
+              type="button"
+              onClick={() => setLimit((value) => Math.min(value + 100, 1000))}
+              className="mt-3 w-full rounded-xl border border-white/10 px-4 py-3 type-ui font-semibold text-slate-300 hover:border-teal-500/30"
+            >
+              Load 100 more
+            </button>
+          ) : null}
         </div>
       )}
     </div>
