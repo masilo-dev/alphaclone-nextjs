@@ -97,8 +97,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         const newVal = nextSearch.get('new');
         if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
             setShowAddModal(true);
-            const clientId = searchParams.get('clientId');
-            const suffix = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
+            const clientId = relationship.customerId;
             router.replace(relationship.moduleUrl('projects', clientId ? { clientId } : {}), { scroll: false });
         }
         const projectId =
@@ -110,10 +109,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             const match = projects.find((p) => p.id === projectId);
             if (match) {
                 setViewingProject(match);
-                router.replace('/dashboard/business/projects/manage', { scroll: false });
+                router.replace(relationship.moduleUrl('projects'), { scroll: false });
             }
         }
-    }, [nextSearch, router, projects, pathname]);
+    }, [nextSearch, router, projects, pathname, relationship]);
 
     const loadData = useCallback(async () => {
         if (!currentTenant) return;
