@@ -757,10 +757,11 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             onOpenChange={(open) => { if (!open) onClose(); }}
             title={lead.businessName}
             description={lead.industry || 'Lead details'}
-            size="wide"
+            size="workspace"
+            hideHeader
         >
-            <div className="flex flex-col min-h-0">
-                <div className="px-3 sm:px-4 pt-2 bg-slate-900">
+            <div className="flex min-h-full flex-col bg-slate-950">
+                <div className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/95 px-4 py-3 pr-14 backdrop-blur-xl sm:px-6">
                     <RecordHeader
                         moduleId="leads"
                         title={lead.businessName}
@@ -821,18 +822,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 </div>
 
                 {/* Header actions */}
-                <div className="px-3 sm:px-4 py-2 border-b border-slate-800 flex flex-col lg:flex-row justify-between items-start gap-2 bg-slate-900">
+                <div className="sticky top-[92px] z-20 flex flex-col gap-2 border-b border-slate-800 bg-slate-950/95 px-4 py-2 backdrop-blur-xl sm:px-6 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0 type-caption text-slate-500 lg:pt-2">
                         Quick actions for this lead
                     </div>
 
                     {/* Actions */}
-                    <div className="w-full lg:w-auto flex flex-col items-start lg:items-end gap-1.5 rounded-lg border border-white/5 bg-slate-900/40 px-2 py-1.5">
-                        <div className="self-start">
-                            <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 type-caption font-bold uppercase tracking-caps text-slate-500">
-                                Quick actions
-                            </span>
-                        </div>
+                    <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
                         <CRMActionChips
                             items={[
                                 {
@@ -864,7 +860,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 },
                             ]}
                         />
-                        <div className="flex w-full flex-wrap items-center gap-1.5 lg:justify-end">
+                        <div className="flex flex-wrap items-center gap-1.5">
                             <Button
                             variant="outline"
                             size="sm"
@@ -988,7 +984,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 )}
 
                 {/* Tabs */}
-                <div className="px-4 sm:px-6 border-b border-slate-800 bg-slate-900/50 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
+                <div className="sticky top-[154px] z-20 flex gap-4 overflow-x-auto border-b border-slate-800 bg-slate-950/95 px-4 backdrop-blur-xl scrollbar-hide sm:px-6 sm:gap-6">
                     {['overview', 'deals', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
@@ -1004,7 +1000,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+                <div className="grid flex-1 grid-cols-1 gap-5 bg-slate-950 p-4 sm:p-6 xl:grid-cols-[minmax(0,1fr)_340px]">
                     <div className="min-w-0">
                     {showEditForm && (
                         <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
@@ -1102,35 +1098,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     />
                                 </div>
                             </Card>
-
-                            <CRMActionChips
-                                items={[
-                                    {
-                                        label: 'Email',
-                                        icon: Send,
-                                        tone: 'indigo',
-                                        onClick: handleSendProviderEmail,
-                                        disabled: !lead.email,
-                                    },
-                                    {
-                                        label: 'Schedule',
-                                        icon: PhoneCall,
-                                        tone: 'amber',
-                                        onClick: handleScheduleCall,
-                                        disabled: !lead.phone,
-                                    },
-                                    {
-                                        label: 'Call',
-                                        icon: Phone,
-                                        tone: 'teal',
-                                        onClick: () => {
-                                            if (!lead.phone) return;
-                                            window.open(`tel:${lead.phone}`, '_self');
-                                        },
-                                        disabled: !lead.phone,
-                                    },
-                                ]}
-                            />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="p-6 space-y-4">
@@ -1584,7 +1551,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             tenantId={currentTenant.id}
                             entityType="lead"
                             entityId={lead.id}
-                            className="hidden xl:block sticky top-0 self-start"
+                            className="hidden xl:block sticky top-[210px] self-start"
                         />
                     ) : null}
                 </div>

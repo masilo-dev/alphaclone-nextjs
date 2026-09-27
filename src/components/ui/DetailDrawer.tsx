@@ -21,7 +21,9 @@ interface DetailDrawerProps {
   children: React.ReactNode;
   className?: string;
   /** Wider drawer on desktop (forms, quote editor) */
-  size?: 'default' | 'wide' | 'fullscreen';
+  size?: 'default' | 'wide' | 'workspace' | 'fullscreen';
+  /** Keep the accessible title but hide the drawer's duplicate visual heading. */
+  hideHeader?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ export function DetailDrawer({
   children,
   className,
   size = 'default',
+  hideHeader = false,
 }: DetailDrawerProps) {
   const isMobile = useMediaQuery('(max-width: 767px)');
   const { isInstalledMobileCompanion } = useDeviceExperience();
@@ -62,13 +65,15 @@ export function DetailDrawer({
             ? 'inset-0 h-[100dvh] !w-screen max-w-none rounded-none border-0'
             : isMobile
               ? 'max-h-[85vh]'
-              : size === 'wide'
-                ? 'h-full !w-[min(100vw,44rem)] !p-4 !gap-2'
-                : 'h-full',
+              : size === 'workspace'
+                ? 'h-full !w-[min(86vw,90rem)] !max-w-none !p-0 !gap-0'
+                : size === 'wide'
+                  ? 'h-full !w-[min(100vw,44rem)] !p-4 !gap-2'
+                  : 'h-full',
           className
         )}
       >
-        <SheetHeader className={cn(isInstalledMobileCompanion && 'sticky top-0 z-20 border-b border-white/5 bg-[var(--ws-toolbar)] px-4 py-3')}>
+        <SheetHeader className={cn(hideHeader && 'sr-only', isInstalledMobileCompanion && !hideHeader && 'sticky top-0 z-20 border-b border-white/5 bg-[var(--ws-toolbar)] px-4 py-3')}>
           <SheetTitle>{title}</SheetTitle>
           {description ? <SheetDescription>{description}</SheetDescription> : null}
         </SheetHeader>
