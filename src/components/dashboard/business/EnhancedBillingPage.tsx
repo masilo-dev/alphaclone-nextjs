@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRelationship } from '@/contexts/RelationshipContext';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
@@ -48,6 +49,7 @@ interface EnhancedBillingPageProps {
 
 const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const router = useRouter();
+    const relationship = useRelationship();
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
@@ -212,7 +214,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             setShowCreateModal(true);
             const clientId = searchParams.get('clientId');
             const suffix = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
-            router.replace(`/dashboard/business/billing/manage${suffix}`, { scroll: false });
+            router.replace(relationship.moduleUrl('billing', clientId ? { clientId } : {}), { scroll: false });
         }
     }, [searchParams, router]);
 

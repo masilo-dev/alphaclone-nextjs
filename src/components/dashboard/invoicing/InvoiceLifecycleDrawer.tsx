@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { AskBonnieButton } from "@/components/ui/os/AskBonnieButton";
 import { BusinessContextPanel } from "@/components/dashboard/crm/BusinessContextPanel";
+import { useRelationship } from "@/contexts/RelationshipContext";
 
 type Workspace = {
   invoice: Record<string, any>;
@@ -47,6 +48,7 @@ export function InvoiceLifecycleDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const relationship = useRelationship();
   const [data, setData] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<
@@ -228,6 +230,7 @@ export function InvoiceLifecycleDrawer({
                   compact
                   mode="summarise"
                   contexts={[
+                    ...relationship.related.map((ref) => ({ type: ref.type, id: ref.id, label: ref.label })),
                     { type: 'Invoice', id: invoiceId ?? undefined, label: String(data.invoice.invoice_number || 'Invoice') },
                   ]}
                 />

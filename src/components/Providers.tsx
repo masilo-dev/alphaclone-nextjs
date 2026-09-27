@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-
 import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { initTabFocusCoordinator, TAB_VISIBLE_EVENT } from '@/lib/sync/tabFocusCoordinator';
 import { TenantProvider } from '@/contexts/TenantContext';
+import { RelationshipProvider } from '@/contexts/RelationshipContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { BonnieDrawerProvider } from '@/contexts/BonnieDrawerContext';
@@ -83,6 +84,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <UserPreferencesBootstrap />
                       <ServiceWorkerBootstrap />
                       <TenantProvider>
+                        <RelationshipProvider>
                         <BackgroundTaskProvider>
                           <BonnieDrawerProvider>
                             <BookingModalProvider>
@@ -92,6 +94,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                             </BookingModalProvider>
                           </BonnieDrawerProvider>
                         </BackgroundTaskProvider>
+                        </RelationshipProvider>
                       </TenantProvider>
                     </LanguageProvider>
                   </ThemeProvider>

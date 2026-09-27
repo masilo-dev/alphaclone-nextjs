@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useRelationship } from '@/contexts/RelationshipContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -77,6 +78,7 @@ const getNormalizedStage = (stage: string | undefined): ProjectStage => {
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const router = useRouter();
+    const relationship = useRelationship();
     const pathname = usePathname();
     const nextSearch = useSearchParams();
     const { currentTenant } = useTenant();
@@ -97,7 +99,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             setShowAddModal(true);
             const clientId = searchParams.get('clientId');
             const suffix = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
-            router.replace(`/dashboard/business/projects/manage${suffix}`, { scroll: false });
+            router.replace(relationship.moduleUrl('projects', clientId ? { clientId } : {}), { scroll: false });
         }
         const projectId =
             nextSearch.get('project') ||

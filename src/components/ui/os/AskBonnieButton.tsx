@@ -4,6 +4,8 @@ import { IconBonnie } from '@/components/icons/alphaclone';
 import { useBonnieDrawerOptional, type BonnieMode, type BonnieRecordContext } from '@/contexts/BonnieDrawerContext';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useRelationshipOptional } from '@/contexts/RelationshipContext';
+import { relationshipBonnieContexts } from '@/lib/crm/relationshipNavigation';
 
 interface AskBonnieButtonProps {
   contexts?: BonnieRecordContext[];
@@ -21,12 +23,15 @@ export function AskBonnieButton({
   compact,
 }: AskBonnieButtonProps) {
   const drawer = useBonnieDrawerOptional();
+  const relationship = useRelationshipOptional();
   if (!drawer) return null;
+  const inheritedContexts = relationshipBonnieContexts(relationship);
+  const effectiveContexts = contexts?.length ? contexts : inheritedContexts;
 
   return (
     <button
       type="button"
-      onClick={() => drawer.openDrawer({ mode, contexts })}
+      onClick={() => drawer.openDrawer({ mode, contexts: effectiveContexts })}
       className={cn(
         compact
           ? 'inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] type-caption font-semibold text-[var(--brand-violet-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]'

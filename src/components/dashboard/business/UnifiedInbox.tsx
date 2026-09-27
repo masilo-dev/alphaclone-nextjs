@@ -6,6 +6,7 @@ import { Inbox, Loader2, MessageSquare } from 'lucide-react';
 import UnifiedInboxView from './UnifiedInboxView';
 import UnifiedInboxTab from './UnifiedInboxTab';
 import type { InboxFolder, InboxProvider } from '@/types/unifiedInbox';
+import { useRelationship } from '@/contexts/RelationshipContext';
 
 type UnifiedInboxProps = {
   defaultProvider?: InboxProvider;
@@ -31,6 +32,7 @@ function UnifiedInboxContent({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const relationship = useRelationship();
   const tabParam = searchParams?.get('tab');
 
   const activeTab: InboxTab = useMemo(() => {
@@ -44,7 +46,7 @@ function UnifiedInboxContent({
     const params = new URLSearchParams(searchParams?.toString() || '');
     params.set('tab', tab);
     const base = pathname || '/dashboard/mail';
-    router.replace(`${base}?${params.toString()}`, { scroll: false });
+    router.replace(relationship.withRelationship(`${base}?${params.toString()}`), { scroll: false });
   };
 
   return (

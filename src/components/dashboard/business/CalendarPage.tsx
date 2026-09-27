@@ -28,6 +28,7 @@ import { EmptyStateFromPreset } from '../../ui/EmptyState';
 import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { isFinishedProject } from '@/lib/projects/projectEnums';
+import { useRelationship } from '@/contexts/RelationshipContext';
 
 interface CalendarPageProps {
     user: User;
@@ -107,6 +108,7 @@ const SOURCE_CONFIG = {
 const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const router = useRouter();
+    const relationship = useRelationship();
     const searchParams = useSearchParams();
     const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -120,7 +122,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
     useEffect(() => {
-        if (searchParams.get('create') === 'true') {
+        if (searchParams.get('create') === 'true' || relationship.customerId || relationship.contactId) {
             setSelectedDate(new Date());
             setShowAddModal(true);
         }

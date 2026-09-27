@@ -29,6 +29,7 @@ import { ProjectTasksKanban } from '@/components/dashboard/projects/ProjectTasks
 import { ProjectBlockersPanel } from '@/components/dashboard/projects/ProjectBlockersPanel';
 import { GanttChart } from '@/components/dashboard/projects/GanttChart';
 import { cn } from '@/lib/utils';
+import { useRelationship } from '@/contexts/RelationshipContext';
 import toast from 'react-hot-toast';
 
 type WorkspaceTab = 'overview' | 'tasks' | 'milestones' | 'timeline' | 'team';
@@ -77,6 +78,7 @@ export function ProjectWorkspaceDrawer({
   onStageChange,
 }: ProjectWorkspaceDrawerProps) {
   const router = useRouter();
+  const relationship = useRelationship();
   const pathname = usePathname();
   const prevPathnameRef = useRef(pathname);
 
@@ -420,7 +422,7 @@ export function ProjectWorkspaceDrawer({
                     onClick={() => {
                       if (!project.clientId) return;
                       onClose();
-                      router.push(`/dashboard/crm/workspace?clientId=${encodeURIComponent(project.clientId)}`);
+                      router.push(relationship.customer360Url(project.clientId));
                     }}
                     className="type-card-description text-white font-semibold hover:text-[var(--brand-blue-300)] hover:underline text-left"
                   >
@@ -431,7 +433,7 @@ export function ProjectWorkspaceDrawer({
                       type="button"
                       onClick={() => {
                         onClose();
-                        router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName}`));
+                        router.push(relationship.withRelationship(buildMailComposeUrl(clientEmail, `Re: ${clientName}`), { clientId: project.clientId, projectId: project.id }));
                       }}
                       className="type-ui text-[var(--brand-blue-300)] hover:underline"
                     >

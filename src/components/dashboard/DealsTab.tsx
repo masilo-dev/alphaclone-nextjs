@@ -46,6 +46,7 @@ import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { usePersistentPreference } from '@/hooks/usePersistentPreference';
+import { useRelationship } from '@/contexts/RelationshipContext';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -176,6 +177,7 @@ const DealDetail: React.FC<{
   inDrawer?: boolean;
 }> = ({ deal, user, onBack, onStageChange, onComposeEmail, onNavigate, inDrawer }) => {
   const router = useRouter();
+  const relationship = useRelationship();
   const col = STAGE_COLORS[deal.stage];
   const progress = getDealStageProgress(deal.stage);
   const nextStage = getForwardStageTarget(deal.stage);
@@ -651,7 +653,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     }
 
     const subject = recipients.length === 1 ? 'Deal follow-up' : 'Pipeline follow-up';
-    router.push(buildMailComposeUrl(recipients, subject));
+    router.push(relationship.withRelationship(buildMailComposeUrl(recipients, subject)));
   }, [deals, router, selectedDealIds]);
 
   // Detect responsive view mode on load

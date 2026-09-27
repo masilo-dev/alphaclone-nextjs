@@ -38,6 +38,7 @@ import { notificationService } from '../../services/dashboardService';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { TemplateLibrary } from './TemplateLibrary';
+import { useRelationship } from '@/contexts/RelationshipContext';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -122,6 +123,7 @@ function getFileLabel(fileType: string): string {
 
 const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const relationship = useRelationship();
     const { confirm } = useConfirmDialog();
     const [files, setFiles] = useState<HubFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -175,6 +177,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const openEmailModal = useCallback((file: HubFile) => {
         setEmailFile(file);
         setEmailTo('');
+        // Relationship context stays attached when this document is reached from a customer/project.
         setEmailSubject(`Document: ${file.original_filename}`);
         setEmailMessage(`Hi,\n\nPlease find attached "${file.original_filename}".\n\nBest regards`);
     }, []);

@@ -9,6 +9,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import toast from 'react-hot-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useRelationship } from '@/contexts/RelationshipContext';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../dashboard/OperationalWorkflowStrip';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
@@ -157,6 +158,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const router = useRouter();
+    const relationship = useRelationship();
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { confirm: confirmDialog } = useConfirmDialog();

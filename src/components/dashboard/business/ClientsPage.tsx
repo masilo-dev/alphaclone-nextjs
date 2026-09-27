@@ -26,6 +26,7 @@ import {
     Calendar,
     History,
     MessageSquare,
+    MessageCircle,
     Receipt,
     ChevronLeft,
     FileSpreadsheet,
