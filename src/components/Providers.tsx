@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { Suspense, useState, useEffect, useLayoutEffect } from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
@@ -84,8 +84,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <UserPreferencesBootstrap />
                       <ServiceWorkerBootstrap />
                       <TenantProvider>
-                        <RelationshipProvider>
-                        <BackgroundTaskProvider>
+                        <Suspense fallback={null}>
+                          <RelationshipProvider>
+                            <BackgroundTaskProvider>
                           <BonnieDrawerProvider>
                             <BookingModalProvider>
                               {children}
@@ -93,8 +94,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
                               <BonnieDrawer />
                             </BookingModalProvider>
                           </BonnieDrawerProvider>
-                        </BackgroundTaskProvider>
-                        </RelationshipProvider>
+                            </BackgroundTaskProvider>
+                          </RelationshipProvider>
+                        </Suspense>
                       </TenantProvider>
                     </LanguageProvider>
                   </ThemeProvider>
