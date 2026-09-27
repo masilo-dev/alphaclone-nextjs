@@ -1522,6 +1522,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   } | null>(null);
   const crmListRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(50);
+  const [leadCursor, setLeadCursor] = useState<{ createdAt: string; id: string } | null>(null);
+  const [leadHasMore, setLeadHasMore] = useState(false);
+  const [leadTotal, setLeadTotal] = useState(0);
+  const [loadingMoreLeads, setLoadingMoreLeads] = useState(false);
   const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
   const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string; emails?: string[] }) => {
     const fromArray = Array.isArray(entity.emails)
@@ -1695,8 +1699,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     setLoading(true);
     try {
       const [leadsResult, unifiedResult] = await Promise.all([
-        leadService.getLeads(),
-        contactService.getUnifiedContactsList({ limit: 10000 }),
+        leadService.getLeadsPage({ limit: 100 }),
+        contactService.getUnifiedContactsList({ limit: 100 }),
       ]);
 
       if (leadsResult.error) {
@@ -1709,6 +1713,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       const openLeads = leadsResult.leads.filter(
         (lead) => !lead.client_id && lead.stage !== 'converted'
       );
+      setLeadCursor(leadsResult.pageInfo.nextCursor);
+      setLeadHasMore(leadsResult.pageInfo.hasMore);
+      setLeadTotal(leadsResult.pageInfo.total);
 
       setLeads(
         openLeads.map((lead) => {
@@ -1761,6 +1768,38 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       setLoading(false);
     }
   }, [currentTenant?.id]);
+
+  const loadMoreLeadPage = useCallback(async () => {
+    if (!leadHasMore || !leadCursor || loadingMoreLeads) return;
+    setLoadingMoreLeads(true);
+    try {
+      const result = await leadService.getLeadsPage({ limit: 100, cursor: leadCursor });
+      if (result.error) throw new Error(result.error);
+      const mapped: Lead[] = result.leads.filter((lead) => !lead.client_id && lead.stage !== 'converted').map((lead) => ({
+        id: lead.id,
+        name: lead.businessName || 'Unknown Lead',
+        business_name: lead.businessName,
+        email: lead.email,
+        phone: lead.phone,
+        company: lead.businessName || '',
+        source: lead.source,
+        status: (['new', 'contacted', 'qualified', 'disqualified'].includes(lead.status || '') ? lead.status : lead.stage === 'qualified' ? 'qualified' : lead.stage === 'contacted' ? 'contacted' : 'new') as LeadStatus,
+        created_at: lead.created_at || new Date().toISOString(),
+        tenant_id: currentTenant?.id || '',
+      }));
+      setLeads((previous) => {
+        const seen = new Set(previous.map((lead) => lead.id));
+        return [...previous, ...mapped.filter((lead) => !seen.has(lead.id))];
+      });
+      setLeadCursor(result.pageInfo.nextCursor);
+      setLeadHasMore(result.pageInfo.hasMore);
+      setLeadTotal(result.pageInfo.total);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'More leads could not be loaded');
+    } finally {
+      setLoadingMoreLeads(false);
+    }
+  }, [currentTenant?.id, leadCursor, leadHasMore, loadingMoreLeads]);
 
   const handleSyncOutlookContacts = async () => {
     if (!currentTenant?.id) return;
