@@ -33,9 +33,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
         const checkSize = () => {
             if (containerRef.current) {
                 const { width, height } = containerRef.current.getBoundingClientRect();
-                if (width > 0 && height > 0) {
-                    setHasSize(true);
-                }
+                setHasSize(width > 0 && height > 0);
             }
         };
 

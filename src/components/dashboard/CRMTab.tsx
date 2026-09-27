@@ -1553,7 +1553,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   }, []);
 
   const [presenceMap, setPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
-  const [teamsPresenceMap, setTeamsPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
   const [isTeamsConnected, setIsTeamsConnected] = useState<boolean>(false);
 
   // Modals / Drawers
@@ -1648,25 +1647,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       supabase.removeChannel(channel);
     };
   }, [currentTenant?.id, flashRecord]);
-
-  useEffect(() => {
-    if (isTeamsConnected && currentTenant?.id) {
-      const fetchTeamsPresences = async () => {
-        const allEntities = [...leads, ...clients];
-        const newTeamsMap: Record<string, 'online' | 'away' | 'busy' | 'offline'> = {};
-        await Promise.all(
-          allEntities.map(async (entity) => {
-            if (entity.email) {
-              const { status } = await microsoft365Service.fetchTeamsPresence(currentTenant.id, entity.email);
-              newTeamsMap[entity.id] = status;
-            }
-          })
-        );
-        setTeamsPresenceMap(newTeamsMap);
-      };
-      fetchTeamsPresences();
-    }
-  }, [isTeamsConnected, currentTenant?.id, leads, clients]);
 
   // Open the create drawer automatically when arriving via "Quick Add" (?quickAdd=true)
   useEffect(() => {
@@ -2585,8 +2565,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   <div key={entity.id} className={flashIds.has(entity.id) ? 'bg-[var(--brand-blue-500)]/10 transition-colors duration-1000' : 'transition-colors duration-1000'}>
                   <SwipeableRow
                     entity={entity}
-                    status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
-                    isTeamsConnected={isTeamsConnected}
+                    status={presenceMap[entity.id] || 'offline'}
+                    isTeamsConnected={false}
                     onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
                     onSendEmail={(ent) => openEmailCompose(ent)}
                     onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
@@ -2697,8 +2677,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               setSelectedEntity(null);
               router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts'}?clientId=${encodeURIComponent(selectedEntity.rawClient!.id)}`);
             }}
-            status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
-            isTeamsConnected={isTeamsConnected}
+            status={presenceMap[selectedEntity.id] || 'offline'}
+            isTeamsConnected={false}
             inDrawer
           />
         )}

@@ -76,6 +76,8 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         const handleBeforeInstallPrompt = (e: Event) => {
+            if (pwaActive) return;
+            if ((window as any).deferredPrompt === e) return;
             e.preventDefault();
             (window as any).deferredPrompt = e;
             setDeferredPrompt(e);
@@ -145,7 +147,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     const promptInstall = useCallback(async (): Promise<{ success: boolean; outcome?: string }> => {
         const promptEvent = deferredPrompt || (typeof window !== 'undefined' ? (window as any).deferredPrompt : null);
         if (!promptEvent) {
-            return { success: false, outcome: 'dismissed' };
+            return { success: false, outcome: isIOS ? 'manual_install' : 'unavailable' };
         }
         try {
             await promptEvent.prompt();
@@ -161,10 +163,11 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
             }
             return { success: false, outcome: choice?.outcome || 'dismissed' };
         } catch (err) {
-            console.error('Error during PWA promptInstall:', err);
-            return { success: false };
+            setDeferredPrompt(null);
+            if (typeof window !== 'undefined') (window as any).deferredPrompt = null;
+            return { success: false, outcome: err instanceof Error ? err.message : 'unavailable' };
         }
-    }, [deferredPrompt]);
+    }, [deferredPrompt, isIOS]);
 
     return (
         <PWAContext.Provider

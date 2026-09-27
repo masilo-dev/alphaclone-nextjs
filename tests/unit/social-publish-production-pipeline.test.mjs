@@ -8,6 +8,9 @@ const migration = fs.readFileSync('supabase/migrations/20260915042254_social_pub
 const instagram = fs.readFileSync('src/lib/social/providerAssetPublishers.ts', 'utf8');
 const wrappers = fs.readFileSync('src/lib/mcp/tools/social-publishing.ts', 'utf8');
 const crons = fs.readFileSync('railway.crons.json', 'utf8');
+const crm = fs.readFileSync('src/components/dashboard/CRMTab.tsx', 'utf8');
+const pwa = fs.readFileSync('src/contexts/PWAContext.tsx', 'utf8');
+const charts = fs.readFileSync('src/components/ui/ChartContainer.tsx', 'utf8');
 
 test('deterministic idempotency includes tenant, identity, platform, checksum, caption and time', () => {
   const base = { tenantId: 't1', identityId: 'i1', platform: 'instagram', mediaChecksum: 'abc', caption: ' hello   world ', requestedPublishTime: null };
@@ -40,6 +43,35 @@ test('Instagram wrapper persists the container before returning pending', () => 
   assert.ok(update > 0 && returnReceipt > update);
   assert.match(instagram, /reconcileDueInstagramOperations/);
   assert.match(instagram, /fields=id,permalink,timestamp,username/);
+});
+
+test('Instagram publish waits for FINISHED, returns pending with no fake provider ID, and blocks ambiguous retries', () => {
+  assert.match(instagram, /waitForInstagramContainerReady\(creationId, token, \{ timeoutMs: 12_000/);
+  assert.match(instagram, /if \(ready\.status_code === 'FINISHED'\)[\s\S]*?media_publish/);
+  assert.match(instagram, /provider_post_id: string \| null/);
+  assert.match(instagram, /INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN/);
+  assert.match(instagram, /operation\.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'[\s\S]*?reconciliation_required/);
+  assert.match(instagram, /retry_safe: false, failure_code: 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'/);
+  assert.match(instagram, /publish_operation_id: operation\.id/);
+});
+
+test('Instagram cron repairs post-operation links and never creates replacement provider containers', () => {
+  assert.match(instagram, /eq\('provider_container_id', post\.provider_container_id\)/);
+  assert.match(instagram, /publish_operation_id: existing\.id/);
+  assert.match(instagram, /social_post_id: post\.id/);
+  assert.doesNotMatch(instagram, /providerAssetPublishers[\s\S]*?reconcileDueInstagramOperations[\s\S]*?\/media['"`]/);
+});
+
+test('CRM does not query Microsoft presence for lead and customer email addresses', () => {
+  assert.doesNotMatch(crm, /fetchTeamsPresence\(/);
+  assert.match(crm, /isTeamsConnected=\{false\}/);
+});
+
+test('PWA captures the browser prompt once and chart wrapper unmounts zero-size charts', () => {
+  assert.match(pwa, /if \(pwaActive\) return/);
+  assert.match(pwa, /setDeferredPrompt\(null\)/);
+  assert.match(pwa, /outcome: isIOS \? 'manual_install' : 'unavailable'/);
+  assert.match(charts, /setHasSize\(width > 0 && height > 0\)/);
 });
 
 test('Instagram reconciliation cannot strand verifying or reconciliation_required operations', () => {

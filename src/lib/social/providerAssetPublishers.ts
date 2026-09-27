@@ -12,7 +12,7 @@ import { createPublishOperation, operationReceipt } from '@/lib/social/publishOp
 export type DirectPublishReceipt = {
   published: boolean;
   provider: 'instagram' | 'x';
-  provider_post_id: string;
+  provider_post_id: string | null;
   live_url: string | null;
   verified: boolean;
   verification_timestamp: string;
@@ -55,6 +55,41 @@ async function assertProviderFetchable(url: string, expectedMime: string): Promi
   if (!response.ok || contentType !== expectedMime) throw new Error(`INSTAGRAM_MEDIA_FETCH_FAILED: provider URL returned HTTP ${response.status} ${contentType || 'without Content-Type'}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   if (!bytes.length) throw new Error('INSTAGRAM_MEDIA_FETCH_FAILED: provider URL returned an empty body');
+}
+
+/**
+ * Meta often returns a valid creation container before it has finished processing.
+ * Poll briefly within the request budget; the durable reconciler continues longer
+ * processing asynchronously. Never call media_publish until status is FINISHED.
+ */
+export async function waitForInstagramContainerReady(containerId: string, token: string, options: {
+  timeoutMs?: number; pollIntervalMs?: number; signal?: AbortSignal;
+} = {}) {
+  const timeoutMs = Math.max(0, options.timeoutMs ?? 8_000);
+  const pollIntervalMs = Math.max(100, options.pollIntervalMs ?? 1_000);
+  if (timeoutMs === 0) {
+    return graphJson(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+  }
+  const deadline = Date.now() + timeoutMs;
+  let latest: Record<string, any> = {};
+  do {
+    if (options.signal?.aborted) throw new Error('INSTAGRAM_PUBLISH_CANCELLED');
+    latest = await graphJson(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+    const state = String(latest.status_code || '').toUpperCase();
+    if (['FINISHED', 'ERROR', 'EXPIRED'].includes(state)) return latest;
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) return latest;
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, Math.min(pollIntervalMs, remainingMs));
+      const onAbort = () => {
+        clearTimeout(timer);
+        reject(new Error('INSTAGRAM_PUBLISH_CANCELLED'));
+      };
+      options.signal?.addEventListener('abort', onAbort, { once: true });
+      if (options.signal?.aborted) onAbort();
+    });
+  } while (Date.now() <= deadline);
+  return latest;
 }
 
 export async function publishInstagramAssets(input: {
@@ -116,10 +151,13 @@ export async function publishInstagramAssets(input: {
     social_post_id: post.id, provider_container_id: creationId, state: 'provider_processing', retry_after: retryAfter, attempt_count: 1, updated_at: new Date().toISOString(),
   }).eq('id', claimed.operation.id).eq('tenant_id', input.tenantId).select('*').single();
   if (operationError) throw new Error(operationError.message);
+  const { error: linkPostError } = await admin.from('social_posts').update({ publish_operation_id: operation.id })
+    .eq('tenant_id', input.tenantId).eq('id', post.id);
+  if (linkPostError) throw new Error(`INSTAGRAM_PUBLISH_FAILED: operation could not be linked to its post: ${linkPostError.message}`);
   // Meta may finish photo containers before its initial creation request returns.
   // Publish synchronously when ready so a normal photo post does not wait for cron.
   try {
-    const ready = await waitForInstagramContainerReady(creationId, token);
+    const ready = await waitForInstagramContainerReady(creationId, token, { timeoutMs: 12_000, pollIntervalMs: 1_000 });
     if (ready.status_code === 'FINISHED') {
       const published = await graphJson(`https://graph.facebook.com/v21.0/${accountId}/media_publish`, {
         creation_id: creationId, access_token: token,
@@ -146,12 +184,16 @@ export async function publishInstagramAssets(input: {
       return operationReceipt(completed) as DirectPublishReceipt;
     }
     if (ready.status_code === 'ERROR' || ready.status_code === 'EXPIRED') {
-      const { data: failed } = await admin.from('social_publish_operations').update({
+      const { data: failed, error: failedError } = await admin.from('social_publish_operations').update({
         state: 'failed_terminal', retry_safe: true, failure_code: 'INSTAGRAM_CONTAINER_FAILED',
         failure_message: String(ready.status || ready.status_code), last_provider_response: ready,
         retry_after: null, updated_at: new Date().toISOString(),
       }).eq('id', operation.id).eq('tenant_id', input.tenantId).select('*').single();
-      throw new Error(failed?.failure_message || 'INSTAGRAM_CONTAINER_FAILED');
+      if (failedError) throw new Error(failedError.message);
+      const { error: postFailureError } = await admin.from('social_posts').update({ status: 'failed', retry_safe: true, structured_failure_code: 'INSTAGRAM_CONTAINER_FAILED', error_message: String(ready.status || ready.status_code) })
+        .eq('tenant_id', input.tenantId).eq('id', post.id);
+      if (postFailureError) throw new Error(postFailureError.message);
+      return operationReceipt(failed) as DirectPublishReceipt;
     }
   } catch (error) {
     // The durable reconciler remains responsible for transient Meta/API errors.
@@ -162,8 +204,25 @@ export async function publishInstagramAssets(input: {
 
 const INSTAGRAM_RECONCILABLE_STATES = ['provider_processing', 'failed_retryable', 'reconciliation_required', 'verifying'];
 
-export async function waitForInstagramContainerReady(containerId: string, token: string) {
-  return graphJson(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+async function persistInstagramPublished(admin: ReturnType<typeof createSupabaseAdminClient>, operation: any, providerId: string, token: string) {
+  const verified = await graphJson(`https://graph.facebook.com/v21.0/${providerId}?fields=id,permalink,timestamp,username&access_token=${encodeURIComponent(token)}`);
+  if (String(verified.id || '') !== providerId) throw new Error('INSTAGRAM_VERIFICATION_FAILED');
+  const verifiedAt = new Date().toISOString();
+  const { error: postUpdateError } = await admin.from('social_posts').update({
+    status: 'published', instagram_post_id: providerId, provider_permalink: verified.permalink || null,
+    live_url: verified.permalink || null, published_at: verified.timestamp || verifiedAt,
+    verification_timestamp: verifiedAt, retry_safe: false,
+  }).eq('tenant_id', operation.tenant_id).eq('id', operation.social_post_id);
+  if (postUpdateError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${postUpdateError.message}`);
+  const { data: completed, error: completeError } = await admin.from('social_publish_operations').update({
+    state: 'published', provider_post_id: providerId, provider_permalink: verified.permalink || null,
+    provider_identity_verified: true, verification_timestamp: verifiedAt,
+    published_at: verified.timestamp || verifiedAt, retry_safe: false,
+    last_provider_response: { id: verified.id, permalink: verified.permalink, timestamp: verified.timestamp },
+    locked_by: null, locked_until: null, retry_after: null, updated_at: verifiedAt,
+  }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+  if (completeError) throw new Error(completeError.message);
+  return completed;
 }
 
 export async function reconcileInstagramPublishOperation(operationId: string) {
@@ -182,48 +241,113 @@ export async function reconcileInstagramPublishOperation(operationId: string) {
   });
   if (!integration) throw new Error('INSTAGRAM_IDENTITY_NOT_FOUND');
   const token = integration.pageAccessToken;
-  const container = await waitForInstagramContainerReady(operation.provider_container_id, token);
+  const container = await waitForInstagramContainerReady(operation.provider_container_id, token, { timeoutMs: 5_000, pollIntervalMs: 1_000 });
   if (!['FINISHED', 'ERROR', 'EXPIRED'].includes(String(container.status_code))) {
     const attempts = Number(operation.attempt_count || 0) + 1;
     const next = new Date(Date.now() + Math.min(300, 5 * (2 ** Math.min(attempts, 6))) * 1000).toISOString();
     const { data } = await admin.from('social_publish_operations').update({
-      state: attempts >= 12 ? 'reconciliation_required' : 'provider_processing', attempt_count: attempts, retry_after: next,
+      state: 'provider_processing', attempt_count: attempts, retry_after: next,
       locked_by: null, locked_until: null, retry_safe: false, last_provider_response: container, updated_at: new Date().toISOString(),
     }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
     return operationReceipt(data);
   }
-  if (container.status_code !== 'FINISHED') {
-    const { data } = await admin.from('social_publish_operations').update({
+  if (container.status_code === 'ERROR' || container.status_code === 'EXPIRED') {
+    const { data, error: terminalError } = await admin.from('social_publish_operations').update({
       state: 'failed_terminal', retry_safe: true, failure_code: 'INSTAGRAM_CONTAINER_FAILED', failure_message: String(container.status || container.status_code),
       last_provider_response: container, locked_by: null, locked_until: null, updated_at: new Date().toISOString(),
     }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    if (terminalError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${terminalError.message}`);
+    const { error: postFailureError } = await admin.from('social_posts').update({
+      status: 'failed', retry_safe: true, structured_failure_code: 'INSTAGRAM_CONTAINER_FAILED',
+      error_message: String(container.status || container.status_code),
+    }).eq('tenant_id', operation.tenant_id).eq('id', operation.social_post_id);
+    if (postFailureError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${postFailureError.message}`);
     return operationReceipt(data);
   }
-  const published = await graphJson(`https://graph.facebook.com/v21.0/${integration.instagram_account_id}/media_publish`, { creation_id: operation.provider_container_id, access_token: token });
-  const providerId = String(published.id || '');
-  if (!providerId) throw new Error('INSTAGRAM_MISSING_MEDIA_ID');
-  const verified = await graphJson(`https://graph.facebook.com/v21.0/${providerId}?fields=id,permalink,timestamp,username&access_token=${encodeURIComponent(token)}`);
-  if (String(verified.id || '') !== providerId) throw new Error('INSTAGRAM_VERIFICATION_FAILED');
-  const verifiedAt = new Date().toISOString();
-  await admin.from('social_posts').update({
-    status: 'published', instagram_post_id: providerId, provider_permalink: verified.permalink || null, live_url: verified.permalink || null,
-    published_at: verified.timestamp || verifiedAt, verification_timestamp: verifiedAt, retry_safe: false,
-  }).eq('tenant_id', operation.tenant_id).eq('id', operation.social_post_id);
-  const { data: completed, error: completeError } = await admin.from('social_publish_operations').update({
-    state: 'published', provider_post_id: providerId, provider_permalink: verified.permalink || null, provider_identity_verified: true,
-    verification_timestamp: verifiedAt, published_at: verified.timestamp || verifiedAt, retry_safe: false,
-    last_provider_response: { id: verified.id, permalink: verified.permalink, timestamp: verified.timestamp },
-    locked_by: null, locked_until: null, retry_after: null, updated_at: verifiedAt,
-  }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
-  if (completeError) throw new Error(completeError.message);
-  return operationReceipt(completed);
+  if (container.status_code !== 'FINISHED') {
+    const { data, error: statusError } = await admin.from('social_publish_operations').update({
+      state: 'failed_retryable', retry_safe: false, failure_code: 'INSTAGRAM_CONTAINER_STATUS_UNKNOWN',
+      failure_message: String(container.status || container.status_code || 'Instagram returned no container status'),
+      last_provider_response: container, retry_after: new Date(Date.now() + 30_000).toISOString(),
+      locked_by: null, locked_until: null, updated_at: new Date().toISOString(),
+    }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    if (statusError) throw new Error(statusError.message);
+    return operationReceipt(data);
+  }
+  const socialPost = operation.social_post_id
+    ? (await admin.from('social_posts').select('instagram_post_id').eq('tenant_id', operation.tenant_id).eq('id', operation.social_post_id).maybeSingle()).data
+    : null;
+  const alreadyPublishedId = operation.provider_post_id || socialPost?.instagram_post_id;
+  if (alreadyPublishedId) {
+    return operationReceipt(await persistInstagramPublished(admin, operation, String(alreadyPublishedId), token));
+  }
+  if (operation.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'
+      || operation.failure_code === 'INSTAGRAM_CONTAINER_STATUS_UNKNOWN') {
+    const next = new Date(Date.now() + 60_000).toISOString();
+    const { data, error: pendingError } = await admin.from('social_publish_operations').update({
+      state: 'reconciliation_required', retry_safe: false, retry_after: next,
+      locked_by: null, locked_until: null, updated_at: new Date().toISOString(),
+    }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    if (pendingError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${pendingError.message}`);
+    return operationReceipt(data);
+  }
+  try {
+    const published = await graphJson(`https://graph.facebook.com/v21.0/${integration.instagram_account_id}/media_publish`, { creation_id: operation.provider_container_id, access_token: token });
+    const providerId = String(published.id || '');
+    if (!providerId) throw new Error('INSTAGRAM_MISSING_MEDIA_ID');
+    return operationReceipt(await persistInstagramPublished(admin, operation, providerId, token));
+  } catch (publishError) {
+    // A timeout can happen after Meta accepted media_publish. Query the same
+    // container by its unique ID before any later attempt; never issue a second
+    // publish call while the first outcome is ambiguous.
+    const retryAfter = new Date(Date.now() + 30_000).toISOString();
+    const { data: pending, error: pendingError } = await admin.from('social_publish_operations').update({
+      state: 'failed_retryable', retry_safe: false, failure_code: 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN',
+      failure_message: publishError instanceof Error ? publishError.message : String(publishError),
+      retry_after: retryAfter, locked_by: null, locked_until: null,
+      updated_at: new Date().toISOString(),
+    }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    if (pendingError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${pendingError.message}`);
+    return operationReceipt(pending);
+  }
 }
 
 export async function reconcileDueInstagramOperations(limit = 25) {
   const admin = createSupabaseAdminClient();
+  // Legacy direct publish flows could persist a queued post and its provider
+  // container but fail before attaching the operation. Recover those rows so the
+  // existing container is reconciled; never create another Instagram container.
+  const { data: orphanedPosts, error: orphanError } = await admin.from('social_posts')
+    .select('id, tenant_id, user_id, caption, identity_id, identity_type, provider_identity_id, provider_container_id, idempotency_key, correlation_id, media_urls')
+    .eq('provider', 'instagram').eq('status', 'queued').not('provider_container_id', 'is', null)
+    .is('instagram_post_id', null).is('publish_operation_id', null).limit(limit);
+  if (orphanError) throw new Error(orphanError.message);
+  for (const post of orphanedPosts || []) {
+    const { data: existing, error: existingError } = await admin.from('social_publish_operations').select('id, social_post_id')
+      .eq('tenant_id', post.tenant_id).eq('platform', 'instagram').eq('provider_container_id', post.provider_container_id).maybeSingle();
+    if (existingError) throw new Error(existingError.message);
+    if (existing) {
+      const { error: linkPostError } = await admin.from('social_posts').update({ publish_operation_id: existing.id })
+        .eq('tenant_id', post.tenant_id).eq('id', post.id);
+      if (linkPostError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${linkPostError.message}`);
+      if (!existing.social_post_id) {
+        const { error: linkOperationError } = await admin.from('social_publish_operations').update({ social_post_id: post.id })
+          .eq('id', existing.id).eq('tenant_id', post.tenant_id);
+        if (linkOperationError) throw new Error(`INSTAGRAM_RECONCILIATION_PERSIST_FAILED: ${linkOperationError.message}`);
+      }
+      continue;
+    }
+    const { data: identity } = await admin.from('social_identities').select('identity_type')
+      .eq('tenant_id', post.tenant_id).eq('id', post.identity_id).eq('provider', 'instagram').maybeSingle();
+    if (!identity) continue;
+    // A missing legacy ledger row must remain manually recoverable: reconstructing
+    // its idempotency/checksum from URLs is unsafe. Existing ledger rows are linked
+    // above; no new provider write is ever made here.
+  }
   const { data, error } = await admin.from('social_publish_operations').select('id')
     .eq('platform', 'instagram').in('state', INSTAGRAM_RECONCILABLE_STATES)
-    .or(`retry_after.is.null,retry_after.lte.${new Date().toISOString()}`).limit(limit);
+    .or(`retry_after.is.null,retry_after.lte.${new Date().toISOString()}`)
+    .or(`locked_until.is.null,locked_until.lt.${new Date().toISOString()}`).limit(limit);
   if (error) throw new Error(error.message);
   const results = [];
   for (const row of data || []) {
