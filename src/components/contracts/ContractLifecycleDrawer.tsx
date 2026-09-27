@@ -16,7 +16,6 @@ import toast from "react-hot-toast";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
 import { AskBonnieButton } from "@/components/ui/os/AskBonnieButton";
 import { BusinessContextPanel } from "@/components/dashboard/crm/BusinessContextPanel";
-import { useRelationship } from "@/contexts/RelationshipContext";
 
 type Workspace = {
   contract: Record<string, any>;
@@ -56,7 +55,6 @@ export function ContractLifecycleDrawer({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const relationship = useRelationship();
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(false);
   const [action, setAction] = useState<
@@ -339,7 +337,6 @@ export function ContractLifecycleDrawer({
                   compact
                   mode="summarise"
                   contexts={[
-                    ...relationship.related.map((ref) => ({ type: ref.type, id: ref.id, label: ref.label })),
                     { type: 'Contract', id: contractId ?? undefined, label: workspace.contract.title || 'Contract' },
                   ]}
                 />
