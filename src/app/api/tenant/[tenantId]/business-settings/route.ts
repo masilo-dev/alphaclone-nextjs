@@ -76,8 +76,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ tenantI
     const { error: tenantUpdateError } = await admin.from('tenants').update({
       logo_url: value.logoUrl || null,
       brand_color_primary: value.brandColor,
-      legal_name: value.businessName,
-      business_address: value.address || null,
+      name: value.businessName,
       settings: {
         ...tenantSettings,
         branding: {
@@ -88,6 +87,14 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ tenantI
           logo: value.logoUrl || null,
           logoUrl: value.logoUrl || null,
           supportEmail: value.email || null,
+        },
+        profile: {
+          ...(tenantSettings.profile && typeof tenantSettings.profile === 'object'
+            ? tenantSettings.profile as Record<string, unknown>
+            : {}),
+          address: value.address || null,
+          phone: value.phone || null,
+          email: value.email || null,
         },
       },
     }).eq('id', tenantId);

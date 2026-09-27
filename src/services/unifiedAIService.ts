@@ -152,11 +152,15 @@ export const parseGrowthAgentCommands = (text: string) => {
  */
 export const chatWithGrowthAgent = async (
     history: { role: string; text: string }[],
-    message: string
+    message: string,
+    workspaceContext?: Record<string, unknown>
 ): Promise<{ text: string; commands: any; grounding: any }> => {
     try {
         // Append language instruction to the system prompt
-        const localizedSystem = GROWTH_AGENT_SYSTEM_PROMPT + getLanguageInstruction();
+        const contextInstruction = workspaceContext
+            ? `\n\n### CURRENT WORKSPACE CONTEXT\nYou are operating inside AlphaClone, not a generic chat window. Use this context when resolving references such as "these leads", "this lead", "selected", "them", or "what I am looking at". Do not invent fields that are absent. If the user asks to act on selected records, prefer an executable command when one is supported instead of merely explaining what they could do.\n${JSON.stringify(workspaceContext)}`
+            : '';
+        const localizedSystem = GROWTH_AGENT_SYSTEM_PROMPT + contextInstruction + getLanguageInstruction();
         const tenantId =
             typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null;
         const response = await fetch('/api/ai/chat', {

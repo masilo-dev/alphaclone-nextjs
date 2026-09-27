@@ -272,13 +272,23 @@ const SalesAgent: React.FC = () => {
         let successCount = 0;
         let failCount = 0;
 
-        for (const leadId of selectedLeads) {
-            const lead = leads.find(l => l.id === leadId);
-            if (lead) {
-                const result = await processLeadHelper(lead, user.id, tenantId);
+        const selected = selectedLeads
+            .map((leadId) => leads.find((lead) => lead.id === leadId))
+            .filter((lead): lead is Lead => Boolean(lead));
+        const concurrency = 4;
+        for (let i = 0; i < selected.length; i += concurrency) {
+            const results = await Promise.all(
+                selected.slice(i, i + concurrency)
+                    .map((lead) => processLeadHelper(lead, user.id, tenantId))
+            );
+            for (const result of results) {
                 if (result.success) successCount++;
                 else failCount++;
             }
+            toast.loading(
+                `Executing leads... ${Math.min(i + concurrency, selected.length)}/${selected.length}`,
+                { id: toastId }
+            );
         }
 
         if (failCount === 0) {
@@ -532,12 +542,17 @@ const SalesAgent: React.FC = () => {
     };
 
     const deleteSelected = async () => {
-        // Delete individually or bulk if service supports
-        for (const id of selectedLeads) {
-            await leadService.deleteLead(id);
+        if (selectedLeads.length === 0) return;
+        const ids = [...selectedLeads];
+        const toastId = toast.loading(`Deleting ${ids.length} lead${ids.length === 1 ? '' : 's'}...`);
+        const { error, count } = await leadService.bulkDeleteLeads(ids);
+        if (error) {
+            toast.error(`Bulk delete failed: ${error}`, { id: toastId });
+            return;
         }
-        toast.success("Deleted selected leads");
-        setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
+        toast.success(`Deleted ${count} lead${count === 1 ? '' : 's'}`, { id: toastId });
+        const removed = new Set(ids);
+        setLeads(prev => prev.filter(l => !removed.has(l.id)));
         setSelectedLeads([]);
     };
 
@@ -795,7 +810,28 @@ const SalesAgent: React.FC = () => {
             }));
 
             // Get specialized Growth Agent response
-            const { text, commands } = await chatWithGrowthAgent(history, userMessage);
+            const workspaceContext = {
+                activeSurface: 'lead-finder',
+                tenantId: currentTenant?.id || null,
+                visibleLeadCount: leads.length,
+                selectedLeadIds: selectedLeads.slice(0, 100),
+                selectedLeads: leads
+                    .filter((lead) => selectedLeads.includes(lead.id))
+                    .slice(0, 25)
+                    .map((lead) => ({
+                        id: lead.id,
+                        businessName: lead.businessName,
+                        stage: lead.stage,
+                        industry: lead.industry,
+                        location: lead.location,
+                        email: lead.email,
+                        phone: lead.phone,
+                        source: lead.source,
+                        notes: lead.notes,
+                    })),
+            };
+
+            const { text, commands } = await chatWithGrowthAgent(history, userMessage, workspaceContext);
 
             if (!text) throw new Error("No response from AI");
 

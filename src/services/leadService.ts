@@ -650,25 +650,38 @@ export const leadService = {
     async bulkDeleteLeads(ids: string[]): Promise<{ error: string | null; count: number }> {
         if (!ids.length) return { error: null, count: 0 };
         const tenantId = this.getTenantId();
-        invalidateLeadsCache(tenantId);
-        const uniqueIds = [...new Set(ids)];
+        const uniqueIds = [...new Set(ids.filter(Boolean))];
+
         try {
-            await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('lead', id)));
+            // Attachments are best-effort cleanup and must not turn a database bulk action
+            // into thousands of serial requests.
+            const attachmentConcurrency = 8;
+            for (let i = 0; i < uniqueIds.length; i += attachmentConcurrency) {
+                await Promise.allSettled(
+                    uniqueIds.slice(i, i + attachmentConcurrency)
+                        .map((id) => fileUploadService.deleteFileByEntity('lead', id))
+                );
+            }
+
+            // PostgREST supports set-based deletes. Chunk IDs to keep request URLs bounded,
+            // while deleting hundreds of leads per database statement rather than one RPC
+            // and one fallback query per lead.
+            const deleteChunkSize = 500;
             let count = 0;
-            for (const id of uniqueIds) {
-                const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
-                if (!error && data && (data as { ok?: boolean }).ok) {
-                    count += 1;
-                    continue;
-                }
-                const { error: directError } = await supabase
+            for (let i = 0; i < uniqueIds.length; i += deleteChunkSize) {
+                const chunk = uniqueIds.slice(i, i + deleteChunkSize);
+                const { data, error } = await supabase
                     .from('leads')
                     .delete()
-                    .eq('id', id)
-                    .eq('tenant_id', tenantId);
-                if (directError) throw directError;
-                count += 1;
+                    .eq('tenant_id', tenantId)
+                    .in('id', chunk)
+                    .select('id');
+
+                if (error) throw error;
+                count += data?.length || 0;
             }
+
+            invalidateLeadsCache(tenantId);
             return { error: null, count };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };

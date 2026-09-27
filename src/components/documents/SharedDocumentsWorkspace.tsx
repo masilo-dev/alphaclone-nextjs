@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FileText, Grid2X2, List, Plus, Search, Upload, X } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,6 +64,8 @@ function bytes(value?: number | null) {
 
 export default function SharedDocumentsWorkspace({ section = '' }: { section?: string }) {
   const { currentTenant } = useTenant();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
@@ -73,6 +76,9 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
   const [error, setError] = useState('');
   const [grid, setGrid] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const documentId = searchParams?.get('documentId');
   const [name, setName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const activeSection = NAV.some(([, key]) => key === section) ? section : '';
@@ -118,6 +124,44 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
     const timer = window.setTimeout(load, 250);
     return () => window.clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    if (!currentTenant?.id || !documentId) {
+      setSelectedDocument(null);
+      return;
+    }
+    let cancelled = false;
+    setDetailLoading(true);
+    fetch(`/api/tenant/${currentTenant.id}/documents/${encodeURIComponent(documentId)}`, {
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Document could not be loaded');
+        if (!cancelled) setSelectedDocument(payload);
+      })
+      .catch((caught) => {
+        if (!cancelled) toast.error(caught instanceof Error ? caught.message : 'Document could not be loaded');
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentTenant?.id, documentId]);
+
+  const openDocument = useCallback((id: string) => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('documentId', id);
+    router.replace(`/dashboard/business/documents?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
+
+  const closeDocument = useCallback(() => {
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.delete('documentId');
+    router.replace(`/dashboard/business/documents${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+  }, [router, searchParams]);
 
   const metrics = useMemo(
     () => ({
@@ -387,7 +431,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             ) : grid ? (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {documents.map((d) => (
-                  <article key={d.id} className="ac-workspace-panel rounded-xl p-4">
+                  <article key={d.id} onClick={() => openDocument(d.id)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openDocument(d.id); }} className="ac-workspace-panel cursor-pointer rounded-xl p-4 hover:border-teal-500/30">
                     <FileText className="h-7 w-7 text-teal-400" />
                     <h2 className="mt-3 truncate font-semibold text-white">{d.name}</h2>
                     <p className="mt-1 type-card-description text-slate-400">
@@ -419,7 +463,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                     {documents.map((d) => (
                       <tr
                         key={d.id}
-                        className="border-t border-[var(--ws-border)] text-slate-300 hover:bg-white/[0.02]"
+                        onClick={() => openDocument(d.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openDocument(d.id); }}
+                        className="cursor-pointer border-t border-[var(--ws-border)] text-slate-300 hover:bg-white/[0.02]"
                       >
                         <td className="p-3 font-medium text-white">
                           {d.name}
@@ -448,6 +496,68 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
           </>
         )}
       </div>
+
+      {(detailLoading || selectedDocument) && (
+        <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/70 backdrop-blur-sm" role="presentation" onClick={closeDocument}>
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Document details"
+            onClick={(event) => event.stopPropagation()}
+            className="h-full w-full max-w-2xl overflow-y-auto border-l border-[var(--ws-border)] bg-slate-950 p-5 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="type-caption font-black uppercase tracking-wider text-teal-300">Document details</p>
+                <h2 className="mt-1 text-xl font-semibold text-white">
+                  {selectedDocument?.document?.title || selectedDocument?.document?.name || 'Loading document…'}
+                </h2>
+              </div>
+              <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300" aria-label="Close document details">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {detailLoading ? (
+              <div className="mt-8 space-y-3">{[1,2,3].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-white/5" />)}</div>
+            ) : selectedDocument ? (
+              <div className="mt-6 space-y-5">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Status</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.status || '—'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Approval</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.approval_status || 'Not requested'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Signature</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.signature_status || 'Not requested'}</p></div>
+                </div>
+                <section className="ac-workspace-panel rounded-xl p-4">
+                  <h3 className="font-semibold text-white">Document intelligence</h3>
+                  <p className="mt-2 type-card-description text-slate-300">{selectedDocument.document?.summary || 'No summary has been generated yet.'}</p>
+                  <div className="mt-4 space-y-2">
+                    {(selectedDocument.findings || []).length ? (selectedDocument.findings || []).slice(0, 20).map((finding: any) => (
+                      <div key={finding.id} className="rounded-lg border border-[var(--ws-border)] bg-white/[0.02] p-3">
+                        <p className="type-ui font-semibold text-white">{finding.title || finding.finding_type || 'Finding'}</p>
+                        <p className="mt-1 type-card-description text-slate-400">{finding.summary || finding.description || finding.content || 'Review this finding in the document.'}</p>
+                      </div>
+                    )) : <p className="type-card-description text-slate-500">No intelligence findings yet.</p>}
+                  </div>
+                </section>
+                <section className="ac-workspace-panel rounded-xl p-4">
+                  <h3 className="font-semibold text-white">Relationships</h3>
+                  <p className="mt-2 type-card-description text-slate-400">{(selectedDocument.relationships || []).length} linked client, project, contract, invoice, or other workspace record(s).</p>
+                </section>
+                <section className="ac-workspace-panel rounded-xl p-4">
+                  <h3 className="font-semibold text-white">Recent activity</h3>
+                  <div className="mt-3 space-y-2">
+                    {(selectedDocument.activity || []).slice(0, 10).map((activity: any) => (
+                      <div key={activity.id} className="flex items-start justify-between gap-3 border-b border-[var(--ws-border)] py-2 last:border-0">
+                        <span className="type-card-description text-slate-300">{activity.action || 'Updated'}</span>
+                        <span className="type-caption text-slate-500">{activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            ) : null}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

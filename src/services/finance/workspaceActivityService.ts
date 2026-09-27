@@ -94,14 +94,37 @@ export async function getClientScopedActivity(
   clientId: string,
   opts: ActivityQueryOptions = {}
 ): Promise<{ activity: WorkspaceActivityRow[] }> {
-  const limit = opts.limit ?? 50;
+  const limit = Math.max(1, Math.min(opts.limit ?? 50, 200));
   const since = opts.since;
+
+  // PostgREST .or() cannot contain SQL subqueries. Resolve related entity IDs
+  // first, then build a valid UUID filter across the activity table.
+  const [projectsRes, invoicesRes, contractsRes] = await Promise.all([
+    admin.from('projects').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
+    admin.from('business_invoices').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
+    admin.from('contracts').select('id').eq('tenant_id', tenantId).eq('client_id', clientId).limit(500),
+  ]);
+
+  for (const result of [projectsRes, invoicesRes, contractsRes]) {
+    if (result.error) {
+      console.error('[workspaceActivityService] related entity lookup failed', result.error);
+    }
+  }
+
+  const filters = [`client_id.eq.${clientId}`];
+  const appendInFilter = (column: string, rows: Array<{ id: string }> | null) => {
+    const ids = (rows || []).map((row) => row.id).filter(Boolean);
+    if (ids.length) filters.push(`${column}.in.(${ids.join(',')})`);
+  };
+  appendInFilter('project_id', projectsRes.data as Array<{ id: string }> | null);
+  appendInFilter('invoice_id', invoicesRes.data as Array<{ id: string }> | null);
+  appendInFilter('contract_id', contractsRes.data as Array<{ id: string }> | null);
 
   let query = admin
     .from('workspace_activity')
     .select('*')
     .eq('tenant_id', tenantId)
-    .or(`client_id.eq.${clientId},project_id.in.(select id from projects where client_id.eq.${clientId} and tenant_id.eq.${tenantId}),invoice_id.in.(select id from business_invoices where client_id.eq.${clientId} and tenant_id.eq.${tenantId}),contract_id.in.(select id from contracts where client_id.eq.${clientId} and tenant_id.eq.${tenantId})`)
+    .or(filters.join(','))
     .order('created_at', { ascending: false })
     .limit(limit);
 
