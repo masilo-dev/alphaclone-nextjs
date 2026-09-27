@@ -2751,7 +2751,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         open={Boolean(selectedEntity?.rawClient)}
         onOpenChange={(open) => { if (!open) setSelectedEntity(null); }}
         title={selectedEntity?.rawClient?.name || 'Client'}
-        size="wide"
+        size="workspace"
+        hideHeader
       >
         {selectedEntity?.rawClient && (
           <Client360Detail
@@ -2762,11 +2763,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             onDeleteClient={handleClientDelete}
             onNewDeal={() => {
               setSelectedEntity(null);
-              router.push('/dashboard/deals');
+              router.push(`/dashboard/deals?clientId=${encodeURIComponent(selectedEntity.rawClient!.id)}`);
             }}
             onDraftContract={() => {
               setSelectedEntity(null);
-              router.push(user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts');
+              router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts'}?clientId=${encodeURIComponent(selectedEntity.rawClient!.id)}`);
             }}
             status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
             isTeamsConnected={isTeamsConnected}

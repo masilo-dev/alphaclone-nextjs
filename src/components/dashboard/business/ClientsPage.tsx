@@ -1428,19 +1428,40 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
+                                                    icon={<FilePlus className="w-4 h-4" />}
+                                                    onClick={() => {
+                                                        setSelectedClientForProposal(selectedClient);
+                                                        setShowProposalModal(true);
+                                                    }}
+                                                >
+                                                    Quote / Proposal
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
                                                     icon={<DollarSign className="w-4 h-4" />}
                                                     onClick={() => {
                                                         setSelectedClientForInvoice(selectedClient);
                                                         setShowInvoiceModal(true);
                                                     }}
                                                 >
-                                                    Create Invoice
+                                                    Invoice
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    icon={<Briefcase className="w-4 h-4" />}
+                                                    onClick={() => router.push(`/dashboard/projects?clientId=${encodeURIComponent(selectedClient.id)}`)}
+                                                >
+                                                    Project
                                                 </Button>
                                                 <Dropdown
                                                     trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
                                                     items={[
                                                         { label: 'Set up client portal', icon: <UserCheck className="w-4 h-4"/>, onClick: () => setPortalAccessClient(selectedClient) },
-                                                        { label: 'Create Proposal', icon: <FilePlus className="w-4 h-4"/>, onClick: () => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); } },
+                                                        { label: 'Create Contract', icon: <FileCheck className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/business/contracts?clientId=${encodeURIComponent(selectedClient.id)}`) },
+                                                        { label: 'Schedule Meeting', icon: <Calendar className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/calendar?clientId=${encodeURIComponent(selectedClient.id)}`) },
+                                                        { label: 'Open Communications', icon: <MessageCircle className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/comms?clientId=${encodeURIComponent(selectedClient.id)}`) },
                                                         { label: 'Edit Client', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
                                                         { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
                                                     ]}

@@ -378,14 +378,13 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setPreviewContact(contact)}
+                                                <Link
+                                                    href={`/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contact.id)}`}
                                                     className="font-semibold text-white hover:text-cyan-200 hover:underline underline-offset-2 text-left"
-                                                    title="Open Contact 360 preview"
+                                                    title="Open customer relationship workspace"
                                                 >
                                                     {contact.firstName} {contact.lastName}
-                                                </button>
+                                                </Link>
                                                 <LeadScoreBadge contact={contact} size="sm" />
                                                 <span className={`type-caption px-2 py-0.5 rounded-full ${status.bgColor} ${status.color}`}>
                                                     {status.label}
@@ -455,26 +454,20 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                         >
                                             <Sparkles className="w-4 h-4" />
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                const contactName = contact.fullName || contact.firstName || 'Contact';
-                                                toast.success(`Staged Contract Draft for ${contactName}`);
-                                            }}
+                                        <Link
+                                            href={`/dashboard/business/contracts?contactId=${encodeURIComponent(contact.id)}`}
                                             className="p-2 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
-                                            title="Draft Contract"
+                                            title="Create or view contracts"
                                         >
                                             <FileText className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                const contactName = contact.fullName || contact.firstName || 'Contact';
-                                                toast.success(`Created Invoice Draft for ${contactName}`);
-                                            }}
+                                        </Link>
+                                        <Link
+                                            href={`/dashboard/business/billing/manage?contactId=${encodeURIComponent(contact.id)}`}
                                             className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                                            title="Issue Invoice"
+                                            title="Create or view invoices"
                                         >
                                             <Receipt className="w-4 h-4" />
-                                        </button>
+                                        </Link>
                                         <button
                                             onClick={() => setTimelineContact(contact)}
                                             className="p-2 text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-colors"
