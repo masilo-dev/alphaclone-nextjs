@@ -20,6 +20,20 @@ const VALID_PERIODS = new Set<MetricPeriodPreset>([
   'this_year',
 ]);
 
+function isTransientDatabaseFailure(error: unknown): boolean {
+  const candidate = error as { code?: string; message?: string } | null;
+  const code = candidate?.code ?? '';
+  const message = candidate?.message?.toLowerCase() ?? '';
+  return (
+    code === 'PGRST002' ||
+    code === 'PGRST003' ||
+    code === '57014' ||
+    message.includes('statement timeout') ||
+    message.includes('schema cache') ||
+    message.includes('timed out waiting for a connection')
+  );
+}
+
 function parsePeriod(request: NextRequest): MetricPeriodPreset {
   const periodRaw = request.nextUrl.searchParams.get('period') ?? 'last_30_days';
   return VALID_PERIODS.has(periodRaw as MetricPeriodPreset)
@@ -359,6 +373,13 @@ export async function GET(req: NextRequest) {
       );
 
       if (rpcError) {
+        if (isTransientDatabaseFailure(rpcError)) {
+          console.warn('[dashboard/stats] transient database failure; refusing fallback fan-out:', rpcError.message);
+          return NextResponse.json(
+            { error: 'Dashboard data is temporarily unavailable. Please retry shortly.' },
+            { status: 503, headers: { 'Retry-After': '2' } },
+          );
+        }
         console.warn('[dashboard/stats] RPC failed, using direct-query fallback:', rpcError.message);
       } else if (rpcData) {
         // Hydrate totalMessages separately (not in RPC)
@@ -372,6 +393,13 @@ export async function GET(req: NextRequest) {
         stats = { ...rpcData, totalMessages };
       }
     } catch (rpcException) {
+      if (isTransientDatabaseFailure(rpcException)) {
+        console.warn('[dashboard/stats] transient database exception; refusing fallback fan-out:', rpcException);
+        return NextResponse.json(
+          { error: 'Dashboard data is temporarily unavailable. Please retry shortly.' },
+          { status: 503, headers: { 'Retry-After': '2' } },
+        );
+      }
       console.warn('[dashboard/stats] RPC threw exception, falling back:', rpcException);
     }
 
