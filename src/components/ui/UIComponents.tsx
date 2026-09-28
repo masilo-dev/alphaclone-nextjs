@@ -335,10 +335,10 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
-    <div className={`fixed inset-0 z-[1100] flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
+  return createPortal(
+    <div className={`fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
@@ -346,6 +346,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-modal="true"
         tabIndex={-1}
         aria-labelledby={title ? titleId : undefined}
+        style={{ backgroundColor: 'var(--surface-primary, #171A26)' }}
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
@@ -363,7 +364,8 @@ export const Modal: React.FC<ModalProps> = ({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -525,13 +527,20 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     }
   }, [isOpen, menuPosition]);
 
+  // A portaled menu must sit above the dialog or sheet that owns its trigger.
+  const menuHost = dropdownRef.current?.closest<HTMLElement>(
+    '.ac-layer-panel, .ac-layer-modal, .ac-layer-command, .ac-layer-confirm'
+  );
+  const hostLayer = menuHost ? Number.parseInt(getComputedStyle(menuHost).zIndex, 10) : 0;
+  const menuLayer = Math.max(Z_INDEX.dropdown, Number.isFinite(hostLayer) ? hostLayer + 1 : 0);
+
   const menu = isOpen && menuPosition ? (
     <div
       ref={menuRef}
       aria-label="Actions"
       style={{
         position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192,
-        maxHeight: 'min(20rem, calc(100vh - 1rem))', zIndex: Z_INDEX.dropdown,
+        maxHeight: 'min(20rem, calc(100vh - 1rem))', zIndex: menuLayer,
         // The menu is portaled to body; copy inherited workspace tokens from
         // its trigger so it retains an opaque surface in both color schemes.
         ...Object.fromEntries(Object.entries({
@@ -549,7 +558,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
       } as React.CSSProperties}
       className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
       data-layer="dropdown"
-      data-z-index={Z_INDEX.dropdown}
+      data-z-index={menuLayer}
     >
       <div className="p-1 space-y-0.5">
         {items.map((item, index) => (

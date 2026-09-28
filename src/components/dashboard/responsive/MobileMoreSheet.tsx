@@ -33,7 +33,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
   };
 
   return (
-    <div className="ac-responsive-more-sheet md:hidden fixed inset-0 z-[1200] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
+    <div className="ac-responsive-more-sheet md:hidden fixed inset-0 ac-layer-modal flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
       <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label={t('Close module catalogue')} onClick={onClose} />
       <div className="ac-v3-sheet relative mt-auto max-h-[88dvh] flex flex-col rounded-t-[22px] border border-[var(--border-default)] pb-safe">
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-default)]">

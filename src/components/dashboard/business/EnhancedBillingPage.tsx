@@ -932,14 +932,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             animate={{ opacity: 0.7 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOptionsOpen(false)}
-                            className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm"
+                            className="fixed inset-0 ac-layer-overlay bg-black/80 backdrop-blur-sm"
                         />
                         <motion.div
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                            className="fixed inset-x-0 bottom-0 z-[1110] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
+                            className="fixed inset-x-0 bottom-0 ac-layer-panel max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
                         >
                             <div className="flex justify-center py-2 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
                                 <div className="w-10 h-1 bg-white/20 rounded-full" />
@@ -1052,6 +1052,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 if (!selectedInvoiceForOptions) return;
                                                 const currentEnabled = selectedInvoiceForOptions.autoFollowupEnabled !== false;
                                                 const nextEnabled = !currentEnabled;
+                                                setIsOptionsOpen(false);
                                                 const ok = await confirmDialog({
                                                     title: nextEnabled ? 'Enable auto follow-ups?' : 'Disable auto follow-ups?',
                                                     description: nextEnabled
@@ -1254,7 +1255,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* PDF Preview Modal */}
             <AnimatePresence>
                 {showPDFPreview && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1100] flex flex-col p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md ac-layer-modal flex flex-col p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-white font-black uppercase tracking-widest type-caption">Invoice Preview</h3>
                             <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white"><X size={20} /></button>

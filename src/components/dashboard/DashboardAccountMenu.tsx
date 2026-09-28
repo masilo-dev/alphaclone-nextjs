@@ -71,14 +71,14 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
   const menuPanel = open && anchor ? (
     <>
       <div
-        className="fixed inset-0 z-[1190] bg-slate-950/20"
+        className="fixed inset-0 ac-layer-menu-backdrop bg-slate-950/20"
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />
       <div
         id="ac-account-menu-panel"
         role="menu"
-        className={`fixed z-[1200] border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-2xl shadow-black/40 overflow-hidden ${
+        className={`fixed ac-layer-menu border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-2xl shadow-black/40 overflow-hidden ${
           isMobile ? 'inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] rounded-2xl' : 'w-60 rounded-xl'
         }`}
         style={isMobile ? undefined : { top: anchor.top, right: anchor.right }}

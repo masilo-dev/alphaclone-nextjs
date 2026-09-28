@@ -919,7 +919,7 @@ export function OutreachInbox() {
 
       {/* Composer modal */}
       {composerOpen ? (
-        <div className="fixed inset-0 z-[1000] bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center p-4">
+        <div className="fixed inset-0 ac-layer-modal bg-slate-950/70 backdrop-blur-[2px] flex items-center justify-center p-4">
           <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-950/95 shadow-2xl shadow-black/60 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <div className="flex items-center gap-2">

@@ -879,7 +879,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 z-[1200] flex items-end justify-center overflow-y-auto bg-slate-950/95 p-0 backdrop-blur-md sm:items-center sm:p-4">
+        <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-slate-950/95 p-0 backdrop-blur-md sm:items-center sm:p-4">
             <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-[var(--brand-blue-900)]/20 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>

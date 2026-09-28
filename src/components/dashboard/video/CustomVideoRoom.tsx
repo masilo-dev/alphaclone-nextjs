@@ -555,7 +555,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-950 z-[1100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-slate-950 ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Immersive Header */}
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-black/70 to-transparent z-[110] px-3 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">

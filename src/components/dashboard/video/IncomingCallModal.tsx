@@ -102,7 +102,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
         <>
             <audio ref={audioRef} src={INCOMING_CALL_RINGTONE_URL} loop preload="none" hidden />
             {incomingCall ? (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 ac-layer-urgent flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
 
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl shadow-teal-500/20 w-full max-w-sm p-8 text-center relative overflow-hidden">
                 {/* Background Animation */}

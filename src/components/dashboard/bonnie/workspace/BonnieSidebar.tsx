@@ -249,7 +249,7 @@ export default function BonnieSidebar({
     <>
       <div className="hidden h-full md:flex">{panel}</div>
       {mobileOpen ? (
-        <div className="fixed inset-0 z-[1110] md:hidden" role="dialog" aria-modal="true" aria-label="Bonnie conversations">
+        <div className="fixed inset-0 ac-layer-panel md:hidden" role="dialog" aria-modal="true" aria-label="Bonnie conversations">
           <button type="button" className="absolute inset-0 bg-[var(--overlay,rgba(0,0,0,0.5))]" aria-label="Close conversations" onClick={onCloseMobile} />
           <div data-sheet data-side="left" data-state="open" className="absolute inset-y-0 left-0 flex h-full w-[min(100%,300px)] shadow-2xl">
             {panel}

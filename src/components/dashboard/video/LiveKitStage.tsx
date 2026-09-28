@@ -340,7 +340,7 @@ export default function LiveKitStage({
     const primaryScreen = screenTiles[0];
 
     return (
-        <div className="fixed inset-0 bg-slate-950 z-[1100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-slate-950 ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-16 sm:h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-4 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
                     <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">

@@ -123,7 +123,7 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
       data-side="right"
       data-state="open"
       aria-label={`${contactName} activity timeline`}
-      className="fixed inset-y-0 right-0 z-[1110] flex w-full max-w-sm flex-col border-l border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-panel)_94%,transparent)] shadow-2xl"
+      className="fixed inset-y-0 right-0 ac-layer-panel flex w-full max-w-sm flex-col border-l border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-panel)_94%,transparent)] shadow-2xl"
     >
       <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-toolbar)_92%,transparent)] px-5 py-4">
         <div className="min-w-0">

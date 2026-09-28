@@ -972,7 +972,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const printTarget = fileUrl || (selectedFile.storage_path ? fileUploadService.getProxiedUrl('uploads', selectedFile.storage_path) : '');
         const viewerDescription = `${getFileLabel(selectedFile.file_type)} · ${formatBytes(selectedFile.file_size)} · ${format(new Date(selectedFile.created_at), 'MMM d, yyyy')}`;
         return (
-            <div className="fixed inset-0 z-[1100] flex flex-col bg-[var(--ws-canvas)] animate-in fade-in duration-200">
+            <div className="fixed inset-0 ac-layer-overlay flex flex-col bg-[var(--ws-canvas)] animate-in fade-in duration-200">
                 <PageHeader
                     moduleLabel="Deliver"
                     title={selectedFile.original_filename}
@@ -1671,7 +1671,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         
         {/* AI Designer Interface */}
         {viewMode === 'designer' && (
-            <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+            <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
                 <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                     <div className="p-8 border-b border-white/5 bg-gradient-to-br from-violet-600/20 to-transparent">
                         <div className="flex items-center justify-between mb-8">

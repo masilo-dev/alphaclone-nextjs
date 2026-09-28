@@ -214,7 +214,7 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
       )}
 
       {editingTask ? (
-        <div className="fixed inset-0 z-[1200] flex items-end sm:items-center justify-center bg-slate-950/80 p-4">
+        <div className="fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center bg-slate-950/80 p-4">
           <div className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-4 space-y-3 shadow-xl">
             <p className="type-card-description font-bold text-white truncate">{editingTask.title}</p>
             <label className="block type-label text-slate-400">

@@ -33,7 +33,7 @@ export const DeletionOverlay: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 p-4 backdrop-blur-md">
+        <div className="fixed inset-0 ac-layer-urgent flex items-center justify-center bg-slate-900/90 p-4 backdrop-blur-md">
             <div className={`max-w-md w-full p-8 space-y-6 text-center animate-in fade-in zoom-in duration-300 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                 <div className="flex justify-center">
                     <div className="rounded-full bg-amber-500/10 p-4">

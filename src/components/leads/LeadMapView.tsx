@@ -78,7 +78,7 @@ function ZoomTracker({ onZoomChange }: { onZoomChange: (zoom: number) => void })
 function MapZoomControls() {
   const map = useMap();
   return (
-    <div className="absolute bottom-3 right-3 z-[1000] flex flex-col gap-1">
+    <div className="absolute bottom-3 right-3 ac-layer-map-controls flex flex-col gap-1">
       <button
         type="button"
         onClick={() => map.zoomIn()}
@@ -315,7 +315,7 @@ export default function LeadMapView({
   return (
     <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
       {/* Legend + map style */}
-      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-[1000] max-w-[calc(100%-1rem)] flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border border-slate-700 type-caption sm:text-xs font-semibold">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 ac-layer-map-controls max-w-[calc(100%-1rem)] flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border border-slate-700 type-caption sm:text-xs font-semibold">
         <div className="flex items-center gap-1 mb-1">
           <button
             type="button"
@@ -376,7 +376,7 @@ export default function LeadMapView({
       </div>
 
       {/* Pin count */}
-      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-[1000] max-w-[min(calc(100%-5rem),14rem)] bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 border border-slate-700 type-caption sm:text-sm font-bold text-white flex items-center gap-1.5">
+      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 ac-layer-map-controls max-w-[min(calc(100%-5rem),14rem)] bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 border border-slate-700 type-caption sm:text-sm font-bold text-white flex items-center gap-1.5">
         <MapPin className="w-3.5 h-3.5 text-teal-400 shrink-0" aria-hidden />
         <span className="truncate">
           {pinnable.length} <span className="text-slate-400 font-normal">/ {leads.length} mapped</span>

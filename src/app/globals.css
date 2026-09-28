@@ -3017,21 +3017,35 @@ html.light textarea::placeholder {
    Scope: APP-SCOPED. Public marketing website unaffected.
    ======================================================================== */
 
-/* 7. Modal backdrop: elevated above dashboard chrome + sidebar but below focus traps */
-.ac-dashboard-root [data-dialog-backdrop="true"],
-.ac-business-root [data-dialog-backdrop="true"],
-.ac-dashboard-root [data-sheet-overlay],
-.ac-business-root [data-sheet-overlay] {
-  z-index: 9998 !important;
+/* Dashboard overlay layers; panels and their backdrops move as a pair. */
+:root {
+  --ac-layer-map-controls: 1000;
+  --ac-layer-menu-backdrop: 1035;
+  --ac-layer-menu: 1040;
+  --ac-layer-overlay: 1100;
+  --ac-layer-panel: 1110;
+  --ac-layer-modal: 1200;
+  --ac-layer-command: 1250;
+  --ac-layer-confirm: 1300;
+  --ac-layer-urgent: 1400;
+  --ac-layer-toast: 1450;
+  --ac-layer-startup: 2000;
 }
-.ac-dashboard-root [role="dialog"],
-.ac-business-root [role="dialog"],
-.ac-dashboard-root [data-dialog-content],
-.ac-business-root [data-dialog-content],
-.ac-dashboard-root [role="alertdialog"],
-.ac-business-root [role="alertdialog"] {
-  z-index: 9999 !important;
-}
+.ac-layer-map-controls { z-index: var(--ac-layer-map-controls); }
+.ac-layer-menu-backdrop { z-index: var(--ac-layer-menu-backdrop); }
+.ac-layer-menu { z-index: var(--ac-layer-menu); }
+.ac-layer-overlay { z-index: var(--ac-layer-overlay); }
+.ac-layer-panel { z-index: var(--ac-layer-panel); }
+.ac-layer-modal { z-index: var(--ac-layer-modal); }
+.ac-layer-command { z-index: var(--ac-layer-command); }
+.ac-layer-confirm { z-index: var(--ac-layer-confirm); }
+.ac-layer-urgent { z-index: var(--ac-layer-urgent); }
+.ac-layer-toast { z-index: var(--ac-layer-toast); }
+.ac-layer-startup { z-index: var(--ac-layer-startup); }
+
+/* Dialog backdrops and panels retain their component-defined layer together.
+   Raising every role="dialog" independently separates panels from their
+   backdrops and allows one workflow to cover another. */
 
 /* 8. Scroll lock — applied to <html>/<body> when a dialog is open so the page behind
    cannot be scrolled accidentally via mouse wheel inside form field overflow. */

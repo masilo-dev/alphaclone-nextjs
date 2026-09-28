@@ -55,6 +55,7 @@ export function ConfirmDialogProvider({ children }: { children: React.ReactNode 
         onClose={() => close(false)}
         title={options?.title}
         maxWidth="max-w-lg"
+        containerClassName="ac-layer-confirm"
       >
         <div className="flex flex-col gap-5">
           {options?.description ? (
@@ -85,4 +86,3 @@ export function useConfirmDialog() {
   }
   return ctx;
 }
-

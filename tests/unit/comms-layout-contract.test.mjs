@@ -44,6 +44,7 @@ test('mail workspaces use bounded internal scrolling instead of page-level overf
 test('dashboard overlays stay above chrome and scroll panes share one rule', () => {
   assert.match(globals, /\.ac-scroll-pane\s*\{[^}]*overflow-y: auto/);
   assert.doesNotMatch(routeTransition, /\b(?:scale|x|y):\s*[-\d.]+/);
-  assert.match(uiPrimitives, /zIndex: Z_INDEX\.dropdown/);
+  assert.match(uiPrimitives, /Math\.max\(Z_INDEX\.dropdown,[^\n]*hostLayer/);
+  assert.match(uiPrimitives, /zIndex: menuLayer/);
   assert.match(uiPrimitives, /getComputedStyle\(dropdownRef\.current\)\.getPropertyValue\(token\)/);
 });

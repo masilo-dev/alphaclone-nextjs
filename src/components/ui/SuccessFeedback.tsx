@@ -54,7 +54,7 @@ export function SuccessFeedbackProvider({ children }: { children: React.ReactNod
           role="status"
           aria-live="polite"
           className={cn(
-            'fixed bottom-20 md:bottom-6 right-4 z-[9999] max-w-sm',
+            'fixed bottom-20 md:bottom-6 right-4 ac-layer-toast max-w-sm',
             'ac-workspace-panel border border-emerald-500/30 shadow-xl',
             'p-4 animate-in slide-in-from-bottom-4 fade-in duration-300'
           )}

@@ -2214,7 +2214,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {showSendModal && (
-                <div className="fixed inset-0 z-[1100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
+                <div className="fixed inset-0 ac-layer-modal flex items-start sm:items-center justify-center p-4 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
                     <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-h-[calc(100vh-2rem)] flex flex-col">
                         <div className="px-5 sm:px-6 py-4 border-b border-slate-800">

@@ -152,7 +152,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
             />
             <div
               role="menu"
-              className="absolute left-0 top-full z-[1000] mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-slate-900 p-1 shadow-lg"
+              className="absolute left-0 top-full ac-layer-menu mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-slate-900 p-1 shadow-lg"
             >
               {SALES_SECONDARY_TABS.map((tab) => {
                 const isActive = isSalesWorkspaceTabActive(pathname, tab.href);

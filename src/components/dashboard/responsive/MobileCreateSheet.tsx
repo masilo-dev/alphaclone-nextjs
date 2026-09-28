@@ -47,7 +47,7 @@ export function MobileCreateSheet({ open, onClose, userRole, onNavigate }: Mobil
   };
 
   return (
-    <div className="ac-responsive-create-sheet md:hidden fixed inset-0 z-[1210] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-create-title">
+    <div className="ac-responsive-create-sheet md:hidden fixed inset-0 ac-layer-modal flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-create-title">
       <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label={t('Close create menu')} onClick={onClose} />
       <div className="ac-v3-sheet relative mt-auto flex max-h-[82dvh] flex-col rounded-t-[22px] border border-[var(--border-default)] pb-safe">
         <div className="flex items-center justify-between border-b border-[var(--border-default)] px-4 pb-3 pt-4">

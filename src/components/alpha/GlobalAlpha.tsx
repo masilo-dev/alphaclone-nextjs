@@ -62,7 +62,7 @@ export default function GlobalAlpha() {
                 whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(0,255,209,0.4)" }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-[9999] w-14 h-14 bg-[#000F15] border border-[#00FFD1]/40 rounded-sm flex items-center justify-center group"
+                className="fixed bottom-6 right-6 ac-layer-menu w-14 h-14 bg-[#000F15] border border-[#00FFD1]/40 rounded-sm flex items-center justify-center group"
             >
                 <div className="absolute inset-0 bg-[#00FFD1]/5 animate-pulse" />
                 <Cpu className={`w-6 h-6 text-[#00FFD1] ${isOpen ? 'rotate-90' : ''} transition-transform duration-500`} />
@@ -78,7 +78,7 @@ export default function GlobalAlpha() {
                         initial={{ opacity: 0, y: 50, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                        className="fixed bottom-24 right-6 z-[9999] w-[380px] bg-[#000F15] border border-[#00FFD1]/30 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden font-mono"
+                        className="fixed bottom-24 right-6 ac-layer-menu w-[380px] bg-[#000F15] border border-[#00FFD1]/30 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden font-mono"
                     >
                         {/* Scanline Overlay */}
                         <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[length:100%_2px] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)]" />

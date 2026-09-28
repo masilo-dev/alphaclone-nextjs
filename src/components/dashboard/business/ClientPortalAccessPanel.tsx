@@ -75,7 +75,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/75 p-3 backdrop-blur-sm sm:items-center sm:p-6" role="presentation">
+    <div className="fixed inset-0 ac-layer-overlay flex items-end justify-center bg-slate-950/75 p-3 backdrop-blur-sm sm:items-center sm:p-6" role="presentation">
       <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-700/80 bg-slate-950 shadow-2xl shadow-black/60" role="dialog" aria-modal="true" aria-labelledby="client-portal-access-title">
         <div className="border-b border-slate-800 bg-gradient-to-br from-cyan-950/40 to-slate-950 p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">

@@ -90,7 +90,7 @@ export const SignerProfileModal: React.FC<SignerProfileModalProps> = ({ profile,
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="signer-profile-title">
+        <div className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="signer-profile-title">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
                 <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-800 bg-slate-900/95 px-6 py-4 backdrop-blur">

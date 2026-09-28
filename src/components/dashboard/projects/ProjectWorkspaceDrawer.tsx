@@ -316,7 +316,7 @@ export function ProjectWorkspaceDrawer({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100]"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm ac-layer-overlay"
       />
 
       <motion.div
@@ -324,7 +324,7 @@ export function ProjectWorkspaceDrawer({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92dvh] max-h-[calc(100dvh-env(safe-area-inset-top,0px))] md:h-auto md:max-h-[90dvh] md:max-w-4xl rounded-t-lg md:rounded-lg bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+        className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92dvh] max-h-[calc(100dvh-env(safe-area-inset-top,0px))] md:h-auto md:max-h-[90dvh] md:max-w-4xl rounded-t-lg md:rounded-lg bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden ac-layer-panel shadow-[0_0_50px_rgba(0,0,0,0.8)]"
       >
         <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
 

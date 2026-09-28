@@ -633,7 +633,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                 />
             )}
             {previewContact && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
+                <div className="fixed inset-0 ac-layer-overlay bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
                     <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-2xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
                             <div>
