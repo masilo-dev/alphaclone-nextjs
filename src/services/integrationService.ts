@@ -286,7 +286,7 @@ export const integrationService = {
       const returnTo = encodeURIComponent('/dashboard/business/facebook');
       return {
         success: true,
-        redirectUrl: `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tenantId)}&return_to=${returnTo}`,
+        redirectUrl: `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(tenantId)}&return_to=${returnTo}&scope_mode=advanced`,
       };
     }
 

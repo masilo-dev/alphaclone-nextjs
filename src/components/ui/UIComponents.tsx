@@ -529,8 +529,25 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     <div
       ref={menuRef}
       aria-label="Actions"
-      style={{ position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192, maxHeight: 'min(20rem, calc(100vh - 1rem))' }}
-      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel)] ${WORKSPACE.panel.radius} ${WORKSPACE.action.secondary} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
+      style={{
+        position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192,
+        maxHeight: 'min(20rem, calc(100vh - 1rem))', zIndex: Z_INDEX.dropdown,
+        // The menu is portaled to body; copy inherited workspace tokens from
+        // its trigger so it retains an opaque surface in both color schemes.
+        ...Object.fromEntries(Object.entries({
+          '--ws-panel': '#171A26',
+          '--ws-border': '#374151',
+          '--ws-text-primary': '#F4F7FC',
+          '--ws-hover': '#252936',
+          '--state-danger': '#ef4444',
+        }).map(([token, fallback]) => [
+          token,
+          typeof window !== 'undefined' && dropdownRef.current
+            ? getComputedStyle(dropdownRef.current).getPropertyValue(token).trim() || fallback
+            : fallback,
+        ])),
+      } as React.CSSProperties}
+      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
       data-layer="dropdown"
       data-z-index={Z_INDEX.dropdown}
     >

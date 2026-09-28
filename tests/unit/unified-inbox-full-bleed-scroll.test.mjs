@@ -32,7 +32,9 @@ test('reading a message shows a dedicated scroll pane and keeps reply collapsed'
   );
   assert.match(source, /data-testid="email-reading-pane"/);
   assert.match(source, /ac-email-reader-scroll/);
-  assert.match(source, /overflow-y-scroll/);
+  assert.match(source, /ac-email-reader-scroll flex-1 ac-scroll-pane/);
+  const styles = readFileSync(new URL('../../src/app/globals.css', import.meta.url), 'utf8');
+  assert.match(styles, /\.ac-scroll-pane\s*\{[^}]*overflow-y: auto/);
   assert.match(source, /Write a reply…/);
   assert.match(source, /replyComposerOpen/);
   assert.equal(source.includes('AI Quick Reply Suggestions'), false);

@@ -55,7 +55,7 @@ test('onboarding is durably saved before it is locally cached or routed', () => 
   assert.match(onboarding, /if \(!profileResponse\.ok\)/);
   assert.match(onboarding, /supabase\.auth\.updateUser/);
   assert.match(onboarding, /localStorage\.setItem\(`onboarding_completed_\$\{user\.id\}`, 'true'\)/);
-  assert.match(onboarding, /Nothing has been changed/);
+  assert.match(onboarding, /refresh to check whether your choice was saved/);
   assert.doesNotMatch(onboarding, /Moving to dashboard/);
 });
 
@@ -133,5 +133,6 @@ test('marketing chrome exposes shared language switching and PWA install timing 
   assert.match(marketingHeader, /setLanguage\(event\.target\.value/);
   assert.match(marketingFooter, /useLanguage/);
   assert.match(marketingFooter, /t\(column\.title\)/);
-  assert.match(pwaInstallPrompt, /\[isLoading, isPWA, pathname\]/);
+  assert.match(pwaInstallPrompt, /pathname\?\.startsWith\('\/dashboard'\)/);
+  assert.match(pwaInstallPrompt, /\[canInstall, isLoading, isPWA, isInstalled, pathname\]/);
 });

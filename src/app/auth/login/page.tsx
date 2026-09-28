@@ -723,16 +723,21 @@ function LoginContent() {
                                 }}
                             />
                             {turnstileError && (
-                                <p className="type-card-description text-amber-400 text-center">
-                                    Security check unavailable. Please refresh the page and try again.
-                                </p>
+                                <div role="alert" className="type-card-description text-amber-400 text-center">
+                                    <p>Security check unavailable. Please try the check again.</p>
+                                    <button type="button" className="mt-2 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => {
+                                        setTurnstileToken('');
+                                        setTurnstileError(false);
+                                        setTurnstileNonce((nonce) => nonce + 1);
+                                    }}>Retry security check</button>
+                                </div>
                             )}
                         </div>
                     )}
 
                     <Button
                         type="submit"
-                        className="w-full h-9 type-ui font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                        className="w-full min-h-11 type-ui font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                         isLoading={isLoading}
                         disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >

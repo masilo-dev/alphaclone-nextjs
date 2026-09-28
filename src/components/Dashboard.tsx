@@ -2403,11 +2403,15 @@ const Dashboard: React.FC<DashboardProps> = ({
       {showOnboarding && (
         <OnboardingFlow
           user={user}
-          onComplete={() => {
+          onComplete={(nextPath?: string) => {
             setShowOnboarding(false);
             if (typeof window !== "undefined") {
               localStorage.setItem(`onboarding_completed_${user.id}`, "true");
               window.dispatchEvent(new CustomEvent("alphaclone:onboarding-updated"));
+            }
+            if (nextPath) {
+              navigateToTab(nextPath);
+              return;
             }
             setShowProductTour(true);
           }}

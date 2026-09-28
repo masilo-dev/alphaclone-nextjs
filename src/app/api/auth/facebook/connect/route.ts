@@ -34,15 +34,17 @@ export async function GET(req: NextRequest) {
     }
 
     const redirectUri = OAUTH_CALLBACKS.facebook;
-    const scopeMode = req.nextUrl.searchParams.get('scope_mode') === 'publishing' ? 'publishing' : 'advanced';
+    // Page connections start with the permissions needed to list and publish
+    // to Pages. More sensitive capabilities require an explicit workflow.
+    const scopeMode = req.nextUrl.searchParams.get('scope_mode') === 'advanced' ? 'advanced' : 'publishing';
     const publishingScopes = [
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',       // required to post content to page
-        'read_insights',            // post/page reach metrics for analytics
     ];
     const advancedScopes = [
         ...publishingScopes,
+        'read_insights',
         'pages_read_user_content',
         'pages_manage_engagement',  // required to comment on posts
         'pages_messaging',          // required for Messenger send

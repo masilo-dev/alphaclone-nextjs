@@ -14,8 +14,24 @@ test('marketing header compacts on scroll and leaves anchor targets visible', as
   await expect.poll(() => workflow.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBeGreaterThanOrEqual(56);
 });
 
-test('laptop navigation moves into the sheet before labels wrap', async ({ page }) => {
-  await page.setViewportSize({ width: 1360, height: 900 });
+test('marketing navigation remains visible at laptop widths', async ({ page }) => {
+  await page.goto('/');
+  for (const width of [1200, 1280, 1360]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator('.mkt-nav-redesign')).toBeVisible();
+    await expect(page.locator('.mkt-header-actions-redesign')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open navigation menu' })).toBeHidden();
+    const fits = await page.locator('.mkt-header-bar').evaluate((bar) => {
+      const nav = bar.querySelector('.mkt-nav-redesign');
+      const actions = bar.querySelector('.mkt-header-actions-redesign');
+      return nav.getBoundingClientRect().right <= actions.getBoundingClientRect().left;
+    });
+    expect(fits).toBe(true);
+  }
+});
+
+test('marketing navigation uses the sheet at narrow widths', async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 900 });
   await page.goto('/');
   await expect(page.locator('.mkt-nav-redesign')).toBeHidden();
   await page.getByRole('button', { name: 'Open navigation menu' }).click();

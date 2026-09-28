@@ -307,7 +307,7 @@ export default function WhatsAppIntegration() {
                 <Button
                   onClick={() => {
                     if (!currentTenant?.id) return;
-                    window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}`;
+                    window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}&scope_mode=advanced`;
                   }}
                   className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 type-caption flex items-center gap-2"
                 >
@@ -419,4 +419,3 @@ export default function WhatsAppIntegration() {
     </motion.div>
   );
 }
-

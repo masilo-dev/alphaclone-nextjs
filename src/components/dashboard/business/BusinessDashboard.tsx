@@ -222,6 +222,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+    const [mailToolsOpen, setMailToolsOpen] = useState(false);
+    const isMailWorkspace = route === '/dashboard/mail' || route === '/dashboard/comms' || route === '/dashboard/zoho/mail' || route === '/dashboard/business/unified-inbox';
     const [todayOpen, setTodayOpen] = useState(false);
     const [showProductTour, setShowProductTour] = useState(false);
     const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
@@ -1299,7 +1301,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className={`min-h-14 h-auto md:h-14 pt-safe md:pt-0 border-b border-[var(--ws-border)] flex items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
+                {isMailWorkspace ? (
+                    <button
+                        type="button"
+                        aria-expanded={mailToolsOpen}
+                        aria-controls="business-workspace-tools"
+                        onClick={() => setMailToolsOpen((open) => !open)}
+                        className="min-h-9 shrink-0 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 text-left type-caption font-semibold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]"
+                    >
+                        {mailToolsOpen ? t('Hide workspace tools') : t('Show workspace tools')}
+                    </button>
+                ) : null}
+                <header id="business-workspace-tools" className={`min-h-14 h-auto md:h-14 pt-safe md:pt-0 border-b border-[var(--ws-border)] items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${isMailWorkspace && !mailToolsOpen ? 'hidden' : route === '/dashboard/pwa-settings' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}

@@ -193,6 +193,7 @@ export default function MarketingHomePage() {
               <p className="acr-hero-detail">{t('Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.')}</p>
               <div className="acr-hero-actions">
                 <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{t(EXECUTION_LAYER.primaryCta)} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
+                <SecondaryCTA href="/pricing" className="mkt-btn-large">{t('See pricing')}</SecondaryCTA>
                 <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> {t(EXECUTION_LAYER.secondaryCta)}</SecondaryCTA>
               </div>
               <div className="acr-hero-proof">

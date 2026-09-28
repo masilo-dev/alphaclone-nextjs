@@ -77,7 +77,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     name: 'Pro',
     price: 45,
     yearly: 432,
-    tagline: 'Serious daily operating capacity for solo founders and small teams running real workflows.',
+    tagline: 'Serious daily operating capacity for owners running real workflows.',
     highlight: true,
     badge: 'Recommended for active founders',
     features: [

@@ -1246,7 +1246,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             )}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                        <div className="flex-1 ac-scroll-pane space-y-2 pr-2 custom-scrollbar">
                             {filteredClients.map(client => (
                                 <div
                                     key={client.id}
@@ -1317,7 +1317,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="flex flex-1 min-h-0 gap-4">
-                                <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                                <div className="min-w-0 p-6 flex flex-col flex-1 ac-scroll-pane custom-scrollbar">
                                     <RecordHeader
                                         moduleId="crm"
                                         className="mb-4"
@@ -1413,7 +1413,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     />
 
                                     {/* Tabs Header */}
-                                    <div className="flex border-b border-[var(--ws-border)] mb-4 overflow-x-auto [scrollbar-width:none]">
+                                    <div className="flex w-full min-w-0 shrink-0 border-b border-[var(--ws-border)] mb-4 overflow-x-auto [scrollbar-width:none] [&>button]:shrink-0">
                                         <button
                                             onClick={() => handleTabChange('timeline')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
@@ -1490,7 +1490,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Tabs Content */}
-                                    <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar mb-6">
+                                    <div className="flex-1 ac-scroll-pane pr-1 custom-scrollbar mb-6">
                                         {activeTab === 'timeline' && selectedClient?.id && (
                                             <CustomerTimeline
                                                 clientId={selectedClient.id}

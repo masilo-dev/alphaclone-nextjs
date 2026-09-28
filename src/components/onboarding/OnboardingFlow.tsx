@@ -126,13 +126,14 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
 
             // This is an optimistic cache only. The profile remains the durable source of truth.
             localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+            localStorage.setItem(`onboarding_goal_${user.id}`, choice);
             window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
             toast.success(nextPath ? 'Your first path is ready.' : 'Your full workspace is ready.', { id: toastId });
             onComplete(nextPath);
         } catch (err) {
             console.error('OnboardingFlow: Update failed:', err);
             const message = err instanceof Error ? err.message : 'Your choice could not be saved.';
-            setSaveError(`${message} Please try again. Nothing has been changed.`);
+            setSaveError(`${message} Please refresh to check whether your choice was saved before trying again.`);
             toast.error('We could not save your starting point.', { id: toastId });
             setSelectedId(null);
         } finally {

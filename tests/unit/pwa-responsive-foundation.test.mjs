@@ -127,7 +127,7 @@ test('installed module interiors remove desktop chrome and learning guides', () 
   assert.match(layout, /header && !isInstalledMobileCompanion/);
   assert.match(layout, /stats && !isInstalledMobileCompanion/);
   assert.match(guidance, /7 \* 24 \* 60 \* 60 \* 1000/);
-  assert.match(executionHeader, /if \(!showGuidance\)/);
+  assert.match(executionHeader, /if \(!showGuidance \|\| !showExecutionDetails\)/);
 });
 
 test('deep CRM and billing workspaces use native detail and compact manager patterns', () => {

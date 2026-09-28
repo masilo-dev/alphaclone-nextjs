@@ -11,8 +11,6 @@ import {
   Forward,
   Loader2,
   Mail,
-  Maximize2,
-  Minimize2,
   PenSquare,
   RefreshCw,
   Reply,
@@ -256,7 +254,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
   const [senderClientId, setSenderClientId] = useState<string | null>(null);
   const [creatingContact, setCreatingContact] = useState(false);
-  const [readerExpanded, setReaderExpanded] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   const [threadMessages, setThreadMessages] = useState<UnifiedInboxMessage[]>([]);
@@ -794,15 +791,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     window.location.href = `/api/auth/zoho/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
   };
 
-  useEffect(() => {
-    if (!readerExpanded) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setReaderExpanded(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [readerExpanded]);
-
   if (!statusChecked) {
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
@@ -854,14 +842,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   }
 
   return (
-    <div className={readerExpanded ? 'fixed inset-0 z-[80] bg-slate-950 p-0 sm:p-3' : 'relative h-full min-h-0'}>
+    <div className="relative h-full min-h-0">
       <div
-        className={`flex h-full ac-workspace-panel overflow-hidden ${readerExpanded ? 'min-h-0 rounded-none sm:rounded-xl' : 'min-h-0'}`}
+        className="flex h-full min-h-0 ac-workspace-panel overflow-hidden"
         role="region"
         aria-label="Email mailbox"
       >
-        {!readerExpanded && (
-          <aside className="hidden w-56 shrink-0 flex-col border-r border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-3 md:flex">
+        <aside className="hidden w-48 2xl:w-56 shrink-0 flex-col min-h-0 border-r border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-3 xl:flex">
             <button
               type="button"
               onClick={openNewEmail}
@@ -894,7 +881,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               </button>
             </div>
 
-            <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto custom-scrollbar" aria-label="Mail modules">
+            <nav className="flex-1 ac-scroll-pane space-y-1 custom-scrollbar" aria-label="Mail modules">
               {(['inbox', 'sent', 'drafts', 'spam', 'trash'] as InboxFolder[]).map((f) => (
                 <button
                   key={f}
@@ -930,16 +917,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 Refresh
               </button>
             </div>
-          </aside>
-        )}
+        </aside>
 
         {/* Message list */}
         <div
-          className={`${
-            readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
-          } w-full md:w-[340px] lg:w-[380px] flex-col h-full min-h-0 border-r border-white/5 bg-slate-950/50 shrink-0`}
+          className={`${selectedId ? 'hidden md:flex' : 'flex'} w-full md:w-[min(340px,45%)] 2xl:w-[380px] flex-col h-full min-h-0 border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
-          <div className="p-2.5 border-b border-white/8 shrink-0 space-y-2">
+          <div className="max-h-[45%] overflow-y-auto p-2.5 border-b border-white/8 shrink-0 space-y-2">
             {/* AI draft banner */}
             <AiDraftReviewBanner
               onOpenDraft={(draft) => {
@@ -984,6 +968,22 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             )}
 
             {/* ── Search & Shortcuts ── */}
+            <label className="block xl:hidden type-caption text-[var(--ws-text-secondary)]">
+              Mail folder
+              <select
+                value={folder}
+                onChange={(event) => {
+                  setFolder(event.target.value as InboxFolder);
+                  setSelectedId(null);
+                  setThreadMessages([]);
+                }}
+                className="mt-1 w-full min-h-10 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] px-3 text-[var(--ws-text-primary)]"
+              >
+                {(['inbox', 'sent', 'drafts', 'spam', 'trash'] as InboxFolder[]).map((item) => (
+                  <option key={item} value={item}>{t(FOLDER_LABELS[item])}</option>
+                ))}
+              </select>
+            </label>
             <div className="flex items-center gap-1.5">
               <div className="relative flex-1 min-w-0">
                 <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
@@ -1009,7 +1009,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>
+          <div className="flex-1 ac-scroll-pane divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>
             {active.loading ? (
               <div className="p-6 flex flex-col items-center gap-2 text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin text-[var(--brand-blue-500)]" />
@@ -1138,7 +1138,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           {selectedEmail && folder !== 'drafts' ? (
             <>
               {/* ── Thread header: subject + meta ── */}
-              <div className="px-4 pt-3 pb-2 border-b border-white/5 shrink-0">
+              <div className="max-h-[45%] overflow-y-auto px-4 pt-3 pb-2 border-b border-white/5 shrink-0">
                 <div className="flex items-start gap-2">
                   <button
                     type="button"
@@ -1244,16 +1244,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setReaderExpanded((current) => !current)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/10 hover:bg-[var(--brand-blue-500)]/20 px-3 py-1.5 type-caption font-semibold text-[var(--brand-blue-200)]"
-                    aria-label={readerExpanded ? 'Exit full-window email reader' : 'Open email in full window'}
-                    title={readerExpanded ? 'Exit full window (Esc)' : 'Full-window reader'}
-                  >
-                    {readerExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                    {readerExpanded ? t('Exit full window') : t('Full window')}
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => openReply(false)}
                     disabled={!providerConnected}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] hover:bg-[var(--ws-hover)] px-3 py-1.5 type-caption font-semibold text-[var(--ws-text-secondary)] disabled:opacity-40"
@@ -1304,7 +1294,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
               {/* ── Lead insight: collapsed/dismissible, not inline above body ── */}
               <div
-                className="ac-email-reader-scroll flex-1 min-h-0 overflow-y-scroll p-4 md:p-5 space-y-6"
+                className="ac-email-reader-scroll flex-1 ac-scroll-pane p-4 md:p-5 space-y-6"
                 data-testid="email-reading-pane"
               >
                 <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />

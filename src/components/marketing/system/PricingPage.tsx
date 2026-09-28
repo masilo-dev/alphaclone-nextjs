@@ -25,7 +25,7 @@ const pricingFaqs = [
   {
     question: 'Which plan should I choose?',
     answer:
-      'Starter is the entry plan for getting core workflows connected. Pro is designed for active founders and teams. Enterprise provides the highest execution capacity and support.',
+      'Starter is the entry plan for getting core workflows connected. Pro is designed for active owners. Enterprise provides the highest execution capacity and support.',
   },
   {
     question: 'What is included in every AlphaClone plan?',

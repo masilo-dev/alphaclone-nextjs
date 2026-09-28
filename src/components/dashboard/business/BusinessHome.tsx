@@ -18,6 +18,16 @@ import {
 } from './NewUserSetupPanel';
 import { WorkspaceGuide } from './WorkspaceGuide';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import Link from 'next/link';
+
+const FIRST_GOAL_LINKS: Record<string, { title: string; href: string }> = {
+  get_customers: { title: 'Continue finding customers', href: '/dashboard/leads/campaigns' },
+  post_to_social: { title: 'Continue your social post', href: '/dashboard/business/social/compose' },
+  send_promotions: { title: 'Continue your email campaign', href: '/dashboard/business/campaigns' },
+  manage_customers: { title: 'Add a customer or enquiry', href: '/dashboard/crm/workspace?quickAdd=true' },
+  create_invoices: { title: 'Create a draft invoice', href: '/dashboard/business/billing/manage?create=true' },
+  manage_projects: { title: 'Create a project', href: '/dashboard/business/projects/manage?create=true' },
+};
 
 interface BusinessHomeProps {
   user: User;
@@ -37,8 +47,18 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem(`onboarding_completed_${user.id}`) === 'true';
   });
+  const [cachedGoalId, setCachedGoalId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(`onboarding_goal_${user.id}`) || '';
+  });
+  const [goalDismissed, setGoalDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`onboarding_goal_dismissed_${user.id}`) === 'true';
+  });
   const [showMoreContext, setShowMoreContext] = useState(false);
   const { dashboardHomeLayout, loading: prefsLoading } = useWorkspacePreferences();
+  const firstGoalId = cachedGoalId || (typeof user.user_metadata?.onboarding_role === 'string' ? user.user_metadata.onboarding_role : '');
+  const firstGoal = FIRST_GOAL_LINKS[firstGoalId];
 
   const isCompanion = device.isInstalledMobileCompanion;
   const homeLayout = isCompanion ? 'attention_first' : prefsLoading ? 'operating_system' : dashboardHomeLayout;
@@ -61,6 +81,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   useEffect(() => {
     const syncOnboarding = () => {
       setOnboardingComplete(localStorage.getItem(`onboarding_completed_${user.id}`) === 'true');
+      setCachedGoalId(localStorage.getItem(`onboarding_goal_${user.id}`) || '');
     };
     window.addEventListener('alphaclone:onboarding-updated', syncOnboarding);
     syncOnboarding();
@@ -81,6 +102,21 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
+      {onboardingComplete && firstGoal && !goalDismissed ? (
+        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4" aria-label="Your chosen first task">
+          <div>
+            <h2 className="type-ui font-semibold text-[var(--ws-text-primary)]">Your chosen first task</h2>
+            <p className="type-caption text-[var(--ws-text-secondary)]">Pick up where you started whenever you are ready.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={firstGoal.href} className="inline-flex min-h-11 items-center rounded-xl bg-[var(--ac-accent)] px-4 type-ui font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ac-accent)]">{firstGoal.title}</Link>
+            <button type="button" className="min-h-11 rounded-xl px-3 type-ui text-[var(--ws-text-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => {
+              localStorage.setItem(`onboarding_goal_dismissed_${user.id}`, 'true');
+              setGoalDismissed(true);
+            }}>Dismiss</button>
+          </div>
+        </section>
+      ) : null}
       {showSetup ? (
         <NewUserSetupPanel
           user={user}

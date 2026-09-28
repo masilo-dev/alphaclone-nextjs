@@ -146,10 +146,11 @@ export default function CreateBusinessOnboarding() {
               <div className="space-y-6">
                 {/* Business Name */}
                 <div>
-                  <label className="block type-label font-medium text-slate-300 mb-2">
+                  <label htmlFor="workspace-business-name" className="block type-label font-medium text-slate-300 mb-2">
                     Business Name
                   </label>
                   <input
+                    id="workspace-business-name"
                     type="text"
                     value={businessName}
                     onChange={(e) => handleBusinessNameChange(e.target.value)}
@@ -161,11 +162,12 @@ export default function CreateBusinessOnboarding() {
 
                 {/* Business Slug */}
                 <div>
-                  <label className="block type-label font-medium text-slate-300 mb-2">
+                  <label htmlFor="workspace-business-slug" className="block type-label font-medium text-slate-300 mb-2">
                     Business URL
                   </label>
                   <div className="flex items-center gap-2">
                     <input
+                      id="workspace-business-slug"
                       type="text"
                       value={businessSlug}
                       onChange={(e) => setBusinessSlug(e.target.value.toLowerCase())}
@@ -179,28 +181,6 @@ export default function CreateBusinessOnboarding() {
                   </p>
                 </div>
 
-                {/* Industry (Optional) */}
-                <div>
-                  <label className="block type-label font-medium text-slate-300 mb-2">
-                    Your Sector
-                  </label>
-                    <select
-                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
-                  >
-                    <option value="">Choose your sector</option>
-                    <option value="agency">Agency / Creative Services</option>
-                    <option value="consulting">Consulting / Professional Services</option>
-                    <option value="restaurant">Restaurant / Food Service</option>
-                    <option value="retail">Retail / E-commerce</option>
-                    <option value="fitness">Fitness / Health</option>
-                    <option value="legal">Legal Services</option>
-                    <option value="real-estate">Real Estate</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <p className="type-card-description text-slate-500 mt-2">
-                    You can update your workspace profile and defaults from Settings after setup.
-                  </p>
-                </div>
               </div>
 
               <button

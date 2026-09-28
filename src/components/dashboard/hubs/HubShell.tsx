@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ChevronDown, Info, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 import { WorkspaceSwitcher } from '@/components/ui/workspace/WorkspaceSwitcher';
 import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
@@ -92,7 +92,6 @@ export default function HubShell({
     ? HUB_EXECUTION_STEPS[moduleId]
     : undefined;
   const [overviewOpen, setOverviewOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
 
   const canonicalPath = resolveCanonicalPath(pathname || '');
   const canonicalFirstTab = tabs[0] ? resolveCanonicalPath(tabs[0].href) : '';
@@ -116,18 +115,14 @@ export default function HubShell({
     <div
       className={cn(
         'relative flex flex-col min-h-0 ac-enterprise-module ac-module-frame',
-        isFocused
-          ? 'fixed inset-0 z-[100] h-[100dvh] w-screen overflow-y-auto bg-[var(--ws-canvas)]'
-          : isFullHeight
-            ? 'h-full overflow-hidden'
-            : 'ac-scroll-full'
+        isFullHeight ? 'h-full overflow-hidden' : 'ac-scroll-full'
       )}
       style={{ ['--module-accent' as string]: accentColor }}
       data-module={moduleId}
     >
       <div
         className={cn(
-          'sticky top-0 z-20 flex-shrink-0 bg-[var(--ws-toolbar)] ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          'relative flex-shrink-0 bg-[var(--ws-toolbar)] ac-workspace-toolbar border-b border-[var(--ws-border)]',
           isInstalledMobileCompanion ? 'px-3 py-1.5' : isOverview ? 'px-4 py-2' : 'px-3.5 py-1.5',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
@@ -186,16 +181,6 @@ export default function HubShell({
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', overviewOpen && 'rotate-180')} aria-hidden />
               </button>
             ) : null}
-            {!isInstalledMobileCompanion ? <button
-              type="button"
-              onClick={() => setIsFocused((focused) => !focused)}
-              aria-pressed={isFocused}
-              aria-label={isFocused ? t('Exit focus mode') : t('Focus this module')}
-              title={isFocused ? t('Exit focus mode') : t('Focus this module')}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
-            >
-              {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </button> : null}
           </div>
         </div>
 

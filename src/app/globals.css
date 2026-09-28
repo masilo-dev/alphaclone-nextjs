@@ -2344,6 +2344,14 @@ html.light .ac-kpi-card--interactive:hover {
   z-index: 15;
 }
 
+/* Shared scroll behavior for workspace panes that own independent content. */
+.ac-scroll-pane {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
 .ac-workspace-panel:hover {
   border-color: var(--ws-border-strong);
 }
