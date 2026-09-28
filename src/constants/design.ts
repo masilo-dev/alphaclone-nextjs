@@ -221,7 +221,7 @@ export const ENTERPRISE = {
  */
 export const WORKSPACE = {
   sidebar: {
-    widthExpanded: 'w-56',
+    widthExpanded: 'w-56 md:w-52',
     widthCollapsed: 'md:w-14',
     logoHeight: 'h-14',
   },

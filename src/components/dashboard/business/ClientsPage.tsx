@@ -2135,7 +2135,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
     return (
         <Card
             hoverEffect
-            className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}
+            className={`flex flex-col h-full !p-3 relative transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}
         >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">

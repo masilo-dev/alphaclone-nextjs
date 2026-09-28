@@ -164,7 +164,7 @@ const Sidebar = React.memo<SidebarProps>(({
             <aside data-tour="navigation" data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
                 fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
                 flex flex-col transition-all duration-200 overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-56 pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-14'}
+                ${sidebarOpen ? `translate-x-0 ${WORKSPACE.sidebar.widthExpanded} pb-safe md:pb-0` : `-translate-x-full md:translate-x-0 w-0 ${WORKSPACE.sidebar.widthCollapsed}`}
             `}>
 
                 {/* ── Logo ── */}
@@ -172,7 +172,7 @@ const Sidebar = React.memo<SidebarProps>(({
                     <div className={`${sidebarOpen ? 'flex' : 'hidden'} items-center gap-2.5 overflow-hidden min-w-0`}>
                         <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
                             className="rounded-md object-contain flex-shrink-0" />
-                        <span className={`font-semibold text-white type-ui tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                        <span className={`min-w-0 truncate font-semibold text-white type-caption tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             {t('Alphaclone Systems')}
                         </span>
                     </div>
