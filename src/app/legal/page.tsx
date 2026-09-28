@@ -94,10 +94,10 @@ const legalPages = [
 
 export default function LegalHubPage() {
   return (
-    <main className="min-h-screen bg-[#040A12] text-slate-200">
+    <div className="min-h-screen bg-[var(--marketing-bg-primary)] text-[var(--marketing-text-primary)]">
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h1 className="text-4xl font-black text-white mb-4">Legal and Trust Center</h1>
-        <p className="text-slate-300 mb-8">
+        <h1 className="text-4xl font-black mb-4">Legal and Trust Center</h1>
+        <p className="text-[var(--marketing-text-secondary)] mb-8">
           All official AlphaClone legal and trust documents are listed here for customers, partners, and search indexing.
         </p>
 
@@ -108,14 +108,14 @@ export default function LegalHubPage() {
             <Link
               key={page.href}
               href={page.href}
-              className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-5 hover:border-cyan-400/40 transition-colors"
+              className="rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-surface)] p-5 hover:border-[var(--marketing-accent)] transition-colors"
             >
-              <h2 className="text-lg font-bold text-cyan-200 mb-2">{page.title}</h2>
-              <p className="type-card-description text-slate-300">{page.description}</p>
+              <h2 className="text-lg font-bold text-[var(--marketing-text-primary)] mb-2">{page.title}</h2>
+              <p className="type-card-description text-[var(--marketing-text-secondary)]">{page.description}</p>
             </Link>
           ))}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

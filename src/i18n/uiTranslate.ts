@@ -1,4 +1,14 @@
 import type { SupportedLanguage } from './languages';
+import { marketingHomeTranslate } from './marketingHome';
+import { marketingContactTranslate } from './marketingContact';
+import { marketingPricingTranslate } from './marketingPricing';
+import { marketingSolutionsTranslate } from './marketingSolutions';
+import { marketingWhoWeServeTranslate } from './marketingWhoWeServe';
+import { marketingAboutTranslate } from './marketingAbout';
+import { marketingReliabilityTranslate } from './marketingReliability';
+import { marketingEcosystemTranslate } from './marketingEcosystem';
+import { marketingServicesTranslate } from './marketingServices';
+import { marketingCookieTranslate } from './marketingCookie';
 
 const ES: Record<string, string> = {
     // Marketing site navigation
@@ -2695,5 +2705,5 @@ export function uiTranslate(lang: SupportedLanguage, text: string): string {
     if (table[text]) return table[text];
     const trimmed = text.trim();
     if (table[trimmed]) return table[trimmed];
-    return text;
+    return marketingHomeTranslate(lang, trimmed) ?? marketingContactTranslate(lang, trimmed) ?? marketingPricingTranslate(lang, trimmed) ?? marketingSolutionsTranslate(lang, trimmed) ?? marketingWhoWeServeTranslate(lang, trimmed) ?? marketingAboutTranslate(lang, trimmed) ?? marketingReliabilityTranslate(lang, trimmed) ?? marketingEcosystemTranslate(lang, trimmed) ?? marketingServicesTranslate(lang, trimmed) ?? marketingCookieTranslate(lang, trimmed) ?? text;
 }

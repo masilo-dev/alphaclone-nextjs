@@ -87,22 +87,20 @@ export function EnterpriseDataTable<T>({
               {columns.map((col) => (
                 <th
                   key={col.id}
-                  className={cn(col.sortable && 'cursor-pointer select-none')}
-                  onClick={() => toggleSort(col)}
                   aria-sort={
                     sortCol === col.id ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined
                   }
                 >
-                  <span className="inline-flex items-center gap-1">
+                  {col.sortable ? <button type="button" className="inline-flex items-center gap-1 text-left min-h-11 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400" onClick={() => toggleSort(col)}>
                     {col.header}
                     {sortCol === col.id ? (
                       sortDir === 'asc' ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
+                        <ChevronUp aria-hidden="true" className="h-3.5 w-3.5" />
                       ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
+                        <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" />
                       )
                     ) : null}
-                  </span>
+                  </button> : <span>{col.header}</span>}
                 </th>
               ))}
               {renderExpanded ? <th className="w-10" aria-label="Expand" /> : null}
@@ -114,12 +112,9 @@ export function EnterpriseDataTable<T>({
               const isExpanded = expandedId === id;
               return (
                 <React.Fragment key={id}>
-                  <tr
-                    className={cn(onRowClick && 'cursor-pointer')}
-                    onClick={() => onRowClick?.(row)}
-                  >
-                    {columns.map((col) => (
-                      <td key={col.id}>{col.accessor(row)}</td>
+                  <tr>
+                    {columns.map((col, index) => (
+                      <td key={col.id}>{onRowClick && index === 0 ? <button type="button" className="text-left underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400" onClick={() => onRowClick(row)}>{col.accessor(row)}</button> : col.accessor(row)}</td>
                     ))}
                     {renderExpanded ? (
                       <td>

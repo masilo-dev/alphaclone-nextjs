@@ -51,7 +51,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
 };
 
 export const DashboardShellSkeleton: React.FC = () => (
-    <div className="flex min-h-screen bg-slate-950 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-950 overflow-hidden" role="status" aria-label="Loading workspace">
     <div className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-3 shrink-0 ac-skeleton-pulse">
       <div className="h-10 w-36 bg-slate-800 rounded-lg mb-4" />
       {Array.from({ length: 8 }).map((_, i) => (

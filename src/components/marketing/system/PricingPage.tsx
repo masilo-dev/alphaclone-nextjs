@@ -9,6 +9,8 @@ import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketi
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 import { PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 import { ConversionBanner } from './ConversionBanner';
+import { DEMO_HREF } from '@/lib/marketing/cta';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 
 const PRO_DAILY = `${PRO_DAILY_LIMIT} / day`;
@@ -90,19 +92,21 @@ const detailedComparison: ComparisonCategory[] = [
 ];
 
 function RenderCell({ val }: { val: string | boolean }) {
+  const { t } = useLanguage();
   if (typeof val === 'boolean') {
     return val ? (
-      <AlphaIcon name="check" variant="trust" size="md" title="Included" decorative={false} className="mx-auto text-[var(--marketing-accent-hover)]" />
+      <AlphaIcon name="check" variant="trust" size="md" title={t('Included')} decorative={false} className="mx-auto text-[var(--marketing-accent-hover)]" />
     ) : (
-      <span className="text-[var(--marketing-text-muted)] font-mono type-ui" aria-label="Not included">
+      <span className="text-[var(--marketing-text-muted)] font-mono type-ui" aria-label={t('Not included')}>
         —
       </span>
     );
   }
-  return <span className="font-medium text-[var(--marketing-text-primary)]">{val}</span>;
+  return <span className="font-medium text-[var(--marketing-text-primary)]">{t(val)}</span>;
 }
 
 export default function PricingPage() {
+  const { t } = useLanguage();
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
 
   useEffect(() => {
@@ -120,17 +124,19 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="bg-[var(--marketing-bg-primary)]">
+    <div className="bg-[var(--marketing-bg-primary)]">
       <MarketingSection className="relative overflow-hidden pt-16 sm:pt-20">
         <div className="marketing-glow-hero" aria-hidden="true" />
         <MarketingContainer className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
-            <p className="mkt-eyebrow mb-4">Same platform. Different execution power.</p>
+            <p className="mkt-eyebrow mb-4">{t('Same platform. Different execution power.')}</p>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-[var(--marketing-text-primary)]">
-              One system. Choose your execution power.
+              {t('One system. Choose your execution power.')}
             </h1>
-            <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
-              Starter $15 · Pro $45 · Enterprise $80. Choose the execution capacity that fits your business.
+            <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed" aria-live="polite">
+              {billingPeriod === 'annual'
+                ? t('Starter $144/year · Pro $432/year · Enterprise $768/year. Save 20% compared with monthly billing. Contact us to confirm annual setup.')
+                : t('Starter $15/month · Pro $45/month · Enterprise $80/month. Choose the execution capacity that fits your business.')}
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
@@ -149,7 +155,7 @@ export default function PricingPage() {
               return (
                 <article
                   key={plan.id}
-                  className={`mkt-surface-elevated flex flex-col justify-between p-6 rounded-2xl transition-all duration-200 border ${
+                  className={`mkt-surface-elevated flex flex-col p-6 rounded-2xl transition-all duration-200 border ${
                     plan.highlight
                       ? 'border-[var(--marketing-accent)] ring-2 ring-[var(--marketing-accent-soft)] shadow-xl bg-[var(--marketing-surface)] relative -translate-y-1'
                       : 'border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]'
@@ -159,7 +165,7 @@ export default function PricingPage() {
                     {plan.badge ? (
                       <div className="mb-3 flex justify-between items-center">
                         <span className="rounded-full bg-[var(--marketing-accent)] px-3 py-1 type-caption font-bold text-white tracking-wide uppercase">
-                          {plan.badge}
+                          {t(plan.badge)}
                         </span>
                       </div>
                     ) : (
@@ -168,11 +174,11 @@ export default function PricingPage() {
 
                     <h2 className="text-2xl font-bold text-[var(--marketing-text-primary)]">{plan.name}</h2>
                     <p className="mt-2 type-caption text-[var(--marketing-text-secondary)] leading-relaxed min-h-[40px]">
-                      {plan.tagline}
+                      {t(plan.tagline)}
                     </p>
 
                     <div className="mt-6 border-b border-[var(--marketing-border)] pb-6">
-                      <div className="flex items-baseline">
+                      <div key={billingPeriod} className="pricing-price-change flex items-baseline">
                         <>
                             <span className="text-4xl font-extrabold text-[var(--marketing-text-primary)]">
                               ${displayPrice}
@@ -182,12 +188,12 @@ export default function PricingPage() {
                             </span>
                         </>
                       </div>
-                      <p className="mt-2 type-card-description text-[var(--marketing-text-muted)]">
+                      <p className="mt-2 min-h-10 type-card-description text-[var(--marketing-text-muted)]">
                         {plan.id === 'enterprise'
-                          ? `$${displayPrice}${priceSuffix} · no AlphaClone usage ceiling`
+                          ? `$${displayPrice}${priceSuffix} · ${t('no AlphaClone usage ceiling')}`
                           : billingPeriod === 'annual'
-                          ? `$${Math.round(plan.yearly / 12)}/mo billed annually`
-                          : 'Billed monthly'}
+                          ? `$${Math.round(plan.yearly / 12)}${t('/mo billed annually')}`
+                          : t('Billed monthly')}
                       </p>
                     </div>
 
@@ -195,15 +201,15 @@ export default function PricingPage() {
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex gap-2.5 type-caption text-[var(--marketing-text-secondary)]">
                           <AlphaIcon name="check" variant="trust" size="sm" className="mt-0.5 shrink-0 text-[var(--marketing-accent-hover)]" />
-                          <span>{feature}</span>
+                          <span>{t(feature)}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="mt-8">
+                  <div className="mt-auto pt-8">
                     <Link
-                      href={plan.ctaLink}
+                      href={billingPeriod === 'annual' ? DEMO_HREF : plan.ctaLink}
                       onClick={() => handlePlanClick(plan.id, plan.name)}
                       className={`mkt-btn w-full text-center type-ui font-semibold py-3 rounded-xl transition-all ${
                         plan.highlight
@@ -211,7 +217,7 @@ export default function PricingPage() {
                           : 'mkt-btn-secondary border border-[var(--marketing-border)] text-[var(--marketing-text-primary)] hover:bg-[var(--marketing-surface-hover)]'
                       }`}
                     >
-                      {plan.cta}
+                      {billingPeriod === 'annual' ? t('Discuss annual billing') : t(plan.cta)}
                     </Link>
                   </div>
                 </article>
@@ -219,7 +225,7 @@ export default function PricingPage() {
             })}
           </div>
           <p className="mt-6 text-center type-card-description text-[var(--marketing-text-muted)] max-w-4xl mx-auto leading-relaxed">
-            *Enterprise execution remains subject to external provider API restrictions, anti-spam rules, and platform safety safeguards.
+            {t('*Enterprise execution remains subject to external provider API restrictions, anti-spam rules, and platform safety safeguards.')}
           </p>
         </MarketingContainer>
       </MarketingSection>
@@ -227,44 +233,36 @@ export default function PricingPage() {
       <MarketingSection>
         <MarketingContainer>
           <SectionHeading
-            eyebrow="Detailed Breakdown"
-            title="Compare Execution Power Across Plans"
-            description="The same connected platform, with capacity and support that scale from Starter to Enterprise."
+            eyebrow={t('Detailed Breakdown')}
+            title={t('Compare Execution Power Across Plans')}
+            description={t('The same connected platform, with capacity and support that scale from Starter to Enterprise.')}
           />
 
-          <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm" role="region" aria-label="AlphaClone plan comparison" tabIndex={0}>
+          <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm" role="region" aria-label={t('AlphaClone plan comparison')} tabIndex={0}>
             <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] type-ui">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]">
-                  <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">Execution Capability</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter ($15)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro ($45)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise ($80)</th>
+                  <th scope="col" className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">{t('Execution Capability')}</th>
+                  <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter (${billingPeriod === 'annual' ? `144${t('/year')}` : `15${t('/month')}`})</th>
+                  <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro (${billingPeriod === 'annual' ? `432${t('/year')}` : `45${t('/month')}`})</th>
+                  <th scope="col" className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise (${billingPeriod === 'annual' ? `768${t('/year')}` : `80${t('/month')}`})</th>
                 </tr>
               </thead>
-              <tbody>
-                {detailedComparison.map((cat) => (
-                  <tr key={cat.category} className="border-b border-[var(--marketing-border)]">
-                    <td colSpan={4} className="p-0">
-                      <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 type-caption font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
-                        {cat.category}
-                      </div>
-                      <table className="w-full">
-                        <tbody>
-                          {cat.rows.map((row) => (
-                            <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0 hover:bg-[var(--marketing-surface-hover)]">
-                              <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{row.feature}</td>
-                              <td className="p-4 text-center"><RenderCell val={row.starter} /></td>
-                              <td className="p-4 text-center bg-[var(--marketing-accent-soft)]"><RenderCell val={row.pro} /></td>
-                              <td className="p-4 text-center"><RenderCell val={row.enterprise} /></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </td>
+              {detailedComparison.map((cat) => (
+                <tbody key={cat.category}>
+                  <tr className="border-b border-[var(--marketing-border)]">
+                    <th colSpan={4} scope="rowgroup" className="bg-[var(--marketing-surface-muted)] px-4 py-2 text-left type-caption font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">{t(cat.category)}</th>
                   </tr>
-                ))}
-              </tbody>
+                  {cat.rows.map((row) => (
+                    <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0 hover:bg-[var(--marketing-surface-hover)]">
+                      <th scope="row" className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{t(row.feature)}</th>
+                      <td className="p-4 text-center"><RenderCell val={row.starter} /></td>
+                      <td className="p-4 text-center bg-[var(--marketing-accent-soft)]"><RenderCell val={row.pro} /></td>
+                      <td className="p-4 text-center"><RenderCell val={row.enterprise} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
             </table>
           </div>
         </MarketingContainer>
@@ -273,12 +271,12 @@ export default function PricingPage() {
       <MarketingSection tone="muted">
         <MarketingContainer>
           <SectionHeading
-            eyebrow="FAQ"
-            title="Frequently Asked Questions"
-            description="Clear answers about billing cycles, daily limits, and plan upgrades."
+            eyebrow={t('FAQ')}
+            title={t('Frequently Asked Questions')}
+            description={t('Clear answers about billing cycles, daily limits, and plan upgrades.')}
           />
           <div className="mx-auto max-w-3xl">
-            <MarketingFaqAccordion items={pricingFaqs} />
+            <MarketingFaqAccordion items={pricingFaqs.map((item) => ({ question: t(item.question), answer: t(item.answer) }))} />
           </div>
         </MarketingContainer>
       </MarketingSection>
@@ -291,6 +289,6 @@ export default function PricingPage() {
           />
         </MarketingContainer>
       </MarketingSection>
-    </main>
+    </div>
   );
 }

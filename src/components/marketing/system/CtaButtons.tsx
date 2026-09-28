@@ -10,6 +10,7 @@ import {
   withPreservedQuery,
 } from '@/lib/marketing/cta';
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type CtaProps = {
   href?: string;
@@ -37,10 +38,12 @@ export function PrimaryCTA({
   onClick,
   'aria-label': ariaLabel,
 }: CtaProps) {
+  const { t } = useLanguage();
   const destination = useAttributedHref(href);
   const external = isExternalHref(destination);
   const classes = `mkt-btn mkt-btn-primary ${className}`.trim();
-  const label = ariaLabel || (typeof children === 'string' ? (children as string) : undefined);
+  const translatedChildren = typeof children === 'string' ? t(children) : children;
+  const label = ariaLabel || (typeof translatedChildren === 'string' ? translatedChildren : undefined);
   if (external) {
     return (
       <a
@@ -51,7 +54,7 @@ export function PrimaryCTA({
         className={classes}
         aria-label={label}
       >
-        {children}
+        {translatedChildren}
       </a>
     );
   }
@@ -62,7 +65,7 @@ export function PrimaryCTA({
       className={classes}
       aria-label={label}
     >
-      {children}
+      {translatedChildren}
     </Link>
   );
 }
@@ -77,10 +80,14 @@ export function SecondaryCTA({
   onClick,
   'aria-label': ariaLabel,
 }: CtaProps) {
+  const { t } = useLanguage();
   const destination = useAttributedHref(href);
   const external = isExternalHref(destination);
   const classes = `mkt-btn mkt-btn-demo ${className}`.trim();
-  const label = ariaLabel || (typeof children === 'string' ? (children as string) : 'Book a demo');
+  // A fallback label must not override a JSX child's visible text with the
+  // unrelated default destination (for example, the homepage workflow link).
+  const translatedChildren = typeof children === 'string' ? t(children) : children;
+  const label = ariaLabel || (typeof translatedChildren === 'string' ? translatedChildren : undefined);
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
@@ -100,7 +107,7 @@ export function SecondaryCTA({
         className={classes}
         aria-label={label}
       >
-        {children}
+        {translatedChildren}
       </a>
     );
   }
@@ -111,7 +118,7 @@ export function SecondaryCTA({
       className={classes}
       aria-label={label}
     >
-      {children}
+      {translatedChildren}
     </Link>
   );
 }

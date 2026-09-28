@@ -10,6 +10,7 @@ import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import { PUBLIC_DEMO_BOOKING_URL, isExternalHref, withPreservedQuery } from '@/lib/marketing/cta';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type FormState = {
   name: string;
@@ -32,6 +33,7 @@ const EMPTY_FORM: FormState = {
 };
 
 const ContactPage: React.FC = () => {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileNonce, setTurnstileNonce] = useState(0);
@@ -123,114 +125,113 @@ const ContactPage: React.FC = () => {
   const submitDisabled = isSubmitting || (turnstileEnabled && !turnstileToken);
 
   return (
-    <div className="min-h-screen bg-white text-[#07152f] relative overflow-hidden">
+    <div className="min-h-screen bg-white text-[var(--marketing-text-primary)] relative overflow-hidden">
       {/* Hero */}
       <section className="relative flex flex-col items-center justify-center pt-16 pb-10 px-4 sm:px-6">
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <AnimateIn type="fadeUp">
-            <p className="type-caption font-bold uppercase tracking-caps text-[#075fc7] mb-3">Get in touch</p>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight leading-tight">
-              Let&apos;s Build Your <br />
-              <span className="text-[#0878f9]">Growth Engine.</span>
+            <p className="type-caption font-bold uppercase tracking-caps text-[var(--marketing-accent-hover)] mb-3">{t('Get in touch')}</p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-marketing-heading text-[var(--marketing-text-primary)] mb-4 tracking-tight leading-tight">
+              {t("Let's Build Your")} <br />
+              <span className="text-[var(--marketing-accent)]">{t('Growth Engine.')}</span>
             </h1>
-            <p className="text-base sm:text-lg text-[#52627b] max-w-2xl mx-auto mb-8 leading-relaxed">
-              Get in touch to discuss your workflows. For the fastest response, book a walkthrough or reach out directly.
+            <p className="text-base sm:text-lg text-[var(--marketing-text-on-light)] max-w-2xl mx-auto mb-8 leading-relaxed">
+              {t('Get in touch to discuss your workflows. For the fastest response, book a walkthrough or reach out directly.')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a
                 href={bookingDestination}
                 target={bookingIsExternal ? '_blank' : undefined}
                 rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
-                aria-label="Book a consultation"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm type-ui"
+                className="mkt-btn mkt-btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-colors shadow-sm type-ui"
               >
                 <Calendar className="w-4 h-4 mr-1 inline" />
-                Book a Walkthrough
+                {t('Book a Walkthrough')}
               </a>
               <Button
                 variant="outline"
                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
-                className="border-[#dfe6ef] hover:border-[#0878f9] text-[#07152f] font-semibold h-11 px-6 rounded-xl type-ui"
+                className="mkt-btn-secondary font-semibold h-11 px-6 rounded-xl type-ui"
               >
-                <span className="relative z-10">Chat on WhatsApp</span>
+                <span className="relative z-10">{t('Chat on WhatsApp')}</span>
               </Button>
             </div>
           </AnimateIn>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 relative z-10 border-t border-[#dfe6ef] pt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 relative z-10 border-t border-[var(--marketing-border)] pt-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Info */}
           <AnimateIn type="fadeLeft" delay={0.1}>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold font-marketing-heading text-[#07152f] mb-6 tracking-tight">
-                Direct Channels
+              <h2 className="text-xl sm:text-2xl font-bold font-marketing-heading text-[var(--marketing-text-primary)] mb-6 tracking-tight">
+                {t('Direct Channels')}
               </h2>
               <div className="space-y-6 mb-8">
                 <div className="flex items-start gap-4">
-                  <Mail className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
+                  <Mail className="w-5 h-5 text-[var(--marketing-accent)] mt-1 flex-shrink-0" />
                   <div>
-                    <div className="font-bold text-[#07152f] mb-1">Email</div>
+                    <div className="font-bold text-[var(--marketing-text-primary)] mb-1">{t('Email')}</div>
                     <div className="flex flex-col gap-1 type-ui">
-                      <div className="text-[#075fc7]">
-                        General: <ObfuscatedEmail email="info@alphaclonesystems.com" className="hover:underline" />
+                      <div className="text-[var(--marketing-accent-hover)]">
+                        {t('General')}: <ObfuscatedEmail email="info@alphaclonesystems.com" className="hover:underline" />
                       </div>
-                      <div className="text-[#075fc7]">
-                        Sales: <ObfuscatedEmail email="sales@alphaclonesystems.com" className="hover:underline" />
+                      <div className="text-[var(--marketing-accent-hover)]">
+                        {t('Sales')}: <ObfuscatedEmail email="sales@alphaclonesystems.com" className="hover:underline" />
                       </div>
-                      <div className="text-[#075fc7]">
-                        Administration: <ObfuscatedEmail email="admin@alphaclonesystems.com" className="hover:underline" />
+                      <div className="text-[var(--marketing-accent-hover)]">
+                        {t('Administration')}: <ObfuscatedEmail email="admin@alphaclonesystems.com" className="hover:underline" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <Phone className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
+                  <Phone className="w-5 h-5 text-[var(--marketing-accent)] mt-1 flex-shrink-0" />
                   <div>
-                    <div className="font-bold text-[#07152f] mb-1">Phone &amp; WhatsApp</div>
+                    <div className="font-bold text-[var(--marketing-text-primary)] mb-1">{t('Phone & WhatsApp')}</div>
                     <div className="flex flex-col gap-1 type-ui">
-                      <a href="tel:+48517809674" className="text-[#075fc7] hover:underline transition-colors font-medium">
+                      <a href="tel:+48517809674" className="text-[var(--marketing-accent-hover)] hover:underline transition-colors font-medium">
                         +48 517 809 674
                       </a>
                       <a
                         href="https://wa.me/48517809674"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="type-caption text-[#52627b] hover:text-[#0878f9] transition-colors"
+                        className="type-caption text-[var(--marketing-text-on-light)] hover:text-[var(--marketing-accent)] transition-colors"
                       >
-                        Send WhatsApp message
+                        {t('Send WhatsApp message')}
                       </a>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <MapPin className="w-5 h-5 text-[#0878f9] mt-1 flex-shrink-0" />
+                  <MapPin className="w-5 h-5 text-[var(--marketing-accent)] mt-1 flex-shrink-0" />
                   <div>
-                    <div className="font-bold text-[#07152f] mb-1">Registered office</div>
-                    <div className="text-[#52627b] type-ui">{formatLegalAddress()}</div>
-                    <div className="text-[#76849a] type-caption mt-1">
-                      Support is available by phone and WhatsApp — remote team, US-registered entity.
+                    <div className="font-bold text-[var(--marketing-text-primary)] mb-1">{t('Registered office')}</div>
+                    <div className="text-[var(--marketing-text-on-light)] type-ui">{formatLegalAddress()}</div>
+                    <div className="text-[var(--marketing-text-muted)] type-caption mt-1">
+                      {t('Support is available by phone and WhatsApp — remote team, US-registered entity.')}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 bg-[#f7f9fc] border border-[#dfe6ef] rounded-2xl">
-                <p className="type-card-description font-bold text-[#07152f] mb-1">Prefer a live call?</p>
-                <p className="type-card-description text-[#52627b] mb-4">
-                  Skip the inbox and schedule a 30-minute walkthrough directly.
+              <div className="p-6 bg-[var(--marketing-bg-secondary)] border border-[var(--marketing-border)] rounded-2xl">
+                <p className="type-card-description font-bold text-[var(--marketing-text-primary)] mb-1">{t('Prefer a live call?')}</p>
+                <p className="type-card-description text-[var(--marketing-text-on-light)] mb-4">
+                  {t('Skip the inbox and schedule a live walkthrough directly.')}
                 </p>
                 <a
                   href={bookingDestination}
                   target={bookingIsExternal ? '_blank' : undefined}
                   rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
-                  className="inline-flex items-center gap-2 type-ui font-semibold text-[#075fc7] hover:text-[#0878f9] transition-colors"
+                  className="inline-flex items-center gap-2 type-ui font-semibold text-[var(--marketing-accent-hover)] hover:text-[var(--marketing-accent)] transition-colors"
                 >
                   <Calendar className="w-4 h-4" />
-                  Book a free 30-min meeting
+                  {t('Book a free meeting')}
                 </a>
               </div>
             </div>
@@ -238,9 +239,9 @@ const ContactPage: React.FC = () => {
 
           {/* Contact Form */}
           <AnimateIn type="fadeRight" delay={0.15}>
-            <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#dfe6ef] shadow-sm">
-              <h2 className="text-xl sm:text-2xl font-bold font-marketing-heading text-[#07152f] mb-6 tracking-tight">
-                Send a Message
+            <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[var(--marketing-border)] shadow-sm">
+              <h2 className="text-xl sm:text-2xl font-bold font-marketing-heading text-[var(--marketing-text-primary)] mb-6 tracking-tight">
+                {t('Send a Message')}
               </h2>
 
               {/* Success Banner */}
@@ -248,11 +249,11 @@ const ContactPage: React.FC = () => {
                 <div className="flex items-start gap-3 text-emerald-800 bg-emerald-50 border border-emerald-200 p-4 rounded-xl mb-6 animate-fadeIn">
                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0 text-emerald-600" />
                   <div>
-                    <p className="font-semibold">Inquiry received!</p>
+                    <p className="font-semibold">{t('Inquiry received!')}</p>
                     <p className="type-card-description text-emerald-700">
                       {notificationSent
-                        ? 'We received your inquiry and will be in touch within 24 hours.'
-                        : 'Your inquiry is saved, but the email notification could not be delivered. For an urgent reply, email bonnie@alphaclonesystems.com.'}
+                        ? t('We received your inquiry and will be in touch within 24 hours.')
+                        : t('Your inquiry is saved, but the email notification could not be delivered. For an urgent reply, email bonnie@alphaclonesystems.com.')}
                     </p>
                   </div>
                 </div>
@@ -262,7 +263,7 @@ const ContactPage: React.FC = () => {
               {status === 'error' && (
                 <div className="flex items-start gap-3 text-red-800 bg-red-50 border border-red-200 p-4 rounded-xl mb-6">
                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-600" />
-                  <span className="type-ui">{errorMessage || 'Failed to send message. Please try again.'}</span>
+                  <span className="type-ui">{errorMessage ? t(errorMessage) : t('Failed to send message. Please try again.')}</span>
                 </div>
               )}
 
@@ -285,17 +286,17 @@ const ContactPage: React.FC = () => {
                 </div>
 
                 <Input
-                  label="Full name *"
+                  label={t('Full name *')}
                   id="contact-name"
                   value={formData.name}
                   onChange={handleChange('name')}
                   required
                   disabled={isSubmitting}
-                  placeholder="Your name"
+                  placeholder={t('Your name')}
                 />
 
                 <Input
-                  label="Email address *"
+                  label={t('Email address *')}
                   id="contact-email"
                   type="email"
                   value={formData.email}
@@ -307,37 +308,37 @@ const ContactPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
-                    label="Company"
+                    label={t('Company')}
                     id="contact-company"
                     value={formData.company}
                     onChange={handleChange('company')}
                     disabled={isSubmitting}
-                    placeholder="Your company (optional)"
+                    placeholder={t('Your company (optional)')}
                   />
                   <Input
-                    label="Phone"
+                    label={t('Phone')}
                     id="contact-phone"
                     type="tel"
                     value={formData.phone}
                     onChange={handleChange('phone')}
                     disabled={isSubmitting}
-                    placeholder="+1 555 000 0000 (optional)"
+                    placeholder={t('+1 555 000 0000 (optional)')}
                   />
                 </div>
 
                 <Input
-                  label="Subject *"
+                  label={t('Subject *')}
                   id="contact-subject"
                   value={formData.subject}
                   onChange={handleChange('subject')}
                   required
                   disabled={isSubmitting}
-                  placeholder="What is this regarding?"
+                  placeholder={t('What is this regarding?')}
                 />
 
                 <div>
-                  <label htmlFor="contact-message" className="block type-label font-medium text-[#33445e] mb-1.5">
-                    Message *
+                  <label htmlFor="contact-message" className="block type-label font-medium text-[var(--marketing-text-secondary)] mb-1.5">
+                    {t('Message *')}
                   </label>
                   <textarea
                     id="contact-message"
@@ -347,8 +348,8 @@ const ContactPage: React.FC = () => {
                     required
                     disabled={isSubmitting}
                     rows={5}
-                    className="w-full bg-white border border-[#dfe6ef] rounded-xl px-4 py-3 text-[#07152f] placeholder-[#76849a] focus:outline-none focus:ring-2 focus:ring-[#0878f9] focus:border-transparent disabled:opacity-60 transition-colors resize-none"
-                    placeholder="Tell us about your business or what you need help with…"
+                    className="w-full bg-white border border-[var(--marketing-border)] rounded-xl px-4 py-3 text-[var(--marketing-text-primary)] placeholder-[var(--marketing-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--marketing-accent)] focus:border-transparent disabled:opacity-60 transition-colors resize-none"
+                    placeholder={t('Tell us about your business or what you need help with…')}
                   />
                 </div>
 
@@ -361,23 +362,28 @@ const ContactPage: React.FC = () => {
                     onError={() => setTurnstileToken('')}
                   />
                 )}
+                {turnstileEnabled && !turnstileToken && (
+                  <p className="type-ui text-[var(--marketing-text-on-light)]" role="status">
+                    {t('Complete the security check to send your message. If it does not load, email info@alphaclonesystems.com directly.')}
+                  </p>
+                )}
 
                 <Button
                   type="submit"
                   disabled={submitDisabled}
                   isLoading={isSubmitting}
                   size="lg"
-                  className="w-full font-semibold rounded-xl py-3.5 bg-[#07152f] text-white hover:bg-[#0c2f61] transition-colors shadow-sm"
+                  className="mkt-btn-primary w-full font-semibold rounded-xl py-3.5 transition-colors shadow-sm"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     {isSubmitting ? (
                       <>
                         <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Sending…
+                        {t('Sending…')}
                       </>
                     ) : (
                       <>
-                        Send Message
+                        {t('Send Message')}
                         <Send className="w-4 h-4" />
                       </>
                     )}

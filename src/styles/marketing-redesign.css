@@ -1,6 +1,9 @@
 /* AlphaClone 2026 marketing redesign — light editorial canvas, proof-led product scenes. */
 
 :root {
+  --marketing-header-height: 72px;
+  --marketing-header-compact-height: 56px;
+  --marketing-header-mobile-height: 66px;
   --acr-ink: #07152f;
   --acr-ink-2: #102443;
   --acr-blue: #0878f9;
@@ -32,6 +35,17 @@
   --text-secondary: #33445e;
   --text-muted: #60708a;
   --text-inverse: #ffffff;
+  --surface-primary: var(--marketing-surface);
+  --surface-hover: var(--marketing-bg-secondary);
+  --interactive-secondary: var(--marketing-accent);
+  --focus-ring: var(--marketing-accent);
+  --marketing-text-on-light: var(--acr-slate);
+  --marketing-action-bg: var(--acr-ink);
+  --marketing-action-text: #ffffff;
+  --marketing-selected-bg: var(--acr-blue-dark);
+  --marketing-selected-text: #ffffff;
+  --marketing-nav-font: var(--font-ui);
+  --marketing-nav-weight: var(--weight-semibold);
   --border-subtle: #dfe6ef;
   --border-default: #cfd9e6;
   --border-strong: #aebdd0;
@@ -80,6 +94,15 @@
   background: #ffffff !important;
   color: #07152f !important;
 }
+
+/* Legal documents use the same light canvas and readable content tokens as marketing. */
+.mkt-light-canvas .legal-page-shell .bg-slate-900\/60,
+.mkt-light-canvas .legal-page-shell .bg-slate-900 { background: var(--marketing-surface-elevated) !important; }
+.mkt-light-canvas .legal-page-shell .border-slate-800 { border-color: var(--marketing-border) !important; }
+.mkt-light-canvas .legal-page-shell a { color: var(--marketing-accent-hover); }
+.mkt-light-canvas .legal-page-shell .text-slate-300,
+.mkt-light-canvas .legal-page-shell .text-slate-400,
+.mkt-light-canvas .legal-page-shell .text-slate-500 { color: var(--marketing-text-secondary) !important; }
 
 .mkt-light-canvas h1,
 .mkt-light-canvas h2,
@@ -347,22 +370,33 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 70;
-  height: 72px;
+  height: var(--marketing-header-height);
   border-bottom: 1px solid rgba(213, 224, 237, 0.9);
   background: rgba(255, 255, 255, 0.94);
   color: var(--acr-ink);
   backdrop-filter: blur(16px) saturate(130%);
   box-shadow: 0 2px 18px rgba(32, 53, 81, 0.04);
+  transition: height 180ms ease;
 }
 
 .mkt-header-redesign .mkt-header-bar {
-  height: 72px;
-  min-height: 72px;
+  height: var(--marketing-header-height);
+  min-height: var(--marketing-header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
+  transition: height 180ms ease, min-height 180ms ease;
 }
+
+.mkt-header-redesign.is-compact,
+.mkt-header-redesign.is-compact .mkt-header-bar {
+  height: var(--marketing-header-compact-height);
+  min-height: var(--marketing-header-compact-height);
+}
+
+/* Anchor navigation shares the fixed header's size without affecting the app. */
+html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) + 12px); }
 
 .mkt-brand-redesign {
   display: inline-flex;
@@ -519,8 +553,9 @@
   display: inline-flex;
   align-items: center;
   color: #26374e;
-  font-size: var(--type-caption-size);
-  font-weight: var(--weight-semibold);
+  font-family: var(--marketing-nav-font);
+  font-size: var(--type-ui-size);
+  font-weight: var(--marketing-nav-weight);
   text-decoration: none;
 }
 
@@ -750,7 +785,55 @@
 .acr-result-card li svg { width: 12px; height: 12px; padding: 2px; border-radius: 50%; background: #dff8ea; color: var(--acr-green); }
 .acr-result-card > span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 7px; background: var(--acr-ink); color: #fff; font-size: var(--type-caption-size); font-weight: var(--weight-bold); }
 .acr-result-card > span svg { width: 12px; }
-.acr-scene-label { position: absolute; z-index: 5; right: 10px; bottom: 6px; color: #5f7089; font-size: var(--type-caption-size); }
+/* The marketing canvas is light; the legacy marketing utilities below were
+   authored for dark pages and otherwise make descriptions nearly invisible. */
+.mkt-light-canvas .text-slate-500:not(.product-system-visual *):not(.mkt-dark-banner *):not(.mkt-mid-cta *),
+.mkt-light-canvas .text-slate-600:not(.product-system-visual *):not(.mkt-dark-banner *):not(.mkt-mid-cta *),
+.mkt-light-canvas .text-slate-700:not(.product-system-visual *):not(.mkt-dark-banner *):not(.mkt-mid-cta *) {
+  color: var(--marketing-text-on-light) !important;
+}
+
+.mkt-header-redesign .mkt-nav-link-redesign {
+  font-family: var(--marketing-nav-font);
+  font-weight: var(--marketing-nav-weight);
+  white-space: nowrap;
+}
+.mkt-mobile-nav-redesign a,
+.mkt-mobile-nav-redesign summary {
+  font-family: var(--marketing-nav-font);
+  font-weight: var(--marketing-nav-weight);
+}
+
+.acr-hero .acr-product-scene .acr-instruction-card { right: 0; }
+.acr-hero .acr-product-scene .acr-result-card { right: 0; }
+
+/* Shared marketing controls resolve the same tokens on every light page. */
+.mkt-light-canvas .mkt-btn-primary { background: var(--marketing-action-bg); color: var(--marketing-action-text) !important; }
+.mkt-light-canvas .mkt-btn-primary:hover { background: var(--acr-ink-2); }
+.mkt-light-canvas .mkt-btn-secondary { background: var(--marketing-surface); color: var(--marketing-text-primary) !important; }
+.mkt-light-canvas .mkt-btn-secondary:hover { background: var(--marketing-bg-secondary); }
+.mkt-light-canvas input::placeholder,
+.mkt-light-canvas textarea::placeholder { color: var(--marketing-text-muted); opacity: 1; }
+
+.mkt-light-canvas .mkt-pricing-toggle button[aria-pressed="true"] {
+  background: var(--marketing-selected-bg) !important;
+  color: var(--marketing-selected-text) !important;
+  box-shadow: none !important;
+}
+.mkt-light-canvas .mkt-pricing-toggle button[aria-pressed="false"] {
+  background: var(--marketing-surface) !important;
+  color: var(--marketing-accent-hover) !important;
+}
+
+@keyframes pricing-price-enter {
+  from { opacity: .35; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pricing-price-change { animation: pricing-price-enter 220ms ease-out; font-variant-numeric: tabular-nums; }
+.cookie-preferences-dialog::backdrop { background: rgba(2, 6, 23, .78); backdrop-filter: blur(6px); }
+@media (prefers-reduced-motion: reduce) {
+  .pricing-price-change { animation: none; }
+}
 
 .acr-integrations { padding: 28px 0 34px; border-bottom: 1px solid var(--acr-line); background: rgba(255,255,255,0.96); }
 .acr-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
@@ -955,7 +1038,6 @@
 @media (max-width: 1240px) {
   .mkt-nav-redesign { gap: 14px; }
   .mkt-header-actions-redesign { gap: 11px; }
-  .mkt-language-control { display: none; }
   .acr-hero-grid { grid-template-columns: minmax(370px, .82fr) minmax(520px, 1.18fr); gap: 20px; }
   .acr-product-scene { transform: scale(.92); transform-origin: center right; }
   .acr-instruction-card { right: -40px; }
@@ -963,10 +1045,13 @@
   .acr-feature-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .mkt-nav-redesign,
   .mkt-header-actions-redesign { display: none; }
   .mkt-header-mobile-redesign { display: flex; }
+}
+
+@media (max-width: 1024px) {
   .acr-hero { min-height: auto; }
   .acr-hero-grid { min-height: 690px; grid-template-columns: .9fr 1.1fr; gap: 12px; }
   .acr-hero-copy h1 { font-size: var(--type-hero-size); }
@@ -1004,7 +1089,10 @@
 
 @media (max-width: 640px) {
   .mkt-header-redesign,
-  .mkt-header-redesign .mkt-header-bar { height: 66px; min-height: 66px; }
+  .mkt-header-redesign .mkt-header-bar { height: var(--marketing-header-mobile-height); min-height: var(--marketing-header-mobile-height); }
+  .mkt-header-redesign.is-compact,
+  .mkt-header-redesign.is-compact .mkt-header-bar { height: var(--marketing-header-mobile-height); min-height: var(--marketing-header-mobile-height); }
+  html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-mobile-height) + 12px); }
   .mkt-header-redesign .mkt-container { padding-left: 16px; padding-right: 16px; }
   .mkt-brand-redesign .mkt-brand-word { font-size: var(--text-lg); }
   .mkt-brand-system { display: none; }
@@ -1026,7 +1114,6 @@
   .acr-phone-speaker { position: absolute; z-index: 2; top: 5px; left: 50%; width: 52px; height: 8px; border-radius: 999px; background: #142033; transform: translateX(-50%); }
   .acr-instruction-card { display: none; }
   .acr-result-card { top: 96px; left: 5px; right: auto; width: 190px; padding: 13px; }
-  .acr-scene-label { right: 0; bottom: 2px; }
   .acr-integrations { padding: 26px 0; }
   .acr-strip-head { align-items: flex-start; }
   .acr-strip-head > a { display: none; }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
+import { matchesPublicMonthlyPrice } from '@/config/pricingPlans';
 import { requireTenantRole } from '@/lib/apiAuth';
 import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
@@ -35,6 +36,13 @@ export async function POST(req: NextRequest) {
         }
 
         const planConfig = PLAN_PRICING[plan as SubscriptionPlan];
+        if (!matchesPublicMonthlyPrice(plan, planConfig.monthly * 100)) {
+            console.error('Checkout price differs from public pricing', { plan });
+            return NextResponse.json(
+                { error: 'Checkout pricing is being updated. Please contact sales before subscribing.' },
+                { status: 503 },
+            );
+        }
         const planNames: Record<string, string> = {
             starter: 'Starter Plan',
             pro: 'Pro Plan',

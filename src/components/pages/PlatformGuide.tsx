@@ -32,7 +32,7 @@ const STARTING_STEPS = [
 
 /** Practical public entry point for the outcome-led first-use journey. */
 const PlatformGuide = () => (
-  <main className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
+  <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
     <section className="relative overflow-hidden border-b border-slate-800/50 bg-gradient-to-br from-slate-900 via-slate-950 to-[#071f2a] py-16 sm:py-24">
       <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" aria-hidden="true" />
       <div className="mx-auto grid max-w-5xl gap-12 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -85,7 +85,7 @@ const PlatformGuide = () => (
     </section>
 
     <section aria-labelledby="safe-start-heading" className="py-12 sm:py-14"><div className="mx-auto grid max-w-5xl gap-8 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-start"><div><p className="type-caption font-semibold uppercase tracking-caps text-slate-500">Built for confident action</p><h2 id="safe-start-heading" className="mt-2 text-2xl font-bold sm:text-3xl">A few useful safeguards</h2><p className="mt-3 leading-relaxed text-slate-400">Good business software should make the next step clearer without taking important actions away from you.</p></div><ul className="space-y-3 rounded-xl border border-teal-500/20 bg-teal-500/5 p-5">{['Email campaigns require a recipient group and sender address before they can be sent.','Social updates can be reviewed before publishing from a connected account.','Quotes and invoices can be prepared as drafts before you share or send them.','You can return to the Dashboard and change direction without losing access to other workspaces.'].map((item) => <li key={item} className="flex gap-3 type-ui leading-relaxed text-slate-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" aria-hidden="true" />{item}</li>)}</ul></div></section>
-  </main>
+  </div>
 );
 
 export default PlatformGuide;

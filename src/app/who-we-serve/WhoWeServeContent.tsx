@@ -63,7 +63,7 @@ export default function WhoWeServePage() {
                     <div className="text-center mb-12 max-w-2xl mx-auto">
                         <h2 className="text-2xl sm:text-3xl font-bold font-marketing-heading text-[#07152f] mb-3 tracking-tight">{t('Same problem, different team shape')}</h2>
                         <p className="text-[#52627b] type-card-description leading-relaxed">
-                            Each segment below starts with the business challenge — not a module list. See full before/after stories on{' '}
+                            {t('Each segment below starts with the business challenge — not a module list. See full before/after stories on')}{' '}
                             <Link href="/results" className="text-[#075fc7] hover:text-[#0878f9] font-semibold underline underline-offset-2">
                                 /results
                             </Link>

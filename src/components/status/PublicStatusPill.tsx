@@ -4,20 +4,21 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function PublicStatusPill() {
-  const [status, setStatus] = useState<'healthy' | 'degraded' | 'unhealthy'>('healthy');
+  const [status, setStatus] = useState<'healthy' | 'degraded' | 'unhealthy' | 'unknown'>('unknown');
 
   useEffect(() => {
     let isMounted = true;
     fetch('/api/health')
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (!isMounted) return;
         if (data?.status === 'healthy') setStatus('healthy');
         else if (data?.status === 'degraded') setStatus('degraded');
-        else setStatus('unhealthy');
+        else if (data?.status === 'unhealthy') setStatus('unhealthy');
+        else setStatus('unknown');
       })
       .catch(() => {
-        if (isMounted) setStatus('healthy');
+        if (isMounted) setStatus('unknown');
       });
     return () => {
       isMounted = false;
@@ -29,14 +30,14 @@ export default function PublicStatusPill() {
       ? 'bg-emerald-400'
       : status === 'degraded'
         ? 'bg-amber-400'
-        : 'bg-rose-400';
+        : status === 'unhealthy' ? 'bg-rose-400' : 'bg-slate-400';
 
   const labelText =
     status === 'healthy'
-      ? 'All Systems Operational'
+      ? 'Web App Responding'
       : status === 'degraded'
         ? 'Degraded Performance'
-        : 'System Disruption';
+        : status === 'unhealthy' ? 'System Disruption' : 'Status Unavailable';
 
   return (
     <Link
@@ -45,7 +46,7 @@ export default function PublicStatusPill() {
       title={`Live Platform Status: ${labelText}`}
     >
       <span className="relative flex h-2 w-2">
-        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${colorClass} opacity-75`} />
+        {status !== 'unknown' && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${colorClass} opacity-75`} />}
         <span className={`relative inline-flex rounded-full h-2 w-2 ${colorClass}`} />
       </span>
       <span>{labelText}</span>

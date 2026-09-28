@@ -53,9 +53,10 @@ const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
   },
 ];
 
-function Logo() {
+function Logo({ onClick }: { onClick?: () => void }) {
+  const { t } = useLanguage();
   return (
-    <Link href="/" className="mkt-brand mkt-brand-redesign" aria-label="AlphaClone home">
+    <Link href="/" onClick={onClick} className="mkt-brand mkt-brand-redesign" aria-label={t('AlphaClone home')}>
       <span className="mkt-brand-mark" aria-hidden="true">
         <Image src="/logo.png" alt="" width={34} height={34} priority className="h-[34px] w-[34px] object-contain" />
       </span>
@@ -68,15 +69,15 @@ function Logo() {
 }
 
 function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
-  const { language, setLanguage, languageCode } = useLanguage();
+  const { language, setLanguage, languageCode, t } = useLanguage();
   return (
     <label className={`mkt-language-control${mobile ? ' is-mobile' : ''}`}>
       <Globe2 className="h-4 w-4" aria-hidden="true" />
-      <span className="sr-only">Language</span>
+      <span className="sr-only">{t('Language')}</span>
       <select
         value={language}
         onChange={(event) => setLanguage(event.target.value as SupportedLanguage)}
-        aria-label="Select language"
+        aria-label={t('Select language')}
       >
         {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{mobile ? item.nativeName : item.code.toUpperCase()}</option>)}
       </select>
@@ -93,12 +94,20 @@ export default function MarketingHeader() {
   const pathname = usePathname();
   const [activeMenu, setActiveMenu] = useState<MenuKey | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setActiveMenu(null);
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const updateHeader = () => setCompact(window.scrollY > 120);
+    updateHeader();
+    window.addEventListener('scroll', updateHeader, { passive: true });
+    return () => window.removeEventListener('scroll', updateHeader);
+  }, []);
 
   useEffect(() => {
     if (!activeMenu) return;
@@ -117,11 +126,11 @@ export default function MarketingHeader() {
   return (
     <>
       <a href="#main-content" className="mkt-skip-link">{t('Skip to main content')}</a>
-      <header className="mkt-header mkt-header-redesign">
+      <header className={`mkt-header mkt-header-redesign${compact ? ' is-compact' : ''}`}>
         <div className="mkt-container">
           <div className="mkt-header-bar">
             <Logo />
-            <nav ref={navRef} className="mkt-nav-redesign" aria-label="Primary navigation">
+            <nav ref={navRef} className="mkt-nav-redesign" aria-label={t('Primary navigation')}>
               {MENUS.slice(0, 2).map((menu) => (
                 <div className="mkt-nav-popover" key={menu.key}>
                   <button
@@ -185,7 +194,7 @@ export default function MarketingHeader() {
               <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-demo-mobile">{t('Book a demo')}</PrimaryCTA>
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
-                  <button type="button" className="mkt-mobile-toggle-redesign" aria-label="Open navigation menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
+                  <button type="button" className="mkt-mobile-toggle-redesign" aria-label={t('Open navigation menu')} aria-expanded={mobileOpen} aria-controls="mkt-mobile-sheet">
                     <Menu className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </SheetTrigger>
@@ -195,17 +204,15 @@ export default function MarketingHeader() {
                   showCloseButton={false}
                   className="mkt-mobile-sheet-redesign h-[100dvh] w-[min(100vw,24rem)] overflow-y-auto"
                 >
-                  <SheetTitle className="sr-only">AlphaClone navigation</SheetTitle>
+                  <SheetTitle className="sr-only">{t('AlphaClone navigation')}</SheetTitle>
                   <div className="mkt-mobile-sheet-head">
-                    <div onClick={() => setMobileOpen(false)}>
-                      <Logo />
-                    </div>
-                    <SheetClose className="mkt-mobile-toggle-redesign" aria-label="Close navigation menu">
+                    <Logo onClick={() => setMobileOpen(false)} />
+                    <SheetClose className="mkt-mobile-toggle-redesign" aria-label={t('Close navigation menu')}>
                       <X className="h-6 w-6" aria-hidden="true" />
                     </SheetClose>
                   </div>
                   <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">{t('Book a demo')}</PrimaryCTA>
-                  <nav className="mkt-mobile-nav-redesign" aria-label="Mobile navigation">
+                  <nav className="mkt-mobile-nav-redesign" aria-label={t('Mobile navigation')}>
                     <Link href="/how-it-works" onClick={() => setMobileOpen(false)}>{t('How it works')}</Link>
                     <Link href="/ecosystem" onClick={() => setMobileOpen(false)}>{t('Integrations')}</Link>
                     <Link href="/pricing" onClick={() => setMobileOpen(false)}>{t('Pricing')}</Link>

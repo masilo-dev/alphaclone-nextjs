@@ -4,6 +4,7 @@ import { requireTenantRole } from '@/lib/apiAuth';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { PLAN_PRICING, type SubscriptionPlan } from '@/services/tenancy/types';
+import { matchesPublicMonthlyPrice } from '@/config/pricingPlans';
 import { z } from 'zod';
 
 export async function POST(req: Request) {
@@ -32,6 +33,13 @@ export async function POST(req: Request) {
         }
 
         const priceId = PLAN_PRICING[planId as SubscriptionPlan]?.stripePriceId;
+        if (!matchesPublicMonthlyPrice(planId, PLAN_PRICING[planId as SubscriptionPlan].monthly * 100)) {
+            console.error('Checkout price differs from public pricing', { planId });
+            return NextResponse.json(
+                { error: 'Checkout pricing is being updated. Please contact sales before subscribing.' },
+                { status: 503 },
+            );
+        }
         if (!priceId) {
             return NextResponse.json({ error: `Price ID for plan ${planId} is not configured` }, { status: 503 });
         }

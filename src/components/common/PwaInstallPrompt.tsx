@@ -9,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const DISMISS_KEY = 'ac_pwa_install_dismissed_until';
 const DISMISS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const SESSION_SHOWN_KEY = 'ac_pwa_install_shown_session';
+const INSTALL_DELAY_MS = 15000;
 
 function isDismissed(): boolean {
   if (typeof window === 'undefined') return true;
@@ -25,7 +26,9 @@ export default function PwaInstallPrompt() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    if (typeof window === 'undefined' || isLoading || isPWA || isInstalled || isDismissed()) {
+    // Keep the public site available for reading and conversion. Invite users
+    // to install only after they have entered their workspace.
+    if (typeof window === 'undefined' || !pathname?.startsWith('/dashboard') || isLoading || isPWA || isInstalled || !canInstall || isDismissed()) {
       setVisible(false);
       return;
     }
@@ -34,36 +37,15 @@ export default function PwaInstallPrompt() {
       return;
     }
 
-    // Do not pop up on sensitive auth/checkout pages
-    if (pathname?.startsWith('/auth') || pathname?.startsWith('/authorize') || pathname?.startsWith('/login')) {
-      return;
-    }
-
-    if (canInstall) {
-      const timer = window.setTimeout(() => {
-        if (!isDismissed() && !isInstalled) {
-          setVisible(true);
-          sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
-        }
-      }, 1500);
-
-      return () => window.clearTimeout(timer);
-    }
-  }, [isLoading, isPWA, pathname]);
-
-  useEffect(() => {
-    if (canInstall && !visible && !isInstalled && !isPWA && !isDismissed()) {
-      if (sessionStorage.getItem(SESSION_SHOWN_KEY) !== '1') {
-        const timer = window.setTimeout(() => {
-          if (!isDismissed() && !isInstalled) {
-            setVisible(true);
-            sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
-          }
-        }, 1500);
-        return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      if (!isDismissed() && !isInstalled && document.visibilityState === 'visible') {
+        setVisible(true);
+        sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
       }
-    }
-  }, [canInstall, visible, isInstalled, isPWA]);
+    }, INSTALL_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [canInstall, isLoading, isPWA, isInstalled, pathname]);
 
   if (!visible || isInstalled || isPWA) return null;
 

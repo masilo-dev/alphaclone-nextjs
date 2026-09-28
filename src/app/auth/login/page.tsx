@@ -23,7 +23,7 @@ import PublicStatusPill from '@/components/status/PublicStatusPill';
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex items-center justify-center" role="status" aria-label="Loading sign in"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" /></main>}>
             <LoginContent />
         </Suspense>
     );
@@ -432,12 +432,12 @@ function LoginContent() {
 
     if (showMfaChallenge) {
         return (
-            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+            <main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
                 <div className="max-w-md w-full bg-white/95 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
                     <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Shield className="w-10 h-10 text-teal-600 dark:text-teal-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h2>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h1>
                     <p className="text-slate-600 dark:text-slate-400 mb-8 type-card-description">
                         Enter the 6-digit verification code from your authenticator app to continue.
                     </p>
@@ -482,12 +482,12 @@ function LoginContent() {
                         Back to Login
                     </button>
                 </div>
-            </div>
+            </main>
         );
     }
 
     return (
-        <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
+        <main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
             <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-white/95 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
@@ -577,7 +577,7 @@ function LoginContent() {
 
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <label className="type-label font-medium text-slate-600 dark:text-slate-400">Password</label>
+                            <label htmlFor="login-password" className="type-label font-medium text-slate-600 dark:text-slate-400">Password</label>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -607,6 +607,7 @@ function LoginContent() {
                         </div>
                         <div className="relative">
                             <Input
+                                id="login-password"
                                 type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -769,6 +770,6 @@ function LoginContent() {
                     </p>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }

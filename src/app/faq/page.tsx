@@ -36,7 +36,7 @@ export default function FaqPage() {
   return (
     <MarketingLandingShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-16 space-y-14">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 space-y-14">
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold font-marketing-heading text-[#07152f] mb-3 tracking-tight">
             Frequently asked questions
@@ -84,7 +84,7 @@ export default function FaqPage() {
             Get started
           </Link>
         </div>
-      </main>
+      </div>
     </MarketingLandingShell>
   );
 }

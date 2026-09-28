@@ -1,0 +1,86 @@
+import type { SupportedLanguage } from './languages';
+
+const pl: Record<string, string> = {
+  'Who it is for': 'Dla kogo',
+  'Built for teams that sell': 'Dla zespołów, które sprzedają',
+  'and deliver client work.': 'i realizują projekty klientów.',
+  'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — AlphaClone is your operating layer, not another point tool.': 'Jeśli arkusze i ciągłe przełączanie między CRM, projektami i rozliczeniami już nie wystarczają, AlphaClone pozwala połączyć tę pracę w jednym miejscu.',
+  'Each segment below starts with the business challenge — not a module list. See full before/after stories on': 'Każda grupa zaczyna się od konkretnego problemu biznesowego. Przykłady zmian przed i po wdrożeniu znajdziesz na stronie',
+  'Growth agencies': 'Rozwijające się agencje',
+  'Zoom + PandaDoc + separate CRM': 'Zoom + PandaDoc + osobny CRM',
+  'Client work scattered across CRM, delivery, and billing creates rework — and margin leaks when sales promises do not match what delivery sees.': 'Praca rozproszona między CRM, realizacją i rozliczeniami powoduje poprawki oraz straty, gdy ustalenia ze sprzedaży nie docierają do zespołu realizacyjnego.',
+  'One client record from pitch through signed SOW to invoice': 'Jeden rekord klienta od oferty przez podpisany zakres prac do faktury',
+  'Pipeline value visible next to active project load': 'Wartość sprzedaży widoczna obok obciążenia aktywnymi projektami',
+  'Branded client-facing forms and portals tied to CRM': 'Formularze i portale dla klientów powiązane z CRM',
+  'SaaS & B2B startups': 'Startupy SaaS i B2B',
+  'Early teams burn budget on overlapping subscriptions before they have a repeatable sales process.': 'Młode zespoły wydają pieniądze na nakładające się subskrypcje, zanim zbudują powtarzalny proces sprzedaży.',
+  'Forecast and deal board without enterprise CRM setup time': 'Prognoza i tablica transakcji bez długiej konfiguracji firmowego CRM',
+  'Contracts and billing linked to the same deal record': 'Umowy i rozliczenia powiązane z tym samym rekordem transakcji',
+  'Outreach prep and follow-up tasks without a separate sales stack': 'Przygotowanie kontaktu i dalszych działań bez osobnych narzędzi sprzedażowych',
+  'Consulting firms': 'Firmy konsultingowe',
+  'Clients expect a polished experience — but enterprise software is overkill and consumer tools look amateur.': 'Klienci oczekują profesjonalnej obsługi, a rozbudowane systemy dla dużych firm bywają zbyt skomplikowane.',
+  'Professional invoices, contracts, and meetings from one system': 'Profesjonalne faktury, umowy i spotkania w jednym systemie',
+  'Project and task visibility tied to each client engagement': 'Widoczność projektów i zadań związanych z każdym klientem',
+  'Less admin between calls, deliverables, and payment collection': 'Mniej pracy administracyjnej między rozmowami, realizacją i płatnościami',
+  'Emerging market founders': 'Założyciele firm na rozwijających się rynkach',
+  'Per-seat enterprise pricing prices out small teams that still need credible client operations.': 'Opłaty za każde stanowisko mogą być zbyt wysokie dla małych zespołów, które również potrzebują dobrej obsługi klientów.',
+  'Clear pricing before you commit budget': 'Jasne ceny przed podjęciem decyzji o budżecie',
+  'Same capabilities larger firms pay multiple vendors for': 'Możliwości, za które większe firmy płacą kilku dostawcom',
+  'Privacy-conscious teams': 'Zespoły dbające o prywatność',
+  'Sensitive client and financial data needs clear controls — not opaque third-party sprawl.': 'Wrażliwe dane klientów i informacje finansowe wymagają jasnych zasad dostępu oraz ochrony.',
+  'Isolated tenant workspaces with role-based access': 'Oddzielne przestrzenie firmowe z dostępem według ról',
+  'Encryption in transit and at rest with audit logging': 'Szyfrowanie danych podczas przesyłania i przechowywania oraz dziennik działań',
+  'Public privacy, security, and data-deletion policies': 'Publiczne zasady prywatności, bezpieczeństwa i usuwania danych',
+  'Remote & field teams': 'Zespoły zdalne i terenowe',
+  'When the team is distributed or on client sites, context lives in chat threads instead of one record.': 'Gdy zespół pracuje zdalnie lub u klientów, informacje często zostają w rozmowach zamiast w jednym rekordzie.',
+  'Meetings, tasks, and billing visible from mobile': 'Spotkania, zadania i rozliczenia dostępne na telefonie',
+  'Start a client call from the CRM record — notes stay attached': 'Rozpocznij rozmowę z rekordu CRM i zachowaj przy nim notatki',
+  'Fewer “what is the status?” messages back to the office': 'Mniej pytań do biura o stan pracy',
+};
+
+const es: Record<string, string> = {
+  'Who it is for': 'Para quién es',
+  'Built for teams that sell': 'Para equipos que venden',
+  'and deliver client work.': 'y entregan trabajos a clientes.',
+  'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — AlphaClone is your operating layer, not another point tool.': 'Si las hojas de cálculo y el cambio constante entre CRM, proyectos y facturación ya no te sirven, AlphaClone reúne ese trabajo en un mismo espacio.',
+  'Each segment below starts with the business challenge — not a module list. See full before/after stories on': 'Cada grupo comienza con un problema empresarial concreto. Consulta ejemplos del antes y el después en',
+  'Growth agencies': 'Agencias en crecimiento',
+  'Zoom + PandaDoc + separate CRM': 'Zoom + PandaDoc + CRM independiente',
+  'Client work scattered across CRM, delivery, and billing creates rework — and margin leaks when sales promises do not match what delivery sees.': 'Cuando el CRM, la entrega y la facturación están separados, se repite trabajo y se pierde margen si los compromisos de ventas no llegan al equipo de entrega.',
+  'One client record from pitch through signed SOW to invoice': 'Un registro del cliente desde la propuesta hasta el alcance firmado y la factura',
+  'Pipeline value visible next to active project load': 'Valor del proceso de ventas junto a la carga de proyectos activos',
+  'Branded client-facing forms and portals tied to CRM': 'Formularios y portales para clientes vinculados al CRM',
+  'SaaS & B2B startups': 'Startups SaaS y B2B',
+  'Early teams burn budget on overlapping subscriptions before they have a repeatable sales process.': 'Los equipos nuevos gastan presupuesto en suscripciones duplicadas antes de tener un proceso de ventas repetible.',
+  'Forecast and deal board without enterprise CRM setup time': 'Previsiones y tablero de acuerdos sin la larga configuración de un CRM empresarial',
+  'Contracts and billing linked to the same deal record': 'Contratos y facturación vinculados al mismo acuerdo',
+  'Outreach prep and follow-up tasks without a separate sales stack': 'Preparación de contactos y seguimiento sin otras herramientas de ventas',
+  'Consulting firms': 'Consultoras',
+  'Clients expect a polished experience — but enterprise software is overkill and consumer tools look amateur.': 'Los clientes esperan una atención profesional, pero los sistemas empresariales pueden ser excesivos y las herramientas básicas quedarse cortas.',
+  'Professional invoices, contracts, and meetings from one system': 'Facturas, contratos y reuniones profesionales desde un solo sistema',
+  'Project and task visibility tied to each client engagement': 'Proyectos y tareas visibles para cada cliente',
+  'Less admin between calls, deliverables, and payment collection': 'Menos tareas administrativas entre llamadas, entregas y cobros',
+  'Emerging market founders': 'Fundadores en mercados emergentes',
+  'Per-seat enterprise pricing prices out small teams that still need credible client operations.': 'El precio empresarial por usuario deja fuera a equipos pequeños que también necesitan atender bien a sus clientes.',
+  'Clear pricing before you commit budget': 'Precios claros antes de asignar presupuesto',
+  'Same capabilities larger firms pay multiple vendors for': 'Funciones por las que las empresas grandes pagan a varios proveedores',
+  'Privacy-conscious teams': 'Equipos que cuidan la privacidad',
+  'Sensitive client and financial data needs clear controls — not opaque third-party sprawl.': 'Los datos sensibles de clientes y finanzas necesitan controles claros y proveedores transparentes.',
+  'Isolated tenant workspaces with role-based access': 'Espacios separados por empresa y acceso según el rol',
+  'Encryption in transit and at rest with audit logging': 'Cifrado en tránsito y en reposo con registro de actividad',
+  'Public privacy, security, and data-deletion policies': 'Políticas públicas de privacidad, seguridad y eliminación de datos',
+  'Remote & field teams': 'Equipos remotos y de campo',
+  'When the team is distributed or on client sites, context lives in chat threads instead of one record.': 'Cuando el equipo trabaja a distancia o en las instalaciones del cliente, la información queda en chats en vez de en un registro compartido.',
+  'Meetings, tasks, and billing visible from mobile': 'Reuniones, tareas y facturación visibles en el móvil',
+  'Start a client call from the CRM record — notes stay attached': 'Inicia una llamada desde el CRM y conserva allí las notas',
+  'Fewer “what is the status?” messages back to the office': 'Menos mensajes a la oficina para preguntar por el estado del trabajo',
+};
+
+export function marketingWhoWeServeTranslate(lang: SupportedLanguage, text: string): string | undefined {
+  const dictionary = lang === 'pl' ? pl : lang === 'es' ? es : {};
+  if (text.startsWith('Full client workflow (') && text.endsWith(') — flat workspace pricing')) {
+    const price = text.slice('Full client workflow ('.length, -') — flat workspace pricing'.length);
+    return lang === 'pl' ? `Pełny proces obsługi klienta (${price}) — stała opłata za przestrzeń` : `Proceso completo del cliente (${price}) — precio fijo por espacio de trabajo`;
+  }
+  return dictionary[text];
+}

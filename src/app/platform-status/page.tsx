@@ -3,11 +3,6 @@ import Link from 'next/link';
 import {
   Activity,
   AlertCircle,
-  CheckCircle2,
-  Clock3,
-  Cpu,
-  Globe,
-  Server,
   ShieldCheck,
   Zap,
 } from 'lucide-react';
@@ -47,32 +42,28 @@ function normalizeStatus(value: unknown): HealthStatus {
   if (s === 'healthy' || s === 'ok' || s === 'operational') return 'healthy';
   if (s === 'degraded' || s === 'warning') return 'degraded';
   if (s === 'unhealthy' || s === 'failed' || s === 'down') return 'unhealthy';
-  // Default to healthy — a missing or unreadable health check is not an incident
-  return 'healthy';
+  return 'unknown';
 }
 
 function statusCopy(status: HealthStatus) {
   if (status === 'healthy')
     return {
-      label: 'All Systems Operational',
-      summary:
-        'All AlphaClone platform services, AI automations, and integrations are running normally with no reported incidents.',
+      label: 'Web Application Responding',
+      summary: 'The web application answered its latest liveness check. This check does not verify the database, integrations, or individual workflows.',
     };
   if (status === 'degraded')
     return {
       label: 'Partial Degradation',
-      summary:
-        'One or more non-critical services are experiencing elevated response times. Core business workflows remain unaffected.',
+      summary: 'The platform health check reports degraded service. Individual workflows may be affected.',
     };
   if (status === 'unhealthy')
     return {
       label: 'Service Disruption',
-      summary:
-        'Our team has identified an issue affecting a platform service and is actively working on resolution.',
+      summary: 'The platform health check reports a service disruption. Please retry affected workflows later.',
     };
   return {
-    label: 'All Systems Operational',
-    summary: 'Live status is confirming platform availability.',
+    label: 'Status Unavailable',
+    summary: 'The live health check could not be verified. Please try again shortly.',
   };
 }
 
@@ -120,7 +111,7 @@ const CORE_SERVICES: Array<{
 ];
 
 async function getStatusReport() {
-  let overallStatus: HealthStatus = 'healthy';
+  let overallStatus: HealthStatus = 'unknown';
   let responseTimeMs: number | null = null;
   let checkedAt = new Date().toISOString();
 
@@ -131,13 +122,11 @@ async function getStatusReport() {
       next: { revalidate: 0 },
     });
     responseTimeMs = Date.now() - t0;
-    const payload = await response.json().catch(() => null);
+    const payload = response.ok ? await response.json().catch(() => null) : null;
     checkedAt = payload?.timestamp || checkedAt;
-    // Only flip to degraded/unhealthy if the API explicitly says so
     overallStatus = normalizeStatus(payload?.status);
   } catch {
-    // Network error fetching health — keep healthy, the page itself loaded
-    overallStatus = 'healthy';
+    overallStatus = 'unknown';
   }
 
   const copy = statusCopy(overallStatus);
@@ -150,8 +139,8 @@ async function getStatusReport() {
     responseTimeMs,
     checks: CORE_SERVICES.map((s) => ({
       ...s,
-      // Individual services inherit overall status — no granular backend leaks
-      status: overallStatus,
+      // The platform endpoint does not report independent service checks.
+      status: 'unknown' as HealthStatus,
     })),
   };
 }
@@ -164,20 +153,20 @@ function StatusDot({ status }: { status: HealthStatus }) {
         ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
         : status === 'unhealthy'
           ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'
-          : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]';
+      : 'bg-slate-400';
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls}`} />;
 }
 
 function statusBadgeClass(status: HealthStatus) {
   if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
   if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-  return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-500/30 bg-slate-500/10 text-slate-300';
 }
 
 function statusRowBadge(status: HealthStatus) {
   if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
   if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-  return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-500/30 bg-slate-500/10 text-slate-300';
 }
 
 export default async function PlatformStatusPage() {
@@ -194,7 +183,7 @@ export default async function PlatformStatusPage() {
 
   return (
     <MarketingLandingShell>
-      <main className="min-h-screen bg-[#030712] pt-20 text-slate-200">
+      <div className="min-h-screen bg-[#030712] pt-20 text-slate-200">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -220,7 +209,7 @@ export default async function PlatformStatusPage() {
               </div>
               <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4 text-right type-caption text-slate-400">
                 <div className="font-semibold uppercase tracking-wider text-slate-500">
-                  Last Verified
+                  Last Health Check
                 </div>
                 <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-slate-200">
                   {new Date(report.checkedAt).toLocaleTimeString([], {
@@ -248,23 +237,8 @@ export default async function PlatformStatusPage() {
             {[
               {
                 icon: <Activity className="mb-3 h-5 w-5 text-emerald-400" />,
-                value: report.responseTimeMs ? `${report.responseTimeMs}ms` : '< 20ms',
-                label: 'API Response Time',
-              },
-              {
-                icon: <Clock3 className="mb-3 h-5 w-5 text-teal-400" />,
-                value: '99.99%',
-                label: '30-Day Platform Uptime',
-              },
-              {
-                icon: <Cpu className="mb-3 h-5 w-5 text-cyan-400" />,
-                value: '504 Capabilities',
-                label: 'AI Automation Suite',
-              },
-              {
-                icon: <Globe className="mb-3 h-5 w-5 text-indigo-400" />,
-                value: 'Global Edge',
-                label: 'Multi-Region Delivery',
+                value: report.status !== 'unknown' && report.responseTimeMs !== null ? `${report.responseTimeMs}ms` : 'Unavailable',
+                label: 'Health Check Response Time',
               },
             ].map(({ icon, value, label }) => (
               <div
@@ -285,10 +259,10 @@ export default async function PlatformStatusPage() {
                 <div>
                   <h2 className="text-xl font-bold text-white">Platform Components</h2>
                   <p className="mt-0.5 type-card-description text-slate-400">
-                    Real-time status across all AlphaClone services.
+                    Platform areas are listed here; the health endpoint does not independently verify each service.
                   </p>
                 </div>
-                <ShieldCheck className="h-6 w-6 text-emerald-400" />
+                <ShieldCheck className="h-6 w-6 text-slate-400" />
               </div>
               <div className="divide-y divide-white/5">
                 {report.checks.map((check) => (
@@ -310,7 +284,7 @@ export default async function PlatformStatusPage() {
                         ? 'Operational'
                         : check.status === 'degraded'
                           ? 'Degraded'
-                          : 'Disrupted'}
+                          : check.status === 'unhealthy' ? 'Disrupted' : 'Not verified'}
                     </span>
                   </div>
                 ))}
@@ -324,20 +298,12 @@ export default async function PlatformStatusPage() {
                   <Zap className="h-5 w-5 text-teal-400" />
                   <h2 className="text-lg font-bold text-white">Security & Compliance</h2>
                 </div>
-                <dl className="space-y-3.5 type-caption">
-                  {[
-                    ['Data Encryption', 'In-transit & at-rest'],
-                    ['Workspace Isolation', 'Strict per-tenant boundaries'],
-                    ['DDoS Protection', 'Always-on shielding'],
-                    ['Compliance', 'GDPR & SOC2 Ready'],
-                    ['Backups', 'Continuous point-in-time'],
-                  ].map(([dt, dd]) => (
-                    <div key={dt} className="flex justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                      <dt className="text-slate-400">{dt}</dt>
-                      <dd className="font-semibold text-emerald-400">{dd}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <p className="type-caption text-slate-400">The runtime health check does not verify security controls. Review the published documents for policy and support information.</p>
+                <div className="mt-4 flex flex-col gap-2 type-ui">
+                  <Link href="/security-policy" className="text-cyan-300 underline">Security policy</Link>
+                  <Link href="/compliance" className="text-cyan-300 underline">Compliance overview</Link>
+                  <Link href="/sla" className="text-cyan-300 underline">Service level agreement</Link>
+                </div>
               </section>
 
               {/* Incident Log */}
@@ -347,7 +313,7 @@ export default async function PlatformStatusPage() {
                   <div>
                     <h2 className="text-base font-bold text-white">Incident Log</h2>
                     <p className="mt-1.5 type-card-description leading-5 text-slate-400">
-                      No active incidents or scheduled maintenance. All services are operating smoothly.
+                      An incident history is not available on this page. The health check above only reports current web application liveness.
                     </p>
                   </div>
                 </div>
@@ -357,7 +323,8 @@ export default async function PlatformStatusPage() {
 
           {/* ── Enterprise Modules ────────────────────────────────── */}
           <section className="mt-8 rounded-2xl border border-white/10 bg-slate-950/90 p-6 shadow-xl backdrop-blur-md">
-            <h2 className="text-lg font-bold text-white">Covered Business Modules</h2>
+            <h2 className="text-lg font-bold text-white">Product Areas</h2>
+            <p className="mt-1 type-caption text-slate-400">These areas are not independently monitored by this health check.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 'CRM & Lead Pipeline',
@@ -368,9 +335,8 @@ export default async function PlatformStatusPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-3 type-caption font-semibold text-emerald-200"
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 type-caption font-semibold text-slate-200"
                 >
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                   {item}
                 </div>
               ))}
@@ -392,7 +358,7 @@ export default async function PlatformStatusPage() {
           </section>
 
         </section>
-      </main>
+      </div>
     </MarketingLandingShell>
   );
 }

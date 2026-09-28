@@ -12,7 +12,7 @@ type Props = {
 
 export default function MarketingFeaturePage({ title, description, bullets, comparison, competitorName }: Props) {
   return (
-    <main className="bg-[var(--marketing-bg-primary)]">
+    <div className="bg-[var(--marketing-bg-primary)]">
       <MarketingSection className="relative overflow-hidden pt-16 sm:pt-20">
         <div className="marketing-glow-hero" aria-hidden="true" />
         <MarketingContainer className="relative z-10">
@@ -75,6 +75,6 @@ export default function MarketingFeaturePage({ title, description, bullets, comp
           </div>
         </MarketingContainer>
       </MarketingSection>
-    </main>
+    </div>
   );
 }

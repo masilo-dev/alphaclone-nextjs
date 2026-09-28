@@ -17,13 +17,22 @@ export function UserPreferencesBootstrap() {
         if (!user?.id) return;
 
         let cancelled = false;
+        // A choice made on the public site or during this request takes priority
+        // over a server preference that may arrive after the user changed language.
+        const hasExplicitLocalLanguage = () => {
+            try {
+                return document.cookie.split(';').some((part) => part.trim().startsWith('ac-language='));
+            } catch {
+                return false;
+            }
+        };
 
         (async () => {
             const { preferences } = await preferencesService.getPreferences(user.id);
             if (cancelled || !preferences) return;
 
             const serverLang = preferences.dashboard_layout?.ui_language;
-            if (typeof serverLang === 'string' && ['en', 'es', 'pl'].includes(serverLang)) {
+            if (!hasExplicitLocalLanguage() && typeof serverLang === 'string' && ['en', 'es', 'pl'].includes(serverLang)) {
                 setLanguage(serverLang as SupportedLanguage, { skipServer: true });
             }
 

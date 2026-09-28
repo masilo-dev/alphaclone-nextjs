@@ -8,12 +8,11 @@ import { getBookingConfig, resolvePlatformBookingUrl } from '@/lib/marketing/boo
 import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 import { useLanguage } from '@/contexts/LanguageContext';
-import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 const COPY = {
   en: {
     back: 'Back to AlphaClone', eyebrow: 'Free live product walkthrough', title: 'See one instruction become real work.',
-    intro: 'In 30 minutes, we will use your workflow to show how AlphaClone plans, requests approval, executes through connected tools, and records the result.',
+    intro: 'In a live demo, we will use your workflow to show how AlphaClone plans, requests approval, executes through connected tools, and records the result.',
     points: ['No pitch deck — see the product', 'Demo built around one of your workflows', 'Clear next steps and trial access'],
     plans: 'Plans', trial: 'Starter plan', days: '$15/month', exploreFirst: 'Prefer to explore first?', startTrial: 'Get started', watchDemo: 'Watch the recorded demo',
     pickTime: 'Pick a time', newTab: 'Open scheduler', timezone: 'Times are shown in your local timezone', explore: 'Explore the platform',
@@ -21,7 +20,7 @@ const COPY = {
   },
   pl: {
     back: 'Wróć do AlphaClone', eyebrow: 'Bezpłatna prezentacja produktu na żywo', title: 'Zobacz, jak jedno polecenie staje się wykonaną pracą.',
-    intro: 'W ciągu 30 minut wykorzystamy Twój proces, aby pokazać, jak AlphaClone planuje, prosi o zatwierdzenie, wykonuje działania w połączonych narzędziach i zapisuje wynik.',
+    intro: 'Podczas prezentacji na żywo wykorzystamy Twój proces, aby pokazać, jak AlphaClone planuje, prosi o zatwierdzenie, wykonuje działania w połączonych narzędziach i zapisuje wynik.',
     points: ['Bez prezentacji sprzedażowej — zobacz produkt', 'Demo oparte na jednym z Twoich procesów', 'Jasne kolejne kroki i dostęp próbny'],
     plans: 'Plany', trial: 'Bezpłatny okres próbny', days: '14 dni', exploreFirst: 'Wolisz najpierw sprawdzić platformę?', startTrial: 'Rozpocznij bezpłatny okres próbny', watchDemo: 'Obejrzyj nagrane demo',
     pickTime: 'Wybierz termin', newTab: 'Otwórz kalendarz', timezone: 'Terminy są pokazane w Twojej lokalnej strefie czasowej', explore: 'Poznaj platformę',
@@ -29,7 +28,7 @@ const COPY = {
   },
   es: {
     back: 'Volver a AlphaClone', eyebrow: 'Demostración gratuita del producto en vivo', title: 'Mira cómo una instrucción se convierte en trabajo realizado.',
-    intro: 'En 30 minutos usaremos tu flujo de trabajo para mostrar cómo AlphaClone planifica, solicita aprobación, ejecuta mediante herramientas conectadas y registra el resultado.',
+    intro: 'En una demostración en vivo usaremos tu flujo de trabajo para mostrar cómo AlphaClone planifica, solicita aprobación, ejecuta mediante herramientas conectadas y registra el resultado.',
     points: ['Sin presentación comercial: mira el producto', 'Demo basada en uno de tus flujos de trabajo', 'Próximos pasos claros y acceso de prueba'],
     plans: 'Planes', trial: 'Prueba gratuita', days: '14 días', exploreFirst: '¿Prefieres explorar primero?', startTrial: 'Iniciar prueba gratuita', watchDemo: 'Ver la demo grabada',
     pickTime: 'Elige una hora', newTab: 'Abrir calendario', timezone: 'Las horas se muestran en tu zona horaria local', explore: 'Explora la plataforma',
@@ -44,8 +43,7 @@ export default function BookDemoContent() {
   const bookingUrl = resolvePlatformBookingUrl(config.bookingUrl);
 
   return (
-    <MarketingLandingShell>
-      <div className="bg-white text-slate-900 selection:bg-blue-500/20">
+    <div className="bg-white text-slate-900 selection:bg-blue-500/20">
         <section className="pt-8 pb-6 sm:pt-12 sm:pb-10 px-4">
           <div className="max-w-5xl mx-auto">
             <Link
@@ -165,7 +163,6 @@ export default function BookDemoContent() {
             </nav>
           </div>
         </section>
-      </div>
-    </MarketingLandingShell>
+    </div>
   );
 }

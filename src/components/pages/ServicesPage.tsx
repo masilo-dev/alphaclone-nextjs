@@ -10,9 +10,11 @@ import {
 import AnimateIn from '../common/AnimateIn';
 import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ServicesPage: React.FC = () => {
-    const blufSummary = `AlphaClone Systems is an AI Business Execution Layer for service companies. It connects compatible AI assistants such as ChatGPT and Claude to CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational workspace for founders and teams.`;
+    const { t } = useLanguage();
+    const blufSummary = `AlphaClone Systems is an AI Business Execution Layer for service businesses. It connects compatible AI assistants such as ChatGPT and Claude to CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one workspace for the business owner.`;
 
     const services = [
         {
@@ -21,8 +23,8 @@ const ServicesPage: React.FC = () => {
             subtitle: 'AI-assisted lead and outreach workflows',
             color: 'from-teal-500 to-emerald-500',
             badge: 'Lead Workflow',
-            description: `The AlphaClone AI Growth Agent helps service teams find public business leads, prepare outreach, and move qualified opportunities into the CRM without scattering work across spreadsheets and inboxes.`,
-            extendedDescription: `The Growth Agent supports targeted searches across public business sources, then helps enrich records, score fit, and prepare outreach drafts that match your services. Teams can review the suggested messages, track responses, and hand qualified conversations into the CRM with context intact.`,
+            description: `The AlphaClone AI Growth Agent helps business owners find public business leads, prepare outreach, and move qualified opportunities into the CRM without scattering work across spreadsheets and inboxes.`,
+            extendedDescription: `The Growth Agent supports targeted searches across public business sources, then helps enrich records, score fit, and prepare outreach drafts that match your services. You can review suggested messages, track responses, and move qualified conversations into the CRM with context intact.`,
             features: [
                 'Automated lead discovery across public directories',
                 'AI-powered outreach and qualification conversations',
@@ -40,7 +42,7 @@ const ServicesPage: React.FC = () => {
             color: 'from-blue-500 to-indigo-500',
             badge: 'Core Feature',
             description: `Most small businesses track clients in spreadsheets, notes, or their inbox. AlphaClone's CRM gives you a searchable database for client relationships, deals, communication history, projects, and billing context.`,
-            extendedDescription: `Each CRM record can keep contact details, communication history from supported connections, invoices, contracts, notes, calls, projects, tasks, and pipeline position together. Teams can move deals through the visual pipeline, create the next delivery step, and keep meeting or booking context attached to the same relationship. Available behavior depends on the connections and permissions configured for the workspace.`,
+            extendedDescription: `Each CRM record can keep contact details, communication history from supported connections, invoices, contracts, notes, calls, projects, tasks, and pipeline position together. You can move deals through the visual pipeline, create the next delivery step, and keep meeting or booking context attached to the same relationship. Available behavior depends on the connections and permissions configured for the workspace.`,
             features: [
                 'Full client profiles with communication history',
                 'Visual drag-and-drop sales pipeline',
@@ -57,7 +59,7 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Connected invoicing and financial workflows',
             color: 'from-emerald-500 to-teal-500',
             badge: 'Professional Accounting',
-            description: `AlphaClone includes financial workflows for invoices, quotes, receipts, chart of accounts, journal entries, and financial reports. Teams should confirm their accounting and tax requirements before replacing dedicated accounting software.`,
+            description: `AlphaClone includes financial workflows for invoices, quotes, receipts, chart of accounts, journal entries, and financial reports. Confirm your accounting and tax requirements before replacing dedicated accounting software.`,
             extendedDescription: `You can generate, brand, and send a professional invoice in under 60 seconds. Invoices include your logo, itemized line items, payment terms, and a direct payment link. The system tracks payment status automatically — you see at a glance which invoices are paid, pending, or overdue. Beyond invoicing, the full accounting suite gives you a proper Chart of Accounts, journal entry recording, income statements, balance sheets, and cash flow reports. This is the same professional-grade accounting structure that your accountant expects to see at tax time — just presented in a way that a business owner without an accounting degree can actually understand and use.`,
             features: [
                 'Branded professional invoice generation',
@@ -93,7 +95,7 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Keep outreach and client context together',
             color: 'from-red-500 to-orange-500',
             badge: 'Context-Aware',
-            description: `Email work becomes difficult when provider inboxes, CRM records, and follow-up tasks live in separate places. AlphaClone connects supported email providers to the workspace so teams can prepare outreach, send approved messages, and keep the activity associated with the relevant business record.`,
+            description: `Email work becomes difficult when provider inboxes, CRM records, and follow-up tasks live in separate places. AlphaClone connects supported email providers to the workspace so you can prepare outreach, send approved messages, and keep the activity associated with the relevant business record.`,
             extendedDescription: `Connect a supported provider such as Outlook, Zoho, or Brevo according to the workflows available for that account. AlphaClone can prepare messages, execute approved sends, record delivery status, and keep follow-up work visible beside CRM context. Exact capabilities depend on provider permissions and connection status.`,
             features: [
                 'Supported provider connections',
@@ -143,21 +145,21 @@ const ServicesPage: React.FC = () => {
         },
         {
             icon: Shield,
-            title: 'Security, RBAC & Compliance',
-            subtitle: 'Enterprise-grade protection for your business data',
+            title: 'Security & Account Controls',
+            subtitle: 'Access and activity visibility for business data',
             color: 'from-rose-500 to-red-600',
-            badge: 'Enterprise-Grade',
-            description: `Data breaches and unauthorized access can be damaging for small businesses. AlphaClone includes role-based access control, audit logging, and account-level controls for teams handling client and financial data.`,
-            extendedDescription: `Role-Based Access Control (RBAC) means you decide what each team member or contractor can see and do inside the platform. Your accountant can access financial records while other team members stay focused on delivery workflows. Audit logs help you understand key account activity, and public policy pages explain privacy, deletion, and security practices.`,
+            badge: 'Account Protection',
+            description: `Data breaches and unauthorized access can be damaging for small businesses. AlphaClone provides account access controls and audit logging for the owner handling client and financial data.`,
+            extendedDescription: `The current business workspace is designed for one owner account. Account controls and activity logs help you review access and key actions. Public policy pages explain privacy, deletion, and security practices. The underlying permission infrastructure does not mean team accounts are available to sign up today.`,
             features: [
-                'Role-based access control (RBAC)',
+                'Owner account access controls',
                 'Audit logging for account activity',
                 'Security policy and support channels',
                 'Account-level access controls',
                 'Data encryption at rest and in transit',
                 'GDPR-compliant data handling',
             ],
-            impact: 'Role-based access, audit logging, and policy visibility for teams',
+            impact: 'Account access, activity logging, and policy visibility for the owner',
         },
         {
             icon: BarChart3,
@@ -165,13 +167,13 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Real-time insights across your entire operation',
             color: 'from-amber-500 to-orange-500',
             badge: 'Data-Driven',
-            description: `Making business decisions based on gut feeling is what keeps most small businesses stuck. AlphaClone's analytics layer turns all your operational data — client activity, revenue trends, pipeline movement, task completion rates, and team productivity — into clear, actionable dashboards that you can actually read and act on.`,
-            extendedDescription: `The Mission Control dashboard gives you a real-time overview of your business health: active projects, month-to-date revenue, outstanding receivables, pipeline value, and team workloads — all visible in a single screen. You can drill down into any metric to see the underlying data. Revenue reports break down earnings by client, service type, and time period. Pipeline analytics show you conversion rates at each stage, average deal size, and the velocity of deals through your funnel. Team productivity metrics show task completion rates, time-to-completion, and workload distribution. All of this data is live and refreshes automatically — no manual reporting or spreadsheet compilation required.`,
+            description: `AlphaClone's analytics bring client activity, revenue trends, pipeline movement, and task completion into dashboards that help you see what needs attention.`,
+            extendedDescription: `The dashboard brings active projects, revenue, outstanding receivables, and pipeline context into one view. Open a metric to inspect the underlying records where available. Reports can help you review earnings by client, service, and time period. This overview is designed for the owner operating the workspace.`,
             features: [
                 'Real-time Mission Control dashboard',
                 'Revenue analytics by client and service',
                 'Pipeline conversion rate tracking',
-                'Team productivity and workload metrics',
+                'Task completion and workload metrics',
                 'Custom date range reporting',
                 'Exportable reports for stakeholders',
             ],
@@ -188,24 +190,24 @@ const ServicesPage: React.FC = () => {
                         <AnimateIn type="fadeIn">
                             <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] type-caption font-bold uppercase tracking-wider">
                                 <div className="w-2 h-2 rounded-full bg-[#0878f9]" />
-                                <span>The Bottom Line</span>
+                                <span>{t('The Bottom Line')}</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
                             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-marketing-heading tracking-tight text-[#07152f] mb-6 leading-tight">
-                                AI Business Execution{' '}
+                                {t('AI Business Execution')}{' '}
                                 <span className="text-[#0878f9]">
-                                    Layer.
+                                    {t('Layer.')}
                                 </span>
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
                             <p className="text-lg sm:text-xl text-[#52627b] leading-relaxed max-w-3xl mx-auto">
-                                {blufSummary}
+                                {t(blufSummary)}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <PrimaryCTA href="/book-demo" className="w-full sm:w-auto">Book a demo</PrimaryCTA>
-                                <SecondaryCTA href="/#workflow" className="w-full sm:w-auto">See a 30-second workflow</SecondaryCTA>
+                                <PrimaryCTA href="/book-demo" className="w-full sm:w-auto">{t('Book a demo')}</PrimaryCTA>
+                                <SecondaryCTA href="/#workflow" className="w-full sm:w-auto">{t('See a 30-second workflow')}</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>
@@ -216,9 +218,9 @@ const ServicesPage: React.FC = () => {
                     <div className="max-w-6xl mx-auto px-4">
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-16">
-                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">Every Service, In Depth</h2>
+                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">{t('Every Service, In Depth')}</h2>
                                 <p className="text-[#52627b] text-lg max-w-2xl mx-auto leading-relaxed">
-                                    Here&apos;s exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.
+                                    {t("Here's exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.")}
                                 </p>
                             </div>
                         </AnimateIn>
@@ -238,34 +240,34 @@ const ServicesPage: React.FC = () => {
                                                 </div>
                                                 {service.badge && (
                                                     <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] type-caption font-semibold">
-                                                        {service.badge}
+                                                        {t(service.badge)}
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="text-2xl font-bold font-marketing-heading text-[#07152f] mb-1 tracking-tight">{service.title}</h3>
-                                            <p className="text-[#0878f9] type-card-description font-semibold mb-3">{service.subtitle}</p>
-                                            <p className="text-[#33445e] leading-relaxed mb-3">{service.description}</p>
-                                            <p className="text-[#52627b] leading-relaxed type-card-description">{service.extendedDescription}</p>
+                                            <h3 className="text-2xl font-bold font-marketing-heading text-[#07152f] mb-1 tracking-tight">{t(service.title)}</h3>
+                                            <p className="text-[#0878f9] type-card-description font-semibold mb-3">{t(service.subtitle)}</p>
+                                            <p className="text-[#33445e] leading-relaxed mb-3">{t(service.description)}</p>
+                                            <p className="text-[#52627b] leading-relaxed type-card-description">{t(service.extendedDescription)}</p>
                                             <div className="mt-6 p-4 bg-[#edf6ff] border border-[#d0e4ff] rounded-xl">
                                                 <div className="flex items-center gap-2">
                                                     <TrendingUp className="w-4 h-4 text-[#0878f9] flex-shrink-0" />
-                                                    <span className="text-[#075fc7] type-ui font-semibold">{service.impact}</span>
+                                                    <span className="text-[#075fc7] type-ui font-semibold">{t(service.impact)}</span>
                                                 </div>
                                             </div>
                                         </div>
                                         {/* Right: Features */}
                                         <div>
-                                            <h4 className="type-caption font-bold text-[#76849a] uppercase tracking-wider mb-4">Capabilities</h4>
+                                            <h4 className="type-caption font-bold text-[#76849a] uppercase tracking-wider mb-4">{t('Capabilities')}</h4>
                                             <div className="space-y-3">
                                                 {service.features.map((f, fi) => (
                                                     <p key={fi} className="text-[#33445e] type-card-description leading-relaxed border-l-2 border-[#d0e4ff] pl-3">
-                                                        {f}
+                                                        {t(f)}
                                                     </p>
                                                 ))}
                                             </div>
                                             <div className="mt-8 flex flex-col gap-3">
-                                                <PrimaryCTA className="w-full">Try This Free</PrimaryCTA>
-                                                <SecondaryCTA className="w-full">Book a Demo Call</SecondaryCTA>
+                                                <PrimaryCTA className="w-full">{t('Try This Free')}</PrimaryCTA>
+                                                <SecondaryCTA className="w-full">{t('Book a Demo Call')}</SecondaryCTA>
                                             </div>
                                         </div>
                                     </div>
@@ -281,10 +283,10 @@ const ServicesPage: React.FC = () => {
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-12">
                                 <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">
-                                    &ldquo;I&apos;m Not Technical&rdquo; — That&apos;s Exactly Who This Is For
+                                    {t('“I’m Not Technical” — That’s Exactly Who This Is For')}
                                 </h2>
                                 <p className="text-[#52627b] text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-                                    AlphaClone was built for business owners who want operational software without hiring an internal tools team. The core workflows use familiar records, approvals, and clear next actions.
+                                    {t('AlphaClone was built for business owners who want operational software without hiring an internal tools team. The core workflows use familiar records, approvals, and clear next actions.')}
                                 </p>
                             </div>
                         </AnimateIn>
@@ -292,12 +294,12 @@ const ServicesPage: React.FC = () => {
                             {[
                                 {
                                     icon: Clock,
-                                    title: 'Set Up in 30 Minutes',
-                                    desc: 'No installation, no configuration files, no developer required. The onboarding flow walks you through setup in plain English.',
+                                    title: 'Start With Your Business',
+                                    desc: 'Register your business and connect the workflows you plan to use. Review the available integrations before relying on them for important actions.',
                                 },
                                 {
                                     icon: Layers,
-                                    title: 'Everything Connected Automatically',
+                                    title: 'Keep Related Work Connected',
                                     desc: 'When you send an invoice, it can link to the right client and project. When a meeting is booked, it can update your calendar and CRM context from the same workspace.',
                                 },
                                 {
@@ -312,8 +314,8 @@ const ServicesPage: React.FC = () => {
                                 },
                                 {
                                     icon: Lock,
-                                    title: 'No Hidden Complexity',
-                                    desc: 'Every feature has a clear purpose that a business owner can understand. We don\'t use technical jargon in the interface. If you\'re unsure what something does, the tooltip explains it in one sentence.',
+                                    title: 'Clear Next Steps',
+                                    desc: 'Records and approval steps show what requires your attention. Review a proposed action before it affects a customer or connected system.',
                                 },
                                 {
                                     icon: Award,
@@ -324,8 +326,8 @@ const ServicesPage: React.FC = () => {
                                 <AnimateIn key={i} type="stagger" index={i}>
                                     <div className="p-6 rounded-2xl bg-white border border-[#dfe6ef] shadow-sm h-full">
                                         <item.icon className="w-8 h-8 text-[#0878f9] mb-4" />
-                                        <h3 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{item.title}</h3>
-                                        <p className="text-[#52627b] type-card-description leading-relaxed">{item.desc}</p>
+                                        <h3 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{t(item.title)}</h3>
+                                        <p className="text-[#52627b] type-card-description leading-relaxed">{t(item.desc)}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -338,18 +340,18 @@ const ServicesPage: React.FC = () => {
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
                             <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading mb-4 text-[#07152f] tracking-tight">
-                                Ready to Run Your Entire Business <br />
-                                from <span className="text-[#0878f9]">One Workspace?</span>
+                                {t('Ready to Run Your Entire Business')} <br />
+                                {t('from')} <span className="text-[#0878f9]">{t('One Workspace?')}</span>
                             </h2>
                             <p className="text-[#52627b] text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
-                                Choose the plan that fits your execution needs, or book a demo to see the workflow before you begin.
+                                {t('Choose the plan that fits your execution needs, or book a demo to see the workflow before you begin.')}
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
-                                <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">{t('Get started')}</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">{t('Book a Live Demo')}</SecondaryCTA>
                             </div>
                             <p className="mt-6 text-[#76849a] type-caption font-bold uppercase tracking-wider">
-                                {MARKETING_PRICING.startingPriceLine} · See pricing for current details
+                                {t(MARKETING_PRICING.startingPriceLine)} · <a href="/pricing" className="underline underline-offset-2">{t('See pricing for current details')}</a>
                             </p>
                         </AnimateIn>
                     </div>

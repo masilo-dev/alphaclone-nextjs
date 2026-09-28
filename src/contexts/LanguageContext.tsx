@@ -33,11 +33,8 @@ export const useLanguage = (): LanguageContextType => useContext(LanguageContext
 export const getStoredLanguage = (userId?: string | null): SupportedLanguage => {
     if (typeof window === 'undefined') return 'en';
 
-    // 1. Check scoped/unscoped localStorage
-    const stored = readUserPrefKey(LANGUAGE_STORAGE_KEY, userId) as SupportedLanguage | null;
-    if (stored && LANGUAGES.some((l) => l.code === stored)) return stored;
-
-    // 2. Check cookie
+    // The cookie records the most recent selection across public and authenticated pages.
+    // An older account-scoped preference must not undo a selection made in the header.
     try {
         const match = document.cookie.match(/(?:^|;\s*)ac-language=([^;]+)/);
         if (match && match[1]) {
@@ -48,7 +45,10 @@ export const getStoredLanguage = (userId?: string | null): SupportedLanguage => 
         /* ignore */
     }
 
-    // 3. Check html tag if already set by inline script
+    const stored = readUserPrefKey(LANGUAGE_STORAGE_KEY, userId) as SupportedLanguage | null;
+    if (stored && LANGUAGES.some((l) => l.code === stored)) return stored;
+
+    // Match the language set by the inline script before React loads.
     try {
         const htmlLang = document.documentElement.lang as SupportedLanguage;
         if (htmlLang && LANGUAGES.some((l) => l.code === htmlLang)) return htmlLang;
@@ -105,6 +105,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const setLanguage = useCallback(
         (lang: SupportedLanguage, opts?: { skipServer?: boolean }) => {
             writeUserPrefKey(LANGUAGE_STORAGE_KEY, lang, userId);
+            // Public pages and the next session must see the same selection even
+            // when the authenticated user ID is still loading.
+            writeUserPrefKey(LANGUAGE_STORAGE_KEY, lang);
             try {
                 document.cookie = `ac-language=${encodeURIComponent(lang)};path=/;max-age=31536000;SameSite=Lax`;
             } catch {

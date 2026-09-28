@@ -27,7 +27,7 @@ export default async function TenantPolicyPage({
     || versions?.[0];
   if (!version) notFound();
   const brand = Array.isArray(policy.tenant_brands) ? policy.tenant_brands[0] : policy.tenant_brands;
-  return <main lang={version.language} className="min-h-screen bg-white px-5 py-12 text-slate-900">
+  return <div lang={version.language} className="min-h-screen bg-white px-5 py-12 text-slate-900">
     <article className="mx-auto max-w-3xl">
       <p className="type-card-description font-medium text-teal-700">{brand?.trading_name || brand?.legal_company_name || 'Legal policy'}</p>
       <h1 className="mt-2 text-4xl font-semibold">{policy.title}</h1>
@@ -36,5 +36,5 @@ export default async function TenantPolicyPage({
       <div className="prose prose-slate mt-10 max-w-none whitespace-pre-wrap">{version.content}</div>
       <footer className="mt-12 border-t pt-5 type-caption text-slate-500">Integrity reference: {version.integrity_hash}</footer>
     </article>
-  </main>;
+  </div>;
 }

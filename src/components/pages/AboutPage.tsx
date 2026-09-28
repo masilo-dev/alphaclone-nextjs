@@ -5,6 +5,7 @@ import { ArrowDown, ArrowRight, CheckCircle2, CircleDot, Workflow } from 'lucide
 import AnimateIn from '@/components/common/AnimateIn';
 import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
 import { DEMO_HREF } from '@/lib/marketing/cta';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const chapters = [
   {
@@ -102,25 +103,26 @@ const chapters = [
 ] as const;
 
 export default function AboutPage() {
+  const { t } = useLanguage();
   return (
     <div className="founder-journey">
       <section className="founder-opening">
         <div className="founder-opening__line" aria-hidden="true" />
         <div className="founder-container">
           <AnimateIn type="fadeUp">
-            <p className="founder-kicker">Why AlphaClone exists</p>
-            <h1>I wasn&apos;t trying to build another software company.</h1>
-            <p className="founder-opening__statement">I was trying to solve a problem I kept experiencing myself.</p>
-            <p className="founder-opening__identity">Bornface &ldquo;Bonnie&rdquo; Masilo · Founder, AlphaClone Systems</p>
-            <a className="founder-scroll" href="#chapter-01">Follow the journey <ArrowDown aria-hidden="true" /></a>
+            <p className="founder-kicker">{t('Why AlphaClone exists')}</p>
+            <h1>{t("I wasn't trying to build another software company.")}</h1>
+            <p className="founder-opening__statement">{t('I was trying to solve a problem I kept experiencing myself.')}</p>
+            <p className="founder-opening__identity">Bornface &ldquo;Bonnie&rdquo; Masilo · {t('Founder, AlphaClone Systems')}</p>
+            <a className="founder-scroll" href="#chapter-01">{t('Follow the journey')} <ArrowDown aria-hidden="true" /></a>
           </AnimateIn>
         </div>
       </section>
 
-      <section className="founder-context" aria-label="The operational problem">
+      <section className="founder-context" aria-label={t('The operational problem')}>
         <div className="founder-container founder-context__grid">
-          <AnimateIn type="fadeLeft"><p className="founder-kicker">The work behind the work</p><h2>The tools held the information. I still had to make everything move.</h2></AnimateIn>
-          <AnimateIn type="fadeRight"><div className="founder-tool-list" aria-label="Disconnected business operations">{['CRM', 'Leads', 'Email', 'Social', 'Projects', 'Documents', 'Contracts', 'Invoices', 'Calendar'].map((item) => <span key={item}><CircleDot aria-hidden="true" />{item}</span>)}</div></AnimateIn>
+          <AnimateIn type="fadeLeft"><p className="founder-kicker">{t('The work behind the work')}</p><h2>{t('The tools held the information. I still had to make everything move.')}</h2></AnimateIn>
+          <AnimateIn type="fadeRight"><div className="founder-tool-list" aria-label={t('Disconnected business operations')}>{['CRM', 'Leads', 'Email', 'Social', 'Projects', 'Documents', 'Contracts', 'Invoices', 'Calendar'].map((item) => <span key={item}><CircleDot aria-hidden="true" />{t(item)}</span>)}</div></AnimateIn>
         </div>
       </section>
 
@@ -131,25 +133,25 @@ export default function AboutPage() {
             <div className="founder-container founder-chapter__grid">
               <AnimateIn type={index % 2 === 0 ? 'fadeLeft' : 'fadeRight'}>
                 <div className="founder-chapter__copy">
-                  <p className="founder-kicker">Chapter {chapter.number} · {chapter.label}</p>
-                  <h2>{chapter.title}</h2>
-                  <blockquote>{chapter.quote}</blockquote>
-                  <div className="founder-prose">{chapter.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
+                  <p className="founder-kicker">{t('Chapter')} {chapter.number} · {t(chapter.label)}</p>
+                  <h2>{t(chapter.title)}</h2>
+                  <blockquote>{t(chapter.quote)}</blockquote>
+                  <div className="founder-prose">{chapter.body.map((paragraph) => <p key={paragraph}>{t(paragraph)}</p>)}</div>
                 </div>
               </AnimateIn>
               {chapter.number === '04' && (
                 <div className="founder-evidence founder-evidence--note">
-                  <p>Architecture Principle</p>
-                  <strong>Intent → Context → Approval → Execution → Verification</strong>
-                  <span>Every action requires workspace context, transparent boundaries, human review for external steps, and an immutable activity log.</span>
+                  <p>{t('Architecture Principle')}</p>
+                  <strong>{t('Intent → Context → Approval → Execution → Verification')}</strong>
+                  <span>{t('Every action requires workspace context, transparent boundaries, human review for external steps, and an immutable activity log.')}</span>
                 </div>
               )}
               {chapter.number === '06' && (
                 <div className="founder-evidence founder-evidence--product">
                   <div className="founder-product-frame">
-                    <Image src="/screenshots/deals-dashboard.png" alt="AlphaClone workspace showing connected business records" fill sizes="(max-width: 900px) 92vw, 520px" className="object-cover object-top" />
+                    <Image src="/screenshots/deals-dashboard.png" alt={t('AlphaClone workspace showing connected business records')} fill sizes="(max-width: 900px) 92vw, 520px" className="object-cover object-top" />
                   </div>
-                  <ol className="founder-execution-flow">{['Intent', 'Context', 'Approval', 'Execution', 'Verification'].map((step) => <li key={step}><CheckCircle2 aria-hidden="true" />{step}</li>)}</ol>
+                  <ol className="founder-execution-flow">{['Intent', 'Context', 'Approval', 'Execution', 'Verification'].map((step) => <li key={step}><CheckCircle2 aria-hidden="true" />{t(step)}</li>)}</ol>
                 </div>
               )}
             </div>
@@ -160,10 +162,18 @@ export default function AboutPage() {
       <section className="founder-final">
         <div className="founder-container founder-final__inner">
           <Workflow aria-hidden="true" />
-          <p className="founder-kicker">A note from the founder</p>
-          <blockquote><p>I started AlphaClone because I had experienced how much business work still depends on one person coordinating disconnected systems.</p><p>I had tried building businesses, experienced an early dropshipping failure, and worked close to client acquisition and delivery in web-services outsourcing.</p><p>I kept asking what would change if I could tell the system what needed to happen instead of manually operating every application.</p><p>And eventually that question became AlphaClone.</p><p>Today, we&apos;re building an execution layer that connects AI instructions with business context, human approval, connected systems, and a visible record of the result.</p><p>Not to give businesses another tool to operate.</p><p>But to help people spend less time operating their tools — and more time actually running the business.</p></blockquote>
-          <h2>Stop operating your tools.<br />Start running your business.</h2>
-          <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight aria-hidden="true" /></PrimaryCTA>
+          <p className="founder-kicker">{t('A note from the founder')}</p>
+          <blockquote>{[
+            'I started AlphaClone because I had experienced how much business work still depends on one person coordinating disconnected systems.',
+            'I had tried building businesses, experienced an early dropshipping failure, and worked close to client acquisition and delivery in web-services outsourcing.',
+            'I kept asking what would change if I could tell the system what needed to happen instead of manually operating every application.',
+            'And eventually that question became AlphaClone.',
+            "Today, we're building an execution layer that connects AI instructions with business context, human approval, connected systems, and a visible record of the result.",
+            'Not to give businesses another tool to operate.',
+            'But to help people spend less time operating their tools — and more time actually running the business.',
+          ].map((paragraph) => <p key={paragraph}>{t(paragraph)}</p>)}</blockquote>
+          <h2>{t('Stop operating your tools.')}<br />{t('Start running your business.')}</h2>
+          <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{t('Book a demo')} <ArrowRight aria-hidden="true" /></PrimaryCTA>
         </div>
       </section>
     </div>

@@ -20,7 +20,7 @@ export default function DemoPage() {
 
     return (
         <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-500/20 relative overflow-x-hidden">
-            <main className="relative z-10 py-8 pb-24 px-4">
+            <div className="relative z-10 py-8 pb-24 px-4">
                 <div className="max-w-6xl mx-auto">
                     {/* Hero Section */}
                     <div className="text-center mb-16">
@@ -131,7 +131,7 @@ export default function DemoPage() {
                         </div>
                     </motion.div>
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

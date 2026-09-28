@@ -39,7 +39,7 @@ export default function AIArchitectPage() {
         <div className="absolute bottom-[10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[120px]" />
       </div>
 
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           {step === 'form' && (
             <motion.div
@@ -218,7 +218,7 @@ export default function AIArchitectPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </div>
     </div>
   );
 }

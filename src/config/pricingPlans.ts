@@ -192,3 +192,9 @@ export function normalizeCheckoutPlanId(planId: string): PublicPlanId {
   if (p === 'premium') return 'enterprise';
   return p as PublicPlanId;
 }
+
+/** Prevent checkout from charging a different monthly amount than /pricing. */
+export function matchesPublicMonthlyPrice(planId: string, amountCents: number): boolean {
+  const publicPlan = PUBLIC_PRICING_PLANS.find((plan) => plan.id === normalizeCheckoutPlanId(planId));
+  return Boolean(publicPlan && Math.round(publicPlan.price * 100) === amountCents);
+}

@@ -130,7 +130,7 @@ export default async function BlogPost({ params }: PageProps) {
                         <div className="relative z-10">
                             <h3 className="text-2xl font-bold text-white mb-4">See AlphaClone on a real workflow.</h3>
                             <p className="text-slate-300 mb-8 max-w-xl mx-auto">
-                                Book a free 30-minute walkthrough tailored to your business. No commitment.
+                                Book a free walkthrough tailored to your business. No commitment.
                             </p>
                             <Link href="/book-demo" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
                                 Book a demo <ArrowRight className="w-4 h-4 ml-2" />

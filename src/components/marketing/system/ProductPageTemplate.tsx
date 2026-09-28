@@ -16,6 +16,7 @@ type ProductPageTemplateProps = {
 
 function RelatedFeatureCard({ label, href }: { label: string; href: string }) {
   const matchingFeature = MARKETING_PRODUCT_FEATURES.find((item) => item.href === href);
+  const { t } = useLanguage();
 
   return (
     <Link
@@ -26,7 +27,7 @@ function RelatedFeatureCard({ label, href }: { label: string; href: string }) {
         {label}
       </h3>
       <p className="mt-2 type-caption leading-relaxed text-[var(--marketing-text-secondary)]">
-        {matchingFeature?.outcome ?? 'Explore how this capability connects with the rest of AlphaClone.'}
+        {t(matchingFeature?.outcome ?? 'Explore how this capability connects with the rest of AlphaClone.')}
       </p>
     </Link>
   );
@@ -35,7 +36,7 @@ function RelatedFeatureCard({ label, href }: { label: string; href: string }) {
 export default function ProductPageTemplate({ feature }: ProductPageTemplateProps) {
   const { t } = useLanguage();
   return (
-    <main className="bg-[var(--marketing-bg-primary)]">
+    <div className="bg-[var(--marketing-bg-primary)]">
       <MarketingSection className="relative overflow-hidden pt-16 sm:pt-20">
         <div className="marketing-glow-hero" aria-hidden="true" />
         <MarketingContainer className="relative z-10">
@@ -127,6 +128,6 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
           />
         </MarketingContainer>
       </MarketingSection>
-    </main>
+    </div>
   );
 }

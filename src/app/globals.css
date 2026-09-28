@@ -3133,8 +3133,8 @@ textarea:focus-visible {
 .pointer-events-none,
 .ac-backlit-surface::before,
 .ac-workspace-nav-item--active::before,
-[data-state="closed"],
-[data-state="closed"] * {
+[data-dialog-backdrop="true"][data-state="closed"],
+[data-sheet-overlay][data-state="closed"] {
   pointer-events: none !important;
 }
 

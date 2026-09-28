@@ -15,22 +15,11 @@ import { usePathname } from 'next/navigation';
  */
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isRouteOrChild = (route: string) => pathname === route || pathname?.startsWith(`${route}/`);
 
   const isDashboardOrApp =
-    pathname?.startsWith('/dashboard') ||
-    pathname?.startsWith('/auth') ||
-    pathname?.startsWith('/login') ||
-    pathname?.startsWith('/register') ||
-    pathname?.startsWith('/account') ||
-    pathname?.startsWith('/billing') ||
-    pathname?.startsWith('/contract') ||
-    pathname?.startsWith('/project') ||
-    pathname?.startsWith('/invoice') ||
-    pathname?.startsWith('/form') ||
-    pathname?.startsWith('/portal') ||
-    pathname?.startsWith('/private-docs') ||
-    pathname?.startsWith('/p/') ||
-    pathname?.startsWith('/bp/');
+    ['/dashboard', '/auth', '/login', '/register', '/account', '/billing', '/contract', '/project', '/invoice', '/form', '/portal', '/private-docs', '/p', '/bp']
+      .some(isRouteOrChild);
 
   if (isDashboardOrApp) {
     return <div className="ac-business-root min-h-screen">{children}</div>;

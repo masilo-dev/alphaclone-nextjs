@@ -685,8 +685,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setSelectedClientIds([]);
             return;
         }
-        const batch = filteredClients.map((c) => c.id);
+        const batch = filteredClients.slice(0, 500).map((c) => c.id);
         setSelectedClientIds(batch);
+        if (filteredClients.length > 500) toast('Selected the first 500 loaded contacts.');
     };
 
     const renderBulkSelectRow = () => (
@@ -701,7 +702,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 ) : (
                     <Square className="w-4 h-4" />
                 )}
-                {allFilteredClientsSelected ? 'Deselect all' : `Select all (${filteredClients.length})`}
+                {allFilteredClientsSelected ? 'Deselect all loaded contacts' : `Select ${Math.min(filteredClients.length, 500)} loaded contacts${filteredClients.length > 500 ? ' (limit 500)' : ''}`}
             </button>
             {selectedClientIds.length > 0 && (
                 <button
@@ -1078,8 +1079,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <button
                                         type="button"
                                         onClick={() => toggleClientSelection(client.id)}
-                                        className="absolute top-1 left-1 text-slate-500 hover:text-[var(--brand-blue-400)]"
-                                        aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
+                                        className="absolute top-1 left-1 min-w-9 min-h-9 flex items-center justify-center text-slate-500 hover:text-[var(--brand-blue-400)]"
+                                        aria-label={`Select ${client.name}`}
+                                        role="checkbox"
+                                        aria-checked={isSelected}
                                     >
                                         {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
                                     </button>
@@ -1395,7 +1398,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     Project
                                                 </Button>
                                                 <Dropdown
-                                                    trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
+                                                    trigger={<Button size="sm" variant="ghost" aria-label={`More actions for ${selectedClient.name}`} className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
                                                     items={[
                                                         { label: 'Set up client portal', icon: <UserCheck className="w-4 h-4"/>, onClick: () => setPortalAccessClient(selectedClient) },
                                                         { label: 'Create Contract', icon: <FileCheck className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/business/contracts?clientId=${encodeURIComponent(selectedClient.id)}`) },
@@ -2133,15 +2136,6 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
         <Card
             hoverEffect
             className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}
-            onClick={onOpen ? () => onOpen(client) : undefined}
-            role={onOpen ? 'button' : undefined}
-            tabIndex={onOpen ? 0 : undefined}
-            onKeyDown={onOpen ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onOpen(client);
-                }
-            } : undefined}
         >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
@@ -2152,8 +2146,10 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                                 event.stopPropagation();
                                 onToggleSelect(client.id);
                             }}
-                            className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)]"
-                            aria-label={isSelected ? 'Deselect contact' : 'Select contact for bulk outreach'}
+                            className="flex-shrink-0 min-w-9 min-h-9 flex items-center justify-center text-slate-500 hover:text-[var(--brand-blue-400)]"
+                            aria-label={`Select ${client.name} for bulk outreach`}
+                            role="checkbox"
+                            aria-checked={isSelected}
                         >
                             {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
                         </button>
@@ -2162,7 +2158,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                         {(client.name || '?').charAt(0)}
                     </div>
                     <div className="min-w-0">
-                        <h3 className="font-semibold text-white truncate" title={client.name}>{client.name}</h3>
+                        <h3 className="font-semibold text-white truncate" title={client.name}>{onOpen ? <button type="button" className="text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400" onClick={() => onOpen(client)}>Open {client.name}</button> : client.name}</h3>
                         {client.industry && <p className="type-card-description text-slate-400 truncate">{client.industry}</p>}
                     </div>
                 </div>
@@ -2175,6 +2171,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                             event.stopPropagation();
                             onCall(client);
                         }}
+                        aria-label={`Call ${client.name}`}
                         className="!p-2 hover:bg-[var(--brand-blue-500)]/10 hover:text-[var(--brand-blue-400)]"
                         icon={<Phone className="w-4 h-4" />}
                     />
@@ -2184,6 +2181,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                                 <Button
                                     size="sm"
                                     variant="ghost"
+                                    aria-label={`More actions for ${client.name}`}
                                     className="!p-2 hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] text-[var(--ws-text-muted)]"
                                     icon={<MoreVertical className="w-4 h-4" />}
                                 />

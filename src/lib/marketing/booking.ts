@@ -43,7 +43,7 @@ export const BOOKING_CONFIGS: Record<MeetingType, BookingConfig> = {
   general: {
     type: 'general',
     title: 'Schedule a Meeting',
-    subtitle: 'Pick a 30-minute window for a live call with the AlphaClone Systems team.',
+    subtitle: 'Pick an available time for a live call with the AlphaClone Systems team.',
     bookingUrl: DEFAULT_BOOKING_URL,
   },
 };

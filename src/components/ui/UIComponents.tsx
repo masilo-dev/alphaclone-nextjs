@@ -293,11 +293,10 @@ export const Modal: React.FC<ModalProps> = ({
     if (!isOpen) return;
     previouslyFocused.current = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const focusable = panel?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const first = focusable?.[0];
-    first?.focus();
+    const getFocusable = () => Array.from(panel?.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+    ) || []).filter((element) => element.getClientRects().length > 0);
+    (getFocusable()[0] || panel)?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -305,11 +304,19 @@ export const Modal: React.FC<ModalProps> = ({
         onClose();
         return;
       }
-      if (e.key !== 'Tab' || !panel || !focusable?.length) return;
-      const items = Array.from(focusable);
+      if (e.key !== 'Tab' || !panel) return;
+      const items = getFocusable();
+      if (!items.length) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
       const firstEl = items[0];
       const lastEl = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === firstEl) {
+      if (!panel.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? lastEl : firstEl).focus();
+      } else if (e.shiftKey && document.activeElement === firstEl) {
         e.preventDefault();
         lastEl.focus();
       } else if (!e.shiftKey && document.activeElement === lastEl) {
@@ -337,6 +344,7 @@ export const Modal: React.FC<ModalProps> = ({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         aria-labelledby={title ? titleId : undefined}
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
@@ -438,7 +446,7 @@ interface DropdownItem {
 }
 
 interface DropdownProps {
-  trigger: React.ReactNode;
+  trigger: React.ReactElement<React.ButtonHTMLAttributes<HTMLButtonElement> & { ref?: React.Ref<HTMLButtonElement> }>;
   items: DropdownItem[];
   align?: 'left' | 'right';
   className?: string;
@@ -448,7 +456,9 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const focusedMenuRef = useRef(false);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
   const updateMenuPosition = useCallback(() => {
@@ -468,13 +478,14 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && !menuRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
         setIsOpen(false);
+        triggerRef.current?.focus();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -487,10 +498,11 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
 
   const toggle = () => setIsOpen((prev) => !prev);
 
-  const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+  const handleTriggerKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setIsOpen((prev) => !prev);
+      setIsOpen(true);
+      requestAnimationFrame(() => menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus());
     }
   };
 
@@ -505,9 +517,18 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     };
   }, [isOpen, updateMenuPosition]);
 
+  useEffect(() => {
+    if (!isOpen) focusedMenuRef.current = false;
+    if (isOpen && menuPosition && !focusedMenuRef.current) {
+      focusedMenuRef.current = true;
+      menuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    }
+  }, [isOpen, menuPosition]);
+
   const menu = isOpen && menuPosition ? (
     <div
-      role="menu"
+      ref={menuRef}
+      aria-label="Actions"
       style={{ position: 'fixed', top: menuPosition.top, left: menuPosition.left, width: 192, maxHeight: 'min(20rem, calc(100vh - 1rem))' }}
       className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel)] ${WORKSPACE.panel.radius} ${WORKSPACE.action.secondary} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
       data-layer="dropdown"
@@ -518,7 +539,6 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
           <button
             key={`${item.label}-${index}`}
             type="button"
-            role="menuitem"
             onClick={() => {
               item.onClick();
               setIsOpen(false);
@@ -539,18 +559,13 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      <div
-        ref={triggerRef}
-        role="button"
-        tabIndex={0}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        onClick={toggle}
-        onKeyDown={handleTriggerKeyDown}
-        className="cursor-pointer inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] rounded-lg touch-manipulation select-none"
-      >
-        {trigger}
-      </div>
+      {React.cloneElement(trigger, {
+        ref: triggerRef,
+        'aria-expanded': isOpen,
+        'aria-label': trigger.props['aria-label'] || 'More actions',
+        onClick: (event: React.MouseEvent<HTMLButtonElement>) => { trigger.props.onClick?.(event); toggle(); },
+        onKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => { trigger.props.onKeyDown?.(event); handleTriggerKeyDown(event); },
+      })}
 
       {typeof document !== 'undefined' && menu ? createPortal(menu, document.body) : null}
     </div>

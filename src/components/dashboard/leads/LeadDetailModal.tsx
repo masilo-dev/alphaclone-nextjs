@@ -889,7 +889,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                         <Dropdown
                             trigger={
-                                <Button variant="outline" size="sm" className="px-2">
+                                <Button variant="outline" size="sm" className="px-2" aria-label={`More actions for ${lead.businessName}`}>
                                     <MoreVertical className="w-4 h-4" />
                                 </Button>
                             }
