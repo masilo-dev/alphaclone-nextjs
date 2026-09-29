@@ -2135,6 +2135,7 @@ html.pwa-standalone .pwa-page-title {
      solid so workspace content never competes with text above it. */
   --ws-panel: #171A26;
   --ws-panel-hover: #252936;
+  --ws-overlay-backdrop: rgba(2, 6, 23, 0.74);
   --ws-surface-primary: var(--surface-primary);
   --ws-surface-secondary: var(--surface-secondary);
   --ws-surface-tertiary: var(--surface-elevated);
@@ -2176,6 +2177,7 @@ html.light .ac-business-root {
   --ws-toolbar: #FFFFFF;
   --ws-panel: var(--surface-primary);
   --ws-panel-hover: var(--surface-hover);
+  --ws-overlay-backdrop: rgba(2, 6, 23, 0.74);
   --ws-surface-primary: var(--surface-primary);
   --ws-surface-secondary: var(--surface-secondary);
   --ws-surface-tertiary: var(--background-subtle);
@@ -3054,7 +3056,6 @@ html.ac-scroll-lock body,
 html.ac-scroll-lock .ac-dashboard-root,
 html.ac-scroll-lock .ac-business-root {
   overflow: hidden !important;
-  touch-action: none;
   overscroll-behavior: none;
 }
 

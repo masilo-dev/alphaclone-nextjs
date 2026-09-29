@@ -79,7 +79,7 @@ const workflowSteps = [
 function ProductScene() {
   const { t } = useLanguage();
   return (
-    <div className="acr-product-scene" aria-label={t('AlphaClone product view with approved execution result')}>
+    <div className="acr-product-scene" aria-label={t('Illustrative AlphaClone product view showing an approval and execution result')}>
       <div className="acr-scene-glow" aria-hidden="true" />
       <div className="acr-laptop">
         <div className="acr-laptop-screen">
@@ -112,7 +112,7 @@ function ProductScene() {
       <div className="acr-result-card">
         <p><span><ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" /></span><strong>AlphaClone</strong></p>
         <ul>
-          <li><Check /> {t('20 records prepared')}</li>
+          <li><Check /> {t('Prospects prepared')}</li>
           <li><Check /> {t('CRM context attached')}</li>
           <li><Check /> {t('Drafts ready for review')}</li>
         </ul>
@@ -188,18 +188,18 @@ export default function MarketingHomePage() {
           <div className="acr-hero-grid">
             <div className="acr-hero-copy">
               <p className="acr-eyebrow">{t(EXECUTION_LAYER.category)}</p>
-              <h1>{t('You type.')}<br />{t('We')} <span>{t('make it happen.')}</span></h1>
+              <h1>{t('AI executes approved business work')}<br /><span>{t('across your tools.')}</span></h1>
               <p className="acr-hero-lead">{t(EXECUTION_LAYER.heroSubhead)}</p>
               <p className="acr-hero-detail">{t('Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.')}</p>
               <div className="acr-hero-actions">
                 <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{t(EXECUTION_LAYER.primaryCta)} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
-                <SecondaryCTA href="/pricing" className="mkt-btn-large">{t('See pricing')}</SecondaryCTA>
                 <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> {t(EXECUTION_LAYER.secondaryCta)}</SecondaryCTA>
               </div>
+              <p className="mt-3 type-ui"><Link href="/pricing" className="font-semibold text-[var(--acr-blue)] underline underline-offset-4">{t('See plans and pricing')}</Link></p>
               <div className="acr-hero-proof">
-                <span><Clock3 /><p><strong>{t('Save hours')}</strong><small>{t('every week')}</small></p></span>
-                <span><Users /><p><strong>{t('More clients')}</strong><small>{t('and revenue')}</small></p></span>
-                <span><ShieldCheck /><p><strong>{t('Human-led')}</strong><small>{t('AI-executed')}</small></p></span>
+                <span><Clock3 /><p><strong>{t('One workspace')}</strong><small>{t('for daily work')}</small></p></span>
+                <span><Users /><p><strong>{t('Client context')}</strong><small>{t('kept together')}</small></p></span>
+                <span><ShieldCheck /><p><strong>{t('Human approval')}</strong><small>{t('before action')}</small></p></span>
               </div>
             </div>
             <ProductScene />
@@ -210,7 +210,7 @@ export default function MarketingHomePage() {
       <section className="acr-integrations" aria-labelledby="integration-heading">
         <MarketingContainer>
           <div className="acr-strip-head">
-            <p id="integration-heading" className="acr-eyebrow">{t('Works with the tools you already use')}</p>
+            <p id="integration-heading" className="acr-eyebrow">{t('Connect the tools you already use')}</p>
             <Link href="/ecosystem">{t('Explore all integrations')} <ArrowRight /></Link>
           </div>
           <div className="acr-integration-row">
@@ -224,7 +224,7 @@ export default function MarketingHomePage() {
           <div className="acr-process-grid">
             <div className="acr-section-intro is-compact">
               <p className="acr-eyebrow">{t('How it works')}</p>
-              <h2 id="process-heading">{t('From intention')}<br />{t('to impact.')}</h2>
+              <h2 id="process-heading">{t('Give an instruction. Review the plan. See the result.')}</h2>
               <p>{t('A simple, transparent process designed for real business work.')}</p>
               <Link href="/how-it-works">{t('See the full workflow')} <ArrowRight /></Link>
             </div>
@@ -239,7 +239,7 @@ export default function MarketingHomePage() {
 
       <section className="acr-outcomes" aria-labelledby="outcomes-heading">
         <MarketingContainer>
-          <div className="acr-section-intro is-center"><p className="acr-eyebrow">{t('Your business, simpler')}</p><h2 id="outcomes-heading">{t('Move the work that moves your business.')}</h2><p>{t('Three connected outcomes replace a long list of disconnected features.')}</p></div>
+          <div className="acr-section-intro is-center"><p className="acr-eyebrow">{t('Your business, simpler')}</p><h2 id="outcomes-heading">{t('Find customers, deliver work, and follow up on payment.')}</h2><p>{t('Three connected outcomes replace a long list of disconnected features.')}</p></div>
           <div className="acr-outcome-grid">
             {outcomes.map((item, index) => <article key={item.title} className={`is-${item.tone}`}><div className="acr-outcome-number">0{index + 1}</div><span><item.icon /></span><h3>{t(item.title)}</h3><p>{t(item.body)}</p><Link href={item.href}>{t('Explore this workflow')} <ArrowRight /></Link></article>)}
           </div>

@@ -416,79 +416,6 @@ const HubSpotSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }) => 
   );
 };
 
-// Team Invitation Component
-const TeamInvitation: React.FC<SetupComponentProps> = ({ tenant, onComplete }) => {
-  const [emails, setEmails] = useState('');
-  const [isInviting, setIsInviting] = useState(false);
-
-  const handleInvite = async () => {
-    setIsInviting(true);
-    try {
-      const emailList = emails.split(',').map(e => e.trim()).filter(e => e);
-      
-      const response = await fetch('/api/team/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId: tenant.id,
-          emails: emailList
-        })
-      });
-
-      if (response.ok) {
-        toast.success('Team invitations sent successfully!');
-        onComplete();
-      } else {
-        toast.error('Failed to send invitations');
-      }
-    } catch (error) {
-      toast.error('Error sending invitations');
-    } finally {
-      setIsInviting(false);
-    }
-  };
-
-  return (
-    <div className="max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <Users className="w-12 h-12 text-teal-500 mx-auto mb-4" />
-        <h4 className="text-lg font-semibold text-white mb-2">Invite Team Members</h4>
-        <p className="text-slate-400 type-card-description">Add your team to collaborate on projects and clients</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Email Addresses</label>
-          <textarea
-            value={emails}
-            onChange={(e) => setEmails(e.target.value)}
-            placeholder="Enter email addresses separated by commas"
-            rows={4}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
-          />
-          <p className="type-card-description text-slate-500 mt-1">Separate multiple emails with commas</p>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onComplete}
-            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg"
-          >
-            Skip for Now
-          </button>
-          <button
-            onClick={handleInvite}
-            disabled={isInviting || !emails.trim()}
-            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black font-semibold rounded-lg disabled:opacity-50"
-          >
-            {isInviting ? 'Sending Invitations...' : 'Send Invitations'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Main Setup Wizard Component
 const SetupWizard: React.FC = () => {
   const { currentTenant } = useTenant();
@@ -537,16 +464,6 @@ const SetupWizard: React.FC = () => {
       isCompleted: completedSteps.has('crm'),
       actionText: 'Connect HubSpot',
       icon: Settings
-    },
-    {
-      id: 'team',
-      title: 'Invite Team Members',
-      description: 'Add your team to collaborate on projects and clients',
-      component: TeamInvitation,
-      isRequired: false,
-      isCompleted: completedSteps.has('team'),
-      actionText: 'Invite Team',
-      icon: Users
     }
   ];
 
@@ -605,8 +522,8 @@ const SetupWizard: React.FC = () => {
                 <div key={step.id} className="flex items-center">
                   <div className={`
                     w-8 h-8 rounded-full flex items-center justify-center type-ui font-medium
-                    ${index < currentStep ? 'bg-green-500 text-white' : 
-                      index === currentStep ? 'bg-teal-500 text-white' : 
+                    ${completedSteps.has(step.id) ? 'bg-green-500 text-white' :
+                      index === currentStep ? 'bg-teal-500 text-white' :
                       'bg-slate-700 text-slate-400'}
                   `}>
                     {completedSteps.has(step.id) ? (

@@ -89,8 +89,8 @@ function Shell({
     }), [portal]);
 
     return (
-        <div className="min-h-screen w-full bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
-            <div className="flex min-h-screen w-full">
+        <div className="h-[100dvh] min-h-0 w-full overflow-hidden bg-[color:var(--background-app)] text-[color:var(--text-primary)]">
+            <div className="flex h-full min-h-0 w-full">
                 {/* DESKTOP SIDEBAR */}
                 <aside className="hidden md:flex md:w-64 lg:w-72 shrink-0 flex-col border-r border-[color:var(--border-default)] bg-[color:var(--ws-sidebar)] text-[color:var(--ws-text-primary)]">
                     <div className="flex h-16 items-center gap-3 px-5 border-b border-white/[0.06]">
@@ -164,7 +164,7 @@ function Shell({
                 </aside>
 
                 {/* MAIN AREA */}
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                     {/* DESKTOP + MOBILE TOP BAR */}
                     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-[color:var(--border-default)] bg-[color:var(--ws-toolbar)] px-4 md:px-6 lg:px-8">
                         <button
@@ -216,7 +216,7 @@ function Shell({
                     </header>
 
                     {/* SCROLLING CONTENT */}
-                    <main className="flex-1 overflow-y-auto">
+                    <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
                         <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
                             {children}
                         </div>

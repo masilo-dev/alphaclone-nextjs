@@ -342,8 +342,14 @@ export function OperatingSystemHome() {
     return [{ label: t('Completed'), value: tasksCompleted }];
   }, [stats, tasksCompleted, t]);
 
-  const revenueTrend = [revenuePrev * 0.8, revenuePrev, revenuePrev * 0.95, revenue * 0.9, revenue];
-  const leadsTrend = [leadsPrev * 0.7, leadsPrev * 0.9, leadsPrev, leads * 0.85, leads];
+  // Only plot values returned as a real time series. Two totals cannot describe
+  // the shape of a period, and interpolating points would imply data we lack.
+  const revenueTrend = useMemo(() => Array.isArray(stats?.revenueSeries) && stats.revenueSeries.length > 1
+    ? (stats.revenueSeries as Array<{ value?: number }>).map((point) => Number(point.value || 0))
+    : undefined, [stats]);
+  const leadsTrend = useMemo(() => Array.isArray(stats?.leadsSeries) && stats.leadsSeries.length > 1
+    ? (stats.leadsSeries as Array<{ value?: number }>).map((point) => Number(point.value || 0))
+    : undefined, [stats]);
 
   const tasksAttention = openTasks + (Number(normalizedStats.missedTasks) || 0);
 

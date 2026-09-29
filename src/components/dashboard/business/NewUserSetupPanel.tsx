@@ -60,6 +60,9 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
           <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 max-w-xl">
             You do not need to set up everything today. Pick the action that will help your business most right now.
           </p>
+          <p className="mt-3 type-caption font-semibold text-[var(--ws-text-secondary)]" aria-label="Account created; choose your first useful action">
+            Account created · Your first useful action is next
+          </p>
         </div>
         {onDismiss ? (
           <button

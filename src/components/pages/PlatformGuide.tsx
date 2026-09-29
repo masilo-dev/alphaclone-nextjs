@@ -32,12 +32,12 @@ const STARTING_STEPS = [
 
 /** Practical public entry point for the outcome-led first-use journey. */
 const PlatformGuide = () => (
-  <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
+  <div className="platform-guide min-h-screen marketing-theme bg-slate-950 text-white">
     <section className="relative overflow-hidden border-b border-slate-800/50 bg-gradient-to-br from-slate-900 via-slate-950 to-[#071f2a] py-16 sm:py-24">
       <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" aria-hidden="true" />
       <div className="mx-auto grid max-w-5xl gap-12 px-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
-          <p className="inline-flex items-center rounded-full border border-teal-500 bg-teal-700 px-3 py-1 type-caption font-bold uppercase tracking-caps text-white">A practical guide for first-time teams</p>
+          <p className="inline-flex items-center rounded-full border border-teal-500 bg-teal-700 px-3 py-1 type-caption font-bold uppercase tracking-caps text-white">A practical guide for business owners</p>
           <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">Start with one useful thing for your business.</h1>
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">AlphaClone brings customer work, outreach, finance, projects, and everyday tasks into one workspace. You do not need to configure everything before you begin.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

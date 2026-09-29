@@ -282,7 +282,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full min-h-0 flex flex-col overflow-hidden min-w-0" data-tour="projects-center">
+        <div className="h-full min-h-0 flex flex-col overflow-y-auto overscroll-contain min-w-0 [-webkit-overflow-scrolling:touch]" data-tour="projects-center">
             <div className="shrink-0 space-y-3 sm:space-y-4 px-3 py-4 sm:px-5 sm:py-5 md:px-8 md:pt-6 md:pb-3">
             <PlatformExecutionWelcome userId={user.id} surface="projects" />
             <div className="flex justify-end">
@@ -417,7 +417,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             </div>
 
             {/* Main Content Area — scrollable project list */}
-            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-3 sm:px-5 md:px-8 pb-6 sm:pb-8">
+            <div className="shrink-0 custom-scrollbar px-3 sm:px-5 md:px-8 pb-6 sm:pb-8">
                 {viewMode === 'list' ? (
                     <div className="flex flex-col space-y-4">
                         {/* List Header */}
@@ -879,34 +879,34 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-slate-950/95 p-0 backdrop-blur-md sm:items-center sm:p-4">
-            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-[var(--brand-blue-900)]/20 animate-in zoom-in-95 duration-200 my-auto">
+        <div className="fixed inset-0 ac-layer-modal flex items-end justify-center overflow-y-auto bg-[var(--ws-overlay-backdrop)] p-0 backdrop-blur-md sm:items-center sm:p-4">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-[var(--brand-blue-900)]/20 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">{initialData ? 'Edit Project' : 'New Project'}</h3>
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--ws-hover)] rounded-xl transition-colors"><X className="w-5 h-5 text-[var(--ws-text-muted)]" /></button>
                 </div>
                 <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="type-label font-semibold text-slate-300 ml-1">Project Name *</label>
+                        <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-medium focus:border-[var(--brand-blue-500)] outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
+                            className="w-full px-5 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-medium focus:border-[var(--brand-blue-500)] outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="type-label font-semibold text-slate-300 ml-1">Briefing</label>
+                        <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Briefing</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-normal focus:border-[var(--brand-blue-500)] outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
+                            className="w-full px-5 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-normal focus:border-[var(--brand-blue-500)] outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="type-label font-semibold text-slate-300 ml-1">Due Date</label>
+                            <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Due Date</label>
                             <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none" />
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none" />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="type-label font-semibold text-slate-300 ml-1">Client</label>
+                            <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Client</label>
                             <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none">
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none">
                                 <option value="">Internal</option>
                                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
@@ -915,11 +915,11 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="type-label font-semibold text-slate-300 ml-1">Live Stage</label>
+                            <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Live Stage</label>
                             <select
                                 value={formData.currentStage}
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
                                     const currentIdx = initialData ? PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(initialData.currentStage)) : 0;
@@ -930,11 +930,11 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="type-caption font-semibold text-slate-300 ml-1">Health Status</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-secondary)] ml-1">Health Status</label>
                             <select
                                 value={formData.health}
                                 onChange={(e) => setFormData({ ...formData, health: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
                             >
                                 <option value="On Track">On Track</option>
                                 <option value="At Risk">At Risk</option>
@@ -944,28 +944,28 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="type-label font-semibold text-slate-300 ml-1">Budget</label>
+                        <label className="type-label font-semibold text-[var(--ws-text-secondary)] ml-1">Budget</label>
                         <input
                             type="number"
                             value={formData.budget}
                             onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none shadow-inner"
+                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] font-bold focus:border-[var(--brand-blue-500)] outline-none shadow-inner"
                             placeholder="0.00"
                         />
                     </div>
 
                     {initialData?.id && tenantId ? (
-                        <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
+                        <div className="rounded-xl border border-[var(--info-border)] bg-[var(--info-surface)] p-4 space-y-3">
                             <div>
-                                <p className="type-card-description font-semibold text-white">Client portal</p>
-                                <p className="type-card-description text-slate-400 mt-1">
+                                <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Client portal</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                     Generate a password-protected link so clients can track milestones and delivery.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setShareDialogOpen(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 type-ui font-semibold transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--info-surface)] hover:bg-[var(--ws-hover)] text-[var(--info-text)] border border-[var(--info-border)] type-ui font-semibold transition-all"
                             >
                                 <Share2 className="w-4 h-4" />
                                 Copy client portal link
@@ -974,7 +974,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     ) : null}
 
                     <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold type-ui text-slate-300 transition-all">Cancel</button>
+                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] rounded-lg font-bold type-ui text-[var(--ws-text-secondary)] transition-all">Cancel</button>
                         <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-lg font-bold type-ui transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>

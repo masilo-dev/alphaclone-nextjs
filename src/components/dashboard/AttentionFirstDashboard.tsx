@@ -222,7 +222,7 @@ export function AttentionFirstDashboard() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <p className={WORKSPACE.typography.sectionLabel}>{t('Home')}</p>
-            <h2 className="mt-1 text-xl md:text-2xl font-semibold tracking-tight text-[var(--ws-text-primary,#fff)]">
+            <h2 className="mt-1 text-xl md:text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)]">
               {greeting}
             </h2>
             <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] line-clamp-2">
@@ -245,26 +245,30 @@ export function AttentionFirstDashboard() {
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link
             href="/dashboard/business/billing"
-            className="rounded-[var(--ws-radius-lg)] border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-3 transition-colors hover:border-emerald-500/35"
+            className="rounded-[var(--ws-radius-lg)] border border-[var(--success-border)] bg-[var(--success-surface)] px-3 py-3 transition-colors hover:border-[var(--success)]"
           >
             <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-400" aria-hidden />
-              {t('Money in')}
+              <DollarSign className="w-3.5 h-3.5 text-[var(--success-text)]" aria-hidden />
+              {t('Revenue')}
             </p>
-            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : (
-              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-emerald-400">{formatCurrency(revenue)}</p>
+            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
+              <p className="mt-1.5 type-ui text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
+            ) : (
+              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-[var(--success-text)]">{formatCurrency(revenue)}</p>
             )}
           </Link>
           <Link
             href="/dashboard/business/billing/manage"
-            className="rounded-[var(--ws-radius-lg)] border border-amber-500/20 bg-amber-500/[0.06] px-3 py-3 transition-colors hover:border-amber-500/35"
+            className="rounded-[var(--ws-radius-lg)] border border-[var(--info-border)] bg-[var(--info-surface)] px-3 py-3 transition-colors hover:border-[var(--info)]"
           >
             <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
-              <Receipt className="w-3.5 h-3.5 text-amber-400" aria-hidden />
-              {t('To collect')}
+              <Receipt className="w-3.5 h-3.5 text-[var(--info-text)]" aria-hidden />
+              {t('Outstanding invoices')}
             </p>
-            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : (
-              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-amber-400">{formatCurrency(outstanding)}</p>
+            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
+              <p className="mt-1.5 type-ui text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
+            ) : (
+              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-[var(--ws-text-primary)]">{formatCurrency(outstanding)}</p>
             )}
           </Link>
         </div>
@@ -277,7 +281,7 @@ export function AttentionFirstDashboard() {
             id="home-attention-heading"
             className={cn(WORKSPACE.typography.panelTitle, 'flex items-center gap-2')}
           >
-            <AlertCircle className="w-4 h-4 text-amber-400" aria-hidden />
+            <AlertCircle className="w-4 h-4 text-[var(--warning-text)]" aria-hidden />
             {HUMAN_LABELS.needsAttention}
           </h3>
           {attentionItems.length > 0 ? (
@@ -304,8 +308,8 @@ export function AttentionFirstDashboard() {
           </div>
         ) : attentionItems.length === 0 ? (
           <p className="type-card-description text-[var(--ws-text-secondary)] flex items-start gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden />
-            {t('Nothing urgent right now — Bonnie is watching your business.')}
+            <CheckCircle2 className="w-4 h-4 text-[var(--success-text)] shrink-0 mt-0.5" aria-hidden />
+            {t('No items need your attention right now.')}
           </p>
         ) : (
           <div>
@@ -317,18 +321,19 @@ export function AttentionFirstDashboard() {
                   className={cn(
                     'flex items-center gap-3 min-h-11 px-3 py-2.5 rounded-[var(--ws-radius-lg)] border transition-colors',
                     item.severity === 'high'
-                      ? 'border-amber-500/25 bg-amber-500/[0.06] hover:border-amber-500/40'
-                      : 'border-[var(--ws-border)] bg-[var(--ws-hover)] hover:border-teal-500/30'
+                      ? 'border-[var(--warning-border)] bg-[var(--warning-surface)] hover:border-[var(--warning)]'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-hover)] hover:border-[var(--ac-accent)]'
                   )}
                 >
-                  <item.icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden />
+                  <item.icon className={cn('w-4 h-4 shrink-0', item.severity === 'high' ? 'text-[var(--warning-text)]' : 'text-[var(--ac-accent)]')} aria-hidden />
                   <div className="flex-1 min-w-0">
-                    <p className="type-card-description font-medium text-[var(--ws-text-primary,#fff)]">
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)]">
                       {item.label}
                     </p>
                     {item.detail ? (
                       <p className="type-card-description text-[var(--ws-text-tertiary)]">{item.detail}</p>
                     ) : null}
+                    {item.severity === 'high' ? <span className="type-caption font-semibold text-[var(--warning-text)]">{t('Needs attention')}</span> : null}
                   </div>
                   <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)] shrink-0" aria-hidden />
                 </Link>
@@ -345,7 +350,7 @@ export function AttentionFirstDashboard() {
                 {attentionItems.slice(4).map((item) => (
                   <li key={item.id}>
                     <Link href={item.href} className="flex min-h-11 items-center gap-3 rounded-[var(--ws-radius-lg)] bg-[var(--ws-hover)] px-3 py-2.5 type-ui text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]">
-                      <item.icon className="h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--warning-text)]" aria-hidden />
                       <span className="min-w-0 flex-1 line-clamp-2">{item.label}</span>
                       <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
                     </Link>
@@ -365,7 +370,7 @@ export function AttentionFirstDashboard() {
             id="home-bonnie-heading"
             className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
           >
-            <Bot className="w-4 h-4 text-teal-400" aria-hidden />
+            <Bot className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
             {HUMAN_LABELS.whatBonnieDid}
           </h3>
           {bonnieLoading ? (
@@ -388,7 +393,7 @@ export function AttentionFirstDashboard() {
                   key={action.id}
                   className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)]"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--ac-accent)] shrink-0 mt-0.5" aria-hidden />
                   <span className="min-w-0 flex-1">
                     <span className="block line-clamp-2">{action.label}</span>
                     <time className="mt-0.5 block type-caption text-[var(--ws-text-tertiary)]">{relativeTime(action.timestamp)}</time>
@@ -399,7 +404,7 @@ export function AttentionFirstDashboard() {
           )}
           <Link
             href="/dashboard/bonnie"
-            className="inline-flex mt-4 type-ui font-medium text-teal-400 hover:text-teal-300"
+            className="inline-flex mt-4 type-ui font-medium text-[var(--ac-accent)] hover:text-[var(--ac-accent-hover)]"
           >
             {t('Open Bonnie')}
           </Link>
@@ -410,7 +415,7 @@ export function AttentionFirstDashboard() {
             id="home-activity-heading"
             className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
           >
-            <Activity className="w-4 h-4 text-teal-400" aria-hidden />
+            <Activity className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
             {t('Recent activity')}
           </h3>
           {activityLoading ? (
@@ -426,9 +431,9 @@ export function AttentionFirstDashboard() {
             <ol className="relative border-l border-[var(--ws-border)] ml-2 space-y-3 max-h-[320px] overflow-y-auto pr-1">
               {workspaceActivity.slice(0, 5).map((item) => (
                 <li key={item.id} className="ml-4 last:pb-0">
-                  <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-teal-400 ring-4 ring-[var(--ws-panel)]" />
+                  <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-[var(--ac-accent)] ring-4 ring-[var(--ws-panel)]" />
                   <div className="min-w-0">
-                    <p className="type-card-description font-medium text-[var(--ws-text-primary,#fff)] line-clamp-2">
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)] line-clamp-2">
                       {item.summary}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -470,7 +475,7 @@ export function AttentionFirstDashboard() {
           )}
           <Link
             href="/dashboard/notifications"
-            className="inline-flex mt-4 type-ui font-medium text-teal-400 hover:text-teal-300"
+            className="inline-flex mt-4 type-ui font-medium text-[var(--ac-accent)] hover:text-[var(--ac-accent-hover)]"
           >
             {t('View all activity')}
           </Link>
@@ -500,9 +505,9 @@ export function AttentionFirstDashboard() {
           <Link
             key={item.href}
             href={item.href}
-            className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] type-ui font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary,#fff)] transition-colors"
+            className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] type-ui font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] transition-colors"
           >
-            <item.icon className="w-3.5 h-3.5 text-teal-400" aria-hidden />
+            <item.icon className="w-3.5 h-3.5 text-[var(--ac-accent)]" aria-hidden />
             {t(item.label)}
           </Link>
         ))}

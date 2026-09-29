@@ -196,7 +196,7 @@ export default function AuditTrailPage() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search business events, clients, actors, or actions..."
-            className="h-10 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-ui text-white outline-none transition-colors placeholder:text-slate-500 focus:border-teal-500"
+            className="h-10 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] py-2 pl-9 pr-3 type-ui text-[var(--ws-text-primary)] outline-none transition-colors placeholder:text-slate-500 focus:border-teal-500"
           />
         </label>
       </div>

@@ -1150,7 +1150,7 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.title}
                                     onChange={e => setNewBookmark({...newBookmark, title: e.target.value})}
                                     placeholder="Title"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none"
                                 />
                                 <input 
                                     required
@@ -1158,7 +1158,7 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.url}
                                     onChange={e => setNewBookmark({...newBookmark, url: e.target.value})}
                                     placeholder="URL Link"
-                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none"
                                 />
                                 <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full type-ui`}>
                                     Save
@@ -1195,7 +1195,7 @@ export default function SocialCommandCenter() {
                             value={videoTopic}
                             onChange={e => setVideoTopic(e.target.value)}
                             placeholder="Video niche / topic details..."
-                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white focus:outline-none resize-none"
+                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] focus:outline-none resize-none"
                         />
                         <button
                             onClick={handleGenerateVideo}
@@ -1322,7 +1322,7 @@ export default function SocialCommandCenter() {
                                         <select
                                             value={selectedPageId}
                                             onChange={e => setSelectedPageId(e.target.value)}
-                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-white outline-none"
+                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                                         >
                                             {fbPages.length === 0 ? (
                                                 <option value="">No pages configured</option>
@@ -1420,7 +1420,7 @@ export default function SocialCommandCenter() {
                                             }
                                         }}
                                         placeholder="https://... image, gif, or mp4"
-                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                     />
                                     <button
                                         type="button"
@@ -1480,7 +1480,7 @@ export default function SocialCommandCenter() {
                                         type="datetime-local"
                                         value={composeScheduledAt}
                                         onChange={e => setComposeScheduledAt(e.target.value)}
-                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                     />
                                 )}
                             </div>
@@ -1519,7 +1519,7 @@ export default function SocialCommandCenter() {
                                 value={aiPromptText}
                                 onChange={e => setAiPromptText(e.target.value)}
                                 placeholder="e.g. A message welcoming new beta testers for our workspace automation application..."
-                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-white outline-none resize-none"
+                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg type-caption text-[var(--ws-text-primary)] outline-none resize-none"
                             />
                             <button
                                 onClick={generateDraftWithAI}

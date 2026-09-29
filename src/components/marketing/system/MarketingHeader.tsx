@@ -21,7 +21,7 @@ type MenuLink = {
 const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
   {
     key: 'product',
-    label: 'Product',
+    label: 'Platform',
     items: [
       { label: 'Platform overview', href: '/services', description: 'One connected workspace' },
       { label: 'How it works', href: '/how-it-works', description: 'Decide, approve, execute, verify' },
@@ -31,9 +31,9 @@ const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
   },
   {
     key: 'solutions',
-    label: 'Solutions',
+    label: 'Use cases',
     items: [
-      { label: 'Who we serve', href: '/who-we-serve', description: 'Find the right path for your team' },
+      { label: 'Who we serve', href: '/who-we-serve', description: 'Find the right path for your business' },
       { label: 'Agencies', href: '/solutions/agencies' },
       { label: 'Consultants', href: '/solutions/consultants' },
       { label: 'Solo founders', href: '/solutions/solo-founders' },
@@ -41,7 +41,7 @@ const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
   },
   {
     key: 'resources',
-    label: 'Resources',
+    label: 'Guides',
     items: [
       { label: 'Documentation', href: '/docs' },
       { label: 'Getting started', href: '/guide' },

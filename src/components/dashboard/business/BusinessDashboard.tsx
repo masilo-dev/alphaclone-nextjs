@@ -176,9 +176,6 @@ import { useDashboardScrollRestoration } from '@/hooks/useDashboardScrollRestora
 const BUSINESS_PULL_SCROLL_ROUTES = new Set([
     '/dashboard/leads/campaigns',
     '/dashboard/leads/finder',
-    '/dashboard/business/projects',
-    '/dashboard/business/projects/manage',
-    '/dashboard/projects/manage',
     '/dashboard/sales-agent',
 ]);
 

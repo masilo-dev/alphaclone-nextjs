@@ -12,6 +12,31 @@ const root = path.resolve(__dirname, '..');
 
 const failures = [];
 
+// Keep migrated dashboard surfaces on semantic, theme-aware color tokens.
+for (const rel of [
+  'src/components/dashboard/AttentionFirstDashboard.tsx',
+  'src/components/dashboard/business/ClientPortalAccessPanel.tsx',
+]) {
+  const source = fs.readFileSync(path.join(root, rel), 'utf8');
+  if (/(?:bg|text|border)-(?:slate|gray|zinc|emerald|amber|red|green|blue|sky|teal)-\d{2,3}|#[\da-fA-F]{3,8}\b/.test(source)) {
+    failures.push(`${rel}: use workspace/status tokens for component colors`);
+  }
+}
+const projectsSource = fs.readFileSync(path.join(root, 'src/components/dashboard/business/ProjectsPage.tsx'), 'utf8');
+const projectModalSource = projectsSource.split('const ProjectModal =')[1]?.split('const ProjectTimeline =')[0] || '';
+if (/(?:bg|text|border)-(?:slate|gray|zinc|emerald|amber|red|green|blue|sky|teal)-\d{2,3}|#[\da-fA-F]{3,8}\b/.test(projectModalSource)) {
+  failures.push('src/components/dashboard/business/ProjectsPage.tsx: project dialog must use workspace/status tokens');
+}
+const clientsSource = fs.readFileSync(path.join(root, 'src/components/dashboard/business/ClientsPage.tsx'), 'utf8');
+if (/ac-workspace-panel rounded-xl p-5 border border-slate-700\/60 bg-gradient-to-br/.test(clientsSource)) {
+  failures.push('src/components/dashboard/business/ClientsPage.tsx: client portal panel must use workspace tokens');
+}
+const billingSource = fs.readFileSync(path.join(root, 'src/components/dashboard/business/EnhancedBillingPage.tsx'), 'utf8');
+const invoiceSheet = billingSource.split('{/* Invoice Options Bottom Sheet */}')[1]?.split('{/* PDF Preview Modal */}')[0] || '';
+if (/(?:bg|text|border)-(?:slate|gray|zinc|emerald|amber|red|green|blue|sky|teal|indigo|violet|purple)-\d{2,3}|bg-black\/80/.test(invoiceSheet)) {
+  failures.push('src/components/dashboard/business/EnhancedBillingPage.tsx: invoice options sheet must use workspace/status tokens');
+}
+
 function read(rel) {
   return fs.readFileSync(path.join(root, rel), 'utf8');
 }

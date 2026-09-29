@@ -929,54 +929,54 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     <>
                         <motion.div
                             initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.7 }}
+                            animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOptionsOpen(false)}
-                            className="fixed inset-0 ac-layer-overlay bg-black/80 backdrop-blur-sm"
+                            className="fixed inset-0 ac-layer-overlay bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm"
                         />
                         <motion.div
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                            className="fixed inset-x-0 bottom-0 ac-layer-panel max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
+                            className="fixed inset-x-0 bottom-0 ac-layer-panel max-h-[92dvh] bg-[var(--ws-panel)] border-t border-[var(--ws-border)] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
                         >
-                            <div className="flex justify-center py-2 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
-                                <div className="w-10 h-1 bg-white/20 rounded-full" />
+                            <div className="flex justify-center py-2 shrink-0 cursor-grab bg-[var(--ws-surface-secondary)] border-b border-[var(--ws-border)]">
+                                <div className="w-10 h-1 bg-[var(--ws-text-muted)] rounded-full" />
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-5 custom-scrollbar pb-10 space-y-5">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <span className="type-caption font-black uppercase tracking-caps text-slate-500 font-mono">
+                                        <span className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)] font-mono">
                                             Invoice ID: #{selectedInvoiceForOptions.id.slice(0, 8).toUpperCase()}
                                         </span>
-                                        <h3 className="text-base font-black text-white uppercase mt-1 tracking-tight">
+                                        <h3 className="text-base font-black text-[var(--ws-text-primary)] uppercase mt-1 tracking-tight">
                                             {selectedInvoiceForOptions.invoiceNumber}
                                         </h3>
-                                        <p className="type-card-description text-slate-400 mt-1">
+                                        <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">
                                             Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId]?.name ? clientMap[selectedInvoiceForOptions.clientId].name : 'Walk-in Client'}
                                         </p>
                                     </div>
-                                    <button onClick={() => setIsOptionsOpen(false)} className="h-8 w-8 p-0 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                                    <button onClick={() => setIsOptionsOpen(false)} className="h-8 w-8 p-0 rounded-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors flex items-center justify-center">
                                         <X className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
 
-                                <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6 text-center">
-                                    <p className="type-caption font-black uppercase tracking-widest text-slate-500 font-mono mb-1">Total Amount Due</p>
-                                    <p className="text-3xl font-black text-[var(--brand-blue-400)] tracking-tight font-mono">
+                                <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-2xl p-6 text-center">
+                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] font-mono mb-1">Total Amount Due</p>
+                                    <p className="text-3xl font-black text-[var(--info-text)] tracking-tight font-mono">
                                         ${selectedInvoiceForOptions.total.toLocaleString()}
                                     </p>
                                     {Number(selectedInvoiceForOptions.amountPaid || 0) > 0 && (
                                         <div className="mt-3 grid grid-cols-2 gap-3 text-left">
-                                            <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2">
-                                                <p className="type-caption font-black uppercase tracking-widest text-blue-200/80">Paid So Far</p>
-                                                <p className="type-card-description font-black text-blue-200">${Number(selectedInvoiceForOptions.amountPaid || 0).toLocaleString()}</p>
+                                            <div className="rounded-xl border border-[var(--info-border)] bg-[var(--info-surface)] px-3 py-2">
+                                                <p className="type-caption font-black uppercase tracking-widest text-[var(--info-text)]">Paid So Far</p>
+                                                <p className="type-card-description font-black text-[var(--info-text)]">${Number(selectedInvoiceForOptions.amountPaid || 0).toLocaleString()}</p>
                                             </div>
-                                            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2">
-                                                <p className="type-caption font-black uppercase tracking-widest text-amber-200/80">Balance Due</p>
-                                                <p className="type-card-description font-black text-amber-200">${Number(selectedInvoiceForOptions.balanceDue || 0).toLocaleString()}</p>
+                                            <div className="rounded-xl border border-[var(--warning-border)] bg-[var(--warning-surface)] px-3 py-2">
+                                                <p className="type-caption font-black uppercase tracking-widest text-[var(--warning-text)]">Balance Due</p>
+                                                <p className="type-card-description font-black text-[var(--warning-text)]">${Number(selectedInvoiceForOptions.balanceDue || 0).toLocaleString()}</p>
                                             </div>
                                         </div>
                                     )}
@@ -986,25 +986,25 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             {selectedInvoiceForOptions.status}
                                         </span>
                                     </div>
-                                    <p className="mt-3 type-caption font-bold uppercase tracking-widest text-slate-500">
+                                    <p className="mt-3 type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">
                                         Auto follow-ups: {selectedInvoiceForOptions.autoFollowupEnabled === false ? 'Off' : 'On'}
                                     </p>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-3">
-                                    <button onClick={() => { setLifecycleInvoiceId(selectedInvoiceForOptions.id); setIsOptionsOpen(false); }} className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"><span className="flex items-center gap-2.5"><Calendar className="w-4 h-4 text-sky-400" /><span>Payment Plan, Credits & Disputes</span></span><span className="type-ui text-slate-500 font-mono">LIFECYCLE</span></button>
+                                    <button onClick={() => { setLifecycleInvoiceId(selectedInvoiceForOptions.id); setIsOptionsOpen(false); }} className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"><span className="flex items-center gap-2.5"><Calendar className="w-4 h-4 text-[var(--info-text)]" /><span>Payment Plan, Credits & Disputes</span></span><span className="type-ui text-[var(--ws-text-muted)] font-mono">LIFECYCLE</span></button>
                                     <button
                                         onClick={() => {
                                             setEditingInvoice(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Edit className="w-4 h-4 text-violet-400" />
+                                            <Edit className="w-4 h-4 text-[var(--info-text)]" />
                                             <span>Edit Invoice &amp; Theme</span>
                                         </span>
-                                        <span className="type-ui text-slate-500 font-mono">DESIGN</span>
+                                        <span className="type-ui text-[var(--ws-text-muted)] font-mono">DESIGN</span>
                                     </button>
 
                                     <button
@@ -1012,13 +1012,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             handleViewPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Eye className="w-4 h-4 text-[var(--brand-blue-400)]" />
+                                            <Eye className="w-4 h-4 text-[var(--info-text)]" />
                                             <span>Preview PDF Invoice</span>
                                         </span>
-                                        <span className="type-ui text-slate-500 font-mono">PDF PREVIEW</span>
+                                        <span className="type-ui text-[var(--ws-text-muted)] font-mono">PDF PREVIEW</span>
                                     </button>
 
                                     <button
@@ -1026,24 +1026,24 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             handleDownloadPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Download className="w-4 h-4 text-indigo-400" />
+                                            <Download className="w-4 h-4 text-[var(--info-text)]" />
                                             <span>Download PDF File</span>
                                         </span>
-                                        <span className="type-ui text-slate-500 font-mono">PDF DOWNLOAD</span>
+                                        <span className="type-ui text-[var(--ws-text-muted)] font-mono">PDF DOWNLOAD</span>
                                     </button>
 
                                     <button
                                         onClick={() => openInvoiceCompose(selectedInvoiceForOptions)}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Mail className="w-4 h-4 text-teal-400" />
+                                            <Mail className="w-4 h-4 text-[var(--success-text)]" />
                                             <span>Compose Email to Client</span>
                                         </span>
-                                        <span className="type-ui text-slate-500 font-mono">ZOHO / OUTLOOK</span>
+                                        <span className="type-ui text-[var(--ws-text-muted)] font-mono">ZOHO / OUTLOOK</span>
                                     </button>
 
                                     {currentTenant?.id && (
@@ -1084,13 +1084,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     toast.error(err instanceof Error ? err.message : 'Failed to update follow-ups', { id: toastId });
                                                 }
                                             }}
-                                            className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                            className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                         >
                                             <span className="flex items-center gap-2.5">
-                                                <CheckCircle className="w-4 h-4 text-teal-400" />
+                                                <CheckCircle className="w-4 h-4 text-[var(--success-text)]" />
                                                 <span>{selectedInvoiceForOptions.autoFollowupEnabled !== false ? 'Disable Auto Follow-ups' : 'Enable Auto Follow-ups'}</span>
                                             </span>
-                                            <span className="type-ui text-slate-500 font-mono">REMINDERS</span>
+                                            <span className="type-ui text-[var(--ws-text-muted)] font-mono">REMINDERS</span>
                                         </button>
                                     )}
 
@@ -1110,13 +1110,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                         toast.error(err instanceof Error ? err.message : 'Failed to copy workspace link');
                                                     }
                                                 }}
-                                                className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                                className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                             >
                                                 <span className="flex items-center gap-2.5">
-                                                    <User className="w-4 h-4 text-purple-400" />
+                                                    <User className="w-4 h-4 text-[var(--info-text)]" />
                                                     <span>Copy client workspace link</span>
                                                 </span>
-                                                <span className="flex items-center gap-1 type-ui text-slate-500 font-mono">
+                                                <span className="flex items-center gap-1 type-ui text-[var(--ws-text-muted)] font-mono">
                                                     <Copy className="w-3 h-3" /> WORKSPACE
                                                 </span>
                                             </button>
@@ -1143,13 +1143,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                             toast.error(err instanceof Error ? err.message : 'Failed to copy project link');
                                                         }
                                                     }}
-                                                    className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                                    className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                                 >
                                                     <span className="flex items-center gap-2.5">
-                                                        <Lock className="w-4 h-4 text-amber-400" />
+                                                        <Lock className="w-4 h-4 text-[var(--warning-text)]" />
                                                         <span>Copy project portal link</span>
                                                     </span>
-                                                    <span className="flex items-center gap-1 type-ui text-slate-500 font-mono">
+                                                    <span className="flex items-center gap-1 type-ui text-[var(--ws-text-muted)] font-mono">
                                                         <Copy className="w-3 h-3" /> PROJECT
                                                     </span>
                                                 </button>
@@ -1176,13 +1176,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
                                             }
                                         }}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left type-ui text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl transition-all text-left type-ui text-[var(--ws-text-primary)]"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Send className="w-4 h-4 text-sky-400" />
+                                            <Send className="w-4 h-4 text-[var(--info-text)]" />
                                             <span>Email Invoice to Client</span>
                                         </span>
-                                        <span className="type-ui text-slate-500 font-mono">EMAIL DISPATCH</span>
+                                        <span className="type-ui text-[var(--ws-text-muted)] font-mono">EMAIL DISPATCH</span>
                                     </button>
 
                                     {selectedInvoiceForOptions.status !== 'paid' ? (
@@ -1199,13 +1199,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     setIsOptionsOpen(false);
                                                     void loadInvoices();
                                                 }}
-                                                className="w-full flex items-center justify-between p-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left type-ui text-emerald-200"
+                                                className="w-full flex items-center justify-between p-3.5 bg-[var(--success-surface)] hover:bg-[var(--ws-hover)] border border-[var(--success-border)] rounded-2xl transition-all text-left type-ui text-[var(--success-text)]"
                                             >
                                                 <span className="flex items-center gap-2.5">
-                                                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                                    <CheckCircle className="w-4 h-4 text-[var(--success-text)]" />
                                                     <span>Mark as Paid</span>
                                                 </span>
-                                                <span className="type-ui text-emerald-500/80 font-mono">FULL PAYMENT</span>
+                                                <span className="type-ui text-[var(--success-text)] font-mono">FULL PAYMENT</span>
                                             </button>
 
                                             <button
@@ -1214,13 +1214,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     setIsOptionsOpen(false);
                                                     openRecordPayment(selectedInvoiceForOptions);
                                                 }}
-                                                className="w-full flex items-center justify-between p-3.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left type-ui text-blue-200"
+                                                className="w-full flex items-center justify-between p-3.5 bg-[var(--info-surface)] hover:bg-[var(--ws-hover)] border border-[var(--info-border)] rounded-2xl transition-all text-left type-ui text-[var(--info-text)]"
                                             >
                                                 <span className="flex items-center gap-2.5">
-                                                    <Clock className="w-4 h-4 text-blue-300" />
+                                                    <Clock className="w-4 h-4 text-[var(--info-text)]" />
                                                     <span>Record Deposit / Partial</span>
                                                 </span>
-                                                <span className="type-ui text-blue-300/80 font-mono">AMOUNT PAID</span>
+                                                <span className="type-ui text-[var(--info-text)] font-mono">AMOUNT PAID</span>
                                             </button>
                                         </div>
                                     ) : (
@@ -1236,13 +1236,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 setIsOptionsOpen(false);
                                                 void loadInvoices();
                                             }}
-                                            className="w-full flex items-center justify-between p-3.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-2xl transition-all text-left type-ui text-amber-200"
+                                            className="w-full flex items-center justify-between p-3.5 bg-[var(--warning-surface)] hover:bg-[var(--ws-hover)] border border-[var(--warning-border)] rounded-2xl transition-all text-left type-ui text-[var(--warning-text)]"
                                         >
                                             <span className="flex items-center gap-2.5">
-                                                <Clock className="w-4 h-4 text-amber-400" />
+                                                <Clock className="w-4 h-4 text-[var(--warning-text)]" />
                                                 <span>Mark as Unpaid</span>
                                             </span>
-                                            <span className="type-ui text-amber-500/80 font-mono">MANUAL UPDATE</span>
+                                            <span className="type-ui text-[var(--warning-text)] font-mono">MANUAL UPDATE</span>
                                         </button>
                                     )}
                                 </div>

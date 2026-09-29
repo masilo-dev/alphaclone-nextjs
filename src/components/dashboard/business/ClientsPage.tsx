@@ -1518,7 +1518,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
+                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-slate-500 rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1750,20 +1750,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                         {activeTab === 'portal' && (
                                             <div className="space-y-4">
-                                                <div className="ac-workspace-panel rounded-xl p-5 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900/90 to-cyan-950/20">
+                                                <div className="ac-workspace-panel rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5">
                                                     <div className="flex items-start justify-between gap-4 mb-4">
                                                         <div className="flex items-start gap-3">
-                                                            <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2.5 text-cyan-300">
+                                                            <div className="rounded-xl border border-[var(--info-border)] bg-[var(--info-surface)] p-2.5 text-[var(--info-text)]">
                                                                 <Globe className="h-5 w-5" />
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <h3 className="type-ui font-bold text-white">Client Portal & Finance Hub</h3>
+                                                                    <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Client Portal & Finance Hub</h3>
                                                                     <Badge variant={selectedClient.financePortalToken || portalUrl ? 'success' : 'warning'}>
                                                                         {selectedClient.financePortalToken || portalUrl ? 'Active' : 'Not Configured'}
                                                                     </Badge>
                                                                 </div>
-                                                                <p className="type-card-description text-slate-400 mt-1 leading-relaxed">
+                                                                <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 leading-relaxed">
                                                                     A dedicated, secure workspace for {selectedClient.name} to view active projects, review invoices, sign contracts, and communicate.
                                                                 </p>
                                                             </div>

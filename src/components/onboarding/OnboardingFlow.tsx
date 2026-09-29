@@ -77,7 +77,7 @@ const ONBOARDING_GOALS: OnboardingGoal[] = [
     {
         id: 'manage_projects',
         title: 'Manage projects and tasks',
-        description: 'Plan client work, assign tasks, and see what needs attention.',
+        description: 'Plan client work, organize tasks, and see what needs attention.',
         nextStep: 'Create the first piece of work to track.',
         href: '/dashboard/business/projects/manage?create=true',
         icon: FolderKanban,
@@ -94,6 +94,7 @@ const ONBOARDING_GOALS: OnboardingGoal[] = [
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [showAllGoals, setShowAllGoals] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -156,7 +157,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                     <div className="mx-auto inline-flex items-center justify-center rounded-2xl bg-[var(--brand-blue-500,#356AF4)]/15 p-3 text-[var(--brand-blue-400,#91B5FF)]">
                         <Sparkles className="w-5 h-5" aria-hidden="true" />
                     </div>
-                    <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,#91B5FF)]">Welcome to AlphaClone</p>
+                    <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,#91B5FF)]">Account created · Choose your first direction</p>
                     <h2 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
                         What do you want AlphaClone to do for your business?
                     </h2>
@@ -172,7 +173,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                 ) : null}
 
                 <div className="grid max-h-[52vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2" aria-label="Choose your first business goal">
-                    {ONBOARDING_GOALS.map((goal) => {
+                    {(showAllGoals ? ONBOARDING_GOALS : ONBOARDING_GOALS.slice(0, 3)).map((goal) => {
                         const Icon = goal.icon;
                         const isSelected = selectedId === goal.id;
 
@@ -203,6 +204,12 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                         );
                     })}
                 </div>
+
+                {!showAllGoals && (
+                    <button type="button" onClick={() => setShowAllGoals(true)} className="mt-3 min-h-11 rounded-lg px-3 type-ui font-semibold text-[var(--brand-blue-400,#91B5FF)] hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-blue-400,#91B5FF)]">
+                        See all seven starting points
+                    </button>
+                )}
 
                 <div className="mt-7 flex flex-col gap-3 border-t border-slate-800/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
                     <p className="type-card-description text-slate-500">You can change direction later. Your existing workspace and permissions stay the same.</p>

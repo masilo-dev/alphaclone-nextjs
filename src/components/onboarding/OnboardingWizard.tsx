@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Check, ChevronRight, Users, FolderPlus, Settings, Sparkles } from 'lucide-react';
+import { Check, ChevronRight, FolderPlus, Settings, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { toast } from 'react-hot-toast';
-import { tenantService } from '@/services/tenancy/TenantService';
 
 interface OnboardingStep {
     id: string;
@@ -40,13 +39,6 @@ export function OnboardingWizard() {
             completed: false,
         },
         {
-            id: 'team',
-            title: 'Invite Your Team',
-            description: 'Collaborate with teammates',
-            icon: Users,
-            completed: false,
-        },
-        {
             id: 'project',
             title: 'Create First Project',
             description: 'Start tracking your work',
@@ -63,8 +55,6 @@ export function OnboardingWizard() {
         phone: '',
     });
 
-    const [teamInvites, setTeamInvites] = useState<string[]>(['']);
-
     const [projectData, setProjectData] = useState({
         name: '',
         description: '',
@@ -79,9 +69,8 @@ export function OnboardingWizard() {
             const raw = localStorage.getItem(draftKey);
             if (!raw) return;
             const draft = JSON.parse(raw);
-            if (typeof draft.currentStep === 'number') setCurrentStep(draft.currentStep);
+            if (typeof draft.currentStep === 'number') setCurrentStep(Math.max(0, Math.min(2, draft.currentStep)));
             if (draft.profileData) setProfileData(draft.profileData);
-            if (Array.isArray(draft.teamInvites)) setTeamInvites(draft.teamInvites);
             if (draft.projectData) setProjectData(draft.projectData);
         } catch {
             // Corrupt draft — start fresh
@@ -94,12 +83,12 @@ export function OnboardingWizard() {
         try {
             localStorage.setItem(
                 draftKey,
-                JSON.stringify({ currentStep, profileData, teamInvites, projectData })
+                JSON.stringify({ currentStep, profileData, projectData })
             );
         } catch {
             // Storage full/unavailable — non-fatal
         }
-    }, [draftKey, currentStep, profileData, teamInvites, projectData]);
+    }, [draftKey, currentStep, profileData, projectData]);
 
     const markStepComplete = (stepIndex: number) => {
         const newSteps = [...steps];
@@ -121,11 +110,6 @@ export function OnboardingWizard() {
                 break;
 
             case 2:
-                // Invite team (optional)
-                await inviteTeam();
-                break;
-
-            case 3:
                 // Create project
                 await createProject();
                 break;
@@ -136,7 +120,6 @@ export function OnboardingWizard() {
     };
 
     const handleSkip = () => {
-        markStepComplete(currentStep);
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -166,37 +149,6 @@ export function OnboardingWizard() {
         }
     };
 
-    const inviteTeam = async () => {
-        const validEmails = teamInvites.filter(email =>
-            email && email.includes('@')
-        );
-
-        if (validEmails.length === 0) {
-            // Skip if no emails
-            markStepComplete(2);
-            setCurrentStep(3);
-            return;
-        }
-
-        setLoading(true);
-        try {
-            // Send invitations
-            for (const email of validEmails) {
-                if (!tenant?.id || !user?.id) throw new Error('Workspace is unavailable');
-                await tenantService.createInvitation(tenant.id, email, 'member', user.id);
-            }
-
-            markStepComplete(2);
-            setCurrentStep(3);
-            toast.success(`Invited ${validEmails.length} team member(s)!`);
-        } catch (error) {
-            console.error('Error inviting team:', error);
-            toast.error('Failed to send invitations');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const createProject = async () => {
         if (!projectData.name) {
             toast.error('Please enter a project name');
@@ -209,7 +161,7 @@ export function OnboardingWizard() {
             const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: projectData.name, description: projectData.description }) });
             if (!response.ok) throw new Error('Project creation failed');
 
-            markStepComplete(3);
+            markStepComplete(2);
             toast.success('Project created!');
 
             // Complete onboarding
@@ -242,7 +194,7 @@ export function OnboardingWizard() {
         }
     };
 
-    const progress = ((currentStep + 1) / steps.length) * 100;
+    const progress = (steps.filter((step) => step.completed).length / steps.length) * 100;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -383,38 +335,8 @@ export function OnboardingWizard() {
                             </div>
                         )}
 
-                        {/* Team invitations step */}
-                        {currentStep === 2 && (
-                            <div className="space-y-4">
-                                <p className="type-card-description text-gray-600 mb-4">
-                                    Invite team members to collaborate (optional)
-                                </p>
-                                {teamInvites.map((email, index) => (
-                                    <div key={index} className="flex gap-2">
-                                        <input
-                                            type="email"
-                                            value={email}
-                                            onChange={e => {
-                                                const newInvites = [...teamInvites];
-                                                newInvites[index] = e.target.value;
-                                                setTeamInvites(newInvites);
-                                            }}
-                                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            placeholder="teammate@example.com"
-                                        />
-                                    </div>
-                                ))}
-                                <button
-                                    onClick={() => setTeamInvites([...teamInvites, ''])}
-                                    className="type-ui text-blue-600 hover:text-blue-700 font-medium"
-                                >
-                                    + Add another
-                                </button>
-                            </div>
-                        )}
-
                         {/* Project creation step */}
-                        {currentStep === 3 && (
+                        {currentStep === 2 && (
                             <div className="space-y-4">
                                 <div>
                                     <label className="block type-label font-medium text-gray-700 mb-1">

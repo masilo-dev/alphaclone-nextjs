@@ -854,7 +854,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             const lookup = getTaxRateForCountry(code);
                                             if (lookup.rate > 0) setTaxRate(lookup.rate);
                                         }}
-                                        className={`w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] ${WORKSPACE.panel.radius} px-3 type-ui text-white outline-none`}
+                                        className={`w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] ${WORKSPACE.panel.radius} px-3 type-ui text-[var(--ws-text-primary)] outline-none`}
                                     >
                                         <option value="ZW">Zimbabwe (15% VAT)</option>
                                         <option value="ZA">South Africa</option>

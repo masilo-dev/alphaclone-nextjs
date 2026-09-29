@@ -7,13 +7,13 @@ export const EXECUTION_LAYER = {
   category: 'AI Business Execution Layer',
   primaryLine: 'AI that does not stop at answers.',
   categoryLine: 'From intention to accountable impact.',
-  problemLine: 'Your tools hold the data. Your team carries the handoffs.',
+  problemLine: 'Your tools hold the data. You carry the handoffs.',
   explanatoryLine:
     'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.',
   differentiationLine:
     'AI provides the intelligence and conversation. AlphaClone provides business context, permissions, workflows, execution, and verification.',
   mechanism: ['Decide', 'Approve', 'Execute', 'Verify'] as const,
-  heroHeadline: 'You type. We make it happen.',
+  heroHeadline: 'AI executes approved business work across your tools.',
   heroSubhead:
     'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.',
   primaryCta: 'Book a demo',

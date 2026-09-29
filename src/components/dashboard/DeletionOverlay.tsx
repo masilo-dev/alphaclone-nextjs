@@ -73,7 +73,7 @@ export const DeletionOverlay: React.FC = () => {
 
                     <button
                         onClick={signOut}
-                        className="flex w-full items-center justify-center space-x-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--ws-surface-2)]"
+                        className="flex w-full items-center justify-center space-x-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 py-3 font-semibold text-[var(--ws-text-primary)] transition-all hover:bg-[var(--ws-surface-2)]"
                     >
                         <LogOut className="w-5 h-5" />
                         <span>Sign Out</span>

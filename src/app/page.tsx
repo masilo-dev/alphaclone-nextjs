@@ -28,7 +28,7 @@ export default async function Home() {
         <div className="marketing-theme min-h-screen bg-white text-slate-950 flex items-center justify-center px-5 sm:px-8">
           <div className="w-full max-w-3xl">
             <p className="mb-4 type-caption font-bold uppercase tracking-caps text-blue-700">AI business execution layer</p>
-            <h1 className="font-marketing-heading text-5xl font-bold leading-tight tracking-tight sm:text-7xl">You type. We make it happen.</h1>
+            <h1 className="font-marketing-heading text-5xl font-bold leading-tight tracking-tight sm:text-7xl">{EXECUTION_LAYER.heroHeadline}</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">{EXECUTION_LAYER.heroSubhead}</p>
           </div>
         </div>
