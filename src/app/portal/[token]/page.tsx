@@ -22,6 +22,7 @@ import {
     Signature,
     X,
     FileCheck,
+    Download,
     Bell,
     CalendarClock,
     CreditCard,
@@ -420,6 +421,9 @@ export default function ClientPortalPage() {
     const [projectId, setProjectId] = useState('');
     const [sending, setSending] = useState(false);
     const [documentPreview, setDocumentPreview] = useState<{ name: string; url: string } | null>(null);
+    const [contractPreview, setContractPreview] = useState<{ id: string; title: string; content: string; actionUrl?: string } | null>(null);
+    const [contractLoading, setContractLoading] = useState(false);
+    const [contractDownloading, setContractDownloading] = useState<string | null>(null);
     const [deciding, setDeciding] = useState<string | null>(null);
     const [workspaceActivity, setWorkspaceActivity] = useState<Array<{ id: string; event_type: string; summary: string; actor_display_name: string | null; created_at: string; metadata: Record<string, unknown> }>>([]);
 
@@ -442,6 +446,41 @@ export default function ClientPortalPage() {
         } catch {
             /* swallow network flakes; next poll or reload will recover */
         }
+    }, [token, handle401]);
+
+    const openContract = useCallback(async (contract: ClientFinancePortalData['contracts'][number]) => {
+        setContractLoading(true);
+        try {
+            const response = await fetch(`/api/client-finance/contract?token=${encodeURIComponent(token)}&contractId=${encodeURIComponent(contract.id)}`, { cache: 'no-store' });
+            if (response.status === 401) { handle401(); return; }
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Contract could not be opened');
+            setContractPreview({ id: contract.id, title: contract.title, content: String(data.contract.content || ''), actionUrl: contract.actionUrl });
+        } catch (cause) {
+            setToast({ type: 'error', text: cause instanceof Error ? cause.message : 'Contract could not be opened' });
+        } finally { setContractLoading(false); }
+    }, [token, handle401]);
+
+    const downloadContract = useCallback(async (contractId: string) => {
+        setContractDownloading(contractId);
+        try {
+            const response = await fetch(`/api/client-finance/contract?token=${encodeURIComponent(token)}&contractId=${encodeURIComponent(contractId)}&download=1`, { cache: 'no-store' });
+            if (response.status === 401) { handle401(); return; }
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                throw new Error(result.error || 'Contract could not be downloaded');
+            }
+            const url = URL.createObjectURL(await response.blob());
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `contract-${contractId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        } catch (cause) {
+            setToast({ type: 'error', text: cause instanceof Error ? cause.message : 'Contract could not be downloaded' });
+        } finally { setContractDownloading(null); }
     }, [token, handle401]);
 
     const loadWorkspaceActivity = useCallback(async () => {
@@ -1043,19 +1082,19 @@ export default function ClientPortalPage() {
                                         <span>Last updated <span className="font-medium text-[color:var(--ws-text-secondary)]">{formatDate(c.updatedAt)}</span></span>
                                     </div>
                                 </div>
-                                <div className="shrink-0 sm:text-right">
-                                    {c.actionUrl ? (
-                                        <a
-                                            href={c.actionUrl}
+                                <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                                    <button
+                                            type="button"
+                                            onClick={() => void openContract(c)}
+                                            disabled={contractLoading}
                                             className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-caption md:text-sm font-semibold text-white"
                                         >
-                                            Review & sign <ArrowUpRight className="h-3.5 w-3.5" />
-                                        </a>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] border border-[color:var(--ws-border)] px-3.5 py-2 type-caption font-medium text-[color:var(--ws-text-tertiary)]">
-                                            <CheckCircle2 className="h-3.5 w-3.5" /> No action required
-                                        </span>
-                                    )}
+                                            {c.actionUrl ? 'Review & sign' : 'View contract'} <ArrowUpRight className="h-3.5 w-3.5" />
+                                        </button>
+                                    <button type="button" onClick={() => void downloadContract(c.id)} disabled={contractDownloading === c.id}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ws-border-strong)] px-4 py-2 type-caption font-semibold text-[color:var(--ws-text-primary)] disabled:opacity-50">
+                                        <Download className="h-4 w-4" /> {contractDownloading === c.id ? 'Preparing…' : 'Download PDF'}
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -1199,6 +1238,28 @@ export default function ClientPortalPage() {
             </div>
 
             {/* DOCUMENT PREVIEW MODAL */}
+            {contractPreview ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setContractPreview(null)}>
+                    <div role="dialog" aria-modal="true" aria-label={contractPreview.title} onClick={(event) => event.stopPropagation()} className="flex h-[90vh] w-full max-w-5xl flex-col rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-2xl">
+                        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
+                            <h2 className="truncate font-semibold text-[color:var(--ws-text-primary)]">{contractPreview.title}</h2>
+                            <div className="flex items-center gap-2">
+                                {portal.projects.length > 0 ? <button type="button" onClick={() => { setContractPreview(null); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button> : null}
+                                <button type="button" onClick={() => void downloadContract(contractPreview.id)} disabled={contractDownloading === contractPreview.id} className="inline-flex items-center gap-1 rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)] disabled:opacity-50"><Download className="h-4 w-4" /> Download</button>
+                                <button type="button" onClick={() => setContractPreview(null)} aria-label="Close contract" className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
+                            </div>
+                        </div>
+                        {contractPreview.actionUrl ? (
+                            <iframe title={`Sign ${contractPreview.title}`} src={contractPreview.actionUrl} className="min-h-0 w-full flex-1 rounded-b-2xl bg-white" />
+                        ) : (
+                            <div className="min-h-0 flex-1 overflow-auto p-5 md:p-8">
+                                <div className="whitespace-pre-wrap break-words type-body text-[color:var(--ws-text-primary)]">{contractPreview.content || 'A contract preview is not available. Ask the business to share the final document or a signing link.'}</div>
+                                <p className="mt-6 type-caption text-[color:var(--ws-text-tertiary)]">Signing becomes available here when the business sends you a secure signing link.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ) : null}
             {documentPreview ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm" onClick={() => setDocumentPreview(null)}>
                     <div

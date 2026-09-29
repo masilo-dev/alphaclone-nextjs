@@ -7,6 +7,7 @@ import {
   normalizeProjectStatus,
 } from "@/lib/projects/projectEnums";
 import { appendWorkspaceActivity } from "@/services/finance/workspaceActivityService";
+import { notifyProjectClientDetails } from '@/lib/projects/projectClientNotification';
 
 const optionalDate = z.union([z.string(), z.null()]).optional().transform((val) => (val && val.trim().length > 0 ? val.trim() : null));
 const optionalUuid = z.union([z.string(), z.null()]).optional().transform((val) => (val && z.string().uuid().safeParse(val.trim()).success ? val.trim() : undefined));
@@ -114,7 +115,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
       metadata: { projectId: project.id, projectName: project.name || input.name, category: input.category },
     }).catch((e) => console.error('[projects/route] workspace activity failed', e));
 
-    return NextResponse.json({ project, templateApplication }, { status: 201 });
+    const clientNotification = project.client_id
+      ? await notifyProjectClientDetails({ admin, projectId: project.id, tenantId, kind: 'created', origin: req.nextUrl.origin })
+          .catch((notificationError) => ({ sent: false, skipped: String(notificationError) }))
+      : { sent: false, skipped: 'no_client' };
+    return NextResponse.json({ project, templateApplication, clientNotification }, { status: 201 });
   } catch (error) {
     return routeErrorResponse(error, "Project could not be created", req);
   }

@@ -15,6 +15,7 @@ import {
   notifyProjectClientProgressUpdate,
   notifyProjectClientStageUpdate,
   notifyProjectFinished,
+  notifyProjectClientDetails,
 } from "@/lib/projects/projectClientNotification";
 import { sendEmailServer } from "@/lib/email/sendEmailServer";
 import { buildCanonicalProjectPortalUrl } from "@/lib/projects/portalLinks";
@@ -136,7 +137,7 @@ export async function PATCH(
     }
     const { data: before, error: beforeError } = await admin
       .from("projects")
-      .select("id, name, current_stage, status, progress, portal_expires_at, owner_id")
+      .select("id, name, description, due_date, client_id, current_stage, status, progress, portal_expires_at, owner_id")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -293,6 +294,17 @@ export async function PATCH(
         origin,
         trigger: "progress_change",
       });
+    }
+    const detailChanges = [
+      before.name !== project.name ? `Name: ${project.name}` : '',
+      before.description !== project.description ? 'Description updated' : '',
+      before.due_date !== project.due_date ? `Due date: ${project.due_date || 'To be confirmed'}` : '',
+      before.status !== project.status && !justFinished ? `Status: ${project.status}` : '',
+    ].filter(Boolean);
+    if (project.client_id && detailChanges.length) {
+      notificationResults.details = await notifyProjectClientDetails({
+        admin, projectId, tenantId, kind: 'details_updated', changes: detailChanges, origin,
+      }).catch((notificationError) => ({ sent: false, skipped: String(notificationError) }));
     }
     const changedForOwner = [
       before.current_stage !== project.current_stage ? `Stage: ${before.current_stage || "In Progress"} -> ${project.current_stage || "In Progress"}` : "",

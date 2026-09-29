@@ -126,6 +126,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [contractsLoading, setContractsLoading] = useState(false);
     const [portalUrl, setPortalUrl] = useState<string | null>(null);
     const [portalUrlLoading, setPortalUrlLoading] = useState(false);
+    const [invitingClient, setInvitingClient] = useState(false);
     const [copiedPortalUrl, setCopiedPortalUrl] = useState(false);
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteDescription, setNewNoteDescription] = useState('');
@@ -1895,6 +1896,24 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                     Manage Access & Credentials
                                                                 </Button>
                                                             </div>
+                                                            <Button size="sm" variant="outline" disabled={invitingClient || !selectedClient.email}
+                                                                onClick={async () => {
+                                                                    if (!currentTenant?.id) return;
+                                                                    setInvitingClient(true);
+                                                                    try {
+                                                                        const response = await fetch(`/api/client-finance/invite/${selectedClient.id}`, {
+                                                                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ tenantId: currentTenant.id }),
+                                                                        });
+                                                                        const result = await response.json().catch(() => ({}));
+                                                                        if (!response.ok) throw new Error(result.error || 'Invitation could not be sent');
+                                                                        toast.success(`Invitation sent to ${result.recipient}`);
+                                                                    } catch (cause) {
+                                                                        toast.error(cause instanceof Error ? cause.message : 'Invitation could not be sent');
+                                                                    } finally { setInvitingClient(false); }
+                                                                }}>
+                                                                {invitingClient ? 'Sending invitation…' : 'Email client portal invitation'}
+                                                            </Button>
                                                         </div>
                                                     ) : (
                                                         <div className="pt-2 text-center sm:text-left">
@@ -2622,8 +2641,9 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
         }
         setIsSubmitting(true);
         try {
-            const { projectService } = await import('../../../services/projectService');
-            const { error } = await projectService.createProject({
+            const response = await fetch(`/api/tenant/${currentTenant.id}/projects`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                 ownerId: user.id,
                 ownerName: user.name,
                 name: formData.name,
@@ -2632,21 +2652,23 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                 status: 'Pending',
                 currentStage: 'Proposal',
                 progress: 0,
-                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
                 team: [],
-                image: '',
                 contractStatus: 'None',
                 clientId: client.id,
                 budget: formData.budget,
                 isPublic: false,
                 showInPortfolio: false,
                 resources: [],
-                startDate: new Date().toISOString()
-            } as any);
+                startDate: new Date().toISOString().slice(0, 10),
+            }),
+            });
+            const result = await response.json().catch(() => ({}));
 
-            if (error) {
-                toast.error(`Failed to create proposal: ${error}`);
+            if (!response.ok) {
+                toast.error(`Failed to create proposal: ${result.error || 'Please try again'}`);
             } else {
+                if (result.clientNotification && !result.clientNotification.sent) toast(`Proposal saved. Client email was not sent: ${result.clientNotification.skipped || 'delivery unavailable'}`);
                 onCreated();
             }
         } catch (err) {

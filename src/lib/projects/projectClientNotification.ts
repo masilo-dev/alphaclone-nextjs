@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { ensureFooter } from '@/lib/email/emailComposition';
 import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
+import { escapeHtml } from '@/lib/email/escapeHtml';
 
 const NOREPLY_FOOTER =
   '\n\n—\nThis is an automated project update from AlphaClone Systems. Please do not reply to this email; use your project portal link to message the team.';
@@ -131,6 +132,35 @@ async function sendClientProjectNoReplyEmail(params: {
     templateName: params.templateName,
   });
   return { success: sendResult.success, error: sendResult.error };
+}
+
+export async function notifyProjectClientDetails(params: {
+  admin: SupabaseClient;
+  projectId: string;
+  tenantId: string;
+  kind: 'created' | 'details_updated';
+  changes?: string[];
+  origin: string;
+}): Promise<{ sent: boolean; skipped?: string; email?: string }> {
+  const { admin, projectId, tenantId, kind, changes = [] } = params;
+  const { data: project, error } = await admin.from('projects')
+    .select('id, name, client_id, portal_token, portal_enabled, is_public')
+    .eq('tenant_id', tenantId).eq('id', projectId).maybeSingle();
+  if (error || !project) return { sent: false, skipped: 'project_not_found' };
+  const { email, name } = await resolveClientRecipient(admin, tenantId, project.client_id);
+  if (!email || !email.includes('@')) return { sent: false, skipped: 'no_client_email' };
+  const safeChanges = changes.slice(0, 8).map((change) => escapeHtml(change));
+  const portalUrl = project.portal_enabled && project.is_public && project.portal_token
+    ? buildPortalUrl(params.origin, project.portal_token) : null;
+  const title = String(project.name || 'Your project');
+  const intro = kind === 'created' ? 'A project has been created for you.' : 'Your project details have been updated.';
+  const sent = await sendClientProjectNoReplyEmail({
+    tenantId, to: email, templateName: kind === 'created' ? 'projectCreatedClient' : 'projectDetailsUpdatedClient',
+    subject: `${kind === 'created' ? 'New project' : 'Project update'}: ${title}`,
+    html: `<p>Hi ${escapeHtml(name || 'there')},</p><p>${intro}</p><p><strong>${escapeHtml(title)}</strong></p>${safeChanges.length ? `<ul>${safeChanges.map((change) => `<li>${change}</li>`).join('')}</ul>` : ''}${portalUrl ? `<p><a href="${escapeHtml(portalUrl)}">Open your project</a></p>` : ''}<p style="color:#64748b;font-size:12px">If you have client workspace access, you can message the business there.</p>`,
+    text: [`Hi ${name || 'there'},`, '', intro, title, ...changes.slice(0, 8), portalUrl ? `Open your project: ${portalUrl}` : '', NOREPLY_FOOTER].filter(Boolean).join('\n'),
+  });
+  return { sent: sent.success, skipped: sent.error, email: sent.success ? email : undefined };
 }
 
 export async function notifyProjectClientProgressUpdate(params: {

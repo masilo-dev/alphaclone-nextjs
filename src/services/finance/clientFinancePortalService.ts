@@ -190,7 +190,10 @@ export async function getClientFinancePortalData(
       .gt('expires_at', new Date().toISOString())
     : { data: [] as any[] };
   const activeTokenByContract = new Map((signingTokens || []).map((row: any) => [row.contract_id, row.token]));
-  const contractRows = (contracts || []).map((contract: any) => ({
+  const sharedStatuses = new Set(['sent', 'viewed', 'client_signed', 'fully_signed', 'signed', 'completed']);
+  const contractRows = (contracts || []).filter((contract: any) =>
+    sharedStatuses.has(String(contract.status || '').toLowerCase()) || activeTokenByContract.has(contract.id)
+  ).map((contract: any) => ({
     id: String(contract.id),
     title: String(contract.title || 'Contract'),
     contractNumber: contract.contract_number ? String(contract.contract_number) : null,
