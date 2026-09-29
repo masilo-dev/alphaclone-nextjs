@@ -33,7 +33,7 @@ import type { ClientFinancePortalData } from '@/services/finance/clientFinancePo
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 type Tab = 'overview' | 'projects' | 'invoices' | 'quotes' | 'contracts' | 'documents' | 'messages';
-type PortalMessage = { id: string; project_id: string; projectName: string; author_name: string; content: string; is_client: boolean; created_at: string };
+type PortalMessage = { id: string; project_id: string | null; projectName: string; author_name: string; content: string; is_client: boolean; created_at: string };
 
 const money = (amount: number, currency = 'USD') =>
     new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
@@ -530,6 +530,7 @@ export default function ClientPortalPage() {
     }, [token, loadMessages, loadWorkspaceActivity, handle401]);
 
     const projectIds = useMemo(() => new Set(portal?.projects.map((p) => p.id) || []), [portal]);
+    const conversationMessages = useMemo(() => messages.filter((item) => item.project_id === (projectId || null)), [messages, projectId]);
     useEffect(() => {
         if (!portal || !projectIds.size || !token) return;
         const channel = supabase
@@ -1176,8 +1177,8 @@ export default function ClientPortalPage() {
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5 space-y-3 min-h-[280px] bg-[color:var(--ws-surface-secondary)]">
-                            {messages.length > 0 ? (
-                                messages.map((item) => (
+                            {conversationMessages.length > 0 ? (
+                                conversationMessages.map((item) => (
                                     <div
                                         key={item.id}
                                         className={`flex ${item.is_client ? 'justify-end' : 'justify-start'}`}
@@ -1206,7 +1207,7 @@ export default function ClientPortalPage() {
                                         </div>
                                         <h3 className="font-semibold text-[color:var(--ws-text-primary)]">No messages yet</h3>
                                         <p className="mt-1.5 type-card-description text-[color:var(--ws-text-tertiary)] max-w-sm mx-auto">
-                                            Send a message to get a conversation started. Replies from the team will appear right here.
+                                            Send a message to start this conversation. Replies from the business will appear right here.
                                         </p>
                                     </div>
                                 </div>
