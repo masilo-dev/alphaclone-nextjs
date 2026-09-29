@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -35,11 +36,14 @@ export function WorkspaceSwitcher({
 }: WorkspaceSwitcherProps) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({ visibility: 'hidden' });
   const router = useRouter();
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
@@ -47,6 +51,53 @@ export function WorkspaceSwitcher({
       document.addEventListener('mousedown', handleOutsideClick);
     }
     return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const positionMenu = () => {
+      const trigger = dropdownRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(320, window.innerWidth - 24);
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      const openAbove = below < 240 && above > below;
+      const available = Math.max(100, openAbove ? above : below);
+      const menuHeight = Math.min(available, 440, options.length * 44 + 12);
+      const tokens = getComputedStyle(trigger);
+      const style: React.CSSProperties = {
+        position: 'fixed',
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        top: openAbove ? Math.max(12, rect.top - menuHeight - 6) : rect.bottom + 6,
+        width,
+        maxHeight: menuHeight,
+        overflowY: 'auto',
+      };
+      for (const token of ['--ws-panel', '--ws-border', '--ws-hover', '--ws-text-primary', '--ws-text-secondary', '--ws-text-muted', '--ws-surface-secondary', '--info-text']) {
+        (style as Record<string, string | number>)[token] = tokens.getPropertyValue(token).trim();
+      }
+      setMenuPosition(style);
+    };
+    positionMenu();
+    window.addEventListener('resize', positionMenu);
+    window.addEventListener('scroll', positionMenu, true);
+    return () => {
+      window.removeEventListener('resize', positionMenu);
+      window.removeEventListener('scroll', positionMenu, true);
+    };
+  }, [open, options.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        dropdownRef.current?.querySelector('button')?.focus();
+      }
+    };
+    document.addEventListener('keydown', onEscape);
+    return () => document.removeEventListener('keydown', onEscape);
   }, [open]);
 
   return (
@@ -74,10 +125,13 @@ export function WorkspaceSwitcher({
         />
       </button>
 
-      {open ? (
+      {open && typeof document !== 'undefined' ? createPortal(
         <div
+          ref={menuRef}
           role="listbox"
-          className="absolute left-0 top-full mt-1.5 w-60 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] py-1.5 shadow-xl z-50 animate-fade-in"
+          aria-label={`${moduleName || 'Workspace'} sections`}
+          style={menuPosition}
+          className="ac-layer-menu rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] py-1.5 shadow-xl"
         >
           {options.map((option) => {
             const isSelected = Boolean(
@@ -116,18 +170,18 @@ export function WorkspaceSwitcher({
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {option.badge != null ? (
-                    <span className="text-xs px-1.5 py-0.5 rounded-md bg-[var(--ws-surface)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]">
+                    <span className="text-xs px-1.5 py-0.5 rounded-md bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]">
                       {option.badge}
                     </span>
                   ) : null}
                   {isSelected ? (
-                    <Check className="w-4 h-4 text-[var(--brand-blue-400)]" aria-hidden="true" />
+                    <Check className="w-4 h-4 text-[var(--info-text)]" aria-hidden="true" />
                   ) : null}
                 </div>
               </button>
             );
           })}
-        </div>
+        </div>, document.body
       ) : null}
     </div>
   );

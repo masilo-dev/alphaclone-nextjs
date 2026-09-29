@@ -131,6 +131,11 @@ assertMatch(
   /role="dialog"/,
   'CommandPalette must expose dialog role'
 );
+assertMatch(
+  'src/components/ui/workspace/WorkspaceSwitcher.tsx',
+  /createPortal\([\s\S]*ac-layer-menu[\s\S]*document\.body/,
+  'module switcher menu must render above module content, outside clipped toolbar layers'
+);
 
 // --- Canonical finance ---
 assertMatch(
