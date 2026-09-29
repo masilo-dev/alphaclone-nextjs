@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ client
     const business = tenant?.name || 'Your business';
     const sent = await sendEmailServer({
       tenantId, to: client.email, subject: `${business} shared a client workspace with you`,
-      fromName: business, isPlatformNotification: true, templateName: 'clientPortalInvitation',
+      fromName: business, category: 'transactional', templateName: 'clientPortalInvitation',
       html: `<p>Hi ${escapeHtml(client.name || client.company_name || 'there')},</p><p>${escapeHtml(business)} has shared a client workspace with you. You can review projects, proposals, contracts and invoices, and message the business there.</p><p><a href="${escapeHtml(loginUrl)}">Open your client workspace</a></p><p>Sign in using this email and the password provided to you by the business. If you need access, contact the business directly.</p>`,
       text: `Hi ${client.name || 'there'},\n\n${business} has shared a client workspace with you. Open it at ${loginUrl}\n\nSign in using this email and the password provided by the business.`,
     });

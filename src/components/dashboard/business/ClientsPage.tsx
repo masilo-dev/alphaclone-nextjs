@@ -118,7 +118,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [portalAccessClient, setPortalAccessClient] = useState<BusinessClient | null>(null);
     const [clientTimeline, setClientTimeline] = useState<any>(null);
     const [timelineLoading, setTimelineLoading] = useState(false);
-    type ClientDetailTab = 'timeline' | 'projects' | 'invoices' | 'contracts' | 'portal' | 'notes' | 'properties';
+    type ClientDetailTab = 'timeline' | 'projects' | 'invoices' | 'contracts' | 'portal' | 'messages' | 'notes' | 'properties';
     const [activeTab, setActiveTab] = useState<ClientDetailTab>('timeline');
     const [clientProjects, setClientProjects] = useState<any[]>([]);
     const [projectsLoading, setProjectsLoading] = useState(false);
@@ -127,6 +127,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [portalUrl, setPortalUrl] = useState<string | null>(null);
     const [portalUrlLoading, setPortalUrlLoading] = useState(false);
     const [invitingClient, setInvitingClient] = useState(false);
+    const [clientMessages, setClientMessages] = useState<Array<{ id: string; created_at: string; author_name: string; content: string; is_client: boolean }>>([]);
+    const clientMessagesRequest = useRef(0);
+    const [clientMessageDraft, setClientMessageDraft] = useState('');
+    const [clientMessageSending, setClientMessageSending] = useState(false);
     const [copiedPortalUrl, setCopiedPortalUrl] = useState(false);
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteDescription, setNewNoteDescription] = useState('');
@@ -150,6 +154,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const clientTabParam = searchParams?.get('clientTab');
     const directoryParam = searchParams?.get('directory');
     const PAGE_SIZE = 50;
 
@@ -237,6 +242,17 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     }, [currentTenant?.id]);
 
+    const loadClientMessages = useCallback(async (clientId: string) => {
+        if (!currentTenant?.id) return;
+        const request = ++clientMessagesRequest.current;
+        try {
+            const response = await fetch(`/api/tenant/${currentTenant.id}/clients/${clientId}/messages`, { cache: 'no-store' });
+            if (!response.ok) throw new Error('Messages could not be loaded');
+            const result = await response.json();
+            if (request === clientMessagesRequest.current) setClientMessages(result.messages || []);
+        } catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Messages could not be loaded'); }
+    }, [currentTenant?.id]);
+
     const handleTabChange = useCallback((tab: ClientDetailTab) => {
         setActiveTab(tab);
         if (!selectedClient?.id) return;
@@ -246,17 +262,50 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             void loadClientContracts(selectedClient.id);
         } else if (tab === 'portal' && !portalUrl) {
             void loadClientPortalUrl(selectedClient.id);
+        } else if (tab === 'messages') {
+            void loadClientMessages(selectedClient.id);
         }
-    }, [selectedClient, clientProjects.length, clientContracts.length, portalUrl, loadClientProjects, loadClientContracts, loadClientPortalUrl]);
+    }, [selectedClient, clientProjects.length, clientContracts.length, portalUrl, loadClientProjects, loadClientContracts, loadClientPortalUrl, loadClientMessages]);
 
     useEffect(() => {
+        if (activeTab !== 'messages' || !selectedClient?.id) return;
+        const id = selectedClient.id;
+        const interval = setInterval(() => { void loadClientMessages(id); }, 20_000);
+        return () => clearInterval(interval);
+    }, [activeTab, selectedClient?.id, loadClientMessages]);
+
+    const sendClientMessage = async (event: React.FormEvent) => {
+        event.preventDefault();
+        if (!currentTenant?.id || !selectedClient?.id || !clientMessageDraft.trim()) return;
+        setClientMessageSending(true);
+        try {
+            const response = await fetch(`/api/tenant/${currentTenant.id}/clients/${selectedClient.id}/messages`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: clientMessageDraft }),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Message could not be sent');
+            setClientMessageDraft('');
+            await loadClientMessages(selectedClient.id);
+            if (!result.notification?.sent) toast(`Message saved, but email was not sent: ${result.notification?.error || 'delivery unavailable'}`);
+            else toast.success('Message sent to the client');
+        } catch (cause) { toast.error(cause instanceof Error ? cause.message : 'Message could not be sent'); }
+        finally { setClientMessageSending(false); }
+    };
+
+    useEffect(() => {
+        clientMessagesRequest.current += 1;
         if (selectedClient?.id) {
             void loadClientTimeline(selectedClient.id);
-            setActiveTab('timeline');
+            const openMessages = contactParam === selectedClient.id && clientTabParam === 'messages';
+            setActiveTab(openMessages ? 'messages' : 'timeline');
+            if (openMessages) void loadClientMessages(selectedClient.id);
             setClientProjects([]);
             setClientContracts([]);
             setPortalUrl(null);
             setCopiedPortalUrl(false);
+            setClientMessages([]);
+            setClientMessageDraft('');
         } else {
             setClientTimeline(null);
             setClientProjects([]);
@@ -264,7 +313,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setPortalUrl(null);
             setCopiedPortalUrl(false);
         }
-    }, [selectedClient, loadClientTimeline]);
+    }, [selectedClient, loadClientTimeline, loadClientMessages, contactParam, clientTabParam]);
 
     const handleAddNote = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1542,6 +1591,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             )}
                                         </button>
                                         <button
+                                            onClick={() => handleTabChange('messages')}
+                                            className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                                activeTab === 'messages'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            Messages
+                                        </button>
+                                        <button
                                             onClick={() => handleTabChange('notes')}
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'notes'
@@ -1565,6 +1624,24 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                     {/* Tabs Content */}
                                     <div className="flex-1 ac-scroll-pane pr-1 custom-scrollbar mb-6">
+                                        {activeTab === 'messages' && (
+                                            <section className="space-y-4" aria-label="Client conversation">
+                                                <p className="type-card-description text-[var(--ws-text-secondary)]">A private conversation with this client, available in their client workspace.</p>
+                                                <div className="space-y-3 max-h-[50vh] overflow-y-auto" aria-live="polite">
+                                                    {clientMessages.length ? clientMessages.map((item) => (
+                                                        <div key={item.id} className={`ac-workspace-panel rounded-xl p-4 ${item.is_client ? 'border-l-2 border-cyan-400' : ''}`}>
+                                                            <div className="flex justify-between gap-2 type-caption text-[var(--ws-text-secondary)]"><strong>{item.author_name}</strong><time>{new Date(item.created_at).toLocaleString()}</time></div>
+                                                            <p className="mt-2 whitespace-pre-wrap break-words type-card-description text-[var(--ws-text-primary)]">{item.content}</p>
+                                                        </div>
+                                                    )) : <p className="type-card-description text-[var(--ws-text-secondary)]">No messages yet. Start the conversation below.</p>}
+                                                </div>
+                                                <form onSubmit={sendClientMessage} className="space-y-3">
+                                                    <label htmlFor="client-message-draft" className="type-caption font-semibold text-[var(--ws-text-primary)]">Write to the client</label>
+                                                    <textarea id="client-message-draft" rows={4} maxLength={10000} value={clientMessageDraft} onChange={(event) => setClientMessageDraft(event.target.value)} placeholder="Write a message…" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 type-card-description text-[var(--ws-text-primary)]" />
+                                                    <Button type="submit" size="sm" variant="primary" disabled={!clientMessageDraft.trim() || clientMessageSending} icon={<Send className="h-4 w-4" />}>{clientMessageSending ? 'Sending…' : 'Send message'}</Button>
+                                                </form>
+                                            </section>
+                                        )}
                                         {activeTab === 'timeline' && selectedClient?.id && (
                                             <CustomerTimeline
                                                 clientId={selectedClient.id}

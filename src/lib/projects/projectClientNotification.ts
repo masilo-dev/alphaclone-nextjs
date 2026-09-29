@@ -128,7 +128,7 @@ async function sendClientProjectNoReplyEmail(params: {
     html: ensureFooter(params.html),
     text: params.text,
     fromName: 'AlphaClone Project Updates',
-    isPlatformNotification: true,
+    category: 'transactional',
     templateName: params.templateName,
   });
   return { success: sendResult.success, error: sendResult.error };
@@ -554,7 +554,7 @@ ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
         to: ownerProfile.email,
         subject: `Project done: ${row.name}`,
         fromName: 'AlphaClone Project Updates',
-        isPlatformNotification: true,
+        category: 'transactional',
         templateName: 'projectFinishedOwner',
         idempotencyKey: `project-finished:${projectId}:${new Date().toISOString().slice(0, 10)}`,
         html: `<p>Hi ${ownerName},</p>

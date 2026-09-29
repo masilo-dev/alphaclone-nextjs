@@ -324,7 +324,7 @@ export async function PATCH(
           to: ownerProfile.email,
           subject: `Project updated: ${project.name || before.name}`,
           fromName: "AlphaClone Project Updates",
-          isPlatformNotification: true,
+          category: 'transactional',
           templateName: "projectOwnerUpdate",
           html: `
             <p>Hi ${ownerProfile.name || "there"},</p>

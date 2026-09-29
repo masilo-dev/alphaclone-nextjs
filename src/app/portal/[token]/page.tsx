@@ -512,7 +512,7 @@ export default function ClientPortalPage() {
                 if (cancelled) return;
                 if (!r.ok || !d.portal) throw new Error(d.error || 'This workspace link is no longer available.');
                 setPortal(d.portal);
-                setProjectId(d.portal.projects?.[0]?.id || '');
+                setProjectId('');
                 // The portal record is the primary render payload. Do not keep
                 // the entire workspace behind the slower secondary activity
                 // requests; show projects/invoices/contracts first, then fill
@@ -541,23 +541,30 @@ export default function ClientPortalPage() {
         return () => { void channel.unsubscribe(); };
     }, [portal, projectIds, token, loadMessages]);
 
+    useEffect(() => {
+        if (activeTab !== 'messages') return;
+        const interval = setInterval(() => { void loadMessages(); }, 20_000);
+        return () => clearInterval(interval);
+    }, [activeTab, loadMessages]);
+
     async function sendMessage(event: React.FormEvent) {
         event.preventDefault();
-        if (!message.trim() || !projectId) return;
+        if (!message.trim()) return;
         setSending(true);
         try {
             const r = await fetch('/api/client-finance/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token, projectId, content: message }),
+                body: JSON.stringify({ token, projectId: projectId || null, content: message }),
             });
             if (r.status === 401) {
                 handle401();
                 return;
             }
-            if (!r.ok) throw new Error('Message could not be sent');
+            const result = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(result.error || 'Message could not be sent');
             setMessage('');
-            setToast({ type: 'success', text: 'Message sent' });
+            setToast({ type: 'success', text: result.notification?.sent === false ? 'Message saved. The business email notification was unavailable.' : 'Message sent' });
             await loadMessages();
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'Message could not be sent');
@@ -1146,7 +1153,7 @@ export default function ClientPortalPage() {
                                 <div>
                                     <h2 className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">Messages</h2>
                                     <p className="type-card-description text-[color:var(--ws-text-tertiary)]">
-                                        {portal.projects.length ? 'Reply within the context of a project' : 'Create a project first to enable messages'}
+                                        Talk directly with the business or choose a project conversation
                                     </p>
                                 </div>
                             </div>
@@ -1154,21 +1161,17 @@ export default function ClientPortalPage() {
 
                         <div className="px-4 py-3 md:px-6 md:py-4 border-b border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)]">
                             <label className="block type-caption font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)] mb-1.5">
-                                Project context
+                                Conversation
                             </label>
                             <select
                                 value={projectId}
                                 onChange={(event) => setProjectId(event.target.value)}
                                 className="w-full max-w-md rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3 py-2 type-ui text-[color:var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)]"
-                                disabled={!portal.projects.length}
                             >
-                                {portal.projects.length ? (
-                                    portal.projects.map((project) => (
-                                        <option key={project.id} value={project.id}>{project.name}</option>
-                                    ))
-                                ) : (
-                                    <option value="">No projects available</option>
-                                )}
+                                <option value="">General conversation</option>
+                                {portal.projects.map((project) => (
+                                    <option key={project.id} value={project.id}>{project.name}</option>
+                                ))}
                             </select>
                         </div>
 
@@ -1214,18 +1217,17 @@ export default function ClientPortalPage() {
                             <textarea
                                 value={message}
                                 onChange={(event) => setMessage(event.target.value)}
-                                placeholder={projectId ? 'Write a message to your team…' : 'Choose a project above to start messaging'}
+                                placeholder="Write a message to the business…"
                                 className="w-full rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] px-4 py-3 type-caption text-[color:var(--ws-text-primary)] placeholder:text-[color:var(--ws-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--focus-ring)] resize-none"
                                 rows={3}
-                                disabled={!projectId}
                             />
                             <div className="flex items-center justify-end gap-2">
                                 <p className="mr-auto type-card-description text-[color:var(--ws-text-tertiary)]">
-                                    {message.length > 0 ? `${message.length}/10000` : 'Messages are recorded in your shared project timeline'}
+                                    {message.length > 0 ? `${message.length}/10000` : 'Messages stay in your client workspace'}
                                 </p>
                                 <button
                                     type="submit"
-                                    disabled={!message.trim() || !projectId || sending}
+                                    disabled={!message.trim() || sending}
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 type-ui font-semibold text-white disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -1244,7 +1246,7 @@ export default function ClientPortalPage() {
                         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
                             <h2 className="truncate font-semibold text-[color:var(--ws-text-primary)]">{contractPreview.title}</h2>
                             <div className="flex items-center gap-2">
-                                {portal.projects.length > 0 ? <button type="button" onClick={() => { setContractPreview(null); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button> : null}
+                                <button type="button" onClick={() => { setContractPreview(null); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button>
                                 <button type="button" onClick={() => void downloadContract(contractPreview.id)} disabled={contractDownloading === contractPreview.id} className="inline-flex items-center gap-1 rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)] disabled:opacity-50"><Download className="h-4 w-4" /> Download</button>
                                 <button type="button" onClick={() => setContractPreview(null)} aria-label="Close contract" className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
                             </div>

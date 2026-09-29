@@ -4,12 +4,14 @@ import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 import { notifyProjectTeamClientPortalMessage } from '@/lib/projects/projectClientNotification';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { escapeHtml } from '@/lib/email/escapeHtml';
 
 export const dynamic = 'force-dynamic';
 
 const messageSchema = z.object({
   token: z.string().uuid(),
-  projectId: z.string().uuid(),
+  projectId: z.string().uuid().nullable().optional(),
   content: z.string().trim().min(1).max(10_000),
 });
 
@@ -50,15 +52,28 @@ export async function GET(req: NextRequest) {
       .from('projects').select('id, name').eq('tenant_id', client.tenant_id).eq('client_id', client.id);
     if (projectError) throw projectError;
     const ids = (projects || []).map((project: any) => project.id);
-    if (!ids.length) return NextResponse.json({ success: true, messages: [] });
     const names = new Map((projects || []).map((project: any) => [project.id, project.name]));
-    const { data, error } = await admin
-      .from('project_comments')
+    const projectMessages = ids.length ? await admin.from('project_comments')
       .select('id, project_id, author_name, author_email, content, is_client, created_at')
       .eq('tenant_id', client.tenant_id).in('project_id', ids)
-      .order('created_at', { ascending: true }).limit(200);
-    if (error) throw error;
-    return NextResponse.json({ success: true, messages: (data || []).map((message: any) => ({ ...message, projectName: names.get(message.project_id) || 'Project' })) });
+      .order('created_at', { ascending: false }).limit(100) : { data: [], error: null };
+    const generalMessages = await admin.from('client_portal_events')
+      .select('id, created_at, metadata')
+      .eq('tenant_id', client.tenant_id).eq('client_id', client.id)
+      .eq('event_type', 'portal_message_sent').contains('metadata', { kind: 'general_message' })
+      .order('created_at', { ascending: false }).limit(100);
+    if (projectMessages.error) throw projectMessages.error;
+    if (generalMessages.error) throw generalMessages.error;
+    const messages = [
+      ...(projectMessages.data || []).map((item: any) => ({ ...item, projectName: names.get(item.project_id) || 'Project' })),
+      ...(generalMessages.data || []).map((item: any) => ({
+        id: item.id, project_id: null, projectName: 'General',
+        author_name: String(item.metadata?.author_name || 'Business'),
+        content: String(item.metadata?.content || ''), is_client: item.metadata?.is_client === true,
+        created_at: item.created_at,
+      })),
+    ].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    return NextResponse.json({ success: true, messages }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('[client-finance/messages GET]', error);
     return NextResponse.json({ error: 'Messages could not be loaded' }, { status: 500 });
@@ -77,6 +92,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message, code: guarded.error.code }, { status });
     }
     const client = guarded.resolvedClient;
+
+    if (!parsed.data.projectId) {
+      const { data: recipient, error: recipientError } = await admin.from('business_clients')
+        .select('name, company_name, email').eq('tenant_id', client.tenant_id).eq('id', client.id).maybeSingle();
+      if (recipientError) throw recipientError;
+      const authorName = recipient?.name || recipient?.company_name || 'Client';
+      const { data, error } = await admin.from('client_portal_events').insert({
+        tenant_id: client.tenant_id, client_id: client.id, event_type: 'portal_message_sent',
+        metadata: { kind: 'general_message', content: parsed.data.content, author_name: authorName, is_client: true },
+      }).select('id, created_at').single();
+      if (error) throw error;
+      const { data: tenant } = await admin.from('tenants').select('owner_id, name').eq('id', client.tenant_id).maybeSingle();
+      const { data: owner } = tenant?.owner_id ? await admin.from('profiles').select('email').eq('id', tenant.owner_id).maybeSingle() : { data: null };
+      const notification = owner?.email ? await sendEmailServer({
+        tenantId: client.tenant_id, to: owner.email, category: 'transactional',
+        templateName: 'clientConversationOwner', fromName: tenant?.name || 'AlphaClone',
+        idempotencyKey: `client-message:${data.id}:owner`,
+        subject: `New client message: ${authorName}`,
+        html: `<p>${escapeHtml(authorName)} sent you a message:</p><blockquote>${escapeHtml(parsed.data.content)}</blockquote><p><a href="${req.nextUrl.origin}/dashboard/clients?contactId=${client.id}&amp;clientTab=messages">Open client conversation</a></p>`,
+        text: `${authorName} sent you a message:\n\n${parsed.data.content}\n\nOpen client conversation: ${req.nextUrl.origin}/dashboard/clients?contactId=${client.id}&clientTab=messages`,
+      }).catch((cause) => ({ success: false, error: String(cause) })) : { success: false, error: 'no_owner_email' };
+      return NextResponse.json({ success: true, message: data, notification: { sent: notification.success, error: notification.error } }, { status: 201 });
+    }
 
     const { data: project, error: projectError } = await admin
       .from('projects').select('id, name').eq('tenant_id', client.tenant_id).eq('client_id', client.id).eq('id', parsed.data.projectId).maybeSingle();
