@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email, password, token } = parsed.data;
+  const email = parsed.data.email.trim().toLowerCase();
+  const { password, token } = parsed.data;
   const rateLimit = await rateLimitClientPortalLogin(email);
   if (!rateLimit.success) {
     return NextResponse.json(
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
         .eq('finance_portal_token', token)
         .maybeSingle();
       if (tokenError) throw tokenError;
-      if (byToken && byToken.email && byToken.email.toLowerCase() === email.toLowerCase()) {
+      if (byToken && byToken.email && byToken.email.trim().toLowerCase() === email) {
         client = byToken;
       }
     }
@@ -85,14 +86,20 @@ export async function POST(req: NextRequest) {
           'id, tenant_id, name, email, finance_portal_token, client_portal_password_hash, client_portal_session_salt, is_active'
         )
         .ilike('email', email)
-        .limit(5);
+        .eq('is_active', true)
+        .limit(10);
       if (emailError) throw emailError;
-      for (const row of byEmail || []) {
-        if (verifyClientPortalPassword(password, row.client_portal_password_hash)) {
-          client = row;
-          break;
-        }
-      }
+      // Match the complete normalized address too: PostgREST ilike treats '%' and '_' as wildcards.
+      const matchingClients = (byEmail || []).filter(
+        (row: { email?: string | null }) => row.email?.trim().toLowerCase() === email
+      );
+      const passwordMatches = matchingClients.filter(
+        (row: { client_portal_password_hash?: string | null }) =>
+          verifyClientPortalPassword(password, row.client_portal_password_hash)
+      );
+      if (passwordMatches.length === 1) client = passwordMatches[0];
+      // Keep one exact match for standard bad-password auditing and lockout.
+      if (!client && matchingClients.length === 1) client = matchingClients[0];
     }
 
     if (!client || !verifyClientPortalPassword(password, client.client_portal_password_hash)) {

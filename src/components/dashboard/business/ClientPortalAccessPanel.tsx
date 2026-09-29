@@ -5,7 +5,6 @@ import { Check, Clipboard, ExternalLink, Eye, EyeOff, KeyRound, Mail, ShieldChec
 import toast from 'react-hot-toast';
 import type { BusinessClient } from '@/services/businessClientService';
 import { businessClientService } from '@/services/businessClientService';
-import { useRelationship } from '@/contexts/RelationshipContext';
 
 type ClientPortalAccessPanelProps = {
   client: BusinessClient;
@@ -15,7 +14,6 @@ type ClientPortalAccessPanelProps = {
 };
 
 export default function ClientPortalAccessPanel({ client, tenantId, onClose, onClientUpdated }: ClientPortalAccessPanelProps) {
-  const relationship = useRelationship();
   const [email, setEmail] = useState(client.email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +44,8 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
       const response = await fetch('/api/client-finance/grant-access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: relationship.customerId || client.id, tenantId, password }),
+        // The grant must follow the client shown in this panel, not a stale relationship query.
+        body: JSON.stringify({ clientId: client.id, tenantId, password }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || 'Portal access could not be created.');
