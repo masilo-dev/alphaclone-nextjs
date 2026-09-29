@@ -239,6 +239,10 @@ export function invalidateLeadsCache(tenantId?: string) {
     leadsCache.delete(tenantId);
 }
 
+if (typeof window !== 'undefined') {
+    window.addEventListener('alphaclone:platform-reset', () => invalidateLeadsCache());
+}
+
 export const leadService = {
     /**
      * Get tenant ID with better error handling

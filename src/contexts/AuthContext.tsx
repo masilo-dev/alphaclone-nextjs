@@ -7,6 +7,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { AuthChangeEvent } from '@supabase/supabase-js';
 import { resetPlatformState } from '@/lib/platformReset';
 import { useOnTabVisible } from '@/lib/sync/tabFocusCoordinator';
+import { dashboardTimer } from '@/lib/dashboard/performance';
 
 
 interface AuthContextType {
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [needsMfa, setNeedsMfa] = useState(false);
     // Track the latest user state to prevent race conditions between initSession and onAuthStateChange
     const latestUserRef = useRef<User | null>(null);
+    const sessionValidationInFlight = useRef(false);
 
     // Fetch and set MFA level
     // Fetch and set MFA level - wrapped in timeout to prevent blocking init
@@ -109,6 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // This correctly reads sessions from HTTP-only cookies (set by the SSR callback
         // after Google OAuth) as well as localStorage sessions (email/password sign-in).
         const initSession = async () => {
+            if (sessionValidationInFlight.current) return;
+            sessionValidationInFlight.current = true;
+            const endTimer = dashboardTimer('session-validation');
             try {
                 const { user: validatedUser, error: authError } = await authService.getCurrentUser();
 
@@ -152,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 } else if (validatedUser) {
                     setSafeUser(validatedUser);
                     setError(null);
-                    await refreshMfaLevel();
+                    void refreshMfaLevel();
                 } else {
                     // RACE CONDITION FIX: If onAuthStateChange already found a user, don't overwrite with null
                     if (!latestUserRef.current) {
@@ -170,6 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     }
                 }
             } finally {
+                endTimer();
+                sessionValidationInFlight.current = false;
                 if (isMounted) {
                     setLoading(false);
                 }

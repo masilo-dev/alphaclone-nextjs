@@ -78,7 +78,7 @@ const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
 const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
 const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
-import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
+const AlphaCloneContractModal = React.lazy(() => import('../../contracts/AlphaCloneContractModal'));
 const ContractDashboard = React.lazy(() => import('../../contracts/ContractDashboard'));
 const SharedDocumentsWorkspace = React.lazy(() => import('../../documents/SharedDocumentsWorkspace'));
 // Accounting Components - Lazy loaded to prevent module resolution issues
@@ -144,7 +144,7 @@ import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
 
 import { TrialBanner } from '../TrialBanner';
 import BonnieWidget from '../bonnie/BonnieWidget';
-import BonnieFullView from '../bonnie/BonnieFullView';
+const BonnieFullView = React.lazy(() => import('../bonnie/BonnieFullView'));
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
@@ -461,7 +461,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // Fetch projects using useQuery for caching and sharing with TasksTab
     const { data: projectData, isLoading: loadingProjects } = useQuery({
-        queryKey: ['projects', user.id],
+        queryKey: ['projects', currentTenant?.id, user.id],
         queryFn: () => projectService.getProjects(user.id, user.role),
         staleTime: 5 * 60 * 1000,
         enabled: !!user.id && !!currentTenant,
@@ -497,7 +497,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const handlePullRefresh = React.useCallback(async () => {
         await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentTenant?.id, user.id] }),
-            queryClient.invalidateQueries({ queryKey: ['projects', user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['projects', currentTenant?.id, user.id] }),
         ]);
         dispatchPullRefresh(route);
     }, [queryClient, currentTenant?.id, user.id, route]);
@@ -1516,12 +1516,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Contract Modal */}
             {showContractModal && (
+              <React.Suspense fallback={null}>
                 <AlphaCloneContractModal
                     isOpen={showContractModal}
                     onClose={() => setShowContractModal(false)}
                     project={selectedProjectForContract}
                     user={user}
                 />
+              </React.Suspense>
             )}
 
 

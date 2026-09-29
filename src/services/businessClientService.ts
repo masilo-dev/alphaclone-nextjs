@@ -41,9 +41,12 @@ interface CacheEntry<T> {
 }
 const CLIENTS_CACHE_TTL_MS = 60_000;
 const clientsCache = new Map<string, CacheEntry<ClientsResponse>>();
+const clientsInFlight = new Map<string, Promise<ClientsResponse>>();
+let clientsCacheEpoch = 0;
 const singleClientCache = new Map<string, CacheEntry<BusinessClient>>();
 
 export function invalidateClientsCache(tenantId?: string) {
+    clientsCacheEpoch += 1;
     if (!tenantId) {
         clientsCache.clear();
         singleClientCache.clear();
@@ -61,6 +64,10 @@ export function invalidateClientsCache(tenantId?: string) {
     });
 }
 
+if (typeof window !== 'undefined') {
+    window.addEventListener('alphaclone:platform-reset', () => invalidateClientsCache());
+}
+
 function mapClient(row: any): BusinessClient {
     return {
         id: row.id, tenantId: row.tenant_id, name: row.name, email: row.email, phone: row.phone,
@@ -73,6 +80,38 @@ function mapClient(row: any): BusinessClient {
 }
 
 export const businessClientService = {
+    async getClientsCursorPage(
+        tenantId: string,
+        options: { limit?: number; cursor?: { createdAt: string; id: string } | null; search?: string; stage?: string; showArchived?: boolean } = {}
+    ): Promise<{ clients: BusinessClient[]; pageInfo: { nextCursor: { createdAt: string; id: string } | null; hasMore: boolean; total: number }; error: string | null }> {
+        const empty = { nextCursor: null, hasMore: false, total: 0 };
+        try {
+            const params = new URLSearchParams({
+                limit: String(options.limit || 50),
+                archived: String(Boolean(options.showArchived)),
+            });
+            if (options.search) params.set('search', options.search);
+            if (options.stage && options.stage !== 'all') params.set('stage', options.stage);
+            if (options.cursor) params.set('cursor', btoa(JSON.stringify(options.cursor)));
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/clients?${params}`, { credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Clients could not be loaded');
+            return {
+                clients: (payload.clients || []).map(mapClient),
+                pageInfo: payload.pageInfo || empty,
+                error: null,
+            };
+        } catch (error) {
+            return { clients: [], pageInfo: empty, error: error instanceof Error ? error.message : 'Clients could not be loaded' };
+        }
+    },
+
+    peekClients(tenantId: string, page = 1, limit = 50, showArchived = false, searchTerm = ''): ClientsResponse | null {
+        const key = `${tenantId}:${page}:${limit}:${showArchived}:${searchTerm.trim().toLowerCase()}`;
+        const cached = clientsCache.get(key);
+        return cached && Date.now() - cached.timestamp < CLIENTS_CACHE_TTL_MS ? cached.data : null;
+    },
+
     async getClients(
         tenantId: string,
         page = 1,
@@ -89,21 +128,29 @@ export const businessClientService = {
                     return cached.data;
                 }
             }
+            const existing = clientsInFlight.get(cacheKey);
+            if (existing) return existing;
+            const requestEpoch = clientsCacheEpoch;
 
-            const offset = (page - 1) * limit;
-            const CLIENT_LIST_COLUMNS = 'id, tenant_id, name, email, phone, sales_stage, value, location, industry, is_active, created_at, updated_at, website, crm_contact_id';
-            let query = supabase.from('business_clients').select(CLIENT_LIST_COLUMNS, { count: 'exact' }).eq('tenant_id', tenantId);
-            if (!showArchived) query = query.eq('is_active', true);
-            if (searchTerm.trim()) query = query.or(`name.ilike.%${searchTerm.trim()}%,email.ilike.%${searchTerm.trim()}%`);
-            const { data, count, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
-            if (error) throw error;
-            const result = { clients: (data || []).map(mapClient), count: count || 0, error: null };
-
-            clientsCache.set(cacheKey, { data: result, timestamp: Date.now() });
-            for (const client of result.clients) {
-                singleClientCache.set(client.id, { data: client, timestamp: Date.now() });
-            }
-            return result;
+            const request = (async (): Promise<ClientsResponse> => {
+                const offset = (page - 1) * limit;
+                const CLIENT_LIST_COLUMNS = 'id, tenant_id, name, email, phone, sales_stage, value, location, industry, is_active, created_at, updated_at, website, crm_contact_id';
+                let query = supabase.from('business_clients').select(CLIENT_LIST_COLUMNS, { count: 'exact' }).eq('tenant_id', tenantId);
+                if (!showArchived) query = query.eq('is_active', true);
+                if (searchTerm.trim()) query = query.or(`name.ilike.%${searchTerm.trim()}%,email.ilike.%${searchTerm.trim()}%`);
+                const { data, count, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+                if (error) throw error;
+                const result = { clients: (data || []).map(mapClient), count: count || 0, error: null };
+                if (requestEpoch === clientsCacheEpoch) {
+                    clientsCache.set(cacheKey, { data: result, timestamp: Date.now() });
+                    for (const client of result.clients) {
+                        singleClientCache.set(client.id, { data: client, timestamp: Date.now() });
+                    }
+                }
+                return result;
+            })();
+            clientsInFlight.set(cacheKey, request);
+            try { return await request; } finally { clientsInFlight.delete(cacheKey); }
         } catch (error) {
             return { clients: [], count: 0, error: error instanceof Error ? error.message : 'Clients could not be loaded' };
         }

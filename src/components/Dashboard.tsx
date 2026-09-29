@@ -895,7 +895,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         console.log("[Dashboard] Projects loaded:", fetchedProjects.length);
         setProjects(fetchedProjects);
         localStorage.setItem(
-          `dashboard_projects_${user.id}`,
+          `dashboard_projects_${currentTenant?.id}_${user.id}`,
           JSON.stringify(fetchedProjects),
         );
       }
@@ -941,7 +941,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         })) as Invoice[];
         setInvoices(mappedInvoices);
         localStorage.setItem(
-          `dashboard_invoices_${user.id}`,
+          `dashboard_invoices_${currentTenant?.id}_${user.id}`,
           JSON.stringify(mappedInvoices),
         );
       }
@@ -959,22 +959,22 @@ const Dashboard: React.FC<DashboardProps> = ({
     // 1. Restore from cache immediately for instant UI
     try {
       const cachedProjects = localStorage.getItem(
-        `dashboard_projects_${user.id}`,
+        `dashboard_projects_${currentTenant?.id}_${user.id}`,
       );
       if (cachedProjects) setProjects(JSON.parse(cachedProjects));
 
       const cachedInvoices = localStorage.getItem(
-        `dashboard_invoices_${user.id}`,
+        `dashboard_invoices_${currentTenant?.id}_${user.id}`,
       );
       if (cachedInvoices) setInvoices(JSON.parse(cachedInvoices));
 
       const cachedMessages = localStorage.getItem(
-        `dashboard_messages_${user.id}`,
+        `dashboard_messages_${currentTenant?.id}_${user.id}`,
       );
       if (cachedMessages) setMessages(JSON.parse(cachedMessages));
 
       const cachedStats = localStorage.getItem(
-        `dashboard_stats_${currentTenant.id}`,
+        `dashboard_stats_${currentTenant.id}_${user.id}`,
       );
       if (cachedStats) setDashboardStats(JSON.parse(cachedStats));
     } catch (e) {
@@ -994,7 +994,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             if (!error && fetchedMessages) {
               setMessages(fetchedMessages);
               localStorage.setItem(
-                `dashboard_messages_${user.id}`,
+                `dashboard_messages_${currentTenant?.id}_${user.id}`,
                 JSON.stringify(fetchedMessages),
               );
             }
@@ -1028,7 +1028,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         setDashboardStats(stats);
         try {
           localStorage.setItem(
-            `dashboard_stats_${currentTenant.id}`,
+            `dashboard_stats_${currentTenant.id}_${user.id}`,
             JSON.stringify(stats),
           );
         } catch {
@@ -1057,7 +1057,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         if (!error && fetchedMessages) {
           setMessages(fetchedMessages);
           localStorage.setItem(
-            `dashboard_messages_${user.id}`,
+            `dashboard_messages_${currentTenant?.id}_${user.id}`,
             JSON.stringify(fetchedMessages),
           );
         }

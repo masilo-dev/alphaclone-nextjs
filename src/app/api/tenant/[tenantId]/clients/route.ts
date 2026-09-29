@@ -4,6 +4,61 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { assertContactSalesStageTransition } from '@/lib/stageProgression';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { buildIlikeOrFilter } from '@/lib/db/postgrestFilters';
+
+const pageQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().optional(),
+  search: z.string().max(200).optional(),
+  stage: z.string().max(100).optional(),
+  archived: z.enum(['true', 'false']).default('false'),
+});
+
+export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
+  try {
+    const { tenantId } = await context.params;
+    await requireTenantAccess(tenantId, req);
+    const parsed = pageQuery.safeParse(Object.fromEntries(req.nextUrl.searchParams));
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid client query' }, { status: 400 });
+    const { limit, search, archived, stage } = parsed.data;
+    let cursor: { createdAt: string; id: string } | null = null;
+    if (parsed.data.cursor) {
+      try {
+        const value = JSON.parse(Buffer.from(parsed.data.cursor, 'base64').toString('utf8'));
+        if (!Number.isNaN(Date.parse(value.createdAt)) && z.string().uuid().safeParse(value.id).success) cursor = value;
+      } catch { /* invalid cursor below */ }
+      if (!cursor) return NextResponse.json({ error: 'Invalid cursor' }, { status: 400 });
+    }
+    const admin = createSupabaseAdminClient();
+    let query = admin.from('business_clients')
+      .select('id, tenant_id, name, email, phone, sales_stage, value, location, industry, is_active, created_at, updated_at, website, crm_contact_id', { count: cursor ? undefined : 'exact' })
+      .eq('tenant_id', tenantId);
+    if (archived === 'false') query = query.eq('is_active', true);
+    if (stage && stage !== 'all') query = query.eq('sales_stage', stage);
+    if (search) {
+      const filter = buildIlikeOrFilter(['name', 'email', 'phone', 'industry'], search);
+      if (filter) query = query.or(filter);
+    }
+    if (cursor) query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+    );
+    const { data, error, count } = await query.order('created_at', { ascending: false })
+      .order('id', { ascending: false }).limit(limit + 1);
+    if (error) throw error;
+    const rows = data || [];
+    const hasMore = rows.length > limit;
+    const clients = rows.slice(0, limit);
+    const last = clients.at(-1);
+    return NextResponse.json({
+      clients,
+      pageInfo: {
+        hasMore,
+        total: count ?? 0,
+        nextCursor: hasMore && last ? { createdAt: last.created_at, id: last.id } : null,
+      },
+    });
+  } catch (error) { return routeErrorResponse(error, 'Clients could not be loaded', req); }
+}
 
 const baseFields = z.object({
   name: z.string().trim().min(1).max(300),

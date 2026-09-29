@@ -17,8 +17,7 @@ import {
     ChevronDown
 } from 'lucide-react';
 import { Button, Badge } from '../../ui/UIComponents';
-import { leadService, Lead } from '../../../services/leadService';
-import { businessClientService } from '../../../services/businessClientService';
+import { Lead } from '../../../services/leadService';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -40,12 +39,17 @@ const TONES = [
     { id: 'direct', label: 'Direct', description: 'Concise & Short' },
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
 ];
+const EMPTY_SELECTION: string[] = [];
 
-const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [], recipientSource = 'leads' }) => {
+const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = EMPTY_SELECTION, recipientSource = 'leads' }) => {
     const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
     const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [page, setPage] = useState(0);
+    const [loadRetry, setLoadRetry] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
     const [sending, setSending] = useState(false);
     const [complianceConfirmed, setComplianceConfirmed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -62,15 +66,53 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const OUTREACH_SEND_CONCURRENCY = 5;
 
     useEffect(() => {
-        if (isOpen) {
-            fetchLeads();
-            fetchAccountInfo();
-            setComplianceConfirmed(false);
-            if (initialSelectedLeads?.length) {
-                setSelectedLeads(initialSelectedLeads.slice(0, 20));
+        if (!isOpen || !currentTenant?.id) return;
+        const controller = new AbortController();
+        const timer = window.setTimeout(async () => {
+            setLoading(true);
+            setLoadError('');
+            try {
+                const params = new URLSearchParams({
+                    tenantId: currentTenant.id, source: recipientSource,
+                    search: searchQuery, page: String(page),
+                });
+                if (page === 0 && initialSelectedLeads.length) params.set('ids', initialSelectedLeads.slice(0, 20).join(','));
+                const response = await fetch(`/api/outreach/recipients?${params}`, { signal: controller.signal });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || 'Recipients could not be loaded');
+                setLeads(previous => page === 0 ? data.recipients : [...previous, ...data.recipients]);
+                if (page === 0) setSelectedLeads(previous => previous.filter(id => data.recipients.some((lead: Lead) => lead.id === id)));
+                setHasMore(Boolean(data.hasMore));
+            } catch (err) {
+                if (!controller.signal.aborted) setLoadError(err instanceof Error ? err.message : 'Recipients could not be loaded');
+            } finally {
+                if (!controller.signal.aborted) setLoading(false);
             }
-        }
-    }, [isOpen, userId, initialSelectedLeads, recipientSource, currentTenant?.id]);
+        }, searchQuery ? 250 : 0);
+        return () => { window.clearTimeout(timer); controller.abort(); };
+    }, [isOpen, currentTenant?.id, recipientSource, searchQuery, page, loadRetry, initialSelectedLeads]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        fetchAccountInfo();
+        setSelectedLeads(initialSelectedLeads.slice(0, 20));
+    }, [isOpen, userId, initialSelectedLeads]);
+
+    useEffect(() => { setPage(0); }, [searchQuery, recipientSource, currentTenant?.id]);
+
+    useEffect(() => {
+        if (!isOpen || !currentTenant?.id) return;
+        let active = true;
+        setComplianceConfirmed(false);
+        fetch(`/api/outreach/acknowledgement?tenantId=${encodeURIComponent(currentTenant.id)}`)
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not load acknowledgement');
+                if (active) setComplianceConfirmed(Boolean(data.confirmed));
+            })
+            .catch(err => { if (active) setLoadError(err instanceof Error ? err.message : 'Could not load acknowledgement'); });
+        return () => { active = false; };
+    }, [isOpen, currentTenant?.id]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -104,51 +146,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         }
     };
 
-    const fetchLeads = async () => {
-        setLoading(true);
-        try {
-            if (recipientSource === 'clients' && currentTenant?.id) {
-                const { clients, error } = await businessClientService.getClients(currentTenant.id, 1, 100);
-                if (error) throw new Error(error);
-                const mapped = (clients || []).map((c) => ({
-                    id: c.id,
-                    businessName: c.name,
-                    email: c.email,
-                    industry: c.industry,
-                    phone: c.phone,
-                    website: c.website,
-                    location: c.location,
-                })) as Lead[];
-                setLeads(mapped);
-            } else {
-                const { leads: fetchedLeads, error } = await leadService.getLeads();
-                if (error) throw new Error(error);
-                setLeads(fetchedLeads || []);
-            }
-        } catch (err: any) {
-            toast.error('Failed to load recipients: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const inferRecipientEmail = (lead: Lead): string | null => {
         const directEmail = String((lead as any).email || '').trim();
         if (directEmail.includes('@')) return directEmail.toLowerCase();
 
-        const website = String((lead as any).website || '').trim();
-        if (!website) return null;
-
-        try {
-            const normalizedUrl = website.startsWith('http://') || website.startsWith('https://')
-                ? website
-                : `https://${website}`;
-            const host = new URL(normalizedUrl).hostname.replace(/^www\./i, '').toLowerCase();
-            if (!host || !host.includes('.') || host.includes('localhost')) return null;
-            return `info@${host}`;
-        } catch {
-            return null;
-        }
+        return null;
     };
 
     const toggleLead = (id: string) => {
@@ -179,6 +181,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         setSending(true);
         try {
             const selectedLeadRecords = leads.filter((lead) => selectedLeads.includes(lead.id));
+            if (selectedLeadRecords.length !== selectedLeads.length) {
+                throw new Error('Some selected recipients are outside the loaded list. Search for them and select them here before sending.');
+            }
             const generationResponse = await fetch('/api/outreach/generate', {
                 method: 'POST',
                 headers: {
@@ -214,6 +219,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             }
 
             const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
+            if (drafts.length !== selectedLeadRecords.length) throw new Error('Not all selected recipients received a draft. Nothing was sent.');
             setSendProgress({ completed: 0, total: drafts.length });
 
             const sendOne = async (draft: Record<string, unknown>) => {
@@ -242,8 +248,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             autoSend: true,
                             consentGranted: true,
                             confidenceScore: 100,
-                            directSend: true,
-                            skipCrmGate: true,
+                            directSend: false,
+                            skipCrmGate: false,
+                            bulkOutreach: true,
                             deliveryProviders: [selectedProvider],
                             preferredProvider: selectedProvider,
                             balanceByDailyLimit: false,
@@ -281,11 +288,28 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
             setSendProgress(null);
             setResults(sendResults);
-            toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
+            setSelectedLeads([]);
+            setPage(0);
+            toast.success(`Sent ${sendResults.filter((r) => r.status === 'success').length} of ${sendResults.length} emails`);
         } catch (err: any) {
             toast.error(err.message || 'Bulk outreach failed');
         } finally {
             setSending(false);
+        }
+    };
+
+    const acknowledgeOutreach = async () => {
+        if (!currentTenant?.id) return;
+        try {
+            const response = await fetch('/api/outreach/acknowledgement', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Could not save acknowledgement');
+            setComplianceConfirmed(true);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Could not save acknowledgement');
         }
     };
 
@@ -309,7 +333,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="relative w-full max-w-4xl h-[80vh] bg-slate-950 border border-slate-800 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+                className="relative w-full max-w-6xl h-[min(92dvh,900px)] bg-slate-950 border border-slate-800 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
             >
                 {/* Header */}
                 <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
@@ -330,9 +354,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     </button>
                 </div>
 
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
                     {/* Left Side: Lead Selection */}
-                    <div className="w-1/2 border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
+                    <div className="w-full md:w-1/2 min-h-[350px] border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-white type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
@@ -367,14 +391,18 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                            {loading ? (
+                            {loading && leads.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
                                     <div key={i} className="h-20 bg-slate-900/40 rounded-2xl animate-pulse" />
                                 ))
+                            ) : loadError && leads.length === 0 ? (
+                                <div role="alert" className="p-4 text-amber-200">
+                                    {loadError} <button className="underline" onClick={() => setLoadRetry(value => value + 1)}>Retry</button>
+                                </div>
                             ) : filteredLeads.length === 0 ? (
                                 <div className="text-center py-12 text-slate-600">
                                     <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                                    <p className="type-card-description">No leads available</p>
+                                    <p className="type-card-description">No eligible recipients found. Previously contacted and suppressed addresses are hidden.</p>
                                 </div>
                             ) : (
                                 filteredLeads.map(lead => (
@@ -403,11 +431,13 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                     </button>
                                 ))
                             )}
+                            {loadError && leads.length > 0 && <p role="alert" className="text-amber-200">{loadError}</p>}
+                            {hasMore && <button className="w-full p-3 text-teal-300" disabled={loading} onClick={() => setPage(p => p + 1)}>{loading ? 'Loading…' : 'Load more recipients'}</button>}
                         </div>
                     </div>
 
                     {/* Right Side: Configuration & AI */}
-                    <div className="w-1/2 flex flex-col p-6 overflow-y-auto bg-slate-950">
+                    <div className="w-full md:w-1/2 flex flex-col p-6 overflow-y-auto bg-slate-950">
                         {results ? (
                             <div className="space-y-6">
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -434,7 +464,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
                                 <Button
                                     className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-teal-400 text-white font-black uppercase type-caption"
-                                    onClick={() => { setResults(null); setSelectedLeads([]); }}
+                                    onClick={() => { setResults(null); setSelectedLeads([]); setLoadRetry(value => value + 1); }}
                                 >
                                     Start New Batch
                                 </Button>
@@ -544,17 +574,17 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <div className="pt-4 mt-auto">
-                                    <label className="mb-3 flex items-start gap-2.5 rounded-2xl border border-amber-400/20 bg-amber-400/[.06] p-3 text-left cursor-pointer">
+                                    {!complianceConfirmed && <label className="mb-3 flex items-start gap-2.5 rounded-2xl border border-amber-400/20 bg-amber-400/[.06] p-3 text-left cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={complianceConfirmed}
-                                            onChange={(event) => setComplianceConfirmed(event.target.checked)}
+                                            onChange={(event) => { if (event.target.checked) void acknowledgeOutreach(); }}
                                             className="mt-0.5 h-4 w-4 accent-teal-500"
                                         />
                                         <span className="type-ui leading-5 text-slate-300">
                                             I confirm the selected recipients have permission or another lawful basis for contact, the message is relevant and not deceptive, and opt-outs will be honoured. My business is responsible for the outreach sent from this workspace.
                                         </span>
-                                    </label>
+                                    </label>}
                                     <Button
                                         onClick={handleSend}
                                         disabled={sending || !complianceConfirmed}

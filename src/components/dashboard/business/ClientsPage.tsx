@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { offlineService } from '@/services/offlineService';
 import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
@@ -45,6 +45,7 @@ import {
     Globe
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
+import { dashboardTimer } from '@/lib/dashboard/performance';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { WORKSPACE } from '@/constants/design';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
@@ -69,6 +70,7 @@ import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
 import { ContextualBulkBar, TableSkeleton } from '@/components/ui/workspace';
 import { resolveContactDeepLink } from '@/lib/crm/resolveContactDeepLink';
 import ClientPortalAccessPanel from './ClientPortalAccessPanel';
+import { useQueryClient } from '@tanstack/react-query';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -83,18 +85,27 @@ interface ClientsPageProps {
 
 const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const queryClient = useQueryClient();
     const router = useRouter();
     const rawPathname = usePathname() || '';
     const pathname = resolveCanonicalPath(rawPathname);
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [filteredClients, setFilteredClients] = useState<BusinessClient[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStage, setSelectedStage] = useState<string>('all');
+    const [searchTerm, setSearchTerm] = useState(() =>
+        typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('search') || ''
+    );
+    const [selectedStage, setSelectedStage] = useState<string>(() =>
+        typeof window === 'undefined' ? 'all' : new URLSearchParams(window.location.search).get('stage') || 'all'
+    );
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingClient, setEditingClient] = useState<BusinessClient | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [loading, setLoading] = useState(true);
+    const clientRequestSequence = useRef(0);
+    const clientsSnapshotRef = useRef<BusinessClient[]>([]);
+    const loadedTenantRef = useRef<string | null>(null);
+    const previousSearchRef = useRef(searchTerm);
     const [totalCount, setTotalCount] = useState(0);
     const [viewMode, setViewMode] = useState<'list' | 'board' | 'micro'>('list');
     const [showProposalModal, setShowProposalModal] = useState(false);
@@ -123,6 +134,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showOutreachModal, setShowOutreachModal] = useState(false);
     const [showOutreachPanel, setShowOutreachPanel] = useState(false);
     const [page, setPage] = useState(1);
+    const [clientCursor, setClientCursor] = useState<{ createdAt: string; id: string } | null>(null);
     const [showArchived, setShowArchived] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [directoryView, setDirectoryView] = useState<ContactDirectoryView>(() =>
@@ -139,6 +151,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
     const directoryParam = searchParams?.get('directory');
     const PAGE_SIZE = 50;
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            const params = new URLSearchParams(window.location.search);
+            if ((params.get('search') || '') === searchTerm.trim()
+                && (params.get('stage') || 'all') === selectedStage) return;
+            if (searchTerm.trim()) params.set('search', searchTerm.trim());
+            else params.delete('search');
+            if (selectedStage !== 'all') params.set('stage', selectedStage);
+            else params.delete('stage');
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        }, 350);
+        return () => window.clearTimeout(timer);
+    }, [searchTerm, selectedStage, pathname, router]);
 
     const loadClientTimeline = useCallback(async (clientId: string) => {
         setTimelineLoading(true);
@@ -306,29 +332,75 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     const loadClients = useCallback(async (isInitial = true) => {
         if (!currentTenant) return;
-        if (isInitial) setLoading(true);
-
-        const targetPage = isInitial ? 1 : page + 1;
-        const { clients: data, count } = await businessClientService.getClients(
-            currentTenant.id,
-            targetPage,
-            PAGE_SIZE,
-            showArchived,
-            searchTerm
-        );
-
-        if (isInitial) {
-            setClients(data);
-            setPage(1);
-        } else {
-            setClients(prev => [...prev, ...data]);
-            setPage(targetPage);
+        if (loadedTenantRef.current !== currentTenant.id) {
+            loadedTenantRef.current = currentTenant.id;
+            clientsSnapshotRef.current = [];
+            setClients([]);
+            setSelectedClient(null);
+        }
+        const endTimer = dashboardTimer('crm-clients-page');
+        const requestId = ++clientRequestSequence.current;
+        const cacheKey = ['crm', 'clients', currentTenant.id, user.id, showArchived, selectedStage, searchTerm.trim().toLowerCase()];
+        const cached = isInitial
+            ? queryClient.getQueryData<{ clients: BusinessClient[]; total: number; cursor: { createdAt: string; id: string } | null; hasMore: boolean; page: number }>(cacheKey)
+            : null;
+        if (cached) {
+            clientsSnapshotRef.current = cached.clients;
+            setClients(cached.clients);
+            setPage(cached.page || 1);
+            setTotalCount(cached.total);
+            setClientCursor(cached.cursor);
+            setHasMore(cached.hasMore);
+            setLoading(false);
+        } else if (isInitial) {
+            setLoading(true);
         }
 
-        setTotalCount(count);
-        setHasMore(data.length === PAGE_SIZE);
+        const targetPage = isInitial ? 1 : page + 1;
+        const { clients: data, pageInfo, error } = await businessClientService.getClientsCursorPage(currentTenant.id, {
+            limit: PAGE_SIZE, cursor: isInitial ? null : clientCursor, showArchived, search: searchTerm, stage: selectedStage,
+        });
+        if (requestId !== clientRequestSequence.current) {
+            endTimer();
+            return;
+        }
+        if (error) {
+            if (!cached) toast.error(error);
+            setLoading(false);
+            endTimer();
+            return;
+        }
+
+        if (isInitial) {
+            const previousPage = cached?.page || 1;
+            const next = previousPage > 1
+                ? [...data, ...cached!.clients.filter(client => !data.some(fresh => fresh.id === client.id))]
+                : data;
+            clientsSnapshotRef.current = next;
+            setClients(next);
+            setPage(previousPage);
+            setTotalCount(pageInfo.total);
+            const nextCursor = previousPage > 1 ? cached!.cursor : pageInfo.nextCursor;
+            const nextHasMore = previousPage > 1 ? cached!.hasMore : pageInfo.hasMore;
+            setClientCursor(nextCursor);
+            setHasMore(nextHasMore);
+            queryClient.setQueryData(cacheKey, { clients: next, total: pageInfo.total, cursor: nextCursor, hasMore: nextHasMore, page: previousPage });
+        } else {
+            const seen = new Set(clientsSnapshotRef.current.map(client => client.id));
+            const next = [...clientsSnapshotRef.current, ...data.filter(client => !seen.has(client.id))];
+            clientsSnapshotRef.current = next;
+            setClients(next);
+            setPage(targetPage);
+            queryClient.setQueryData(cacheKey, { clients: next, total: totalCount, cursor: pageInfo.nextCursor, hasMore: pageInfo.hasMore, page: targetPage });
+        }
+
+        if (!isInitial) {
+            setClientCursor(pageInfo.nextCursor);
+            setHasMore(pageInfo.hasMore);
+        }
         setLoading(false);
-    }, [currentTenant, page, showArchived, searchTerm]);
+        endTimer();
+    }, [currentTenant, user.id, queryClient, page, totalCount, clientCursor, showArchived, selectedStage, searchTerm]);
 
     useEffect(() => {
         if (!currentTenant) return;
@@ -337,12 +409,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             return;
         }
         void loadClients(true);
-    }, [currentTenant, pathname, showArchived]);
+    }, [currentTenant, pathname, showArchived, selectedStage]);
 
     // Debounced server fetch when user types into the search bar
     useEffect(() => {
         if (!currentTenant) return;
-        if (!searchTerm.trim()) return;
+        if (previousSearchRef.current === searchTerm) return;
+        previousSearchRef.current = searchTerm;
         const timer = setTimeout(() => {
             void loadClients(true);
         }, 350);

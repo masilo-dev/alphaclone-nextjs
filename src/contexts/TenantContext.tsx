@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback, useMemo } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
-import { authService } from '../services/authService';
-import { User } from '../types';
+import { useAuth } from './AuthContext';
 import { resetPlatformState } from '@/lib/platformReset';
+import { dashboardTimer } from '@/lib/dashboard/performance';
 
 export interface TenantContextType {
   currentTenant: Tenant | null;
@@ -27,27 +27,16 @@ interface CreateTenantData {
 export const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Array<Tenant & { role: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasResolvedOnceRef = useRef(false);
+  const resolvedUserRef = useRef<string | null>(null);
 
-  // Load user's tenants when user logs in
-  useEffect(() => {
-    // Subscribe to auth changes
-    const { data: { subscription } } = authService.onAuthStateChange((u) => {
-      setUser(u);
-    });
-
-    // Initial check
-    authService.getCurrentUser().then(({ user }) => setUser(user));
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  // The auth provider owns session validation. Never launch a second
+  // getCurrentUser() request just to resolve the same workspace.
 
   /* Methods defined before useEffect to avoid 'used before declaration' */
   const switchTenant = useCallback(async (tenantId: string) => {
@@ -74,10 +63,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout, retryCount = 0) {
     if (!user?.id) return;
 
+    const endTimer = dashboardTimer('workspace-resolution');
     try {
       setError(null); // Clear previous errors
-      const hasCachedTenant = !!tenantService.getCachedCurrentTenant();
-      if (!hasCachedTenant && !hasResolvedOnceRef.current) {
+      if (!hasResolvedOnceRef.current) {
         setIsLoading(true);
       }
 
@@ -107,6 +96,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         if (savedTenant) {
           console.log('[TenantContext] Using saved tenant:', savedTenant.id);
           setCurrentTenant(savedTenant);
+          try {
+            localStorage.setItem(`workspace_bootstrap_v1:${user.id}`, JSON.stringify({ tenant: savedTenant, cachedAt: Date.now() }));
+          } catch { /* storage may be unavailable */ }
           tenantService.setCurrentTenant(savedTenant);
           hasResolvedOnceRef.current = true;
           setIsLoading(false);
@@ -115,6 +107,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           tenantService.clearCurrentTenant();
           const firstTenant = tenants[0];
           setCurrentTenant(firstTenant);
+          try {
+            localStorage.setItem(`workspace_bootstrap_v1:${user.id}`, JSON.stringify({ tenant: firstTenant, cachedAt: Date.now() }));
+          } catch { /* storage may be unavailable */ }
           tenantService.setCurrentTenant(firstTenant);
           hasResolvedOnceRef.current = true;
           setIsLoading(false);
@@ -123,6 +118,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           const firstTenant = tenants[0];
           console.log('[TenantContext] No saved tenant valid, defaulting to:', firstTenant.id);
           setCurrentTenant(firstTenant);
+          try {
+            localStorage.setItem(`workspace_bootstrap_v1:${user.id}`, JSON.stringify({ tenant: firstTenant, cachedAt: Date.now() }));
+          } catch { /* storage may be unavailable */ }
           tenantService.setCurrentTenant(firstTenant);
           hasResolvedOnceRef.current = true;
           setIsLoading(false);
@@ -131,6 +129,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // No access is a real state, not permission to create data implicitly.
         // The dashboard presents an explicit workspace-creation action for owners.
         tenantService.clearCurrentTenant();
+        try { localStorage.removeItem(`workspace_bootstrap_v1:${user.id}`); } catch { /* no storage */ }
         setCurrentTenant(null);
         setUserTenants([]);
         setError('You do not currently have access to a workspace. Create one or ask an owner for an invitation.');
@@ -165,9 +164,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       }
 
       setError(errorMessage);
-      tenantService.clearCurrentTenant();
-      setCurrentTenant(null);
-      setUserTenants([]);
+      // A transient refresh failure must not discard a previously verified
+      // workspace. Protected APIs still enforce membership independently.
+      if (!hasResolvedOnceRef.current || error?.code === 'PGRST301' || error?.message?.includes('403')) {
+        tenantService.clearCurrentTenant();
+        setCurrentTenant(null);
+        setUserTenants([]);
+        try { localStorage.removeItem(`workspace_bootstrap_v1:${user.id}`); } catch { /* no storage */ }
+      }
       if (timeoutId) clearTimeout(timeoutId);
       hasResolvedOnceRef.current = true;
       setIsLoading(false);
@@ -182,6 +186,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           }
         }, 3000); // Retry after 3 seconds
       }
+    } finally {
+      endTimer();
     }
   }, [user?.id]);
 
@@ -242,7 +248,24 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
     if (user?.id) {
+      if (resolvedUserRef.current !== user.id) {
+        hasResolvedOnceRef.current = false;
+        setCurrentTenant(null);
+        setUserTenants([]);
+        resolvedUserRef.current = user.id;
+      }
+      try {
+        const cached = JSON.parse(localStorage.getItem(`workspace_bootstrap_v1:${user.id}`) || 'null');
+        if (cached?.tenant?.id && Date.now() - cached.cachedAt < 24 * 60 * 60 * 1000) {
+          setCurrentTenant(cached.tenant);
+          setUserTenants([cached.tenant]);
+          tenantService.setCurrentTenant(cached.tenant);
+          hasResolvedOnceRef.current = true;
+          setIsLoading(false);
+        }
+      } catch { /* validate membership in the background */ }
       // Timeout safeguard: Force loading to false after 20 seconds to allow Vercel cold starts
       const timeoutId = setTimeout(() => {
         setIsLoading((current) => {
@@ -260,13 +283,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return () => clearTimeout(timeoutId);
     } else {
       hasResolvedOnceRef.current = false;
+      resolvedUserRef.current = null;
       tenantService.clearCurrentTenant();
       setCurrentTenant(null);
       setUserTenants([]);
       setIsLoading(false);
       setError(null);
     }
-  }, [user?.id, loadUserTenants]);
+  }, [user?.id, authLoading, loadUserTenants]);
 
 
 

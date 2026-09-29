@@ -121,7 +121,7 @@ describe('Frontend Cache & Tab Return Synchronization', () => {
 
     it('Dashboard.tsx restores cached dashboardStats and revalidates on tab return', () => {
       const content = readFileSync(path.join(root, 'src/components/Dashboard.tsx'), 'utf8');
-      assert.match(content, /cachedStats\s*=\s*localStorage\.getItem\(\s*`dashboard_stats_\$\{currentTenant\.id\}`/);
+      assert.match(content, /cachedStats\s*=\s*localStorage\.getItem\(\s*`dashboard_stats_\$\{currentTenant\.id\}_\$\{user\.id\}`/);
       assert.match(content, /useOnTabVisible/);
     });
 

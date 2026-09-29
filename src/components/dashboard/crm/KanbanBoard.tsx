@@ -35,6 +35,10 @@ import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HelpDisclosure } from '@/components/ui/workspace/HelpDisclosure';
+import { dashboardTimer } from '@/lib/dashboard/performance';
+import { useQueryClient } from '@tanstack/react-query';
+import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ContextualBulkBar } from '@/components/ui/workspace';
 
 // Active pipeline columns only — won/lost are terminal actions (removed from board).
@@ -464,6 +468,9 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
  * MAIN BOARD COMPONENT
  * ------------------------------------------------------------------- */
 export default function KanbanBoard() {
+  const queryClient = useQueryClient();
+  const { currentTenant } = useTenant();
+  const { user } = useAuth();
   const [columns, setColumns] = useState(KANBAN_STAGES);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
@@ -471,6 +478,9 @@ export default function KanbanBoard() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [mobileDrawerLead, setMobileDrawerLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [leadCursor, setLeadCursor] = useState<{ createdAt: string; id: string } | null>(null);
+  const [hasMoreLeads, setHasMoreLeads] = useState(false);
 
   const handleOpenLead = (lead: Lead) => {
     if (window.innerWidth < 768) {
@@ -544,8 +554,20 @@ export default function KanbanBoard() {
   );
 
   const loadLeads = useCallback(async () => {
-    setLoading(true);
-    const { leads: dbLeads, error } = await leadService.getLeads();
+    const endTimer = dashboardTimer('crm-pipeline-page');
+    const queryKey = ['crm', 'kanban', currentTenant?.id, user?.id];
+    const cached = currentTenant?.id && user?.id
+      ? queryClient.getQueryData<{ leads: Lead[]; cursor: { createdAt: string; id: string } | null; hasMore: boolean }>(queryKey)
+      : null;
+    if (cached) {
+      setLeads(cached.leads);
+      setLeadCursor(cached.cursor);
+      setHasMoreLeads(cached.hasMore);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+    const { leads: dbLeads, error, pageInfo } = await leadService.getLeadsPage({ limit: 100 });
     if (error) {
         toast.error('Failed to load CRM pipeline');
     } else {
@@ -561,18 +583,46 @@ export default function KanbanBoard() {
             return l;
         }).filter(Boolean) as Lead[];
         setLeads(mappedLeads);
+        setLeadCursor(pageInfo.nextCursor);
+        setHasMoreLeads(pageInfo.hasMore);
+        if (currentTenant?.id && user?.id) {
+          queryClient.setQueryData(queryKey, { leads: mappedLeads, cursor: pageInfo.nextCursor, hasMore: pageInfo.hasMore });
+        }
     }
     setLoading(false);
-  }, []);
+    endTimer();
+  }, [currentTenant?.id, user?.id, queryClient]);
+
+  const loadMoreLeads = useCallback(async () => {
+    if (!leadCursor || !hasMoreLeads || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await leadService.getLeadsPage({ limit: 100, cursor: leadCursor });
+      if (result.error) throw new Error(result.error);
+      setLeads(previous => {
+        const seen = new Set(previous.map(lead => lead.id));
+        const next = result.leads
+          .filter(lead => !seen.has(lead.id) && lead.stage !== 'won' && lead.stage !== 'lost')
+          .map(lead => ({
+            ...lead,
+            stage: KANBAN_STAGES.some(stage => stage.id === lead.stage) ? lead.stage : 'lead',
+          }));
+        return [...previous, ...next];
+      });
+      setLeadCursor(result.pageInfo.nextCursor);
+      setHasMoreLeads(result.pageInfo.hasMore);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'More leads could not be loaded');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [leadCursor, hasMoreLeads, loadingMore]);
 
   useEffect(() => {
-    loadLeads();
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) setCurrentUserId(data.user.id);
-    };
-    fetchUser();
-  }, [loadLeads]);
+    if (!currentTenant?.id || !user?.id) return;
+    void loadLeads();
+    setCurrentUserId(user.id);
+  }, [loadLeads, currentTenant?.id, user?.id]);
 
   useBonnieDeepLinkFocus({
     onFocus: ({ recordId, focus }) => {
@@ -865,6 +915,17 @@ export default function KanbanBoard() {
             </DragOverlay>
 
         </DndContext>
+
+        {hasMoreLeads && (
+          <button
+            type="button"
+            disabled={loadingMore}
+            onClick={() => void loadMoreLeads()}
+            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+          >
+            {loadingMore ? 'Loading more leads…' : 'Load more leads'}
+          </button>
+        )}
 
         {detailLead && (
           <LeadDetailModal

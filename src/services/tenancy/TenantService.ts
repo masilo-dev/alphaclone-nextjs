@@ -381,14 +381,14 @@ class TenantService {
         }
 
         // Version key — bump this whenever the RPC schema changes to bust stale caches
-        const CACHE_VERSION = 'v4';
-        const CACHE_KEY = `dashboard_stats_${tenantId}_${CACHE_VERSION}`;
+        const CACHE_VERSION = 'v5';
+        const CACHE_KEY = `dashboard_stats_${tenantId}_${userId}_${CACHE_VERSION}`;
         const CACHE_TTL = 60_000; // 60 seconds
 
         // Purge old versioned cache entries
         if (typeof window !== 'undefined') {
             for (const key of Object.keys(localStorage)) {
-                if (key.startsWith(`dashboard_stats_${tenantId}`) && key !== CACHE_KEY) {
+                if (key.startsWith(`dashboard_stats_${tenantId}_${userId}_`) && key !== CACHE_KEY) {
                     localStorage.removeItem(key);
                 }
             }
@@ -406,10 +406,11 @@ class TenantService {
                             stats.clientCount === 0 &&
                             stats.activeProjects === 0
                         );
-                        if (Date.now() - ts < CACHE_TTL && !isAllZero) {
-                            console.log('[TenantService] Returning cached dashboard stats');
-                            // Refresh in background after returning
-                            setTimeout(() => this.fetchAndCacheStats(tenantId, userId, CACHE_KEY), 0);
+                        if (Date.now() - ts < 24 * 60 * 60 * 1000 && !isAllZero) {
+                            // Visible immediately; synchronize without blocking the shell.
+                            if (Date.now() - ts >= CACHE_TTL) {
+                                void this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
+                            }
                             return { stats, error: null };
                         }
                     }
@@ -514,7 +515,10 @@ class TenantService {
             return { stats, error: null };
         } catch (err: any) {
             console.error('[TenantService] Error fetching dashboard stats:', err?.message);
-            // Return null stats on error — do NOT cache zeros
+            try {
+                const cached = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+                if (cached) return { stats: JSON.parse(cached).stats, error: 'Unable to refresh dashboard stats' };
+            } catch { /* no usable cache */ }
             return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
         }
     }

@@ -20,8 +20,10 @@ test('canonical Lead Finder includes the agent chat as a first-class workspace t
 
 test('sales navigation exposes one Lead Finder destination, not a duplicate Growth Agent', async () => {
   const hub = await fs.readFile('src/components/dashboard/hubs/SalesHub.tsx', 'utf8');
-  assert.match(hub, /label: 'Lead Finder'/);
-  assert.doesNotMatch(hub, /label: 'Growth Agent'/);
+  const tabs = await fs.readFile('src/components/dashboard/hubs/SalesWorkspaceTabs.tsx', 'utf8');
+  assert.match(hub, /tabs={SALES_WORKSPACE_TABS}/);
+  assert.equal((tabs.match(/label: 'Lead Finder'/g) || []).length, 1);
+  assert.doesNotMatch(tabs, /label: 'Growth Agent'/);
 });
 
 test('chat assistant queues canonical searches instead of running a second scraper pipeline', async () => {

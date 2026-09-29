@@ -108,6 +108,7 @@ export const outreachSendSchema = z.object({
     /** Direct compose/reply — skip CRM membership gate */
     skipCrmGate: z.boolean().optional(),
     directSend: z.boolean().optional(),
+    bulkOutreach: z.boolean().optional(),
     entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct', 'contact']).optional(),
     entityId: z.string().uuid().optional().nullable(),
 });
