@@ -176,6 +176,7 @@ export async function POST(request: Request) {
       languageMode,
       skipCrmGate = false,
       directSend = false,
+      bulkOutreach = false,
       entityType,
       entityId,
     } = parsed.data;
@@ -187,6 +188,19 @@ export async function POST(request: Request) {
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
+
+    if (bulkOutreach) {
+      const [prior, campaign] = await Promise.all([
+        admin.from('lead_outreach_log').select('id').eq('tenant_id', tenantId)
+          .ilike('lead_email', leadEmail).in('status', ['sent', 'delivered', 'opened', 'clicked', 'replied']).limit(1),
+        admin.from('campaign_recipients').select('id').eq('tenant_id', tenantId)
+          .ilike('email', leadEmail).in('status', ['sent', 'delivered', 'opened', 'clicked', 'replied']).limit(1),
+      ]);
+      if (prior.error || campaign.error) throw prior.error || campaign.error;
+      if (prior.data?.length || campaign.data?.length || await isEmailSuppressed(tenantId, leadEmail)) {
+        return NextResponse.json({ success: false, error: 'Recipient was already contacted or suppressed.' }, { status: 409 });
+      }
+    }
 
     // 0. Recipient Validation (skipped for direct inbox replies)
     if (!isDirectSend) {
@@ -217,6 +231,9 @@ export async function POST(request: Request) {
     const unsubscribeUrl = buildUnsubscribeUrl(leadEmail, tenantId);
 
     const { data: tenantRow } = await admin.from('tenants').select('name, settings').eq('id', tenantId).maybeSingle();
+    if (bulkOutreach && !(tenantRow?.settings as Record<string, unknown> | null)?.outreach_acknowledged_at) {
+      return NextResponse.json({ success: false, error: 'Acknowledge outreach responsibility once before sending.' }, { status: 403 });
+    }
     const tenantName = tenantRow?.name || 'Your workspace';
 
     // Resolve Calendly link from tenant settings for {{client_calendly_link}} injection
