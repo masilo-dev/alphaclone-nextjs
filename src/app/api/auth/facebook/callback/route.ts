@@ -124,7 +124,11 @@ export async function GET(req: NextRequest) {
             .eq('user_id', stateData.userId)
             .eq('tenant_id', resolvedTenantId)
             .maybeSingle();
-        if (!mem?.tenant_id) resolvedTenantId = null;
+        // An explicit workspace in signed state must never silently fall back
+        // to another membership and attach provider credentials there.
+        if (!mem?.tenant_id) {
+            return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'workspace_access_denied' });
+        }
     }
     if (!resolvedTenantId) {
         const { data: first } = await supabase
@@ -189,6 +193,10 @@ export async function GET(req: NextRequest) {
 
     if (pages.length > 0) {
         for (const page of pages) {
+            if (!page.id || !page.access_token) {
+                upsertFailures += 1;
+                continue;
+            }
             const hasManageTask = Array.isArray(page.tasks) && (
                 page.tasks.includes('MANAGE') ||
                 page.tasks.includes('ADVERTISE') ||
@@ -256,33 +264,12 @@ export async function GET(req: NextRequest) {
             }
         }
     } else {
-        console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);
-        const fbResult = await upsertFacebookIntegration({
-            userId: stateData.userId,
-            tenantId: resolvedTenantId,
-            pageId: fbUserId,
-            pageName: profileData.name || 'Facebook profile',
-            pageAccessToken: null,
-            userAccessToken: userToken,
-            appScopedUserId: fbUserId,
-            expiresAt,
-            metadata: {
-                fb_name: profileData.name,
-                no_pages: true,
-                warning: 'No pages found. User may not have granted pages_show_list or has no Facebook Pages.',
-                scope_mode: stateData.scopeMode || 'publishing',
-                requested_scopes: stateData.requestedScopes || [],
-            },
-        });
-        if (!fbResult.integrationId) {
-            console.error('[Facebook Callback] facebook_integrations upsert (no pages) failed:', fbResult.error);
-            upsertFailures += 1;
-        }
+        console.warn('[Facebook Callback] No publishable pages returned for user:', stateData.userId);
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'no_pages_available' });
     }
 
     const allPageUpsertsFailed = pages.length > 0 && upsertFailures >= pages.length;
-    const noPageRowFailed = pages.length === 0 && upsertFailures > 0;
-    if (allPageUpsertsFailed || noPageRowFailed) {
+    if (allPageUpsertsFailed) {
         return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'save_failed' });
     }
 

@@ -4,7 +4,6 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 import { buildPublicInvoiceUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
-import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
 
 export type ClientFinancePortalData = {
   client: { id: string; name: string; email?: string | null };
@@ -33,7 +32,8 @@ export type ClientFinancePortalData = {
     status: string;
     stage: string | null;
     progress: number;
-    viewUrl: string;
+    description: string | null;
+    dueDate: string | null;
   }>;
   contracts: Array<{
     id: string;
@@ -113,35 +113,24 @@ export async function getClientFinancePortalData(
     };
   });
 
-  const { data: publicProjects } = await admin
+  const { data: clientProjects, error: projectError } = await admin
     .from('projects')
-    .select('id, name, status, current_stage, progress, portal_token, portal_expires_at')
+    .select('id, name, status, current_stage, progress, description, due_date')
     .eq('tenant_id', client.tenant_id)
     .eq('client_id', client.id)
-    .eq('portal_enabled', true)
-    .eq('is_public', true)
-    .not('portal_token', 'is', null)
     .order('updated_at', { ascending: false })
     .limit(50);
+  if (projectError) throw projectError;
 
-  const projectRows = (publicProjects || [])
-    .filter((project) => !project.portal_expires_at || new Date(project.portal_expires_at).getTime() >= Date.now())
-    .flatMap((project) => {
-      const token = String(project.portal_token || '');
-      if (!token) return [];
-      try {
-        return [{
+  const projectRows = (clientProjects || []).map((project) => ({
           id: String(project.id),
           name: String(project.name || 'Untitled project'),
           status: String(project.status || 'active'),
           stage: project.current_stage ? String(project.current_stage) : null,
           progress: Number(project.progress || 0),
-          viewUrl: buildCanonicalProjectPortalUrl(token),
-        }];
-      } catch {
-        return [];
-      }
-    });
+          description: project.description ? String(project.description) : null,
+          dueDate: project.due_date ? String(project.due_date) : null,
+  }));
 
   // A client portal may only list contracts whose canonical client_id is the
   // portal holder.  Signing remains on its dedicated, expiring signing link.
@@ -201,6 +190,17 @@ export async function getClientFinancePortalData(
     updatedAt: String(contract.updated_at || ''),
     actionUrl: activeTokenByContract.get(contract.id) ? AppUrls.signContract(activeTokenByContract.get(contract.id)) : undefined,
   }));
+  // A shared contract is also a client document. Reuse its canonical record
+  // and the guarded PDF endpoint; no duplicate document or broader file access.
+  const contractDocuments = contractRows.map((contract) => ({
+    id: contract.id,
+    name: contract.title,
+    documentType: 'contract',
+    status: contract.status,
+    updatedAt: contract.updatedAt,
+    viewUrl: `/api/client-finance/contract?token=${encodeURIComponent(token)}&contractId=${encodeURIComponent(contract.id)}&view=1`,
+  }));
+  const allDocumentRows = [...contractDocuments, ...documentRows];
 
   const projectIds = projectRows.map((project) => project.id);
   const projectNames = new Map(projectRows.map((project) => [project.id, project.name]));
@@ -247,7 +247,7 @@ export async function getClientFinancePortalData(
       quotes: [],
       projects: projectRows,
       contracts: contractRows,
-      documents: documentRows,
+      documents: allDocumentRows,
       approvals: approvalRows,
       activity: activityRows,
       summary: {
@@ -285,7 +285,7 @@ export async function getClientFinancePortalData(
     quotes: quoteRows,
     projects: projectRows,
     contracts: contractRows,
-    documents: documentRows,
+    documents: allDocumentRows,
     approvals: approvalRows,
     activity: activityRows,
     summary: {

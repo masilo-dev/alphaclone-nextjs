@@ -42,6 +42,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const currentStage = normalizeProjectStage(input.currentStage) || "Discovery";
     const ownerId = input.ownerId || user.id;
     const admin = createSupabaseAdminClient();
+    if (input.clientId) {
+      const { data: client, error: clientError } = await admin.from('business_clients')
+        .select('id').eq('tenant_id', tenantId).eq('id', input.clientId).eq('is_active', true).maybeSingle();
+      if (clientError) throw clientError;
+      if (!client) return NextResponse.json({ error: 'Client not found in this workspace' }, { status: 404 });
+    }
 
     const memberIds = [...new Set([ownerId, ...input.team])].filter((id) => Boolean(id) && z.string().uuid().safeParse(id).success);
     if (memberIds.length) {

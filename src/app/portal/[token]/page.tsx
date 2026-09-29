@@ -421,7 +421,8 @@ export default function ClientPortalPage() {
     const [projectId, setProjectId] = useState('');
     const [sending, setSending] = useState(false);
     const [documentPreview, setDocumentPreview] = useState<{ name: string; url: string } | null>(null);
-    const [contractPreview, setContractPreview] = useState<{ id: string; title: string; content: string; actionUrl?: string } | null>(null);
+    const [contractPreview, setContractPreview] = useState<{ id: string; title: string; pdfUrl: string; actionUrl?: string; signing?: boolean } | null>(null);
+    const [projectPreview, setProjectPreview] = useState<ClientFinancePortalData['projects'][number] | null>(null);
     const [contractLoading, setContractLoading] = useState(false);
     const [contractDownloading, setContractDownloading] = useState<string | null>(null);
     const [deciding, setDeciding] = useState<string | null>(null);
@@ -451,15 +452,27 @@ export default function ClientPortalPage() {
     const openContract = useCallback(async (contract: ClientFinancePortalData['contracts'][number]) => {
         setContractLoading(true);
         try {
-            const response = await fetch(`/api/client-finance/contract?token=${encodeURIComponent(token)}&contractId=${encodeURIComponent(contract.id)}`, { cache: 'no-store' });
+            const response = await fetch(`/api/client-finance/contract?token=${encodeURIComponent(token)}&contractId=${encodeURIComponent(contract.id)}&view=1`, { cache: 'no-store' });
             if (response.status === 401) { handle401(); return; }
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || 'Contract could not be opened');
-            setContractPreview({ id: contract.id, title: contract.title, content: String(data.contract.content || ''), actionUrl: contract.actionUrl });
+            if (!response.ok || !response.headers.get('content-type')?.includes('application/pdf')) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || 'Contract PDF could not be opened');
+            }
+            const pdfUrl = URL.createObjectURL(await response.blob());
+            setContractPreview((previous) => {
+                if (previous) URL.revokeObjectURL(previous.pdfUrl);
+                return { id: contract.id, title: contract.title, pdfUrl, actionUrl: contract.actionUrl };
+            });
         } catch (cause) {
             setToast({ type: 'error', text: cause instanceof Error ? cause.message : 'Contract could not be opened' });
         } finally { setContractLoading(false); }
     }, [token, handle401]);
+    const closeContract = useCallback(() => {
+        setContractPreview((previous) => {
+            if (previous) URL.revokeObjectURL(previous.pdfUrl);
+            return null;
+        });
+    }, []);
 
     const downloadContract = useCallback(async (contractId: string) => {
         setContractDownloading(contractId);
@@ -941,7 +954,7 @@ export default function ClientPortalPage() {
                     <DataCardList
                         rows={portal.projects}
                         icon={FolderKanban}
-                        empty={{ title: 'No projects yet', description: "When your provider shares a project with you, you'll see it here with progress, next steps, and project detail access." }}
+                        empty={{ title: 'No projects yet', description: "Projects linked to your client account will appear here." }}
                         render={(p) => (
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0 flex-1">
@@ -965,13 +978,13 @@ export default function ClientPortalPage() {
                                     </div>
                                 </div>
                                 <div className="shrink-0 sm:text-right">
-                                    <a
-                                        href={p.viewUrl}
+                                    <button type="button"
+                                        onClick={() => setProjectPreview(p)}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
                                         Open project
                                         <ArrowUpRight className="h-3.5 w-3.5" />
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -1132,7 +1145,11 @@ export default function ClientPortalPage() {
                                 </div>
                                 <div className="shrink-0 sm:text-right">
                                     <button
-                                        onClick={() => setDocumentPreview({ name: d.name, url: d.viewUrl })}
+                                        onClick={() => {
+                                            const contract = d.documentType === 'contract' ? portal.contracts.find((item) => item.id === d.id) : null;
+                                            if (contract) void openContract(contract);
+                                            else setDocumentPreview({ name: d.name, url: d.viewUrl });
+                                        }}
                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--ws-surface-secondary)] hover:bg-[color:var(--ws-panel-hover)] border border-[color:var(--ws-border-strong)] px-3.5 py-2 type-caption md:text-xs font-semibold text-[color:var(--ws-text-primary)]"
                                     >
                                         Preview
@@ -1240,25 +1257,33 @@ export default function ClientPortalPage() {
                 )}
             </div>
 
+            {projectPreview ? (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setProjectPreview(null)}>
+                    <div role="dialog" aria-modal="true" aria-label={projectPreview.name} onClick={(event) => event.stopPropagation()} className="w-full max-w-2xl rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-6 text-[color:var(--ws-text-primary)] shadow-2xl">
+                        <div className="flex items-start justify-between gap-4"><h2 className="text-xl font-semibold">{projectPreview.name}</h2><button type="button" aria-label="Close project" onClick={() => setProjectPreview(null)}><X className="h-5 w-5" /></button></div>
+                        <p className="mt-3 type-body whitespace-pre-wrap">{projectPreview.description || 'No project description has been added yet.'}</p>
+                        <p className="mt-4 type-caption">Status: {projectPreview.stage || projectPreview.status} · Progress: {projectPreview.progress}%{projectPreview.dueDate ? ` · Due: ${formatDate(projectPreview.dueDate)}` : ''}</p>
+                        <button type="button" onClick={() => { setProjectId(projectPreview.id); setProjectPreview(null); setActiveTab('messages'); }} className="mt-5 rounded-lg bg-[color:var(--brand-teal)] px-4 py-2 font-semibold text-white">Open project conversation</button>
+                    </div>
+                </div>
+            ) : null}
             {/* DOCUMENT PREVIEW MODAL */}
             {contractPreview ? (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={() => setContractPreview(null)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 md:p-6" onClick={closeContract}>
                     <div role="dialog" aria-modal="true" aria-label={contractPreview.title} onClick={(event) => event.stopPropagation()} className="flex h-[90vh] w-full max-w-5xl flex-col rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-2xl">
                         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--ws-border)] p-4">
                             <h2 className="truncate font-semibold text-[color:var(--ws-text-primary)]">{contractPreview.title}</h2>
                             <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => { setContractPreview(null); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button>
+                                <button type="button" onClick={() => { closeContract(); setProjectId(''); setActiveTab('messages'); }} className="rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)]">Message the business</button>
+                                {contractPreview.actionUrl ? <button type="button" onClick={() => setContractPreview({ ...contractPreview, signing: !contractPreview.signing })} className="rounded-lg bg-[color:var(--brand-teal)] px-3 py-2 type-caption font-semibold text-white">{contractPreview.signing ? 'View contract' : 'Review & sign'}</button> : null}
                                 <button type="button" onClick={() => void downloadContract(contractPreview.id)} disabled={contractDownloading === contractPreview.id} className="inline-flex items-center gap-1 rounded-lg border border-[color:var(--ws-border)] px-3 py-2 type-caption text-[color:var(--ws-text-primary)] disabled:opacity-50"><Download className="h-4 w-4" /> Download</button>
-                                <button type="button" onClick={() => setContractPreview(null)} aria-label="Close contract" className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
+                                <button type="button" onClick={closeContract} aria-label="Close contract" className="rounded-lg p-2 text-[color:var(--ws-text-primary)]"><X className="h-5 w-5" /></button>
                             </div>
                         </div>
-                        {contractPreview.actionUrl ? (
+                        {contractPreview.signing && contractPreview.actionUrl ? (
                             <iframe title={`Sign ${contractPreview.title}`} src={contractPreview.actionUrl} className="min-h-0 w-full flex-1 rounded-b-2xl bg-white" />
                         ) : (
-                            <div className="min-h-0 flex-1 overflow-auto p-5 md:p-8">
-                                <div className="whitespace-pre-wrap break-words type-body text-[color:var(--ws-text-primary)]">{contractPreview.content || 'A contract preview is not available. Ask the business to share the final document or a signing link.'}</div>
-                                <p className="mt-6 type-caption text-[color:var(--ws-text-tertiary)]">Signing becomes available here when the business sends you a secure signing link.</p>
-                            </div>
+                            <iframe title={`View ${contractPreview.title}`} src={contractPreview.pdfUrl} className="min-h-0 w-full flex-1 rounded-b-2xl bg-white" />
                         )}
                     </div>
                 </div>

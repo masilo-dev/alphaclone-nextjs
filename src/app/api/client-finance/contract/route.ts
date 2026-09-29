@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
         .is('used_at', null).is('revoked_at', null).gt('expires_at', new Date().toISOString()).maybeSingle();
       if (!signingToken) return NextResponse.json({ error: 'Contract has not been shared with you' }, { status: 404 });
     }
-    if (req.nextUrl.searchParams.get('download') === '1') {
+    if (req.nextUrl.searchParams.get('download') === '1' || req.nextUrl.searchParams.get('view') === '1') {
+      const download = req.nextUrl.searchParams.get('download') === '1';
       const filePath = `contracts/${client.tenant_id}/${contractId}.pdf`;
       const { data: stored } = await admin.storage.from('contracts').download(filePath);
       let pdf: ArrayBuffer;
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
       return new NextResponse(pdf, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="contract-${contractId}.pdf"`,
+          'Content-Disposition': `${download ? 'attachment' : 'inline'}; filename="contract-${contractId}.pdf"`,
           'Cache-Control': 'private, no-store',
           'X-Content-Type-Options': 'nosniff',
         },
