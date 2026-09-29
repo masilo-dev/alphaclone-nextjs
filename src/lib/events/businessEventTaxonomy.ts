@@ -207,6 +207,7 @@ const EXTRA_ALIASES: Record<string, string> = {
   campaign_finished: 'campaign.completed',
   project_created: 'project.created',
   client_created: 'client.created',
+  client_updated: 'client.updated',
   crm_client_created: 'client.created',
   clients_imported: 'client.created',
   task_created: 'task.created',

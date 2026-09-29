@@ -76,7 +76,9 @@ export async function bridgeAutomationEventToTenantNotification(
     source: (payload.source as TenantBusinessEventInput['source']) || 'user',
     title,
     message,
-    actionUrl: actionUrlFor(canonical.entityType),
+    actionUrl: canonical.entityType === 'client' && entityId
+      ? `/dashboard/clients?contactId=${encodeURIComponent(entityId)}`
+      : actionUrlFor(canonical.entityType),
     clientName,
     projectName: (payload.projectName || payload.name) as string | undefined,
     entityType: canonical.entityType,

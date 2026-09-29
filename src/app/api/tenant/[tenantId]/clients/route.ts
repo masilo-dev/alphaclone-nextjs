@@ -164,6 +164,15 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     const { data, error } = await admin.from('business_clients').update(updates).eq('tenant_id', tenantId).eq('id', clientId).select('*').single();
     if (error) throw error;
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: isActive === true ? 'client_restored' : 'client_updated', payload: { clientId, actorUserId: user.id, changedFields: Object.keys(updates) } });
+    if (value.salesStage && value.salesStage !== existing.sales_stage) {
+      const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
+      await bridgeAutomationEventToTenantNotification(tenantId, 'client_updated', {
+        clientId, clientName: data.name || data.company_name, actorUserId: user.id,
+        previousStage: existing.sales_stage, stage: data.sales_stage,
+        message: `${data.name || 'Client'} moved from ${existing.sales_stage} to ${data.sales_stage} in the CRM.`,
+        communication_intent: 'internal', source: 'user',
+      });
+    }
     return NextResponse.json({ client: data });
   } catch (error) { return routeErrorResponse(error, 'Client could not be updated', req); }
 }
