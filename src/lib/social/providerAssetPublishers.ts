@@ -52,9 +52,9 @@ async function graphJson(url: string, body?: Record<string, unknown>) {
 async function assertProviderFetchable(url: string, expectedMime: string): Promise<void> {
   const response = await fetch(url, { method: 'GET', redirect: 'follow', headers: { Accept: expectedMime } });
   const contentType = String(response.headers.get('content-type') || '').split(';')[0].toLowerCase();
-  if (!response.ok || contentType !== expectedMime) throw new Error(`INSTAGRAM_MEDIA_FETCH_FAILED: provider URL returned HTTP ${response.status} ${contentType || 'without Content-Type'}`);
+  if (!response.ok || contentType !== expectedMime) throw new Error(`MEDIA_NOT_PROVIDER_ACCESSIBLE: provider URL returned HTTP ${response.status} ${contentType || 'without Content-Type'}`);
   const bytes = Buffer.from(await response.arrayBuffer());
-  if (!bytes.length) throw new Error('INSTAGRAM_MEDIA_FETCH_FAILED: provider URL returned an empty body');
+  if (!bytes.length) throw new Error('MEDIA_NOT_PROVIDER_ACCESSIBLE: provider URL returned an empty body');
 }
 
 /**
@@ -65,7 +65,7 @@ async function assertProviderFetchable(url: string, expectedMime: string): Promi
 export async function waitForInstagramContainerReady(containerId: string, token: string, options: {
   timeoutMs?: number; pollIntervalMs?: number; signal?: AbortSignal;
 } = {}) {
-  const timeoutMs = Math.max(0, options.timeoutMs ?? 8_000);
+  const timeoutMs = Math.max(0, options.timeoutMs ?? 2_000);
   const pollIntervalMs = Math.max(100, options.pollIntervalMs ?? 1_000);
   if (timeoutMs === 0) {
     return graphJson(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
@@ -95,11 +95,13 @@ export async function waitForInstagramContainerReady(containerId: string, token:
 export async function publishInstagramAssets(input: {
   tenantId: string; userId: string; assetIds: string[]; caption: string;
   mode: 'photo' | 'reel' | 'carousel'; instagramAccountId?: string;
+  idempotencyKey?: string;
 }): Promise<DirectPublishReceipt> {
   const admin = createSupabaseAdminClient();
   const claimed = await createPublishOperation({
     tenantId: input.tenantId, userId: input.userId, platform: 'instagram', identityType: 'instagram_business',
     identityId: input.instagramAccountId, assetIds: input.assetIds, caption: input.caption,
+    idempotencyKey: input.idempotencyKey,
   });
   if (claimed.reused) return operationReceipt(claimed.operation) as DirectPublishReceipt;
 
@@ -157,7 +159,7 @@ export async function publishInstagramAssets(input: {
   // Meta may finish photo containers before its initial creation request returns.
   // Publish synchronously when ready so a normal photo post does not wait for cron.
   try {
-    const ready = await waitForInstagramContainerReady(creationId, token, { timeoutMs: 12_000, pollIntervalMs: 1_000 });
+    const ready = await waitForInstagramContainerReady(creationId, token, { timeoutMs: 2_000, pollIntervalMs: 500 });
     if (ready.status_code === 'FINISHED') {
       const published = await graphJson(`https://graph.facebook.com/v21.0/${accountId}/media_publish`, {
         creation_id: creationId, access_token: token,
