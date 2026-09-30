@@ -155,8 +155,17 @@ export async function ingestMediaInput(params: {
   userId: string;
   media: MediaInput;
   purpose?: string;
+  mediaSource?: 'user_upload' | 'generated' | 'remote_url' | 'existing_asset';
+  provenance?: { generation_id?: string; generation_provider?: string; generation_timestamp?: string; prompt_hash?: string };
 }): Promise<IngestedMediaAsset> {
   const { tenantId, userId, media } = params;
+
+  // Local/sandbox paths are references in the caller's filesystem, never media.
+  // Publishing must fail closed unless the MCP transport supplied actual bytes/base64.
+  const rawMedia = media as unknown as Record<string, unknown>;
+  for (const candidate of [rawMedia.url, rawMedia.data, rawMedia.base64, rawMedia.dataUrl, rawMedia.path]) {
+    if (typeof candidate === 'string') rejectLocalAiPaths(candidate, 'media');
+  }
 
   switch (media.type) {
     case 'asset_id':
@@ -168,6 +177,7 @@ export async function ingestMediaInput(params: {
       if (!rawData) {
         throw new Error('base64 media input requires data or base64 content');
       }
+      rejectLocalAiPaths(rawData, 'content_base64');
       const uploaded = await uploadSocialMedia({
         tenantId,
         userId,
@@ -199,6 +209,7 @@ export async function ingestMediaInput(params: {
 
     case 'url': {
       const targetUrl = media.url || '';
+      rejectLocalAiPaths(targetUrl, 'media_url');
       if (isDataUri(targetUrl)) {
         return ingestMediaInput({
           tenantId,
