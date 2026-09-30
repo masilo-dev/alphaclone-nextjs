@@ -51,6 +51,7 @@ test('Instagram publish waits for FINISHED, returns pending with no fake provide
   assert.match(instagram, /provider_post_id: string \| null/);
   assert.match(instagram, /INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN/);
   assert.match(instagram, /operation\.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'[\s\S]*?reconciliation_required/);
+  assert.doesNotMatch(instagram, /operation\.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'\s*\|\|\s*operation\.failure_code === 'INSTAGRAM_CONTAINER_STATUS_UNKNOWN'/);
   assert.match(instagram, /retry_safe: false, failure_code: 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'/);
   assert.match(instagram, /publish_operation_id: operation\.id/);
 });
