@@ -1065,10 +1065,11 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
 }
 .mkt-footer-redesign .mkt-footer-bottom-redesign a[href="/platform-status"] span { color: #eef5ff !important; }
 
-@media (min-width: 1200px) and (max-width: 1400px) {
-  .mkt-header-redesign .mkt-header-bar { gap: 14px; }
-  .mkt-nav-redesign { gap: 12px; }
-  .mkt-header-actions-redesign { gap: 10px; }
+@media (min-width: 1024px) and (max-width: 1400px) {
+  .mkt-header-redesign .mkt-header-bar { gap: 10px; }
+  .mkt-nav-redesign { gap: 8px; }
+  .mkt-nav-link-redesign { font-size: 13px; padding: 6px 8px; }
+  .mkt-header-actions-redesign { gap: 8px; }
 }
 
 @media (max-width: 1240px) {
@@ -1079,7 +1080,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
   .acr-feature-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 1023px) {
   .mkt-nav-redesign,
   .mkt-header-actions-redesign { display: none; }
   .mkt-header-mobile-redesign { display: flex; }

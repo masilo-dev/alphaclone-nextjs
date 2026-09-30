@@ -3,7 +3,7 @@ export class LinkedInApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly body?: string,
-    public readonly code?: 'TOKEN_EXPIRED' | 'RATE_LIMITED' | 'FORBIDDEN' | 'NOT_FOUND'
+    public readonly code?: 'TOKEN_EXPIRED' | 'RATE_LIMITED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DUPLICATE_POST'
   ) {
     super(message);
     this.name = 'LinkedInApiError';
@@ -26,6 +26,7 @@ function classifyStatus(status: number, body: string): LinkedInApiError['code'] 
   if (status === 403) return 'FORBIDDEN';
   if (status === 404) return 'NOT_FOUND';
   if (status === 429) return 'RATE_LIMITED';
+  if (status === 422 && (body.includes('DUPLICATE_POST') || body.includes('Duplicate post'))) return 'DUPLICATE_POST';
   return undefined;
 }
 

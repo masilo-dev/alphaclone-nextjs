@@ -80,15 +80,16 @@ async function createAuthenticatedContext(options = {}) {
   const cookies = await getAuthCookies();
   await context.addCookies(cookies);
 
-  await context.addInitScript(() => {
-    const userId = '681241e7-6e31-455b-89e0-a2bfda699135';
-    const tenantId = '3abb9768-b9b9-4d92-97ed-71fa56ce31af';
+  const targetUserId = options.userId || '681241e7-6e31-455b-89e0-a2bfda699135';
+  const targetTenantId = options.tenantId || process.env.TEST_TENANT_ID || '066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4';
+
+  await context.addInitScript(({ userId, tenantId }) => {
     localStorage.setItem(`welcome_seen_${userId}`, 'true');
     localStorage.setItem(`business_welcome_seen_${userId}`, '1');
     localStorage.setItem(`onboarding_completed_${userId}`, 'true');
     localStorage.setItem('current_tenant_id', tenantId);
     sessionStorage.setItem('current_tenant_id', tenantId);
-  });
+  }, { userId: targetUserId, tenantId: targetTenantId });
 
   return { browser, context };
 }

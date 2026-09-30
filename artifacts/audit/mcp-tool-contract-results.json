@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-27T12:55:40.584Z",
-  "total_tools": 568,
-  "passed": 511,
+  "generated_at": "2026-09-30T09:25:29.519Z",
+  "total_tools": 569,
+  "passed": 512,
   "failed": 0,
   "skipped": 57,
   "before_failure_count": 8,
@@ -1674,6 +1674,15 @@
     },
     {
       "tool": "get_current_user",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_customer_360",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

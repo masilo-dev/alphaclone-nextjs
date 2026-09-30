@@ -565,8 +565,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         const sharedRoute = renderSharedDashboardRoute(tab, user);
         if (sharedRoute) return sharedRoute;
 
-        if (tab === '/dashboard/business/documents' || tab.startsWith('/dashboard/business/documents/')) {
-            const section = tab.slice('/dashboard/business/documents'.length).replace(/^\//, '').split('/')[0];
+        if (
+            tab === '/dashboard/documents' ||
+            tab.startsWith('/dashboard/documents/') ||
+            tab === '/dashboard/business/documents' ||
+            tab.startsWith('/dashboard/business/documents/')
+        ) {
+            const section = tab.replace(/^\/dashboard\/(business\/)?documents\/?/, '').split('/')[0];
             return <SharedDocumentsWorkspace section={section} />;
         }
 
@@ -811,7 +816,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/contracts/manage':
             case '/dashboard/business/contracts/manage':
                 return <ContractDashboard user={user} initialTab="details" />;
-            // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
+            case '/dashboard/documents':
+            case '/dashboard/business/documents':
+                return <SharedDocumentsWorkspace />;
             case '/dashboard/business/quotes':
             case '/dashboard/quotes':
                 return <QuotesTab user={user} />;

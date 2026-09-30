@@ -80,6 +80,8 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/business': '/dashboard',
         '/dashboard/messages': '/dashboard/business/messages',
         '/dashboard/settings': '/dashboard/business/settings',
+        '/dashboard/calendar': '/dashboard/business/calendar',
+        '/dashboard/documents': '/dashboard/business/documents',
         '/dashboard/contracts': '/dashboard/business/contracts',
         '/dashboard/contracts/manage': '/dashboard/business/contracts/manage',
         '/dashboard/finance': '/dashboard/business/billing',

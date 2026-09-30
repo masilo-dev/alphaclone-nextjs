@@ -142,7 +142,8 @@ export async function updateSession(request: NextRequest) {
 
         // HARD GATE: Enforce trial and subscription status for dashboard routes
         if (isProtectedPage) {
-            if (!isDashboardNavigation) {
+            // API routes handle their own 401 responses
+            if (pathname.startsWith('/api/')) {
                 return response;
             }
 
@@ -152,7 +153,7 @@ export async function updateSession(request: NextRequest) {
                 const url = request.nextUrl.clone();
                 url.pathname = '/auth/login';
                 url.searchParams.set('next', pathname);
-                return NextResponse.redirect(url);
+                return withRequestIdHeader(NextResponse.redirect(url));
             }
 
             const { data: profile, error: profileError } = await supabase

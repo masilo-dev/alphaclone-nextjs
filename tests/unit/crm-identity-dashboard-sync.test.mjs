@@ -76,7 +76,7 @@ describe('CRM identity resolution wiring', () => {
 
   it('migration adds identity indexes and last_activity_at', () => {
     const source = readFileSync(
-      path.join(root, 'supabase/migrations/20260904120000_crm_identity_dashboard_sync.sql'),
+      path.join(root, 'supabase/migrations/20260904065432_crm_identity_dashboard_sync.sql'),
       'utf8',
     );
     assert.match(source, /last_activity_at/);

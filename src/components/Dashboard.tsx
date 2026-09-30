@@ -194,6 +194,9 @@ const ArticleEditor = React.lazy(() => import("./dashboard/ArticleEditor"));
 const CalendarComponent = React.lazy(
   () => import("./dashboard/CalendarComponent"),
 );
+const SharedDocumentsWorkspace = React.lazy(
+  () => import("./documents/SharedDocumentsWorkspace"),
+);
 import { PasswordChangeRequiredModal } from "./auth/PasswordChangeRequiredModal";
 const SuperAdminDashboardTab = React.lazy(
   () => import("./dashboard/admin/SuperAdminDashboardTab"),
@@ -2245,9 +2248,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case "/dashboard/calendar":
+      case "/dashboard/business/calendar":
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
             <CalendarComponent user={user} />
+          </React.Suspense>
+        );
+
+      case "/dashboard/documents":
+      case "/dashboard/business/documents":
+        return (
+          <React.Suspense fallback={<TabSkeleton rows={6} showStats={false} />}>
+            <SharedDocumentsWorkspace />
           </React.Suspense>
         );
 

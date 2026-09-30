@@ -1041,6 +1041,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     key={`${email.provider}-${email.id}`}
                     type="button"
                     role="listitem"
+                    data-testid="email-item"
                     onClick={() => handleSelectEmail(email)}
                     className={`w-full text-left px-3 py-3 transition-all duration-200 border-b border-white/5 ${
                       isSelected
@@ -1134,7 +1135,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
         </div>
 
         {/* Read & reply — 70% width, flex-1 */}
-        <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0 h-full min-h-0`}>
+        <div data-testid="email-detail" className={`${selectedId ? 'flex' : 'hidden md:flex'} email-detail email-detail-view flex-1 flex-col min-w-0 h-full min-h-0`}>
           {selectedEmail && folder !== 'drafts' ? (
             <>
               {/* ── Thread header: subject + meta ── */}

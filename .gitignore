@@ -84,6 +84,8 @@ current_tsc*.txt
 /playwright-report/
 /test-results/
 /qa/screenshots/
+/qa/reports/
+/qa/results*.json
 
 # Misc output files
 diff.txt

@@ -382,6 +382,14 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       }
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn token expired. Reconnect your account.', outcome: 'rejected' };
     }
+    if (err instanceof LinkedInApiError && err.code === 'DUPLICATE_POST') {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        reason: 'Duplicate post detected: LinkedIn rejected this publication because identical content was posted in the last 7 days.',
+        outcome: 'rejected',
+      };
+    }
     console.error('[publishLinkedInPost] error:', err);
     return {
       ok: false,

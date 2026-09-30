@@ -30,11 +30,12 @@ async function migrateStuckPosts() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   console.log("Querying stuck posts...");
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   const { data: stuckPosts, error } = await supabase
     .from("social_posts")
-    .select("id, scheduled_at, attempt_count, status")
-    .eq("status", "scheduled")
-    .lte("scheduled_at", now.toISOString());
+    .select("id, scheduled_at, attempt_count, status, created_at")
+    .or(`status.eq.scheduled,status.eq.queued,status.eq.processing,status.eq.provider_processing`)
+    .lt("created_at", thirtyMinsAgo);
 
   if (error) {
     console.error("Error querying stuck posts:", error);

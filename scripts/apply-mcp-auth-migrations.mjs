@@ -39,6 +39,7 @@ const MIGRATIONS = [
   "supabase/migrations/20260722140000_platform_auth_oauth_hardening.sql",
   "supabase/migrations/20260722153000_mcp_auth_hotfixes.sql",
   "supabase/migrations/20260724210000_fix_claude_mcp_oauth_redirects.sql",
+  "supabase/migrations/20260930120000_harden_business_clients_and_projects_rls.sql",
 ];
 
 async function main() {
