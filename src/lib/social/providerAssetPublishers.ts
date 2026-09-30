@@ -281,8 +281,11 @@ export async function reconcileInstagramPublishOperation(operationId: string) {
   if (alreadyPublishedId) {
     return operationReceipt(await persistInstagramPublished(admin, operation, String(alreadyPublishedId), token));
   }
-  if (operation.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN'
-      || operation.failure_code === 'INSTAGRAM_CONTAINER_STATUS_UNKNOWN') {
+  // Only a media_publish request with an unknown outcome is unsafe to replay.
+  // A previously unknown *container status* is different: once that same persisted
+  // container reaches FINISHED, no publish request has been issued yet, so it is
+  // safe (and required) to continue to media_publish below.
+  if (operation.failure_code === 'INSTAGRAM_PUBLISH_OUTCOME_UNKNOWN') {
     const next = new Date(Date.now() + 60_000).toISOString();
     const { data, error: pendingError } = await admin.from('social_publish_operations').update({
       state: 'reconciliation_required', retry_safe: false, retry_after: next,
