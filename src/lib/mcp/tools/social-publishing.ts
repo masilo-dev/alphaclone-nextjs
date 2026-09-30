@@ -498,7 +498,9 @@ defineConnectorTool({
         });
         return asset;
       } catch (err: any) {
-        throwConnectorError('MEDIA_INGESTION_FAILED', err?.message || 'Attachment resolution failed', err);
+        const message = err?.message || 'Attachment resolution failed';
+        const code = String(message).split(':', 1)[0];
+        throwConnectorError(code === 'CHAT_ATTACHMENT_BYTES_UNAVAILABLE' ? code : 'MEDIA_INGESTION_FAILED', message, err);
       }
     }
 
@@ -1984,6 +1986,7 @@ for (const providerTool of [
         caption: args.content,
         mode: providerTool[1],
         instagramAccountId: args.identity_id,
+        idempotencyKey: args.idempotency_key,
       });
     },
   });

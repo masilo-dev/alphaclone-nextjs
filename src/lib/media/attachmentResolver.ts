@@ -15,11 +15,16 @@ export type ResolvedAttachment = {
 };
 
 function configuredRoots(): string[] {
-  return String(process.env.MCP_ATTACHMENT_ROOTS || '/workspace/scratch,/mnt/data')
+  return String(process.env.MCP_ATTACHMENT_ROOTS || '/workspace/scratch')
     .split(',').map((root) => resolve(root.trim())).filter(Boolean);
 }
 
 async function resolveLocalPath(path: string): Promise<ResolvedAttachment> {
+  // ChatGPT /mnt/data belongs to the caller sandbox, not the AlphaClone server.
+  // Never pretend a caller-local path is transportable media.
+  if (/^\/mnt\/data\//i.test(path)) {
+    throw new Error('CHAT_ATTACHMENT_BYTES_UNAVAILABLE: caller-local sandbox path cannot be read by AlphaClone; send attachment bytes/base64 or an authenticated file reference');
+  }
   const actual = await realpath(path);
   const permitted = configuredRoots().some((root) => actual === root || actual.startsWith(`${root}${sep}`));
   if (!permitted) throw new Error('LOCAL_PATH_FORBIDDEN: attachment is outside configured MCP attachment roots');
