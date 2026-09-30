@@ -75,7 +75,6 @@ import {
 import { toast } from "react-hot-toast";
 import { Button, Card, Input, Modal } from "./ui/UIComponents";
 import {
-  CLIENT_NAV_ITEMS,
   ADMIN_NAV_ITEMS,
   TENANT_ADMIN_NAV_ITEMS,
   LOGO_URL,
@@ -873,8 +872,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Determine Navigation Items based on Role
   const NAV_ITEMS = React.useMemo(() => {
     if (isPlatformAdminRole(user.role)) return ADMIN_NAV_ITEMS;
-    if (user.role === "tenant_admin") return TENANT_ADMIN_NAV_ITEMS;
-    return CLIENT_NAV_ITEMS;
+    return TENANT_ADMIN_NAV_ITEMS;
   }, [user.role]);
 
   // Calculate unread message count

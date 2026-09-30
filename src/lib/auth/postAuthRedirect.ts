@@ -9,11 +9,7 @@ export function getPostAuthDashboardPath(role?: UserRole | string | null): strin
   if (role === 'tenant_admin' || role === 'business_dashboard') {
     return '/dashboard';
   }
-  // Legacy client portal — keep isolated until fully removed.
-  if (role === 'client') {
-    return '/dashboard/projects';
-  }
-  // Unknown / visitor — business owner default (every new signup is tenant_admin).
+  // All registered business users land on /dashboard
   return '/dashboard';
 }
 

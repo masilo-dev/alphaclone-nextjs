@@ -63,53 +63,6 @@ export const APP_VERSION = '1.0.0';
 
 export const LOGO_URL = "/logo.png";
 
-// --- CLIENT NAVIGATION ---
-export const CLIENT_NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  {
-    label: 'Workspace',
-    href: '#',
-    icon: Briefcase,
-    subItems: [
-      { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-      { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-    ]
-  },
-  {
-    label: 'Communication',
-    href: '#',
-    icon: MessageSquare,
-    subItems: [
-      { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
-    ]
-  },
-  {
-    label: 'Resources',
-    href: '#',
-    icon: FileText,
-    subItems: [
-      { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-      { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-      { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
-      { label: 'Documents', href: '/dashboard/submit', icon: FileText },
-    ]
-  },
-  {
-    label: 'Growth',
-    href: '#',
-    icon: Target,
-    subItems: [
-      { label: 'Outbound Engine', href: '/dashboard/outbound', icon: Target },
-      { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
-      { label: 'Email campaigns', href: '/dashboard/business/campaigns', icon: Mail },
-      { label: 'Lead finder', href: '/dashboard/leads/finder', icon: Search },
-    ]
-  },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
-];
 
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
@@ -271,3 +224,6 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     ],
   },
 ];
+
+// Deprecated: standalone client dashboard is removed; aliased to full business navigation
+export const CLIENT_NAV_ITEMS: NavItem[] = TENANT_ADMIN_NAV_ITEMS;

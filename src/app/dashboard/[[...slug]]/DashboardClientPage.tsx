@@ -11,6 +11,7 @@ import { usePWA } from '@/contexts/PWAContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import dynamic from 'next/dynamic';
 
 const Dashboard = dynamic(() => import('@/components/Dashboard'), {
@@ -141,7 +142,7 @@ export default function DashboardClientPage() {
     return (
         <BuildErrorLogger>
             <SubscriptionGuard>
-                {user.role === 'tenant_admin' || user.role === 'business_dashboard' ? (
+                {!isPlatformAdminRole(user.role) || user.role === 'tenant_admin' || user.role === 'business_dashboard' ? (
                     <TenantAdminDashboardShell user={user} onLogout={handleLogout} />
                 ) : (
                     <Dashboard

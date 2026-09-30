@@ -71,10 +71,6 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         }
     }
 
-    if (role !== 'tenant_admin' && role !== 'business_dashboard') {
-        return resolveCanonicalPath(base);
-    }
-
     const tenantAliases: Record<string, string> = {
         // bare /dashboard/business resolves to home
         '/dashboard/business': '/dashboard',

@@ -805,7 +805,7 @@ export const authService = {
                 id: profile.id,
                 email: profile.email,
                 name: profile.name,
-                role: profile.role,
+                role: (profile.role === 'client' ? 'tenant_admin' : profile.role),
                 avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
                 account_status: profile.account_status,
                 scheduled_deletion_at: profile.scheduled_deletion_at,
