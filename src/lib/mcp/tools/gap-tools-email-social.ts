@@ -78,8 +78,8 @@ registerTool('gap-ai', {
   description: 'Generate an AI image asset using standard text prompts.',
   inputSchema: z.object({ tenant_id: tid, prompt: z.string(), aspect_ratio: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, prompt: { type: 'string' } }, required: ['prompt'] },
-  handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ status: 'success', prompt: args.prompt, image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe', note: 'AI Image generated' }) }] };
+  handler: async () => {
+    throw new Error('AI_IMAGE_GENERATION_UNAVAILABLE: legacy stock-image generator disabled; use the canonical image-generation tool and ingest its actual output bytes');
   },
 });
 
@@ -88,7 +88,7 @@ registerTool('gap-ai', {
   description: 'Generate or edit an image prompt for marketing/social media.',
   inputSchema: z.object({ tenant_id: tid, prompt: z.string() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, prompt: { type: 'string' } }, required: ['prompt'] },
-  handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ status: 'success', prompt: args.prompt, image_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe' }) }] };
+  handler: async () => {
+    throw new Error('AI_IMAGE_GENERATION_UNAVAILABLE: legacy stock-image generator disabled; use the canonical image-generation tool and ingest its actual output bytes');
   },
 });
