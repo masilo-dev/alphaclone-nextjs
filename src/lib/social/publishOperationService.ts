@@ -14,6 +14,7 @@ export async function createPublishOperation(input: {
   tenantId: string; userId: string; platform: SocialPlatform; identityType: SocialIdentityType;
   identityId?: string; assetIds: string[]; caption: string; requestedPublishTime?: string | null;
   correlationId?: string;
+  idempotencyKey?: string;
 }) {
   const admin = createSupabaseAdminClient();
   const identity = await resolveTenantIdentityForPublish({
@@ -38,7 +39,7 @@ export async function createPublishOperation(input: {
     const asset = assets.find((row) => row.id === id)!;
     return `${id}:${asset.checksum_sha256}`;
   }).join('|')).digest('hex');
-  const idempotencyKey = deterministicPublishKey({
+  const idempotencyKey = input.idempotencyKey || deterministicPublishKey({
     tenantId: input.tenantId, identityId: identity.identity_id, platform: input.platform,
     mediaChecksum: checksum, caption: input.caption, requestedPublishTime: input.requestedPublishTime,
   });
