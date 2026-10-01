@@ -248,3 +248,159 @@ defineConnectorTool({
     throwConnectorError('QUERY_FAILED', error.message);
   },
 });
+
+defineConnectorTool({
+  module: 'documents-ops',
+  name: 'generate_quote_pdf',
+  description: 'Generate real PDF buffer and optional storage upload for a quote.',
+  permission: 'documents:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    quote_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      quote_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id', 'quote_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: quote, error: qErr } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', args.quote_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+    if (qErr || !quote) throwConnectorError('NOT_FOUND', 'Quote not found');
+
+    const { data: items } = await supabase
+      .from('quote_items')
+      .select('*')
+      .eq('quote_id', args.quote_id)
+      .order('item_order', { ascending: true });
+
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name, logo_url, brand_color_primary, settings')
+      .eq('id', args.tenant_id)
+      .maybeSingle();
+
+    const { generateThemedQuotePdfBuffer } = await import('@/lib/documents/themedDocumentPdf');
+    const pdf = await generateThemedQuotePdfBuffer(quote, items || [], tenant);
+
+    return {
+      success: true,
+      quote_id: args.quote_id,
+      byte_length: pdf.byteLength,
+      pdf_base64: pdf.toString('base64'),
+      mime_type: 'application/pdf',
+    };
+  },
+});
+
+defineConnectorTool({
+  module: 'documents-ops',
+  name: 'generate_contract_pdf',
+  description: 'Generate real PDF buffer and optional storage upload for a contract.',
+  permission: 'documents:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    contract_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      contract_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id', 'contract_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: contract, error: cErr } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('id', args.contract_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+    if (cErr || !contract) throwConnectorError('NOT_FOUND', 'Contract not found');
+
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name, logo_url, brand_color_primary, settings')
+      .eq('id', args.tenant_id)
+      .maybeSingle();
+
+    const { generateThemedContractPdfBuffer } = await import('@/lib/documents/themedDocumentPdf');
+    const pdf = await generateThemedContractPdfBuffer(contract, tenant, {
+      name: contract.client_name || undefined,
+      email: contract.client_email || undefined,
+    });
+
+    return {
+      success: true,
+      contract_id: args.contract_id,
+      byte_length: pdf.byteLength,
+      pdf_base64: pdf.toString('base64'),
+      mime_type: 'application/pdf',
+    };
+  },
+});
+
+defineConnectorTool({
+  module: 'documents-ops',
+  name: 'generate_invoice_pdf',
+  description: 'Generate real PDF buffer and optional storage upload for an invoice.',
+  permission: 'documents:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    invoice_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      invoice_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id', 'invoice_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: invoice, error: iErr } = await supabase
+      .from('business_invoices')
+      .select('*')
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+    if (iErr || !invoice) throwConnectorError('NOT_FOUND', 'Invoice not found');
+
+    const { data: items } = await supabase
+      .from('invoice_line_items')
+      .select('*')
+      .eq('invoice_id', args.invoice_id)
+      .order('created_at', { ascending: true });
+
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('name, logo_url, brand_color_primary, settings')
+      .eq('id', args.tenant_id)
+      .maybeSingle();
+
+    const { generateThemedInvoicePdfBuffer } = await import('@/lib/documents/themedDocumentPdf');
+    const pdf = await generateThemedInvoicePdfBuffer(invoice, items || [], tenant, {
+      name: invoice.client_name || undefined,
+      email: invoice.client_email || undefined,
+    });
+
+    return {
+      success: true,
+      invoice_id: args.invoice_id,
+      byte_length: pdf.byteLength,
+      pdf_base64: pdf.toString('base64'),
+      mime_type: 'application/pdf',
+    };
+  },
+});

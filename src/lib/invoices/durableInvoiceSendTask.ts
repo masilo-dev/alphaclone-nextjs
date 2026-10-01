@@ -73,7 +73,9 @@ export async function enqueueInvoiceSendTask(input: EnqueueInvoiceSendInput): Pr
     tenantId: input.tenantId,
     eventType: 'invoice.send.enqueued',
     payload: { task_id: taskId, run_id: runResult.run.id, invoice_id: input.invoiceId },
-    correlationId: idempotencyKey,
+    correlationId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idempotencyKey)
+      ? idempotencyKey
+      : input.invoiceId,
   });
 
   return { runId: runResult.run.id, taskId };

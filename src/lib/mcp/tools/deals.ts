@@ -113,11 +113,13 @@ registerTool('deals', {
     title: z.string().optional(),
     name: z.string().optional(),
     value: z.number().nonnegative().optional(),
+    currency: z.string().optional(),
     stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']).optional(),
     contact_id: z.string().uuid().optional(),
     client_id: z.string().uuid().optional(),
     expected_close_date: z.string().optional(),
     description: z.string().optional(),
+    is_test_data: z.boolean().optional(),
   }).refine((data) => Boolean(String(data.title || data.name || '').trim()), {
     message: 'title or name is required',
   }),
@@ -127,11 +129,13 @@ registerTool('deals', {
       name: { type: 'string', description: 'Deal name/title (alias: title)' },
       title: { type: 'string', description: 'Deal name/title (alias: name)' },
       value: { type: 'number', description: 'Value of the deal (default 0)' },
+      currency: { type: 'string', description: '3-letter currency code (e.g. EUR, USD). Default: EUR or USD' },
       stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'], description: 'Default: lead' },
       contact_id: { type: 'string', format: 'uuid' },
       client_id: { type: 'string', format: 'uuid', description: 'CRM client UUID (alias for contact_id)' },
       expected_close_date: { type: 'string', format: 'date-time' },
       description: { type: 'string' },
+      is_test_data: { type: 'boolean' },
     },
     required: ['name'],
   },
@@ -154,23 +158,65 @@ registerTool('deals', {
     if (!ownerId) throw new Error('owner_id is required');
 
     const dealName = String(args.title || args.name || '').trim();
-    const contactId = args.contact_id || args.client_id || null;
+    let contactId = args.contact_id || args.client_id || null;
+    
+    // Resolve contact_id if a business_client UUID was passed
+    if (contactId) {
+      const { data: directContact } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('id', contactId)
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+
+      if (!directContact) {
+        const { data: bClient } = await supabase
+          .from('business_clients')
+          .select('id, crm_contact_id')
+          .eq('id', contactId)
+          .eq('tenant_id', tenantId)
+          .maybeSingle();
+
+        if (bClient?.crm_contact_id) {
+          contactId = bClient.crm_contact_id;
+        } else if (bClient) {
+          const { data: linkedContact } = await supabase
+            .from('contacts')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .contains('custom_fields', { business_client_id: bClient.id })
+            .maybeSingle();
+          if (linkedContact?.id) {
+            contactId = linkedContact.id;
+          }
+        }
+      }
+    }
+
     const stage = args.stage || 'lead';
     const probability = getProbabilityForStage(stage);
+    const currency = (args.currency || 'EUR').toUpperCase();
+
+    const insertPayload: Record<string, unknown> = {
+      tenant_id: tenantId,
+      name: dealName,
+      value: args.value ?? 0,
+      stage,
+      contact_id: contactId,
+      owner_id: ownerId,
+      expected_close_date: args.expected_close_date || null,
+      description: args.description || null,
+      currency,
+      probability,
+    };
+
+    if (args.is_test_data !== undefined) {
+      insertPayload.is_test_data = args.is_test_data;
+    }
+
     const { data, error } = await supabase
       .from('deals')
-      .insert({
-        tenant_id: tenantId,
-        name: dealName,
-        value: args.value ?? 0,
-        stage,
-        contact_id: contactId,
-        owner_id: ownerId,
-        expected_close_date: args.expected_close_date || null,
-        description: args.description || null,
-        currency: 'USD',
-        probability,
-      })
+      .insert(insertPayload)
       .select()
       .single();
 

@@ -78,7 +78,7 @@ export function validateContract(input: ContractValidationInput): DocumentValida
   if (!input.jurisdiction && !/jurisdiction|governing\s+law|laws?\s+of/i.test(text)) {
     findings.push({
       id: 'undefined-jurisdiction',
-      severity: 'critical',
+      severity: input.isDraft ? 'warning' : 'critical',
       message: 'Jurisdiction / governing law is undefined.',
       field: 'jurisdiction',
     });

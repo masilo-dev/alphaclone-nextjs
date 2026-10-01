@@ -57,6 +57,7 @@ export function isBridgedTool(name: string): boolean {
 }
 
 export function listTools(sanitizeForClient = false) {
+  initializeRegistry();
   return Array.from(registry.values()).map((tool) => ({
     name: tool.name,
     description: tool.description,
@@ -147,6 +148,7 @@ export async function executeTool(
   toolName: string,
   args: Record<string, any>
 ): Promise<MCPToolExecutionResult> {
+  initializeRegistry();
   const requestedTool = resolveMcpToolName(normalizeToolName(toolName));
   const startTime = Date.now();
   let success = false;
@@ -246,6 +248,7 @@ export async function executeTool(
     executionResult = result;
     return result;
   } catch (err: any) {
+    console.error(`[tool-registry] ${resolvedToolName} error:`, err);
     const structured = formatToolExecutionError(resolvedToolName, err);
     errorMessage = structured.error.message;
     return structuredErrorToMcpContent(structured);
@@ -363,6 +366,10 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/gap-tools-contracts-strategy'), './tools/gap-tools-contracts-strategy');
   loadToolModule(() => require('./tools/outbound-engine-ops'), './tools/outbound-engine-ops');
   loadToolModule(() => require('./tools/research-engine-ops'), './tools/research-engine-ops');
+  loadToolModule(() => require('./tools/portal-ops'), './tools/portal-ops');
+  loadToolModule(() => require('./tools/package-ops'), './tools/package-ops');
+  loadToolModule(() => require('./tools/lifecycle-ops'), './tools/lifecycle-ops');
+  loadToolModule(() => require('./tools/testing-ops'), './tools/testing-ops');
   // Universal Manifest Bridge — registers all remaining canonical tools from toolManifest & supplemental definitions
   loadToolModule(() => require('./tools/manifest-bridge'), './tools/manifest-bridge');
   // Canonical social publishing — MUST load last so it overrides legacy stubs

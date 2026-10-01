@@ -141,6 +141,7 @@ defineConnectorTool({
     source: z.string().optional(),
     notes: z.string().optional(),
     linkedin_url: z.string().optional(),
+    is_test_data: z.boolean().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -155,6 +156,7 @@ defineConnectorTool({
       source: { type: 'string' },
       notes: { type: 'string' },
       linkedin_url: { type: 'string' },
+      is_test_data: { type: 'boolean', description: 'Explicit test data flag' },
     },
     required: ['tenant_id'],
   },
@@ -174,6 +176,7 @@ defineConnectorTool({
         notes: args.notes,
         linkedin_url: args.linkedin_url,
         owner_id: ctx.userId,
+        is_test_data: args.is_test_data,
       },
       args.tenant_id,
       args.source || 'mcp_connector',

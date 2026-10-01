@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-01T09:37:48.479Z",
-  "total_tools": 570,
-  "passed": 513,
+  "generated_at": "2026-10-01T16:05:20.361Z",
+  "total_tools": 585,
+  "passed": 526,
   "failed": 0,
-  "skipped": 57,
+  "skipped": 59,
   "before_failure_count": 8,
   "after_failure_count": 0,
   "results": [
@@ -413,6 +413,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "cancel_workflow",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "capture_linkedin_comment_leads",
       "classification": "read-only",
       "registered": true,
@@ -440,6 +449,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "check_action_readiness",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "check_mcp_execution_readiness",
       "classification": "read-only",
       "registered": true,
@@ -450,6 +468,15 @@
     },
     {
       "tool": "classify_outreach_reply",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "cleanup_test_run",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -522,6 +549,15 @@
     },
     {
       "tool": "convert_quote_to_invoice",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "correct_customer_identity",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1115,6 +1151,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "enable_client_portal_access",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "enable_lead_auto_outreach",
       "classification": "read-only",
       "registered": true,
@@ -1179,6 +1224,15 @@
     },
     {
       "tool": "execute_action",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "execute_client_lifecycle",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1295,6 +1349,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "generate_contract_pdf",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "generate_contract_signing_token",
       "classification": "authentication",
       "registered": true,
@@ -1331,6 +1394,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "generate_invoice_pdf",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "generate_market_authority_report",
       "classification": "authentication",
       "registered": true,
@@ -1341,6 +1413,15 @@
     },
     {
       "tool": "generate_outreach_draft",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_quote_pdf",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1610,6 +1691,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "get_client_portal_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "get_clients",
       "classification": "read-only",
       "registered": true,
@@ -1737,6 +1827,15 @@
     },
     {
       "tool": "get_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_document_package",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -2708,6 +2807,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "inspect_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "integrations_status",
       "classification": "read-only",
       "registered": true,
@@ -3479,6 +3587,15 @@
       "has_schema": true,
       "status": "passed",
       "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "preview_send_package",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
       "envelope_sample_valid": true
     },
     {
@@ -4517,6 +4634,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "start_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "stop_chase",
       "classification": "read-only",
       "registered": true,
@@ -5031,6 +5157,15 @@
     },
     {
       "tool": "validate_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_client_portal_records",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

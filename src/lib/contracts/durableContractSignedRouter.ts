@@ -28,18 +28,34 @@ export async function queueContractSigned(input: {
     };
   }
 
-  const { runId } = await start(contractSignedWorkflow, [
-    {
-      tenantId: input.tenantId,
-      payload: {
-        contractId: input.contractId,
-        actorUserId: input.userId,
+  try {
+    const { runId } = await start(contractSignedWorkflow, [
+      {
+        tenantId: input.tenantId,
+        payload: {
+          contractId: input.contractId,
+          actorUserId: input.userId,
+        },
       },
-    },
-  ]);
-  return {
-    durable: false,
-    run_id: runId,
-    poll_tool: 'get_outcome_status',
-  };
+    ]);
+    return {
+      durable: false,
+      run_id: runId,
+      poll_tool: 'get_outcome_status',
+    };
+  } catch (err: any) {
+    console.warn('[queueContractSigned] Workflow SDK start failed, falling back to durable task:', err?.message || err);
+    const enqueued = await enqueueContractSignedTask({
+      tenantId: input.tenantId,
+      userId: input.userId,
+      contractId: input.contractId,
+      idempotencyKey: input.eventId ? `contract-signed-${input.eventId}` : undefined,
+    });
+    return {
+      durable: true,
+      run_id: enqueued.runId,
+      task_id: enqueued.taskId,
+      poll_tool: 'get_outcome_status',
+    };
+  }
 }

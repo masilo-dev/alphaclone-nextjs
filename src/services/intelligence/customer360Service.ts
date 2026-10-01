@@ -303,8 +303,21 @@ class Customer360Service {
   }
 
   private async fetchQuotes(supabase: SupabaseClient, tenantId: string, userIds: string[], email: string): Promise<any[]> {
-    if (userIds.length === 0) return [];
-    const { data } = await supabase.from('quotes').select('*').eq('tenant_id', tenantId).in('client_id', userIds).limit(20);
+    let query = supabase.from('quotes').select('*').eq('tenant_id', tenantId);
+    const orConditions: string[] = [];
+    if (userIds.length > 0) {
+      orConditions.push(`client_id.in.(${userIds.join(',')})`);
+      orConditions.push(`contact_id.in.(${userIds.join(',')})`);
+    }
+    if (email) {
+      orConditions.push(`client_email.ilike.${email}`);
+    }
+    if (orConditions.length > 0) {
+      query = query.or(orConditions.join(','));
+    } else {
+      return [];
+    }
+    const { data } = await query.limit(30);
     return Array.isArray(data) ? data : [];
   }
 

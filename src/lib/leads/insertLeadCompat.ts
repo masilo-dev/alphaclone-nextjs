@@ -15,6 +15,7 @@ export type LeadInsertInput = {
   linkedin_url?: string | null;
   status?: string;
   stage?: string;
+  is_test_data?: boolean;
   created_at?: string;
 };
 
@@ -33,6 +34,7 @@ function buildFullPayload(input: LeadInsertInput, now: string): Record<string, u
     linkedin_url: input.linkedin_url ?? null,
     status: input.status ?? 'new',
     stage: input.stage ?? 'new',
+    is_test_data: Boolean(input.is_test_data),
     created_at: input.created_at ?? now,
     updated_at: now,
   };

@@ -486,6 +486,10 @@ export async function sendContract(
       hasPageNumbers: metadata.has_page_numbers === true,
     });
 
+    const isDraftReview =
+      Boolean(config.isDraft || config.draftReview || config.send_draft_for_review) ||
+      contract.status === "draft";
+
     const legalConsistencyFindings = runContractLegalConsistencyCheck({
       content: contractText,
       clientName,
@@ -494,10 +498,30 @@ export async function sendContract(
       governingLaw,
       supplierLegalName: String(metadata.supplier_legal_name || metadata.provider_name || "").trim() || undefined,
     });
+    // For drafts being sent for review, lack of governing law or jurisdiction is an advisory warning,
+    // not a hard blocker to sending the draft review copy to the client/owner.
+    const effectiveCriticalFindings = isDraftReview
+      ? legalConsistencyFindings.filter(
+          (finding) =>
+            finding.severity === "critical" &&
+            !finding.id.includes("governing_law") &&
+            !finding.id.includes("jurisdiction")
+        )
+      : legalConsistencyFindings.filter((finding) => finding.severity === "critical");
+
+    const effectiveValidationFindings = isDraftReview
+      ? validation.findings.filter(
+          (finding) =>
+            finding.severity === "critical" &&
+            !finding.id.includes("governing_law") &&
+            !finding.id.includes("jurisdiction")
+        )
+      : validation.findings.filter((finding) => finding.severity === "critical");
+
     const mergedFindings = [...validation.findings, ...legalConsistencyFindings];
     const canSend =
-      validation.can_send &&
-      !legalConsistencyFindings.some((finding) => finding.severity === "critical");
+      effectiveValidationFindings.length === 0 &&
+      effectiveCriticalFindings.length === 0;
     const mergedValidation = {
       ...validation,
       findings: mergedFindings,
@@ -505,7 +529,7 @@ export async function sendContract(
       can_send: canSend,
       score: Math.max(
         0,
-        validation.score - legalConsistencyFindings.filter((f) => f.severity === "critical").length * 25
+        validation.score - effectiveCriticalFindings.length * 25 - effectiveValidationFindings.length * 25
       ),
     };
     const reviewedAt = new Date().toISOString();
@@ -545,10 +569,13 @@ export async function sendContract(
         },
       });
     if (!mergedValidation.can_send) {
+      const blocking = [
+        ...effectiveValidationFindings,
+        ...effectiveCriticalFindings,
+      ];
       return {
         success: false,
-        error: `Contract failed pre-send legal checks: ${mergedValidation.findings
-          .filter((finding) => finding.severity === "critical")
+        error: `Contract failed pre-send legal checks: ${blocking
           .map((finding) => finding.message)
           .join(" ")}`,
         validation: mergedValidation,

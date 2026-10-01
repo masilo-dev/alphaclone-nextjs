@@ -469,7 +469,7 @@ registerTool('crm', {
 
 registerTool('crm', {
   name: 'create_client',
-  description: 'Create a business client record (delegates to create_contact unified path).',
+  description: 'Create a business client record, link contacts, and convert lead if provided. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     name: z.string(),
@@ -482,6 +482,8 @@ registerTool('crm', {
     value: z.number().optional(),
     source: z.string().optional(),
     notes: z.string().optional(),
+    lead_id: z.string().uuid().optional(),
+    is_test_data: z.boolean().optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
   }),
   jsonSchema: {
@@ -498,13 +500,20 @@ registerTool('crm', {
       value: { type: 'number' },
       source: { type: 'string' },
       notes: { type: 'string' },
+      lead_id: { type: 'string', format: 'uuid', description: 'Optional lead UUID to convert' },
+      is_test_data: { type: 'boolean', description: 'Explicit test data flag' },
       metadata: { type: 'object' },
     },
     required: ['tenant_id', 'name'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
+    const isTestData =
+      args.is_test_data !== undefined
+        ? Boolean(args.is_test_data)
+        : /test|qa|sample|dummy|invalid/i.test(`${args.name} ${args.email || ''} ${args.notes || ''}`);
+
+    const { data: client, error } = await supabase
       .from('business_clients')
       .insert({
         tenant_id: args.tenant_id,
@@ -520,13 +529,101 @@ registerTool('crm', {
         custom_fields: {
           ...(args.metadata && typeof args.metadata === 'object' ? args.metadata : {}),
           ...(args.source ? { lead_source: args.source } : {}),
+          ...(args.lead_id ? { original_lead_id: args.lead_id } : {}),
+          is_test_data: isTestData,
         },
         is_active: true,
       })
-      .select('id, name, email')
+      .select('*')
       .single();
+
     if (error) throw error;
-    return data;
+
+    // Create or sync canonical contact record for this client
+    const { first_name, last_name } = splitName(args.name);
+    let contactId: string | null = null;
+
+    if (args.email) {
+      const { data: existingContact } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('tenant_id', args.tenant_id)
+        .eq('email', args.email)
+        .maybeSingle();
+
+      if (existingContact) {
+        contactId = existingContact.id;
+        await supabase
+          .from('contacts')
+          .update({
+            custom_fields: {
+              synced_from: 'business_clients',
+              business_client_id: client.id,
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingContact.id);
+      }
+    }
+
+    if (!contactId) {
+      const { data: newContact, error: contactErr } = await supabase
+        .from('contacts')
+        .insert({
+          tenant_id: args.tenant_id,
+          first_name,
+          last_name,
+          email: args.email || null,
+          phone: args.phone || null,
+          status: 'active',
+          notes: args.notes || null,
+          original_lead_id: args.lead_id || null,
+          lead_source: args.source || null,
+          custom_fields: {
+            synced_from: 'business_clients',
+            business_client_id: client.id,
+            is_test_data: isTestData,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (contactErr) {
+        console.error('[create_client] Failed to create canonical contact:', contactErr);
+        throw contactErr;
+      } else if (newContact) {
+        contactId = newContact.id;
+      }
+    }
+
+    if (contactId) {
+      await supabase
+        .from('business_clients')
+        .update({ crm_contact_id: contactId })
+        .eq('id', client.id);
+    }
+
+    // If lead_id provided, mark lead as converted and link to client
+    if (args.lead_id) {
+      await supabase
+        .from('leads')
+        .update({
+          client_id: client.id,
+          status: 'converted',
+          stage: 'opportunity',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', args.lead_id)
+        .eq('tenant_id', args.tenant_id);
+    }
+
+    return {
+      ...client,
+      contact_id: contactId,
+      crm_contact_id: contactId,
+      lead_id: args.lead_id || null,
+      is_test_data: isTestData,
+    };
   },
 });
 
@@ -646,3 +743,63 @@ registerTool('crm', {
     };
   },
 });
+
+// 13. correct_customer_identity
+registerTool('crm', {
+  name: 'correct_customer_identity',
+  description:
+    'Correct customer identity details (email, name, phone, company, notes). Propagates atomically across linked contacts, business_clients, and active leads while preserving immutable issued document records. Detects and reports email conflicts without creating duplicate records.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    identifier: z.string().min(1).describe('Email address, Client UUID, Contact UUID, or Lead UUID'),
+    email: z.string().email().optional(),
+    name: z.string().optional(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    phone: z.string().optional(),
+    company: z.string().optional(),
+    notes: z.string().optional(),
+    dry_run: z.boolean().optional().default(false),
+    update_draft_documents: z.boolean().optional().default(true),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      identifier: { type: 'string', description: 'Email address or UUID of client/contact/lead' },
+      email: { type: 'string', format: 'email', description: 'New email address' },
+      name: { type: 'string', description: 'New full name' },
+      first_name: { type: 'string' },
+      last_name: { type: 'string' },
+      phone: { type: 'string' },
+      company: { type: 'string' },
+      notes: { type: 'string' },
+      dry_run: { type: 'boolean', default: false },
+      update_draft_documents: { type: 'boolean', default: true },
+    },
+    required: ['tenant_id', 'identifier'],
+  },
+  handler: async (args) => {
+    const { correctCustomerIdentity } = await import('@/services/crm/customerIdentityCorrectionService');
+    const result = await correctCustomerIdentity({
+      tenantId: args.tenant_id,
+      identifier: args.identifier,
+      corrections: {
+        email: args.email,
+        name: args.name,
+        first_name: args.first_name,
+        last_name: args.last_name,
+        phone: args.phone,
+        company: args.company,
+        notes: args.notes,
+      },
+      options: {
+        dryRun: args.dry_run,
+        updateDraftDocuments: args.update_draft_documents,
+      },
+    });
+
+    return result;
+  },
+});
+

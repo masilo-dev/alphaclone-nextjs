@@ -26,12 +26,27 @@ export async function queueContractLifecycle(input: {
     };
   }
 
-  const { runId } = await start(contractLifecycleWorkflow, [
-    { contractId: input.contractId, tenantId: input.tenantId },
-  ]);
-  return {
-    durable: false,
-    run_id: runId,
-    poll_tool: 'get_outcome_status',
-  };
+  try {
+    const { runId } = await start(contractLifecycleWorkflow, [
+      { contractId: input.contractId, tenantId: input.tenantId },
+    ]);
+    return {
+      durable: false,
+      run_id: runId,
+      poll_tool: 'get_outcome_status',
+    };
+  } catch (err: any) {
+    console.warn('[queueContractLifecycle] Workflow SDK start failed, falling back to durable task:', err?.message || err);
+    const enqueued = await enqueueContractLifecycleTask({
+      tenantId: input.tenantId,
+      userId: input.userId,
+      contractId: input.contractId,
+    });
+    return {
+      durable: true,
+      run_id: enqueued.runId,
+      task_id: enqueued.taskId,
+      poll_tool: 'get_outcome_status',
+    };
+  }
 }

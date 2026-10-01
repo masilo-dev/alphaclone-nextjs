@@ -39,14 +39,20 @@ type TenantLike = {
 };
 
 type BusinessSettingsLike = {
+  business_name?: string | null;
   trading_name?: string | null;
   registration_number?: string | null;
   tax_country?: string | null;
   phone?: string | null;
   website?: string | null;
+  address?: string | null;
   postal_address?: string | null;
   jurisdiction?: string | null;
   default_currency?: string | null;
+  currency?: string | null;
+  logo_url?: string | null;
+  brand_color?: string | null;
+  email?: string | null;
   payment_instructions?: string | null;
   legal_footer?: string | null;
   bank_details?: Record<string, unknown> | null;
@@ -55,7 +61,7 @@ type BusinessSettingsLike = {
 
 /**
  * Resolve a complete brand profile from tenant + business_settings rows.
- * Prefer legal_name; never invent "ALPHACLONE SYSTEMS's Organization."
+ * Prefer legal_name and clean business_name; never invent "ALPHACLONE SYSTEMS's Organization."
  */
 export function resolveBrandProfile(
   tenant: TenantLike | null | undefined,
@@ -68,10 +74,18 @@ export function resolveBrandProfile(
     ...((businessSettings?.branding || {}) as Record<string, unknown>),
   };
 
+  const rawTenantName = String(tenant?.name || '').replace(/'s\s+Organization$/i, '').trim();
+
   const legalName =
-    String(tenant?.legal_name || branding.legalBusinessName || branding.legal_name || '').trim() ||
-    String(tenant?.name || '').trim() ||
-    'Unconfigured Business';
+    String(
+      businessSettings?.business_name ||
+        tenant?.legal_name ||
+        branding.legalBusinessName ||
+        branding.legal_name ||
+        branding.business_name ||
+        rawTenantName ||
+        ''
+    ).trim() || 'ALPHACLONE SYSTEMS';
 
   const tradingName =
     String(
@@ -82,6 +96,22 @@ export function resolveBrandProfile(
         ''
     ).trim() || undefined;
 
+  const logoUrl =
+    String(
+      businessSettings?.logo_url ||
+        tenant?.logo_url ||
+        branding.logoUrl ||
+        branding.primaryLogoUrl ||
+        ''
+    ).trim() || undefined;
+
+  const defaultCurrency = String(
+    businessSettings?.default_currency ||
+      businessSettings?.currency ||
+      branding.currency ||
+      'USD'
+  );
+
   return {
     tenant_id: tenantId,
     legal_business_name: legalName,
@@ -91,26 +121,39 @@ export function resolveBrandProfile(
       undefined,
     tax_vat_number: String(tenant?.tax_id || branding.taxId || branding.vatNumber || '').trim() || undefined,
     physical_address:
-      String(tenant?.business_address || branding.address || branding.physicalAddress || '').trim() ||
-      undefined,
+      String(
+        businessSettings?.address ||
+          tenant?.business_address ||
+          branding.address ||
+          branding.physicalAddress ||
+          ''
+      ).trim() || undefined,
     postal_address:
       String(businessSettings?.postal_address || branding.postalAddress || '').trim() || undefined,
     business_email:
-      String(branding.supportEmail || branding.businessEmail || settings.support_email || '').trim() ||
-      undefined,
+      String(
+        businessSettings?.email ||
+          branding.supportEmail ||
+          branding.businessEmail ||
+          settings.support_email ||
+          ''
+      ).trim() || undefined,
     telephone: String(businessSettings?.phone || branding.phone || '').trim() || undefined,
     website: String(businessSettings?.website || branding.website || '').trim() || undefined,
-    default_currency: String(businessSettings?.default_currency || branding.currency || 'USD'),
+    default_currency: defaultCurrency,
     country: String(businessSettings?.tax_country || branding.country || '').trim() || undefined,
     jurisdiction:
       String(businessSettings?.jurisdiction || branding.jurisdiction || '').trim() || undefined,
-    primary_logo_url:
-      String(tenant?.logo_url || branding.logoUrl || branding.primaryLogoUrl || '').trim() || undefined,
+    primary_logo_url: logoUrl,
     secondary_logo_url: String(branding.secondaryLogoUrl || '').trim() || undefined,
     monochrome_logo_url: String(branding.monochromeLogoUrl || '').trim() || undefined,
     favicon_url: String(branding.faviconUrl || branding.iconUrl || '').trim() || undefined,
     primary_colour: String(
-      tenant?.brand_color_primary || branding.primaryColor || branding.primary_colour || DEFAULT_PRIMARY
+      businessSettings?.brand_color ||
+        tenant?.brand_color_primary ||
+        branding.primaryColor ||
+        branding.primary_colour ||
+        DEFAULT_PRIMARY
     ),
     secondary_colour: String(
       tenant?.brand_color_secondary ||

@@ -56,12 +56,32 @@ export async function queueInvoiceSend(input: QueueInvoiceSendInput): Promise<Qu
     };
   }
 
-  const { runId } = await start(invoiceLifecycleWorkflow, [lifecycleInput]);
-  return {
-    durable: false,
-    status: 'queued',
-    run_id: runId,
-    workflow_run_id: runId,
-    poll_tool: 'get_outcome_status',
-  };
+  try {
+    const { runId } = await start(invoiceLifecycleWorkflow, [lifecycleInput]);
+    return {
+      durable: false,
+      status: 'queued',
+      run_id: runId,
+      workflow_run_id: runId,
+      poll_tool: 'get_outcome_status',
+    };
+  } catch (err: any) {
+    console.warn('[queueInvoiceSend] Workflow SDK start failed, falling back to durable task:', err?.message || err);
+    const enqueued = await enqueueInvoiceSendTask({
+      tenantId: input.tenantId,
+      userId: input.userId,
+      invoiceId: input.invoiceId,
+      recipients: input.recipients,
+      subject: input.subject,
+      message: input.message,
+      idempotencyKey: input.idempotencyKey || `invoice-send-${input.invoiceId}`,
+    });
+    return {
+      durable: true,
+      status: 'queued',
+      run_id: enqueued.runId,
+      task_id: enqueued.taskId,
+      poll_tool: 'get_outcome_status',
+    };
+  }
 }

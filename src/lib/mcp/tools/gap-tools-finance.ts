@@ -185,8 +185,33 @@ registerTool('gap-finance', {
 registerTool('gap-finance', {
   name: 'create_quote',
   description: 'Create a new quote/proposal for a client.',
-  inputSchema: z.object({ tenant_id: tid, client_id: z.string().optional(), title: z.string(), total: z.number(), line_items: z.array(z.any()).optional(), valid_until: z.string().optional(), notes: z.string().optional() }),
-  jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, title: { type: 'string' }, total: { type: 'number' }, valid_until: { type: 'string' }, notes: { type: 'string' } }, required: ['title', 'total'] },
+  inputSchema: z.object({
+    tenant_id: tid,
+    client_id: z.string().optional(),
+    deal_id: z.string().optional(),
+    title: z.string(),
+    total: z.number(),
+    currency: z.string().optional(),
+    line_items: z.array(z.any()).optional(),
+    valid_until: z.string().optional(),
+    notes: z.string().optional(),
+    is_test_data: z.boolean().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string' },
+      client_id: { type: 'string' },
+      deal_id: { type: 'string' },
+      title: { type: 'string' },
+      total: { type: 'number' },
+      currency: { type: 'string', description: '3-letter currency code (e.g. EUR, USD)' },
+      valid_until: { type: 'string' },
+      notes: { type: 'string' },
+      is_test_data: { type: 'boolean' },
+    },
+    required: ['title', 'total'],
+  },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const { insertQuoteSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
@@ -194,13 +219,16 @@ registerTool('gap-finance', {
       tenant_id: args.tenant_id,
       title: args.title,
       total: args.total,
+      currency: args.currency || 'EUR',
+      deal_id: args.deal_id,
       client_id: args.client_id,
       line_items: args.line_items as Array<Record<string, unknown>> | undefined,
       valid_until: args.valid_until,
       notes: args.notes,
       created_by: ctx.userId,
+      is_test_data: args.is_test_data,
     });
-    if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
+    if (error) throw new Error(error.message);
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
   },
 });
@@ -253,14 +281,67 @@ registerTool('gap-finance', {
 // ── send_quote / send_receipt ────────────────────────────────────────
 registerTool('gap-finance', {
   name: 'send_quote',
-  description: 'Mark a quote as sent and optionally email it to the client.',
+  description: 'Mark a quote as sent and optionally email it to the client with provider receipt.',
   inputSchema: z.object({ tenant_id: tid, quote_id: z.string(), recipient_email: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, quote_id: { type: 'string' }, recipient_email: { type: 'string' } }, required: ['quote_id'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('quotes').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', args.quote_id).eq('tenant_id', args.tenant_id).select().single();
+    const { data: quote, error: fetchErr } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', args.quote_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+
+    if (fetchErr || !quote) {
+      return { content: [{ type: 'text', text: JSON.stringify({ error: fetchErr?.message || 'Quote not found' }) }] };
+    }
+
+    const recipient = args.recipient_email || quote.client_email;
+    let emailResult = null;
+
+    if (recipient) {
+      try {
+        const { sendEmailServer } = await import('@/lib/email/emailServer');
+        emailResult = await sendEmailServer(args.tenant_id, {
+          to: recipient,
+          subject: `Quotation: ${quote.name || quote.quote_number}`,
+          html: `<p>Hello,</p><p>Please review quotation <strong>${quote.quote_number}</strong> for ${quote.currency || 'EUR'} ${quote.total_amount}.</p>`,
+          text: `Quotation ${quote.quote_number} for ${quote.currency || 'EUR'} ${quote.total_amount}.`,
+        });
+      } catch (err: any) {
+        console.warn('[MCP send_quote] email send failed:', err?.message || err);
+      }
+    }
+
+    const { data: updated, error } = await supabase
+      .from('quotes')
+      .update({
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      })
+      .eq('id', args.quote_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
-    return { content: [{ type: 'text', text: JSON.stringify({ sent: true, quote: data, recipient_email: args.recipient_email || null }, null, 2) }] };
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            status: emailResult?.success ? 'delivered' : 'sent',
+            sent: true,
+            quote: updated,
+            recipient_email: recipient || null,
+            provider_accepted: emailResult?.success ?? false,
+            message_id: emailResult?.messageId ?? null,
+          }, null, 2),
+        },
+      ],
+    };
   },
 });
 

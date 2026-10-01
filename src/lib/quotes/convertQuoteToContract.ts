@@ -87,16 +87,30 @@ export async function convertQuoteToContract(
     lineItemsSummary || `Total Agreed Amount: ${currency} ${total}`,
     `\n## Terms & Conditions`,
     quote.terms_and_conditions || options?.terms || 'Standard payment terms apply upon execution.',
+    `\n## Governing Law & Jurisdiction`,
+    'This Agreement shall be governed by and construed in accordance with the laws of Delaware, United States.',
     `\nTotal Value: ${currency} ${total}`,
   ].join('\n\n');
 
   const now = new Date().toISOString();
+
+  let clientName = quote.name || null;
+  if (clientId) {
+    const { data: bClient } = await admin
+      .from('business_clients')
+      .select('name')
+      .eq('id', clientId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    if (bClient?.name) clientName = bClient.name;
+  }
 
   const { data: contract, error: contractError } = await admin
     .from('contracts')
     .insert({
       tenant_id: tenantId,
       client_id: clientId,
+      client_name: clientName,
       deal_id: quote.deal_id || null,
       title: contractTitle,
       content,
@@ -105,13 +119,20 @@ export async function convertQuoteToContract(
       type: 'service_agreement',
       value: total,
       total_value: total,
+      contract_value: total,
+      currency_code: currency,
       payment_amount: total,
+      governing_law: 'Delaware, United States',
+      jurisdiction: 'Delaware',
       user_id: options?.createdBy || null,
       owner_user_id: options?.createdBy || null,
       metadata: {
         converted_from_quote_id: quoteId,
         quote_number: quote.quote_number,
+        quote_id: quoteId,
         converted_at: now,
+        currency,
+        is_test_data: Boolean(existingMeta.is_test_data),
       },
     })
     .select('id, status')

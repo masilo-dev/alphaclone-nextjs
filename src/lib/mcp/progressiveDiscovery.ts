@@ -109,21 +109,109 @@ export function getModuleTools(full: UnifiedMcpTool[], moduleName: string): Unif
   return full.filter((tool) => moduleForTool(tool.name) === lower);
 }
 
+const INTENT_SYNONYM_MAP: Record<string, string[]> = {
+  'send pdf': ['generate_quote_pdf', 'generate_contract_pdf', 'generate_invoice_pdf', 'send_invoice', 'send_contract', 'send_quote', 'send_email'],
+  'upload document': ['create_document', 'upload_file', 'doc_os_upload', 'generate_quote_pdf', 'generate_contract_pdf', 'generate_invoice_pdf'],
+  'client portal access': ['enable_client_portal_access', 'get_client_portal_status', 'verify_client_portal_records'],
+  'correct customer email': ['correct_customer_identity', 'update_contact', 'update_client', 'update_lead'],
+  'resume invoice': ['start_invoice_lifecycle', 'resume_workflow', 'get_outcome_status', 'send_invoice'],
+  'customer history': ['get_customer_360', 'get_client_activity', 'get_contact_activity', 'get_customer_timeline'],
+};
+
+import { listTools } from '@/lib/mcp/tool-registry';
+
+const KEYWORD_SYNONYMS: Record<string, string[]> = {
+  pdf: ['document', 'invoice', 'contract', 'quote'],
+  upload: ['create_document', 'file', 'attach'],
+  portal: ['client_portal', 'workspace', 'token'],
+  correct: ['update', 'patch', 'edit', 'modify', 'identity'],
+  resume: ['restart', 'continue', 'lifecycle', 'outcome'],
+  history: ['activity', 'timeline', '360', 'log'],
+  invoice: ['billing', 'payment', 'invoicing'],
+  contract: ['agreement', 'sign', 'legal'],
+  quote: ['proposal', 'estimate'],
+};
+
 export function findToolsByQuery(
-  full: UnifiedMcpTool[],
-  query: string,
-  limit = 15
+  fullOrQuery: UnifiedMcpTool[] | string,
+  queryOrLimit?: string | number,
+  limitArg?: number
 ): UnifiedMcpTool[] {
+  let full: UnifiedMcpTool[];
+  let query: string;
+  let limit: number;
+
+  if (typeof fullOrQuery === 'string') {
+    query = fullOrQuery;
+    limit = typeof queryOrLimit === 'number' ? queryOrLimit : 15;
+    full = listTools() as unknown as UnifiedMcpTool[];
+  } else {
+    full = fullOrQuery;
+    query = typeof queryOrLimit === 'string' ? queryOrLimit : '';
+    limit = typeof limitArg === 'number' ? limitArg : 15;
+  }
+
   if (!query?.trim()) return full.slice(0, limit);
-  const terms = query.toLowerCase().split(/[\s_-]+/).filter(Boolean);
+  const normalizedQuery = query.toLowerCase().trim();
+  const terms = normalizedQuery.split(/[\s_-]+/).filter(Boolean);
+
+  // Check for multi-word intent phrases first
+  const intentBoostTools = new Set<string>();
+  for (const [intentKey, toolNames] of Object.entries(INTENT_SYNONYM_MAP)) {
+    if (normalizedQuery.includes(intentKey) || intentKey.split(' ').every((k) => normalizedQuery.includes(k))) {
+      toolNames.forEach((t) => intentBoostTools.add(t));
+    }
+  }
+
+  // Expand individual term synonyms
+  const expandedTerms = new Set<string>(terms);
+  for (const term of terms) {
+    if (KEYWORD_SYNONYMS[term]) {
+      KEYWORD_SYNONYMS[term].forEach((syn) => expandedTerms.add(syn));
+    }
+  }
+
   const scored = full.map((tool) => {
-    const haystack = `${tool.name} ${tool.description || ''}`.toLowerCase();
-    const hits = terms.filter((t) => haystack.includes(t)).length;
-    return { tool, hits };
+    let score = 0;
+    const toolNameLower = tool.name.toLowerCase();
+    const descLower = (tool.description || '').toLowerCase();
+    const haystack = `${toolNameLower} ${descLower}`;
+
+    // Highest boost: Explicit intent match
+    if (intentBoostTools.has(toolNameLower)) {
+      score += 50;
+    }
+
+    // Exact name match
+    if (toolNameLower === normalizedQuery) {
+      score += 100;
+    }
+
+    // Term matches in name vs description
+    for (const term of terms) {
+      if (toolNameLower === term || toolNameLower.includes(`_${term}`) || toolNameLower.includes(`${term}_`)) {
+        score += 25;
+      } else if (toolNameLower.includes(term)) {
+        score += 15;
+      } else if (descLower.includes(term)) {
+        score += 5;
+      }
+    }
+
+    // Expanded synonym matches
+    for (const syn of expandedTerms) {
+      if (!terms.includes(syn)) {
+        if (toolNameLower.includes(syn)) score += 10;
+        else if (descLower.includes(syn)) score += 3;
+      }
+    }
+
+    return { tool, score };
   });
+
   return scored
-    .filter(({ hits }) => hits > 0)
-    .sort((a, b) => b.hits - a.hits)
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map(({ tool }) => tool);
 }

@@ -36,7 +36,32 @@ export async function probeMediaBytes(buffer: Buffer, mimeType: string): Promise
     return { ...base, width: metadata.width, height: metadata.height, duration_seconds: null,
       video_codec: null, frame_rate: null, bitrate: null, audio_codec: null, fully_decoded: true };
   }
-  if (!mimeType.startsWith('video/')) throw new Error('MEDIA_PROBE_UNSUPPORTED: only images and videos are supported');
+  if (
+    mimeType === 'application/pdf' ||
+    mimeType.startsWith('text/') ||
+    mimeType.includes('document') ||
+    mimeType.includes('msword') ||
+    mimeType.includes('sheet')
+  ) {
+    if (mimeType === 'application/pdf') {
+      const header = buffer.subarray(0, 1024).toString('latin1');
+      if (!header.includes('%PDF-')) {
+        throw new Error('MEDIA_DECODE_FAILED: invalid PDF header or corrupt PDF document');
+      }
+    }
+    return {
+      ...base,
+      width: null,
+      height: null,
+      duration_seconds: null,
+      video_codec: null,
+      frame_rate: null,
+      bitrate: null,
+      audio_codec: null,
+      fully_decoded: true,
+    };
+  }
+  if (!mimeType.startsWith('video/')) throw new Error('MEDIA_PROBE_UNSUPPORTED: only images, videos, and documents are supported');
   const dir = await mkdtemp(join(tmpdir(), 'alphaclone-probe-'));
   const path = join(dir, 'media');
   await writeFile(path, buffer);

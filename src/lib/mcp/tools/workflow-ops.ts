@@ -191,3 +191,148 @@ defineConnectorTool({
     });
   },
 });
+
+import {
+  startWorkflow,
+  inspectWorkflow,
+  resumeWorkflow,
+  cancelWorkflow,
+} from '@/services/workflow/workflowCoordinationService';
+
+defineConnectorTool({
+  module: 'workflow-ops',
+  name: 'start_workflow',
+  description:
+    'Start an owned, durable workflow run persisted in AlphaClone state. The system tracks objective, canonical customer identity, records, step outcomes, and provider receipts.',
+  permission: 'automation:write',
+  rateLimitClass: 'write',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    objective: z.string().min(1),
+    scope: z.array(z.string()).optional(),
+    customer_identity: z
+      .object({
+        name: z.string().optional(),
+        email: z.string().optional(),
+        client_id: z.string().uuid().optional(),
+        contact_id: z.string().uuid().optional(),
+      })
+      .optional(),
+    is_test_data: z.boolean().optional(),
+    test_run_id: z.string().optional(),
+    initial_records: z.record(z.string(), z.string()).optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      objective: { type: 'string' },
+      scope: { type: 'array', items: { type: 'string' } },
+      customer_identity: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          email: { type: 'string' },
+          client_id: { type: 'string', format: 'uuid' },
+          contact_id: { type: 'string', format: 'uuid' },
+        },
+      },
+      is_test_data: { type: 'boolean' },
+      test_run_id: { type: 'string' },
+      initial_records: { type: 'object' },
+    },
+    required: ['tenant_id', 'objective'],
+  },
+  handler: async (args, ctx) => {
+    const result = await startWorkflow({
+      tenantId: args.tenant_id,
+      userId: ctx.userId,
+      objective: args.objective,
+      scope: args.scope,
+      customerIdentity: args.customer_identity,
+      isTestData: args.is_test_data,
+      testRunId: args.test_run_id,
+      initialRecords: args.initial_records as Record<string, string> | undefined,
+    });
+    return okResult('start_workflow', result);
+  },
+});
+
+defineConnectorTool({
+  module: 'workflow-ops',
+  name: 'inspect_workflow',
+  description:
+    'Inspect workflow execution progress, heartbeat, canonical customer identity, created records, pending approvals, provider receipts, and stale/stalled run state.',
+  permission: 'automation:read',
+  rateLimitClass: 'read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    run_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      run_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id', 'run_id'],
+  },
+  handler: async (args) => {
+    const result = await inspectWorkflow(args.tenant_id, args.run_id);
+    return okResult('inspect_workflow', result);
+  },
+});
+
+defineConnectorTool({
+  module: 'workflow-ops',
+  name: 'resume_workflow',
+  description:
+    'Resume an interrupted, stalled, or failed workflow run. Can resume from a specific failed step or continue pending steps.',
+  permission: 'automation:write',
+  rateLimitClass: 'write',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    run_id: z.string().uuid(),
+    from_step_id: z.string().uuid().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      run_id: { type: 'string', format: 'uuid' },
+      from_step_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id', 'run_id'],
+  },
+  handler: async (args) => {
+    const result = await resumeWorkflow(args.tenant_id, args.run_id, args.from_step_id);
+    return okResult('resume_workflow', result);
+  },
+});
+
+defineConnectorTool({
+  module: 'workflow-ops',
+  name: 'cancel_workflow',
+  description: 'Cancel an active or queued workflow run and cancel any pending tasks.',
+  permission: 'automation:write',
+  rateLimitClass: 'write',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    run_id: z.string().uuid(),
+    reason: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      run_id: { type: 'string', format: 'uuid' },
+      reason: { type: 'string' },
+    },
+    required: ['tenant_id', 'run_id'],
+  },
+  handler: async (args) => {
+    const result = await cancelWorkflow(args.tenant_id, args.run_id, args.reason);
+    return okResult('cancel_workflow', result);
+  },
+});
+

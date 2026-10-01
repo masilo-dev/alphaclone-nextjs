@@ -29,6 +29,7 @@ export type CRMIdentityInput = {
   platform?: string | null;
   external_account_id?: string | null;
   owner_id?: string | null;
+  is_test_data?: boolean;
   metadata?: Record<string, unknown>;
 };
 
@@ -62,6 +63,8 @@ type LeadRow = {
   contact_name?: string | null;
   stage?: string | null;
   status?: string | null;
+  notes?: string | null;
+  is_test_data?: boolean;
   metadata?: Record<string, unknown> | null;
   client_id?: string | null;
   website?: string | null;
@@ -98,7 +101,7 @@ async function findLeadByEmail(
 ): Promise<LeadRow | null> {
   const { data, error } = await admin
     .from('leads')
-    .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source, deleted_at')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
     .eq('tenant_id', tenantId)
     .ilike('email', email)
     .is('deleted_at', null)
@@ -120,7 +123,7 @@ async function findLeadByPhone(
   for (const variant of variants) {
     const { data, error } = await admin
       .from('leads')
-      .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source, deleted_at')
+      .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
       .eq('tenant_id', tenantId)
       .eq('phone', variant)
       .is('deleted_at', null)
@@ -140,7 +143,7 @@ async function findLeadByExternalId(
 ): Promise<LeadRow | null> {
   const { data, error } = await admin
     .from('leads')
-    .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source, deleted_at')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
     .eq('tenant_id', tenantId)
     .eq('external_id', externalId)
     .is('deleted_at', null)
@@ -157,7 +160,7 @@ async function findLeadByPlatformAccount(
 ): Promise<LeadRow | null> {
   const { data: rows } = await admin
     .from('leads')
-    .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source, deleted_at')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
     .not('metadata', 'is', null)
@@ -188,7 +191,7 @@ async function findLeadByDomainWithIdentity(
   if (!email && !phone) return null;
   const { data, error } = await admin
     .from('leads')
-    .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source, deleted_at')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source, deleted_at')
     .eq('tenant_id', tenantId)
     .ilike('website', `%${domain}%`)
     .is('deleted_at', null)
@@ -256,15 +259,34 @@ async function updateMatchedLead(
   if (!existing.contact_name && input.contact_name) patch.contact_name = input.contact_name;
   if (!existing.email && input.email) patch.email = normalizeEmail(input.email);
   if (!existing.phone && input.phone) patch.phone = normalizePhone(input.phone);
-  if (!existing.website && input.website) patch.website = input.website;
-  if (input.notes) patch.notes = input.notes;
+  if (input.notes) {
+    const existingNotes = String(existing.notes || '').trim();
+    const newNotes = String(input.notes || '').trim();
+    if (!existingNotes) {
+      patch.notes = newNotes;
+    } else if (existingNotes === newNotes) {
+      // already identical, preserve
+    } else if (!existingNotes.includes(newNotes)) {
+      patch.notes = `${existingNotes}\n\n[${now}] ${newNotes}`;
+    }
+  }
+  if (input.is_test_data !== undefined) {
+    patch.is_test_data = Boolean(input.is_test_data);
+  } else if (
+    !existing.is_test_data &&
+    /test|qa|sample|dummy|invalid/i.test(
+      `${input.business_name || ''} ${input.contact_name || ''} ${input.email || ''} ${input.notes || ''}`
+    )
+  ) {
+    patch.is_test_data = true;
+  }
 
   let updateResult = await admin
     .from('leads')
     .update(patch)
     .eq('id', existing.id)
     .eq('tenant_id', tenantId)
-    .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source')
     .single();
 
   if (updateResult.error && isMissingColumnError(updateResult.error)) {
@@ -274,7 +296,7 @@ async function updateMatchedLead(
       .update(fallbackPatch)
       .eq('id', existing.id)
       .eq('tenant_id', tenantId)
-      .select('id, email, phone, business_name, contact_name, stage, status, metadata, client_id, website, source')
+      .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source')
       .single();
   }
 
@@ -428,6 +450,13 @@ export async function resolveOrCreateCRMIdentity(
     };
   }
 
+  const isTestData =
+    input.is_test_data !== undefined
+      ? Boolean(input.is_test_data)
+      : /test|qa|sample|dummy|invalid/i.test(
+          `${input.business_name || ''} ${input.company || ''} ${input.contact_name || ''} ${input.email || ''} ${input.notes || ''}`
+        );
+
   const insertInput: LeadInsertInput = {
     tenant_id: tenantId,
     owner_id: input.owner_id ?? userId,
@@ -442,6 +471,7 @@ export async function resolveOrCreateCRMIdentity(
     linkedin_url: input.linkedin_url || null,
     status: 'new',
     stage: 'lead',
+    is_test_data: isTestData,
   };
 
   const metadata: Record<string, unknown> = {

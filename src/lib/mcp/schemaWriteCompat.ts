@@ -61,11 +61,14 @@ export type QuoteInsertInput = {
   tenant_id: string;
   title: string;
   total: number;
+  currency?: string | null;
+  deal_id?: string | null;
   client_id?: string | null;
   line_items?: Array<Record<string, unknown>>;
   valid_until?: string | null;
   notes?: string | null;
   created_by: string;
+  is_test_data?: boolean;
 };
 
 function mapQuoteLineItem(item: Record<string, unknown>, index: number) {
@@ -82,7 +85,7 @@ function mapQuoteLineItem(item: Record<string, unknown>, index: number) {
   };
 }
 
-/** Insert quote + quote_items using production schema (name, contact_id, total_amount). */
+/** Insert quote + quote_items using production schema (name, contact_id, total_amount, currency). */
 export async function insertQuoteSchemaCompat(
   supabase: SupabaseClient,
   input: QuoteInsertInput,
@@ -94,33 +97,75 @@ export async function insertQuoteSchemaCompat(
     ? lineItems.reduce((sum, row) => sum + Number(row.line_total || 0), 0)
     : input.total;
 
+  let clientEmail: string | null = null;
+  if (input.client_id) {
+    const { data: cl } = await supabase
+      .from('business_clients')
+      .select('email')
+      .eq('id', input.client_id)
+      .eq('tenant_id', input.tenant_id)
+      .maybeSingle();
+    clientEmail = cl?.email || null;
+  }
+  if (!clientEmail && contactId) {
+    const { data: ct } = await supabase
+      .from('contacts')
+      .select('email')
+      .eq('id', contactId)
+      .eq('tenant_id', input.tenant_id)
+      .maybeSingle();
+    clientEmail = ct?.email || null;
+  }
+
+  const currency = (input.currency || 'EUR').toUpperCase();
+
+  const payload: Record<string, unknown> = {
+    tenant_id: input.tenant_id,
+    quote_number: quoteNumber,
+    name: input.title,
+    contact_id: contactId,
+    client_email: clientEmail,
+    deal_id: input.deal_id || null,
+    subtotal,
+    total_amount: subtotal,
+    currency,
+    notes: input.notes ?? null,
+    valid_until: input.valid_until?.slice(0, 10) ?? null,
+    status: 'draft',
+    created_by: input.created_by,
+    metadata: {
+      ...(lineItems.length ? { line_items: lineItems } : {}),
+      ...(input.client_id ? { business_client_id: input.client_id } : {}),
+      ...(input.is_test_data !== undefined ? { is_test_data: input.is_test_data } : {}),
+    },
+  };
+
   const { data, error } = await supabase
     .from('quotes')
-    .insert({
-      tenant_id: input.tenant_id,
-      quote_number: quoteNumber,
-      name: input.title,
-      contact_id: contactId,
-      subtotal,
-      total_amount: subtotal,
-      notes: input.notes ?? null,
-      valid_until: input.valid_until?.slice(0, 10) ?? null,
-      status: 'draft',
-      created_by: input.created_by,
-      metadata: lineItems.length ? { line_items: lineItems } : {},
-    })
+    .insert(payload)
     .select('*')
     .single();
 
-  if (error || !data?.id) return { data, error };
+  if (error || !data?.id) {
+    console.error('[insertQuoteSchemaCompat] quotes insert error:', error);
+    return { data, error };
+  }
 
   if (lineItems.length) {
     const rows = lineItems.map((row) => ({
       tenant_id: input.tenant_id,
       quote_id: data.id,
-      ...row,
+      item_order: row.item_order,
+      product_name: row.product_name,
+      description: row.description,
+      quantity: row.quantity,
+      unit_price: row.unit_price,
+      metadata: row.metadata,
     }));
-    await supabase.from('quote_items').insert(rows);
+    const { error: itemsErr } = await supabase.from('quote_items').insert(rows);
+    if (itemsErr) {
+      console.warn('[insertQuoteSchemaCompat] quote_items insert warning:', itemsErr);
+    }
   }
 
   return { data: { ...data, line_items: lineItems }, error: null };
@@ -134,6 +179,13 @@ export type InvoiceInsertInput = {
   due_date?: string;
   issue_date?: string;
   currency_code?: string;
+  currency?: string;
+  line_items?: Array<Record<string, unknown>>;
+  quote_id?: string | null;
+  contract_id?: string | null;
+  opportunity_id?: string | null;
+  notes?: string | null;
+  is_test_data?: boolean;
   bank_name?: string | null;
   account_number?: string | null;
   branch_code?: string | null;
@@ -152,16 +204,40 @@ export async function insertBusinessInvoiceSchemaCompat(
     input.due_date?.slice(0, 10) ||
     new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
+  const currency = (input.currency || input.currency_code || 'EUR').toUpperCase();
+
+  let clientName: string | null = null;
+  let clientEmail: string | null = null;
+  if (input.client_id) {
+    const { data: cl } = await supabase
+      .from('business_clients')
+      .select('name, email')
+      .eq('id', input.client_id)
+      .eq('tenant_id', input.tenant_id)
+      .maybeSingle();
+    clientName = cl?.name || null;
+    clientEmail = cl?.email || null;
+  }
+
   const payload: Record<string, unknown> = {
     tenant_id: input.tenant_id,
     client_id: input.client_id,
+    client_name: clientName,
+    client_email: clientEmail,
     total: input.amount,
     subtotal: input.amount,
     status: input.status || 'draft',
     due_date: dueDate,
     issue_date: issueDate,
     invoice_number: `INV-${Date.now().toString().slice(-8)}`,
-    currency_code: input.currency_code || 'USD',
+    currency,
+    currency_code: currency,
+    quote_id: input.quote_id || null,
+    contract_id: input.contract_id || null,
+    opportunity_id: input.opportunity_id || null,
+    notes: input.notes || null,
+    line_items: input.line_items || null,
+    is_test_data: input.is_test_data ?? false,
     bank_name: input.bank_name ?? null,
     account_number: input.account_number ?? null,
     branch_code: input.branch_code ?? null,
@@ -172,3 +248,4 @@ export async function insertBusinessInvoiceSchemaCompat(
 
   return supabase.from('business_invoices').insert(payload).select('*').single();
 }
+

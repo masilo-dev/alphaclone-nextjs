@@ -131,6 +131,49 @@ registerTool('document-os', {
         correlation_id: args.correlation_id,
       },
     });
+
+    // Also persist to Supabase doc_os_documents for durability
+    try {
+      const supabase = createSupabaseAdminClient();
+      await supabase.from('doc_os_documents').upsert({
+        document_id: doc.document_id,
+        tenant_id: doc.tenant_id,
+        client_id: doc.client_id,
+        company_id: doc.company_id,
+        project_id: doc.project_id,
+        document_type: doc.document_type,
+        document_number: doc.document_number,
+        title: doc.title,
+        current_version_id: doc.current_version_id,
+        version: doc.version,
+        status: doc.status,
+        currency: doc.currency,
+        structured_data: doc.structured_data,
+        owner_user_id: doc.owner_user_id,
+        created_at: doc.created_at,
+        updated_at: doc.updated_at,
+        checksum: doc.checksum,
+      });
+      const versions = storeFor(args.tenant_id).versions.get(doc.document_id);
+      if (versions && versions[0]) {
+        const v = versions[0];
+        await supabase.from('doc_os_versions').upsert({
+          version_id: v.version_id,
+          document_id: v.document_id,
+          tenant_id: doc.tenant_id,
+          version_number: v.version_number,
+          structured_content: v.structured_content,
+          checksum: v.checksum,
+          created_by_type: v.created_by_type,
+          created_by_id: v.created_by_id,
+          created_by_name: v.created_by_name,
+          created_at: v.created_at,
+        });
+      }
+    } catch (err) {
+      console.warn('[document-os] persistent DB sync failed:', err);
+    }
+
     return textResult({ success: true, document: doc });
   },
 });
@@ -503,7 +546,21 @@ registerTool('document-os', {
   handler: async (args) => {
     const brand = await loadBrand(args.tenant_id);
     const svc = new DocumentOsService(storeFor(args.tenant_id), brand);
-    return textResult(svc.getDocument(args.document_id));
+    try {
+      return textResult(svc.getDocument(args.document_id));
+    } catch (err) {
+      const supabase = createSupabaseAdminClient();
+      const { data: dbDoc } = await supabase
+        .from('doc_os_documents')
+        .select('*')
+        .eq('document_id', args.document_id)
+        .eq('tenant_id', args.tenant_id)
+        .maybeSingle();
+      if (dbDoc) {
+        return textResult(dbDoc);
+      }
+      throw err;
+    }
   },
 });
 

@@ -21,17 +21,6 @@
       "tool": "nexus_contract_drafter"
     }
   },
-  "send_invoice": {
-    "symptom": "broken",
-    "action": "redirect",
-    "reason": "send_invoice is broken; use start_invoice_lifecycle.",
-    "workaround": {
-      "tool": "start_invoice_lifecycle",
-      "argMap": {
-        "invoice_id": "invoice_id"
-      }
-    }
-  },
   "send_batch_outreach": {
     "symptom": "silent ~5 lead cap",
     "action": "chunk",
