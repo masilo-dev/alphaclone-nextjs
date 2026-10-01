@@ -44,12 +44,12 @@ registerTool('gap-finance', {
     const [{ data: invoices }, { data: expenses }, { data: bills }] = await Promise.all([
       supabase.from('business_invoices').select('total, status').eq('tenant_id', args.tenant_id).limit(2000),
       supabase.from('expenses').select('amount, status').eq('tenant_id', args.tenant_id).limit(2000),
-      supabase.from('vendor_bills').select('total_amount, amount_paid, status').eq('tenant_id', args.tenant_id).limit(500),
+      supabase.from('vendor_bills').select('total, amount_paid, status').eq('tenant_id', args.tenant_id).limit(500),
     ]);
     const paidRevenue = (invoices || []).filter((i: any) => i.status === 'paid').reduce((s: number, i: any) => s + Number(i.total || 0), 0);
     const outstanding = (invoices || []).filter((i: any) => ['sent', 'overdue'].includes(i.status)).reduce((s: number, i: any) => s + Number(i.total || 0), 0);
     const totalExpenses = (expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
-    const totalPayable = (bills || []).filter((b: any) => b.status !== 'paid').reduce((s: number, b: any) => s + Math.max(0, Number(b.total_amount || 0) - Number(b.amount_paid || 0)), 0);
+    const totalPayable = (bills || []).filter((b: any) => b.status !== 'paid').reduce((s: number, b: any) => s + Math.max(0, Number(b.total || 0) - Number(b.amount_paid || 0)), 0);
     const result = {
       assets: { cash_and_revenue: paidRevenue, accounts_receivable: outstanding, total_assets: paidRevenue + outstanding },
       liabilities: { accounts_payable: totalPayable, total_expenses_incurred: totalExpenses, total_liabilities: totalPayable + totalExpenses },
