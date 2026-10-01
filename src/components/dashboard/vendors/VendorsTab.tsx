@@ -32,7 +32,7 @@ export default function VendorsTab() {
     setLoading(true);
     const { data, error } = await supabase
       .from('vendor_bills')
-      .select('vendor_id, total_amount, status, due_date, created_at, contacts(first_name, last_name)')
+      .select('total, status, due_date, created_at, metadata')
       .eq('tenant_id', currentTenant.id)
       .order('created_at', { ascending: false })
       .limit(500);
@@ -46,10 +46,8 @@ export default function VendorsTab() {
 
     const map = new Map<string, VendorRow>();
     for (const row of (data as any[]) || []) {
-      const contact = row.contacts as { first_name?: string; last_name?: string } | null;
-      const name = contact
-        ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown vendor'
-        : 'Unknown vendor';
+      const metadata = (row.metadata || {}) as Record<string, unknown>;
+      const name = String(metadata.vendor_name || metadata.vendor || metadata.supplier_name || 'Unknown vendor');
       const existing = map.get(name) || {
         vendor_name: name,
         bill_count: 0,
@@ -58,7 +56,7 @@ export default function VendorsTab() {
       };
       existing.bill_count += 1;
       if (String(row.status).toLowerCase() !== 'paid') {
-        existing.open_total += Number(row.total_amount || 0);
+        existing.open_total += Number(row.total || 0);
       }
       if (!existing.last_bill_at || row.created_at > existing.last_bill_at) {
         existing.last_bill_at = row.created_at;
