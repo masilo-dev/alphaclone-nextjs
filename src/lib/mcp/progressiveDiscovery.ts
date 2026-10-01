@@ -118,8 +118,6 @@ const INTENT_SYNONYM_MAP: Record<string, string[]> = {
   'customer history': ['get_customer_360', 'get_client_activity', 'get_contact_activity', 'get_customer_timeline'],
 };
 
-import { listTools } from '@/lib/mcp/tool-registry';
-
 const KEYWORD_SYNONYMS: Record<string, string[]> = {
   pdf: ['document', 'invoice', 'contract', 'quote'],
   upload: ['create_document', 'file', 'attach'],
@@ -133,24 +131,10 @@ const KEYWORD_SYNONYMS: Record<string, string[]> = {
 };
 
 export function findToolsByQuery(
-  fullOrQuery: UnifiedMcpTool[] | string,
-  queryOrLimit?: string | number,
-  limitArg?: number
+  full: UnifiedMcpTool[],
+  query: string,
+  limit = 15
 ): UnifiedMcpTool[] {
-  let full: UnifiedMcpTool[];
-  let query: string;
-  let limit: number;
-
-  if (typeof fullOrQuery === 'string') {
-    query = fullOrQuery;
-    limit = typeof queryOrLimit === 'number' ? queryOrLimit : 15;
-    full = listTools() as unknown as UnifiedMcpTool[];
-  } else {
-    full = fullOrQuery;
-    query = typeof queryOrLimit === 'string' ? queryOrLimit : '';
-    limit = typeof limitArg === 'number' ? limitArg : 15;
-  }
-
   if (!query?.trim()) return full.slice(0, limit);
   const normalizedQuery = query.toLowerCase().trim();
   const terms = normalizedQuery.split(/[\s_-]+/).filter(Boolean);
