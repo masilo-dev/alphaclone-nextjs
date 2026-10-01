@@ -16,6 +16,7 @@ import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import CookieBanner from "@/components/legal/CookieBanner";
 import PwaInstallPrompt from "@/components/common/PwaInstallPrompt";
+import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
 
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
@@ -133,7 +134,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </PWAProvider>
           <CookieBanner />
         </Providers>
-        
+        <ConsentAwareAnalytics />
       </body>
     </html>
   );
