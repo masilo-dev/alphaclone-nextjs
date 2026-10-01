@@ -201,7 +201,7 @@ export async function reconcileStaleExternalActions(limit = 40): Promise<{ revie
     const { error } = await admin
       .from('external_actions')
       .update({
-        status: 'stale_pending',
+        status: 'outcome_unknown',
         updated_at: new Date().toISOString(),
       })
       .eq('id', row.id)
