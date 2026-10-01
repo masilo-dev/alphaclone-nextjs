@@ -209,7 +209,7 @@ registerTool('accounting', {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('vendor_bills')
-      .select('id, vendor_name, total_amount, amount_paid, status, due_date')
+      .select('id, vendor_name, total, amount_paid, status, due_date')
       .eq('tenant_id', args.tenant_id)
       .in('status', ['open', 'partial', 'overdue'])
       .order('due_date', { ascending: true })
@@ -228,7 +228,7 @@ registerTool('accounting', {
     const bills: Array<Record<string, unknown>> = [];
 
     for (const row of data || []) {
-      const owed = Math.max(0, Number(row.total_amount) - Number(row.amount_paid || 0));
+      const owed = Math.max(0, Number(row.total) - Number(row.amount_paid || 0));
       const dueMs = row.due_date ? new Date(row.due_date).getTime() : now;
       const daysPast = Math.max(0, Math.floor((now - dueMs) / 86400000));
       const bucket = bucketReceivableDays(daysPast);
