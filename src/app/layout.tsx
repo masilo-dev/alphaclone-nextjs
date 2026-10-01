@@ -16,7 +16,7 @@ import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import CookieBanner from "@/components/legal/CookieBanner";
 import PwaInstallPrompt from "@/components/common/PwaInstallPrompt";
-import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
+
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
@@ -110,9 +110,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         />
         <script
-          id="ac-consent-bootstrap"
+          id="ac-zaraz-consent-bridge"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{'analytics_storage':'denied','ad_storage':'denied','ad_user_data':'denied','ad_personalization':'denied','wait_for_update':500});var raw=localStorage.getItem('ac_cookie_consent')||localStorage.getItem('ac_cookie_preferences');if(raw){var c=JSON.parse(raw);if(c&&c.essential){var a=c.analytics?'granted':'denied';var m=c.marketing?'granted':'denied';gtag('consent','update',{'analytics_storage':a,'ad_storage':m,'ad_user_data':m,'ad_personalization':m});function syncZaraz(){if(window.zaraz&&window.zaraz.consent&&window.zaraz.consent.set){window.zaraz.consent.set({functional:!!c.functional,analytics:!!c.analytics,marketing:!!c.marketing,analytics_id:!!c.analytics,marketing_id:!!c.marketing});}}if(window.zaraz&&window.zaraz.consent){syncZaraz();}else{document.addEventListener('zarazConsentAPIReady',syncZaraz,{once:true});}}}else{function syncZarazDefault(){if(window.zaraz&&window.zaraz.consent&&window.zaraz.consent.set){window.zaraz.consent.set({functional:false,analytics:false,marketing:false,analytics_id:false,marketing_id:false});}}if(window.zaraz&&window.zaraz.consent){syncZarazDefault();}else{document.addEventListener('zarazConsentAPIReady',syncZarazDefault,{once:true});}}}catch(e){}})();`,
+            __html: `(function(){try{var raw=localStorage.getItem('ac_cookie_consent')||localStorage.getItem('ac_cookie_preferences');var c=raw?JSON.parse(raw):null;function applyConsent(){if(!window.zaraz||!window.zaraz.consent||!window.zaraz.consent.set)return;if(c&&c.essential){window.zaraz.consent.set({functional:!!c.functional,analytics:!!c.analytics,marketing:!!c.marketing});}else{window.zaraz.consent.set({functional:false,analytics:false,marketing:false});}}if(window.zaraz&&window.zaraz.consent){applyConsent();}else{document.addEventListener('zarazConsentAPIReady',applyConsent,{once:true});}document.addEventListener('ac:cookie-consent',function(e){if(window.zaraz&&window.zaraz.consent&&window.zaraz.consent.set){var p=e.detail||{};window.zaraz.consent.set({functional:!!p.functional,analytics:!!p.analytics,marketing:!!p.marketing});}},{passive:true});}catch(e){}})();`,
           }}
         />
       </head>
@@ -133,7 +133,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </PWAProvider>
           <CookieBanner />
         </Providers>
-        <ConsentAwareAnalytics />
+        
       </body>
     </html>
   );
