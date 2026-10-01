@@ -277,6 +277,49 @@ registerTool('gap-finance', {
   },
 });
 
+// ── convert_quote_to_contract ─────────────────────────────────────────
+registerTool('gap-finance', {
+  name: 'convert_quote_to_contract',
+  description: 'Convert an accepted quote into a formal binding contract with terms, line items, and lifecycle graph links.',
+  inputSchema: z.object({
+    tenant_id: tid,
+    quote_id: z.string(),
+    title: z.string().optional(),
+    terms: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string' },
+      quote_id: { type: 'string' },
+      title: { type: 'string' },
+      terms: { type: 'string' },
+    },
+    required: ['quote_id'],
+  },
+  handler: async (args) => {
+    const { convertQuoteToContract } = await import('@/lib/quotes/convertQuoteToContract');
+    const result = await convertQuoteToContract(args.quote_id, args.tenant_id, {
+      title: args.title,
+      terms: args.terms,
+    });
+    if (result.error) {
+      return { content: [{ type: 'text', text: JSON.stringify({ error: result.error }) }] };
+    }
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          contract_id: result.contractId,
+          status: result.status,
+          converted: true,
+        }, null, 2),
+      }],
+    };
+  },
+});
+
 // ── reconcile_payment ────────────────────────────────────────────────
 registerTool('gap-finance', {
   name: 'reconcile_payment',

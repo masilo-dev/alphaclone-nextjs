@@ -109,69 +109,51 @@ export class CommercialEngine {
    * Generate Contract from accepted Quote.
    */
   public async generateContractFromQuote(tenantId: string, quoteId: string, leadId: string, amount: number): Promise<any> {
-    const supabase = getDbClient();
-    const now = new Date().toISOString();
-
-    const contractData = {
-      tenant_id: tenantId,
-      lead_id: leadId,
-      quote_id: quoteId,
+    const { convertQuoteToContract } = await import('@/lib/quotes/convertQuoteToContract');
+    const result = await convertQuoteToContract(quoteId, tenantId, {
       title: "Master Services Agreement",
-      status: "sent_for_signature",
-      value_amount: amount,
-      signing_token: `sign_${Date.now()}`,
-      created_at: now,
-      updated_at: now,
-    };
+    });
 
-    let contractId = `contract_${Date.now()}`;
-    try {
-      const { data, error } = await supabase.from("contracts").insert(contractData).select().single();
-      if (!error && data) contractId = data.id;
-    } catch (e) {}
+    if (result.error || !result.contractId) {
+      console.warn(`[CommercialEngine] Contract conversion failed for quote ${quoteId}:`, result.error);
+      return { status: "error", error: result.error };
+    }
 
-    console.log(`[CommercialEngine] Generated contract ${contractId} for quote ${quoteId}`);
+    console.log(`[CommercialEngine] Generated canonical contract ${result.contractId} for quote ${quoteId}`);
 
     await eventBus.emit({
       tenant_id: tenantId,
       event_type: "contract.generated",
       aggregate_type: "contract",
-      aggregate_id: contractId,
+      aggregate_id: result.contractId,
       payload: { lead_id: leadId, quote_id: quoteId, value_amount: amount },
     });
 
-    return { status: "sent_for_signature", contract_id: contractId };
+    return { status: "sent_for_signature", contract_id: result.contractId };
   }
 
   /**
-   * Onboard client after contract is signed. Converts lead to active client, creates initial invoice.
+   * Onboard client after contract is signed. Converts lead to active client, triggers canonical contract-signed pipeline.
    */
   public async onboardSignedClient(tenantId: string, contractId: string, leadId: string, amount: number): Promise<void> {
     const supabase = getDbClient();
     const now = new Date().toISOString();
 
     // 1. Update lead status to won / active client
-    await supabase.from("leads").update({ status: "won", updated_at: now }).eq("id", leadId);
+    if (leadId) {
+      await supabase.from("leads").update({ status: "won", updated_at: now }).eq("id", leadId).eq("tenant_id", tenantId);
+    }
 
-    // 2. Create initial invoice
-    const invoiceData = {
-      tenant_id: tenantId,
-      contract_id: contractId,
-      total: amount,
-      subtotal: amount,
-      status: "sent",
-      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-      issue_date: now.slice(0, 10),
-      invoice_number: `INV-${Date.now()}`,
-      created_at: now,
-      updated_at: now,
-    };
+    // 2. Trigger canonical contract signed flow (provisions invoice, project, tasks, links)
+    const { runContractSignedFlow } = await import('@/lib/contracts/contractSignedSteps');
+    await runContractSignedFlow({
+      tenantId,
+      contractId,
+    }).catch((err) => {
+      console.error('[CommercialEngine] runContractSignedFlow failed:', err);
+    });
 
-    try {
-      await supabase.from("business_invoices").insert(invoiceData);
-    } catch (e) {}
-
-    console.log(`[CommercialEngine] Onboarded signed client for contract ${contractId}! Initial invoice issued ($${amount})`);
+    console.log(`[CommercialEngine] Onboarded signed client for contract ${contractId}! Canonical pipeline executed.`);
 
     await eventBus.emit({
       tenant_id: tenantId,

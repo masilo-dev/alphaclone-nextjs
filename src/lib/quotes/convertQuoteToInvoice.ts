@@ -6,6 +6,7 @@ import {
 } from '@/lib/contracts/contractCoherenceServer';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { emitBusinessEvent } from '@/lib/automation/emit-event';
 import crypto from 'crypto';
 
 const CONVERTIBLE_STATUSES = new Set(['accepted', 'sent', 'viewed', 'draft']);
@@ -41,7 +42,6 @@ function mapQuoteItemToInvoiceLine(
         description: String(item.product_name || item.description || 'Item'),
         quantity,
         unit_price: unitPrice,
-        amount: lineTotal,
         position: index + 1,
     };
 }
@@ -179,6 +179,57 @@ export async function convertQuoteToInvoice(
             },
         })
         .eq('id', quoteId);
+
+    // Link quote to invoice in revenue lifecycle graph
+    await admin.from('revenue_lifecycle_links').upsert(
+        {
+            tenant_id: tenantId,
+            source_type: 'quote',
+            source_id: quoteId,
+            target_type: 'invoice',
+            target_id: inv.id,
+            relationship: 'billed_by',
+            metadata: { auto_created: true },
+        },
+        { onConflict: 'tenant_id,source_type,source_id,target_type,target_id,relationship' }
+    );
+
+    if (quote.deal_id) {
+        await admin.from('revenue_lifecycle_links').upsert(
+            {
+                tenant_id: tenantId,
+                source_type: 'deal',
+                source_id: quote.deal_id,
+                target_type: 'invoice',
+                target_id: inv.id,
+                relationship: 'billed_by',
+                metadata: { quote_id: quoteId },
+            },
+            { onConflict: 'tenant_id,source_type,source_id,target_type,target_id,relationship' }
+        );
+
+        // Update deal stage to closed_won if not already won
+        await admin
+            .from('deals')
+            .update({
+                stage: 'closed_won',
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', quote.deal_id)
+            .eq('tenant_id', tenantId);
+    }
+
+    // Emit canonical business event
+    await emitBusinessEvent(tenantId, 'quote.converted', {
+        quoteId,
+        invoiceId: inv.id,
+        clientId,
+        dealId: quote.deal_id || null,
+        total,
+        currency: quote.currency || 'USD',
+    }).catch((err) => {
+        console.warn('[convertQuoteToInvoice] emit event failed:', err?.message || err);
+    });
 
     const payUrl = `${origin.replace(/\/$/, '')}/invoice/${inv.id}?token=${publicToken}`;
 

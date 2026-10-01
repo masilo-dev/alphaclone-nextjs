@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-30T10:02:51.917Z",
-  "total_tools": 569,
-  "passed": 512,
+  "generated_at": "2026-10-01T09:37:48.479Z",
+  "total_tools": 570,
+  "passed": 513,
   "failed": 0,
   "skipped": 57,
   "before_failure_count": 8,
@@ -504,6 +504,15 @@
     },
     {
       "tool": "conversions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "convert_quote_to_contract",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,

@@ -260,6 +260,13 @@ export async function POST(req: NextRequest) {
                     actorUserId: updatedContract.created_by,
                 }).catch(err => console.error('Failed to emit contract_signed event:', err));
 
+                const { runContractSignedFlow } = await import('@/lib/contracts/contractSignedSteps');
+                await runContractSignedFlow({
+                    tenantId: updatedContract.tenant_id,
+                    contractId: updatedContract.id,
+                    actorUserId: updatedContract.created_by || undefined,
+                }).catch(err => console.error('Synchronous contract signed flow failed:', err));
+
                 const contentHash =
                     String(updatedContract.metadata?.content_hash || '') ||
                     String(updatedContract.content || updatedContract.title || '');

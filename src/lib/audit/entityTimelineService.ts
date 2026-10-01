@@ -1,12 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { formatAttributionLabel, attributionFromMetadata } from '@/lib/audit/sourceAttribution';
 
-export type EntityType = 'lead' | 'client' | 'contact' | 'contract' | 'invoice' | 'project';
+export type EntityType = 'lead' | 'client' | 'contact' | 'deal' | 'quote' | 'contract' | 'invoice' | 'project';
 
 export type EntityTimelineItem = {
   id: string;
   timestamp: string;
-  category: 'outreach' | 'audit' | 'lead_activity' | 'email' | 'contract' | 'invoice' | 'meeting' | 'project';
+  category: 'outreach' | 'audit' | 'lead_activity' | 'email' | 'deal' | 'quote' | 'contract' | 'invoice' | 'meeting' | 'project';
   title: string;
   description: string;
   status?: string;
@@ -357,6 +357,143 @@ export async function buildProjectTimeline(
   return sortTimeline(items);
 }
 
+export async function buildDealTimeline(
+  admin: SupabaseClient,
+  tenantId: string,
+  dealId: string,
+): Promise<EntityTimelineItem[]> {
+  const items: EntityTimelineItem[] = [];
+  const { data: deal } = await admin
+    .from('deals')
+    .select('id, name, stage, value, currency, created_at, updated_at, contact_id, project_id')
+    .eq('tenant_id', tenantId)
+    .eq('id', dealId)
+    .maybeSingle();
+
+  if (deal) {
+    items.push({
+      id: `deal-created-${deal.id}`,
+      timestamp: deal.created_at,
+      category: 'deal',
+      title: 'Deal created',
+      description: `${deal.name || 'Deal'} — Value: ${deal.currency || 'USD'} ${deal.value || 0}`,
+      status: deal.stage,
+      source_label: 'AlphaClone CRM',
+    });
+  }
+
+  const [{ data: quotes }, { data: contracts }, { data: links }, auditItems] = await Promise.all([
+    admin.from('quotes').select('id, quote_number, name, status, total_amount, currency, created_at').eq('tenant_id', tenantId).eq('deal_id', dealId).limit(10),
+    admin.from('contracts').select('id, title, status, value, created_at').eq('tenant_id', tenantId).eq('deal_id', dealId).limit(10),
+    admin.from('revenue_lifecycle_links').select('target_type, target_id, relationship, created_at').eq('tenant_id', tenantId).eq('source_type', 'deal').eq('source_id', dealId).limit(10),
+    fetchAuditTimelineItems(admin, tenantId, dealId),
+  ]);
+
+  for (const q of quotes || []) {
+    items.push({
+      id: `deal-quote-${q.id}`,
+      timestamp: q.created_at,
+      category: 'quote',
+      title: `Quote #${q.quote_number || q.id.slice(0, 8)}`,
+      description: `${q.name || 'Quote'} — ${q.currency || 'USD'} ${q.total_amount || 0}`,
+      status: q.status,
+      source_label: 'Commercial Engine',
+    });
+  }
+
+  for (const c of contracts || []) {
+    items.push({
+      id: `deal-contract-${c.id}`,
+      timestamp: c.created_at,
+      category: 'contract',
+      title: `Contract — ${c.title || 'Agreement'}`,
+      description: `Value: ${c.value || 0}`,
+      status: c.status,
+      source_label: 'Contract System',
+    });
+  }
+
+  for (const l of links || []) {
+    items.push({
+      id: `deal-link-${l.target_type}-${l.target_id}`,
+      timestamp: l.created_at || new Date().toISOString(),
+      category: 'deal',
+      title: `Linked to ${l.target_type}`,
+      description: `Relationship: ${l.relationship}`,
+      source_label: 'Revenue Lifecycle Graph',
+    });
+  }
+
+  items.push(...auditItems);
+  return sortTimeline(items);
+}
+
+export async function buildQuoteTimeline(
+  admin: SupabaseClient,
+  tenantId: string,
+  quoteId: string,
+): Promise<EntityTimelineItem[]> {
+  const items: EntityTimelineItem[] = [];
+  const { data: quote } = await admin
+    .from('quotes')
+    .select('id, quote_number, name, status, total_amount, currency, created_at, viewed_at, accepted_at, metadata')
+    .eq('tenant_id', tenantId)
+    .eq('id', quoteId)
+    .maybeSingle();
+
+  if (quote) {
+    items.push({
+      id: `quote-created-${quote.id}`,
+      timestamp: quote.created_at,
+      category: 'quote',
+      title: `Quote #${quote.quote_number || quote.id.slice(0, 8)} created`,
+      description: `${quote.name || 'Quote'} — Total: ${quote.currency || 'USD'} ${quote.total_amount || 0}`,
+      status: quote.status,
+      source_label: 'Commercial Engine',
+    });
+    if (quote.viewed_at) {
+      items.push({
+        id: `quote-viewed-${quote.id}`,
+        timestamp: quote.viewed_at,
+        category: 'quote',
+        title: 'Quote viewed by client',
+        description: `View recorded for ${quote.name || quote.quote_number}`,
+        source_label: 'Client Portal',
+      });
+    }
+    if (quote.accepted_at) {
+      items.push({
+        id: `quote-accepted-${quote.id}`,
+        timestamp: quote.accepted_at,
+        category: 'quote',
+        title: 'Quote accepted',
+        description: `Approved by client`,
+        status: 'accepted',
+        source_label: 'Client Action',
+      });
+    }
+  }
+
+  const [{ data: links }, auditItems] = await Promise.all([
+    admin.from('revenue_lifecycle_links').select('target_type, target_id, relationship, created_at').eq('tenant_id', tenantId).eq('source_type', 'quote').eq('source_id', quoteId).limit(10),
+    fetchAuditTimelineItems(admin, tenantId, quoteId),
+  ]);
+
+  for (const l of links || []) {
+    items.push({
+      id: `quote-link-${l.target_type}-${l.target_id}`,
+      timestamp: l.created_at || new Date().toISOString(),
+      category: 'quote',
+      title: `Converted to ${l.target_type}`,
+      description: `Relationship: ${l.relationship}`,
+      source_label: 'Revenue Lifecycle Graph',
+    });
+  }
+
+  items.push(...auditItems);
+  return sortTimeline(items);
+}
+
 export async function buildEntityContextSummary(
   admin: SupabaseClient,
   tenantId: string,
@@ -530,6 +667,76 @@ export async function buildEntityContextSummary(
     if (invoice?.contract_id) {
       const { data: contract } = await admin.from('contracts').select('id, title, status').eq('tenant_id', tenantId).eq('id', invoice.contract_id).maybeSingle();
       relationships.contract = contract || null;
+    }
+
+    return { identity, outreach_status: 'N/A', timeline, needs_attention, next_action, relationships };
+  }
+
+  if (entityType === 'deal') {
+    const { data: deal } = await admin.from('deals').select('*').eq('tenant_id', tenantId).eq('id', entityId).maybeSingle();
+    identity = deal || {};
+    const timeline = await buildDealTimeline(admin, tenantId, entityId);
+
+    const stage = String(deal?.stage || '').toLowerCase();
+    if (stage === 'discovery' || stage === 'qualified') {
+      next_action = 'Schedule discovery call or prepare proposal.';
+    } else if (stage === 'proposal' || stage === 'negotiation') {
+      next_action = 'Follow up on proposal and finalize contract terms.';
+    } else if (stage === 'closed_won' || stage === 'won') {
+      next_action = 'Deal won — ensure project kickoff and invoice delivery.';
+    } else if (stage === 'closed_lost' || stage === 'lost') {
+      next_action = 'Deal closed lost — review notes for retention / future campaigns.';
+    }
+
+    const [{ data: quotes }, { data: contracts }, { data: links }, clientRow] = await Promise.all([
+      admin.from('quotes').select('id, quote_number, name, status, total_amount').eq('tenant_id', tenantId).eq('deal_id', entityId).limit(5),
+      admin.from('contracts').select('id, title, status, value').eq('tenant_id', tenantId).eq('deal_id', entityId).limit(5),
+      admin.from('revenue_lifecycle_links').select('target_type, target_id, relationship').eq('tenant_id', tenantId).or(`source_id.eq.${entityId},target_id.eq.${entityId}`).limit(10),
+      deal?.contact_id
+        ? admin.from('business_clients').select('id, name, email').eq('tenant_id', tenantId).eq('id', deal.contact_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    relationships.quotes = quotes || [];
+    relationships.contracts = contracts || [];
+    relationships.links = links || [];
+    relationships.client = clientRow.data || null;
+
+    return { identity, outreach_status: 'N/A', timeline, needs_attention, next_action, relationships };
+  }
+
+  if (entityType === 'quote') {
+    const { data: quote } = await admin.from('quotes').select('*').eq('tenant_id', tenantId).eq('id', entityId).maybeSingle();
+    identity = quote || {};
+    const timeline = await buildQuoteTimeline(admin, tenantId, entityId);
+
+    const status = String(quote?.status || '').toLowerCase();
+    if (status === 'draft') {
+      next_action = 'Review quote details and send to client.';
+    } else if (status === 'sent') {
+      next_action = 'Quote sent — awaiting client review.';
+    } else if (status === 'viewed') {
+      next_action = 'Client viewed quote — follow up to close.';
+    } else if (status === 'accepted') {
+      next_action = 'Quote accepted — convert to contract or invoice.';
+    } else if (status === 'converted') {
+      next_action = 'Quote converted — track downstream contract/invoice fulfillment.';
+    }
+
+    if (quote?.valid_until && new Date(quote.valid_until) < new Date() && status !== 'converted' && status !== 'accepted') {
+      needs_attention.push('Quote has expired');
+    }
+
+    const [{ data: items }, { data: links }] = await Promise.all([
+      admin.from('quote_items').select('*').eq('quote_id', entityId).order('item_order'),
+      admin.from('revenue_lifecycle_links').select('source_type, source_id, target_type, target_id, relationship').eq('tenant_id', tenantId).or(`source_id.eq.${entityId},target_id.eq.${entityId}`).limit(10),
+    ]);
+
+    relationships.items = items || [];
+    relationships.links = links || [];
+    if (quote?.deal_id) {
+      const { data: deal } = await admin.from('deals').select('id, name, stage').eq('tenant_id', tenantId).eq('id', quote.deal_id).maybeSingle();
+      relationships.deal = deal || null;
     }
 
     return { identity, outreach_status: 'N/A', timeline, needs_attention, next_action, relationships };

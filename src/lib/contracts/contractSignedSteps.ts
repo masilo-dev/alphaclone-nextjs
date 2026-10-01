@@ -83,7 +83,8 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       discount_amount: 0,
       total: amount,
       amount_paid: 0,
-      balance_due: amount,
+      currency: contract.currency_code || 'USD',
+      currency_code: contract.currency_code || 'USD',
       is_public: true,
       metadata: {
         public_token: publicToken,
@@ -103,7 +104,6 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       description: contract.title || 'Services per contract',
       quantity: 1,
       unit_price: amount,
-      amount,
     });
     if (itemError) {
       await supabase.from('business_invoices').delete().eq('tenant_id', tenantId).eq('id', invoice.id);

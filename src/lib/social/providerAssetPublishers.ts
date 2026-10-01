@@ -159,7 +159,7 @@ export async function publishInstagramAssets(input: {
   // Meta may finish photo containers before its initial creation request returns.
   // Publish synchronously when ready so a normal photo post does not wait for cron.
   try {
-    const ready = await waitForInstagramContainerReady(creationId, token, { timeoutMs: 2_000, pollIntervalMs: 500 });
+    const ready = await waitForInstagramContainerReady(creationId, token, { timeoutMs: 12_000, pollIntervalMs: 1_000 });
     if (ready.status_code === 'FINISHED') {
       const published = await graphJson(`https://graph.facebook.com/v21.0/${accountId}/media_publish`, {
         creation_id: creationId, access_token: token,

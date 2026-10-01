@@ -4,7 +4,7 @@ import { buildEntityContextSummary, type EntityType } from '@/lib/audit/entityTi
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_TYPES = new Set<EntityType>(['lead', 'client', 'contact', 'contract', 'invoice', 'project']);
+const ALLOWED_TYPES = new Set<EntityType>(['lead', 'client', 'contact', 'deal', 'quote', 'contract', 'invoice', 'project']);
 
 function parseEntityType(value: string): EntityType | null {
   return ALLOWED_TYPES.has(value as EntityType) ? (value as EntityType) : null;

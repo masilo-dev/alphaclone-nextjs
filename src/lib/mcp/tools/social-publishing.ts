@@ -496,7 +496,36 @@ defineConnectorTool({
           mimeType: detectedMime,
           altText: args.alt_text,
         });
-        return asset;
+        const mediaResult = mediaToolResult({
+          id: asset.media_asset_id,
+          filename: asset.filename,
+          mime_type: asset.mime_type,
+          size_bytes: asset.size_bytes,
+          url: asset.public_url,
+          status: 'ready',
+          width: asset.width,
+          height: asset.height,
+          checksum: asset.checksum,
+        });
+        return okResult('upload_social_media', mediaResult, {
+          receipt: {
+            action_id: asset.media_asset_id,
+            status: 'completed',
+            entity_id: asset.media_asset_id,
+            entity_type: 'media_asset',
+            live_url: buildPublicMediaUrl(asset.media_asset_id),
+            timestamp: new Date().toISOString(),
+            verification: {
+              media_ready: true,
+              mime_type: asset.mime_type,
+              size_bytes: asset.size_bytes,
+              decoded_bytes: asset.source_bytes ?? asset.size_bytes,
+              stored_bytes: asset.stored_bytes ?? asset.size_bytes,
+              integrity_verified: asset.integrity_verified ?? true,
+              public_fetch_verified: asset.public_fetch_verified ?? true,
+            },
+          },
+        });
       } catch (err: any) {
         const message = err?.message || 'Attachment resolution failed';
         const code = String(message).split(':', 1)[0];
@@ -629,6 +658,58 @@ defineConnectorTool({
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+
+    if (args.openai_file_id || args.local_file_path) {
+      try {
+        const { resolveAttachmentReference, readAttachmentStream } = await import('@/lib/media/attachmentResolver');
+        const { uploadSocialMediaFromBuffer, detectMimeFromSignature } = await import('@/lib/social/mediaUpload');
+        const attachment = await resolveAttachmentReference({
+          openaiFileId: args.openai_file_id,
+          localFilePath: args.local_file_path,
+        });
+        const maxBytes = Number(process.env.SOCIAL_MEDIA_MAX_UPLOAD_BYTES || 200 * 1024 * 1024);
+        const bytes = await readAttachmentStream(attachment, maxBytes);
+        const detectedMime = detectMimeFromSignature(bytes);
+        if (!detectedMime) throw new Error('MEDIA_UNSUPPORTED_TYPE: file signature is not supported');
+        const filename = args.filename || args.file_name || attachment.filename;
+        const asset = await uploadSocialMediaFromBuffer({
+          tenantId, userId, buffer: bytes,
+          filename,
+          mimeType: detectedMime,
+          altText: args.alt_text,
+        });
+        return okResult(
+          'upload_media',
+          sanitizeMediaForClient({
+            id: asset.media_asset_id,
+            mime_type: asset.mime_type,
+            size_bytes: asset.size_bytes,
+            status: 'ready',
+            width: asset.width,
+            height: asset.height,
+          }),
+          {
+            receipt: {
+              action_id: asset.media_asset_id,
+              status: 'completed',
+              entity_id: asset.media_asset_id,
+              entity_type: 'media_asset',
+              live_url: buildPublicMediaUrl(asset.media_asset_id),
+              timestamp: new Date().toISOString(),
+              verification: {
+                media_ready: true,
+                mime_type: asset.mime_type,
+                size_bytes: asset.size_bytes,
+              },
+            },
+          }
+        );
+      } catch (err: any) {
+        const message = err?.message || 'Attachment resolution failed';
+        const code = String(message).split(':', 1)[0];
+        throwConnectorError(code === 'CHAT_ATTACHMENT_BYTES_UNAVAILABLE' ? code : 'MEDIA_INGESTION_FAILED', message, err);
+      }
+    }
 
     rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
