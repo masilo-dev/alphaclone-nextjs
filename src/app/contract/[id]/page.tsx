@@ -313,10 +313,24 @@ export default function PublicContractPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
-                        <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-400" />
+                    <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center space-y-4">
+                        <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-emerald-400" />
                         <h2 className="text-lg font-semibold text-white">Your signature is recorded</h2>
-                        <p className="mx-auto mt-2 max-w-lg type-card-description text-slate-400">The sender will receive your signed agreement. When all required signers have completed it, the authoritative agreement and completion receipt will be made available by the sender.</p>
+                        <p className="mx-auto max-w-lg type-card-description text-slate-400">
+                            The agreement has been sealed with an electronic signature and tamper audit certificate.
+                        </p>
+                        {contract.pdf_url && (
+                            <div>
+                                <a
+                                    href={contract.pdf_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 font-bold text-white transition-all shadow-md text-sm"
+                                >
+                                    <FileText className="w-4 h-4" /> Download Signed PDF
+                                </a>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -101,8 +101,9 @@ export default function MarketingFooter() {
           <p suppressHydrationWarning>{formatCopyrightLine()}</p>
           <div>
             <PublicStatusPill />
-            <Link href="/privacy-policy">{t('Privacy')}</Link>
-            <Link href="/terms-of-service">{t('Terms')}</Link>
+            <Link href="/legal/privacy">{t('Privacy')}</Link>
+            <Link href="/legal/terms">{t('Terms')}</Link>
+            <Link href="/legal/subprocessors">{t('Subprocessors')}</Link>
             <Link href="/security-policy">{t('Security')}</Link>
             <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}>{t('Cookie preferences')}</button>
           </div>

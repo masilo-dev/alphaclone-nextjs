@@ -194,6 +194,73 @@ export function buildContractDocumentInput(
   const sections = parseContractContentToSections(content);
   const paymentAmount = Number(contract.payment_amount ?? meta.payment_amount ?? 0);
 
+  const signers: NonNullable<RenderDocumentInput['signers']> = [];
+  const explicitParties = (contract.contract_parties || contract.parties || meta.parties || meta.signers) as Array<Record<string, unknown>> | undefined;
+
+  if (Array.isArray(explicitParties) && explicitParties.length > 0) {
+    for (const party of explicitParties) {
+      const partySnapshot = (party.party_snapshot || {}) as Record<string, unknown>;
+      const rawRole = String(party.signer_role || party.role || 'Signatory');
+      const name = String(partySnapshot.name || party.name || party.signer_name || 'Authorized Signatory');
+      const email = String(partySnapshot.email || party.email || party.signer_email || '');
+      const title = String(partySnapshot.title || party.title || party.signer_title || '');
+      const signed = party.signature_status === 'signed' || Boolean(party.signed);
+      const signatureUrl = party.signature_url
+        ? String(party.signature_url)
+        : signed
+          ? String(contract.client_signature || contract.admin_signature || '')
+          : undefined;
+      const date = party.signed_at ? new Date(String(party.signed_at)).toLocaleDateString() : undefined;
+
+      signers.push({
+        role: rawRole.charAt(0).toUpperCase() + rawRole.slice(1).replace(/_/g, ' '),
+        name,
+        email,
+        title,
+        signed,
+        signatureUrl,
+        date,
+      });
+    }
+  } else {
+    const providerSigned = Boolean(contract.admin_signature || contract.admin_signed_at);
+    signers.push({
+      role: 'Service Provider',
+      name: String(meta.provider_signatory_name || tenant?.name || 'Service Provider'),
+      title: String(meta.provider_signatory_title || 'Authorized Representative'),
+      email: String(meta.provider_email || ''),
+      signed: providerSigned,
+      signatureUrl: contract.admin_signature ? String(contract.admin_signature) : undefined,
+      date: contract.admin_signed_at ? new Date(String(contract.admin_signed_at)).toLocaleDateString() : undefined,
+    });
+
+    const clientSigned = Boolean(contract.client_signature || contract.client_signed_at);
+    signers.push({
+      role: 'Client',
+      name: client?.name || String(meta.client_signatory_name || meta.client_name || contract.client_name || 'Client Signatory'),
+      title: String(meta.client_signatory_title || 'Authorized Signatory'),
+      email: client?.email || String(meta.client_email || contract.client_email || ''),
+      signed: clientSigned,
+      signatureUrl: contract.client_signature ? String(contract.client_signature) : undefined,
+      date: contract.client_signed_at ? new Date(String(contract.client_signed_at)).toLocaleDateString() : undefined,
+    });
+  }
+
+  const contentHash = String(meta.content_hash || meta.contentHash || '');
+  const tamperSeal = String(meta.tamper_seal || meta.tamperSeal || '');
+  const completedAt = contract.client_signed_at || contract.admin_signed_at || meta.signed_at
+    ? new Date(String(contract.client_signed_at || contract.admin_signed_at || meta.signed_at)).toLocaleString()
+    : undefined;
+
+  const auditCertificate =
+    contentHash || tamperSeal || (signers.some((s) => s.signed) && completedAt)
+      ? {
+          documentHash: contentHash || undefined,
+          tamperSeal: tamperSeal || undefined,
+          completedAt,
+        }
+      : undefined;
+
   return {
     type: 'contract',
     themeId: resolveDocumentThemeId(meta),
@@ -214,6 +281,8 @@ export function buildContractDocumentInput(
     total: paymentAmount > 0 ? paymentAmount : undefined,
     notes: meta.notes ? String(meta.notes) : undefined,
     status: contract.status ? String(contract.status) : undefined,
+    signers,
+    auditCertificate,
   };
 }
 

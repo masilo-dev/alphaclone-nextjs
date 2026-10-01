@@ -243,22 +243,32 @@ function LoginContent() {
                                     isRegistration: true,
                                 }),
                             });
-                            void fetch('/api/auth/registration-event', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    Authorization: `Bearer ${sessionToken}`,
-                                },
-                                body: JSON.stringify({
-                                    selectedPlan,
-                                    referralCode: referralCodeParam,
-                                    businessName,
-                                    marketingOptIn,
-                                    legalAccepted,
-                                    euConsent,
-                                    ageConfirmed,
+                            void Promise.all([
+                                fetch('/api/legal/acceptance', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${sessionToken}`,
+                                    },
+                                    body: JSON.stringify({
+                                        documentType: 'terms_of_service',
+                                        versionNumber: '2026-10',
+                                        acceptanceContext: 'signup',
+                                    }),
                                 }),
-                            }).catch((eventErr) => console.warn('Registration event notification failed:', eventErr));
+                                fetch('/api/legal/acceptance', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${sessionToken}`,
+                                    },
+                                    body: JSON.stringify({
+                                        documentType: 'privacy_policy',
+                                        versionNumber: '2026-10',
+                                        acceptanceContext: 'signup',
+                                    }),
+                                }),
+                            ]).catch((legalErr) => console.warn('Legal acceptance recording failed:', legalErr));
                         }
                     } catch (consentErr) {
                         console.warn('Failed to persist registration consent:', consentErr);

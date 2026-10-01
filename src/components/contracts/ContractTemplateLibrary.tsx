@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Copy, Plus, ExternalLink, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Copy, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CONTRACT_TEMPLATE_REGISTRY, type ContractTemplateDefinition } from '@/lib/contracts/templates/contractTemplateRegistry';
 
 export type ContractTemplate = {
   id: string;
@@ -14,7 +15,21 @@ export type ContractTemplate = {
   body: string;
 };
 
+function formatRegistryTemplate(def: ContractTemplateDefinition): ContractTemplate {
+  const body = `# ${def.name.toUpperCase()}\n\n${def.sections.map((s) => `## ${s.heading}\n\n${s.body}`).join('\n\n---\n\n')}`;
+  return {
+    id: def.id,
+    title: def.name,
+    category: def.category,
+    description: def.description,
+    estimatedPages: Math.max(1, Math.ceil(def.sections.length / 2)),
+    tags: [def.category, 'Corporate', 'Agreement'],
+    body,
+  };
+}
+
 export const CONTRACT_TEMPLATES: ContractTemplate[] = [
+  ...Object.values(CONTRACT_TEMPLATE_REGISTRY).map(formatRegistryTemplate),
   {
     id: 'nda',
     title: 'Non-Disclosure Agreement (NDA)',
@@ -230,6 +245,9 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
     Legal: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
     Services: 'text-teal-300 bg-teal-500/10 border-teal-500/30',
     Operations: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
+    Retainer: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30',
+    Development: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30',
+    General: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
     Freelance: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
     Project: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
   };

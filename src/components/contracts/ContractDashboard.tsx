@@ -48,6 +48,11 @@ import {
     type ContractSignerProfile,
 } from '@/lib/contracts/signerProfile';
 import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
+import {
+    buildContractVariableContext,
+    resolveContractVariables,
+    validateContractVariables,
+} from '@/lib/contracts/contractVariables';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -895,6 +900,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             return;
         }
 
+        const contentToCheck = (isEditing ? editedHtml : generatedContract) || '';
+        const validation = validateContractVariables(contentToCheck);
+        if (!validation.valid) {
+            toast.error(`Cannot send: please replace placeholder tokens (${validation.unresolvedTokens.slice(0, 3).join(', ')})`);
+            return;
+        }
+
         setSendingContract(true);
         try {
             const res = await fetch('/api/contracts/management', {
@@ -1180,10 +1192,34 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             {activeView === 'templates' && (
                 <ContractTemplateLibrary
                     onUseTemplate={(tmpl: ContractTemplate) => {
+                        const varContext = buildContractVariableContext({
+                            tenant: currentTenant,
+                            client: {
+                                name: form.clientName,
+                                company: form.clientCompany,
+                                email: form.clientEmail,
+                                phone: form.clientPhone,
+                                address: form.clientAddress,
+                            },
+                            contract: {
+                                title: tmpl.title,
+                                payment_amount: safeParseFloat(form.totalAmount, 0),
+                                currency: form.currency,
+                            },
+                            project: {
+                                name: form.projectName || tmpl.title,
+                                description: form.deliverables ? `${form.projectScope || tmpl.description}\n\nDeliverables:\n${form.deliverables}` : (form.projectScope || tmpl.description),
+                            },
+                            user,
+                        });
+                        const resolvedBody = resolveContractVariables(tmpl.body, varContext);
                         set('projectName', tmpl.title);
-                        set('projectScope', tmpl.body);
+                        set('projectScope', tmpl.description);
+                        setGeneratedContract(resolvedBody);
+                        setEditedHtml(contractToHTML(resolvedBody));
+                        setStep('preview');
                         setActiveView('new');
-                        toast.success(`Loaded "${tmpl.title}" into draft form`);
+                        toast.success(`Loaded "${tmpl.title}" into agreement review`);
                     }}
                 />
             )}

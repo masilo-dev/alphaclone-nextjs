@@ -279,11 +279,12 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     .eq('id', existingContractId)
                                     .single();
 
-                                if (finalContract) {
-                                    const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
-                                    const pdfBlob = doc.output('blob');
-                                    const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
-                                    await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
+                                if (finalContract && currentTenant?.id) {
+                                    await fetch(`/api/contracts/${finalContract.id}/generate-pdf`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ tenantId: currentTenant.id }),
+                                    }).catch((err) => console.error('Failed to generate contract PDF:', err));
                                 }
                             } catch (err) {
                                 console.error('Failed to auto-save contract PDF:', err);
@@ -334,11 +335,12 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         .eq('id', contract.id)
                                         .single();
 
-                                    if (finalContract) {
-                                        const doc = contractService.generateProfessionalPDF(finalContract, currentTenant);
-                                        const pdfBlob = doc.output('blob');
-                                        const pdfFile = new File([pdfBlob], `Contract-${finalContract.title}.pdf`, { type: 'application/pdf' });
-                                        await fileUploadService.uploadFile(pdfFile, 'contract', finalContract.id);
+                                    if (finalContract && currentTenant?.id) {
+                                        await fetch(`/api/contracts/${finalContract.id}/generate-pdf`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ tenantId: currentTenant.id }),
+                                        }).catch((err) => console.error('Failed to generate contract PDF:', err));
                                     }
                                 } catch (err) {
                                     console.error('Failed to auto-save contract PDF:', err);

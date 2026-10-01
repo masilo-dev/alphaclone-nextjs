@@ -1,6 +1,15 @@
-import { permanentRedirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { DPA } from '@/components/pages/LegalDocs';
 
-/** Canonical doc lives at /dpa — keep this path as a hard redirect only. */
+export const metadata: Metadata = {
+  title: 'Data Processing Agreement (DPA) | AlphaClone Systems',
+  description:
+    'AlphaClone Systems Data Processing Agreement. Governs the processing of personal data on behalf of our business customers in compliance with GDPR.',
+  keywords: ['AlphaClone DPA', 'data processing agreement', 'GDPR compliance', 'sub-processors'],
+  alternates: { canonical: 'https://alphaclonesystems.com/legal/dpa' },
+  robots: { index: true, follow: true },
+};
+
 export default function Page() {
-  permanentRedirect('/dpa');
+  return <DPA />;
 }

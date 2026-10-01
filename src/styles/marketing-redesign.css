@@ -743,7 +743,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
   margin: 18px 0 0;
   color: var(--acr-ink);
   font-family: var(--font-brand);
-  font-size: var(--type-hero-size);
+  font-size: clamp(1.875rem, 3.8vw, 3rem);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-display);
   line-height: var(--leading-tight);
@@ -1089,7 +1089,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
 @media (max-width: 1024px) {
   .acr-hero { min-height: auto; }
   .acr-hero-grid { min-height: 690px; grid-template-columns: .9fr 1.1fr; gap: 12px; }
-  .acr-hero-copy h1 { font-size: var(--type-hero-size); }
+  .acr-hero-copy h1 { font-size: clamp(1.75rem, 3.4vw, 2.75rem); }
   .acr-product-scene { min-height: 450px; transform: scale(.84); }
   .acr-process-grid { grid-template-columns: 220px 1fr; gap: 30px; }
   .acr-process-steps article { padding: 0 16px; }
@@ -1137,7 +1137,7 @@ html:has(.mkt-shell) { scroll-padding-top: calc(var(--marketing-header-height) +
   .acr-eyebrow { letter-spacing: var(--tracking-caps) !important; font-size: var(--type-caption-size) !important; }
   .acr-hero-backdrop { background-image: linear-gradient(180deg, rgba(255,255,255,.99), rgba(255,255,255,.88)), url('/images/alphaclone-hero-backdrop.jpg'); }
   .acr-hero-grid { padding: 38px 0 24px; }
-  .acr-hero-copy h1 { margin-top: 15px; font-size: var(--type-hero-size); line-height: var(--type-hero-leading); }
+  .acr-hero-copy h1 { margin-top: 15px; font-size: clamp(1.625rem, 7vw, 2.25rem); line-height: var(--type-hero-leading); }
   .acr-hero-lead { margin-top: 20px; font-size: var(--type-body-size); line-height: var(--type-body-leading); }
   .acr-hero-detail { font-size: var(--type-ui-size); }
   .acr-hero-actions { display: grid; grid-template-columns: 1fr; }

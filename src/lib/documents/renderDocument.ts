@@ -258,6 +258,25 @@ export const DOCUMENT_THEME_PRESETS: Record<DocumentThemeId, DocumentTheme> = {
   },
 };
 
+export interface DocumentSigner {
+  role?: string;
+  name: string;
+  title?: string;
+  email?: string;
+  date?: string;
+  signed?: boolean;
+  signatureUrl?: string;
+  signatureType?: 'drawn' | 'typed';
+}
+
+export interface DocumentAuditCertificate {
+  documentHash?: string;
+  completedAt?: string;
+  eventCount?: number;
+  tamperSeal?: string;
+  verificationUrl?: string;
+}
+
 export interface RenderDocumentInput {
   type: DocumentType;
   themeId?: DocumentThemeId;
@@ -276,6 +295,8 @@ export interface RenderDocumentInput {
   paymentInstructions?: string;
   sections?: Array<{ heading: string; body: string }>;
   status?: string;
+  signers?: DocumentSigner[];
+  auditCertificate?: DocumentAuditCertificate;
 }
 
 function escapeHtml(text: string): string {
@@ -336,6 +357,59 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       </section>`;
       })
       .join('') || '';
+
+  const signersHtml =
+    input.signers && input.signers.length > 0
+      ? `<div class="signature-block" style="margin-top:40px;padding-top:24px;border-top:1px solid #cbd5e1;page-break-inside:avoid;break-inside:avoid;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${primary};margin-bottom:18px;">Execution & Signatures</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:20px;">
+            ${input.signers
+              .map((signer) => {
+                const isSigned = Boolean(signer.signed);
+                const hasSigImg = Boolean(signer.signatureUrl && (signer.signatureUrl.startsWith('data:image') || signer.signatureUrl.startsWith('http')));
+                const typedText = signer.signatureUrl?.replace(/^typed:/i, '') || signer.name;
+
+                return `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:16px;background:#f8fafc;page-break-inside:avoid;break-inside:avoid;">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em;margin-bottom:10px;">${escapeHtml(signer.role || 'Authorized Signatory')}</div>
+                  <div style="min-height:56px;display:flex;align-items:center;margin-bottom:12px;border-bottom:1px dashed #cbd5e1;padding-bottom:8px;">
+                    ${
+                      isSigned
+                        ? hasSigImg
+                          ? `<img src="${escapeHtml(signer.signatureUrl!)}" alt="Signature of ${escapeHtml(signer.name)}" style="max-height:50px;max-width:200px;object-fit:contain;" />`
+                          : `<span style="font-family:'Brush Script MT', 'Dancing Script', 'Caveat', cursive, serif;font-size:26px;color:#1e3a8a;line-height:1.2;">${escapeHtml(typedText)}</span>`
+                        : `<span style="font-size:12px;color:#94a3b8;font-style:italic;">Awaiting signature</span>`
+                    }
+                  </div>
+                  <div style="font-weight:600;font-size:14px;color:#0f172a;">${escapeHtml(signer.name)}</div>
+                  ${signer.title ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${escapeHtml(signer.title)}</div>` : ''}
+                  ${signer.email ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px;">${escapeHtml(signer.email)}</div>` : ''}
+                  <div style="margin-top:12px;padding-top:8px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+                    <span style="color:#64748b;">${isSigned ? (signer.date ? `Signed: ${escapeHtml(signer.date)}` : 'Signed') : 'Status:'}</span>
+                    ${
+                      isSigned
+                        ? `<span style="display:inline-flex;align-items:center;color:#059669;font-weight:600;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 6px;border-radius:4px;font-size:10px;">✓ Electronic Signature</span>`
+                        : `<span style="color:#d97706;font-weight:600;background:#fffbeb;border:1px solid #fde68a;padding:2px 6px;border-radius:4px;font-size:10px;">Pending</span>`
+                    }
+                  </div>
+                </div>`;
+              })
+              .join('')}
+          </div>
+        </div>`
+      : '';
+
+  const auditCertificateHtml =
+    input.auditCertificate && (input.auditCertificate.documentHash || input.auditCertificate.tamperSeal)
+      ? `<div style="margin-top:20px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#475569;page-break-inside:avoid;break-inside:avoid;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#334155;">Cryptographic Audit Certificate</span>
+            <span style="color:#059669;font-weight:600;font-size:10px;text-transform:uppercase;">Tamper-Sealed Verification</span>
+          </div>
+          ${input.auditCertificate.documentHash ? `<div><span style="color:#64748b;">Content Hash (SHA-256):</span> <code style="font-family:monospace;font-size:10px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">${escapeHtml(input.auditCertificate.documentHash)}</code></div>` : ''}
+          ${input.auditCertificate.tamperSeal ? `<div style="margin-top:3px;"><span style="color:#64748b;">Tamper Seal:</span> <code style="font-family:monospace;font-size:10px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">${escapeHtml(input.auditCertificate.tamperSeal)}</code></div>` : ''}
+          ${input.auditCertificate.completedAt ? `<div style="margin-top:3px;"><span style="color:#64748b;">Execution Completed:</span> <span>${escapeHtml(input.auditCertificate.completedAt)}</span></div>` : ''}
+        </div>`
+      : '';
 
   const isAgreement = ['contract'].includes(input.type);
   const showTotalBox = input.total != null && !isAgreement;
@@ -418,6 +492,8 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
     }
     ${input.notes ? `<div style="margin-top:28px;padding:14px;border:1px solid #e2e8f0;border-radius:4px;page-break-inside:avoid;break-inside:avoid;"><strong style="font-size:12px;color:#334155;">Notes</strong><p style="margin:6px 0 0;font-size:12px;color:#64748b;line-height:1.6;">${escapeHtml(input.notes)}</p></div>` : ''}
     ${input.paymentInstructions && !isAgreement ? `<div style="margin-top:16px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;page-break-inside:avoid;break-inside:avoid;"><strong style="font-size:12px;color:#334155;">Payment Details</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;line-height:1.6;">${escapeHtml(input.paymentInstructions)}</p></div>` : ''}
+    ${signersHtml}
+    ${auditCertificateHtml}
     <div class="footer">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>

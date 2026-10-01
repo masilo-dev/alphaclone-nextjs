@@ -25,14 +25,22 @@ export default function AppLegalFooter({ compact = false }: AppLegalFooterProps)
               {COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}
             </p>
           </div>
-          <nav className={`flex flex-wrap ${compact ? 'gap-x-3 gap-y-1 type-ui' : 'gap-x-4 gap-y-2'}`}>
-            <Link className="hover:text-slate-200" href="/privacy-policy">Privacy</Link>
-            <Link className="hover:text-slate-200" href="/terms-of-service">Terms</Link>
-            <Link className="hover:text-slate-200" href="/cookie-policy">Cookies</Link>
+          <nav className={`flex flex-wrap items-center ${compact ? 'gap-x-3 gap-y-1 type-ui' : 'gap-x-4 gap-y-2'}`}>
+            <Link className="hover:text-slate-200" href="/legal/privacy">Privacy</Link>
+            <Link className="hover:text-slate-200" href="/legal/terms">Terms</Link>
+            <Link className="hover:text-slate-200" href="/legal/cookies">Cookies</Link>
+            <Link className="hover:text-slate-200" href="/legal/subprocessors">Subprocessors</Link>
             <Link className="hover:text-slate-200" href="/legal/refund">Refund</Link>
             {!compact ? (
               <Link className="hover:text-slate-200" href="/legal/acceptable-use">Acceptable Use</Link>
             ) : null}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}
+              className="hover:text-teal-300 transition-colors"
+            >
+              Cookie preferences
+            </button>
           </nav>
         </div>
       </div>

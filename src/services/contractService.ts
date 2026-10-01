@@ -602,8 +602,13 @@ export const contractService = {
                 return;
             }
         }
+        if (contract?.id) {
+            await this.downloadPDF(contract, tenant);
+            return;
+        }
+
         const doc = this.generateProfessionalPDF(contract, tenant);
-        doc.save(`${contract.title.replace(/\s+/g, '_')}.pdf`);
+        doc.save(`${(contract?.title || 'Contract').replace(/\s+/g, '_')}.pdf`);
     },
 
     /**

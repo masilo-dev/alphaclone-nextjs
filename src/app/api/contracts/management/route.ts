@@ -14,6 +14,7 @@ import { validateContract } from "@/lib/documents/documentValidationEngine";
 import { runContractLegalConsistencyCheck } from "@/lib/documents/contractLegalPreflight";
 import { resolveContractGoverningLaw } from "@/lib/contracts/contractGoverningLaw";
 import { assessContractContentQuality } from "@/lib/documents/contractContentQuality";
+import { validateContractVariables } from "@/lib/contracts/contractVariables";
 import { generateContractFromTemplate } from "@/services/alphacloneContractTemplate";
 import {
   AlignmentType,
@@ -423,6 +424,15 @@ export async function sendContract(
 
     const metadata = (contract.metadata || {}) as Record<string, unknown>;
     const contractText = String(contract.content || "");
+
+    const variableValidation = validateContractVariables(contractText);
+    if (!variableValidation.valid) {
+      return {
+        success: false,
+        error: `Cannot send contract with unresolved placeholder tokens: ${variableValidation.unresolvedTokens.slice(0, 5).join(', ')}`,
+      };
+    }
+
     const clientName =
       String(contract.client_name || metadata.client_name || "").trim() ||
       undefined;
