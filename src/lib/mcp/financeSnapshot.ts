@@ -71,7 +71,7 @@ export async function getFinanceOperatingSnapshot(tenantId: string) {
     safeQuery(() =>
       supabase
         .from('vendor_bills')
-        .select('id, status, total_amount, amount_paid, due_date')
+        .select('id, status, total, amount_paid, due_date')
         .eq('tenant_id', tenantId)
         .in('status', ['open', 'partial', 'overdue'])
         .limit(100)
@@ -115,7 +115,7 @@ export async function getFinanceOperatingSnapshot(tenantId: string) {
 
   const openBills = billResult.data || [];
   const openBillsTotal = openBills.reduce(
-    (sum, b) => sum + Number(b.total_amount || 0) - Number(b.amount_paid || 0),
+    (sum, b) => sum + Number(b.total || 0) - Number(b.amount_paid || 0),
     0
   );
 
@@ -136,7 +136,7 @@ export async function getFinanceOperatingSnapshot(tenantId: string) {
       bills: openBills.map((b) => ({
         id: b.id,
         status: b.status,
-        owed: Number(b.total_amount || 0) - Number(b.amount_paid || 0),
+        owed: Number(b.total || 0) - Number(b.amount_paid || 0),
         due_date: b.due_date,
       })),
     },
