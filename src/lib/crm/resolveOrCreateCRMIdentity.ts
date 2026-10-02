@@ -30,6 +30,30 @@ export type CRMIdentityInput = {
   external_account_id?: string | null;
   owner_id?: string | null;
   is_test_data?: boolean;
+  score?: number | null;
+  fit_score?: number | null;
+  intelligence_score?: number | null;
+  source_details?: string | null;
+  research_qualification_state?:
+    | 'research_pending'
+    | 'potential_fit'
+    | 'research_qualified'
+    | 'needs_verification'
+    | 'disqualified'
+    | string
+    | null;
+  source_url?: string | null;
+  evidence_urls?: string[] | null;
+  social_urls?: string[] | null;
+  research_date?: string | null;
+  research_method?: string | null;
+  observed_facts?: string[] | null;
+  inferred_opportunities?: string[] | null;
+  evidence_confidence?: string | null;
+  recent_activity_evidence?: string | null;
+  staff_size_evidence?: string | null;
+  email_verification_state?: string | null;
+  suggested_next_action?: string | null;
   metadata?: Record<string, unknown>;
 };
 
@@ -68,7 +92,9 @@ type LeadRow = {
   metadata?: Record<string, unknown> | null;
   client_id?: string | null;
   website?: string | null;
+  score?: number | null;
   source?: string | null;
+  source_details?: string | null;
   deleted_at?: string | null;
 };
 
@@ -259,6 +285,36 @@ async function updateMatchedLead(
   if (!existing.contact_name && input.contact_name) patch.contact_name = input.contact_name;
   if (!existing.email && input.email) patch.email = normalizeEmail(input.email);
   if (!existing.phone && input.phone) patch.phone = normalizePhone(input.phone);
+  if (!existing.website && input.website) patch.website = input.website;
+  const incomingScore = input.score ?? input.fit_score;
+  if ((!existing.score || existing.score === 0) && typeof incomingScore === 'number') {
+    patch.intelligence_score = incomingScore;
+  }
+  if (!existing.source_details && (input.source_details || input.source_url)) {
+    patch.source_details = input.source_details || input.source_url;
+  }
+
+  if (input.fit_score !== undefined || input.score !== undefined || input.research_qualification_state || input.source_url) {
+    const prevResearch = (metadata.research as Record<string, unknown>) || {};
+    metadata.research = {
+      ...prevResearch,
+      qualification_state: input.research_qualification_state || prevResearch.qualification_state || 'research_qualified',
+      fit_score: input.fit_score ?? input.score ?? prevResearch.fit_score ?? null,
+      source_url: input.source_url || prevResearch.source_url || null,
+      evidence_urls: input.evidence_urls || prevResearch.evidence_urls || [],
+      social_urls: input.social_urls || prevResearch.social_urls || [],
+      research_date: input.research_date || prevResearch.research_date || new Date().toISOString().split('T')[0],
+      research_method: input.research_method || prevResearch.research_method || 'chatgpt_public_web_research',
+      observed_facts: input.observed_facts || prevResearch.observed_facts || [],
+      inferred_opportunities: input.inferred_opportunities || prevResearch.inferred_opportunities || [],
+      evidence_confidence: input.evidence_confidence || prevResearch.evidence_confidence || null,
+      recent_activity_evidence: input.recent_activity_evidence || prevResearch.recent_activity_evidence || null,
+      staff_size_evidence: input.staff_size_evidence || prevResearch.staff_size_evidence || null,
+      email_verification_state: input.email_verification_state || prevResearch.email_verification_state || 'unverified',
+      suggested_next_action: input.suggested_next_action || prevResearch.suggested_next_action || null,
+    };
+  }
+
   if (input.notes) {
     const existingNotes = String(existing.notes || '').trim();
     const newNotes = String(input.notes || '').trim();
@@ -286,7 +342,7 @@ async function updateMatchedLead(
     .update(patch)
     .eq('id', existing.id)
     .eq('tenant_id', tenantId)
-    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source')
+    .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, score, source, source_details')
     .single();
 
   if (updateResult.error && isMissingColumnError(updateResult.error)) {
@@ -296,7 +352,7 @@ async function updateMatchedLead(
       .update(fallbackPatch)
       .eq('id', existing.id)
       .eq('tenant_id', tenantId)
-      .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, source')
+      .select('id, email, phone, business_name, contact_name, stage, status, notes, is_test_data, metadata, client_id, website, score, source, source_details')
       .single();
   }
 
@@ -457,23 +513,6 @@ export async function resolveOrCreateCRMIdentity(
           `${input.business_name || ''} ${input.company || ''} ${input.contact_name || ''} ${input.email || ''} ${input.notes || ''}`
         );
 
-  const insertInput: LeadInsertInput = {
-    tenant_id: tenantId,
-    owner_id: input.owner_id ?? userId,
-    business_name: String(primaryName),
-    contact_name: normalizeContactName(input.contact_name),
-    email: normalizedEmail,
-    phone: normalizedPhone,
-    industry: input.industry || null,
-    location: input.location || null,
-    source,
-    notes: input.notes || null,
-    linkedin_url: input.linkedin_url || null,
-    status: 'new',
-    stage: 'lead',
-    is_test_data: isTestData,
-  };
-
   const metadata: Record<string, unknown> = {
     ...(input.metadata || {}),
     identity_sources: [source],
@@ -485,6 +524,48 @@ export async function resolveOrCreateCRMIdentity(
   if (platform && platformAccountId) {
     metadata.external_identities = [{ platform, external_id: platformAccountId }];
   }
+
+  if (input.fit_score !== undefined || input.score !== undefined || input.research_qualification_state || input.source_url) {
+    metadata.research = {
+      qualification_state: input.research_qualification_state || 'research_qualified',
+      fit_score: input.fit_score ?? input.score ?? null,
+      source_url: input.source_url || null,
+      evidence_urls: input.evidence_urls || [],
+      social_urls: input.social_urls || [],
+      research_date: input.research_date || new Date().toISOString().split('T')[0],
+      research_method: input.research_method || 'chatgpt_public_web_research',
+      observed_facts: input.observed_facts || [],
+      inferred_opportunities: input.inferred_opportunities || [],
+      evidence_confidence: input.evidence_confidence || null,
+      recent_activity_evidence: input.recent_activity_evidence || null,
+      staff_size_evidence: input.staff_size_evidence || null,
+      email_verification_state: input.email_verification_state || 'unverified',
+      suggested_next_action: input.suggested_next_action || null,
+    };
+  }
+
+  const insertScore = input.score ?? input.fit_score ?? 0;
+  const insertInput: LeadInsertInput = {
+    tenant_id: tenantId,
+    owner_id: input.owner_id ?? userId,
+    business_name: String(primaryName),
+    contact_name: normalizeContactName(input.contact_name),
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    website: input.website || null,
+    score: insertScore,
+    intelligence_score: input.intelligence_score ?? null,
+    industry: input.industry || null,
+    location: input.location || null,
+    source,
+    source_details: input.source_details || input.source_url || null,
+    notes: input.notes || null,
+    linkedin_url: input.linkedin_url || null,
+    status: 'new',
+    stage: 'lead',
+    metadata,
+    is_test_data: isTestData,
+  };
 
   const { data, error } = await insertLeadWithSchemaCompat(admin, insertInput);
 

@@ -456,7 +456,7 @@ defineConnectorTool({
         to: recipient.email,
         provider: preferredOutbound,
       },
-      execute: async () =>
+      execute: async ({ actionId }) =>
         sendEmailServer({
           tenantId,
           userId,
@@ -478,6 +478,10 @@ defineConnectorTool({
           workflowId: args.workflow_id,
           initiationSource: 'mcp.send_email',
           idempotencyKey,
+          auditMetadata: {
+            action_id: actionId,
+            mcp_tool: 'send_email',
+          },
           attachments: attachments.length
             ? attachments.map((a) => ({
                 filename: a.filename,
@@ -731,13 +735,15 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'email-ops',
   name: 'get_action_status',
-  description: 'Look up MCP action receipt / external action status by action_id or idempotency_key.',
+  description:
+    'Look up execution receipt and live provider outcome by action_id, idempotency_key, or provider reference across email and social publishing operations.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
     action_id: z.string().optional(),
     idempotency_key: z.string().optional(),
     tool: z.string().optional(),
+    provider_reference: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -745,6 +751,7 @@ defineConnectorTool({
       action_id: { type: 'string' },
       idempotency_key: { type: 'string' },
       tool: { type: 'string' },
+      provider_reference: { type: 'string' },
     },
     required: [],
   },
@@ -753,26 +760,200 @@ defineConnectorTool({
     if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const supabase = createSupabaseAdminClient();
 
-    if (args.idempotency_key && args.tool) {
-      const row = await findReceiptByIdempotency({
-        tenantId,
-        tool: args.tool,
-        idempotencyKey: args.idempotency_key,
-      });
-      return okResult('get_action_status', { receipt: row });
+    const actionId = args.action_id?.trim();
+    const idempotencyKey = args.idempotency_key?.trim();
+    const tool = args.tool?.trim();
+    const providerRef = args.provider_reference?.trim();
+
+    if (!actionId && !idempotencyKey && !providerRef) {
+      throwConnectorError('RESOURCE_NOT_FOUND', 'Provide action_id, idempotency_key, or provider_reference');
     }
 
-    if (args.action_id) {
-      const { data } = await supabase
+    // 1. Check mcp_action_receipts by idempotency_key (with tool or general)
+    if (idempotencyKey && tool) {
+      const row = await findReceiptByIdempotency({
+        tenantId,
+        tool,
+        idempotencyKey,
+      });
+      if (row) return okResult('get_action_status', { receipt: row });
+    }
+
+    if (idempotencyKey) {
+      const { data: byIdemp } = await supabase
         .from('mcp_action_receipts')
         .select('*')
         .eq('tenant_id', tenantId)
-        .eq('action_id', args.action_id)
+        .eq('idempotency_key', idempotencyKey)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
-      return okResult('get_action_status', { receipt: data });
+      if (byIdemp) return okResult('get_action_status', { receipt: byIdemp });
     }
 
-    throwConnectorError('RESOURCE_NOT_FOUND', 'Provide action_id or (tool + idempotency_key)');
+    // 2. Check mcp_action_receipts by action_id
+    if (actionId) {
+      const { data: byAction } = await supabase
+        .from('mcp_action_receipts')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .or(`action_id.eq.${actionId},id.eq.${actionId}`)
+        .maybeSingle();
+      if (byAction) return okResult('get_action_status', { receipt: byAction });
+    }
+
+    // 3. Check social_publish_operations (handles Instagram, Facebook, LinkedIn operations)
+    if (actionId || idempotencyKey || providerRef) {
+      let query = supabase
+        .from('social_publish_operations')
+        .select('*')
+        .eq('tenant_id', tenantId);
+
+      const orConditions: string[] = [];
+      if (actionId) {
+        orConditions.push(`id.eq.${actionId}`, `social_post_id.eq.${actionId}`);
+      }
+      if (idempotencyKey) {
+        orConditions.push(`idempotency_key.eq.${idempotencyKey}`);
+      }
+      if (providerRef) {
+        orConditions.push(`provider_post_id.eq.${providerRef}`, `provider_container_id.eq.${providerRef}`);
+      }
+
+      if (orConditions.length > 0) {
+        const { data: socialOp } = await query
+          .or(orConditions.join(','))
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (socialOp) {
+          // If operation is in in-flight/reconcilable state, reconcile on demand
+          let currentOp = socialOp;
+          if (
+            ['provider_processing', 'verifying', 'reconciliation_required'].includes(socialOp.state) &&
+            socialOp.platform === 'instagram'
+          ) {
+            try {
+              const { reconcileInstagramPublishOperation } = await import('@/lib/social/providerAssetPublishers');
+              const reconciled = await reconcileInstagramPublishOperation(socialOp.id);
+              if (reconciled) {
+                const { data: refreshed } = await supabase
+                  .from('social_publish_operations')
+                  .select('*')
+                  .eq('tenant_id', tenantId)
+                  .eq('id', socialOp.id)
+                  .single();
+                if (refreshed) currentOp = refreshed;
+              }
+            } catch (err) {
+              console.warn('[get_action_status] live instagram reconciliation attempt:', err);
+            }
+          }
+
+          const receipt = {
+            id: currentOp.id,
+            action_id: currentOp.id,
+            tenant_id: currentOp.tenant_id,
+            tool: `publish_${currentOp.platform}_post`,
+            provider: currentOp.platform,
+            final_status: currentOp.state,
+            provider_reference: currentOp.provider_post_id || currentOp.provider_container_id,
+            live_url: currentOp.provider_permalink,
+            entity_id: currentOp.social_post_id,
+            entity_type: 'social_post',
+            success: currentOp.state === 'published',
+            created_at: currentOp.created_at,
+            updated_at: currentOp.updated_at,
+            published_at: currentOp.published_at,
+            verification: {
+              verified: Boolean(currentOp.provider_identity_verified),
+              verified_at: currentOp.verification_timestamp,
+            },
+          };
+          return okResult('get_action_status', { receipt });
+        }
+      }
+    }
+
+    // 4. Check external_actions table
+    if (actionId || idempotencyKey || providerRef) {
+      const orConditions: string[] = [];
+      if (actionId) orConditions.push(`action_id.eq.${actionId}`, `id.eq.${actionId}`);
+      if (idempotencyKey) orConditions.push(`idempotency_key.eq.${idempotencyKey}`);
+      if (providerRef) orConditions.push(`provider_reference.eq.${providerRef}`);
+
+      if (orConditions.length > 0) {
+        const { data: extAction } = await supabase
+          .from('external_actions')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .or(orConditions.join(','))
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (extAction) {
+          const receipt = {
+            id: extAction.id,
+            action_id: extAction.action_id || extAction.id,
+            tenant_id: extAction.tenant_id,
+            tool: extAction.tool_name,
+            provider: extAction.provider,
+            final_status: extAction.status,
+            provider_reference: extAction.provider_reference,
+            live_url: extAction.live_url,
+            entity_type: extAction.action_type,
+            success: extAction.status === 'completed' || extAction.status === 'published',
+            created_at: extAction.created_at,
+            completed_at: extAction.completed_at,
+            failure_reason: extAction.failure_reason,
+          };
+          return okResult('get_action_status', { receipt });
+        }
+      }
+    }
+
+    // 5. Check email_logs table
+    if (providerRef || actionId) {
+      const orConditions: string[] = [];
+      if (providerRef) orConditions.push(`email_id.eq.${providerRef}`);
+      if (actionId) orConditions.push(`id.eq.${actionId}`);
+
+      if (orConditions.length > 0) {
+        const { data: emailLog } = await supabase
+          .from('email_logs')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .or(orConditions.join(','))
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (emailLog) {
+          const receipt = {
+            id: emailLog.id,
+            action_id: emailLog.id,
+            tenant_id: emailLog.tenant_id,
+            tool: 'send_email',
+            provider: emailLog.provider,
+            final_status: emailLog.status === 'sent' ? 'provider_accepted' : emailLog.status,
+            provider_reference: emailLog.email_id,
+            recipient: emailLog.to_email,
+            subject: emailLog.subject,
+            entity_type: 'email',
+            success: emailLog.status === 'sent',
+            created_at: emailLog.created_at,
+          };
+          return okResult('get_action_status', { receipt });
+        }
+      }
+    }
+
+    return okResult('get_action_status', {
+      receipt: null,
+      message: 'No record found matching the provided identifier(s).',
+    });
   },
 });
 
@@ -952,7 +1133,7 @@ defineConnectorTool({
   module: 'email-ops',
   name: 'search_emails',
   description:
-    'Search workspace emails by keyword query, recipient email, or project/client context.',
+    'Search workspace outbound emails and drafts across provider dispatches (email_logs, receipts, external actions, project workflows) by recipient email, subject, keyword, action_id, or provider message ID.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
@@ -972,30 +1153,223 @@ defineConnectorTool({
     if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
     const supabase = createSupabaseAdminClient();
 
-    const pattern = `%${args.query.replace(/[%_]/g, '')}%`;
-    const { data: dispatches } = await supabase
-      .from('project_email_dispatches')
-      .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
-      .eq('tenant_id', tenantId)
-      .or(`subject.ilike.${pattern},recipient_email.ilike.${pattern},body_text.ilike.${pattern}`)
-      .order('created_at', { ascending: false })
-      .limit(args.limit || 20);
+    const rawQuery = args.query.trim();
+    const cleanPattern = rawQuery.replace(/[%_]/g, '');
+    const pattern = `%${cleanPattern}%`;
+    const limit = args.limit || 20;
 
-    const matches = (dispatches || []).map((row) => ({
-      message_id: row.id,
-      project_id: row.project_id,
-      client_id: row.client_id,
-      recipient_email: row.recipient_email,
-      subject: row.subject,
-      snippet: (row.body_text || '').slice(0, 150),
-      sent_at: row.sent_at || row.created_at,
-      approval_status: row.approval_status,
-    }));
+    type UnifiedEmailMatch = {
+      message_id: string;
+      action_id?: string;
+      recipient_email: string;
+      subject: string;
+      snippet: string;
+      provider?: string;
+      delivery_status: string;
+      sent_at: string;
+      source: string;
+      evidence: {
+        provider_reference?: string;
+        action_id?: string;
+        verified: boolean;
+        metadata?: unknown;
+      };
+    };
+
+    const matches: UnifiedEmailMatch[] = [];
+    const seenKeys = new Set<string>();
+
+    // 1. Search email_logs (direct provider outbound dispatches via Brevo, Zoho, Gmail, etc.)
+    try {
+      const { data: logs } = await supabase
+        .from('email_logs')
+        .select('id, to_email, subject, status, email_id, provider, created_at, metadata')
+        .eq('tenant_id', tenantId)
+        .or(`to_email.ilike.${pattern},subject.ilike.${pattern},email_id.ilike.${pattern}`)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      for (const log of logs || []) {
+        const key = log.email_id || log.id;
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+
+        const statusNormalized =
+          log.status === 'sent'
+            ? 'provider_accepted'
+            : log.status || 'unknown';
+
+        matches.push({
+          message_id: log.email_id || log.id,
+          action_id: (log.metadata as { action_id?: string })?.action_id,
+          recipient_email: log.to_email || '',
+          subject: log.subject || '(no subject)',
+          snippet: `Provider: ${log.provider || 'unknown'}, status: ${statusNormalized}`,
+          provider: log.provider || undefined,
+          delivery_status: statusNormalized,
+          sent_at: log.created_at,
+          source: 'email_logs',
+          evidence: {
+            provider_reference: log.email_id || undefined,
+            verified: Boolean(log.email_id),
+            metadata: log.metadata,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[search_emails] email_logs query error:', err);
+    }
+
+    // 2. Search mcp_action_receipts (where tool = 'send_email')
+    try {
+      const { data: receipts } = await supabase
+        .from('mcp_action_receipts')
+        .select('id, action_id, idempotency_key, tool, final_status, provider, provider_reference, sanitized_input, sanitized_output, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('tool', 'send_email')
+        .order('created_at', { ascending: false })
+        .limit(limit * 2);
+
+      const qLower = cleanPattern.toLowerCase();
+      for (const rec of receipts || []) {
+        const inputStr = JSON.stringify(rec.sanitized_input || '').toLowerCase();
+        const outputStr = JSON.stringify(rec.sanitized_output || '').toLowerCase();
+        const actionMatches =
+          (rec.action_id && rec.action_id.toLowerCase().includes(qLower)) ||
+          (rec.provider_reference && rec.provider_reference.toLowerCase().includes(qLower)) ||
+          inputStr.includes(qLower) ||
+          outputStr.includes(qLower);
+
+        if (!actionMatches) continue;
+
+        const key = rec.provider_reference || rec.action_id || rec.id;
+        if (seenKeys.has(key)) {
+          // If we already saw this from email_logs, enrich action_id
+          const existing = matches.find((m) => m.evidence.provider_reference === rec.provider_reference || m.message_id === rec.provider_reference);
+          if (existing && !existing.action_id && rec.action_id) {
+            existing.action_id = rec.action_id;
+            existing.evidence.action_id = rec.action_id;
+          }
+          continue;
+        }
+        seenKeys.add(key);
+
+        const target = (rec.sanitized_input as { target?: { resource_id?: string }; to?: string })?.target;
+        const recipient = target?.resource_id || (rec.sanitized_input as { to?: string })?.to || '';
+
+        matches.push({
+          message_id: rec.provider_reference || rec.action_id || rec.id,
+          action_id: rec.action_id || undefined,
+          recipient_email: recipient,
+          subject: (rec.sanitized_input as { subject?: string })?.subject || '(action receipt)',
+          snippet: `Action ID: ${rec.action_id}, Status: ${rec.final_status}`,
+          provider: rec.provider || undefined,
+          delivery_status: rec.final_status === 'completed' ? 'provider_accepted' : rec.final_status || 'unknown',
+          sent_at: rec.created_at,
+          source: 'mcp_action_receipts',
+          evidence: {
+            provider_reference: rec.provider_reference || undefined,
+            action_id: rec.action_id || undefined,
+            verified: Boolean(rec.provider_reference),
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[search_emails] mcp_action_receipts query error:', err);
+    }
+
+    // 3. Search external_actions (where action_type = 'email' or tool_name = 'send_email')
+    try {
+      const { data: actions } = await supabase
+        .from('external_actions')
+        .select('id, action_id, tool_name, action_type, status, provider, provider_reference, payload, target, created_at, completed_at')
+        .eq('tenant_id', tenantId)
+        .or('action_type.eq.email,tool_name.eq.send_email')
+        .order('created_at', { ascending: false })
+        .limit(limit * 2);
+
+      const qLower = cleanPattern.toLowerCase();
+      for (const act of actions || []) {
+        const payloadStr = JSON.stringify(act.payload || '').toLowerCase();
+        const actMatches =
+          (act.action_id && act.action_id.toLowerCase().includes(qLower)) ||
+          (act.provider_reference && act.provider_reference.toLowerCase().includes(qLower)) ||
+          payloadStr.includes(qLower);
+
+        if (!actMatches) continue;
+
+        const key = act.provider_reference || act.action_id || act.id;
+        if (seenKeys.has(key)) {
+          const existing = matches.find((m) => m.evidence.provider_reference === act.provider_reference || m.action_id === act.action_id);
+          if (existing && !existing.action_id && act.action_id) {
+            existing.action_id = act.action_id;
+            existing.evidence.action_id = act.action_id;
+          }
+          continue;
+        }
+        seenKeys.add(key);
+
+        const payload = (act.payload as { to?: string; subject?: string }) || {};
+        matches.push({
+          message_id: act.provider_reference || act.action_id || act.id,
+          action_id: act.action_id || undefined,
+          recipient_email: payload.to || (act.target as { resource_id?: string })?.resource_id || '',
+          subject: payload.subject || '(external action)',
+          snippet: `Action: ${act.tool_name}, Status: ${act.status}`,
+          provider: act.provider || undefined,
+          delivery_status: act.status === 'completed' ? 'provider_accepted' : act.status,
+          sent_at: act.completed_at || act.created_at,
+          source: 'external_actions',
+          evidence: {
+            provider_reference: act.provider_reference || undefined,
+            action_id: act.action_id || undefined,
+            verified: Boolean(act.provider_reference),
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[search_emails] external_actions query error:', err);
+    }
+
+    // 4. Search project_email_dispatches (internal workflow emails and drafts)
+    try {
+      const { data: dispatches } = await supabase
+        .from('project_email_dispatches')
+        .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
+        .eq('tenant_id', tenantId)
+        .or(`subject.ilike.${pattern},recipient_email.ilike.${pattern},body_text.ilike.${pattern}`)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      for (const row of dispatches || []) {
+        if (seenKeys.has(row.id)) continue;
+        seenKeys.add(row.id);
+
+        matches.push({
+          message_id: row.id,
+          recipient_email: row.recipient_email,
+          subject: row.subject,
+          snippet: (row.body_text || '').slice(0, 150),
+          sent_at: row.sent_at || row.created_at,
+          delivery_status: row.approval_status === 'sent' ? 'provider_accepted' : row.approval_status || 'draft',
+          source: 'project_email_dispatches',
+          evidence: {
+            verified: Boolean(row.sent_at),
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('[search_emails] project_email_dispatches query error:', err);
+    }
+
+    // Sort all matches by timestamp descending and apply limit
+    matches.sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+    const finalMatches = matches.slice(0, limit);
 
     return okResult('search_emails', {
       query: args.query,
-      count: matches.length,
-      matches,
+      count: finalMatches.length,
+      matches: finalMatches,
     });
   },
 });

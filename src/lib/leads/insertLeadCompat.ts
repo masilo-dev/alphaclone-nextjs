@@ -8,13 +8,18 @@ export type LeadInsertInput = {
   contact_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  website?: string | null;
+  score?: number | null;
+  intelligence_score?: number | null;
   industry?: string | null;
   location?: string | null;
   source?: string | null;
+  source_details?: string | null;
   notes?: string | null;
   linkedin_url?: string | null;
   status?: string;
   stage?: string;
+  metadata?: Record<string, unknown> | null;
   is_test_data?: boolean;
   created_at?: string;
 };
@@ -27,13 +32,17 @@ function buildFullPayload(input: LeadInsertInput, now: string): Record<string, u
     contact_name: input.contact_name ?? null,
     email: input.email ?? null,
     phone: input.phone ?? null,
+    website: input.website ?? null,
+    intelligence_score: input.intelligence_score ?? input.score ?? null,
     industry: input.industry ?? null,
     location: input.location ?? null,
     source: input.source ?? 'mcp_connector',
+    source_details: input.source_details ?? null,
     notes: input.notes ?? null,
     linkedin_url: input.linkedin_url ?? null,
     status: input.status ?? 'new',
     stage: input.stage ?? 'new',
+    metadata: input.metadata ?? null,
     is_test_data: Boolean(input.is_test_data),
     created_at: input.created_at ?? now,
     updated_at: now,

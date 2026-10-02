@@ -231,6 +231,22 @@ export async function executeMcpWrite<TResult>(
     payload: params.payload,
   });
 
+  await persistActionReceipt({
+    tenantId: params.tenantId,
+    userId: params.userId,
+    tool: params.tool,
+    idempotencyKey,
+    receipt: {
+      action_id: actionId,
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      entity_type: params.target.resource_type || undefined,
+    },
+    success: false,
+    sanitizedInput: { target: params.target, mode: params.mode },
+    sanitizedOutput: null,
+  }).catch(() => undefined);
+
   try {
     const result = await params.execute({ actionId, correlationId });
     const isSuccess = params.isSuccess ? params.isSuccess(result) : true;

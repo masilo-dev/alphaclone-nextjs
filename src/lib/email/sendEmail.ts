@@ -165,20 +165,38 @@ export async function sendEmail(
         continue;
       }
 
-      const providerResult = await sendWithProviderSdk(config.provider as EmailProvider, {
-        apiKey: config.apiKey,
-        fromEmail,
-        fromName,
-        to: payload.to,
-        subject: normalizedSubject,
-        html: normalizedHtml,
-        text: normalizedText,
-        replyTo: payload.reply_to || payload.replyTo,
-        listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
-        attachments: normalizeEmailAttachments(payload.attachments),
-        userId: config.ownerUserId || payload.userId,
-        tenantId,
-      });
+      const PROVIDER_TIMEOUT_MS = Number(process.env.EMAIL_PROVIDER_SEND_TIMEOUT_MS || 8_000);
+      let providerResult: Awaited<ReturnType<typeof sendWithProviderSdk>>;
+      try {
+        providerResult = await Promise.race([
+          sendWithProviderSdk(config.provider as EmailProvider, {
+            apiKey: config.apiKey,
+            fromEmail,
+            fromName,
+            to: payload.to,
+            subject: normalizedSubject,
+            html: normalizedHtml,
+            text: normalizedText,
+            replyTo: payload.reply_to || payload.replyTo,
+            listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
+            attachments: normalizeEmailAttachments(payload.attachments),
+            userId: config.ownerUserId || payload.userId,
+            tenantId,
+          }),
+          new Promise<never>((_, reject) => {
+            const timer = setTimeout(() => {
+              reject(new Error(`Provider ${config.provider} timed out after ${PROVIDER_TIMEOUT_MS}ms`));
+            }, PROVIDER_TIMEOUT_MS);
+            if (typeof timer.unref === 'function') timer.unref();
+          }),
+        ]);
+      } catch (providerError) {
+        providerResult = {
+          ok: false,
+          provider: config.provider as EmailProvider,
+          error: providerError instanceof Error ? providerError.message : 'Provider request timed out',
+        };
+      }
 
       if (!providerResult.ok) {
         tried.push({ provider: config.provider, providerAccountId: config.providerAccountId, error: providerResult.error || 'Provider rejected request' });

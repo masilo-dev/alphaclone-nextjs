@@ -2059,16 +2059,69 @@ for (const providerTool of [
       if (args.scheduled_at || args.publish_now === false) {
         throw new Error('Instagram provider scheduling is not enabled for this direct tool; create a scheduled social post instead');
       }
+
+      const idempotencyKey =
+        args.idempotency_key?.trim() || `mcp-${providerTool[0]}-${crypto.randomUUID()}`;
+
+      const { findReceiptByIdempotency, persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
+      const existing = await findReceiptByIdempotency({
+        tenantId,
+        tool: providerTool[0],
+        idempotencyKey,
+      });
+      if (existing?.sanitized_output) {
+        return existing.sanitized_output;
+      }
+
       const { publishInstagramAssets } = await import('@/lib/social/providerAssetPublishers');
-      return publishInstagramAssets({
+      const result = await publishInstagramAssets({
         tenantId,
         userId,
         assetIds: args.asset_ids,
         caption: args.content,
         mode: providerTool[1],
         instagramAccountId: args.identity_id,
-        idempotencyKey: args.idempotency_key,
+        idempotencyKey,
       });
+
+      const receipt = {
+        action_id: result.operation_id || crypto.randomUUID(),
+        status: result.published ? 'published' : result.state || 'provider_processing',
+        provider: 'instagram',
+        provider_reference: result.provider_post_id || result.provider_container_id || undefined,
+        live_url: result.live_url || undefined,
+        entity_id: result.social_post_id || undefined,
+        entity_type: 'social_post',
+        timestamp: result.verification_timestamp || new Date().toISOString(),
+        verification: {
+          verified: Boolean(result.verified),
+          verified_at: result.verification_timestamp,
+        },
+      };
+
+      await persistActionReceipt({
+        tenantId,
+        userId,
+        tool: providerTool[0],
+        idempotencyKey,
+        receipt,
+        success: Boolean(result.published),
+        sanitizedInput: {
+          tool: providerTool[0],
+          caption: args.content,
+          asset_ids: args.asset_ids,
+          identity_id: args.identity_id,
+        },
+        sanitizedOutput: {
+          ...result,
+          receipt,
+        },
+      }).catch(() => undefined);
+
+      return {
+        ...result,
+        receipt,
+      };
     },
   });
 }
@@ -2084,6 +2137,20 @@ for (const providerTool of ['publish_x_image', 'publish_x_video'] as const) {
       if (args.scheduled_at || args.publish_now === false) {
         throw new Error('X provider scheduling is not enabled for this direct tool; create a scheduled social post instead');
       }
+
+      const idempotencyKey =
+        args.idempotency_key?.trim() || `mcp-${providerTool}-${crypto.randomUUID()}`;
+
+      const { findReceiptByIdempotency, persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
+      const existing = await findReceiptByIdempotency({
+        tenantId,
+        tool: providerTool,
+        idempotencyKey,
+      });
+      if (existing?.sanitized_output) {
+        return existing.sanitized_output;
+      }
+
       const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
       const expected = providerTool.endsWith('video') ? 'video/' : 'image/';
       for (const assetId of args.asset_ids) {
@@ -2097,12 +2164,50 @@ for (const providerTool of ['publish_x_image', 'publish_x_video'] as const) {
         }
       }
       const { publishXAssets } = await import('@/lib/social/providerAssetPublishers');
-      return publishXAssets({
+      const result = await publishXAssets({
         tenantId,
         userId,
         assetIds: args.asset_ids,
         content: args.content,
       });
+
+      const receipt = {
+        action_id: result.operation_id || crypto.randomUUID(),
+        status: result.published ? 'published' : result.state || 'provider_processing',
+        provider: 'x',
+        provider_reference: result.provider_post_id || undefined,
+        live_url: result.live_url || undefined,
+        entity_id: result.social_post_id || undefined,
+        entity_type: 'social_post',
+        timestamp: result.verification_timestamp || new Date().toISOString(),
+        verification: {
+          verified: Boolean(result.verified),
+          verified_at: result.verification_timestamp,
+        },
+      };
+
+      await persistActionReceipt({
+        tenantId,
+        userId,
+        tool: providerTool,
+        idempotencyKey,
+        receipt,
+        success: Boolean(result.published),
+        sanitizedInput: {
+          tool: providerTool,
+          content: args.content,
+          asset_ids: args.asset_ids,
+        },
+        sanitizedOutput: {
+          ...result,
+          receipt,
+        },
+      }).catch(() => undefined);
+
+      return {
+        ...result,
+        receipt,
+      };
     },
   });
 }
