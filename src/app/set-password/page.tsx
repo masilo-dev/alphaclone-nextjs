@@ -69,6 +69,7 @@ function SetPasswordContent() {
                 body: JSON.stringify({
                     newPassword,
                     confirmPassword,
+                    token: token || undefined,
                 }),
             });
             const data = await res.json().catch(() => ({}));

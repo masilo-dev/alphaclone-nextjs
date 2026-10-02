@@ -31,6 +31,108 @@ function storeFor(tenantId: string) {
   return memoryStores.get(tenantId)!;
 }
 
+export async function ensureDocumentInStore(tenantId: string, documentId: string) {
+  const store = storeFor(tenantId);
+  if (store.documents.has(documentId)) return store.documents.get(documentId)!;
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data: dbDoc } = await supabase
+      .from('doc_os_documents')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('document_id', documentId)
+      .maybeSingle();
+
+    if (!dbDoc) return null;
+
+    const docRecord: any = {
+      document_id: dbDoc.document_id,
+      tenant_id: dbDoc.tenant_id,
+      client_id: dbDoc.client_id,
+      company_id: dbDoc.company_id,
+      project_id: dbDoc.project_id,
+      document_type: dbDoc.document_type,
+      document_number: dbDoc.document_number,
+      title: dbDoc.title,
+      current_version_id: dbDoc.current_version_id,
+      version: dbDoc.version,
+      status: dbDoc.status,
+      currency: dbDoc.currency,
+      structured_data: dbDoc.structured_data || {},
+      owner_user_id: dbDoc.owner_user_id,
+      created_at: dbDoc.created_at,
+      updated_at: dbDoc.updated_at,
+      checksum: dbDoc.checksum || '',
+      legal_hold: Boolean(dbDoc.legal_hold),
+    };
+
+    store.documents.set(documentId, docRecord);
+
+    const { data: dbVersions } = await supabase
+      .from('doc_os_versions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('document_id', documentId)
+      .order('version_number', { ascending: true });
+
+    if (dbVersions && dbVersions.length > 0) {
+      store.versions.set(
+        documentId,
+        dbVersions.map((v: any) => ({
+          version_id: v.version_id,
+          document_id: v.document_id,
+          version_number: v.version_number,
+          structured_content: v.structured_content || {},
+          checksum: v.checksum || '',
+          mime_type: v.mime_type || 'application/json',
+          created_by_type: v.created_by_type || 'system',
+          created_by_id: v.created_by_id || '',
+          created_by_name: v.created_by_name || 'System',
+          created_at: v.created_at,
+          is_signed: Boolean(v.is_signed),
+          is_immutable: Boolean(v.is_immutable),
+        }))
+      );
+    } else {
+      store.versions.set(documentId, [
+        {
+          version_id: dbDoc.current_version_id || dbDoc.document_id,
+          document_id: dbDoc.document_id,
+          version_number: dbDoc.version || 1,
+          structured_content: dbDoc.structured_data || {},
+          checksum: dbDoc.checksum || '',
+          mime_type: 'application/json',
+          created_by_type: 'system',
+          created_by_id: dbDoc.owner_user_id || 'system',
+          created_by_name: 'System',
+          created_at: dbDoc.created_at,
+          is_signed: false,
+          is_immutable: false,
+        },
+      ]);
+    }
+
+    const { data: dbEvents } = await supabase
+      .from('doc_os_events')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('document_id', documentId);
+
+    if (dbEvents && dbEvents.length > 0) {
+      for (const ev of dbEvents) {
+        if (!store.events.some((e) => e.event_id === ev.event_id)) {
+          store.events.push(ev as any);
+        }
+      }
+    }
+    return docRecord;
+  } catch (err) {
+    console.warn('[document-os] ensureDocumentInStore error:', err);
+    return null;
+  }
+}
+
 async function loadBrand(tenantId: string) {
   const supabase = createSupabaseAdminClient();
   const { data: tenant } = await supabase.from('tenants').select('*').eq('id', tenantId).maybeSingle();
@@ -174,7 +276,7 @@ registerTool('document-os', {
       console.warn('[document-os] persistent DB sync failed:', err);
     }
 
-    return textResult({ success: true, document: doc });
+    return textResult({ success: true, document: doc, document_id: doc.document_id });
   },
 });
 
@@ -544,6 +646,7 @@ registerTool('document-os', {
     required: ['tenant_id', 'document_id'],
   },
   handler: async (args) => {
+    await ensureDocumentInStore(args.tenant_id, args.document_id);
     const brand = await loadBrand(args.tenant_id);
     const svc = new DocumentOsService(storeFor(args.tenant_id), brand);
     try {
@@ -580,6 +683,7 @@ registerTool('document-os', {
     required: ['tenant_id', 'document_id'],
   },
   handler: async (args) => {
+    await ensureDocumentInStore(args.tenant_id, args.document_id);
     const brand = await loadBrand(args.tenant_id);
     const svc = new DocumentOsService(storeFor(args.tenant_id), brand);
     return textResult(svc.getDocument(args.document_id));
@@ -602,6 +706,7 @@ registerTool('document-os', {
     required: ['tenant_id', 'document_id'],
   },
   handler: async (args) => {
+    await ensureDocumentInStore(args.tenant_id, args.document_id);
     const brand = await loadBrand(args.tenant_id);
     const svc = new DocumentOsService(storeFor(args.tenant_id), brand);
     return textResult({ versions: svc.listVersions(args.document_id) });
@@ -1170,6 +1275,7 @@ registerTool('document-os', {
     required: ['tenant_id', 'document_id'],
   },
   handler: async (args) => {
+    await ensureDocumentInStore(args.tenant_id, args.document_id);
     const brand = await loadBrand(args.tenant_id);
     const svc = new DocumentOsService(storeFor(args.tenant_id), brand);
     return textResult({

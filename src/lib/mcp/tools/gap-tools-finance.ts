@@ -297,8 +297,37 @@ registerTool('gap-finance', {
       return { content: [{ type: 'text', text: JSON.stringify({ error: fetchErr?.message || 'Quote not found' }) }] };
     }
 
+    const { data: items } = await supabase
+      .from('quote_items')
+      .select('*')
+      .eq('quote_id', args.quote_id)
+      .order('item_order', { ascending: true });
+
+    let pdfBuffer: Buffer | null = null;
+    let pdfUrl: string | null = quote.pdf_url || null;
+    try {
+      const { generateThemedQuotePdfBuffer } = await import('@/lib/documents/themedDocumentPdf');
+      const { data: tenantRow } = await supabase.from('tenants').select('*').eq('id', args.tenant_id).maybeSingle();
+      pdfBuffer = await generateThemedQuotePdfBuffer(quote, items || [], tenantRow);
+    } catch (err: any) {
+      console.warn('[MCP send_quote] PDF generation failed:', err?.message || err);
+    }
+
+    if (pdfBuffer && !pdfUrl) {
+      try {
+        const filePath = `tenant/${args.tenant_id}/quotes/Quote_${quote.quote_number || quote.id}.pdf`;
+        await supabase.storage.from('uploads').upload(filePath, pdfBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
+        pdfUrl = `/api/storage/uploads/${filePath}`;
+      } catch (err: any) {
+        console.warn('[MCP send_quote] PDF storage failed:', err?.message || err);
+      }
+    }
+
     const recipient = args.recipient_email || quote.client_email;
-    let emailResult = null;
+    let emailResult: any = null;
 
     if (recipient) {
       try {
@@ -308,10 +337,53 @@ registerTool('gap-finance', {
           subject: `Quotation: ${quote.name || quote.quote_number}`,
           html: `<p>Hello,</p><p>Please review quotation <strong>${quote.quote_number}</strong> for ${quote.currency || 'EUR'} ${quote.total_amount}.</p>`,
           text: `Quotation ${quote.quote_number} for ${quote.currency || 'EUR'} ${quote.total_amount}.`,
+          attachments: pdfBuffer
+            ? [
+                {
+                  filename: `Quote_${quote.quote_number || 'document'}.pdf`,
+                  content: pdfBuffer.toString('base64'),
+                  contentType: 'application/pdf',
+                },
+              ]
+            : undefined,
         });
       } catch (err: any) {
         console.warn('[MCP send_quote] email send failed:', err?.message || err);
       }
+    }
+
+    const providerAccepted = Boolean(emailResult?.success);
+    const messageId = emailResult?.messageId ?? null;
+
+    if (!providerAccepted) {
+      if (pdfUrl && pdfUrl !== quote.pdf_url) {
+        await supabase
+          .from('quotes')
+          .update({ pdf_url: pdfUrl })
+          .eq('id', args.quote_id)
+          .eq('tenant_id', args.tenant_id);
+      }
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                status: 'failed',
+                sent: false,
+                quote: { ...quote, pdf_url: pdfUrl },
+                recipient_email: recipient || null,
+                provider_accepted: false,
+                message_id: null,
+                pdf_url: pdfUrl,
+                error: emailResult?.error || (recipient ? 'Email delivery failed' : 'No recipient email specified'),
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     }
 
     const { data: updated, error } = await supabase
@@ -319,6 +391,7 @@ registerTool('gap-finance', {
       .update({
         status: 'sent',
         sent_at: new Date().toISOString(),
+        pdf_url: pdfUrl || quote.pdf_url,
       })
       .eq('id', args.quote_id)
       .eq('tenant_id', args.tenant_id)
@@ -331,14 +404,19 @@ registerTool('gap-finance', {
       content: [
         {
           type: 'text',
-          text: JSON.stringify({
-            status: emailResult?.success ? 'delivered' : 'sent',
-            sent: true,
-            quote: updated,
-            recipient_email: recipient || null,
-            provider_accepted: emailResult?.success ?? false,
-            message_id: emailResult?.messageId ?? null,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              status: 'sent',
+              sent: true,
+              quote: updated,
+              recipient_email: recipient || null,
+              provider_accepted: true,
+              message_id: messageId,
+              pdf_url: pdfUrl || updated.pdf_url,
+            },
+            null,
+            2
+          ),
         },
       ],
     };

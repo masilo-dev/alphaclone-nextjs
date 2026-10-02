@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
 import { insertTenantNotification } from './insertTenantNotification';
 import { bufferNotificationDigestEvent } from '@/lib/email/notificationDigestEngine';
+import { sendPushToUser } from '@/lib/push/sendPushToUser';
 
 export type NotificationLevel = 'level1_record_only' | 'level2_digest' | 'level3_urgent_email';
 
@@ -53,6 +54,7 @@ export interface DispatchNotificationOptions {
 export interface DispatchNotificationResult {
   inAppCreated: boolean;
   emailSent: boolean;
+  pushesSent?: number;
   recipientEmail?: string;
   recipientUserId?: string;
   activityLogId?: string;
@@ -185,6 +187,29 @@ export async function dispatchBusinessNotification(
 
     if (inserted.created) {
       result.inAppCreated = true;
+
+      // Deliver Web Push to recipient's registered devices so they receive it on phone/PWA
+      try {
+        const pushResult = await sendPushToUser(
+          target.userId,
+          {
+            title: options.title,
+            body: options.message,
+            url: options.actionUrl || '/dashboard',
+            tag: options.type,
+            data: {
+              tenantId: options.tenantId,
+              type: options.type,
+              entityType: options.relatedRecordType,
+              entityId: options.relatedRecordId,
+            },
+          },
+          options.tenantId
+        );
+        result.pushesSent = pushResult.sent;
+      } catch (pushErr) {
+        console.warn('[dispatchBusinessNotification] Web push delivery failed (non-blocking):', pushErr);
+      }
     } else if (inserted.error && inserted.error !== 'duplicate') {
       console.warn('[dispatchBusinessNotification] In-app notification insert error:', inserted.error);
     }

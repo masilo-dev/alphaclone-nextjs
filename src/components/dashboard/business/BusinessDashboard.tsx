@@ -1312,18 +1312,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {mailToolsOpen ? t('Hide workspace tools') : t('Show workspace tools')}
                     </button>
                 ) : null}
-                <header id="business-workspace-tools" className={`min-h-14 h-auto md:h-14 pt-safe md:pt-0 border-b border-[var(--ws-border)] items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${isMailWorkspace && !mailToolsOpen ? 'hidden' : route === '/dashboard/pwa-settings' ? 'hidden md:flex' : 'flex'}`}>
+                <header id="business-workspace-tools" className={`h-12 md:h-14 border-b border-[var(--ws-border)] items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-20 w-full ac-business-header ac-workspace-toolbar ${isMailWorkspace && !mailToolsOpen ? 'hidden' : route === '/dashboard/pwa-settings' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Left: Menu & Mobile Logo */}
-                    <div className="flex items-center gap-4">
-                        {/* Mobile Menu Toggle removed - BottomNav handles it */}
-
+                    <div className="flex items-center gap-3">
                         <div className="ac-pwa-touch-flex flex items-center md:hidden">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone"
-                                width={34}
-                                height={34}
-                                className="rounded-lg flex-shrink-0"
+                                width={28}
+                                height={28}
+                                className="rounded-md flex-shrink-0"
                                 priority
                             />
                         </div>
@@ -1331,7 +1329,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
                         {!isHubRoute(route) && (
                         <div className="ac-pwa-desktop-only hidden md:block">
-                            <h1 className="text-lg font-bold text-white/90 tracking-tight">
+                            <h1 className="text-base md:text-lg font-bold text-white/90 tracking-tight">
                                 {getPageTitle()}
                             </h1>
                         </div>
@@ -1448,14 +1446,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             <Bot className="h-4 w-4" aria-hidden="true" />
                             <span className="hidden xl:inline">{t('Ask Bonnie')}</span>
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('/dashboard/business/bonnie')}
-                            className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--brand-violet-500)]/30 bg-[var(--brand-violet-500)]/10 text-[var(--brand-violet-300)] active:scale-95 md:hidden"
-                            aria-label={t('Open Bonnie AI')}
-                        >
-                            <Bot className="h-5 w-5" aria-hidden="true" />
-                        </button>
+
 
                         <div data-tour="global-search" className="ac-pwa-desktop-only hidden lg:block">
                             <EnhancedGlobalSearch

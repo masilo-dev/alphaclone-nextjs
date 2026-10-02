@@ -79,6 +79,7 @@ export function buildQuoteDocumentInput(
     documentNumber: String(quote.quote_number || ''),
     clientName: String(quote.name || 'Client'),
     clientEmail: String(meta.client_email || ''),
+    currency: String(quote.currency || meta.currency || 'EUR'),
     issueDate: quote.created_at
       ? new Date(String(quote.created_at)).toLocaleDateString()
       : undefined,
@@ -123,6 +124,7 @@ export function buildInvoiceDocumentInput(
     documentNumber: String(invoice.invoice_number || ''),
     clientName: client?.name || String(invoice.client_name || 'Client'),
     clientEmail: client?.email,
+    currency: String(invoice.currency || meta.currency || 'EUR'),
     issueDate: invoice.issue_date
       ? new Date(String(invoice.issue_date)).toLocaleDateString()
       : invoice.created_at
@@ -271,6 +273,7 @@ export function buildContractDocumentInput(
       client?.name ||
       String(meta.client_name || contract.client_name || 'Client'),
     clientEmail: client?.email || String(meta.client_email || contract.client_email || ''),
+    currency: String(contract.currency || meta.currency || 'EUR'),
     issueDate: contract.created_at
       ? new Date(String(contract.created_at)).toLocaleDateString()
       : new Date().toLocaleDateString(),

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Bell, BellOff, Smartphone, Check } from 'lucide-react';
 import { User } from '@/types';
 import { usePWA } from '@/contexts/PWAContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { usePwaPreferences } from '@/hooks/usePwaPreferences';
 import {
@@ -27,6 +28,7 @@ interface PwaSettingsScreenProps {
 
 export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenProps) {
   const router = useRouter();
+  const { currentTenant } = useTenant();
   const { isPWA } = usePWA();
   const { prefs, updatePrefs } = usePwaPreferences();
   const { pushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush } = usePushNotifications();
@@ -92,12 +94,12 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
           title="Phone alerts"
           subtitle={
             !pushSupported
-              ? 'Not supported'
+              ? 'Not supported by this browser'
               : permission === 'denied'
-                ? 'Blocked in system settings'
+                ? 'Blocked in browser permissions'
                 : isSubscribed
-                  ? 'Messages & calls'
-                  : 'Tap to enable'
+                  ? 'Active on this device'
+                  : 'Tap toggle to activate'
           }
           trailing={
             <NativeSwitch
@@ -107,6 +109,77 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
             />
           }
         />
+        {permission === 'denied' ? (
+          <div className="px-4 py-2.5 bg-amber-500/10 border-t border-amber-500/20 text-xs text-amber-300">
+            Notifications are blocked. Open browser or system site settings and allow notifications for AlphaClone.
+          </div>
+        ) : null}
+
+        {/* Test Alert Button */}
+        {pushSupported && permission !== 'denied' ? (
+          <div className="p-3 border-t border-white/5 flex items-center justify-between">
+            <span className="text-xs text-slate-400">Verify device delivery</span>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                if (!currentTenant?.id) {
+                  alert('No active organization found.');
+                  return;
+                }
+                setBusy(true);
+                try {
+                  const res = await fetch('/api/notifications/test-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenantId: currentTenant.id }),
+                  });
+                  const data = await res.json();
+                  alert(data.message || (data.success ? 'Test alert sent!' : 'Delivery test failed.'));
+                } catch {
+                  alert('Failed to send test push.');
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="px-3 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-semibold transition-colors"
+            >
+              Send test alert
+            </button>
+          </div>
+        ) : null}
+      </NativeSection>
+
+      <NativeSection title="Alert categories">
+        {(
+          [
+            { key: 'leads', label: 'Leads & CRM updates', sub: 'New leads, score changes & outreach' },
+            { key: 'projects', label: 'Projects & tasks', sub: 'Milestones, assignments & blockers' },
+            { key: 'billing', label: 'Invoices & payments', sub: 'Paid invoices and payment reminders' },
+            { key: 'contracts', label: 'Contracts & signatures', sub: 'Executed agreements & sign requests' },
+            { key: 'messages', label: 'Messages & Bonnie tasks', sub: 'Direct chats and automated reports' },
+          ] as const
+        ).map((cat) => (
+          <NativeListTile
+            key={cat.key}
+            title={cat.label}
+            subtitle={cat.sub}
+            trailing={
+              <NativeSwitch
+                checked={prefs.categories?.[cat.key] ?? true}
+                onChange={(v) =>
+                  updatePrefs({
+                    categories: {
+                      ...(prefs.categories || {}),
+                      [cat.key]: v,
+                    },
+                  })
+                }
+                disabled={!prefs.pushEnabled}
+              />
+            }
+          />
+        ))}
       </NativeSection>
 
       <NativeSection title={`Bottom bar · ${prefs.bottomNavModuleIds.length}/${PWA_MAX_BOTTOM_SLOTS}`}>

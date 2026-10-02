@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
   try {
     const input = z.object({ tenantId: z.string().uuid(), subscription: subscriptionSchema }).parse(await req.json());
     const { user, admin } = await requireTenantAccess(input.tenantId);
-    const { data: existing, error: findError } = await admin.from('push_subscriptions').select('id')
-      .eq('user_id', user.id).eq('endpoint', input.subscription.endpoint).maybeSingle();
+    const { data: existing, error: findError } = await admin.from('push_subscriptions').select('id, user_id')
+      .eq('endpoint', input.subscription.endpoint).maybeSingle();
     if (findError) throw findError;
     const values = { user_id: user.id, tenant_id: input.tenantId, subscription: input.subscription, endpoint: input.subscription.endpoint, keys: input.subscription.keys, updated_at: new Date().toISOString() };
     const result = existing
-      ? await admin.from('push_subscriptions').update(values).eq('id', existing.id).eq('user_id', user.id)
+      ? await admin.from('push_subscriptions').update(values).eq('id', existing.id)
       : await admin.from('push_subscriptions').insert(values);
     if (result.error) throw result.error;
     return NextResponse.json({ success: true });

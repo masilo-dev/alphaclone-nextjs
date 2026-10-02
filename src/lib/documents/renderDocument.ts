@@ -285,6 +285,7 @@ export interface RenderDocumentInput {
   documentNumber?: string;
   clientName?: string;
   clientEmail?: string;
+  currency?: string;
   issueDate?: string;
   dueDate?: string;
   lineItems?: Array<{ description: string; quantity: number; rate: number; amount: number }>;
@@ -297,6 +298,24 @@ export interface RenderDocumentInput {
   status?: string;
   signers?: DocumentSigner[];
   auditCertificate?: DocumentAuditCertificate;
+}
+
+export function formatDocumentCurrency(amount: number | null | undefined, currency: string = 'EUR'): string {
+  if (amount == null || isNaN(Number(amount))) return '';
+  const num = Number(amount);
+  const code = (currency || 'EUR').toUpperCase();
+  const symbolMap: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    CAD: 'CA$',
+    AUD: 'AU$',
+    JPY: '¥',
+    CHF: 'CHF ',
+    ZAR: 'R ',
+  };
+  const sym = symbolMap[code] || `${code} `;
+  return `${sym}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function escapeHtml(text: string): string {
@@ -312,6 +331,7 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   const branding = input.branding || { name: 'Your Business' };
   const primary = branding.primaryBrandColor || branding.primaryColor || theme.primaryColor || '#0f172a';
   const accent = theme.accentColor;
+  const docCurrency = input.currency || 'EUR';
 
   const lineItemsHtml =
     input.lineItems && input.lineItems.length > 0
@@ -328,8 +348,8 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
                 (item) => `<tr style="border-bottom:1px solid #f1f5f9;page-break-inside:avoid;break-inside:avoid;">
               <td style="padding:12px;font-weight:500;color:#0f172a;">${escapeHtml(item.description)}</td>
               <td style="padding:12px;text-align:right;color:#334155;font-family:monospace;">${item.quantity}</td>
-              <td style="padding:12px;text-align:right;color:#334155;font-family:monospace;">$${item.rate.toFixed(2)}</td>
-              <td style="padding:12px;text-align:right;font-weight:600;color:#0f172a;font-family:monospace;">$${item.amount.toFixed(2)}</td>
+              <td style="padding:12px;text-align:right;color:#334155;font-family:monospace;">${formatDocumentCurrency(item.rate, docCurrency)}</td>
+              <td style="padding:12px;text-align:right;font-weight:600;color:#0f172a;font-family:monospace;">${formatDocumentCurrency(item.amount, docCurrency)}</td>
             </tr>`
               )
               .join('')}
@@ -485,8 +505,8 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       showTotalBox
         ? `<div class="total-box">
             <div style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;">Total Due</div>
-            <div class="total-amount">$${input.total!.toFixed(2)}</div>
-            ${input.subtotal != null ? `<div style="color:#64748b;font-size:12px;margin-top:6px;">Subtotal: $${input.subtotal.toFixed(2)}${input.tax != null ? ` · Tax: $${input.tax.toFixed(2)}` : ''}</div>` : ''}
+            <div class="total-amount">${formatDocumentCurrency(input.total, docCurrency)}</div>
+            ${input.subtotal != null ? `<div style="color:#64748b;font-size:12px;margin-top:6px;">Subtotal: ${formatDocumentCurrency(input.subtotal, docCurrency)}${input.tax != null ? ` · Tax: ${formatDocumentCurrency(input.tax, docCurrency)}` : ''}</div>` : ''}
           </div>`
         : ''
     }

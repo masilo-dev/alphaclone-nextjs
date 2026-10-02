@@ -1430,9 +1430,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className={`flex-1 min-h-[min(68dvh,640px)] lg:min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
-                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-10 shrink-0">
-                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] type-ui font-medium">
-                                        <ChevronLeft className="w-5 h-5" /> Back
+                                <div className="lg:hidden flex items-center justify-between px-3 py-2.5 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-10 shrink-0">
+                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-1.5 text-[var(--brand-blue-400)] text-sm font-medium">
+                                        <ChevronLeft className="w-4 h-4" /> Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
                                         {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
@@ -1440,7 +1440,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="flex flex-1 min-h-0 gap-4">
-                                <div className="min-w-0 p-6 flex flex-col flex-1 ac-scroll-pane custom-scrollbar">
+                                <div className="min-w-0 p-3 sm:p-5 lg:p-6 flex flex-col flex-1 ac-scroll-pane custom-scrollbar">
                                     <RecordHeader
                                         moduleId="crm"
                                         className="mb-4"

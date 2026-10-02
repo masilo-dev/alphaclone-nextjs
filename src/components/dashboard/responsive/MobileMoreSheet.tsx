@@ -63,15 +63,15 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                       <button
                         type="button"
                         onClick={() => go(item.href)}
-                        className="native-tap w-full flex items-center gap-3 min-h-14 px-3 rounded-[12px] text-left type-ui text-[var(--text-primary)] hover:bg-[var(--surface-hover)] active:scale-[0.99]"
+                        className="native-tap w-full flex items-center gap-2.5 min-h-11 py-1 px-2.5 rounded-xl text-left text-sm text-[var(--text-primary)] hover:bg-[var(--surface-hover)] active:scale-[0.99]"
                       >
-                        <span className="w-10 h-10 rounded-xl bg-[color-mix(in_srgb,var(--ac-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--ac-accent)_20%,transparent)] flex items-center justify-center shrink-0">
-                          <Icon className="w-4 h-4 text-[var(--ac-accent)]" aria-hidden />
+                        <span className="w-8 h-8 rounded-lg bg-[color-mix(in_srgb,var(--ac-accent)_10%,transparent)] border border-[color-mix(in_srgb,var(--ac-accent)_20%,transparent)] flex items-center justify-center shrink-0">
+                          <Icon className="w-3.5 h-3.5 text-[var(--ac-accent)]" aria-hidden />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block font-medium truncate">{t(item.label)}</span>
+                          <span className="block font-medium truncate text-sm">{t(item.label)}</span>
                           {capability.level === 'DESKTOP' ? (
-                            <span className="block type-ui leading-4 text-[var(--text-muted)]">{t('Use on laptop')}</span>
+                            <span className="block text-xs leading-tight text-[var(--text-muted)]">{t('Use on laptop')}</span>
                           ) : null}
                         </span>
                       </button>

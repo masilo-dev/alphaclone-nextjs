@@ -35,7 +35,7 @@ export function RecordHeader({
     <header
       className={cn(
         WORKSPACE.panel.base,
-        'p-4 md:p-5 flex flex-wrap items-start justify-between gap-4',
+        'p-3 sm:p-4 md:p-5 flex flex-wrap items-start justify-between gap-2.5 sm:gap-4',
         className
       )}
       style={{ ['--module-accent' as string]: accent }}
@@ -47,17 +47,17 @@ export function RecordHeader({
             style={{ background: accent }}
             aria-hidden
           />
-          <h1 className="text-2xl leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight truncate">
+          <h1 className="text-lg sm:text-xl md:text-2xl leading-tight font-bold text-[var(--ws-text-primary)] tracking-tight truncate">
             {title}
           </h1>
           {status}
         </div>
         {subtitle ? (
-          <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">{subtitle}</p>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-[var(--ws-text-secondary)]">{subtitle}</p>
         ) : null}
-        {meta ? <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 type-caption text-[var(--ws-text-muted)]">{meta}</div> : null}
+        {meta ? <div className="mt-1.5 sm:mt-2 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-[var(--ws-text-muted)]">{meta}</div> : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">{actions}</div> : null}
     </header>
   );
 }

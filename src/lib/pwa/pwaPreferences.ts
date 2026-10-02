@@ -1,6 +1,15 @@
+export type PwaNotificationCategories = {
+  leads: boolean;
+  projects: boolean;
+  billing: boolean;
+  contracts: boolean;
+  messages: boolean;
+};
+
 export type PwaPreferences = {
   bottomNavModuleIds: string[];
   pushEnabled: boolean;
+  categories: PwaNotificationCategories;
 };
 
 const STORAGE_KEY = 'alphaclone_pwa_prefs_v1';
@@ -9,6 +18,13 @@ const PREF_EVENT = 'alphaclone-pwa-prefs-changed';
 const DEFAULT_PREFS: PwaPreferences = {
   bottomNavModuleIds: ['home', 'crm', 'work', 'money', 'bonnie'],
   pushEnabled: true,
+  categories: {
+    leads: true,
+    projects: true,
+    billing: true,
+    contracts: true,
+    messages: true,
+  },
 };
 
 export function readPwaPreferences(): PwaPreferences {
@@ -22,6 +38,10 @@ export function readPwaPreferences(): PwaPreferences {
         ? parsed.bottomNavModuleIds.slice(0, 5)
         : DEFAULT_PREFS.bottomNavModuleIds,
       pushEnabled: parsed.pushEnabled !== false,
+      categories: {
+        ...DEFAULT_PREFS.categories,
+        ...(parsed.categories || {}),
+      },
     };
   } catch {
     return { ...DEFAULT_PREFS };

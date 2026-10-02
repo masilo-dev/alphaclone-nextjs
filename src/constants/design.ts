@@ -188,11 +188,11 @@ export const ENTERPRISE = {
     wide: '1439px',
   },
   metricCard: {
-    valueSize: 'text-3xl leading-body',
-    labelSize: 'type-ui',
+    valueSize: 'text-xl sm:text-2xl md:text-3xl font-semibold tabular-nums tracking-tight',
+    labelSize: 'type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)]',
     trendSize: 'type-caption',
-    comparisonSize: 'type-ui',
-    minHeight: 'min-h-[112px]',
+    comparisonSize: 'type-caption',
+    minHeight: 'min-h-[84px] md:min-h-[104px]',
     defaultComparison: 'versus previous 30 days',
   },
   moduleLayout: {
@@ -231,18 +231,18 @@ export const WORKSPACE = {
     logoHeight: 'h-14',
   },
   toolbar: {
-    height: 'h-14',
-    padding: 'px-4 md:px-6',
+    height: 'h-12 md:h-14',
+    padding: 'px-3 sm:px-4 md:px-6',
   },
   canvas: {
     maxWidth: 'max-w-[1440px]',
-    padding: 'p-4 md:p-6',
-    gap: 'gap-4 md:gap-5',
+    padding: 'p-3 sm:p-4 md:p-6',
+    gap: 'gap-3 md:gap-5',
   },
   panel: {
     base: 'ac-workspace-panel',
-    radius: 'rounded-[14px]',
-    padding: 'p-4 md:p-5',
+    radius: 'rounded-[12px] md:rounded-[14px]',
+    padding: 'p-3 sm:p-4 md:p-5',
   },
   action: {
     primary: 'ac-workspace-action-btn ac-workspace-action-btn--primary',
@@ -260,11 +260,11 @@ export const WORKSPACE = {
     active: 'ac-workspace-tab--active',
   },
   typography: {
-    pageTitle: 'text-2xl leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
-    sectionLabel: 'type-ui font-medium text-[var(--ws-text-muted)]',
-    panelTitle: 'type-ui font-semibold text-[var(--ws-text-primary)]',
-    panelSubtitle: 'type-ui text-[var(--ws-text-muted)]',
-    sectionTitle: 'text-lg leading-ui font-semibold text-[var(--ws-text-primary)]',
+    pageTitle: 'text-xl sm:text-2xl leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
+    sectionLabel: 'type-caption font-semibold uppercase tracking-label text-[var(--ws-text-muted)]',
+    panelTitle: 'text-base sm:text-lg font-semibold text-[var(--ws-text-primary)]',
+    panelSubtitle: 'type-caption text-[var(--ws-text-muted)]',
+    sectionTitle: 'text-base sm:text-lg font-semibold text-[var(--ws-text-primary)]',
   },
 } as const;
 

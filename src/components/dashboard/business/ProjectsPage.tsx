@@ -347,71 +347,73 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             </AnimatePresence>
 
             {/* Header */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4 min-w-0">
                 <div className="min-w-0">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
-                        <div className="p-2.5 sm:p-3 rounded-[12px] bg-[var(--ws-active)] shrink-0 text-[var(--brand-blue-500)]">
-                            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <div className="flex items-center gap-2 sm:gap-2.5 mb-0.5 min-w-0">
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-[var(--ws-active)] shrink-0 text-[var(--brand-blue-500)]">
+                            <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold text-[var(--ws-text-primary)] tracking-tight break-words">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-[var(--ws-text-primary)] tracking-tight break-words">
                             Projects
                         </h2>
                     </div>
-                    <p className="text-[var(--ws-text-muted)] type-card-description ml-1 mt-2 flex items-center gap-2">
+                    <p className="text-[var(--ws-text-muted)] text-xs sm:text-sm ml-1 mt-1 flex items-center gap-1.5 sm:gap-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--success-500)]"></span>
                         {projects.filter((project) => !isFinishedProject(project)).length} active · {projects.filter((project) => isFinishedProject(project)).length} finished
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full lg:w-auto">
-                    <label className="relative flex-1 lg:w-56">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+                    <label className="relative flex-1 lg:w-52">
                         <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
                         <input
                             value={searchQuery}
                             onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="Search projects…"
                             aria-label="Search projects"
-                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 type-caption text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
+                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 text-xs sm:text-sm text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </label>
-                    <div className="flex p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
+                    <div className="flex p-0.5 sm:p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <LayoutList className="w-3.5 h-3.5" />
                             <span>List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 type-ui font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <Activity className="w-3.5 h-3.5" />
                             <span>Health</span>
                         </button>
                     </div>
 
-                    <button
-                        onClick={() => exportToCSV(projects, 'Projects')}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 type-ui font-bold text-white transition-all hover:bg-slate-800"
-                    >
-                        <Download className="w-3.5 h-3.5" />
-                        Export CSV
-                    </button>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 type-ui font-bold text-slate-900 transition-all hover:bg-[var(--brand-blue-50)] active:scale-95 shadow-xl hover:shadow-white/10"
-                    >
-                        <Plus className="w-3.5 h-3.5" />
-                        New Project
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => exportToCSV(projects, 'Projects')}
+                            className="flex-1 sm:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 text-xs font-semibold text-white transition-all hover:bg-slate-800"
+                        >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Export</span>
+                        </button>
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="flex-1 sm:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-xs font-bold text-slate-900 transition-all hover:bg-[var(--brand-blue-50)] active:scale-95 shadow-xl hover:shadow-white/10"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>New</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             </div>
@@ -545,7 +547,7 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-lg transition-all duration-300 relative overflow-hidden cursor-pointer"
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-center px-3.5 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
         >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
@@ -554,12 +556,12 @@ const ProjectListRow = ({
                 }`} />
 
             {/* Objective Detail */}
-            <div className="col-span-1 lg:col-span-5 flex items-center gap-4">
-                <div className={`p-3 rounded-xl bg-slate-950 border border-white/5 shadow-inner`}>
-                    <Briefcase className="w-5 h-5 text-slate-400" />
+            <div className="col-span-1 lg:col-span-5 flex items-center gap-3 sm:gap-4">
+                <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-950 border border-white/5 shadow-inner shrink-0`}>
+                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="type-ui font-bold text-slate-200 group-hover:text-white transition-colors truncate">
+                    <h4 className="text-sm sm:text-base font-semibold text-slate-200 group-hover:text-white transition-colors truncate">
                         {project.name}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">

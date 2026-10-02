@@ -66,18 +66,23 @@ export default function BonnieLauncher() {
     openBonniePopoutWindow(pathname || undefined);
   };
 
+  // If user is already on Bonnie workspace, suppress floating launcher
+  if (pathname?.startsWith('/dashboard/bonnie') || pathname?.startsWith('/dashboard/business/bonnie')) {
+    return null;
+  }
+
   return (
     <div
       ref={menuRef}
-      className="fixed z-[70] flex flex-col items-end right-3 md:right-5 bottom-[calc(env(safe-area-inset-bottom,0px)+78px)] md:bottom-5"
+      className="fixed z-[60] flex flex-col items-end right-3 md:right-5 bottom-[calc(env(safe-area-inset-bottom,0px)+64px)] md:bottom-5 pointer-events-auto"
       data-tour="bonnie-widget"
     >
       {menuOpen ? (
-        <div className="mb-2 w-56 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-1.5 shadow-[var(--ws-card-shadow-hover)]">
+        <div className="mb-2 w-52 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-1.5 shadow-[var(--ws-card-shadow-hover)]">
           <button
             type="button"
             onClick={openDrawer}
-            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left type-ui font-medium text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left type-ui font-medium text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
           >
             <IconBonnie size={16} variant="duotone" className="text-[var(--brand-violet-500)]" decorative />
             Ask Bonnie
@@ -85,7 +90,7 @@ export default function BonnieLauncher() {
           <button
             type="button"
             onClick={openWorkspace}
-            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left type-caption font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left type-caption font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
           >
             <LayoutPanelLeft className="w-4 h-4 text-[var(--ws-text-muted)]" />
             Open full workspace
@@ -93,13 +98,13 @@ export default function BonnieLauncher() {
           <button
             type="button"
             onClick={openPopout}
-            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left type-caption font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left type-caption font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
           >
             <ExternalLink className="w-4 h-4 text-[var(--ws-text-muted)]" />
             Pop out window
           </button>
           {pendingCount > 0 ? (
-            <p className="px-3 py-1.5 type-card-description text-[var(--warning-text)]">
+            <p className="px-3 py-1 type-card-description text-[var(--warning-text)]">
               {pendingCount} approval{pendingCount === 1 ? '' : 's'} waiting
             </p>
           ) : null}
@@ -114,22 +119,22 @@ export default function BonnieLauncher() {
           title="Bonnie AI"
           onClick={() => setMenuOpen((open) => !open)}
           className={cn(
-            'inline-flex h-14 min-w-14 items-center justify-center gap-1.5 rounded-[12px] px-0 sm:px-4',
-            'bg-[var(--brand-violet-500)] text-white border border-[var(--brand-violet-400)]',
-            'shadow-md hover:bg-[var(--brand-violet-600)] active:bg-[var(--brand-violet-700)]',
+            'inline-flex h-11 w-11 sm:h-12 sm:min-w-12 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-3',
+            'bg-[var(--brand-violet-500)] text-white border border-[var(--brand-violet-400)]/40',
+            'shadow-md hover:bg-[var(--brand-violet-600)] active:scale-95 transition-all',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-violet-300)]'
           )}
         >
-          <IconBonnie size={22} variant="filled" decorative />
+          <IconBonnie size={18} variant="filled" decorative />
           <span className="hidden sm:inline type-caption font-bold uppercase tracking-wide">Bonnie</span>
         </button>
         {hasUnreadBrief ? (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[var(--brand-violet-300)] text-[var(--brand-violet-950)] type-ui font-bold px-1">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--brand-violet-300)] text-[var(--brand-violet-950)] text-[10px] font-bold px-0.5">
             •
           </span>
         ) : null}
         {pendingCount > 0 ? (
-          <span className="absolute -top-1 -left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background,#0C1220)] type-ui font-bold px-1">
+          <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background,#0C1220)] text-[10px] font-bold px-1">
             {pendingCount}
           </span>
         ) : null}

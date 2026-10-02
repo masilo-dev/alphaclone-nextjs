@@ -2331,8 +2331,25 @@ class AlphaCloneMCPServer {
           if (phone !== undefined) update.phone = normalizePhoneForStorage(phone);
           if (industry !== undefined) update.industry = industry || '';
           if (location !== undefined) update.location = location || null;
-          if (source !== undefined) update.source = source || null;
-          if (notes !== undefined) update.notes = notes || null;
+          if (notes !== undefined) {
+            const incomingNotes = String(notes || '').trim();
+            if (incomingNotes) {
+              const { data: currentLead } = await supabaseAdmin
+                .from('leads')
+                .select('notes')
+                .eq('tenant_id', tenant_id)
+                .eq('id', resolvedLeadId)
+                .maybeSingle();
+              const existingNotes = String(currentLead?.notes || '').trim();
+              if (existingNotes && !incomingNotes.includes(existingNotes)) {
+                update.notes = `${existingNotes}\n\n[${new Date().toISOString()}] ${incomingNotes}`;
+              } else {
+                update.notes = incomingNotes;
+              }
+            } else {
+              update.notes = null;
+            }
+          }
           if (status !== undefined) update.status = status;
           if (stage !== undefined) {
             const stageToSet = normalizedStage as string;

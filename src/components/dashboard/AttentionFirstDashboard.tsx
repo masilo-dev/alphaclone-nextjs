@@ -217,58 +217,55 @@ export function AttentionFirstDashboard() {
 
   return (
     <div className="space-y-4 ac-module-section ac-home-feed">
-      {/* First viewport: greeting + money — one clear composition */}
-      <header className="ac-workspace-panel px-4 py-4 md:px-5 md:py-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      {/* First viewport: greeting + money — one clean, compact composition */}
+      <header className="ac-workspace-panel px-3 py-3 sm:px-4 sm:py-3.5 md:px-5 md:py-4">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className={WORKSPACE.typography.sectionLabel}>{t('Home')}</p>
-            <h2 className="mt-1 text-xl md:text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)]">
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[var(--ws-text-primary)]">
               {greeting}
             </h2>
-            <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] line-clamp-2">
-              {currentTenant?.name
-                ? `${currentTenant.name} — ${t('focus on what needs you, then let Bonnie handle the rest.')}`
-                : t('Focus on what needs you, then let Bonnie handle the rest.')}
+            <p className="type-caption text-[var(--ws-text-secondary)] truncate">
+              {currentTenant?.name ? currentTenant.name : t('Overview')}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
             <Link
               href="/dashboard/bonnie"
-              className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
+              className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 type-caption font-semibold')}
             >
-              <Bot className="w-4 h-4" aria-hidden />
+              <Bot className="w-3.5 h-3.5" aria-hidden />
               {t('Ask Bonnie')}
             </Link>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-2.5 grid grid-cols-2 gap-2 sm:gap-3">
           <Link
             href="/dashboard/business/billing"
-            className="rounded-[var(--ws-radius-lg)] border border-[var(--success-border)] bg-[var(--success-surface)] px-3 py-3 transition-colors hover:border-[var(--success)]"
+            className="rounded-xl border border-[var(--success-border)] bg-[var(--success-surface)] p-2.5 sm:p-3 transition-colors hover:border-[var(--success)]"
           >
-            <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-[var(--success-text)]" aria-hidden />
-              {t('Revenue')}
+            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
+              <DollarSign className="w-3 h-3 text-[var(--success-text)] shrink-0" aria-hidden />
+              <span>{t('Revenue')}</span>
             </p>
-            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
-              <p className="mt-1.5 type-ui text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
+            {loading && !stats ? <div className="mt-1.5 h-6 w-20 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
+              <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
             ) : (
-              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-[var(--success-text)]">{formatCurrency(revenue)}</p>
+              <p className="mt-1 text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-[var(--success-text)] truncate">{formatCurrency(revenue)}</p>
             )}
           </Link>
           <Link
             href="/dashboard/business/billing/manage"
-            className="rounded-[var(--ws-radius-lg)] border border-[var(--info-border)] bg-[var(--info-surface)] px-3 py-3 transition-colors hover:border-[var(--info)]"
+            className="rounded-xl border border-[var(--info-border)] bg-[var(--info-surface)] p-2.5 sm:p-3 transition-colors hover:border-[var(--info)]"
           >
-            <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
-              <Receipt className="w-3.5 h-3.5 text-[var(--info-text)]" aria-hidden />
-              {t('Outstanding invoices')}
+            <p className="text-[11px] sm:type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-tertiary)] flex items-center gap-1 truncate">
+              <Receipt className="w-3 h-3 text-[var(--info-text)] shrink-0" aria-hidden />
+              <span className="truncate">{t('Outstanding')}</span>
             </p>
-            {loading && !stats ? <div className="mt-2 h-8 w-24 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
-              <p className="mt-1.5 type-ui text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
+            {loading && !stats ? <div className="mt-1.5 h-6 w-20 rounded bg-[var(--ws-hover)] ac-skeleton-pulse" /> : statsError || !stats ? (
+              <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">{t('Unavailable')}</p>
             ) : (
-              <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-[var(--ws-text-primary)]">{formatCurrency(outstanding)}</p>
+              <p className="mt-1 text-lg sm:text-xl md:text-2xl font-bold tabular-nums tracking-tight text-[var(--ws-text-primary)] truncate">{formatCurrency(outstanding)}</p>
             )}
           </Link>
         </div>

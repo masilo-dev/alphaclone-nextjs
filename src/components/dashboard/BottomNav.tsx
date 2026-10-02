@@ -108,7 +108,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
         className="ac-responsive-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-50 native-bottom-bar ac-v3-floating border-t border-[var(--border-default)]"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 4px)' }}
       >
-        <div className="flex items-center justify-around h-[58px] px-1">
+        <div className="flex items-center justify-around h-[52px] px-1">
           {destinations.map((item) => {
             const isMore = item.moduleId === 'more';
             const isCreate = item.moduleId === 'create';
@@ -125,23 +125,23 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 aria-current={!isMore && !isCreate && isActive ? 'page' : undefined}
                 aria-expanded={isMore ? moreOpen : isCreate ? createOpen : undefined}
                 aria-haspopup={isMore || isCreate ? 'dialog' : undefined}
-                className={`native-tap relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 active:scale-[0.97] ${isCreate ? '-mt-4' : ''}`}
+                className={`native-tap relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 active:scale-[0.97] ${isCreate ? '-mt-2.5' : ''}`}
               >
                 <div className="relative">
-                  <span className={isCreate ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ac-accent)] text-white shadow-lg shadow-blue-950/40' : ''}>
+                  <span className={isCreate ? 'flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--ac-accent)] text-white shadow-md shadow-blue-950/30' : ''}>
                   <Icon
-                    className={`${isCreate ? 'h-6 w-6 text-white' : 'h-5 w-5'} ${!isCreate && isActive ? 'text-[var(--ac-accent)]' : !isCreate ? 'text-[var(--text-muted)]' : ''}`}
-                    strokeWidth={isActive ? 2.35 : 1.8}
+                    className={`${isCreate ? 'h-5 w-5 text-white' : 'h-4.5 w-4.5'} ${!isCreate && isActive ? 'text-[var(--ac-accent)]' : !isCreate ? 'text-[var(--text-muted)]' : ''}`}
+                    strokeWidth={isActive ? 2.25 : 1.75}
                     aria-hidden
                   />
                   </span>
                   {showBadge ? (
-                    <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-[var(--error-500)] px-1 type-ui font-bold leading-4 text-white">
+                    <span className="absolute -right-2 -top-1 min-w-3.5 h-3.5 px-1 rounded-full bg-[var(--error-500)] text-[10px] font-bold leading-3.5 flex items-center justify-center text-white">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   ) : null}
                 </div>
-                <span className={`max-w-[4.75rem] truncate type-ui leading-3 ${isActive ? 'font-semibold text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}>
+                <span className={`max-w-[4.25rem] truncate text-[11px] leading-[13px] ${isActive ? 'font-semibold text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}>
                   {t(item.label)}
                 </span>
               </button>

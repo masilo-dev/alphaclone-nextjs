@@ -400,13 +400,32 @@ defineConnectorTool({
       'industry',
       'location',
       'source',
-      'notes',
       'status',
       'stage',
     ] as const) {
       if (args[key] !== undefined) updates[key] = args[key];
     }
     if (args.phone !== undefined) updates.phone = normalizePhoneForStorage(args.phone);
+
+    if (args.notes !== undefined) {
+      const incomingNotes = String(args.notes || '').trim();
+      if (incomingNotes) {
+        const { data: currentLead } = await supabase
+          .from('leads')
+          .select('notes')
+          .eq('tenant_id', args.tenant_id)
+          .eq('id', args.lead_id)
+          .maybeSingle();
+        const existingNotes = String(currentLead?.notes || '').trim();
+        if (existingNotes && !incomingNotes.includes(existingNotes)) {
+          updates.notes = `${existingNotes}\n\n[${new Date().toISOString()}] ${incomingNotes}`;
+        } else {
+          updates.notes = incomingNotes;
+        }
+      } else {
+        updates.notes = null;
+      }
+    }
 
     let { data, error } = await supabase
       .from('leads')

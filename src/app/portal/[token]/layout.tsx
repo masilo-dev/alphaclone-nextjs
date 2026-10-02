@@ -30,6 +30,24 @@ async function ClientFinancePortalLayoutInner({
     }
 
     if (!hasValidSession) {
+        try {
+            const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+            const admin = createSupabaseAdminClient();
+            const { data: client } = await admin
+                .from('business_clients')
+                .select('id, client_portal_password_hash')
+                .eq('finance_portal_token', token)
+                .maybeSingle();
+
+            if (client && client.client_portal_password_hash == null) {
+                redirect(`/set-password?token=${encodeURIComponent(token)}`);
+            }
+        } catch (e: any) {
+            if (e?.digest?.startsWith?.('NEXT_REDIRECT') || e?.message?.includes?.('NEXT_REDIRECT')) {
+                throw e;
+            }
+        }
+
         const nextPath = `/portal/${encodeURIComponent(token)}`;
         redirect(`/portal-login?next=${encodeURIComponent(nextPath)}`);
     }

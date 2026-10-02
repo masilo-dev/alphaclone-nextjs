@@ -77,41 +77,41 @@ export function PlatformExecutionWelcome({
   return (
     <div
       className={cn(
-        'ac-welcome-banner relative overflow-hidden rounded-2xl border border-[var(--interactive-secondary,#4199A4)]/30 p-4 sm:p-5',
+        'ac-welcome-banner relative overflow-hidden rounded-xl sm:rounded-2xl border border-[var(--interactive-secondary,#4199A4)]/30 p-3 sm:p-4 md:p-5',
         className
       )}
       data-tour="platform-welcome"
     >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[var(--interactive-secondary,#4199A4)]/10 blur-2xl" />
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--interactive-secondary,#4199A4)]/15 ring-1 ring-[var(--interactive-secondary,#4199A4)]/30">
-            <Sparkles className="h-5 w-5 text-[var(--interactive-secondary,#4199A4)]" />
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 sm:h-32 sm:w-32 rounded-full bg-[var(--interactive-secondary,#4199A4)]/10 blur-2xl" />
+      <div className="relative flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-2.5 sm:gap-3 pr-6 sm:pr-0">
+          <span className="mt-0.5 flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[var(--interactive-secondary,#4199A4)]/15 ring-1 ring-[var(--interactive-secondary,#4199A4)]/30">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--interactive-secondary,#4199A4)]" />
           </span>
           <div className="min-w-0">
-            <p className="type-caption font-semibold uppercase tracking-caps text-[var(--interactive-secondary,#4199A4)]">
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-caps text-[var(--interactive-secondary,#4199A4)]">
               AlphaClone Systems
             </p>
-            <h2 className="mt-1 text-base font-semibold text-[var(--text-primary)] sm:text-lg">{t(copy.title)}</h2>
-            <p className="mt-1.5 max-w-2xl type-card-description leading-relaxed text-[var(--text-secondary)]">{t(copy.body)}</p>
+            <h2 className="mt-0.5 sm:mt-1 text-sm sm:text-base font-semibold text-[var(--text-primary)] md:text-lg">{t(copy.title)}</h2>
+            <p className="mt-1 max-w-2xl text-xs sm:text-sm leading-relaxed text-[var(--text-secondary)]">{t(copy.body)}</p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+        <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
           <button
             type="button"
             onClick={() => {
               dismiss();
               requestPlatformTour();
             }}
-            className="inline-flex items-center gap-2 rounded-lg bg-[var(--interactive-secondary,#4199A4)] px-3.5 py-2 type-caption font-semibold text-white shadow-sm transition hover:bg-[var(--interactive-secondary-hover,#388A94)]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--interactive-secondary,#4199A4)] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--interactive-secondary-hover,#388A94)]"
           >
             <Compass className="h-3.5 w-3.5" />
-            {t('Take a quick tour')}
+            {t('Take tour')}
           </button>
           <button
             type="button"
             onClick={dismiss}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 type-caption font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium text-[var(--text-muted)] transition hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
           >
             {t('Dismiss')}
           </button>
@@ -121,9 +121,9 @@ export function PlatformExecutionWelcome({
         type="button"
         onClick={dismiss}
         aria-label={t('Dismiss welcome banner')}
-        className="absolute right-3 top-3 rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+        className="absolute right-2 top-2 sm:right-3 sm:top-3 rounded-md p-1 text-[var(--text-muted)] transition hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
     </div>
   );

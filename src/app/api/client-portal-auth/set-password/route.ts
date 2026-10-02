@@ -23,6 +23,7 @@ export const dynamic = 'force-dynamic';
 const schema = z.object({
   newPassword: z.string().min(1).max(4096),
   confirmPassword: z.string().min(1).max(4096),
+  token: z.string().uuid().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -46,35 +47,67 @@ export async function POST(req: NextRequest) {
 
   try {
     const admin = await resolveSupabaseAdminClient();
-    const session = await requireClientPortalSession(admin);
-    // First-time set-password flow: password_hash MUST be NULL on the current client row.
-    // (Legacy sessions issued from the backwards-compat login path above must be fresh.)
-    // If we're rotating, the grant-access owner endpoint handles that flow instead.
-    if (!session.ok) {
-      const cleared = clearClientPortalCookie();
-      cleared.headers.set('Cache-Control', 'private, no-store');
-      return NextResponse.json(
-        { error: 'Your session has expired. Please return to the link we emailed and sign in again.' },
-        { status: 401, headers: cleared.headers }
-      );
-    }
-    const { clientId, tenantId, sessionJti: currentJti } = session.session;
+    let clientId: string | null = null;
+    let tenantId: string | null = null;
+    let currentJti: string | null = null;
+    let clientRow: any = null;
 
-    const { data: row, error: rowErr } = await admin
-      .from('business_clients')
-      .select('id, tenant_id, finance_portal_token, client_portal_password_hash')
-      .eq('id', clientId)
-      .eq('tenant_id', tenantId)
-      .maybeSingle();
-    if (rowErr) throw rowErr;
-    if (!row) {
-      const cleared = clearClientPortalCookie();
-      return NextResponse.json({ error: 'Account not found.' }, { status: 404, headers: cleared.headers });
+    if (parsed.data.token) {
+      // Direct token-authenticated initial password set
+      const { data: byToken, error: tokenErr } = await admin
+        .from('business_clients')
+        .select('id, tenant_id, finance_portal_token, client_portal_password_hash, is_active')
+        .eq('finance_portal_token', parsed.data.token)
+        .maybeSingle();
+      if (tokenErr) throw tokenErr;
+      if (byToken && byToken.is_active !== false) {
+        clientRow = byToken;
+        clientId = byToken.id;
+        tenantId = byToken.tenant_id;
+      }
     }
 
-    if (row.client_portal_password_hash != null) {
+    if (!clientRow) {
+      // Fall back to session cookie
+      let session: any = null;
+      try {
+        session = await requireClientPortalSession(admin);
+      } catch {
+        session = { ok: false };
+      }
+
+      if (!session?.ok) {
+        const cleared = clearClientPortalCookie();
+        cleared.headers.set('Cache-Control', 'private, no-store');
+        return NextResponse.json(
+          { error: 'Your session has expired. Please return to the link we emailed and sign in again.' },
+          { status: 401, headers: cleared.headers }
+        );
+      }
+      clientId = session.session.clientId;
+      tenantId = session.session.tenantId;
+      currentJti = session.session.sessionJti;
+
+      const { data: row, error: rowErr } = await admin
+        .from('business_clients')
+        .select('id, tenant_id, finance_portal_token, client_portal_password_hash')
+        .eq('id', clientId)
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      if (rowErr) throw rowErr;
+      if (!row) {
+        const cleared = clearClientPortalCookie();
+        return NextResponse.json({ error: 'Account not found.' }, { status: 404, headers: cleared.headers });
+      }
+      clientRow = row;
+    }
+
+    if (!clientId || !tenantId) {
+      return NextResponse.json({ error: 'Account not found.' }, { status: 404 });
+    }
+
+    if (clientRow.client_portal_password_hash != null) {
       // Already has a password. This endpoint is ONLY for the first-time set-password flow.
-      // To change an existing password, use reset-password with owner or forgot-token path.
       return NextResponse.json(
         { error: 'A password is already set for this account. Please sign in instead or use the password reset flow.' },
         { status: 409 }
@@ -96,13 +129,13 @@ export async function POST(req: NextRequest) {
       .eq('tenant_id', tenantId);
     if (updateErr) throw updateErr;
 
-    // Soft-delete the session used to set the password (it had the OLD salt anyway, salt rotation will
-    // invalidate it if the UI retries. But do the explicit delete so audit rows line up).
-    await admin
-      .from('client_portal_sessions')
-      .update({ is_active: false, signed_out_at: now })
-      .eq('session_jti', currentJti)
-      .eq('tenant_id', tenantId);
+    if (currentJti) {
+      await admin
+        .from('client_portal_sessions')
+        .update({ is_active: false, signed_out_at: now })
+        .eq('session_jti', currentJti)
+        .eq('tenant_id', tenantId);
+    }
 
     const newJti = generateClientPortalJti();
     const jwt = signClientPortalSession({
@@ -126,11 +159,11 @@ export async function POST(req: NextRequest) {
       event_type: 'password_set',
       ip_address: extractRequestIp(req),
       user_agent: extractUserAgent(req),
-      metadata: { source: 'legacy_first_time_set_password_form' },
+      metadata: { source: parsed.data.token ? 'token_initial_set_password' : 'legacy_first_time_set_password_form' },
     });
 
-    const redirectTo = row.finance_portal_token
-      ? `/portal/${encodeURIComponent(row.finance_portal_token)}`
+    const redirectTo = clientRow.finance_portal_token
+      ? `/portal/${encodeURIComponent(clientRow.finance_portal_token)}`
       : '/';
 
     const res = NextResponse.json({ success: true, redirectTo });

@@ -46,6 +46,12 @@ export function hasTool(name: string): boolean {
   return registry.has(name);
 }
 
+export function getTool(nameOrModule: string, maybeName?: string): MCPTool | undefined {
+  initializeRegistry();
+  const name = maybeName || nameOrModule;
+  return registry.get(name);
+}
+
 /** Module label the tool was registered under (undefined when not registered). */
 export function getToolModule(name: string): string | undefined {
   return toolModules.get(name);

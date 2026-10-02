@@ -111,36 +111,64 @@ async function attachmentsFromMedia(
   if (!Array.isArray(attachments) || attachments.length === 0) return [];
   const out: Array<{ filename: string; content: string; contentType?: string }> = [];
   for (const raw of attachments) {
+    // 1. Direct base64 content / data payload
+    if (raw.content && typeof raw.content === 'string') {
+      out.push({
+        filename: String(raw.filename || 'attachment.bin'),
+        content: String(raw.content),
+        contentType: String(raw.contentType || raw.mime_type || raw.mimeType || 'application/octet-stream'),
+      });
+      continue;
+    }
+    if (raw.data && typeof raw.data === 'string') {
+      out.push({
+        filename: String(raw.filename || 'attachment.bin'),
+        content: String(raw.data),
+        contentType: String(raw.contentType || raw.mime_type || raw.mimeType || 'application/octet-stream'),
+      });
+      continue;
+    }
+    if (typeof raw.data_url === 'string' || typeof raw.dataUrl === 'string') {
+      const du = String(raw.data_url || raw.dataUrl);
+      const match = du.match(/^data:([^;,]+);base64,([\s\S]*)$/i);
+      if (match) {
+        out.push({
+          filename: String(raw.filename || 'attachment.bin'),
+          content: match[2].trim(),
+          contentType: match[1] || 'application/octet-stream',
+        });
+        continue;
+      }
+    }
+
+    // 2. Fallback to media resolution for asset_id or remote url
     let media: MediaInput | null = null;
     if (raw.type === 'asset_id' || raw.asset_id) {
       media = { type: 'asset_id', assetId: String(raw.assetId || raw.asset_id) };
-    } else if (raw.type === 'base64' || raw.data) {
+    } else if (raw.type === 'base64') {
       media = {
         type: 'base64',
-        data: String(raw.data),
+        data: String(raw.data || raw.content),
         mimeType: String(raw.mime_type || raw.mimeType || 'application/octet-stream'),
         filename: String(raw.filename || 'attachment.bin'),
       };
     } else if (raw.type === 'url' || raw.url) {
       media = { type: 'url', url: String(raw.url), filename: raw.filename ? String(raw.filename) : undefined };
-    } else if (raw.type === 'data_url' || raw.data_url) {
-      media = {
-        type: 'data_url',
-        dataUrl: String(raw.dataUrl || raw.data_url),
-        filename: raw.filename ? String(raw.filename) : undefined,
-      };
     }
     if (!media) continue;
-    const asset = await ingestMediaInput({ tenantId, userId, media, purpose: 'email_attachment' });
-    // Providers that accept URL attachments use content as base64 of a tiny stub is wrong —
-    // fetch bytes for attachment payload.
-    const res = await fetch(asset.url);
-    const buf = Buffer.from(await res.arrayBuffer());
-    out.push({
-      filename: asset.filename,
-      content: buf.toString('base64'),
-      contentType: asset.mime_type,
-    });
+
+    try {
+      const asset = await ingestMediaInput({ tenantId, userId, media, purpose: 'email_attachment' });
+      const res = await fetch(asset.url);
+      const buf = Buffer.from(await res.arrayBuffer());
+      out.push({
+        filename: asset.filename,
+        content: buf.toString('base64'),
+        contentType: asset.mime_type,
+      });
+    } catch (err: any) {
+      console.warn('[MCP send_email] failed to ingest attachment via media:', err?.message || err);
+    }
   }
   return out;
 }
