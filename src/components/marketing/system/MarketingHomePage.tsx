@@ -239,11 +239,11 @@ export default function MarketingHomePage() {
 
       <section className="acr-outcomes" aria-labelledby="outcomes-heading">
         <MarketingContainer>
-          <div className="acr-section-intro is-center"><p className="acr-eyebrow">{t('Your business, simpler')}</p><h2 id="outcomes-heading">{t('Find customers, deliver work, and follow up on payment.')}</h2><p>{t('Three connected outcomes replace a long list of disconnected features.')}</p></div>
+          <div className="acr-section-intro is-center"><p className="acr-eyebrow">{t('End-to-end execution')}</p><h2 id="outcomes-heading">{t('Find customers, deliver work, and follow up on payment.')}</h2><p>{t('Three connected outcomes replace a long list of disconnected tools.')}</p></div>
           <div className="acr-outcome-grid">
             {outcomes.map((item, index) => <article key={item.title} className={`is-${item.tone}`}><div className="acr-outcome-number">0{index + 1}</div><span><item.icon /></span><h3>{t(item.title)}</h3><p>{t(item.body)}</p><Link href={item.href}>{t('Explore this workflow')} <ArrowRight /></Link></article>)}
           </div>
-          <div className="acr-feature-heading"><div><p className="acr-eyebrow">{t('Your end-to-end business system')}</p><h2>{t('Everything you need. One workspace.')}</h2><p>{t('Manage the client journey from first contact to final payment — with AI assistance and human control.')}</p></div><Link href="/services">{t('Explore the platform')} <ArrowRight /></Link></div>
+          <div className="acr-feature-heading"><div><p className="acr-eyebrow">{t('Platform capabilities')}</p><h2>{t('Connected execution across the client journey.')}</h2><p>{t('Manage the client journey from first contact to final payment — with AI assistance and human control.')}</p></div><Link href="/services">{t('Explore the platform')} <ArrowRight /></Link></div>
           <div className="acr-feature-grid">
             {features.map((item) => <Link href={item.href} key={item.title} className={`is-${item.tone}`}><span><item.icon /></span><strong>{t(item.title)}</strong><small>{t(item.body)}</small></Link>)}
           </div>

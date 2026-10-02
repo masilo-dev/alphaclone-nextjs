@@ -159,10 +159,11 @@
 /* Accessible pill labels and eyebrows in light canvas */
 .mkt-light-canvas .mkt-label,
 .mkt-light-canvas .mkt-eyebrow {
-  background: #f0fdfa !important;
-  border: 1px solid #99f6e4 !important;
-  color: #0f766e !important;
-  font-weight: 700 !important;
+  background: #edf6ff !important;
+  border: 1px solid #d0e4ff !important;
+  color: #075fc7 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
 }
 
 /* Buttons retain white text */

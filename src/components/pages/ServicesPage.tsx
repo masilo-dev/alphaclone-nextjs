@@ -235,8 +235,8 @@ const ServicesPage: React.FC = () => {
                                         {/* Left: Header + Description */}
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${service.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                                                    <service.icon className="w-6 h-6 text-white" />
+                                                <div className="w-11 h-11 rounded-xl border border-[#d0e4ff] bg-[#edf6ff] flex items-center justify-center flex-shrink-0">
+                                                    <service.icon className="w-5 h-5 text-[#0878f9]" />
                                                 </div>
                                                 {service.badge && (
                                                     <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] type-caption font-semibold">
