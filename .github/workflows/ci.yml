@@ -179,7 +179,7 @@ jobs:
         run: npm ci
 
       - name: Download production build for browser tests
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: next-build-${{ github.sha }}
           path: .next
