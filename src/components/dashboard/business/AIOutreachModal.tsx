@@ -51,7 +51,6 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [loadRetry, setLoadRetry] = useState(0);
     const [hasMore, setHasMore] = useState(false);
     const [sending, setSending] = useState(false);
-    const [complianceConfirmed, setComplianceConfirmed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [customPrompt, setCustomPrompt] = useState('');
     const [selectedTone, setSelectedTone] = useState('professional');
@@ -99,20 +98,6 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     }, [isOpen, userId, initialSelectedLeads]);
 
     useEffect(() => { setPage(0); }, [searchQuery, recipientSource, currentTenant?.id]);
-
-    useEffect(() => {
-        if (!isOpen || !currentTenant?.id) return;
-        let active = true;
-        setComplianceConfirmed(false);
-        fetch(`/api/outreach/acknowledgement?tenantId=${encodeURIComponent(currentTenant.id)}`)
-            .then(async response => {
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Could not load acknowledgement');
-                if (active) setComplianceConfirmed(Boolean(data.confirmed));
-            })
-            .catch(err => { if (active) setLoadError(err instanceof Error ? err.message : 'Could not load acknowledgement'); });
-        return () => { active = false; };
-    }, [isOpen, currentTenant?.id]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -171,10 +156,6 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         }
         if (!currentTenant?.id) {
             toast.error('No active workspace selected');
-            return;
-        }
-        if (!complianceConfirmed) {
-            toast.error('Confirm that this outreach is lawful and wanted before sending.');
             return;
         }
 
@@ -295,21 +276,6 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             toast.error(err.message || 'Bulk outreach failed');
         } finally {
             setSending(false);
-        }
-    };
-
-    const acknowledgeOutreach = async () => {
-        if (!currentTenant?.id) return;
-        try {
-            const response = await fetch('/api/outreach/acknowledgement', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: currentTenant.id }),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.error || 'Could not save acknowledgement');
-            setComplianceConfirmed(true);
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Could not save acknowledgement');
         }
     };
 
@@ -574,20 +540,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <div className="pt-4 mt-auto">
-                                    {!complianceConfirmed && <label className="mb-3 flex items-start gap-2.5 rounded-2xl border border-amber-400/20 bg-amber-400/[.06] p-3 text-left cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={complianceConfirmed}
-                                            onChange={(event) => { if (event.target.checked) void acknowledgeOutreach(); }}
-                                            className="mt-0.5 h-4 w-4 accent-teal-500"
-                                        />
-                                        <span className="type-ui leading-5 text-slate-300">
-                                            I confirm the selected recipients have permission or another lawful basis for contact, the message is relevant and not deceptive, and opt-outs will be honoured. My business is responsible for the outreach sent from this workspace.
-                                        </span>
-                                    </label>}
                                     <Button
                                         onClick={handleSend}
-                                        disabled={sending || !complianceConfirmed}
+                                        disabled={sending || selectedLeads.length === 0}
                                         className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (

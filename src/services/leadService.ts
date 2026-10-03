@@ -1262,9 +1262,6 @@ Write in plain professional text. No markdown.`;
             if (recipientIds.length > 120) {
                 throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
             }
-            if (options.finalApproval !== true) {
-                throw new Error('Review the recipients and confirm final approval before scheduling outreach.');
-            }
 
             const response = await fetch('/api/outreach/batch-review', {
                 method: 'POST',

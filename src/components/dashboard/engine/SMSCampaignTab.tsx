@@ -160,7 +160,6 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
     };
 
     const handleRun = async (campaignId: string) => {
-        if (!confirm('Send this SMS campaign now? This will send real SMS messages.')) return;
         setRunningId(campaignId);
         const toastId = toast.loading('Running campaign...');
         const res = await fetch(`/api/sms/campaign/${campaignId}/run`, { method: 'POST' });

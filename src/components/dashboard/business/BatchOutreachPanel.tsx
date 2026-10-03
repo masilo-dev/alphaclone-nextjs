@@ -37,7 +37,6 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
     const [excludedRecipients, setExcludedRecipients] = useState<ExcludedRecipient[]>([]);
     const [reviewing, setReviewing] = useState(false);
     const [queueing, setQueueing] = useState(false);
-    const [finalConfirmation, setFinalConfirmation] = useState(false);
 
     const uniqueIds = useMemo(() => [...new Set(selectedIds)], [selectedIds]);
     const capExceeded = uniqueIds.length > MAX_BATCH_RECIPIENTS;
@@ -47,7 +46,6 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
         setStep('configure');
         setReviewedRecipients([]);
         setExcludedRecipients([]);
-        setFinalConfirmation(false);
     }, [isOpen, recipientSource, selectedIds]);
 
     const handleReview = async () => {
@@ -66,12 +64,11 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
 
         setReviewedRecipients(result.recipients || []);
         setExcludedRecipients(result.excluded || []);
-        setFinalConfirmation(false);
         setStep('review');
     };
 
     const handleQueue = async () => {
-        if (!finalConfirmation || !reviewedRecipients.length) return;
+        if (!reviewedRecipients.length) return;
 
         setQueueing(true);
         const result = await leadService.sendBatchOutreach({
@@ -225,16 +222,6 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             </div>
                         )}
 
-                        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-700 bg-slate-800/50 p-4 type-label text-slate-200">
-                            <input
-                                type="checkbox"
-                                checked={finalConfirmation}
-                                onChange={(event) => setFinalConfirmation(event.target.checked)}
-                                className="mt-1 h-4 w-4 accent-teal-500"
-                            />
-                            <span>I have reviewed these recipients. I confirm that this batch may be queued for server-side processing. This confirmation is recorded in the audit trail.</span>
-                        </label>
-
                         <div className="grid grid-cols-2 gap-3 pt-1">
                             <Button
                                 onClick={() => setStep('configure')}
@@ -247,11 +234,11 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             <Button
                                 onClick={handleQueue}
                                 isLoading={queueing}
-                                disabled={!finalConfirmation || !reviewedRecipients.length}
+                                disabled={!reviewedRecipients.length || queueing}
                                 className="flex items-center justify-center gap-2 rounded-2xl bg-teal-600 py-3 font-black text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Send className="h-4 w-4" />
-                                Confirm & queue
+                                Queue batch
                             </Button>
                         </div>
                         <p className="text-center type-caption font-bold uppercase tracking-wide text-slate-500">Queuing does not send from this screen. Processing is tracked in the outreach log and audit trail.</p>

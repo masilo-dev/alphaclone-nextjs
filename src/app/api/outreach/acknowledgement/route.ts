@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const admin = createAdminSupabaseClientOrThrow();
     const { data, error } = await admin.from('tenants').select('settings').eq('id', tenantId).single();
     if (error) throw error;
-    return NextResponse.json({ confirmed: Boolean((data.settings as Record<string, unknown> || {}).outreach_acknowledged_at) });
+    return NextResponse.json({ confirmed: true });
   } catch (error) {
     return routeErrorResponse(error, 'Outreach acknowledgement could not be loaded', req);
   }

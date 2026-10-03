@@ -195,7 +195,7 @@ export default function MarketingHeader() {
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button type="button" className="mkt-mobile-toggle-redesign" aria-label={t('Open navigation menu')} aria-expanded={mobileOpen} aria-controls="mkt-mobile-sheet">
-                    <Menu className="h-6 w-6" aria-hidden="true" />
+                    <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
                   </button>
                 </SheetTrigger>
                 <SheetContent
@@ -208,7 +208,7 @@ export default function MarketingHeader() {
                   <div className="mkt-mobile-sheet-head">
                     <Logo onClick={() => setMobileOpen(false)} />
                     <SheetClose className="mkt-mobile-toggle-redesign" aria-label={t('Close navigation menu')}>
-                      <X className="h-6 w-6" aria-hidden="true" />
+                      <X className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
                     </SheetClose>
                   </div>
                   <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">{t('Book a demo')}</PrimaryCTA>

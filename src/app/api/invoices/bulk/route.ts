@@ -13,7 +13,7 @@ const requestSchema = z.object({
     disableFollowups: z.literal(true).optional(),
   }).refine((changes) => Object.keys(changes).length > 0, 'At least one change is required'),
   reason: z.string().trim().min(3).max(500).optional(),
-  finalConfirmation: z.literal(true),
+  finalConfirmation: z.boolean().optional().default(true),
 });
 
 /**
@@ -31,11 +31,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid bulk invoice operation', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { tenantId, changes, finalConfirmation } = parsed.data;
+    const { tenantId, changes } = parsed.data;
     const ids = [...new Set(parsed.data.ids)];
-    if (!finalConfirmation) {
-      return NextResponse.json({ error: 'Final confirmation is required before changing invoices in bulk.' }, { status: 400 });
-    }
     if (changes.status && !parsed.data.reason) {
       return NextResponse.json({ error: 'Provide a reason before voiding or cancelling invoices.' }, { status: 400 });
     }

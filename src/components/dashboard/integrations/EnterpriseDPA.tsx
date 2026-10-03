@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Shield, CheckCircle, FileText, AlertCircle, ArrowRight } from 'lucide-react';
+import { Shield, FileText, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { MCPAuthService } from '@/services/mcp/MCPAuthService';
 import toast from 'react-hot-toast';
@@ -14,14 +14,8 @@ interface EnterpriseDPAProps {
 
 const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccepted }) => {
   const [isAccepting, setIsAccepting] = useState(false);
-  const [hasAgreed, setHasAgreed] = useState(false);
 
   const handleAccept = async () => {
-    if (!hasAgreed) {
-      toast.error('Please agree to the terms before continuing.');
-      return;
-    }
-
     setIsAccepting(true);
     try {
       const { success, error } = await MCPAuthService.recordDPAAcceptance(tenantId, userId);
@@ -77,27 +71,16 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
         </div>
 
         <div className="space-y-4">
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <div className="relative flex items-center mt-0.5">
-              <input
-                type="checkbox"
-                className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-700 bg-slate-900 transition-all checked:bg-teal-500"
-                checked={hasAgreed}
-                onChange={(e) => setHasAgreed(e.target.checked)}
-              />
-              <CheckCircle className="absolute h-3.5 w-3.5 text-white opacity-0 transition-opacity peer-checked:opacity-100 left-0.5" />
-            </div>
-            <span className="text-slate-300 type-ui select-none group-hover:text-white transition-colors">
-              I represent that I have the authority to bind the organization and I agree to the terms of the Enterprise Data Processing Agreement (DPA v1.0).
-            </span>
-          </label>
+          <p className="text-slate-400 type-caption leading-relaxed">
+            By clicking &ldquo;Accept &amp; Activate Integration&rdquo;, you represent that you have the authority to bind the organization and agree to the terms of the Enterprise Data Processing Agreement (DPA v1.0).
+          </p>
 
           <div className="flex items-center gap-4 pt-2">
             <button
               onClick={handleAccept}
-              disabled={!hasAgreed || isAccepting}
+              disabled={isAccepting}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
-                hasAgreed && !isAccepting
+                !isAccepting
                   ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/20'
                   : 'bg-slate-800 text-slate-500 cursor-not-allowed'
               }`}

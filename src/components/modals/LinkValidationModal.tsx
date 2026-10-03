@@ -76,7 +76,7 @@ export const LinkValidationModal: React.FC<LinkValidationModalProps> = ({
                         onClick={onClose}
                         className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white font-medium"
                     >
-                        I Understand
+                        Dismiss
                     </button>
                 </div>
             </div>

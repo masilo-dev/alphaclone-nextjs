@@ -2,13 +2,13 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import {
   ArrowRight,
   BadgeDollarSign,
-  BarChart3,
-  BriefcaseBusiness,
-  CalendarCheck,
+  Blocks,
+  CalendarClock,
+  ChartNoAxesColumn,
   Check,
   CheckCircle2,
   Clock3,
@@ -17,12 +17,12 @@ import {
   Mail,
   Megaphone,
   Play,
-  Plug,
   ReceiptText,
   ShieldCheck,
   ClipboardCheck,
+  SquareKanban,
   Users,
-  Workflow,
+  UsersRound,
 } from 'lucide-react';
 import { SiBrevo, SiQuickbooks, SiStripe, SiZoho } from 'react-icons/si';
 import { FaFacebook, FaInstagram, FaLinkedin, FaMicrosoft } from 'react-icons/fa6';
@@ -33,29 +33,33 @@ import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 import { MarketingContainer } from './LayoutPrimitives';
 import MarketingShell from './MarketingShell';
 
+// The four stages of one execution pipeline. Numbers carry the visual weight;
+// the stage label names the system state (request → approval → execution → evidence).
 const processes = [
-  { title: 'Tell us what you want', body: 'Type your request in ChatGPT, Claude, Manus or Bonnie.', icon: Workflow },
-  { title: 'Approve the plan', body: 'Review what will be done before anything runs.', icon: ShieldCheck },
-  { title: 'AlphaClone executes', body: 'Approved work moves through the connected tools.', icon: Workflow },
-  { title: 'Get verified results', body: 'See the outcome and activity record in the workspace.', icon: CheckCircle2 },
+  { stage: 'Request', title: 'Tell us what you want', body: 'Type your request in ChatGPT, Claude, Manus or Bonnie.' },
+  { stage: 'Approve', title: 'Approve the plan', body: 'Review what will happen before anything runs.' },
+  { stage: 'Execute', title: 'AlphaClone executes', body: 'Approved actions run through your connected tools.' },
+  { stage: 'Verify', title: 'Verify the result', body: 'See the outcome and activity record in your workspace.' },
 ];
 
 const outcomes = [
-  { title: 'Win work', body: 'Capture leads, keep conversations attached and prepare the right follow-up.', icon: Users, href: '/crm', tone: 'blue' },
-  { title: 'Run delivery', body: 'Turn sold work into projects, documents, approvals and visible progress.', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
-  { title: 'Get paid and follow up', body: 'Prepare invoices, track status and keep the next action from depending on memory.', icon: BadgeDollarSign, href: '/services#financial-suite-invoicing', tone: 'orange' },
+  { title: 'Win work', body: 'Capture leads, keep conversations attached and prepare the right follow-up.', icon: UsersRound, href: '/crm' },
+  { title: 'Run delivery', body: 'Turn sold work into projects, documents, approvals and visible progress.', icon: SquareKanban, href: '/project-management' },
+  { title: 'Get paid and follow up', body: 'Prepare invoices, track status and keep the next action from depending on memory.', icon: BadgeDollarSign, href: '/services#financial-suite-invoicing' },
 ];
 
+// One icon family (Lucide, 1.75 stroke, 20px artwork) and one brand tone for
+// every module. Colour is reserved for meaning/state, not module identity.
 const features = [
-  { title: 'CRM', body: 'Capture and manage leads', icon: Users, href: '/crm', tone: 'blue' },
-  { title: 'Projects', body: 'Deliver work on time', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
-  { title: 'Emails', body: 'Send and follow up', icon: Mail, href: '/marketing/email', tone: 'violet' },
-  { title: 'Social media', body: 'Create and schedule content', icon: Megaphone, href: '/marketing/automation', tone: 'pink' },
-  { title: 'Invoicing', body: 'Get paid faster', icon: ReceiptText, href: '/services#financial-suite-invoicing', tone: 'orange' },
-  { title: 'Contracts', body: 'Send and e-sign', icon: FileSignature, href: '/services#contract-engine-e-signatures', tone: 'coral' },
-  { title: 'Bookings', body: 'Let clients book time', icon: CalendarCheck, href: '/services#smart-scheduling-cal-com-booking', tone: 'blue' },
-  { title: 'Analytics', body: 'See what is working', icon: BarChart3, href: '/results', tone: 'violet' },
-  { title: 'Integrations', body: 'Connect your tools', icon: Plug, href: '/ecosystem', tone: 'green' },
+  { title: 'CRM', body: 'Capture and manage leads', icon: UsersRound, href: '/crm' },
+  { title: 'Projects', body: 'Plan and deliver work', icon: SquareKanban, href: '/project-management' },
+  { title: 'Email', body: 'Send, track and follow up', icon: Mail, href: '/marketing/email' },
+  { title: 'Social', body: 'Create and schedule content', icon: Megaphone, href: '/marketing/automation' },
+  { title: 'Invoices', body: 'Bill clients and track payments', icon: ReceiptText, href: '/services#financial-suite-invoicing' },
+  { title: 'Contracts', body: 'Create, send and e-sign', icon: FileSignature, href: '/services#contract-engine-e-signatures' },
+  { title: 'Bookings', body: 'Let clients book time', icon: CalendarClock, href: '/services#smart-scheduling-cal-com-booking' },
+  { title: 'Analytics', body: 'Understand what is working', icon: ChartNoAxesColumn, href: '/results' },
+  { title: 'Integrations', body: 'Connect the tools you already use', icon: Blocks, href: '/ecosystem' },
 ];
 
 const integrations = [
@@ -119,6 +123,46 @@ function ProductScene() {
         <span>{t('View in CRM')} <ArrowRight /></span>
       </div>
     </div>
+  );
+}
+
+function ExecutionPipeline() {
+  const { t } = useLanguage();
+  const ref = useRef<HTMLOListElement>(null);
+  // 'static' = fully drawn (SSR, no-JS, reduced motion); 'armed' = connectors
+  // collapsed while off-screen; 'run' = connectors draw in sequence once.
+  const [motion, setMotion] = useState<'static' | 'armed' | 'run'>('static');
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.9) return; // already visible: leave drawn
+    setMotion('armed');
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setMotion('run');
+        observer.disconnect();
+      }
+    }, { rootMargin: '0px 0px -15% 0px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <ol ref={ref} className="acr-pipeline" data-motion={motion} aria-label={t('AlphaClone execution pipeline')}>
+      {processes.map((item, index) => (
+        <li key={item.stage} className="acr-pipeline-step" style={{ '--step': index } as CSSProperties}>
+          <span className="acr-pipeline-node" aria-hidden="true">0{index + 1}</span>
+          <div className="acr-pipeline-body">
+            <p className="acr-pipeline-stage">{t(item.stage)}</p>
+            <h3>{t(item.title)}</h3>
+            <p className="acr-pipeline-copy">{t(item.body)}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -221,17 +265,15 @@ export default function MarketingHomePage() {
 
       <section className="acr-process" aria-labelledby="process-heading">
         <MarketingContainer>
-          <div className="acr-process-grid">
+          <div className="acr-process-head">
             <div className="acr-section-intro is-compact">
               <p className="acr-eyebrow">{t('How it works')}</p>
               <h2 id="process-heading">{t('Give an instruction. Review the plan. See the result.')}</h2>
               <p>{t('A simple, transparent process designed for real business work.')}</p>
-              <Link href="/how-it-works">{t('See the full workflow')} <ArrowRight /></Link>
             </div>
-            <div className="acr-process-steps">
-              {processes.map((item, index) => <article key={item.title}><span><item.icon /></span>{index < processes.length - 1 && <ArrowRight className="acr-step-arrow" />}<h3>{index + 1}. {t(item.title)}</h3><p>{t(item.body)}</p></article>)}
-            </div>
+            <Link href="/how-it-works" className="acr-process-link">{t('See the full workflow')} <ArrowRight aria-hidden="true" /></Link>
           </div>
+          <ExecutionPipeline />
         </MarketingContainer>
       </section>
 
@@ -241,11 +283,11 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="acr-section-intro is-center"><p className="acr-eyebrow">{t('End-to-end execution')}</p><h2 id="outcomes-heading">{t('Find customers, deliver work, and follow up on payment.')}</h2><p>{t('Three connected outcomes replace a long list of disconnected tools.')}</p></div>
           <div className="acr-outcome-grid">
-            {outcomes.map((item, index) => <article key={item.title} className={`is-${item.tone}`}><div className="acr-outcome-number">0{index + 1}</div><span><item.icon /></span><h3>{t(item.title)}</h3><p>{t(item.body)}</p><Link href={item.href}>{t('Explore this workflow')} <ArrowRight /></Link></article>)}
+            {outcomes.map((item, index) => <article key={item.title}><div className="acr-outcome-top"><span className="acr-icon"><item.icon strokeWidth={1.75} aria-hidden="true" /></span><span className="acr-outcome-number">0{index + 1}</span></div><h3>{t(item.title)}</h3><p>{t(item.body)}</p><Link href={item.href}>{t('Explore this workflow')} <ArrowRight aria-hidden="true" /></Link></article>)}
           </div>
-          <div className="acr-feature-heading"><div><p className="acr-eyebrow">{t('Platform capabilities')}</p><h2>{t('Connected execution across the client journey.')}</h2><p>{t('Manage the client journey from first contact to final payment — with AI assistance and human control.')}</p></div><Link href="/services">{t('Explore the platform')} <ArrowRight /></Link></div>
+          <div className="acr-feature-heading"><div><p className="acr-eyebrow">{t('Platform capabilities')}</p><h2>{t('Connected execution across the client journey.')}</h2><p>{t('Manage the client journey from first contact to final payment — with AI assistance and human control.')}</p></div><Link href="/services">{t('Explore the platform')} <ArrowRight aria-hidden="true" /></Link></div>
           <div className="acr-feature-grid">
-            {features.map((item) => <Link href={item.href} key={item.title} className={`is-${item.tone}`}><span><item.icon /></span><strong>{t(item.title)}</strong><small>{t(item.body)}</small></Link>)}
+            {features.map((item) => <Link href={item.href} key={item.title}><span className="acr-icon"><item.icon strokeWidth={1.75} aria-hidden="true" /></span><span className="acr-feature-text"><strong>{t(item.title)}</strong><small>{t(item.body)}</small></span></Link>)}
           </div>
         </MarketingContainer>
       </section>

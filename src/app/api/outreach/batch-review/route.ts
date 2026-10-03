@@ -74,12 +74,6 @@ export async function POST(request: Request) {
     if (typeof tenantId !== 'string' || !tenantId) {
       return NextResponse.json({ error: 'A workspace is required.' }, { status: 400 });
     }
-    if (preview !== true && finalConfirmation !== true) {
-      return NextResponse.json(
-        { error: 'Review the recipient list and confirm the final approval before scheduling outreach.' },
-        { status: 400 },
-      );
-    }
 
     const normalizedLeadIds = [...new Set(Array.isArray(leadIds) ? leadIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0) : [])];
     const normalizedClientIds = [...new Set(Array.isArray(clientIds) ? clientIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0) : [])];

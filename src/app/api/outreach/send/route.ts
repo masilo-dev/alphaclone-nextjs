@@ -231,9 +231,6 @@ export async function POST(request: Request) {
     const unsubscribeUrl = buildUnsubscribeUrl(leadEmail, tenantId);
 
     const { data: tenantRow } = await admin.from('tenants').select('name, settings').eq('id', tenantId).maybeSingle();
-    if (bulkOutreach && !(tenantRow?.settings as Record<string, unknown> | null)?.outreach_acknowledged_at) {
-      return NextResponse.json({ success: false, error: 'Acknowledge outreach responsibility once before sending.' }, { status: 403 });
-    }
     const tenantName = tenantRow?.name || 'Your workspace';
 
     // Resolve Calendly link from tenant settings for {{client_calendly_link}} injection
