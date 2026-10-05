@@ -1200,6 +1200,7 @@ export const MCP_TOOLS = [
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        idempotency_key: { type: 'string', description: 'Required retry identity. Reuse the same key for retries of this batch; use a new key for a new campaign.' },
         lead_ids: { type: 'array', items: { type: 'string' }, description: 'References of leads from get_leads' },
         client_ids: { type: 'array', items: { type: 'string' }, description: 'References of clients from get_clients' },
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
