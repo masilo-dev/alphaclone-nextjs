@@ -4,6 +4,8 @@
 **Audit Scope:** Full repository inspection across Frontend, Backend, APIs, MCP Gateway, Supabase DB (653 tables/views), Background Workers, Crons, and Integrations.  
 **Operating Principle:** Human-led. AI-assisted. System-executed.
 
+> **Superseding deep audit (2026-10-05):** See [`AGENTIC_BUSINESS_OS_AUDIT.md`](./AGENTIC_BUSINESS_OS_AUDIT.md) for the full 17-section agentic OS architecture map, capability/event design, duplicate inventory, broken handoffs, and P0–P3 implementation plan. This file remains a concise topology snapshot.
+
 ---
 
 ## 1. Executive Summary & Topology
