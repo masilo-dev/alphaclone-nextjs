@@ -200,6 +200,8 @@ export async function POST(request: NextRequest) {
         fromName: 'AlphaClone Website',
         // Must bypass CRM recipient gate — this is an internal platform notification.
         isPlatformNotification: true,
+        // Website inquiries are time-sensitive — send immediately, do not digest.
+        internalNotificationKind: 'immediate_exception',
         skipFooter: true,
       });
 
