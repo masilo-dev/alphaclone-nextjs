@@ -176,8 +176,10 @@ export function ensureMcpIdempotencyKey(params: {
   tenantId: string;
   toolName: string;
   args: Record<string, unknown>;
+  /** Domain capabilities may require keys even when their MCP tier is internal. */
+  requireKey?: boolean;
 }): string | null {
-  if (!mcpToolRequiresIdempotency(params.toolName)) return null;
+  if (!params.requireKey && !mcpToolRequiresIdempotency(params.toolName)) return null;
   const existing =
     typeof params.args.idempotency_key === 'string'
       ? params.args.idempotency_key.trim()

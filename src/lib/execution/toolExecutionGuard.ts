@@ -102,7 +102,7 @@ export async function guardToolExecution(params: {
   // so retries after timeouts do not create duplicate external effects.
   let idempotencyKey: string | null = null;
   if (capabilityRequiresIdempotencyKey(toolName) || mcpToolRequiresIdempotency(toolName)) {
-    idempotencyKey = ensureMcpIdempotencyKey({ tenantId, toolName, args });
+    idempotencyKey = ensureMcpIdempotencyKey({ tenantId, toolName, args, requireKey: true });
     if (!idempotencyKey) {
       return {
         allowed: false,

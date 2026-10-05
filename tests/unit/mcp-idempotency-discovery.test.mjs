@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { sanitizeToolSchemaForClient, mergeSessionArgs } from '../../src/lib/mcp/sanitizeToolSchema.ts';
 import { compactJsonSchemaForDiscovery } from '../../src/lib/mcp/compactToolSchema.ts';
 import { MCP_TOOLS } from '../../src/services/mcp/toolManifest.ts';
+import { ensureMcpIdempotencyKey } from '../../src/lib/mcp/toolRiskTiers.ts';
 
 test('discovery keeps retry keys and requirements while hiding session identity', () => {
   const schema = {
@@ -42,4 +43,17 @@ test('session binding preserves the exact client retry key', () => {
   assert.equal(merged.tenant_id, 'tenant');
   assert.equal(merged.user_id, 'user');
   assert.equal(args.tenant_id, 'wrong');
+});
+
+test('domain-required internal writes retain supplied keys and derive stable retry keys', () => {
+  for (const toolName of ['create_project', 'create_invoice', 'create_contract', 'promote_lead_candidate']) {
+    const args = { name: 'Example' };
+    const key = ensureMcpIdempotencyKey({ tenantId: 'tenant', toolName, args, requireKey: true });
+    assert.ok(key);
+    assert.equal(args.idempotency_key, key);
+    assert.equal(ensureMcpIdempotencyKey({ tenantId: 'tenant', toolName, args: { name: 'Example' }, requireKey: true }), key);
+    const supplied = { idempotency_key: 'client-retry-key' };
+    assert.equal(ensureMcpIdempotencyKey({ tenantId: 'tenant', toolName, args: supplied, requireKey: true }), 'client-retry-key');
+  }
+  assert.equal(ensureMcpIdempotencyKey({ tenantId: 'tenant', toolName: 'list_leads', args: {} }), null);
 });
