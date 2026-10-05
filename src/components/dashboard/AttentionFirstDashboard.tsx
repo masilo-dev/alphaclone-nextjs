@@ -92,6 +92,7 @@ export function AttentionFirstDashboard() {
   const [workspaceActivity, setWorkspaceActivity] = useState<WorkspaceActivityItem[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [activityError, setActivityError] = useState(false);
+  const [nbaItems, setNbaItems] = useState<AttentionItem[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -161,6 +162,40 @@ export function AttentionFirstDashboard() {
       .finally(() => setActivityLoading(false));
   }, [currentTenant?.id, reloadKey]);
 
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+    void fetch(`/api/dashboard/next-actions?tenantId=${currentTenant.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const actions = Array.isArray(data?.actions) ? data.actions : [];
+        setNbaItems(
+          actions.slice(0, 8).map(
+            (a: {
+              object_id: string;
+              object_type: string;
+              recommended_next_action: string;
+              reason?: string;
+              href: string;
+              urgency: string;
+            }) => ({
+              id: `nba-${a.object_type}-${a.object_id}`,
+              label: a.recommended_next_action,
+              detail: a.reason,
+              href: a.href,
+              severity:
+                a.urgency === 'critical' || a.urgency === 'high'
+                  ? 'high'
+                  : a.urgency === 'medium'
+                    ? 'medium'
+                    : 'low',
+              icon: Target,
+            })
+          )
+        );
+      })
+      .catch(() => setNbaItems([]));
+  }, [currentTenant?.id, reloadKey]);
+
   const attentionItems: AttentionItem[] = [];
 
   if (pendingCount > 0) {
@@ -171,6 +206,12 @@ export function AttentionFirstDashboard() {
       severity: 'high',
       icon: AlertCircle,
     });
+  }
+
+  for (const item of nbaItems) {
+    if (!attentionItems.some((existing) => existing.id === item.id)) {
+      attentionItems.push(item);
+    }
   }
 
   const overdueInvoices = Number(stats?.overdueInvoices ?? stats?.overdue_invoices ?? 0);

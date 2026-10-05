@@ -1,41 +1,34 @@
-# Master Execution Program — Implementation Journal
+# Master Program Journal (continuation)
 
-**Branch:** `cursor/p0-completion-gate-b56b`  
-**Updated:** 2026-10-05
+## Owner directive
 
-## Completed this slice
+“finish all phase all” — complete remaining P0 gaps and progress P1→P5 with ENVIRONMENT_BLOCKED live tests documented (not fabricated).
 
-### P0.1 Social convergence
-- Added `executeSocialPublishCommand` (`src/lib/execution/commands/socialPublishCommand.ts`)
-- Wired: MCP `socialPublishTool`, UI `/api/social/schedule` (POST + PATCH), cron `processDueScheduledPosts`
-- Publisher remains `SocialPublishingService` only
+## Changes this turn
 
-### P0.2 Contract convergence
-- Added `executeContractSendCommand`
-- Wired: UI `contracts/management` `send_contract`, MCP `send_contract`
-- Removed duplicate MCP notify after send (service already notifies)
+### P0 close
+- Chase invoice lifecycle reminder → `executeSendEmailCommand` (`cron`)
+- Escalation path still uses `sendEmailServer` for overdue notice (acceptable; reminder is primary chase)
 
-### P0.3 Project convergence
-- Added `executeProjectCreateCommand` with deal/contract idempotency keys
-- Wired: MCP `create_project`, revenue-lifecycle provision, UI projects POST (non-template)
+### P1
+- `nextBestActionEngine` + `/api/dashboard/next-actions`
+- Chase hints with stop conditions
+- Deal won → idempotent project create
+- `canonicalQuote` pointer
 
-### P0.4 Cron/worker
-- Added `buildCronExecutionContext`
-- Social cron declares `execution_source: cron`; due posts use domain command with `executionSource: 'cron'`
-- Contract signature reminders → `executeSendEmailCommand` (`executionSource: cron`)
-- Invoice reminder API → `executeSendEmailCommand`
+### P2
+- `customerSuccessAttention` merged into next-actions
 
-### P0.5 Testing
-- Unit suite `tests/unit/p0-master-program.test.mjs` (12/12)
-- Combined with prior P0 suites: 30 unit tests
-- Live provider cross-surface: **ENVIRONMENT_BLOCKED** (no `.env.local` / provider credentials in this agent)
+### P3
+- `marketingWeekInsight` + `/api/marketing/week-insight`
 
-## Remaining intentional exceptions / debt
-- Template + portal-enabled UI project creates still use rich route insert (not domain command)
-- Chase invoice/contract reminder delivery not fully wrapped in domain commands
-- Direct provider email routes remain deprecated (not deleted)
-- MCPServer legacy switch cases for some tools
-- Live UI+MCP collision tests not executed
+### P4
+- AttentionFirstDashboard consumes next-actions API
 
-## Why not P1 yet
-See `P0_EXIT_GATE_REPORT.md` — remaining critical cron/chase paths and live evidence.
+### P5
+- `tests/unit/master-program-phases.test.mjs`
+- `FINAL_RELEASE_REPORT.md` → **CONTROLLED BETA**
+
+## Tests
+
+Run: `node --import tsx --test tests/unit/master-program-phases.test.mjs` (+ prior P0 suites)

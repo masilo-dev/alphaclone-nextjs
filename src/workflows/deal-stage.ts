@@ -62,6 +62,30 @@ async function closedWonActions(dealId: string, tenantId: string) {
   if (contract) {
     await queueContractLifecycle({ contractId: contract.id, tenantId });
   }
+
+  // Optional delivery kickoff: idempotent project for this deal (tenant policy can disable later).
+  if (deal?.name) {
+    const { executeProjectCreateCommand } = await import(
+      '@/lib/execution/commands/projectCreateCommand'
+    );
+    await executeProjectCreateCommand({
+      tenantId,
+      userId: String(deal.owner_id || deal.created_by || 'system'),
+      executionSource: 'cron',
+      skipPolicyEvaluation: true,
+      input: {
+        name: `Delivery: ${deal.name}`,
+        dealId,
+        clientId: deal.client_id || deal.contact_id || null,
+        contractId: contract?.id || null,
+        status: 'Pending',
+        currentStage: 'Initiation',
+        description: `Auto-created from deal closed_won (${dealId})`,
+      },
+    }).catch((err) => {
+      console.warn('[deal-stage] project create skipped:', err instanceof Error ? err.message : err);
+    });
+  }
 }
 
 async function lostActions(dealId: string) {

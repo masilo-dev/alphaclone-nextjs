@@ -307,7 +307,8 @@ export async function sendInvoiceReminderPhase(invoiceId: string, tenantId: stri
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
   const admin = createSupabaseAdminClient();
   const actionUrl = await getPublicInvoicePaymentUrl(admin, invoiceId, tenantId);
-  const result = await sendEmailServer({
+  const { executeSendEmailCommand } = await import('@/lib/execution/commands/sendEmailCommand');
+  const execution = await executeSendEmailCommand({
     tenantId,
     to: invoice.client.email,
     subject: `Reminder: Invoice ${invoiceNumber}`,
@@ -325,8 +326,19 @@ export async function sendInvoiceReminderPhase(invoiceId: string, tenantId: stri
     }),
     templateName: 'invoiceLifecycleReminder',
     skipFooter: true,
+    executionSource: 'cron',
+    skipPolicyEvaluation: true,
+    initiationSource: 'cron.invoice_lifecycle_reminder',
+    relatedRecord: { type: 'invoice', id: invoiceId },
+    idempotencyKey: `invoice-lifecycle-remind:${tenantId}:${invoiceId}:${new Date().toISOString().slice(0, 10)}`,
+    auditMetadata: {
+      source_module: 'cron',
+      source_action: 'invoice.lifecycle_reminder',
+    },
   });
-  if (!result.success) throw new Error(`Invoice reminder failed: ${result.error}`);
+  if (!execution.ok || !execution.result?.success) {
+    throw new Error(`Invoice reminder failed: ${execution.error?.message || execution.result?.error}`);
+  }
 
   await admin
     .from('business_invoices')

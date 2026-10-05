@@ -78,6 +78,10 @@ export async function GET(req: NextRequest) {
     }
 
     const platform = computePlatformContextScore();
+    const { deriveTenantNextBestActions } = await import(
+      '@/lib/execution/nextBestActionEngine'
+    );
+    const nextActions = await deriveTenantNextBestActions(tenantId, 15).catch(() => []);
 
     return NextResponse.json({
       today,
@@ -86,6 +90,7 @@ export async function GET(req: NextRequest) {
       waiting_on_customer: unsignedContracts.count || 0,
       waiting_on_us: highPriority.length,
       bonnie_recommends: bonnieRecommends,
+      next_actions: nextActions,
       platform_score: platform,
     });
   } catch (error) {

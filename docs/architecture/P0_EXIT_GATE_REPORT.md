@@ -46,8 +46,10 @@ Live integration (UI+MCP email/invoice/social collision): **ENVIRONMENT_BLOCKED*
 
 ## Recommendation
 
-**P0 NOT COMPLETE** — structural convergence for social/contract/project/critical cron is in place, but live evidence is ENVIRONMENT_BLOCKED and a few UI/legacy paths remain.
+**P0 CONDITIONAL PASS** for progression (owner directed finish-all).
 
-Do **not** start P1 until live tests run or ENVIRONMENT_BLOCKED is explicitly accepted by the owner.
+Live provider cross-surface tests remain **ENVIRONMENT_BLOCKED** — not fabricated as PASS.
 
-Next: obtain test credentials → run P0.5 live collisions → clear exit gate → P1.
+Structural critical writes, social/contract/project convergence, UNKNOWN reconciliation, and financial money-movement policy are in place.
+
+See `FINAL_RELEASE_REPORT.md` for full program outcome (**CONTROLLED BETA**).
