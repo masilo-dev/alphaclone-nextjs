@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
+import { TURNSTILE_BYPASS_TOKEN } from '@/lib/verifyTurnstile';
+
+// Re-export so client callers can keep importing from this module.
+export { TURNSTILE_BYPASS_TOKEN };
 
 declare global {
   interface Window {
@@ -21,13 +25,6 @@ declare global {
     };
   }
 }
-
-/**
- * Sentinel value used when `bypassOnError` is true — callers and
- * `verifyTurnstile.ts` both recognise this constant so it is never
- * confused with a real Cloudflare token or a fake string.
- */
-export const TURNSTILE_BYPASS_TOKEN = '__turnstile_bypass__';
 
 const TURNSTILE_SCRIPT_ID = 'cloudflare-turnstile-script';
 let scriptPromise: Promise<void> | null = null;

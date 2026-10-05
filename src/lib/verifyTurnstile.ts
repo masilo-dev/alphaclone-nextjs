@@ -2,9 +2,18 @@
  * Cloudflare Turnstile server verification (canonical siteverify).
  * Prefers TURNSTILE_SECRET; falls back to TURNSTILE_SECRET_KEY for legacy deploys.
  * When unset or placeholder, verification is skipped (local dev).
+ *
+ * TURNSTILE_BYPASS_TOKEN lives here (server-safe module) — never import it from
+ * a 'use client' file into API routes, or the sentinel can resolve to undefined
+ * at runtime and reject legitimate widget-failure bypasses with HTTP 403.
  */
 
-import { TURNSTILE_BYPASS_TOKEN } from '@/components/security/TurnstileWidget';
+/**
+ * Sentinel value used when TurnstileWidget `bypassOnError` is true.
+ * Callers and the widget both recognise this constant so it is never
+ * confused with a real Cloudflare token or a known-fake string.
+ */
+export const TURNSTILE_BYPASS_TOKEN = '__turnstile_bypass__';
 
 /**
  * Known fake/fallback token strings that must never be accepted as valid.

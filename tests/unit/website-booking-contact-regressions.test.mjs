@@ -8,6 +8,9 @@ import ts from "typescript";
 
 const require = createRequire(import.meta.url);
 const root = resolve(dirname(new URL(import.meta.url).pathname), "../..");
+function read(file) {
+  return readFileSync(resolve(root, file), "utf8");
+}
 function load(file, mocks = {}) {
   const runtimeModule = { exports: {} };
   const source = readFileSync(resolve(root, file), "utf8");
@@ -247,8 +250,8 @@ test("contact accepts explicit Turnstile bypass after widget failure", async () 
   assert.deepEqual(sequence, ["save", "email"]);
 });
 
-test("website owner notifications cannot bypass the internal digest gateway", async () => {
-  let sent = 0;
+test("website owner notifications require explicit immediate_exception classification", async () => {
+  let executed = 0;
   const sender = load("src/lib/email/sendEmailServer.ts", {
     "@/lib/email/usageMeteringService": {
       checkEmailSendQuotaAvailable: async () => ({
@@ -256,10 +259,12 @@ test("website owner notifications cannot bypass the internal digest gateway", as
         message: "Quota exhausted",
       }),
     },
-    "@/lib/email/emailGateway": {
-      sendViaEmailGateway: async () => {
-        sent++;
-        return { success: true };
+    "@/lib/email/emailExecutionService": {
+      EmailExecutionService: {
+        execute: async () => {
+          executed++;
+          return { success: true, emailId: "email-1" };
+        },
       },
     },
   });
@@ -271,14 +276,49 @@ test("website owner notifications cannot bypass the internal digest gateway", as
     templateName: "websiteContact",
     isPlatformNotification: true,
   };
+  // Missing classification → digest gate blocks before quota/send.
   const internal = await sender.sendEmailServer(input);
   assert.equal(internal.success, false);
   assert.equal(internal.code, "DIGEST_REQUIRED");
-  assert.equal(sent, 0);
+  assert.equal(executed, 0);
+
+  // Non-platform path still hits quota.
   assert.equal(
     (await sender.sendEmailServer({ ...input, isPlatformNotification: false }))
       .code,
     "QUOTA_EXCEEDED",
   );
-  assert.equal(sent, 0);
+  assert.equal(executed, 0);
+
+  // Website contact with immediate_exception skips quota and sends.
+  const immediate = await sender.sendEmailServer({
+    ...input,
+    internalNotificationKind: "immediate_exception",
+  });
+  assert.equal(immediate.success, true);
+  assert.equal(executed, 1);
+});
+
+test("contact route passes immediate_exception for owner notification emails", async () => {
+  const source = read("src/app/api/contact/route.ts");
+  assert.match(source, /internalNotificationKind:\s*'immediate_exception'/);
+  assert.match(source, /templateName:\s*'websiteContact'/);
+  assert.match(source, /isPlatformNotification:\s*true/);
+});
+
+test("Turnstile bypass sentinel is defined in server-safe verifyTurnstile module", async () => {
+  const verifySource = read("src/lib/verifyTurnstile.ts");
+  const widgetSource = read("src/components/security/TurnstileWidget.tsx");
+  assert.match(
+    verifySource,
+    /export const TURNSTILE_BYPASS_TOKEN = '__turnstile_bypass__'/,
+  );
+  assert.doesNotMatch(
+    verifySource,
+    /from '@\/components\/security\/TurnstileWidget'/,
+  );
+  assert.match(
+    widgetSource,
+    /import \{ TURNSTILE_BYPASS_TOKEN \} from '@\/lib\/verifyTurnstile'/,
+  );
 });
