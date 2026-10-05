@@ -13,6 +13,7 @@ const EXTERNAL_WRITE_IDEMPOTENCY_CAPABILITIES = new Set([
   'publish_social_post',
   'publish_post',
   'create_social_post',
+  'schedule_social_post',
   'send_invoice',
   'create_invoice',
   'send_quote',

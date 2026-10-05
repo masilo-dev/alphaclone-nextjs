@@ -42,6 +42,46 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const currentStage = normalizeProjectStage(input.currentStage) || "Discovery";
     const ownerId = input.ownerId || user.id;
     const admin = createSupabaseAdminClient();
+    const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');
+
+    // Domain command path for standard creates (no template / portal extras).
+    if (!input.templateId && !input.portalEnabled) {
+      const { executeProjectCreateCommand } = await import(
+        '@/lib/execution/commands/projectCreateCommand'
+      );
+      const { data: ownerProfile } = await admin.from("profiles").select("full_name, name, email").eq("id", ownerId).maybeSingle();
+      const execution = await executeProjectCreateCommand({
+        tenantId,
+        userId: user.id,
+        executionSource: 'ui',
+        idempotencyKey: headerKey || undefined,
+        input: {
+          name: input.name,
+          clientId: input.clientId,
+          status,
+          currentStage,
+          category: input.category,
+          description: input.description,
+          dueDate: cleanDate(input.dueDate),
+          ownerId,
+          ownerName: input.ownerName || ownerProfile?.full_name || ownerProfile?.name || ownerProfile?.email || user.email || "Workspace member",
+        },
+      });
+      if (!execution.ok || !execution.result) {
+        return NextResponse.json(
+          { error: execution.error?.message || 'Project create blocked', code: execution.failure_code },
+          { status: execution.failure_code === 'APPROVAL_REQUIRED' ? 202 : 403 }
+        );
+      }
+      return NextResponse.json({
+        project: execution.result.project,
+        created: execution.result.created,
+        duplicate: execution.result.duplicate,
+        execution_id: execution.execution_id,
+        idempotency_key: execution.idempotency_key,
+      });
+    }
+
     if (input.clientId) {
       const { data: client, error: clientError } = await admin.from('business_clients')
         .select('id').eq('tenant_id', tenantId).eq('id', input.clientId).eq('is_active', true).maybeSingle();

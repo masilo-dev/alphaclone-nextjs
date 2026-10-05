@@ -1936,35 +1936,37 @@ export class SocialPublishingService {
       }
 
       try {
-        const identity = await this.resolveIdentity({
+        const { executeSocialPublishCommand } = await import(
+          '@/lib/execution/commands/socialPublishCommand'
+        );
+        const execution = await executeSocialPublishCommand({
           tenantId: post.tenant_id,
-          platform,
-          identityType,
-          identityId: String(identityId),
+          userId: String(post.user_id || 'system'),
+          executionSource: 'cron',
+          skipPolicyEvaluation: true,
+          existingPostId: post.id,
+          platformHint: platform,
+          idempotencyKey:
+            post.idempotency_key ||
+            `cron-social:${post.tenant_id}:${post.id}:${String(identityId)}`,
         });
-        const result = await this.publishToProvider(post.id, identity, identityType);
-        if (result.ok && result.verified && result.provider_post_id) {
-          await updatePost(post.id, {
-            status: 'published',
-            published_at: result.published_at,
-            live_url: result.live_url,
-            error_message: null,
-          });
+
+        if (execution.ok && execution.result?.ok) {
           published += 1;
         } else {
           const attempts = (post.attempt_count || 0) + 1;
+          const code = execution.failure_code || execution.error?.code || 'PUBLISH_FAILED';
           const permanent =
-            result.error_code === 'MISSING_IDENTITY' ||
-            result.error_code === 'IDENTITY_FALLBACK_BLOCKED' ||
-            result.error_code === 'TOKEN_MISSING';
+            code === 'MISSING_IDENTITY' ||
+            code === 'IDENTITY_NOT_CONNECTED' ||
+            code === 'IDENTITY_FALLBACK_BLOCKED' ||
+            code === 'TOKEN_MISSING';
           await updatePost(post.id, {
             status: permanent || attempts >= 5 ? 'failed' : 'scheduled',
             attempt_count: attempts,
-            last_error: result.error,
-            error_code: result.error_code,
-            provider_response: redactSecrets(result.provider_response),
-            error_message: result.error,
-            // Exponential backoff: push scheduled_at forward
+            last_error: execution.error?.message || code,
+            error_code: code,
+            error_message: execution.error?.message || code,
             ...(permanent || attempts >= 5
               ? {}
               : {

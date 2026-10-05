@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { sendEmailServer } from "@/lib/email/sendEmailServer";
+import { executeSendEmailCommand } from "@/lib/execution/commands/sendEmailCommand";
 import { contractEmailTemplates } from "@/lib/email/contractEmailTemplates";
 import { AppUrls } from "@/lib/urls";
 
@@ -110,8 +110,9 @@ export async function sendOrderedContractSignatureReminders(options: {
       if (tokenError) throw tokenError;
     }
     const signingUrl = AppUrls.signContract(token);
-    const result = await sendEmailServer({
+    const execution = await executeSendEmailCommand({
       tenantId: options.tenantId,
+      userId: options.actorUserId || contract.created_by || undefined,
       to: email,
       subject: `Signature reminder: ${contract.title}`,
       html: contractEmailTemplates.signatureRequest({
@@ -126,8 +127,17 @@ export async function sendOrderedContractSignatureReminders(options: {
       }),
       isPlatformNotification: true,
       skipFooter: true,
+      executionSource: "cron",
+      skipPolicyEvaluation: true,
+      initiationSource: "cron.contract_signature_reminder",
+      relatedRecord: { type: "contract", id: options.contractId },
+      idempotencyKey: `contract-remind:${options.tenantId}:${options.contractId}:${party.id}:${new Date().toISOString().slice(0, 10)}`,
+      auditMetadata: {
+        source_module: "cron",
+        source_action: "contract.signature_reminder",
+      },
     });
-    if (!result.success) {
+    if (!execution.ok || !execution.result?.success) {
       skipped += 1;
       continue;
     }

@@ -12,6 +12,15 @@ export async function GET(req: NextRequest) {
 
   return withCronJob("social-publish", async () => {
     try {
+      const { buildCronExecutionContext } = await import(
+        '@/lib/execution/cronExecutionContext'
+      );
+      // Declares cron as execution source for observability; SPS processDue uses domain command with executionSource=cron.
+      void buildCronExecutionContext({
+        jobName: 'social-publish',
+        tenantId: 'system',
+        capability: 'publish_social_post',
+      });
       const publishSummary = await publishDueSocialPostSummary();
       let scheduledPublishedCount = 0;
       if (
@@ -27,6 +36,7 @@ export async function GET(req: NextRequest) {
         publishSummary,
         scheduledPublishedCount,
         totalCount: publishSummary.processed + scheduledPublishedCount,
+        execution_source: 'cron',
         legacyScheduledPostsEnabled:
           process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === "true" ||
           process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === "1",

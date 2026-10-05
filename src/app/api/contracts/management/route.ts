@@ -73,10 +73,43 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           await downloadContract(tenantId, config, supabase),
         );
-      case "send_contract":
-        return NextResponse.json(
-          await sendContract(tenantId, config, supabase, user.id),
+      case "send_contract": {
+        const { executeContractSendCommand } = await import(
+          '@/lib/execution/commands/contractSendCommand'
         );
+        const recipients = config.recipients || config.recipient_email || config.to;
+        const execution = await executeContractSendCommand({
+          tenantId,
+          userId: user.id,
+          contractId: config.contractId || config.contract_id,
+          recipients,
+          subject: config.subject,
+          message: config.message,
+          resendForSignature: config.resendForSignature,
+          executionSource: 'ui',
+          config,
+        });
+        if (!execution.ok) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: execution.error?.message || 'Contract send blocked',
+              code: execution.failure_code,
+              execution_truth: {
+                status: execution.status,
+                verification_state: execution.verification_state,
+                may_claim_completed: false,
+              },
+            },
+            { status: execution.failure_code === 'APPROVAL_REQUIRED' ? 202 : 403 }
+          );
+        }
+        return NextResponse.json({
+          ...(execution.result || { success: true }),
+          execution_id: execution.execution_id,
+          idempotency_key: execution.idempotency_key,
+        });
+      }
       case "delete_contract":
         return NextResponse.json(
           await deleteContract(tenantId, config, supabase),

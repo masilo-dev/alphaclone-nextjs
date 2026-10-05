@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { executeSendEmailCommand } from '@/lib/execution/commands/sendEmailCommand';
+import { mapProviderCodeToHttpStatus } from '@/lib/execution/domainCapabilityGuard';
 
 type ReminderMetadata = {
   clientEmail?: string;
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     const bodyText = message || `This is a payment reminder for invoice ${invoice.invoice_number}, due on ${invoice.due_date}.`;
-    const result = await sendEmailServer({
+    const execution = await executeSendEmailCommand({
       tenantId,
       userId: user.id,
       to: resolvedRecipient,
@@ -70,15 +71,31 @@ export async function POST(req: NextRequest) {
       isPlatformNotification: true,
       templateName: 'invoiceReminder',
       initiationSource: 'api.invoices.reminder',
+      executionSource: 'ui',
       relatedRecord: { type: 'invoice', id: invoice.id },
+      idempotencyKey: `invoice-remind:${tenantId}:${invoice.id}:${resolvedRecipient.toLowerCase()}:${new Date().toISOString().slice(0, 10)}`,
+      auditMetadata: {
+        source_module: 'api',
+        source_action: 'invoice.reminder',
+      },
     });
 
-    if (!result.success) {
+    if (!execution.ok || !execution.result?.success) {
       return NextResponse.json(
-        { error: result.error || 'Failed to send reminder email', code: result.code },
-        { status: 502 },
+        {
+          error: execution.error?.message || execution.result?.error || 'Failed to send reminder email',
+          code: execution.failure_code || execution.result?.code,
+          execution_truth: {
+            status: execution.status,
+            verification_state: execution.verification_state,
+            may_claim_completed: false,
+          },
+        },
+        { status: mapProviderCodeToHttpStatus(execution.failure_code || execution.result?.code) }
       );
     }
+
+    const result = execution.result;
 
     const nowIso = new Date().toISOString();
     await admin.from('invoice_reminders').insert({

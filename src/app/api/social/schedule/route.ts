@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'node:crypto';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
-import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
-import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { z } from 'zod';
 
@@ -42,48 +41,12 @@ function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name
     .filter((page): page is { id: string; name: string | null } => !!page);
 }
 
-type PublishResult = {
-  ok: boolean;
-  platform: 'facebook' | 'linkedin';
-  reason?: string;
-};
-
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 20000): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-function isMissingColumn(error: unknown, columnName: string) {
-  if (!error || typeof error !== 'object') return false;
-  const maybeError = error as { code?: string; message?: string };
-  return maybeError.code === '42703' && (maybeError.message || '').includes(columnName);
-}
-
 function getMissingColumnName(error: unknown): string | null {
   if (!error || typeof error !== 'object') return null;
   const maybeError = error as { code?: string; message?: string };
   if (maybeError.code !== '42703' || !maybeError.message) return null;
   const match = maybeError.message.match(/column "([^"]+)"/i);
   return match?.[1] || null;
-}
-
-function isStatusConstraintViolation(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const maybeError = error as { code?: string; message?: string };
-  return (
-    maybeError.code === '23514' &&
-    (maybeError.message || '').includes('social_posts_status_check')
-  );
-}
-
-function mapStatusForLegacyConstraint(status: string): string {
-  if (status === 'queued' || status === 'publishing') return 'scheduled';
-  return status;
 }
 
 function normalizeScopes(raw: unknown): string[] {
@@ -148,120 +111,6 @@ async function insertSocialPostWithFallback(
     .insert(mutablePayload)
     .select('*')
     .single();
-}
-
-async function updateSocialPostStatusWithFallback(
-  adminClient: ReturnType<typeof createSupabaseAdminClient>,
-  postId: string,
-  payload: Record<string, unknown>
-) {
-  const firstTry = await adminClient
-    .from('social_posts')
-    .update(payload)
-    .eq('id', postId);
-  if (!isStatusConstraintViolation(firstTry.error)) return firstTry;
-
-  const fallbackPayload = { ...payload };
-  if (typeof fallbackPayload.status === 'string') {
-    fallbackPayload.status = mapStatusForLegacyConstraint(fallbackPayload.status);
-  }
-  return await adminClient
-    .from('social_posts')
-    .update(fallbackPayload)
-    .eq('id', postId);
-}
-
-async function publishToFacebook(postId: string): Promise<PublishResult> {
-  const admin = createSupabaseAdminClient();
-  const { data: post } = await admin.from('social_posts').select('tenant_id, facebook_page_id').eq('id', postId).single();
-  if (!post?.facebook_page_id) return { ok: false, platform: 'facebook', reason: 'missing_page_id' };
-  const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
-  const service = getSocialPublishingService();
-  const identity = await service.resolveIdentity({ tenantId: post.tenant_id, platform: 'facebook', identityType: 'facebook_page', identityId: post.facebook_page_id });
-  const result = await service.publishToFacebook(postId, identity);
-  if (!result.ok) {
-    const saved = await admin.from('social_posts').update({ error_message: result.error, last_error: result.error, error_code: result.error_code, provider_response: result.provider_response }).eq('id', postId).eq('tenant_id', post.tenant_id);
-    if (saved.error) throw new Error(saved.error.message);
-  }
-  return {
-    ok: result.ok && result.verified && Boolean(result.provider_post_id),
-    platform: 'facebook',
-    reason: result.error ?? undefined,
-  };
-}
-
-async function publishToLinkedIn(postId: string): Promise<PublishResult> {
-  const result = await publishLinkedInPost(postId);
-  return { ok: result.ok, platform: 'linkedin', reason: result.reason };
-}
-
-
-async function publishSocialPost(postId: string) {
-  const adminClient = createSupabaseAdminClient();
-  const { data: post } = await adminClient
-    .from('social_posts')
-    .select('id, platforms')
-    .eq('id', postId)
-    .single();
-
-  if (!post) return;
-
-  const platforms = Array.isArray(post.platforms) ? post.platforms : [];
-  const jobs: Promise<PublishResult>[] = [];
-
-  if (platforms.includes('facebook')) jobs.push(publishToFacebook(postId));
-  if (platforms.includes('linkedin')) jobs.push(publishToLinkedIn(postId));
-
-  if (jobs.length === 0) {
-    if (platforms.includes('platform')) {
-      await adminClient.from('social_posts').update({
-        status: 'published',
-        published_at: new Date().toISOString(),
-        error_message: null,
-      }).eq('id', postId);
-      return;
-    }
-    await adminClient.from('social_posts').update({
-      status: 'failed',
-      error_message: 'No supported social platform selected',
-    }).eq('id', postId);
-    return;
-  }
-
-  await updateSocialPostStatusWithFallback(adminClient, postId, {
-    status: 'publishing',
-    error_message: null,
-  });
-  const results = await Promise.all(jobs);
-  const failed = results.filter((r) => !r.ok);
-  const succeeded = results.filter((r) => r.ok);
-
-  if (failed.length > 0 && succeeded.length === 0) {
-    const message = failed.map((r) => `${r.platform}: ${r.reason || 'failed'}`).join(' | ');
-    await updateSocialPostStatusWithFallback(adminClient, postId, {
-      status: 'failed',
-      error_message: message,
-    });
-    return;
-  }
-
-  if (failed.length > 0 && succeeded.length > 0) {
-    const partialMessage = `Partial publish: ${failed
-      .map((r) => `${r.platform}: ${r.reason || 'failed'}`)
-      .join(' | ')}`;
-    await updateSocialPostStatusWithFallback(adminClient, postId, {
-      status: 'published',
-      published_at: new Date().toISOString(),
-      error_message: partialMessage,
-    });
-    return;
-  }
-
-  await updateSocialPostStatusWithFallback(adminClient, postId, {
-    status: 'published',
-    published_at: new Date().toISOString(),
-    error_message: null,
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -377,9 +226,89 @@ export async function POST(req: NextRequest) {
     const scheduledAt = parsedScheduledAt ? parsedScheduledAt.toISOString() : null;
     const shouldPublishNow = body.publish_now === true;
     const publishEnabled = isSocialPublishEnabled();
+    const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');
 
-    // Use a legacy-safe insert status; some deployments still enforce
-    // an older social_posts_status_check that rejects "queued".
+    // Prefer domain command + SocialPublishingService for facebook/linkedin (canonical path).
+    const publishPlatforms = platforms.filter((p) => p === 'facebook' || p === 'linkedin') as Array<
+      'facebook' | 'linkedin'
+    >;
+    if (publishPlatforms.length > 0 && (shouldPublishNow || scheduledAt)) {
+      if (shouldPublishNow && !publishEnabled) {
+        return NextResponse.json({ success: true, publishBlocked: true }, { status: 202 });
+      }
+      const { executeSocialPublishCommand } = await import('@/lib/execution/commands/socialPublishCommand');
+      const results = [];
+      for (const platform of publishPlatforms) {
+        const identityType =
+          platform === 'facebook'
+            ? 'facebook_page'
+            : requestedOrganizationId
+              ? 'linkedin_organization'
+              : 'linkedin_person';
+        const identityId =
+          platform === 'facebook'
+            ? body.facebook_page_id?.trim() || ''
+            : requestedOrganizationId || body.linkedin_member_id?.trim() || '';
+        if (!identityId) {
+          return NextResponse.json(
+            { error: `Missing destination identity for ${platform}` },
+            { status: 400 }
+          );
+        }
+        const execution = await executeSocialPublishCommand({
+          tenantId,
+          userId: user.id,
+          executionSource: 'ui',
+          idempotencyKey:
+            headerKey ||
+            `ui-social:${tenantId}:${platform}:${identityId}:${createHash('sha256').update(body.caption.trim()).digest('hex').slice(0, 16)}`,
+          create: {
+            platform,
+            identityType,
+            identityId,
+            caption: body.caption.trim(),
+            mediaUrls: body.media_urls || [],
+            linkUrl: body.link_url || null,
+            publishNow: shouldPublishNow,
+            scheduledAt: shouldPublishNow ? null : scheduledAt,
+            aiClient: 'ui',
+          },
+        });
+        results.push(execution);
+      }
+      const failed = results.find((r) => !r.ok);
+      if (failed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: failed.error?.message || 'Social publish blocked or failed',
+            code: failed.failure_code,
+            execution_truth: {
+              status: failed.status,
+              verification_state: failed.verification_state,
+              may_claim_completed: false,
+              execution_id: failed.execution_id,
+              idempotency_key: failed.idempotency_key,
+            },
+          },
+          { status: failed.failure_code === 'APPROVAL_REQUIRED' ? 202 : 422 }
+        );
+      }
+      const primary = results[0];
+      return NextResponse.json({
+        success: true,
+        post: primary.result?.data || null,
+        execution_id: primary.execution_id,
+        idempotency_key: primary.idempotency_key,
+        execution_truth: {
+          status: primary.status,
+          verification_state: primary.verification_state,
+          may_claim_completed: primary.verification_state === 'VERIFIED',
+        },
+      });
+    }
+
+    // Legacy path: platform-only / unsupported channel inserts (no external provider write).
     const status = 'scheduled';
 
     const insertPayload = {
@@ -403,17 +332,14 @@ export async function POST(req: NextRequest) {
 
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.POST' });
 
-    if (shouldPublishNow) {
-      if (!publishEnabled) {
-        return NextResponse.json({ success: true, post, publishBlocked: true }, { status: 202 });
-      }
-      await publishSocialPost(post.id);
-      const { data: published, error: readError } = await supabase.from('social_posts').select('*').eq('id', post.id).eq('tenant_id', tenantId).single();
-      if (readError) throw new Error(readError.message);
-      const facebookVerified = !platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url);
-      const linkedinVerified = !platforms.includes('linkedin') || Boolean(published.linkedin_post_urn);
-      const success = published.status === 'published' && facebookVerified && linkedinVerified;
-      return NextResponse.json({ success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' }, { status: success ? 200 : 422 });
+    if (shouldPublishNow && platforms.includes('platform')) {
+      await createSupabaseAdminClient()
+        .from('social_posts')
+        .update({ status: 'published', published_at: new Date().toISOString(), error_message: null })
+        .eq('id', post.id)
+        .eq('tenant_id', tenantId);
+      const { data: published } = await supabase.from('social_posts').select('*').eq('id', post.id).eq('tenant_id', tenantId).single();
+      return NextResponse.json({ success: true, post: published });
     }
 
     return NextResponse.json({ success: true, post });
@@ -498,15 +424,32 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
     }
 
-    const { error } = await supabase
-      .from('social_posts')
-      .update({ status: 'scheduled', scheduled_at: null, error_message: null })
-      .eq('id', body.postId)
-      .eq('tenant_id', body.tenantId);
+    const { executeSocialPublishCommand } = await import('@/lib/execution/commands/socialPublishCommand');
+    const execution = await executeSocialPublishCommand({
+      tenantId: body.tenantId,
+      userId: user.id,
+      executionSource: 'ui',
+      existingPostId: body.postId,
+      idempotencyKey: req.headers.get('idempotency-key') || `ui-publish-existing:${body.tenantId}:${body.postId}`,
+      skipPolicyEvaluation: false,
+    });
 
-    if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
+    if (!execution.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: execution.error?.message || 'Publish failed',
+          code: execution.failure_code,
+          execution_truth: {
+            status: execution.status,
+            verification_state: execution.verification_state,
+            may_claim_completed: false,
+          },
+        },
+        { status: 422 }
+      );
+    }
 
-    await publishSocialPost(body.postId);
     const { data: published, error: readError } = await supabase
       .from('social_posts')
       .select('status, platforms, facebook_post_id, linkedin_post_urn, live_url, error_message')
@@ -517,9 +460,17 @@ export async function PATCH(req: NextRequest) {
     const platforms = Array.isArray(published.platforms) ? published.platforms : [];
     const facebookVerified = !platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url);
     const linkedinVerified = !platforms.includes('linkedin') || Boolean(published.linkedin_post_urn);
-    const success = published.status === 'published' && facebookVerified && linkedinVerified;
+    const success =
+      execution.verification_state === 'VERIFIED' ||
+      (published.status === 'published' && facebookVerified && linkedinVerified);
     return NextResponse.json(
-      { success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' },
+      {
+        success,
+        post: published,
+        execution_id: execution.execution_id,
+        idempotency_key: execution.idempotency_key,
+        error: success ? undefined : published.error_message || 'Publishing could not be verified',
+      },
       { status: success ? 200 : 422 }
     );
   } catch (err: unknown) {

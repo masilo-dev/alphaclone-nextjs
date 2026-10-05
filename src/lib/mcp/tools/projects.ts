@@ -65,33 +65,37 @@ registerTool('projects', {
     },
     required: ['tenant_id', 'name'],
   },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const row = {
-      tenant_id: args.tenant_id,
-      name: args.name,
-      client_id: args.client_id || null,
-      status: args.status,
-      description: args.description || null,
-      due_date: args.due_date || null,
-    };
-
-    const { data, error } = await supabase.from(PROJECT_TABLE).insert(row).select().single();
-    if (error) {
-      const { data: fbData, error: fbError } = await supabase
-        .from('projects')
-        .insert({
-          tenant_id: args.tenant_id,
-          name: args.name,
-          status: args.status,
-          description: args.description || null,
-        })
-        .select()
-        .single();
-      if (fbError) throw fbError;
-      return fbData;
+  handler: async (args, context) => {
+    const { executeProjectCreateCommand } = await import(
+      '@/lib/execution/commands/projectCreateCommand'
+    );
+    const execution = await executeProjectCreateCommand({
+      tenantId: args.tenant_id,
+      userId: context.userId || '',
+      executionSource: 'mcp',
+      skipPolicyEvaluation: true,
+      idempotencyKey:
+        typeof (args as { idempotency_key?: string }).idempotency_key === 'string'
+          ? (args as { idempotency_key?: string }).idempotency_key
+          : undefined,
+      input: {
+        name: args.name,
+        clientId: args.client_id,
+        status: args.status,
+        description: args.description,
+        dueDate: args.due_date,
+      },
+    });
+    if (!execution.ok || !execution.result) {
+      throw new Error(execution.error?.message || 'Failed to create project');
     }
-    return data;
+    return {
+      ...execution.result.project,
+      created: execution.result.created,
+      duplicate: execution.result.duplicate,
+      execution_id: execution.execution_id,
+      idempotency_key: execution.idempotency_key,
+    };
   },
 });
 

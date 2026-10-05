@@ -403,36 +403,30 @@ export async function POST(request: NextRequest) {
         contract.value ?? contract.total_amount ?? contract.payment_amount ?? 0,
       );
       if (input.createProject && !projectId) {
-        const { data: project, error } = await admin
-          .from("projects")
-          .insert({
-            tenant_id: input.tenantId,
-            owner_id: user.id,
-            owner_name: user.email || "Workspace member",
+        const { executeProjectCreateCommand } = await import(
+          '@/lib/execution/commands/projectCreateCommand'
+        );
+        const execution = await executeProjectCreateCommand({
+          tenantId: input.tenantId,
+          userId: user.id,
+          executionSource: 'ui',
+          input: {
             name: contract.title,
-            category: contract.type || "Contract delivery",
-            status: "Pending",
-            current_stage: "Initiation",
-            progress: 0,
+            clientId: contract.client_id || null,
+            contractId: contract.id,
+            status: 'Pending',
+            currentStage: 'Initiation',
+            category: contract.type || 'Contract delivery',
             description: `Delivery project provisioned from signed contract ${contract.title}`,
-            contract_id: contract.id,
-            contract_status: status,
-            contract_text: contract.content || null,
-            client_id: contract.client_id || null,
-            budget: total || null,
-            budget_total: total || null,
-            budget_used: 0,
-            team: [],
-            resources: [],
-            is_public: false,
-            show_in_portfolio: false,
-            portal_enabled: false,
-            auto_invoice_enabled: true,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        projectId = project.id;
+            ownerId: user.id,
+            ownerName: user.email || 'Workspace member',
+          },
+          idempotencyKey: `project-create:contract:${input.tenantId}:${contract.id}`,
+        });
+        if (!execution.ok || !execution.result?.project?.id) {
+          throw new Error(execution.error?.message || 'Project provisioning failed');
+        }
+        projectId = String(execution.result.project.id);
         await admin
           .from("revenue_lifecycle_links")
           .upsert(

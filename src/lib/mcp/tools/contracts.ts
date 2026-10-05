@@ -262,7 +262,6 @@ registerTool('contracts', {
     const supabase = createSupabaseAdminClient();
     const userId = context.userId || '';
 
-    // If recipient_email is not provided, try to fetch it from the contract's client
     let toEmail = args.recipient_email;
     if (!toEmail) {
       const { data: contract } = await supabase
@@ -283,50 +282,40 @@ registerTool('contracts', {
       throw new Error('Recipient email is required (could not resolve from contract/client)');
     }
 
-    const { sendContract } = await import('@/app/api/contracts/management/route');
-    const result = await sendContract(
-      args.tenant_id,
-      {
-        contractId: args.contract_id,
-        recipients: toEmail,
-        subject: args.subject,
-        message: args.message,
-      },
-      supabase,
-      userId
-    );
+    const idempotencyKey =
+      typeof (args as { idempotency_key?: string }).idempotency_key === 'string'
+        ? (args as { idempotency_key?: string }).idempotency_key
+        : undefined;
 
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to send contract');
+    const { executeContractSendCommand } = await import(
+      '@/lib/execution/commands/contractSendCommand'
+    );
+    const execution = await executeContractSendCommand({
+      tenantId: args.tenant_id,
+      userId,
+      contractId: args.contract_id,
+      recipients: toEmail,
+      subject: args.subject,
+      message: args.message,
+      executionSource: 'mcp',
+      skipPolicyEvaluation: true,
+      idempotencyKey,
+    });
+
+    if (!execution.ok || !execution.result?.success) {
+      throw new Error(execution.error?.message || execution.result?.error || 'Failed to send contract');
     }
-
-    const { data: contractRow } = await supabase
-      .from('contracts')
-      .select('title')
-      .eq('id', args.contract_id)
-      .eq('tenant_id', args.tenant_id)
-      .maybeSingle();
-
-    const sentAt = new Date().toISOString();
-    const { notifyContractSent } = await import(
-      '@/services/contractNotificationService'
-    );
-    await notifyContractSent(
-      args.tenant_id,
-      args.contract_id,
-      contractRow?.title || 'Contract',
-      toEmail,
-      userId
-    ).catch((err) => console.error('[send_contract] notify failed:', err));
 
     return {
       sent: true,
       sent_to: toEmail,
-      sent_at: sentAt,
+      sent_at: new Date().toISOString(),
       status: 'sent',
       message: 'Contract successfully sent to client',
       recipient: toEmail,
-      signing_url: result.signingUrl,
+      signing_url: execution.result.signingUrl,
+      execution_id: execution.execution_id,
+      idempotency_key: execution.idempotency_key,
     };
   },
 });
