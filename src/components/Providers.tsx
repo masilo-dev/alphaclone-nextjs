@@ -25,6 +25,7 @@ import { alphacloneChakraTheme } from '@/theme/chakraTheme';
 import { BonnieDrawer } from '@/components/ui/os/BonnieDrawer';
 import { BookingModalProvider } from '@/contexts/BookingModalContext';
 import AlphaCloneBookingModal from '@/components/marketing/system/AlphaCloneBookingModal';
+import { PwaPushBootstrap } from '@/components/pwa/PwaPushBootstrap';
 
 // Configure TanStack Query focus manager with deduplicated tab focus coordinator
 if (typeof window !== 'undefined') {
@@ -86,6 +87,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <ServiceWorkerBootstrap />
                       <TenantProvider>
                         <Suspense fallback={null}>
+                          <PwaPushBootstrap />
                           <RelationshipProvider>
                             <Customer360Provider>
                             <BackgroundTaskProvider>
