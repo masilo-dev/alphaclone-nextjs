@@ -171,6 +171,48 @@ if (dupes.length) {
   failures.push(`canonicalRoutes duplicate aliases: ${dupes.join('; ')}`);
 }
 
+// --- Global token convergence (Untitled-aligned AlphaClone theme) ---
+assertMatch(
+  'src/app/layout.tsx',
+  /alphaclone-theme\.css/,
+  'layout must load alphaclone-theme.css after globals'
+);
+assertMatch(
+  'src/styles/alphaclone-theme.css',
+  /--color-brand-500:\s*#4199a4/i,
+  'theme brand-500 must be AlphaClone teal'
+);
+assertMatch(
+  'src/styles/alphaclone-theme.css',
+  /--color-text-primary/,
+  'theme must expose Untitled-style text semantic tokens'
+);
+assertNotMatch(
+  'src/app/globals.css',
+  /--ac-accent:\s*#356AF4/,
+  'globals must not keep electric blue as --ac-accent'
+);
+assertNotMatch(
+  'src/app/globals.css',
+  /--ac-bonnie:\s*#8950F5/,
+  'globals must not keep purple as --ac-bonnie'
+);
+assertNotMatch(
+  'src/app/globals.css',
+  /--dashboard-electric:\s*#00f0ff|--dashboard-violet:\s*#7f00ff/,
+  'globals must not keep neon dashboard electric/violet'
+);
+assertNotMatch(
+  'src/components/ui/button.tsx',
+  /#356AF4/,
+  'button must not hardcode electric blue focus color'
+);
+assertMatch(
+  'src/constants/brand.ts',
+  /BRAND_INTELLIGENCE/,
+  'brand tokens must expose BRAND_INTELLIGENCE alias'
+);
+
 if (failures.length) {
   console.error('design-system-guard FAILED:\n' + failures.map((f) => ` - ${f}`).join('\n'));
   process.exit(1);

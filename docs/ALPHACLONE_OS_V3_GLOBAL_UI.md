@@ -4,12 +4,14 @@ AlphaClone OS v3 upgrades interaction quality globally without changing AlphaClo
 
 ## Non-negotiable brand identity
 
-- Primary AlphaClone blue remains `#356AF4`.
-- Bonnie / intelligence violet remains `#8950F5`.
+- Brand teal remains `#4199A4` (Untitled `--color-brand-500`).
+- Primary CTA remains coral `#FB7268` (`--interactive-primary`).
+- Intelligence / Bonnie uses navy slate (`#3D4F73` / `#212446`) — not purple.
 - Deep navy remains the navigation identity.
-- Light canvas remains `#F5F7FB`; dark canvas remains `#0C1220`.
+- Light canvas remains `#F6F7F9`; dark canvas remains `#0D0F18`.
 - Existing AlphaClone module icons and brand marks remain canonical.
 - Do not imitate Apple colors, logos, macOS window chrome, or product-specific visual branding.
+- Do not reintroduce electric blue `#356AF4`, neon cyan, purple AI gradients, or glass everywhere.
 
 ## Design equation
 

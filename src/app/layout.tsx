@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 
 import "./globals.css";
+import "@/styles/alphaclone-theme.css";
 import "@/styles/alphaclone-os-v3.css";
 import "@/styles/alphaclone-os-v3-pwa.css";
 import "@/styles/marketing-system.css";

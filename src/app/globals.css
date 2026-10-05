@@ -52,18 +52,19 @@
   --tracking-display: -0.025em;
   --tracking-label: 0.04em;
   --tracking-caps: 0.12em;
-  --color-ac-accent: #356AF4;
-  --color-ac-accent-hover: #5F8FFF;
-  --color-ac-accent-deep: #2553DD;
-  --color-ac-dashboard-bg: #0C1220;
-  --color-ac-dashboard-surface: #121A2A;
-  --color-ac-dashboard-surface-2: #172133;
-  --color-ac-dashboard-text: #F4F7FC;
-  --color-ac-dashboard-text-muted: #8491A6;
+  /* Canonical accent = AlphaClone teal (see alphaclone-theme.css) */
+  --color-ac-accent: #4199A4;
+  --color-ac-accent-hover: #65ABB4;
+  --color-ac-accent-deep: #306F78;
+  --color-ac-dashboard-bg: #0D0F18;
+  --color-ac-dashboard-surface: #171A26;
+  --color-ac-dashboard-surface-2: #1B1E2B;
+  --color-ac-dashboard-text: #F7F8FB;
+  --color-ac-dashboard-text-muted: #9095A5;
   --color-ac-dashboard-mint: #6FE0AD;
   --color-ac-dashboard-mint-strong: #16A36A;
-  --color-ac-dashboard-electric: #5F8FFF;
-  --color-ac-dashboard-violet: #8950F5;
+  --color-ac-dashboard-electric: #65ABB4;
+  --color-ac-dashboard-violet: #3D4F73;
   --color-ac-dashboard-peach: #E69222;
 }
 
@@ -240,7 +241,7 @@
   --interactive-z-modal: 1050;
   --interactive-z-overlay: 1100;
   --interactive-transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --interactive-focus-ring: 0 0 0 2px var(--color-ac-accent, #356AF4);
+  --interactive-focus-ring: 0 0 0 2px var(--focus-ring);
   --interactive-disabled-opacity: 0.5;
 
   --backlight-idle-opacity: 0.03;
@@ -252,29 +253,30 @@
   --duration-slow: 320ms;
   --duration-ambient: 45000ms;
 
-  /* Alphaclone OS brand */
-  --brand-blue-50: #EEF4FF;
-  --brand-blue-100: #DCE8FF;
-  --brand-blue-200: #BED3FF;
-  --brand-blue-300: #91B5FF;
-  --brand-blue-400: #5F8FFF;
-  --brand-blue-500: #356AF4;
-  --brand-blue-600: #2553DD;
-  --brand-blue-700: #2043B8;
-  --brand-blue-800: #213B91;
-  --brand-blue-900: #203570;
-  --brand-blue-950: #151F42;
-  --brand-violet-50: #F5F1FF;
-  --brand-violet-100: #ECE5FF;
-  --brand-violet-200: #DDD0FF;
-  --brand-violet-300: #C4AAFF;
-  --brand-violet-400: #A77BFF;
-  --brand-violet-500: #8950F5;
-  --brand-violet-600: #7434DE;
-  --brand-violet-700: #6128B9;
-  --brand-violet-800: #512697;
-  --brand-violet-900: #45247B;
-  --brand-violet-950: #2B1253;
+  /* Alphaclone OS brand — teal scale (aliases; alphaclone-theme.css is authoritative) */
+  --brand-blue-50: #F1F8F9;
+  --brand-blue-100: #DDEEF0;
+  --brand-blue-200: #BEDDE1;
+  --brand-blue-300: #91C4CA;
+  --brand-blue-400: #65ABB4;
+  --brand-blue-500: #4199A4;
+  --brand-blue-600: #388A94;
+  --brand-blue-700: #306F78;
+  --brand-blue-800: #295A61;
+  --brand-blue-900: #234A50;
+  --brand-blue-950: #153136;
+  /* Intelligence = navy slate (no purple AI look) */
+  --brand-violet-50: #F2F4F8;
+  --brand-violet-100: #E4E8F0;
+  --brand-violet-200: #C8D0E0;
+  --brand-violet-300: #9AA8C0;
+  --brand-violet-400: #6B7C9A;
+  --brand-violet-500: #3D4F73;
+  --brand-violet-600: #212446;
+  --brand-violet-700: #1A1D38;
+  --brand-violet-800: #15182A;
+  --brand-violet-900: #101322;
+  --brand-violet-950: #0A0C16;
 
   --success-50: #EAFBF3;
   --success-100: #CCF5E2;
@@ -297,12 +299,12 @@
   --info-600: #217CC7;
   --info-700: #2165A0;
 
-  --ac-accent: #356AF4;
-  --ac-accent-hover: #5F8FFF;
-  --ac-accent-deep: #2553DD;
-  --ac-accent-muted: rgba(53, 106, 244, 0.12);
-  --ac-bonnie: #8950F5;
-  --ac-bonnie-hover: #A77BFF;
+  --ac-accent: #4199A4;
+  --ac-accent-hover: #65ABB4;
+  --ac-accent-deep: #306F78;
+  --ac-accent-muted: rgba(65, 153, 164, 0.14);
+  --ac-bonnie: #4199A4;
+  --ac-bonnie-hover: #65ABB4;
   --ac-mobile-nav-offset: calc(5.25rem + env(safe-area-inset-bottom, 0px));
   --surface-1: #f8fafc;
   --dashboard-green: #639922;
@@ -311,8 +313,8 @@
   --dashboard-amber-bg: #FAEEDA;
   --dashboard-red: #E24B4A;
   --dashboard-red-bg: #FCEBEB;
-  --dashboard-blue: #378ADD;
-  --dashboard-blue-bg: #E6F1FB;
+  --dashboard-blue: #4199A4;
+  --dashboard-blue-bg: #EAF3F4;
   --dashboard-bg: rgba(9, 14, 21, 0.24);
   --dashboard-surface: rgba(18, 25, 34, 0.54);
   --dashboard-surface-strong: rgba(21, 28, 37, 0.62);
@@ -322,12 +324,12 @@
   --dashboard-text-muted: #d8dde8;
   --dashboard-mint: #adebb3;
   --dashboard-mint-strong: #3eb489;
-  --dashboard-electric: #00f0ff;
-  --dashboard-violet: #7f00ff;
-  --dashboard-peach: #ffb347;
-  --dashboard-warning: #facc15;
-  --dashboard-danger: #f87171;
-  --dashboard-info: #60a5fa;
+  --dashboard-electric: #65ABB4;
+  --dashboard-violet: #3D4F73;
+  --dashboard-peach: #E69222;
+  --dashboard-warning: #E69222;
+  --dashboard-danger: #D64545;
+  --dashboard-info: #3196E8;
 }
 
 .dark,
@@ -360,16 +362,16 @@ html.dark {
   --focus-ring: rgba(90, 170, 179, 0.42);
 }
 
-/* Marketing Theme Definitions */
+/* Marketing Theme Definitions — same brand tokens as product shell */
 .marketing-theme {
   --background: #020D1A;
   --foreground: #f8fafc;
-  --marketing-primary: #356af4;
-  --marketing-accent: #8950f5;
+  --marketing-primary: var(--brand-teal, #4199A4);
+  --marketing-accent: var(--brand-navy, #212446);
   --marketing-radius: 0.75rem;
-  --shadow-luxury-sm: 0 12px 30px -18px rgba(53, 106, 244, 0.22);
-  --shadow-luxury-md: 0 24px 60px -24px rgba(53, 106, 244, 0.28);
-  --shadow-luxury-lg: 0 34px 80px -28px rgba(137, 80, 245, 0.3);
+  --shadow-luxury-sm: 0 12px 30px -18px rgba(65, 153, 164, 0.18);
+  --shadow-luxury-md: 0 24px 60px -24px rgba(33, 36, 70, 0.28);
+  --shadow-luxury-lg: 0 34px 80px -28px rgba(33, 36, 70, 0.34);
   color: var(--foreground);
 }
 

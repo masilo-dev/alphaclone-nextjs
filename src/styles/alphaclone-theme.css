@@ -1,0 +1,219 @@
+/**
+ * AlphaClone global theme — Untitled UI language, AlphaClone identity.
+ *
+ * Structure mirrors Untitled UI React theming:
+ *   --color-brand-* / --color-text-* / --color-bg-* / --color-border-* / --color-fg-*
+ * Brand anchors (NOT Untitled default purple):
+ *   navy #212446 · teal #4199A4 · coral CTA #FB7268
+ *
+ * This file is the finishing override layer. Import after globals.css so
+ * legacy --brand-blue / --ac-accent / --brand-violet aliases converge here.
+ */
+
+@theme {
+  --spacing: 0.25rem;
+
+  /* Brand scale = AlphaClone teal (maps Untitled --color-brand-*) */
+  --color-brand-50: #f1f8f9;
+  --color-brand-100: #ddeef0;
+  --color-brand-200: #bedde1;
+  --color-brand-300: #91c4ca;
+  --color-brand-400: #65abb4;
+  --color-brand-500: #4199a4;
+  --color-brand-600: #388a94;
+  --color-brand-700: #306f78;
+  --color-brand-800: #295a61;
+  --color-brand-900: #234a50;
+  --color-brand-950: #153136;
+
+  /* Accent aliases used by existing Tailwind utilities */
+  --color-ac-accent: #4199a4;
+  --color-ac-accent-hover: #65abb4;
+  --color-ac-accent-deep: #306f78;
+  --color-ac-dashboard-bg: #0d0f18;
+  --color-ac-dashboard-surface: #171a26;
+  --color-ac-dashboard-surface-2: #1b1e2b;
+  --color-ac-dashboard-text: #f7f8fb;
+  --color-ac-dashboard-text-muted: #9095a5;
+  --color-ac-dashboard-mint: #6fe0ad;
+  --color-ac-dashboard-mint-strong: #16a36a;
+  --color-ac-dashboard-electric: #65abb4;
+  --color-ac-dashboard-violet: #3d4f73;
+  --color-ac-dashboard-peach: #e69222;
+}
+
+:root {
+  /* Untitled-style semantic surfaces & text */
+  --color-bg-primary: var(--surface-primary);
+  --color-bg-secondary: var(--surface-secondary);
+  --color-bg-tertiary: var(--background-subtle);
+  --color-bg-quaternary: var(--surface-hover);
+  --color-bg-active: color-mix(in srgb, var(--brand-teal) 12%, var(--surface-primary));
+  --color-bg-brand-primary: var(--color-brand-500);
+  --color-bg-brand-solid: var(--color-brand-600);
+  --color-bg-error-primary: var(--error-50);
+  --color-bg-warning-primary: var(--warning-50);
+  --color-bg-success-primary: var(--success-50);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-muted);
+  --color-text-quaternary: var(--text-muted);
+  --color-text-disabled: #a0a5b0;
+  --color-text-placeholder: var(--text-muted);
+  --color-text-brand-primary: var(--color-brand-700);
+  --color-text-brand-secondary: var(--color-brand-600);
+  --color-text-error-primary: var(--error-600);
+  --color-text-warning-primary: var(--warning-600);
+  --color-text-success-primary: var(--success-600);
+
+  --color-border-primary: var(--border-default);
+  --color-border-secondary: var(--border-subtle);
+  --color-border-tertiary: var(--border-strong);
+  --color-border-brand: var(--color-brand-300);
+  --color-border-error: var(--error-500);
+  --color-border-disabled: var(--border-subtle);
+
+  --color-fg-primary: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-tertiary: var(--text-muted);
+  --color-fg-brand-primary: var(--color-brand-600);
+  --color-fg-brand-primary_alt: var(--color-brand-500);
+  --color-fg-error-primary: var(--error-500);
+  --color-fg-warning-primary: var(--warning-500);
+  --color-fg-success-primary: var(--success-500);
+  --color-fg-disabled: #a0a5b0;
+
+  /* Radius (Untitled-like restraint) */
+  --radius-none: 0;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+  --ws-radius-control: var(--radius-md);
+  --ws-radius: var(--radius-lg);
+  --ws-radius-lg: var(--radius-xl);
+
+  /* Shadows — soft, non-glow */
+  --shadow-xs: 0 1px 2px rgba(33, 36, 70, 0.06);
+  --shadow-sm: 0 1px 3px rgba(33, 36, 70, 0.08), 0 1px 2px rgba(33, 36, 70, 0.04);
+  --shadow-md: 0 4px 8px -2px rgba(33, 36, 70, 0.1), 0 2px 4px -2px rgba(33, 36, 70, 0.06);
+  --shadow-lg: 0 12px 16px -4px rgba(33, 36, 70, 0.12), 0 4px 6px -2px rgba(33, 36, 70, 0.04);
+  --shadow-xl: 0 20px 24px -4px rgba(33, 36, 70, 0.14), 0 8px 8px -4px rgba(33, 36, 70, 0.04);
+
+  /* ── Converge legacy AlphaClone aliases onto teal/navy/coral ── */
+  --brand-blue-50: #f1f8f9;
+  --brand-blue-100: #ddeef0;
+  --brand-blue-200: #bedde1;
+  --brand-blue-300: #91c4ca;
+  --brand-blue-400: #65abb4;
+  --brand-blue-500: #4199a4;
+  --brand-blue-600: #388a94;
+  --brand-blue-700: #306f78;
+  --brand-blue-800: #295a61;
+  --brand-blue-900: #234a50;
+  --brand-blue-950: #153136;
+
+  /* Intelligence scale replaces purple/violet AI look */
+  --brand-violet-50: #f2f4f8;
+  --brand-violet-100: #e4e8f0;
+  --brand-violet-200: #c8d0e0;
+  --brand-violet-300: #9aa8c0;
+  --brand-violet-400: #6b7c9a;
+  --brand-violet-500: #3d4f73;
+  --brand-violet-600: #212446;
+  --brand-violet-700: #1a1d38;
+  --brand-violet-800: #15182a;
+  --brand-violet-900: #101322;
+  --brand-violet-950: #0a0c16;
+
+  --ac-accent: var(--brand-blue-500);
+  --ac-accent-hover: var(--brand-blue-400);
+  --ac-accent-deep: var(--brand-blue-700);
+  --ac-accent-muted: color-mix(in srgb, var(--brand-blue-500) 14%, transparent);
+  --ac-bonnie: var(--brand-blue-500);
+  --ac-bonnie-hover: var(--brand-blue-400);
+
+  --interactive-focus-ring: 0 0 0 2px var(--focus-ring);
+  --focus-ring: rgba(65, 153, 164, 0.35);
+
+  /* Kill neon / electric AI dashboard palette */
+  --dashboard-electric: var(--brand-blue-400);
+  --dashboard-violet: var(--brand-violet-500);
+  --dashboard-peach: var(--warning-500);
+  --dashboard-mint: var(--success-text, #6fe0ad);
+  --dashboard-mint-strong: var(--success-500);
+  --dashboard-info: var(--info-500);
+  --dashboard-warning: var(--warning-500);
+  --dashboard-danger: var(--error-500);
+
+  /* Marketing converges to same brand (no purple luxury glow) */
+  --marketing-primary: var(--brand-blue-500);
+  --marketing-accent: var(--brand-navy);
+  --marketing-radius: var(--radius-xl);
+  --shadow-luxury-sm: var(--shadow-sm);
+  --shadow-luxury-md: var(--shadow-md);
+  --shadow-luxury-lg: var(--shadow-lg);
+}
+
+html.dark {
+  --color-bg-primary: var(--surface-primary);
+  --color-bg-secondary: var(--surface-secondary);
+  --color-bg-tertiary: var(--surface-elevated);
+  --color-bg-quaternary: var(--surface-hover);
+  --color-bg-active: color-mix(in srgb, var(--brand-teal) 18%, var(--surface-primary));
+  --color-bg-error-primary: var(--error-surface, #32191d);
+  --color-bg-warning-primary: var(--warning-surface, #302413);
+  --color-bg-success-primary: var(--success-surface, #102a22);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-muted);
+  --color-text-quaternary: var(--text-muted);
+  --color-text-disabled: #656a78;
+  --color-text-placeholder: var(--text-muted);
+  --color-text-brand-primary: var(--brand-blue-300);
+  --color-text-brand-secondary: var(--brand-blue-400);
+  --color-text-error-primary: var(--error-text, #ff9097);
+  --color-text-warning-primary: var(--warning-text, #f5c46f);
+  --color-text-success-primary: var(--success-text, #6fe0ad);
+
+  --color-border-primary: var(--border-default);
+  --color-border-secondary: var(--border-subtle);
+  --color-border-tertiary: var(--border-strong);
+  --color-border-brand: var(--brand-blue-600);
+
+  --color-fg-primary: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-tertiary: var(--text-muted);
+  --color-fg-brand-primary: var(--brand-blue-400);
+  --color-fg-brand-primary_alt: var(--brand-blue-300);
+  --color-fg-disabled: #656a78;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 16px -4px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 20px 24px -4px rgba(0, 0, 0, 0.5);
+
+  --focus-ring: rgba(90, 170, 179, 0.42);
+  --interactive-focus-ring: 0 0 0 2px var(--focus-ring);
+}
+
+/* Utility helpers for Untitled-style semantic classes */
+.ac-text-primary { color: var(--color-text-primary); }
+.ac-text-secondary { color: var(--color-text-secondary); }
+.ac-text-tertiary { color: var(--color-text-tertiary); }
+.ac-text-brand { color: var(--color-text-brand-primary); }
+.ac-bg-primary { background-color: var(--color-bg-primary); }
+.ac-bg-secondary { background-color: var(--color-bg-secondary); }
+.ac-bg-tertiary { background-color: var(--color-bg-tertiary); }
+.ac-border-primary { border-color: var(--color-border-primary); }
+.ac-border-secondary { border-color: var(--color-border-secondary); }
+.ac-ring-brand:focus-visible {
+  outline: none;
+  box-shadow: var(--interactive-focus-ring);
+}

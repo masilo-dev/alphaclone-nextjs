@@ -101,7 +101,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-disabled={isActuallyDisabled || undefined}
         className={[
           'inline-flex items-center justify-center gap-2 font-medium transition-all select-none touch-manipulation',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent,#356AF4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app,#F6F7F9)]',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)]',
           'disabled:cursor-[var(--interactive-disabled-cursor,not-allowed)] disabled:opacity-[var(--interactive-disabled-opacity,0.5)]',
           '[&:not(:disabled)]:cursor-[var(--interactive-cursor,pointer)] [&:not(:disabled)]:pointer-events-auto',
           variants[variant],
