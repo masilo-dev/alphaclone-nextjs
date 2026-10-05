@@ -226,7 +226,18 @@ export default function MarketingHomePage() {
   return (
     <MarketingShell className="acr-redesign">
       <section className="acr-hero">
-        <div className="acr-hero-backdrop" aria-hidden="true" />
+        <div className="acr-hero-backdrop" aria-hidden="true">
+          <Image
+            src="/images/alphaclone-hero-backdrop.jpg"
+            alt=""
+            fill
+            priority
+            fetchPriority="high"
+            sizes="100vw"
+            className="object-cover object-center"
+            quality={75}
+          />
+        </div>
         <MarketingContainer>
           <div className="acr-hero-grid">
             <div className="acr-hero-copy">

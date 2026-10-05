@@ -14,6 +14,7 @@
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
     "typecheck": "rm -rf .next/types .next/dev/types && cross-env NODE_OPTIONS=--max-old-space-size=7168 tsc --noEmit",
     "test": "node --require ./tests/server-only-register.cjs --import tsx --test tests/unit/*.test.mjs",
+    "test:marketing-perf": "node --test tests/unit/marketing-pagespeed.test.mjs",
     "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
     "guard:no-raw-hex": "node scripts/guard-no-raw-hex.mjs",
     "codemod:colors": "node scripts/codemod-hardcoded-colors.mjs",

@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
 
+import '@/styles/alphaclone-os-v3.css';
+import '@/styles/alphaclone-os-v3-pwa.css';
+import '@/styles/apple-fluid-system.css';
+import '@/styles/crisp-product-ui.css';
+
 // The authenticated dashboard must never be indexed. robots.txt already
 // disallows /dashboard, but search engines can still index disallowed URLs that
 // are linked elsewhere — an explicit noindex meta tag is the reliable signal.

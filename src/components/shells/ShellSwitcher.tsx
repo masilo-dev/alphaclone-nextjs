@@ -7,26 +7,13 @@ import AppShell from './AppShell';
 import Splash from '@/components/pwa/Splash';
 
 import { usePathname } from 'next/navigation';
+import { isPublicMarketingRoute } from '@/lib/isPublicMarketingRoute';
 
 export default function ShellSwitcher({ children }: { children: React.ReactNode }) {
     const { isPWA, isLoading } = usePWA();
     const pathname = usePathname();
 
-    const isPublicRoute =
-        !pathname ||
-        pathname === '/' ||
-        pathname.startsWith('/about') ||
-        pathname.startsWith('/pricing') ||
-        pathname.startsWith('/faq') ||
-        pathname.startsWith('/book') ||
-        pathname.startsWith('/meet') ||
-        pathname.startsWith('/who-we-serve') ||
-        pathname.startsWith('/blog') ||
-        pathname.startsWith('/contact') ||
-        pathname.startsWith('/legal') ||
-        pathname.startsWith('/privacy') ||
-        pathname.startsWith('/terms') ||
-        pathname.startsWith('/portal');
+    const isPublicRoute = isPublicMarketingRoute(pathname);
 
     if (!isPWA && isPublicRoute) {
         return <MarketingShell>{children}</MarketingShell>;
