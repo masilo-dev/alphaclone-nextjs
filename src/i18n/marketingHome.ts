@@ -3,6 +3,9 @@ import type { SupportedLanguage } from './languages';
 // Reviewed homepage copy. Keep product names and provider names unchanged.
 const pl: Record<string, string> = {
   'AI Business Execution Layer': 'Warstwa realizacji działań biznesowych z AI',
+  'Run your business,': 'Prowadź swój biznes,', 'not your tools.': 'a nie narzędzia.',
+  'RUN YOUR BUSINESS, NOT YOUR TOOLS.': 'PROWADŹ SWÓJ BIZNES, A NIE NARZĘDZIA.',
+  'AlphaClone is the execution layer that turns instructions into coordinated business actions across connected systems. Human-led. AI-assisted. System-executed.': 'AlphaClone to warstwa wykonawcza, która zamienia instrukcje w skoordynowane działania biznesowe w połączonych systemach. Kierowana przez człowieka. Wspierana przez AI. Wykonywana przez system.',
   'You type.': 'Ty piszesz.', 'We': 'My', 'make it happen.': 'realizujemy zadanie.',
   'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.': 'AlphaClone zamienia zatwierdzone polecenia AI w działania, które można śledzić w narzędziach używanych już przez Twoją firmę.',
   'Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.': 'Zarządzaj leadami, klientami, projektami, e-mailami, fakturami i rezerwacjami w jednej połączonej przestrzeni.',
@@ -53,7 +56,11 @@ const pl: Record<string, string> = {
 };
 
 const es: Record<string, string> = {
-  'AI Business Execution Layer': 'Capa de ejecución empresarial con IA', 'You type.': 'Tú escribes.', 'We': 'Nosotros', 'make it happen.': 'lo hacemos realidad.',
+  'AI Business Execution Layer': 'Capa de ejecución empresarial con IA',
+  'Run your business,': 'Gestiona tu negocio,', 'not your tools.': 'no tus herramientas.',
+  'RUN YOUR BUSINESS, NOT YOUR TOOLS.': 'GESTIONA TU NEGOCIO, NO TUS HERRAMIENTAS.',
+  'AlphaClone is the execution layer that turns instructions into coordinated business actions across connected systems. Human-led. AI-assisted. System-executed.': 'AlphaClone es la capa de ejecución que convierte instrucciones en acciones de negocio coordinadas a través de sistemas conectados. Guiada por personas. Asistida por IA. Ejecutada por sistemas.',
+  'You type.': 'Tú escribes.', 'We': 'Nosotros', 'make it happen.': 'lo hacemos realidad.',
   'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.': 'AlphaClone convierte instrucciones de IA aprobadas en trabajo verificable en las herramientas que tu empresa ya utiliza.',
   'Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.': 'Gestiona leads, clientes, proyectos, correos, facturas y reservas desde un espacio conectado.',
   'Book a demo': 'Reserva una demo', 'See a 30-second workflow': 'Ve un flujo de 30 segundos', 'Save hours': 'Ahorra horas', 'every week': 'cada semana', 'More clients': 'Más clientes', 'and revenue': 'e ingresos', 'Human-led': 'Decide la persona', 'AI-executed': 'Ejecuta la IA',

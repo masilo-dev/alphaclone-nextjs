@@ -72,7 +72,7 @@ function ProgressBar({ progress, severity }: { progress: number | null; severity
   const styles = getSemanticStyles(severity);
   return (
     <div className="mt-3 space-y-1" aria-label={`Progress: ${pct.toFixed(1)}% of target`}>
-      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-[var(--ws-hover)] rounded-full overflow-hidden">
         <div
           className={cn(
             'h-full rounded-full transition-all duration-700',
@@ -242,7 +242,7 @@ export function IntelligentKpiCard({
         </div>
 
         {(target != null || showNarrative) && !compact ? (
-          <div className="mt-3 pt-3 border-t border-white/[0.04]">
+          <div className="mt-3 pt-3 border-t border-[var(--ws-border)]">
             {target != null ? (
               <div className="flex items-center justify-between gap-2 type-ui">
                 <div className="flex items-center gap-1 text-[var(--ws-text-muted)]">

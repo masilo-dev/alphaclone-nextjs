@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Check, Settings2, Shield, ToggleLeft, ToggleRight, X, RefreshCw } from 'lucide-react';
+import { Check, Settings2, Shield, X, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   readConsentState,
@@ -103,54 +103,56 @@ export default function CookieBanner() {
         <aside
           role="region"
           aria-label={t('Cookie consent banner')}
-          className="fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-[9999] px-3 sm:bottom-5 sm:px-6 pointer-events-none"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[calc(100%-2rem)] max-w-md pointer-events-none transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
         >
-          <div className="mx-auto max-w-4xl pointer-events-auto rounded-2xl border border-[var(--border-default)] bg-[rgba(7,14,28,0.97)] p-3 sm:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="mt-0.5 hidden shrink-0 rounded-xl border border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/10 p-2 sm:block">
-                  <Shield className="h-4 w-4 text-[var(--brand-cyan-soft)]" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="type-card-title font-bold text-white sm:text-sm">{t('Your privacy choices')}</h4>
-                  <p className="mt-1 max-w-2xl type-card-description leading-relaxed text-slate-300 sm:text-sm">
-                    {t(
-                      'We use essential cookies to keep AlphaClone secure. You can allow optional functional, analytics, and marketing cookies, or choose essential only.'
-                    )}
-                  </p>
+          <div className="pointer-events-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xl shadow-slate-900/10 dark:shadow-black/50 backdrop-blur-xl">
+            <div className="flex items-start gap-3.5">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                <Shield className="h-4 w-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('Your privacy choices')}
+                </h4>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  {t(
+                    'We use essential cookies to keep AlphaClone secure. You can allow optional functional, analytics, and marketing cookies, or choose essential only.'
+                  )}
+                </p>
+                <div className="mt-1.5">
                   <Link
                     href="/legal/cookies"
-                    className="mt-1 inline-flex type-ui font-semibold text-[var(--brand-cyan-soft)] hover:text-white hover:underline sm:mt-1.5 sm:text-sm"
+                    className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2"
                   >
                     {t('Read the Cookie Policy')}
                   </Link>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleSave({ functional: false, analytics: false, marketing: false })}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 type-ui font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:flex-none"
-                >
-                  {t('Essential only')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpenPrefs(true)}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2 type-ui font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:flex-none"
-                >
-                  <Settings2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  {t('Manage')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSave({ functional: true, analytics: true, marketing: true })}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-3 py-2 type-ui font-bold text-white shadow-lg shadow-blue-950/40 transition-colors hover:bg-[var(--brand-primary-hover)] sm:flex-none sm:px-4"
-                >
-                  <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  {t('Accept all')}
-                </button>
-              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setOpenPrefs(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('Manage')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSave({ functional: false, analytics: false, marketing: false })}
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-sm"
+              >
+                {t('Essential only')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSave({ functional: true, analytics: true, marketing: true })}
+                className="rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-3.5 py-1.5 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+              >
+                {t('Accept all')}
+              </button>
             </div>
           </div>
         </aside>
@@ -161,21 +163,21 @@ export default function CookieBanner() {
           ref={preferencesDialogRef}
           onClose={() => setOpenPrefs(false)}
           aria-labelledby="cookie-preferences-title"
-          className="cookie-preferences-dialog fixed inset-0 z-[10000] m-auto w-[calc(100%-1.5rem)] max-w-xl max-h-[90dvh] overflow-y-auto rounded-3xl border border-slate-700 bg-slate-950 p-5 text-white shadow-2xl shadow-black/90 sm:p-6"
+          className="cookie-preferences-dialog fixed inset-0 z-[10000] m-auto w-[calc(100%-2rem)] max-w-lg max-h-[88dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 text-slate-900 dark:text-white shadow-2xl shadow-slate-900/20 dark:shadow-black/80 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm"
         >
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>
-              <h3 id="cookie-preferences-title" className="text-base font-bold text-white">
+              <h3 id="cookie-preferences-title" className="text-base font-bold text-slate-900 dark:text-white">
                 {t('Privacy & Cookie Preferences')}
               </h3>
-              <p className="mt-0.5 type-card-description text-slate-400">
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 {t('Choose which optional cookies and trackers AlphaClone and Cloudflare Zaraz may activate.')}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setOpenPrefs(false)}
-              className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white"
+              className="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               aria-label={t('Close preferences')}
             >
               <X className="h-5 w-5" aria-hidden="true" />
@@ -213,11 +215,11 @@ export default function CookieBanner() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-800/80 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
             <button
               type="button"
               onClick={handleRevoke}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-900/40 bg-rose-950/20 px-3 py-2 type-ui font-semibold text-rose-300 transition-colors hover:bg-rose-900/30"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {t('Reset to Essential Only')}
@@ -226,14 +228,14 @@ export default function CookieBanner() {
               <button
                 type="button"
                 onClick={() => setOpenPrefs(false)}
-                className="rounded-xl px-4 py-2.5 type-ui font-semibold text-slate-400 transition-colors hover:text-white"
+                className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {t('Cancel')}
               </button>
               <button
                 type="button"
                 onClick={() => handleSave({ functional, analytics, marketing })}
-                className="rounded-xl bg-[var(--brand-primary)] px-5 py-2.5 type-ui font-bold text-white transition-colors hover:bg-[var(--brand-primary-hover)]"
+                className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-xs font-semibold transition-colors shadow-sm"
               >
                 {t('Save preferences')}
               </button>
@@ -260,10 +262,10 @@ function ToggleRow({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-3.5 sm:p-4">
-      <div>
-        <p className="type-card-description font-bold text-white sm:text-sm">{label}</p>
-        <p className="mt-1 type-card-description leading-relaxed text-slate-400">{description}</p>
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-3.5">
+      <div className="min-w-0 flex-1 pr-2">
+        <p className="text-xs font-bold text-slate-900 dark:text-white">{label}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{description}</p>
       </div>
       <button
         type="button"
@@ -271,12 +273,17 @@ function ToggleRow({
         disabled={disabled}
         aria-label={label}
         aria-pressed={checked}
-        className={`mt-0.5 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 py-1 type-ui font-bold transition-all ${
-          checked ? 'border border-teal-500/30 bg-teal-500/20 text-teal-300' : 'border border-slate-700 bg-slate-800 text-slate-400'
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+          checked ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
         } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
       >
-        {checked ? <ToggleRight className="h-3.5 w-3.5" aria-hidden="true" /> : <ToggleLeft className="h-3.5 w-3.5" aria-hidden="true" />}
-        {checked ? t('On') : t('Off')}
+        <span className="sr-only">{checked ? t('On') : t('Off')}</span>
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
       </button>
     </div>
   );

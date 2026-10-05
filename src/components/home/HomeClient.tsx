@@ -20,7 +20,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   const hasRedirected = useRef(false);
   const [isPwa, setIsPwa] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(false);
 
   useEffect(() => {
     const mode = searchParams?.get('mode');
@@ -104,8 +104,12 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
 
   return (
     <>
-      <SplashScreen isVisible={isInitialLoad && isPwa} mode="loading" />
-      <SplashScreen isVisible={isTransitioning} mode="opening" />
+      {isPwa && (
+        <>
+          <SplashScreen isVisible={isInitialLoad} mode="loading" />
+          <SplashScreen isVisible={isTransitioning} mode="opening" />
+        </>
+      )}
 
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />

@@ -435,6 +435,17 @@ const Sidebar = React.memo<SidebarProps>(({
                             )}
                         </button>
 
+                        {sidebarOpen && (
+                            <button
+                                onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
+                                title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
+                                aria-label={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
+                                className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-amber-300 hover:bg-[var(--ws-hover)] transition-colors active:scale-95 touch-manipulation shrink-0"
+                            >
+                                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                            </button>
+                        )}
+
                         <button
                             onClick={onLogout}
                             title={t('Log Out')}

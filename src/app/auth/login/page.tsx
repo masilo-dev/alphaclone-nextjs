@@ -490,7 +490,7 @@ function LoginContent() {
                         onClick={handleMfaVerify}
                         disabled={mfaCode.length !== 6 || isLoading}
                         isLoading={isLoading}
-                        className="w-full h-12 text-base font-bold bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 rounded-xl shadow-lg shadow-teal-500/20"
+                        className="w-full h-11 text-base font-semibold bg-[var(--interactive-primary)] text-white hover:opacity-90 rounded-xl shadow-sm"
                     >
                         Verify Identity
                     </Button>
@@ -763,7 +763,7 @@ function LoginContent() {
 
                     <Button
                         type="submit"
-                        className="w-full min-h-11 type-ui font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                        className="w-full min-h-11 type-ui font-semibold bg-[var(--interactive-primary)] text-white hover:opacity-90 rounded-xl shadow-sm"
                         isLoading={isLoading}
                         disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >

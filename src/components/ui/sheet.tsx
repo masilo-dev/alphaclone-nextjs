@@ -19,7 +19,7 @@ const SheetOverlay = React.forwardRef<
   <SheetPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 ac-layer-overlay bg-slate-950/80 backdrop-blur-sm transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
+      'fixed inset-0 ac-layer-overlay bg-black/60 backdrop-blur-[2px] transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
       className
     )}
     {...props}
@@ -49,7 +49,12 @@ const SheetContent = React.forwardRef<
     <SheetPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed ac-layer-panel flex flex-col gap-4 border-slate-800 bg-slate-950 shadow-xl transition-transform duration-300 ease-out data-[state=closed]:duration-200 overflow-hidden ac-scroll-full',
+        // Layout & scroll
+        'fixed ac-layer-panel flex flex-col gap-4 overflow-hidden ac-scroll-full',
+        // Token-driven surface: adapts to dark / light theme
+        'border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-xl',
+        // Transition
+        'transition-transform duration-300 ease-out data-[state=closed]:duration-200',
         sheetSideClasses[side],
         side === 'bottom' || side === 'top' ? 'p-4 pt-6 pb-safe' : 'p-6',
         className
@@ -59,7 +64,9 @@ const SheetContent = React.forwardRef<
       {children}
       <SheetPrimitive.Close
         className={cn(
-          'absolute rounded-lg p-2 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500/50',
+          'absolute rounded-lg p-2',
+          'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]',
+          'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]',
           side === 'bottom' || side === 'top' ? 'right-4 top-4' : 'right-4 top-4',
           ENTERPRISE_TOUCH
         )}
@@ -83,7 +90,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn('text-lg font-semibold text-white', className)}
+    className={cn('text-lg font-semibold text-[var(--ws-text-primary)]', className)}
     {...props}
   />
 ));
@@ -95,7 +102,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn('type-ui text-slate-400', className)}
+    className={cn('type-ui text-[var(--ws-text-muted)]', className)}
     {...props}
   />
 ));

@@ -51,7 +51,7 @@ export function MaterialChangesStrip({
                   href={c.href}
                   className={cn(
                     'flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors',
-                    sem.bg, sem.border, 'hover:bg-white/[0.04]',
+                    sem.bg, sem.border, 'hover:opacity-90',
                   )}
                 >
                   <span className={cn('inline-flex w-6 h-6 items-center justify-center rounded shrink-0', sem.iconBg, sem.text)}>
@@ -144,7 +144,7 @@ export function BottleneckDetector({
                 onClick={() => onDrillDown(bottleneck.stageKey)}
                 className={cn(
                   'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 type-ui font-bold transition-colors',
-                  sem.bg, sem.text, 'hover:bg-white/[0.06]',
+                  sem.bg, sem.text, 'hover:opacity-90',
                 )}
               >
                 Drill into {bottleneck.stageLabel}
@@ -215,7 +215,7 @@ function OpportunityRow({
     <li className={cn(
       'flex items-center gap-3 rounded-lg border px-3 py-3 transition-colors',
       deal.priority === 'high' ? priorityStyles.border : 'border-[var(--ws-border)]',
-      deal.priority === 'high' ? priorityStyles.bg : 'hover:bg-white/[0.03]',
+      deal.priority === 'high' ? priorityStyles.bg : 'hover:bg-[var(--ws-hover)]',
       onAction ? 'cursor-pointer' : '',
     )}
       onClick={onAction ? () => onAction(deal.id) : undefined}

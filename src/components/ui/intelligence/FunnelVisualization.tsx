@@ -95,7 +95,7 @@ export function FunnelVisualization({
                 onClick={() => onStageClick?.(stage.key)}
                 className={cn(
                   'w-full text-left rounded-lg p-3 border transition-colors',
-                  isBottleneck ? sem.border + ' ' + sem.bg : 'border-[var(--ws-border)] hover:bg-white/[0.03]',
+                  isBottleneck ? sem.border + ' ' + sem.bg : 'border-[var(--ws-border)] hover:bg-[var(--ws-hover)]',
                   onStageClick ? 'cursor-pointer' : 'cursor-default',
                 )}
               >
@@ -120,7 +120,7 @@ export function FunnelVisualization({
                       ) : null}
                     </div>
 
-                    <div className="mt-2 h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden max-w-[320px]">
+                    <div className="mt-2 h-1.5 w-full bg-[var(--ws-hover)] rounded-full overflow-hidden max-w-[320px]">
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-500',
@@ -141,7 +141,7 @@ export function FunnelVisualization({
                 </div>
 
                 {next ? (
-                  <div className="mt-2 pt-2 border-t border-white/[0.03] flex flex-wrap items-center gap-x-3 gap-y-1 type-ui">
+                  <div className="mt-2 pt-2 border-t border-[var(--ws-border)] flex flex-wrap items-center gap-x-3 gap-y-1 type-ui">
                     <span className="inline-flex items-center gap-1 text-[var(--ws-text-secondary)]">
                       <ChevronRight className="w-3 h-3" />
                       <span className="font-semibold text-[var(--ws-text-primary)] tabular-nums">
@@ -176,7 +176,7 @@ export function FunnelVisualization({
       </ol>
 
       {analysis.bottleneck ? (
-        <div className="mt-4 pt-4 border-t border-white/[0.04]">
+        <div className="mt-4 pt-4 border-t border-[var(--ws-border)]">
           <p className="type-card-description font-semibold text-[var(--ws-text-primary)] mb-1">
             Where to focus first
           </p>

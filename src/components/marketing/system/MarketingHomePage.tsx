@@ -84,7 +84,6 @@ function ProductScene() {
   const { t } = useLanguage();
   return (
     <div className="acr-product-scene" aria-label={t('Illustrative AlphaClone product view showing an approval and execution result')}>
-      <div className="acr-scene-glow" aria-hidden="true" />
       <div className="acr-laptop">
         <div className="acr-laptop-screen">
           <Image
@@ -232,9 +231,8 @@ export default function MarketingHomePage() {
           <div className="acr-hero-grid">
             <div className="acr-hero-copy">
               <p className="acr-eyebrow">{t(EXECUTION_LAYER.category)}</p>
-              <h1>{t('AI executes approved business work')}<br /><span>{t('across your tools.')}</span></h1>
+              <h1>{t('Run your business,')}<br /><span>{t('not your tools.')}</span></h1>
               <p className="acr-hero-lead">{t(EXECUTION_LAYER.heroSubhead)}</p>
-              <p className="acr-hero-detail">{t('Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.')}</p>
               <div className="acr-hero-actions">
                 <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{t(EXECUTION_LAYER.primaryCta)} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
                 <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> {t(EXECUTION_LAYER.secondaryCta)}</SecondaryCTA>

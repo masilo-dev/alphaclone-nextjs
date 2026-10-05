@@ -12,10 +12,13 @@ const root = path.resolve(__dirname, '..');
 
 const failures = [];
 
-// Keep migrated dashboard surfaces on semantic, theme-aware color tokens.
+// Keep migrated dashboard surfaces and primitives on semantic, theme-aware color tokens.
 for (const rel of [
   'src/components/dashboard/AttentionFirstDashboard.tsx',
   'src/components/dashboard/business/ClientPortalAccessPanel.tsx',
+  // Design-system primitives: no raw Tailwind color scale or hardcoded hex
+  'src/components/ui/design-system/StandardStatCard.tsx',
+  'src/components/ui/sheet.tsx',
 ]) {
   const source = fs.readFileSync(path.join(root, rel), 'utf8');
   if (/(?:bg|text|border)-(?:slate|gray|zinc|emerald|amber|red|green|blue|sky|teal)-\d{2,3}|#[\da-fA-F]{3,8}\b/.test(source)) {
@@ -52,6 +55,11 @@ function assertMatch(rel, re, message) {
 }
 
 // --- Data trust ---
+assertNotMatch(
+  'src/components/ui/button.tsx',
+  /primary:\s*'bg-white/,
+  'button primary variant must NOT map to white — must use --interactive-primary (coral CTA)'
+);
 assertNotMatch(
   'src/components/dashboard/ExecutiveDashboard.tsx',
   /\+12%|'-5%'/,

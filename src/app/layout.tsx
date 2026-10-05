@@ -58,7 +58,7 @@ export const viewport: Viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#020D1A" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#020D1A" },
   ],
 };
@@ -110,7 +110,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           id="ac-anti-flash-init"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ac-language=([^;]+)/);var l=m?decodeURIComponent(m[1]):null;if(!l){l=localStorage.getItem('ac-language')||'en';}if(l&&('en'===l||'es'===l||'pl'===l)){document.documentElement.lang=l;}var t=null;try{t=localStorage.getItem('alphaclone:user-pref:ac-theme')||localStorage.getItem('ac-theme')||localStorage.getItem('theme-mode');}catch(te){}var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var isDark=t==='dark'?true:(t==='light'?false:(t==='auto'||t==='system'?prefersDark:true));if(isDark){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.style.colorScheme='dark';document.documentElement.style.backgroundColor='#020D1A';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#F6F7F9';}}catch(e){}})();`,
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ac-language=([^;]+)/);var l=m?decodeURIComponent(m[1]):null;if(!l){l=localStorage.getItem('ac-language')||'en';}if(l&&('en'===l||'es'===l||'pl'===l)){document.documentElement.lang=l;}var p=window.location.pathname||'/';var isApp=p.startsWith('/dashboard')||p.startsWith('/app')||p.startsWith('/meet');if(!isApp){document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#ffffff';}else{var t=null;try{t=localStorage.getItem('alphaclone:user-pref:ac-theme')||localStorage.getItem('ac-theme')||localStorage.getItem('theme-mode');}catch(te){}var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var isDark=t==='dark'?true:(t==='light'?false:(t==='auto'||t==='system'?prefersDark:true));if(isDark){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.style.colorScheme='dark';document.documentElement.style.backgroundColor='#020D1A';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#F6F7F9';}}}catch(e){}})();`,
           }}
         />
         <script

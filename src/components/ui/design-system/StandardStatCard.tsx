@@ -1,10 +1,14 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/**
+ * CardTheme — maps to MODULE_IDENTITY and SEMANTIC palette.
+ * Colors are sourced from CSS custom properties (no raw hex).
+ * Themes are designed for both dark and light workspace modes.
+ */
 export type CardTheme =
   | 'teal'
   | 'blue'
@@ -16,88 +20,38 @@ export type CardTheme =
   | 'orange'
   | 'indigo';
 
-const THEME_STYLES: Record<CardTheme, {
-  hoverBorder: string;
-  glowBg: string;
-  iconBg: string;
-  iconColor: string;
-  textAccent: string;
+/**
+ * Maps CardTheme to CSS custom property references.
+ * All values resolve through the semantic token layer —
+ * no neon hex, no hardcoded colors, no glassmorphism.
+ */
+const THEME_TOKENS: Record<CardTheme, {
+  accentVar: string;   // CSS variable for the accent color
+  iconBg: string;      // Tailwind class for icon background (uses color-mix via inline style)
+  textClass: string;   // Tailwind token for accent text
 }> = {
-  teal: {
-    hoverBorder: 'hover:border-[#adebb3]/30',
-    glowBg: 'group-hover:bg-[#adebb3]/[0.04]',
-    iconBg: 'bg-[#adebb3]/10',
-    iconColor: 'text-[#adebb3]',
-    textAccent: 'text-[#adebb3]',
-  },
-  blue: {
-    hoverBorder: 'hover:border-[#00f0ff]/30',
-    glowBg: 'group-hover:bg-[#00f0ff]/[0.04]',
-    iconBg: 'bg-[#00f0ff]/10',
-    iconColor: 'text-[#60a5fa]',
-    textAccent: 'text-[#60a5fa]',
-  },
-  purple: {
-    hoverBorder: 'hover:border-[#7f00ff]/30',
-    glowBg: 'group-hover:bg-[#7f00ff]/[0.04]',
-    iconBg: 'bg-[#7f00ff]/10',
-    iconColor: 'text-[#c084fc]',
-    textAccent: 'text-[#c084fc]',
-  },
-  emerald: {
-    hoverBorder: 'hover:border-[#3eb489]/30',
-    glowBg: 'group-hover:bg-[#3eb489]/[0.04]',
-    iconBg: 'bg-[#3eb489]/10',
-    iconColor: 'text-[#4ade80]',
-    textAccent: 'text-[#4ade80]',
-  },
-  amber: {
-    hoverBorder: 'hover:border-[#ffb347]/30',
-    glowBg: 'group-hover:bg-[#ffb347]/[0.04]',
-    iconBg: 'bg-[#ffb347]/10',
-    iconColor: 'text-[#facc15]',
-    textAccent: 'text-[#facc15]',
-  },
-  rose: {
-    hoverBorder: 'hover:border-[#ff00cc]/30',
-    glowBg: 'group-hover:bg-[#ff00cc]/[0.04]',
-    iconBg: 'bg-[#ff00cc]/10',
-    iconColor: 'text-[#f87171]',
-    textAccent: 'text-[#f87171]',
-  },
-  sky: {
-    hoverBorder: 'hover:border-[#00f0ff]/30',
-    glowBg: 'group-hover:bg-[#00f0ff]/[0.04]',
-    iconBg: 'bg-[#00f0ff]/10',
-    iconColor: 'text-[#38bdf8]',
-    textAccent: 'text-[#38bdf8]',
-  },
-  orange: {
-    hoverBorder: 'hover:border-[#ffb347]/30',
-    glowBg: 'group-hover:bg-[#ffb347]/[0.04]',
-    iconBg: 'bg-[#ffb347]/10',
-    iconColor: 'text-[#fb923c]',
-    textAccent: 'text-[#fb923c]',
-  },
-  indigo: {
-    hoverBorder: 'hover:border-[#7f00ff]/30',
-    glowBg: 'group-hover:bg-[#7f00ff]/[0.04]',
-    iconBg: 'bg-[#7f00ff]/10',
-    iconColor: 'text-[#818cf8]',
-    textAccent: 'text-[#818cf8]',
-  },
+  teal:    { accentVar: 'var(--interactive-secondary)',  iconBg: 'bg-[var(--info-surface)]',             textClass: 'text-[var(--interactive-secondary)]' },
+  blue:    { accentVar: 'var(--ac-accent)',              iconBg: 'bg-[var(--ac-accent-muted)]',          textClass: 'text-[var(--ac-accent)]' },
+  purple:  { accentVar: 'var(--brand-violet-500)',       iconBg: 'bg-[var(--brand-violet-500)]/10',      textClass: 'text-[var(--brand-violet-500)]' },
+  emerald: { accentVar: 'var(--success-500)',            iconBg: 'bg-[var(--success-surface)]',          textClass: 'text-[var(--success-text)]' },
+  amber:   { accentVar: 'var(--warning-500)',            iconBg: 'bg-[var(--warning-surface)]',          textClass: 'text-[var(--warning-text)]' },
+  rose:    { accentVar: 'var(--error-500)',              iconBg: 'bg-[var(--error-surface)]',            textClass: 'text-[var(--error-text)]' },
+  sky:     { accentVar: 'var(--info-500)',               iconBg: 'bg-[var(--info-surface)]',             textClass: 'text-[var(--info-text)]' },
+  orange:  { accentVar: 'var(--warning-600)',            iconBg: 'bg-[var(--warning-surface)]',          textClass: 'text-[var(--warning-text)]' },
+  indigo:  { accentVar: 'var(--brand-violet-400)',       iconBg: 'bg-[var(--brand-violet-500)]/10',     textClass: 'text-[var(--brand-violet-500)]' },
 };
 
 interface StandardStatCardProps {
   label: string;
   value: string | number;
-  delta?: number | string; // Numeric percentage (e.g. 12.5 or -3.2) or string (e.g. "+15%")
+  delta?: number | string;
   deltaDir?: 'up' | 'down' | 'none';
   comparisonText?: string;
   icon?: React.ElementType | React.ReactNode;
   themeColor?: CardTheme;
   onClick?: () => void;
   className?: string;
+  /** @deprecated — all cards are now non-floating. Kept for API compatibility. */
   interactive?: boolean;
 }
 
@@ -111,15 +65,14 @@ export function StandardStatCard({
   themeColor = 'teal',
   onClick,
   className,
-  interactive = true,
 }: StandardStatCardProps) {
-  const styles = THEME_STYLES[themeColor] || THEME_STYLES.teal;
-  const isClickable = !!onClick;
-  
-  // Resolve Delta values
+  const theme = THEME_TOKENS[themeColor] ?? THEME_TOKENS.teal;
+  const isClickable = Boolean(onClick);
+
+  // Resolve delta direction and display text
   let resolvedDeltaDir: 'up' | 'down' | 'none' = 'none';
   let deltaText = '';
-  
+
   if (delta !== undefined) {
     if (typeof delta === 'number') {
       resolvedDeltaDir = delta > 0 ? 'up' : delta < 0 ? 'down' : 'none';
@@ -136,104 +89,76 @@ export function StandardStatCard({
 
   const content = (
     <div className="flex flex-col h-full justify-between">
+      {/* Top: label + value + icon */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1 min-w-0">
-          <span className="type-caption font-black uppercase tracking-wider text-slate-500">
+          <p className="type-caption font-semibold uppercase tracking-label text-[var(--ws-text-tertiary)] truncate">
             {label}
-          </span>
-          <h4 className="text-2xl sm:text-2xl font-black text-[#f5f5f5] tracking-tight leading-none mt-1">
+          </p>
+          <p className="text-2xl font-bold text-[var(--ws-text-primary)] tracking-tight leading-none mt-1 tabular-nums">
             {value}
-          </h4>
+          </p>
         </div>
 
         {icon && (
-          <div className={cn(
-            'w-9 h-9 rounded-lg flex items-center justify-center border border-white/5 transition-all duration-300',
-            styles.iconBg,
-            styles.iconColor
-          )}>
-            {/* forwardRef components (e.g. Lucide) have typeof === 'object', not 'function'.
-                Use React.isValidElement to distinguish pre-rendered JSX from a component type. */}
+          <span
+            className={cn(
+              'w-9 h-9 rounded-[10px] flex items-center justify-center border border-[var(--ws-border)] shrink-0',
+              theme.iconBg,
+              theme.textClass
+            )}
+          >
             {React.isValidElement(icon)
               ? icon
               : React.createElement(icon as React.ElementType, { className: 'w-4 h-4' })}
-          </div>
+          </span>
         )}
       </div>
 
-      <div className="flex flex-col items-start gap-2 mt-4 pt-3 border-t border-white/[0.03] sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+      {/* Bottom: delta badge + comparison text */}
+      <div className="mt-4 pt-3 border-t border-[var(--ws-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {delta !== undefined && (
             <span
               className={cn(
-                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded type-ui font-bold tabular-nums',
-                resolvedDeltaDir === 'up' && 'bg-[#adebb3]/10 text-[#adebb3]',
-                resolvedDeltaDir === 'down' && 'bg-[#f87171]/10 text-[#f87171]',
-                resolvedDeltaDir === 'none' && 'bg-white/5 text-[#c0c0c0]'
+                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded type-caption font-semibold tabular-nums',
+                resolvedDeltaDir === 'up'   && 'bg-[var(--success-surface)] text-[var(--success-text)]',
+                resolvedDeltaDir === 'down' && 'bg-[var(--error-surface)] text-[var(--error-text)]',
+                resolvedDeltaDir === 'none' && 'bg-[var(--ws-hover)] text-[var(--ws-text-muted)]'
               )}
             >
-              {resolvedDeltaDir === 'up' && <TrendingUp className="w-3 h-3" />}
+              {resolvedDeltaDir === 'up'   && <TrendingUp className="w-3 h-3" />}
               {resolvedDeltaDir === 'down' && <TrendingDown className="w-3 h-3" />}
               {deltaText}
             </span>
           )}
-          <span className="type-ui text-[#94a3b8] font-medium truncate">{comparisonText}</span>
+          <span className="type-caption text-[var(--ws-text-muted)] truncate">{comparisonText}</span>
         </div>
 
         {isClickable && (
-          <ChevronRight className="w-3.5 h-3.5 text-[#64748b] group-hover:text-[#f5f5f5] transition-colors duration-300" />
+          <ChevronRight className="w-3.5 h-3.5 text-[var(--ws-text-tertiary)] shrink-0" />
         )}
       </div>
     </div>
   );
 
   const cardClasses = cn(
-    'relative group text-left w-full dashboard-panel rounded-xl p-4 transition-all duration-300 overflow-hidden',
-    styles.hoverBorder,
-    styles.glowBg,
-    isClickable && 'cursor-pointer',
+    // Use the standard OS panel class — provides surface + border via CSS
+    'ac-workspace-panel',
+    'relative text-left w-full p-4 rounded-xl transition-colors duration-200',
+    isClickable && 'cursor-pointer hover:border-[var(--ws-border-strong)]',
     className
   );
 
-  // Background glow effect element
-  const glowElement = (
-    <div className={cn(
-      'absolute -right-12 -bottom-12 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none',
-      themeColor === 'teal' && 'bg-[#adebb3]',
-      themeColor === 'blue' && 'bg-[#00f0ff]',
-      themeColor === 'purple' && 'bg-[#7f00ff]',
-      themeColor === 'emerald' && 'bg-[#3eb489]',
-      themeColor === 'amber' && 'bg-[#ffb347]',
-      themeColor === 'rose' && 'bg-[#ff00cc]',
-      themeColor === 'sky' && 'bg-[#38bdf8]',
-      themeColor === 'orange' && 'bg-[#fb923c]',
-      themeColor === 'indigo' && 'bg-[#818cf8]'
-    )} />
-  );
-
-  if (!interactive) {
-    return (
-      <div className={cardClasses}>
-        {glowElement}
-        {content}
-      </div>
-    );
+  if (!isClickable) {
+    return <div className={cardClasses}>{content}</div>;
   }
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      whileHover={{ y: -4, scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cardClasses}
-    >
-      {glowElement}
+    <button type="button" onClick={onClick} className={cardClasses}>
       {content}
-    </motion.button>
+    </button>
   );
 }
+
 export default StandardStatCard;
