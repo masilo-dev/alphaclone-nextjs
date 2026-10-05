@@ -113,7 +113,7 @@ export async function promoteToCanonicalLead(params: {
   idempotencyKey?: string;
   skipQualificationGate?: boolean;
 }): Promise<PromoteLeadResult> {
-  const row =
+  const row: Record<string, unknown> =
     params.source.kind === 'lead_candidate'
       ? { ...params.source.candidate, _promotion_kind: 'lead_candidate', id: params.source.candidateId }
       : {

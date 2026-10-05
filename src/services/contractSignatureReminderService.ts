@@ -141,6 +141,10 @@ export async function sendOrderedContractSignatureReminders(options: {
       skipped += 1;
       continue;
     }
+    const providerMessageId =
+      execution.result.emailId ||
+      execution.provider_reference ||
+      `reminder:${party.id}:${Date.now()}`;
     sent += 1;
     await Promise.all([
       db
@@ -158,8 +162,7 @@ export async function sendOrderedContractSignatureReminders(options: {
           signer_email: email,
           signing_order: party.signing_order || null,
           provider: "email",
-          provider_event_id:
-            result.emailId || `reminder:${party.id}:${Date.now()}`,
+          provider_event_id: providerMessageId,
           evidence: {
             signing_url_created: true,
             token_reused: Boolean(existingToken),
@@ -179,7 +182,7 @@ export async function sendOrderedContractSignatureReminders(options: {
           details: {
             party_id: party.id,
             signing_order: party.signing_order,
-            provider_message_id: result.emailId || null,
+            provider_message_id: execution.result.emailId || null,
           },
         }),
     ]);
