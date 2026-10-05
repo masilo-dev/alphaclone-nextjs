@@ -108,33 +108,33 @@ export const StripeConnectOnboarding: React.FC = () => {
   }
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-6">
+    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 space-y-6">
       <div className="flex items-center gap-3">
         <CreditCard className="w-6 h-6 text-teal-400" />
-        <h3 className="text-lg font-semibold text-white">Stripe Connect</h3>
+        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Stripe Connect</h3>
       </div>
 
       {!status ? (
         <div className="space-y-4">
-          <p className="text-slate-400">
+          <p className="text-[var(--ws-text-muted)]">
             Connect your Stripe account to receive payments directly from your clients. 
             AlphaClone never touches your money - payments go directly to your Stripe account.
           </p>
           
           <div className="space-y-3">
-            <div className="flex items-center gap-2 type-ui text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-[var(--ws-text-secondary)]">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Receive payments directly to your bank account</span>
             </div>
-            <div className="flex items-center gap-2 type-ui text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-[var(--ws-text-secondary)]">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Automatic payment links and invoicing</span>
             </div>
-            <div className="flex items-center gap-2 type-ui text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-[var(--ws-text-secondary)]">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Professional payment experience for clients</span>
             </div>
-            <div className="flex items-center gap-2 type-ui text-slate-300">
+            <div className="flex items-center gap-2 type-ui text-[var(--ws-text-secondary)]">
               <CheckCircle className="w-4 h-4 text-green-400" />
               <span>Multi-currency support</span>
             </div>
@@ -157,13 +157,13 @@ export const StripeConnectOnboarding: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4 type-ui">
             <div>
-              <span className="text-slate-500">Charges Enabled:</span>
+              <span className="text-[var(--ws-text-muted)]">Charges Enabled:</span>
               <span className={`ml-2 ${status.chargesEnabled ? 'text-green-400' : 'text-amber-400'}`}>
                 {status.chargesEnabled ? 'Yes' : 'No'}
               </span>
             </div>
             <div>
-              <span className="text-slate-500">Payouts Enabled:</span>
+              <span className="text-[var(--ws-text-muted)]">Payouts Enabled:</span>
               <span className={`ml-2 ${status.payoutsEnabled ? 'text-green-400' : 'text-amber-400'}`}>
                 {status.payoutsEnabled ? 'Yes' : 'No'}
               </span>
@@ -176,7 +176,7 @@ export const StripeConnectOnboarding: React.FC = () => {
                 <AlertCircle className="w-4 h-4" />
                 <span className="font-medium type-ui">Action Required</span>
               </div>
-              <p className="type-card-description text-slate-400">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 Complete the requirements in your Stripe dashboard to enable all features.
               </p>
             </div>
@@ -187,7 +187,7 @@ export const StripeConnectOnboarding: React.FC = () => {
               onClick={handleManageAccount}
               disabled={loading}
               variant="outline"
-              className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+              className="flex-1 border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               Manage Account
@@ -196,7 +196,7 @@ export const StripeConnectOnboarding: React.FC = () => {
               onClick={checkConnectStatus}
               disabled={loading}
               variant="outline"
-              className="border-slate-700 text-slate-300 hover:bg-slate-800"
+              className="border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
             >
               Refresh
             </Button>
@@ -209,7 +209,7 @@ export const StripeConnectOnboarding: React.FC = () => {
             <span className="font-medium">Connection In Progress</span>
           </div>
           
-          <p className="text-slate-400 type-card-description">
+          <p className="text-[var(--ws-text-muted)] type-card-description">
             Your Stripe account setup is in progress. Please complete the onboarding process in Stripe.
           </p>
 
@@ -217,7 +217,7 @@ export const StripeConnectOnboarding: React.FC = () => {
             onClick={checkConnectStatus}
             disabled={loading}
             variant="outline"
-            className="w-full border-slate-700 text-slate-300 hover:bg-slate-800"
+            className="w-full border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
           >
             Check Status
           </Button>

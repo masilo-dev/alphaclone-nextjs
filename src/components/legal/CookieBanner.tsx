@@ -105,7 +105,7 @@ export default function CookieBanner() {
           aria-label={t('Cookie consent banner')}
           className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[calc(100%-2rem)] max-w-md pointer-events-none transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
         >
-          <div className="pointer-events-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xl shadow-slate-900/10 dark:shadow-black/50 backdrop-blur-xl">
+          <div className="pointer-events-auto rounded-2xl border border-slate-200 dark:border-[var(--ws-border)] bg-white dark:bg-[var(--ws-panel)] p-5 shadow-xl shadow-slate-900/10 dark:shadow-black/50 backdrop-blur-xl">
             <div className="flex items-start gap-3.5">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <Shield className="h-4 w-4" aria-hidden="true" />
@@ -114,7 +114,7 @@ export default function CookieBanner() {
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {t('Your privacy choices')}
                 </h4>
-                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-[var(--ws-text-muted)]">
                   {t(
                     'We use essential cookies to keep AlphaClone secure. You can allow optional functional, analytics, and marketing cookies, or choose essential only.'
                   )}
@@ -130,11 +130,11 @@ export default function CookieBanner() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[var(--ws-border)]">
               <button
                 type="button"
                 onClick={() => setOpenPrefs(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)] transition-colors"
               >
                 <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('Manage')}
@@ -142,14 +142,14 @@ export default function CookieBanner() {
               <button
                 type="button"
                 onClick={() => handleSave({ functional: false, analytics: false, marketing: false })}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                className="rounded-lg border border-slate-200 dark:border-[var(--ws-border)] bg-white dark:bg-[var(--ws-surface-secondary)] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-[var(--ws-text-secondary)] hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] transition-colors shadow-sm"
               >
                 {t('Essential only')}
               </button>
               <button
                 type="button"
                 onClick={() => handleSave({ functional: true, analytics: true, marketing: true })}
-                className="rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-950 px-3.5 py-1.5 text-xs font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-sm"
+                className="rounded-lg bg-[var(--ws-panel)] dark:bg-white text-white dark:text-slate-950 px-3.5 py-1.5 text-xs font-semibold hover:bg-[var(--ws-surface-secondary)] dark:hover:bg-slate-100 transition-colors shadow-sm"
               >
                 {t('Accept all')}
               </button>
@@ -163,21 +163,21 @@ export default function CookieBanner() {
           ref={preferencesDialogRef}
           onClose={() => setOpenPrefs(false)}
           aria-labelledby="cookie-preferences-title"
-          className="cookie-preferences-dialog z-[10000] w-[calc(100%-2rem)] max-w-lg max-h-[88dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 text-slate-900 dark:text-white shadow-2xl shadow-slate-900/20 dark:shadow-black/80 open:flex open:flex-col backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm"
+          className="cookie-preferences-dialog z-[10000] w-[calc(100%-2rem)] max-w-lg max-h-[88dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-[var(--ws-border)] bg-white dark:bg-[var(--ws-panel)] p-5 sm:p-6 text-slate-900 dark:text-white shadow-2xl shadow-slate-900/20 dark:shadow-black/80 open:flex open:flex-col backdrop:bg-[var(--ws-canvas)]/55 backdrop:backdrop-blur-sm"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-[var(--ws-border)] pb-4">
             <div>
               <h3 id="cookie-preferences-title" className="text-base font-bold text-slate-900 dark:text-white">
                 {t('Privacy & Cookie Preferences')}
               </h3>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-0.5 text-xs text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)]">
                 {t('Choose which optional cookies and trackers AlphaClone and Cloudflare Zaraz may activate.')}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setOpenPrefs(false)}
-              className="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="rounded-lg p-1.5 text-[var(--ws-text-muted)] hover:text-slate-600 dark:hover:text-[var(--ws-text-secondary)] hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)] transition-colors"
               aria-label={t('Close preferences')}
             >
               <X className="h-5 w-5" aria-hidden="true" />
@@ -215,11 +215,11 @@ export default function CookieBanner() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-[var(--ws-border)] pt-4">
             <button
               type="button"
               onClick={handleRevoke}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-transparent px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-[var(--ws-border)] bg-transparent px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               {t('Reset to Essential Only')}
@@ -228,7 +228,7 @@ export default function CookieBanner() {
               <button
                 type="button"
                 onClick={() => setOpenPrefs(false)}
-                className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="rounded-lg px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)] transition-colors"
               >
                 {t('Cancel')}
               </button>
@@ -262,10 +262,10 @@ function ToggleRow({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-3.5">
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-slate-200/80 dark:border-[var(--ws-border)]/80 bg-slate-50/50 dark:bg-[var(--ws-panel)]/40 p-3.5">
       <div className="min-w-0 flex-1 pr-2">
         <p className="text-xs font-bold text-slate-900 dark:text-white">{label}</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{description}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)]">{description}</p>
       </div>
       <button
         type="button"
@@ -274,7 +274,7 @@ function ToggleRow({
         aria-label={label}
         aria-pressed={checked}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
-          checked ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'
+          checked ? 'bg-blue-600' : 'bg-slate-200 dark:bg-[var(--ws-surface-tertiary)]'
         } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
       >
         <span className="sr-only">{checked ? t('On') : t('Off')}</span>

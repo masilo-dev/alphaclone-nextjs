@@ -1,5 +1,5 @@
 *:focus-visible {
-  outline: 2px solid #2dd4bf;
+  outline: 2px solid var(--brand-blue-400);
   outline-offset: 2px;
 }
 
@@ -8,7 +8,7 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #2dd4bf;
+  outline: 2px solid var(--brand-blue-400);
   outline-offset: 2px;
 }
 
@@ -17,8 +17,8 @@ select:focus-visible {
   position: absolute;
   top: -40px;
   left: 0;
-  background: #2dd4bf;
-  color: #020617;
+  background: var(--brand-blue-400);
+  color: var(--brand-violet-950);
   padding: 8px;
   text-decoration: none;
   z-index: 100;
@@ -31,7 +31,7 @@ select:focus-visible {
 /* Improve focus visibility for custom components */
 [role="button"]:focus-visible,
 [role="link"]:focus-visible {
-  outline: 2px solid #2dd4bf;
+  outline: 2px solid var(--brand-blue-400);
   outline-offset: 2px;
 }
 
@@ -46,12 +46,12 @@ select:focus-visible {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--ws-surface-tertiary);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--ws-text-muted);
 }
 
 /* Mobile Tap Target Safeguards (WCAG 2.5.5 / 2.5.8 min 40px/44px) */

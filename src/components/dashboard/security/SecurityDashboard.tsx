@@ -71,7 +71,7 @@ const SecurityDashboard: React.FC = () => {
             case 'C': return 'text-yellow-500';
             case 'D': return 'text-orange-500';
             case 'F': return 'text-red-500';
-            default: return 'text-slate-400';
+            default: return 'text-[var(--ws-text-muted)]';
         }
     };
 
@@ -79,8 +79,8 @@ const SecurityDashboard: React.FC = () => {
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Security Center</h1>
-                    <p className="text-slate-400">Monitor website security, SSL status, and trust reputation.</p>
+                    <h1 className="text-3xl font-bold text-[var(--ws-text-primary)] mb-2">Security Center</h1>
+                    <p className="text-[var(--ws-text-muted)]">Monitor website security, SSL status, and trust reputation.</p>
                 </div>
                 {result && (
                     <Button variant="outline" onClick={() => window.print()}>
@@ -91,19 +91,19 @@ const SecurityDashboard: React.FC = () => {
             </div>
 
             {/* Scanner Input */}
-            <Card className="p-8 border-slate-700 bg-slate-800/50 backdrop-blur-md">
+            <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 backdrop-blur-md">
                 <form onSubmit={handleScan} className="max-w-3xl mx-auto">
                     <div className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="flex-1 w-full">
-                            <label className="block type-label font-medium text-slate-300 mb-2">Website URL to Scan</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Website URL to Scan</label>
                             <div className="relative">
-                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
                                 <input
                                     type="text"
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                     placeholder="example.com"
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 placeholder-slate-600"
+                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 placeholder-slate-600"
                                 />
                             </div>
                         </div>
@@ -124,13 +124,13 @@ const SecurityDashboard: React.FC = () => {
             {result && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up">
                     {/* Score Card */}
-                    <Card className="p-8 border-slate-700 bg-slate-800/50 backdrop-blur-md text-center flex flex-col justify-center items-center">
-                        <h3 className="text-lg font-medium text-slate-400 mb-4">Security Grade</h3>
+                    <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 backdrop-blur-md text-center flex flex-col justify-center items-center">
+                        <h3 className="text-lg font-medium text-[var(--ws-text-muted)] mb-4">Security Grade</h3>
                         <div className={`text-8xl font-black mb-4 ${getGradeColor(result.grade)}`}>
                             {result.grade}
                         </div>
-                        <div className="text-2xl font-bold text-white mb-2">{result.score}/100</div>
-                        <p className="text-slate-500 type-caption">Valid as of {result.timestamp.toLocaleTimeString()}</p>
+                        <div className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">{result.score}/100</div>
+                        <p className="text-[var(--ws-text-muted)] type-caption">Valid as of {result.timestamp.toLocaleTimeString()}</p>
                     </Card>
 
                     {/* Detailed Checks */}
@@ -166,15 +166,15 @@ const SecurityDashboard: React.FC = () => {
 
                     {/* Issues List */}
                     {result.issues.length > 0 && (
-                        <Card className="lg:col-span-3 p-6 border-red-500/20 bg-red-500/5 animate-fade-in">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                        <Card className="lg:col-span-3 p-6 border-red-500/20 bg-[var(--error-500)]/5 animate-fade-in">
+                            <h3 className="text-xl font-bold text-[var(--text-inverse)] mb-4 flex items-center">
                                 <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
                                 Critical Issues Found
                             </h3>
                             <ul className="space-y-3">
                                 {result.issues.map((issue: string, idx: number) => (
-                                    <li key={idx} className="flex items-center text-red-200 bg-red-500/10 px-4 py-2 rounded-lg">
-                                        <div className="w-2 h-2 rounded-full bg-red-500 mr-3" />
+                                    <li key={idx} className="flex items-center text-red-200 bg-[var(--error-500)]/10 px-4 py-2 rounded-lg">
+                                        <div className="w-2 h-2 rounded-full bg-[var(--error-500)] mr-3" />
                                         {issue}
                                     </li>
                                 ))}
@@ -183,21 +183,21 @@ const SecurityDashboard: React.FC = () => {
                     )}
 
                     {/* Scan History */}
-                    <Card className="lg:col-span-3 p-6 border-slate-700 bg-slate-800/50">
-                        <h3 className="text-xl font-bold text-white mb-4">Scan History</h3>
+                    <Card className="lg:col-span-3 p-6 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50">
+                        <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-4">Scan History</h3>
                         <div className="overflow-x-auto min-w-0">
                             <table className="w-full min-w-[560px] text-left">
                                 <thead>
-                                    <tr className="text-slate-500 type-ui border-b border-slate-700">
+                                    <tr className="text-[var(--ws-text-muted)] type-ui border-b border-[var(--ws-border)]">
                                         <th className="pb-3 pr-4">URL</th>
                                         <th className="pb-3 px-4">Score</th>
                                         <th className="pb-3 px-4">Grade</th>
                                         <th className="pb-3 pl-4">Date</th>
                                     </tr>
                                 </thead>
-                                <tbody className="type-ui text-slate-300">
+                                <tbody className="type-ui text-[var(--ws-text-secondary)]">
                                     {scanHistory.map((scan) => (
-                                        <tr key={scan.id} className="border-b border-slate-800/50 hover:bg-slate-700/20 cursor-pointer" onClick={() => {
+                                        <tr key={scan.id} className="border-b border-[var(--ws-border)]/50 hover:bg-[var(--ws-surface-tertiary)]/20 cursor-pointer" onClick={() => {
                                             setResult({
                                                 url: scan.url,
                                                 timestamp: new Date(scan.created_at),
@@ -213,14 +213,14 @@ const SecurityDashboard: React.FC = () => {
                                             <td className="py-4 px-4">
                                                 <span className={`font-bold ${getGradeColor(scan.grade)}`}>{scan.grade}</span>
                                             </td>
-                                            <td className="py-4 pl-4 text-slate-500">
+                                            <td className="py-4 pl-4 text-[var(--ws-text-muted)]">
                                                 {new Date(scan.created_at).toLocaleDateString()}
                                             </td>
                                         </tr>
                                     ))}
                                     {scanHistory.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} className="py-8 text-center text-slate-500 italic">No previous scans found</td>
+                                            <td colSpan={4} className="py-8 text-center text-[var(--ws-text-muted)] italic">No previous scans found</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -233,7 +233,7 @@ const SecurityDashboard: React.FC = () => {
             {!result && !isScanning && (
                 <div className="text-center py-20 opacity-50">
                     <Shield className="w-24 h-24 mx-auto text-slate-700 mb-6" />
-                    <h3 className="text-xl font-medium text-slate-400">Ready to Scan</h3>
+                    <h3 className="text-xl font-medium text-[var(--ws-text-muted)]">Ready to Scan</h3>
                     <p className="text-slate-600">Enter a domain above to perform a comprehensive security audit.</p>
                 </div>
             )}
@@ -249,7 +249,7 @@ const CheckCard: React.FC<{
 }> = ({ title, status, details, icon: Icon }) => {
     const getColor = () => {
         if (status === 'pass') return 'bg-green-500/10 border-green-500/20 text-green-400';
-        if (status === 'fail') return 'bg-red-500/10 border-red-500/20 text-red-400';
+        if (status === 'fail') return 'bg-[var(--error-500)]/10 border-red-500/20 text-red-400';
         return 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400';
     };
 
@@ -257,19 +257,19 @@ const CheckCard: React.FC<{
         <div className={`p-6 rounded-xl border ${getColor()} transition-all`}>
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${status === 'pass' ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                    <div className={`p-2 rounded-lg ${status === 'pass' ? 'bg-green-500/20' : 'bg-[var(--error-500)]/20'}`}>
                         <Icon className="w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-lg text-white">{title}</h4>
+                    <h4 className="font-bold text-lg text-[var(--ws-text-primary)]">{title}</h4>
                 </div>
                 <div className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider ${status === 'pass' ? 'bg-green-500 text-slate-900' :
-                    status === 'fail' ? 'bg-red-500 text-white' :
+                    status === 'fail' ? 'bg-[var(--error-500)] text-[var(--text-inverse)]' :
                         'bg-yellow-500 text-slate-900'
                     }`}>
                     {status}
                 </div>
             </div>
-            <p className="text-slate-300 type-card-description leading-relaxed">
+            <p className="text-[var(--ws-text-secondary)] type-card-description leading-relaxed">
                 {details}
             </p>
         </div>

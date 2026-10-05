@@ -74,11 +74,11 @@ function mapQuoteRow(raw: Record<string, unknown>): QuoteRow {
 }
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
-  draft:    'bg-slate-500/15 text-slate-400 border-slate-500/20',
+  draft:    'bg-slate-500/15 text-[var(--ws-text-muted)] border-slate-500/20',
   sent:     'bg-blue-500/15 text-blue-400 border-blue-500/20',
   accepted: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-  rejected: 'bg-red-500/15 text-red-400 border-red-500/20',
-  expired:  'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  rejected: 'bg-[var(--error-500)]/15 text-red-400 border-red-500/20',
+  expired:  'bg-slate-500/15 text-[var(--ws-text-secondary)] border-slate-500/20',
   converted: 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] border-[var(--brand-blue-500)]/20',
 };
 
@@ -94,20 +94,20 @@ const QuoteListRow: React.FC<{ quote: QuoteRow; onDelete: (id: string) => void; 
 
   return (
     <div className="relative overflow-hidden">
-      <motion.div style={{ opacity: rOp }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center z-0">
-        <Trash2 className="w-5 h-5 text-white" />
+      <motion.div style={{ opacity: rOp }} className="absolute inset-y-0 right-0 w-20 bg-[var(--error-500)] flex items-center justify-center z-0">
+        <Trash2 className="w-5 h-5 text-[var(--text-inverse)]" />
       </motion.div>
       <motion.div drag="x" dragConstraints={{ left: -100, right: 0 }} dragElastic={0.1} onDragEnd={handleDragEnd} style={{ x }}
-        onClick={() => onTap(quote)} className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 py-3 cursor-pointer">
+        onClick={() => onTap(quote)} className="relative z-10 bg-[var(--ws-canvas)] flex items-center gap-3 px-4 py-3 cursor-pointer">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="type-ui text-slate-500 opacity-55">#{quote.number || quote.id.slice(0,6)}</span>
-            <span className="type-ui font-bold text-white truncate">{clientName}</span>
+            <span className="type-ui text-[var(--ws-text-muted)] opacity-55">#{quote.number || quote.id.slice(0,6)}</span>
+            <span className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{clientName}</span>
           </div>
-          {quote.valid_until && <span className="type-ui text-slate-500 opacity-55">Valid until {new Date(quote.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+          {quote.valid_until && <span className="type-ui text-[var(--ws-text-muted)] opacity-55">Valid until {new Date(quote.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="type-ui font-bold text-white">{amountDisplay}</span>
+          <span className="type-ui font-bold text-[var(--ws-text-primary)]">{amountDisplay}</span>
           <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
       </motion.div>
@@ -129,20 +129,20 @@ const QuoteDetail: React.FC<{
   const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
 
   const actions = (
-    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
-      <button onClick={() => onEdit(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-[var(--ws-border)]' : 'absolute bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
+      <button onClick={() => onEdit(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]">
         <Edit3 className="w-4 h-4 text-violet-400" />
         <span className="type-ui font-bold">Edit</span>
       </button>
-      <button onClick={() => onSend(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+      <button onClick={() => onSend(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]">
         <Send className="w-4 h-4 text-sky-400" />
         <span className="type-ui font-bold">Send</span>
       </button>
-      <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+      <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]">
         <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
         <span className="type-ui font-bold">Convert</span>
       </button>
-      <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400">
+      <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-[var(--error-500)]/10 text-red-400">
         <Trash2 className="w-4 h-4 text-red-400" />
         <span className="type-ui font-bold">Delete</span>
       </button>
@@ -203,7 +203,7 @@ const QuoteDetail: React.FC<{
         </div>
         <QuoteDocumentPreview quoteId={quote.id} />
         {quote.status === 'accepted' && (
-          <button onClick={() => onConvert(quote)} className="w-full min-h-[52px] bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold rounded-[14px] type-ui transition-colors flex items-center justify-center gap-2">
+          <button onClick={() => onConvert(quote)} className="w-full min-h-[52px] bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] font-semibold rounded-[14px] type-ui transition-colors flex items-center justify-center gap-2">
             <ArrowRight className="w-5 h-5" /> Convert to invoice
           </button>
         )}
@@ -304,7 +304,7 @@ const CreateQuoteModal: React.FC<{
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Recipient email (for sending)"
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white type-ui"
+          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] type-ui"
         />
         <input
           type="number"
@@ -313,7 +313,7 @@ const CreateQuoteModal: React.FC<{
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Amount (USD)"
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white type-ui"
+          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] type-ui"
         />
         <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
         <DocumentQualityPanel
@@ -330,7 +330,7 @@ const CreateQuoteModal: React.FC<{
         <button
           type="submit"
           disabled={saving}
-          className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-bold disabled:opacity-50"
+          className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] font-bold disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Quote'}
         </button>
@@ -561,46 +561,46 @@ const QuoteEditModal: React.FC<{
                 />
               </div>
               <div>
-                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-slate-500">Status</label>
-                <select value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 type-caption text-white">
+                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Status</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)]">
                   {(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'] as QuoteStatus[]).map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-slate-500">Currency</label>
-                <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 type-caption text-white" />
+                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Currency</label>
+                <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)]" />
               </div>
               <div>
-                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-slate-500">Valid until</label>
-                <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 type-ui text-white" />
+                <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Valid until</label>
+                <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
               </div>
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="type-caption font-bold uppercase tracking-widest text-slate-500">Line items</h3>
-                <button type="button" onClick={addItem} className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 type-ui font-bold text-white">
+                <h3 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Line items</h3>
+                <button type="button" onClick={addItem} className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui font-bold text-[var(--ws-text-primary)]">
                   <Plus className="h-4 w-4" /> Add item
                 </button>
               </div>
               <div className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={item.id || index} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+                  <div key={item.id || index} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="type-caption font-bold uppercase tracking-widest text-slate-500">Item {index + 1}</div>
-                      <button type="button" onClick={() => removeItem(index)} className="inline-flex items-center gap-1 rounded-lg border border-slate-800 px-2 py-1 type-ui font-bold text-slate-400 hover:text-red-400">
+                      <div className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Item {index + 1}</div>
+                      <button type="button" onClick={() => removeItem(index)} className="inline-flex items-center gap-1 rounded-lg border border-[var(--ws-border)] px-2 py-1 type-ui font-bold text-[var(--ws-text-muted)] hover:text-red-400">
                         <Minus className="h-3.5 w-3.5" /> Remove
                       </button>
                     </div>
-                    <input value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white" />
-                    <textarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white resize-none" />
+                    <input value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                    <textarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
                     <div className="grid gap-3 sm:grid-cols-4">
-                      <input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white" />
-                      <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white" />
-                      <input type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white" />
-                      <input type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 type-ui text-white" />
+                      <input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                      <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                      <input type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
+                      <input type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-[var(--ws-text-primary)]" />
                     </div>
                   </div>
                 ))}
@@ -612,20 +612,20 @@ const QuoteEditModal: React.FC<{
             <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
             {previewInput ? <DocumentPreview input={previewInput} /> : null}
             <div>
-              <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-slate-500">Notes</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 type-ui text-white resize-none" />
+              <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Notes</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
             </div>
             <div>
-              <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-slate-500">Terms & conditions</label>
-              <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 type-ui text-white resize-none" />
+              <label className="mb-2 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Terms & conditions</label>
+              <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-ui text-[var(--ws-text-primary)] resize-none" />
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-              <div className="flex items-center justify-between type-ui text-slate-400">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4 space-y-2">
+              <div className="flex items-center justify-between type-ui text-[var(--ws-text-muted)]">
                 <span>Estimated total</span>
-                <span className="font-mono text-white">{Number(total).toFixed(2)} {currency || 'USD'}</span>
+                <span className="font-mono text-[var(--ws-text-primary)]">{Number(total).toFixed(2)} {currency || 'USD'}</span>
               </div>
-              <p className="type-card-description text-slate-500">Totals are recalculated from the current line items when you save.</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Totals are recalculated from the current line items when you save.</p>
             </div>
 
             <button
@@ -800,7 +800,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
               setSelectedQuoteIds(new Set(visibleQuotes.map((quote) => quote.id)));
             }
           }}
-          className="inline-flex items-center text-slate-400 hover:text-white"
+          className="inline-flex items-center text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
           aria-label={allVisibleSelected ? 'Deselect all visible quotes' : 'Select all visible quotes'}
         >
           {allVisibleSelected ? (
@@ -817,7 +817,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
             event.stopPropagation();
             toggleQuoteSelection(q.id);
           }}
-          className="inline-flex items-center text-slate-400 hover:text-white"
+          className="inline-flex items-center text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
           aria-label={selectedQuoteIds.has(q.id) ? 'Deselect quote' : 'Select quote'}
         >
           {selectedQuoteIds.has(q.id) ? (
@@ -836,8 +836,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       sortValue: (q) => q.client_name,
       accessor: (q) => (
         <div>
-          <span className="type-ui font-bold text-white block">{q.client_name?.trim() || 'Unnamed Client'}</span>
-          <span className="type-ui text-slate-500">#{q.number || q.id.slice(0, 6)}</span>
+          <span className="type-ui font-bold text-[var(--ws-text-primary)] block">{q.client_name?.trim() || 'Unnamed Client'}</span>
+          <span className="type-ui text-[var(--ws-text-muted)]">#{q.number || q.id.slice(0, 6)}</span>
         </div>
       ),
     },
@@ -898,7 +898,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           </div>
         )}
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-[34px] px-3.5 rounded-[8px] type-ui font-semibold capitalize transition-all ${filter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-[34px] px-3.5 rounded-[8px] type-ui font-semibold capitalize transition-all ${filter === f ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
         ))}
           </div>
         )}
@@ -910,7 +910,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       >
       <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
         {loading ? (
-          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
         ) : quotes.length === 0 && filter === 'all' ? (
           <div className="p-6">
             <EmptyStateFromPreset moduleId="quotes" onAction={() => setShowCreate(true)} />
@@ -931,7 +931,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
         onClick={() => setShowCreate(true)}
         className="fixed bottom-20 right-4 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-md z-30"
       >
-        <FilePlus className="w-6 h-6 text-white" />
+        <FilePlus className="w-6 h-6 text-[var(--text-inverse)]" />
       </button>
       {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
       {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} userId={user.id} />}

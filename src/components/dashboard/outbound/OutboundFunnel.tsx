@@ -26,23 +26,23 @@ const STAGE_ORDER = [
 ];
 
 const STAGE_COLORS: Record<string, string> = {
-  Discovered: '#356AF4',
-  Qualified: '#3B7FF5',
-  Verified: '#4194F6',
-  Contacted: '#48A8F7',
-  Replied: '#22c55e',
-  Interested: '#16a34a',
-  Meeting: '#15803d',
-  Customer: '#166534',
+  Discovered: 'var(--brand-blue-500)',
+  Qualified: 'var(--info-600)',
+  Verified: 'var(--info-500)',
+  Contacted: 'var(--brand-blue-400)',
+  Replied: 'var(--success-500)',
+  Interested: 'var(--success-600)',
+  Meeting: 'var(--success-700)',
+  Customer: 'var(--success-700)',
 };
 
 const STAGE_BG: Record<string, string> = {
   Discovered: 'bg-blue-500/10',
   Qualified: 'bg-blue-400/10',
   Verified: 'bg-sky-500/10',
-  Contacted: 'bg-sky-400/10',
+  Contacted: 'bg-[var(--info-500)]/10',
   Replied: 'bg-emerald-500/10',
-  Interested: 'bg-emerald-400/10',
+  Interested: 'bg-[var(--success-500)]/10',
   Meeting: 'bg-green-500/10',
   Customer: 'bg-green-600/10',
 };
@@ -91,9 +91,9 @@ export default function OutboundFunnel({ data, className }: OutboundFunnelProps)
   if (stages.every((s) => s.count === 0)) {
     return (
       <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm p-6 text-center', className)}>
-        <TrendingUp className="mx-auto mb-3 w-8 h-8 text-slate-300" />
-        <p className="text-sm font-medium text-slate-500">No funnel data yet</p>
-        <p className="text-xs text-slate-400 mt-1">
+        <TrendingUp className="mx-auto mb-3 w-8 h-8 text-[var(--ws-text-secondary)]" />
+        <p className="text-sm font-medium text-[var(--ws-text-muted)]">No funnel data yet</p>
+        <p className="text-xs text-[var(--ws-text-muted)] mt-1">
           Funnel data will appear once leads are discovered and processed.
         </p>
       </div>
@@ -116,7 +116,7 @@ export default function OutboundFunnel({ data, className }: OutboundFunnelProps)
         {enriched.map((s, i) => {
           const barWidth = maxCount > 0 ? (s.count / maxCount) * 100 : 0;
           const isBiggestDrop = i === maxDropIdx;
-          const stageColor = STAGE_COLORS[s.stage] ?? '#356AF4';
+          const stageColor = STAGE_COLORS[s.stage] ?? 'var(--brand-blue-500)';
           const stageBg = STAGE_BG[s.stage] ?? 'bg-blue-500/10';
 
           return (
@@ -189,7 +189,7 @@ export default function OutboundFunnel({ data, className }: OutboundFunnelProps)
 
       {/* Summary row */}
       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span className="text-[11px] text-slate-500">
+        <span className="text-[11px] text-[var(--ws-text-muted)]">
           Top → bottom: {enriched[0].count > 0
             ? `${((enriched[enriched.length - 1].count / enriched[0].count) * 100).toFixed(1)}% overall conversion`
             : 'No data'}

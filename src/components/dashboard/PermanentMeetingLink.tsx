@@ -128,8 +128,8 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                 <div className="flex items-start gap-4">
                     <AlertCircle className="w-6 h-6 text-red-400 shrink-0 mt-1" />
                     <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white mb-2">Failed to Load Room</h3>
-                        <p className="type-card-description text-red-300 mb-4">{roomData.error}</p>
+                        <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-2">Failed to Load Room</h3>
+                        <p className="type-card-description text-[var(--error-text,var(--error-500))] mb-4">{roomData.error}</p>
                         <Button onClick={initializeRoom} variant="outline" size="sm">
                             Retry
                         </Button>
@@ -143,10 +143,10 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
         <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-xl p-6 border-2 border-blue-500/30 shadow-lg shadow-blue-500/10">
             <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/50">
-                    <Video className="w-6 h-6 text-white" />
+                    <Video className="w-6 h-6 text-[var(--ws-text-primary)]" />
                 </div>
                 <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-1 flex items-center gap-2">
                         Your Permanent Booking Room
                         <span className="px-2 py-0.5 type-caption bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">
                             Calendly Ready
@@ -195,9 +195,9 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                 <div className="flex gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                     <div className="type-caption text-gray-300 space-y-1">
-                        <p><strong className="text-white">Guest Ready:</strong> No account required; guests join with your secure meeting code</p>
-                        <p><strong className="text-white">Always Ready:</strong> The room stays available until an administrator rotates its code</p>
-                        <p><strong className="text-white">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>
+                        <p><strong className="text-[var(--ws-text-primary)]">Guest Ready:</strong> No account required; guests join with your secure meeting code</p>
+                        <p><strong className="text-[var(--ws-text-primary)]">Always Ready:</strong> The room stays available until an administrator rotates its code</p>
+                        <p><strong className="text-[var(--ws-text-primary)]">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>
                     </div>
                 </div>
             </div>

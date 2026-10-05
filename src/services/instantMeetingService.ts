@@ -61,12 +61,12 @@ export function getMeetingProviderDisplay(provider: PlatformMeetingProvider): {
   if (provider === 'jitsi') {
     return {
       label: 'Using Jitsi',
-      className: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
+      className: 'bg-amber-500/10 text-[var(--warning-text,var(--warning-500))] border-amber-500/25',
     };
   }
   return {
     label: 'Using AlphaClone video',
-    className: 'bg-teal-500/10 text-teal-300 border-teal-500/25',
+    className: 'bg-teal-500/10 text-[var(--brand-blue-300)] border-teal-500/25',
   };
 }
 

@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,13 +21,13 @@ export default function LeadDetailScreen({ route, navigation }: { route: { param
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'hot':
-        return '#FF6B6B';
+        return colors.error;
       case 'warm':
-        return '#FFA500';
+        return colors.warning;
       case 'cold':
-        return '#0077FF';
+        return colors.info;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
@@ -46,25 +47,25 @@ export default function LeadDetailScreen({ route, navigation }: { route: { param
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color=colors.textInverse />
             </TouchableOpacity>
             <Text style={styles.title}>Lead Details</Text>
             <TouchableOpacity>
-              <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+              <Ionicons name="ellipsis-horizontal" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
           {/* Lead Info */}
           <View style={styles.leadInfo}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={40} color="#FFFFFF" />
+              <Ionicons name="person" size={40} color=colors.textInverse />
             </View>
             <Text style={styles.leadName}>{currentLead.name}</Text>
             <Text style={styles.leadCompany}>{currentLead.company || 'Lead'}</Text>
@@ -80,14 +81,14 @@ export default function LeadDetailScreen({ route, navigation }: { route: { param
           <View style={styles.contactSection}>
             <Text style={styles.sectionTitle}>Contact Information</Text>
             <View style={styles.contactRow}>
-              <Ionicons name="mail" size={20} color="#94A3B8" />
+              <Ionicons name="mail" size={20} color=colors.textSecondary />
               <View style={styles.contactText}>
                 <Text style={styles.contactLabel}>Email</Text>
                 <Text style={styles.contactValue}>{currentLead.email || 'No email'}</Text>
               </View>
             </View>
             <View style={styles.contactRow}>
-              <Ionicons name="call" size={20} color="#94A3B8" />
+              <Ionicons name="call" size={20} color=colors.textSecondary />
               <View style={styles.contactText}>
                 <Text style={styles.contactLabel}>Phone</Text>
                 <Text style={styles.contactValue}>{currentLead.phone || 'No phone'}</Text>
@@ -110,11 +111,11 @@ export default function LeadDetailScreen({ route, navigation }: { route: { param
           {/* Action Buttons */}
           <View style={styles.actionsSection}>
             <TouchableOpacity style={styles.callButton}>
-              <Ionicons name="call" size={20} color="#FFFFFF" />
+              <Ionicons name="call" size={20} color=colors.textInverse />
               <Text style={styles.actionButtonText}>Call</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.emailButton}>
-              <Ionicons name="mail" size={20} color="#FFFFFF" />
+              <Ionicons name="mail" size={20} color=colors.textInverse />
               <Text style={styles.actionButtonText}>Email</Text>
             </TouchableOpacity>
           </View>
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   leadInfo: {
     alignItems: 'center',
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
@@ -164,12 +165,12 @@ const styles = StyleSheet.create({
   leadName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 5,
   },
   leadCompany: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginBottom: 15,
   },
   statusBadge: {
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   contactRow: {
@@ -204,12 +205,12 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
     marginBottom: 2,
   },
   contactValue: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
   },
   valueSection: {
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
   dealValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#00D2A0',
+    color: colors.primary,
   },
   notesSection: {
     paddingHorizontal: 20,
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
   },
   notesText: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     lineHeight: 24,
   },
   actionsSection: {
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
   callButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00D2A0',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -247,13 +248,13 @@ const styles = StyleSheet.create({
   emailButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0077FF',
+    backgroundColor: colors.info,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

@@ -107,11 +107,11 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
       {!embedded && (
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">{campaign.name}</h2>
-            <p className="type-card-description text-slate-400">Subject: {campaign.subject}</p>
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{campaign.name}</h2>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Subject: {campaign.subject}</p>
           </div>
           {onClose && (
-            <button onClick={onClose} className="type-ui font-bold text-teal-400 hover:text-teal-300">
+            <button onClick={onClose} className="type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)]">
               Close
             </button>
           )}
@@ -129,10 +129,10 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
             const openRate = bucket.sent ? ((bucket.opened / bucket.sent) * 100).toFixed(1) : '0.0';
             const clickRate = bucket.sent ? ((bucket.clicked / bucket.sent) * 100).toFixed(1) : '0.0';
             return (
-              <div key={variant} className="bg-slate-900 border border-violet-500/20 rounded-2xl p-4">
+              <div key={variant} className="bg-[var(--ws-panel)] border border-violet-500/20 rounded-2xl p-4">
                 <div className="type-caption font-bold text-violet-400 mb-2">Variant {variant}</div>
-                <div className="type-ui text-white">Sent: {bucket.sent}</div>
-                <div className="type-ui text-slate-400">Open rate: {openRate}% · Click rate: {clickRate}%</div>
+                <div className="type-ui text-[var(--ws-text-primary)]">Sent: {bucket.sent}</div>
+                <div className="type-ui text-[var(--ws-text-muted)]">Open rate: {openRate}% · Click rate: {clickRate}%</div>
               </div>
             );
           })}
@@ -140,12 +140,12 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
       )}
 
       {(statusCounts.bounced > 0 || statusCounts.failed > 0) && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4">
+        <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-4 h-4 text-red-400" />
             <span className="type-ui font-bold text-red-400">Delivery Issues</span>
           </div>
-          <div className="flex gap-4 type-ui text-red-300">
+          <div className="flex gap-4 type-ui text-[var(--error-text,var(--error-500))]">
             {statusCounts.bounced > 0 && <span>{statusCounts.bounced} bounced</span>}
             {statusCounts.failed > 0 && <span>{statusCounts.failed} failed</span>}
           </div>
@@ -153,17 +153,17 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
       )}
 
       <div>
-        <h3 className="type-ui font-bold text-white mb-3">Recipients ({recipients.length})</h3>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-3">Recipients ({recipients.length})</h3>
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
           <div className="divide-y divide-white/5 max-h-48 overflow-y-auto">
             {recipients.length === 0 ? (
-              <div className="px-4 py-6 type-ui text-slate-500 text-center">No recipients yet</div>
+              <div className="px-4 py-6 type-ui text-[var(--ws-text-muted)] text-center">No recipients yet</div>
             ) : (
               recipients.map((r) => {
                 const abVariant = String((r.metadata as Record<string, unknown>)?.abVariant || '');
                 return (
                 <div key={r.id} className="flex items-center justify-between px-4 py-2.5 type-ui">
-                  <span className="text-white truncate">{r.email}</span>
+                  <span className="text-[var(--ws-text-primary)] truncate">{r.email}</span>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {abVariant ? (
                       <span className="type-ui font-bold text-violet-400">{abVariant}</span>

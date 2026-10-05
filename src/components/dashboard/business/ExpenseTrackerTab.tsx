@@ -63,20 +63,20 @@ interface Expense {
 const STATUS_STYLES: Record<string, string> = {
     pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
     approved: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-    rejected: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    rejected: 'bg-slate-500/15 text-[var(--ws-text-muted)] border-slate-500/30',
     reimbursed: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 };
 
 const PAYMENT_METHODS = ['card', 'cash', 'bank_transfer', 'check', 'other'];
 const DEFAULT_CATEGORIES = [
-    { name: 'Software & SaaS', color: '#6366f1', icon: '💻' },
-    { name: 'Office Supplies', color: '#f59e0b', icon: '📎' },
-    { name: 'Travel', color: '#3b82f6', icon: '✈️' },
-    { name: 'Marketing', color: '#ec4899', icon: '📢' },
-    { name: 'Meals & Entertainment', color: '#10b981', icon: '🍽️' },
-    { name: 'Utilities', color: '#8b5cf6', icon: '⚡' },
-    { name: 'Professional Services', color: '#06b6d4', icon: '🤝' },
-    { name: 'Equipment', color: '#f97316', icon: '🔧' },
+    { name: 'Software & SaaS', color: 'var(--brand-violet-500)', icon: '💻' },
+    { name: 'Office Supplies', color: 'var(--warning-500)', icon: '📎' },
+    { name: 'Travel', color: 'var(--info-500)', icon: '✈️' },
+    { name: 'Marketing', color: 'var(--error-500)', icon: '📢' },
+    { name: 'Meals & Entertainment', color: 'var(--success-500)', icon: '🍽️' },
+    { name: 'Utilities', color: 'var(--brand-violet-400)', icon: '⚡' },
+    { name: 'Professional Services', color: 'var(--info-500)', icon: '🤝' },
+    { name: 'Equipment', color: 'var(--warning-500)', icon: '🔧' },
 ];
 
 const EMPTY_FORM = {
@@ -441,7 +441,7 @@ export default function ExpenseTrackerTab() {
                     <select
                         value={statusFilter}
                         onChange={e => setStatusFilter(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                     >
                         <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
@@ -452,7 +452,7 @@ export default function ExpenseTrackerTab() {
                     <select
                         value={categoryFilter}
                         onChange={e => setCategoryFilter(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                     >
                         <option value="all">All Categories</option>
                         {categories.map(c => (
@@ -463,21 +463,21 @@ export default function ExpenseTrackerTab() {
                         type="date"
                         value={dateFrom}
                         onChange={e => setDateFrom(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                         aria-label="From date"
                     />
                     <input
                         type="date"
                         value={dateTo}
                         onChange={e => setDateTo(e.target.value)}
-                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500"
+                        className="min-h-11 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                         aria-label="To date"
                     />
                     {(statusFilter !== 'all' || categoryFilter !== 'all' || dateFrom || dateTo) && (
                         <button
                             type="button"
                             onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setDateFrom(''); setDateTo(''); }}
-                            className="flex items-center gap-1 min-h-11 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-red-500/20 transition-colors"
+                            className="flex items-center gap-1 min-h-11 px-3 py-2 bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-[var(--error-500)]/20 transition-colors"
                         >
                             <X className="w-3 h-3" /> Clear
                         </button>
@@ -486,48 +486,48 @@ export default function ExpenseTrackerTab() {
             )}
             stats={(
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-1">
-                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="type-caption font-semibold uppercase tracking-wider text-slate-400">Total Spending</span>
+                            <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Total Spending</span>
                             <DollarSign className="w-4 h-4 text-teal-400" />
                         </div>
-                        <div className="text-xl font-semibold text-white font-mono tracking-tight">{fmt(totalAmount)}</div>
-                        <span className="type-caption text-slate-500">Filtered expenses</span>
+                        <div className="text-xl font-semibold text-[var(--ws-text-primary)] font-mono tracking-tight">{fmt(totalAmount)}</div>
+                        <span className="type-caption text-[var(--ws-text-muted)]">Filtered expenses</span>
                     </div>
-                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="type-caption font-semibold uppercase tracking-wider text-slate-400">Pending Approval</span>
+                            <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Pending Approval</span>
                             <Clock className="w-4 h-4 text-amber-400" />
                         </div>
                         <div className="text-xl font-semibold text-amber-400 font-mono tracking-tight">{fmt(pendingAmount)}</div>
-                        <span className="type-caption text-slate-500">{filtered.filter(e => e.status === 'pending').length} pending</span>
+                        <span className="type-caption text-[var(--ws-text-muted)]">{filtered.filter(e => e.status === 'pending').length} pending</span>
                     </div>
-                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="type-caption font-semibold uppercase tracking-wider text-slate-400">Approved Spend</span>
+                            <span className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Approved Spend</span>
                             <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         </div>
                         <div className="text-xl font-semibold text-teal-400 font-mono tracking-tight">{fmt(approvedAmount)}</div>
-                        <span className="type-caption text-slate-500">{filtered.filter(e => e.status === 'approved').length} approved</span>
+                        <span className="type-caption text-[var(--ws-text-muted)]">{filtered.filter(e => e.status === 'approved').length} approved</span>
                     </div>
                 </div>
             )}
         >
             {scanning && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] flex flex-col items-center justify-center gap-4">
+                <div className="fixed inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-md z-[110] flex flex-col items-center justify-center gap-4">
                     <div className="relative w-20 h-20">
                         <div className="absolute inset-0 border-4 border-teal-500/30 rounded-full" />
                         <div className="absolute inset-0 border-4 border-t-teal-500 rounded-full animate-spin" />
-                        <div className="absolute inset-4 bg-slate-900 rounded-full flex items-center justify-center">
+                        <div className="absolute inset-4 bg-[var(--ws-panel)] rounded-full flex items-center justify-center">
                             <Camera className="w-6 h-6 text-teal-400" />
                         </div>
                     </div>
                     <div className="text-center space-y-1">
-                        <p className="text-white font-semibold flex items-center gap-2 justify-center">
+                        <p className="text-[var(--ws-text-primary)] font-semibold flex items-center gap-2 justify-center">
                             <Sparkles className="w-4 h-4 text-teal-400 animate-pulse" />
                             Scanning receipt
                         </p>
-                        <p className="type-card-description text-slate-400">Extracting details with OCR…</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Extracting details with OCR…</p>
                     </div>
                 </div>
             )}
@@ -546,47 +546,47 @@ export default function ExpenseTrackerTab() {
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Date *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Date *</label>
                             <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Amount *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Amount *</label>
                             <input type="number" min="0" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                                 placeholder="0.00"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Tax Amount</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Tax Amount</label>
                             <input type="number" min="0" step="0.01" value={form.tax_amount} onChange={e => setForm(f => ({ ...f, tax_amount: e.target.value }))}
                                 placeholder="0.00"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Vendor / Payee</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Vendor / Payee</label>
                             <input type="text" value={form.vendor_name} onChange={e => setForm(f => ({ ...f, vendor_name: e.target.value }))}
                                 placeholder="e.g. Amazon, Uber"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Category</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Category</label>
                             <select value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="">Uncategorized</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Payment Method</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Payment Method</label>
                             <select value={form.payment_method} onChange={e => setForm(f => ({ ...f, payment_method: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui capitalize">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui capitalize">
                                 {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m.replace('_', ' ')}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1.5 block">Paid From (Asset)</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1.5 block">Paid From (Asset)</label>
                             <select value={form.asset_account_id} onChange={e => setForm(f => ({ ...f, asset_account_id: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="">Select Account</option>
                                 {assetAccounts.map(acc => (
                                     <option key={acc.id} value={acc.id}>{acc.accountName} ({acc.accountCode})</option>
@@ -599,15 +599,15 @@ export default function ExpenseTrackerTab() {
                             )}
                         </div>
                         <div className="sm:col-span-2">
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Description</label>
                             <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                                 placeholder="What was this expense for?"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Status</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Status</label>
                             <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
@@ -615,23 +615,23 @@ export default function ExpenseTrackerTab() {
                             </select>
                         </div>
                         <div className="sm:col-span-2 lg:col-span-3">
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Notes</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Notes</label>
                             <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                                 rows={2} placeholder="Additional notes..."
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none" />
                         </div>
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="billable" checked={form.billable} onChange={e => setForm(f => ({ ...f, billable: e.target.checked }))}
-                                className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
-                            <label htmlFor="billable" className="type-label text-slate-300">Billable to client</label>
+                                className="w-4 h-4 rounded border-slate-600 bg-[var(--ws-surface-secondary)] text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
+                            <label htmlFor="billable" className="type-label text-[var(--ws-text-secondary)]">Billable to client</label>
                         </div>
                         {form.billable && (
                             <div className="sm:col-span-2">
-                                <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Bill to client</label>
+                                <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Bill to client</label>
                                 <select
                                     value={form.client_id}
                                     onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white type-ui"
+                                    className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui"
                                 >
                                     <option value="">Select client</option>
                                     {clients.map((c) => (
@@ -642,13 +642,13 @@ export default function ExpenseTrackerTab() {
                         )}
                         {receiptPreview && (
                             <div className="sm:col-span-2 lg:col-span-3">
-                                <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Scanned Receipt Attachment</label>
-                                <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 bg-slate-950 flex items-center justify-center group/receipt">
+                                <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2 block">Scanned Receipt Attachment</label>
+                                <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-[var(--ws-border)] bg-[var(--ws-canvas)] flex items-center justify-center group/receipt">
                                     <img src={receiptPreview} alt="Receipt Preview" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
                                         onClick={() => setReceiptPreview(null)}
-                                        className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-black text-white rounded-full transition-colors"
+                                        className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-black text-[var(--ws-text-primary)] rounded-full transition-colors"
                                     >
                                         <X className="w-3.5 h-3.5" />
                                     </button>
@@ -658,12 +658,12 @@ export default function ExpenseTrackerTab() {
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button onClick={handleSave} disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl font-semibold type-ui transition-colors">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                             {saving ? 'Saving...' : (editingId ? 'Update' : 'Add Expense')}
                         </button>
                         <button onClick={() => { setShowForm(false); setEditingId(null); }}
-                            className="px-5 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold type-ui transition-colors">
+                            className="px-5 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl font-semibold type-ui transition-colors">
                             Cancel
                         </button>
                     </div>
@@ -698,12 +698,12 @@ export default function ExpenseTrackerTab() {
                 <>
                 <ResponsiveTableMobile>
                     {filtered.map((expense) => (
-                        <MobileDataCard key={expense.id} className="group border-slate-800 bg-slate-900/40">
+                        <MobileDataCard key={expense.id} className="group border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
                             <div className="flex justify-between gap-2">
-                                <p className="text-white font-medium truncate flex-1">{expense.description || '—'}</p>
-                                <p className="font-semibold text-white shrink-0">{fmt(expense.total ?? expense.amount, expense.currency)}</p>
+                                <p className="text-[var(--ws-text-primary)] font-medium truncate flex-1">{expense.description || '—'}</p>
+                                <p className="font-semibold text-[var(--ws-text-primary)] shrink-0">{fmt(expense.total ?? expense.amount, expense.currency)}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 type-caption text-slate-400">
+                            <div className="grid grid-cols-2 gap-2 type-caption text-[var(--ws-text-muted)]">
                                 <span>{new Date(expense.date + 'T00:00:00').toLocaleDateString()}</span>
                                 <span className="truncate">{expense.vendor_name || '—'}</span>
                                 <span>{expense.expense_categories?.name || '—'}</span>
@@ -712,7 +712,7 @@ export default function ExpenseTrackerTab() {
                             <select
                                 value={expense.status}
                                 onChange={(e) => handleStatusChange(expense.id, e.target.value)}
-                                className={`w-full min-h-11 type-caption px-2 py-2 border rounded-lg bg-slate-950 focus:outline-none ${STATUS_STYLES[expense.status] || STATUS_STYLES.pending}`}
+                                className={`w-full min-h-11 type-caption px-2 py-2 border rounded-lg bg-[var(--ws-canvas)] focus:outline-none ${STATUS_STYLES[expense.status] || STATUS_STYLES.pending}`}
                             >
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
@@ -720,40 +720,40 @@ export default function ExpenseTrackerTab() {
                                 <option value="reimbursed">Reimbursed</option>
                             </select>
                             <div className={`${rowActionsClass} justify-end`}>
-                                <button onClick={() => handleEdit(expense)} className="min-h-11 px-3 py-2 rounded-lg border border-slate-700 text-slate-300 type-ui">Edit</button>
+                                <button onClick={() => handleEdit(expense)} className="min-h-11 px-3 py-2 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui">Edit</button>
                                 <button onClick={() => handleDelete(expense.id)} className="min-h-11 px-3 py-2 rounded-lg border border-red-500/30 text-red-400 type-ui">Delete</button>
                             </div>
                         </MobileDataCard>
                     ))}
-                    <MobileDataCard className="border-slate-700 bg-slate-900/60">
-                        <div className="flex justify-between type-ui font-bold text-white">
+                    <MobileDataCard className="border-[var(--ws-border)] bg-[var(--ws-panel)]/60">
+                        <div className="flex justify-between type-ui font-bold text-[var(--ws-text-primary)]">
                             <span>{filtered.length} expense{filtered.length !== 1 ? 's' : ''}</span>
                             <span>{fmt(totalAmount)}</span>
                         </div>
                     </MobileDataCard>
                 </ResponsiveTableMobile>
-                <ResponsiveTableDesktop className="rounded-2xl border border-slate-800 min-w-0">
+                <ResponsiveTableDesktop className="rounded-2xl border border-[var(--ws-border)] min-w-0">
                     <table className="w-full min-w-[720px] type-ui">
                         <thead>
-                            <tr className="border-b border-slate-800 bg-slate-900/50">
-                                <th className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                <th className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-                                <th className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Category</th>
-                                <th className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Vendor</th>
-                                <th className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Method / Account</th>
-                                <th className="text-right px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                                <th className="text-center px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="text-right px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                                <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Date</th>
+                                <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Description</th>
+                                <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Category</th>
+                                <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Vendor</th>
+                                <th className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Method / Account</th>
+                                <th className="text-right px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Amount</th>
+                                <th className="text-center px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Status</th>
+                                <th className="text-right px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800">
                             {filtered.map(expense => (
-                                <tr key={expense.id} className="hover:bg-slate-800/30 transition-colors group">
-                                    <td className="px-4 py-3 text-slate-300 whitespace-nowrap">
+                                <tr key={expense.id} className="hover:bg-[var(--ws-surface-secondary)]/30 transition-colors group">
+                                    <td className="px-4 py-3 text-[var(--ws-text-secondary)] whitespace-nowrap">
                                         {new Date(expense.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>
                                     <td className="px-4 py-3">
-                                        <p className="text-white font-medium truncate max-w-[180px]">
+                                        <p className="text-[var(--ws-text-primary)] font-medium truncate max-w-[180px]">
                                             {expense.description || '—'}
                                         </p>
                                         {expense.billable && (
@@ -762,20 +762,20 @@ export default function ExpenseTrackerTab() {
                                     </td>
                                     <td className="px-4 py-3">
                                         {expense.expense_categories ? (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/60 border border-white/5 text-slate-300 type-caption">
-                                                <span className="w-4 h-4 rounded-full flex items-center justify-center type-ui bg-slate-900" style={{ color: expense.expense_categories.color }}>
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-caption">
+                                                <span className="w-4 h-4 rounded-full flex items-center justify-center type-ui bg-[var(--ws-panel)]" style={{ color: expense.expense_categories.color }}>
                                                     {expense.expense_categories.icon || '🏷️'}
                                                 </span>
-                                                <span className="font-medium text-slate-200">{expense.expense_categories.name}</span>
+                                                <span className="font-medium text-[var(--ws-text-secondary)]">{expense.expense_categories.name}</span>
                                             </span>
                                         ) : (
                                             <span className="text-slate-600 type-caption">—</span>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-400 type-table-cell truncate max-w-[120px]">
+                                    <td className="px-4 py-3 text-[var(--ws-text-muted)] type-table-cell truncate max-w-[120px]">
                                         {expense.vendor_name || '—'}
                                     </td>
-                                    <td className="px-4 py-3 text-slate-400 type-table-cell">
+                                    <td className="px-4 py-3 text-[var(--ws-text-muted)] type-table-cell">
                                         <p className="capitalize">{expense.payment_method?.replace('_', ' ')}</p>
                                         {expense.asset_account?.account_name && (
                                             <p className="type-card-description text-slate-600 font-mono">
@@ -784,10 +784,10 @@ export default function ExpenseTrackerTab() {
                                             </p>
                                         )}
                                     </td>
-                                    <td className="px-4 py-3 text-right font-semibold text-white whitespace-nowrap">
+                                    <td className="px-4 py-3 text-right font-semibold text-[var(--ws-text-primary)] whitespace-nowrap">
                                         {fmt(expense.total ?? expense.amount, expense.currency)}
                                         {expense.tax_amount > 0 && (
-                                            <p className="type-card-description text-slate-500 font-normal">+{fmt(expense.tax_amount, expense.currency)} tax</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)] font-normal">+{fmt(expense.tax_amount, expense.currency)} tax</p>
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-center">
@@ -805,11 +805,11 @@ export default function ExpenseTrackerTab() {
                                     <td className="px-4 py-3 text-right">
                                         <div className={`justify-end ${rowActionsClass}`}>
                                             <button onClick={() => handleEdit(expense)}
-                                                className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                                                className="p-1.5 rounded-lg hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
                                             <button onClick={() => handleDelete(expense.id)}
-                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+                                                className="p-1.5 rounded-lg hover:bg-[var(--error-500)]/20 text-[var(--ws-text-muted)] hover:text-red-400 transition-colors">
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -818,11 +818,11 @@ export default function ExpenseTrackerTab() {
                             ))}
                         </tbody>
                         <tfoot>
-                            <tr className="border-t border-slate-700 bg-slate-900/50">
-                                <td colSpan={5} className="px-4 py-3 type-caption text-slate-500 font-semibold uppercase tracking-wider">
+                            <tr className="border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                                <td colSpan={5} className="px-4 py-3 type-caption text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider">
                                     {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
                                 </td>
-                                <td className="px-4 py-3 text-right font-bold text-white">
+                                <td className="px-4 py-3 text-right font-bold text-[var(--ws-text-primary)]">
                                     {fmt(totalAmount)}
                                 </td>
                                 <td colSpan={2} />

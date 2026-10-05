@@ -48,19 +48,19 @@ export default function RevenueMomentumCard() {
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg bg-slate-950/50 border border-white/5 ${getStatusColor(score)}`}>
+            <div className={`p-1.5 rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] ${getStatusColor(score)}`}>
               <Zap className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="type-caption font-black uppercase tracking-widest text-slate-400">Revenue Momentum</h3>
-              <p className="type-card-description text-slate-500 mt-0.5">Current sales pace and collection pressure</p>
+              <h3 className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Revenue Momentum</h3>
+              <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Current sales pace and collection pressure</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
             {trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
             {trend === 'down' && <TrendingDown className="w-4 h-4 text-red-400" />}
-            {trend === 'flat' && <Minus className="w-4 h-4 text-slate-500" />}
-            <span className={`type-caption font-bold uppercase ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-slate-500'}`}>
+            {trend === 'flat' && <Minus className="w-4 h-4 text-[var(--ws-text-muted)]" />}
+            <span className={`type-caption font-bold uppercase ${trend === 'up' ? 'text-green-400' : trend === 'down' ? 'text-red-400' : 'text-[var(--ws-text-muted)]'}`}>
               {trend}
             </span>
           </div>
@@ -73,15 +73,15 @@ export default function RevenueMomentumCard() {
             {displayScore}
           </motion.span>
           <div className="mb-2">
-            <p className="type-caption text-slate-500 font-bold uppercase leading-none">Momentum</p>
-            <p className="type-caption text-slate-500 font-bold uppercase leading-none">Score</p>
+            <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase leading-none">Momentum</p>
+            <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase leading-none">Score</p>
           </div>
         </div>
 
         <div className="space-y-3">
           {/* Nudge Box */}
-          <div className="rounded-lg bg-slate-950/45 p-3 border border-white/5">
-            <p className="type-card-description text-slate-300 leading-relaxed">
+          <div className="rounded-lg bg-[var(--ws-canvas)]/45 p-3 border border-[var(--ws-border)]">
+            <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
               {nudge}
             </p>
           </div>
@@ -89,23 +89,23 @@ export default function RevenueMomentumCard() {
           {/* Mini Stats Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center">
-              <p className="type-card-description text-slate-500 font-medium mb-0.5">Leads</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.leadsContacted}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Leads</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.leadsContacted}</p>
             </div>
             <div className="text-center">
-              <p className="type-card-description text-slate-500 font-medium mb-0.5">Deals</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.dealsAdvanced}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Deals</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.dealsAdvanced}</p>
             </div>
             <div className="text-center">
-              <p className="type-card-description text-slate-500 font-medium mb-0.5">Invoices</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.invoicesSent}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Invoices</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.invoicesSent}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Progress Bar Background */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-950/40">
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-[var(--ws-canvas)]/40">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
@@ -113,7 +113,7 @@ export default function RevenueMomentumCard() {
           className={`h-full ${
             score >= 70 ? 'bg-green-500' :
             score >= 40 ? 'bg-amber-500' :
-            'bg-red-500'
+            'bg-[var(--error-500)]'
           }`}
         />
       </div>

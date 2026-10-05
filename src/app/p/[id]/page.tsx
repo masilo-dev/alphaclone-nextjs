@@ -197,7 +197,7 @@ export default function PublicProjectPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-teal-400">
+      <div className="min-h-screen bg-[var(--ws-panel)] flex items-center justify-center text-teal-400">
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <p>Loading project status...</p>
@@ -208,13 +208,13 @@ export default function PublicProjectPage() {
 
   if (requiresPassword && !expired) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8 border-slate-800 bg-slate-900/80">
+      <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center p-6">
+        <Card className="w-full max-w-md p-8 border-[var(--ws-border)] bg-[var(--ws-panel)]/80">
           <div className="flex items-center gap-3 mb-4 text-teal-400">
             <Lock className="w-5 h-5" />
             <h1 className="text-xl font-bold text-white">Password required</h1>
           </div>
-          <p className="type-card-description text-slate-400 mb-6">
+          <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
             {project?.name ? `"${project.name}" is protected.` : 'This project link is protected.'}{' '}
             Enter the password your provider shared with you.
           </p>
@@ -224,7 +224,7 @@ export default function PublicProjectPage() {
               value={portalPassword}
               onChange={(e) => setPortalPassword(e.target.value)}
               placeholder="Portal password"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+              className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 text-white"
               autoFocus
             />
             <button
@@ -242,17 +242,17 @@ export default function PublicProjectPage() {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-red-400">
+      <div className="min-h-screen bg-[var(--ws-panel)] flex items-center justify-center text-red-400">
         <div className="text-center max-w-md px-6">
           <h1 className="text-2xl font-bold mb-2">{expired ? 'Link expired' : 'Project Not Found'}</h1>
-          <p className="text-slate-400">{error || 'This project may not be public or the link is invalid.'}</p>
+          <p className="text-[var(--ws-text-muted)]">{error || 'This project may not be public or the link is invalid.'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12">
+    <div className="min-h-screen bg-[var(--ws-canvas)] text-white p-6 md:p-12">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="inline-block px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 type-ui font-medium border border-teal-500/20">
@@ -270,75 +270,75 @@ export default function PublicProjectPage() {
               </a>
             )}
           </div>
-          {project.ownerName && <p className="text-slate-400">Client: {project.ownerName}</p>}
+          {project.ownerName && <p className="text-[var(--ws-text-muted)]">Client: {project.ownerName}</p>}
         </div>
 
-        <Card className="p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+        <Card className="p-8 border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl">
           <div className="space-y-2 mb-6">
-            <div className="flex justify-between type-ui text-slate-400">
+            <div className="flex justify-between type-ui text-[var(--ws-text-muted)]">
               <span>Overall Progress</span>
               <span className="text-teal-400 font-bold">{project.progress}%</span>
             </div>
-            <div className="h-4 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-4 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 transition-all" style={{ width: `${project.progress}%` }} />
             </div>
           </div>
           <div className="text-3xl font-bold text-teal-400">{project.currentStage || 'In Progress'}</div>
           <div className="grid gap-3 md:grid-cols-3 mt-6 type-ui">
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-slate-500">Status</p>
+            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4">
+              <p className="text-[var(--ws-text-muted)]">Status</p>
               <p className="font-semibold text-white">{project.status || 'Active'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-slate-500">Deadline</p>
+            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4">
+              <p className="text-[var(--ws-text-muted)]">Deadline</p>
               <p className="font-semibold text-white">{project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'Not set'}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-slate-500 flex items-center gap-1"><Timer className="w-3.5 h-3.5" /> Time left</p>
+            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4">
+              <p className="text-[var(--ws-text-muted)] flex items-center gap-1"><Timer className="w-3.5 h-3.5" /> Time left</p>
               <p className="font-semibold text-white">
                 {(project as any).daysLeft == null ? 'Not set' : (project as any).daysLeft > 0 ? `${(project as any).daysLeft} day${(project as any).daysLeft === 1 ? '' : 's'}` : 'Due now'}
               </p>
             </div>
           </div>
           {(project as any).portalExpiresAt && (
-            <p className="mt-4 type-card-description text-slate-500">
+            <p className="mt-4 type-card-description text-[var(--ws-text-muted)]">
               This secure portal link is valid until {new Date((project as any).portalExpiresAt).toLocaleString()}.
             </p>
           )}
         </Card>
 
         {invoices.length > 0 && (
-          <Card className="p-6 border-slate-800 bg-slate-900/50">
+          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
             <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
               <ReceiptText className="w-5 h-5 text-teal-400" /> Invoices & Payments
             </h3>
             <div className="space-y-3">
               {invoices.map((invoice) => (
-                <div key={invoice.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                <div key={invoice.id} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold text-white">{invoice.invoiceNumber || 'Invoice'}</p>
-                      <p className="type-card-description text-slate-500">
+                      <p className="type-card-description text-[var(--ws-text-muted)]">
                         {invoice.dueDate ? `Due ${new Date(invoice.dueDate).toLocaleDateString()}` : 'No due date'}
                       </p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-right type-ui">
                       <div>
-                        <p className="text-slate-500">Total</p>
+                        <p className="text-[var(--ws-text-muted)]">Total</p>
                         <p className="font-semibold">{invoice.currency} {invoice.total.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Paid</p>
-                        <p className="font-semibold text-teal-300">{invoice.currency} {invoice.amountPaid.toFixed(2)}</p>
+                        <p className="text-[var(--ws-text-muted)]">Paid</p>
+                        <p className="font-semibold text-[var(--brand-blue-300)]">{invoice.currency} {invoice.amountPaid.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Balance</p>
-                        <p className="font-semibold text-amber-300">{invoice.currency} {invoice.balanceDue.toFixed(2)}</p>
+                        <p className="text-[var(--ws-text-muted)]">Balance</p>
+                        <p className="font-semibold text-[var(--warning-text,var(--warning-500))]">{invoice.currency} {invoice.balanceDue.toFixed(2)}</p>
                       </div>
                     </div>
                   </div>
                   <div className="mt-3">
-                    <span className={`inline-flex rounded-full px-3 py-1 type-caption font-bold ${invoice.isPaid ? 'bg-teal-500/10 text-teal-300' : 'bg-amber-500/10 text-amber-300'}`}>
+                    <span className={`inline-flex rounded-full px-3 py-1 type-caption font-bold ${invoice.isPaid ? 'bg-teal-500/10 text-[var(--brand-blue-300)]' : 'bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]'}`}>
                       {invoice.isPaid ? 'Paid' : invoice.status || 'Open'}
                     </span>
                   </div>
@@ -352,19 +352,19 @@ export default function PublicProjectPage() {
           <div className="space-y-4">
             <h3 className="text-xl font-bold">Timeline</h3>
             {milestones.map((m, index) => (
-              <div key={m.id} className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
+              <div key={m.id} className="p-6 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
                 <div className="flex items-start gap-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.status === 'completed' ? 'bg-teal-500 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.status === 'completed' ? 'bg-teal-500 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                     {m.status === 'completed' ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                   </div>
                   <div>
                     <h4 className="font-semibold text-white">{m.name}</h4>
                     {m.dueDate && (
-                      <p className="type-card-description text-slate-500 flex items-center gap-1 mt-1">
+                      <p className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1 mt-1">
                         <Calendar className="w-3 h-3" /> {new Date(m.dueDate).toLocaleDateString()}
                       </p>
                     )}
-                    {m.description && <p className="type-card-description text-slate-400 mt-2">{m.description}</p>}
+                    {m.description && <p className="type-card-description text-[var(--ws-text-muted)] mt-2">{m.description}</p>}
                   </div>
                 </div>
               </div>
@@ -372,31 +372,31 @@ export default function PublicProjectPage() {
           </div>
         )}
 
-        <Card className="p-6 border-slate-800 bg-slate-900/50">
+        <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
           <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5 text-teal-400" /> Project Conversation
           </h3>
           <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
             {comments.length === 0 ? (
-              <p className="type-card-description text-slate-500 italic">No messages yet. Tell your team what you need below.</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] italic">No messages yet. Tell your team what you need below.</p>
             ) : (
               comments.map((c) => (
-                <div key={c.id} className={`p-4 rounded-xl ${c.is_client ? 'bg-teal-500/5 border border-teal-500/20 ml-4' : 'bg-slate-800/50 border border-slate-700/50 mr-4'}`}>
-                  <div className="flex justify-between type-caption text-slate-500 mb-1">
-                    <span className="font-bold text-slate-300">{c.author_name}{c.is_client ? ' (You)' : ' (Team)'}</span>
+                <div key={c.id} className={`p-4 rounded-xl ${c.is_client ? 'bg-teal-500/5 border border-teal-500/20 ml-4' : 'bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 mr-4'}`}>
+                  <div className="flex justify-between type-caption text-[var(--ws-text-muted)] mb-1">
+                    <span className="font-bold text-[var(--ws-text-secondary)]">{c.author_name}{c.is_client ? ' (You)' : ' (Team)'}</span>
                     <span>{new Date(c.created_at).toLocaleString()}</span>
                   </div>
-                  <p className="type-card-description text-slate-200 whitespace-pre-wrap">{c.content}</p>
+                  <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap">{c.content}</p>
                 </div>
               ))
             )}
           </div>
-          <form onSubmit={handlePostComment} className="space-y-3 border-t border-slate-800 pt-4">
+          <form onSubmit={handlePostComment} className="space-y-3 border-t border-[var(--ws-border)] pt-4">
             <div className="grid sm:grid-cols-2 gap-3">
-              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Your name" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui text-white" required />
-              <input value={authorEmail} onChange={(e) => setAuthorEmail(e.target.value)} placeholder="Email (optional)" type="email" className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui text-white" />
+              <input value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Your name" className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-2 type-ui text-white" required />
+              <input value={authorEmail} onChange={(e) => setAuthorEmail(e.target.value)} placeholder="Email (optional)" type="email" className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-2 type-ui text-white" />
             </div>
-            <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="What do you need? Add notes, questions, or feedback..." rows={3} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 type-ui text-white resize-none" required />
+            <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="What do you need? Add notes, questions, or feedback..." rows={3} className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-3 type-ui text-white resize-none" required />
             <button type="submit" disabled={posting} className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold type-ui disabled:opacity-50">
               {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Send Message
             </button>

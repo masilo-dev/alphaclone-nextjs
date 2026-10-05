@@ -43,15 +43,15 @@ export default function ZernioIntegration() {
       animate={{ opacity: 1, y: 0 }}
       className="ac-workspace-panel rounded-lg overflow-hidden"
     >
-      <div className="p-6 border-b border-white/5">
+      <div className="p-6 border-b border-[var(--ws-border)]">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
             <Share2 className="w-6 h-6 text-violet-400" />
           </div>
           <div>
-            <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
-            <h2 className="text-lg font-bold text-white">Zernio Social Publishing</h2>
-            <p className="type-card-description text-slate-400">
+            <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Zernio Social Publishing</h2>
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               Connect Instagram and LinkedIn company pages in your Zernio dashboard, then paste account IDs here.
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function ZernioIntegration() {
 
       <div className="p-6 space-y-5">
         <div className="space-y-2">
-          <label className="flex items-center gap-2 type-caption font-black text-slate-500 uppercase tracking-widest">
+          <label className="flex items-center gap-2 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
             <Instagram className="w-3.5 h-3.5" /> Instagram Account ID
           </label>
           <input
@@ -68,13 +68,13 @@ export default function ZernioIntegration() {
             value={instagramAccountId}
             onChange={(e) => setInstagramAccountId(e.target.value)}
             placeholder="From Zernio → Instagram channel"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-violet-500/40"
+            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-500/40"
           />
           <p className="type-card-description text-slate-600">Scheduled Instagram posts publish through Zernio.</p>
         </div>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-2 type-caption font-black text-slate-500 uppercase tracking-widest">
+          <label className="flex items-center gap-2 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
             <Linkedin className="w-3.5 h-3.5" /> LinkedIn Company Page Account ID
           </label>
           <input
@@ -82,13 +82,13 @@ export default function ZernioIntegration() {
             value={linkedinOrgAccountId}
             onChange={(e) => setLinkedinOrgAccountId(e.target.value)}
             placeholder="From Zernio → LinkedIn org channel"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-violet-500/40"
+            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-500/40"
           />
           <p className="type-card-description text-slate-600">Company page posts route through Zernio when an org is selected.</p>
         </div>
 
         <div className="flex justify-end pt-2">
-          <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-500 text-white font-bold">
+          <Button onClick={handleSave} disabled={saving} className="bg-violet-600 hover:bg-violet-500 text-[var(--ws-text-primary)] font-bold">
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             Save Social Accounts
           </Button>

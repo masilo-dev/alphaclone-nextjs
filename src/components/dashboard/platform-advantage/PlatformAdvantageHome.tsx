@@ -66,7 +66,7 @@ function priorityClass(priority?: string): string {
     case 'medium':
       return 'border-teal-500/30 bg-teal-500/10 text-teal-200';
     default:
-      return 'border-slate-700 bg-slate-900/60 text-slate-300';
+      return 'border-[var(--ws-border)] bg-[var(--ws-panel)]/60 text-[var(--ws-text-secondary)]';
   }
 }
 
@@ -101,7 +101,7 @@ export function PlatformAdvantageHome() {
 
   if (loading) {
     return (
-      <div className="ac-workspace-panel flex min-h-[180px] items-center justify-center gap-2 p-6 text-slate-400">
+      <div className="ac-workspace-panel flex min-h-[180px] items-center justify-center gap-2 p-6 text-[var(--ws-text-muted)]">
         <Loader2 className="h-5 w-5 animate-spin text-teal-400" />
         Loading owner intelligence…
       </div>
@@ -112,11 +112,11 @@ export function PlatformAdvantageHome() {
     return (
       <div className="ac-workspace-panel border border-rose-500/20 p-5">
         <p className="type-card-description font-semibold text-rose-200">Intelligence unavailable</p>
-        <p className="mt-1 type-card-description text-slate-400">{error}</p>
+        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{error}</p>
         <button
           type="button"
           onClick={() => void load()}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 type-caption font-bold text-slate-200 hover:border-teal-500/40"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-3 py-1.5 type-caption font-bold text-[var(--ws-text-secondary)] hover:border-teal-500/40"
         >
           <RefreshCw className="h-3.5 w-3.5" />
           Retry
@@ -139,8 +139,8 @@ export function PlatformAdvantageHome() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="type-caption font-bold uppercase tracking-caps text-teal-400/80">Owner intelligence</p>
-          <h2 className="text-lg font-black text-white">What needs your attention</h2>
-          <p className="type-caption text-slate-500">Ranked by cash impact, client risk, and time saved — every card opens the exact workspace action.</p>
+          <h2 className="text-lg font-black text-[var(--ws-text-primary)]">What needs your attention</h2>
+          <p className="type-caption text-[var(--ws-text-muted)]">Ranked by cash impact, client risk, and time saved — every card opens the exact workspace action.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -164,10 +164,10 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4 lg:col-span-2">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-teal-400" />
-            <h3 className="type-ui font-black text-white">Owner autopilot queue</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Owner autopilot queue</h3>
           </div>
           {queue.length === 0 ? (
-            <p className="type-card-description text-slate-500">No urgent actions right now. Bonnie will surface new priorities as your workspace changes.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">No urgent actions right now. Bonnie will surface new priorities as your workspace changes.</p>
           ) : (
             <ul className="space-y-2">
               {queue.map((item, idx) => (
@@ -177,7 +177,7 @@ export function PlatformAdvantageHome() {
                       <p className="type-card-description font-bold">{item.title || 'Recommended action'}</p>
                       <p className="mt-0.5 type-card-description opacity-80">{item.reason}</p>
                       {item.approval_required ? (
-                        <p className="mt-1 type-caption font-bold uppercase tracking-wider text-amber-300">Approval required before send</p>
+                        <p className="mt-1 type-caption font-bold uppercase tracking-wider text-[var(--warning-text,var(--warning-500))]">Approval required before send</p>
                       ) : null}
                     </div>
                     <Link
@@ -186,7 +186,7 @@ export function PlatformAdvantageHome() {
                         focus: item.recommended_tool || 'action',
                         reason: item.reason,
                       })}
-                      className="shrink-0 inline-flex items-center gap-1 type-ui font-bold text-teal-300 hover:text-teal-200"
+                      className="shrink-0 inline-flex items-center gap-1 type-ui font-bold text-[var(--brand-blue-300)] hover:text-teal-200"
                     >
                       Open
                       <ArrowRight className="h-3 w-3" />
@@ -199,21 +199,21 @@ export function PlatformAdvantageHome() {
         </section>
 
         <section className="ac-workspace-panel p-4 space-y-3">
-          <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-            <div className="flex items-center gap-2 text-slate-400">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
+            <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
               <Clock className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Time saved (30d)</span>
             </div>
-            <p className="mt-2 text-2xl font-black text-white">{hoursSaved > 0 ? `${hoursSaved.toFixed(1)}h` : '—'}</p>
-            <p className="type-card-description text-slate-500">Estimated from automated workflows and MCP activity.</p>
+            <p className="mt-2 text-2xl font-black text-[var(--ws-text-primary)]">{hoursSaved > 0 ? `${hoursSaved.toFixed(1)}h` : '—'}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Estimated from automated workflows and MCP activity.</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-            <div className="flex items-center gap-2 text-slate-400">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
+            <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
               <ShieldCheck className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Automation readiness</span>
             </div>
-            <p className="mt-2 text-2xl font-black text-white">{readinessScore > 0 ? `${Math.round(readinessScore)}%` : '—'}</p>
-            <p className="type-card-description text-slate-500">
+            <p className="mt-2 text-2xl font-black text-[var(--ws-text-primary)]">{readinessScore > 0 ? `${Math.round(readinessScore)}%` : '—'}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               {typeof readiness?.summary === 'string'
                 ? readiness.summary
                 : 'Connect integrations and clear approvals to unlock more autonomous execution.'}
@@ -226,18 +226,18 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4">
           <div className="mb-3 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-emerald-400" />
-            <h3 className="type-ui font-black text-white">Revenue recovery</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Revenue recovery</h3>
           </div>
           {recovery.length === 0 ? (
-            <p className="type-card-description text-slate-500">No overdue invoices or stale quotes detected in the current window.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">No overdue invoices or stale quotes detected in the current window.</p>
           ) : (
             <ul className="space-y-2">
               {recovery.map((item, idx) => (
                 <li key={`${item.id || item.title}-${idx}`} className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
                   <p className="type-card-description font-bold text-emerald-100">{item.title || item.type || 'Recovery opportunity'}</p>
-                  <p className="type-card-description text-slate-400">{item.reason || item.recommended_action}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">{item.reason || item.recommended_action}</p>
                   {typeof item.amount === 'number' && item.amount > 0 ? (
-                    <p className="mt-1 type-card-description font-bold text-emerald-300">${item.amount.toLocaleString()}</p>
+                    <p className="mt-1 type-card-description font-bold text-[var(--success-text,var(--success-500))]">${item.amount.toLocaleString()}</p>
                   ) : null}
                   <Link
                     href={buildBonnieDeepLink({
@@ -246,7 +246,7 @@ export function PlatformAdvantageHome() {
                       recordId: item.id,
                       reason: item.reason,
                     }) + '&source=recovery'}
-                    className="mt-2 inline-flex items-center gap-1 type-ui font-bold text-emerald-300 hover:text-emerald-200"
+                    className="mt-2 inline-flex items-center gap-1 type-ui font-bold text-[var(--success-text,var(--success-500))] hover:text-[var(--success-text,var(--success-500))]"
                   >
                     Create recovery campaign
                     <ArrowRight className="h-3 w-3" />
@@ -258,7 +258,7 @@ export function PlatformAdvantageHome() {
                       recordId: item.id,
                       reason: item.reason,
                     })}
-                    className="mt-1 inline-flex items-center gap-1 type-ui font-bold text-slate-400 hover:text-slate-200"
+                    className="mt-1 inline-flex items-center gap-1 type-ui font-bold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
                   >
                     Review in billing
                     <ArrowRight className="h-3 w-3" />
@@ -272,16 +272,16 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4">
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-400" />
-            <h3 className="type-ui font-black text-white">Client pulse</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Client pulse</h3>
           </div>
           {pulse.length === 0 ? (
-            <p className="type-card-description text-slate-500">No clients flagged for attention right now.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">No clients flagged for attention right now.</p>
           ) : (
             <ul className="space-y-2">
               {pulse.map((client, idx) => (
                 <li key={`${client.id || client.name}-${idx}`} className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-3 py-2.5">
                   <p className="type-card-description font-bold text-indigo-100">{client.name || 'Client'}</p>
-                  <p className="type-card-description text-slate-400">{client.reason}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">{client.reason}</p>
                   <Link
                     href={client.href || buildBonnieDeepLink({
                       route: '/dashboard/crm',
@@ -338,11 +338,11 @@ export function ClientPulsePanel({ compact = false }: { compact?: boolean }) {
   }, [tenantId, compact]);
 
   if (loading) {
-    return <div className="type-caption text-slate-500">Loading client pulse…</div>;
+    return <div className="type-caption text-[var(--ws-text-muted)]">Loading client pulse…</div>;
   }
 
   if (!clients.length) {
-    return <div className="type-caption text-slate-500">No clients need attention right now.</div>;
+    return <div className="type-caption text-[var(--ws-text-muted)]">No clients need attention right now.</div>;
   }
 
   return (
@@ -350,7 +350,7 @@ export function ClientPulsePanel({ compact = false }: { compact?: boolean }) {
       {clients.map((client, idx) => (
         <li key={`${client.id || client.name}-${idx}`} className="rounded-lg border border-indigo-500/20 bg-indigo-500/5 px-3 py-2">
           <p className="type-card-description font-bold text-indigo-100">{client.name || 'Client'}</p>
-          <p className="type-card-description text-slate-400">{client.reason}</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">{client.reason}</p>
         </li>
       ))}
     </ul>

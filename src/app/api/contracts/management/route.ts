@@ -1133,22 +1133,22 @@ function generateStandardContract(params: any) {
     <div style="font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif; font-size: ${fontSize}px; line-height: ${lineSpacing}; max-width: 800px; margin: 0 auto; padding: 40px;">
       
       <!-- Header -->
-      <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-        <h1 style="font-size: ${fontSize + 8}px; margin: 0; color: #333;">${type.toUpperCase()} AGREEMENT</h1>
-        <p style="font-size: ${fontSize}px; margin: 10px 0 0 0; color: #666;">Effective Date: ${new Date().toLocaleDateString()}</p>
+      <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid var(--text-primary); padding-bottom: 20px;">
+        <h1 style="font-size: ${fontSize + 8}px; margin: 0; color: var(--text-primary);">${type.toUpperCase()} AGREEMENT</h1>
+        <p style="font-size: ${fontSize}px; margin: 10px 0 0 0; color: var(--text-muted);">Effective Date: ${new Date().toLocaleDateString()}</p>
       </div>
       
       <!-- Parties -->
       <div style="margin-bottom: 30px;">
-        <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">PARTIES</h2>
+        <h2 style="font-size: ${fontSize + 4}px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding-bottom: 5px;">PARTIES</h2>
         ${parties
           .map(
             (party: any, index: number) => `
           <div style="margin-bottom: 15px;">
             <p style="margin: 0; font-weight: bold;">${index + 1}. ${party.name}</p>
-            <p style="margin: 5px 0; color: #666;">${party.address}</p>
-            ${party.email ? `<p style="margin: 5px 0; color: #666;">Email: ${party.email}</p>` : ""}
-            ${party.phone ? `<p style="margin: 5px 0; color: #666;">Phone: ${party.phone}</p>` : ""}
+            <p style="margin: 5px 0; color: var(--text-muted);">${party.address}</p>
+            ${party.email ? `<p style="margin: 5px 0; color: var(--text-muted);">Email: ${party.email}</p>` : ""}
+            ${party.phone ? `<p style="margin: 5px 0; color: var(--text-muted);">Phone: ${party.phone}</p>` : ""}
           </div>
         `,
           )
@@ -1157,13 +1157,13 @@ function generateStandardContract(params: any) {
       
       <!-- Terms -->
       <div style="margin-bottom: 30px;">
-        <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">TERMS AND CONDITIONS</h2>
+        <h2 style="font-size: ${fontSize + 4}px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding-bottom: 5px;">TERMS AND CONDITIONS</h2>
         ${terms
           .map(
             (term: any, index: number) => `
           <div style="margin-bottom: 20px;">
-            <p style="margin: 0; font-weight: bold; color: #333;">${index + 1}. ${term.title}</p>
-            <p style="margin: 10px 0; color: #666; line-height: ${lineSpacing};">${term.description}</p>
+            <p style="margin: 0; font-weight: bold; color: var(--text-primary);">${index + 1}. ${term.title}</p>
+            <p style="margin: 10px 0; color: var(--text-muted); line-height: ${lineSpacing};">${term.description}</p>
           </div>
         `,
           )
@@ -1172,17 +1172,17 @@ function generateStandardContract(params: any) {
       
       <!-- Duration -->
       <div style="margin-bottom: 30px;">
-        <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">DURATION</h2>
-        <p style="margin: 10px 0; color: #666;">This agreement shall commence on ${duration.startDate} and shall continue until ${duration.endDate} unless terminated earlier in accordance with the terms herein.</p>
+        <h2 style="font-size: ${fontSize + 4}px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding-bottom: 5px;">DURATION</h2>
+        <p style="margin: 10px 0; color: var(--text-muted);">This agreement shall commence on ${duration.startDate} and shall continue until ${duration.endDate} unless terminated earlier in accordance with the terms herein.</p>
       </div>
       
       <!-- Payment -->
       <div style="margin-bottom: 30px;">
-        <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">PAYMENT TERMS</h2>
-        <p style="margin: 10px 0; color: #666;"><strong>Amount:</strong> ${payment.amount} ${payment.currency}</p>
-        <p style="margin: 10px 0; color: #666;"><strong>Payment Schedule:</strong> ${payment.schedule}</p>
-        <p style="margin: 10px 0; color: #666;"><strong>Payment Method:</strong> ${payment.method}</p>
-        <p style="margin: 10px 0; color: #666;"><strong>Due Date:</strong> ${payment.dueDate}</p>
+        <h2 style="font-size: ${fontSize + 4}px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding-bottom: 5px;">PAYMENT TERMS</h2>
+        <p style="margin: 10px 0; color: var(--text-muted);"><strong>Amount:</strong> ${payment.amount} ${payment.currency}</p>
+        <p style="margin: 10px 0; color: var(--text-muted);"><strong>Payment Schedule:</strong> ${payment.schedule}</p>
+        <p style="margin: 10px 0; color: var(--text-muted);"><strong>Payment Method:</strong> ${payment.method}</p>
+        <p style="margin: 10px 0; color: var(--text-muted);"><strong>Due Date:</strong> ${payment.dueDate}</p>
       </div>
       
       <!-- Signatures -->
@@ -1190,15 +1190,15 @@ function generateStandardContract(params: any) {
         <div style="display: flex; justify-content: space-between;">
           <div style="width: 45%;">
             <p style="margin: 0; font-weight: bold;">Party 1 Signature</p>
-            <div style="border-bottom: 1px solid #333; margin: 20px 0; height: 40px;"></div>
-            <p style="margin: 5px 0; color: #666;">Name: ${parties[0]?.name || ""}</p>
-            <p style="margin: 5px 0; color: #666;">Date: _______________</p>
+            <div style="border-bottom: 1px solid var(--text-primary); margin: 20px 0; height: 40px;"></div>
+            <p style="margin: 5px 0; color: var(--text-muted);">Name: ${parties[0]?.name || ""}</p>
+            <p style="margin: 5px 0; color: var(--text-muted);">Date: _______________</p>
           </div>
           <div style="width: 45%;">
             <p style="margin: 0; font-weight: bold;">Party 2 Signature</p>
-            <div style="border-bottom: 1px solid #333; margin: 20px 0; height: 40px;"></div>
-            <p style="margin: 5px 0; color: #666;">Name: ${parties[1]?.name || ""}</p>
-            <p style="margin: 5px 0; color: #666;">Date: _______________</p>
+            <div style="border-bottom: 1px solid var(--text-primary); margin: 20px 0; height: 40px;"></div>
+            <p style="margin: 5px 0; color: var(--text-muted);">Name: ${parties[1]?.name || ""}</p>
+            <p style="margin: 5px 0; color: var(--text-muted);">Date: _______________</p>
           </div>
         </div>
       </div>
@@ -1239,8 +1239,8 @@ function wrapContractHtmlDocument(
     html, body {
       margin: 0;
       padding: 0;
-      background: #ffffff;
-      color: #111827;
+      background: var(--color-white);
+      color: var(--ws-canvas);
       font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
       font-size: ${fontSize}px;
       line-height: ${lineSpacing};
@@ -1366,8 +1366,8 @@ function ensurePrintableContractHtml(
     html, body {
       margin: 0;
       padding: 0;
-      background: #ffffff;
-      color: #0f172a;
+      background: var(--color-white);
+      color: var(--ws-canvas);
       font-family: Arial, Helvetica, sans-serif;
       font-size: ${fontSize}px;
       line-height: ${lineSpacing};
@@ -1377,8 +1377,8 @@ function ensurePrintableContractHtml(
       margin: 18px 0 8px 0;
       font-size: ${Math.max(fontSize + 2, 14)}px;
       font-weight: 700;
-      color: #0f172a;
-      border-bottom: 1px solid #e2e8f0;
+      color: var(--ws-canvas);
+      border-bottom: 1px solid var(--ws-border);
       padding-bottom: 4px;
     }
     p {
@@ -1466,7 +1466,7 @@ async function renderContractPdfBuffer(html: string): Promise<Buffer> {
       displayHeaderFooter: true,
       headerTemplate: "<div></div>",
       footerTemplate: `
-        <div style="width:100%;font-size:9px;color:#64748b;padding:0 20px;">
+        <div style="width:100%;font-size:9px;color:var(--ws-text-muted);padding:0 20px;">
           <span style="float:left;">AlphaClone Systems Contract</span>
           <span style="float:right;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
         </div>

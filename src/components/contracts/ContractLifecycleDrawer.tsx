@@ -328,7 +328,7 @@ export function ContractLifecycleDrawer({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="type-card-description font-bold text-white">Lifecycle</p>
-                <p className="type-card-description text-slate-400">
+                <p className="type-card-description text-[var(--ws-text-muted)]">
                   Every transition is recorded in the audit history.
                 </p>
               </div>
@@ -354,14 +354,14 @@ export function ContractLifecycleDrawer({
                 ) ? (
                   <button
                     onClick={() => void provision()}
-                    className="rounded-lg border border-teal-500/25 bg-teal-500/10 px-2.5 py-1.5 type-ui font-bold text-teal-300"
+                    className="rounded-lg border border-teal-500/25 bg-teal-500/10 px-2.5 py-1.5 type-ui font-bold text-[var(--brand-blue-300)]"
                   >
                     Create project + invoice
                   </button>
                 ) : null}
                 <button
                   onClick={() => void load()}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-white/5 hover:text-white"
+                  className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-white/5 hover:text-white"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </button>
@@ -383,7 +383,7 @@ export function ContractLifecycleDrawer({
                 <button
                   key={status}
                   onClick={() => void transition(status)}
-                  className={`rounded-full border px-2.5 py-1 type-caption font-bold uppercase ${workspace.contract.lifecycle_status === status ? "border-teal-400 bg-teal-500/15 text-teal-200" : "border-white/10 text-slate-400 hover:border-teal-500/30"}`}
+                  className={`rounded-full border px-2.5 py-1 type-caption font-bold uppercase ${workspace.contract.lifecycle_status === status ? "border-teal-400 bg-teal-500/15 text-teal-200" : "border-white/10 text-[var(--ws-text-muted)] hover:border-teal-500/30"}`}
                 >
                   {status.replaceAll("_", " ")}
                 </button>
@@ -394,7 +394,7 @@ export function ContractLifecycleDrawer({
             <section className={card}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <FileDiff className="h-4 w-4 text-sky-300" />
+                  <FileDiff className="h-4 w-4 text-[var(--info-text,var(--info-500))]" />
                   <p className="type-card-description font-bold text-white">
                     Versions & clauses
                   </p>
@@ -408,7 +408,7 @@ export function ContractLifecycleDrawer({
                     });
                     setAction("version");
                   }}
-                  className="type-ui font-bold text-sky-300"
+                  className="type-ui font-bold text-[var(--info-text,var(--info-500))]"
                 >
                   Save version
                 </button>
@@ -416,17 +416,17 @@ export function ContractLifecycleDrawer({
               <p className="mt-2 text-2xl font-black text-white">
                 {workspace.versions.length}
               </p>
-              <p className="type-card-description text-slate-500">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 {workspace.clauses.length} approved clause usages
               </p>
               {workspace.versions.slice(0, 3).map((version) => (
-                <p key={version.id} className="mt-2 type-card-description text-slate-300">
+                <p key={version.id} className="mt-2 type-card-description text-[var(--ws-text-secondary)]">
                   v{version.version_number} ·{" "}
                   {version.change_summary || "Saved version"}
                 </p>
               ))}
               <div className="mt-3 border-t border-white/5 pt-2">
-                <p className="type-caption font-black uppercase tracking-wider text-slate-500">
+                <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Approved library
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -459,13 +459,13 @@ export function ContractLifecycleDrawer({
                 <div className="flex gap-2">
                   <button
                     onClick={() => void remindSigners()}
-                    className="type-ui font-bold text-amber-300"
+                    className="type-ui font-bold text-[var(--warning-text,var(--warning-500))]"
                   >
                     Remind next
                   </button>
                   <button
                     onClick={() => setAction("signer")}
-                    className="type-ui font-bold text-teal-300"
+                    className="type-ui font-bold text-[var(--brand-blue-300)]"
                   >
                     Add signer
                   </button>
@@ -477,19 +477,19 @@ export function ContractLifecycleDrawer({
                     key={party.id}
                     className="mt-2 flex items-center justify-between type-ui"
                   >
-                    <span className="text-slate-300">
+                    <span className="text-[var(--ws-text-secondary)]">
                       {party.signing_order || "—"}.{" "}
                       {party.party_snapshot?.name ||
                         party.party_snapshot?.email ||
                         party.role}
                     </span>
-                    <span className="text-slate-500">
+                    <span className="text-[var(--ws-text-muted)]">
                       {party.signature_status || "not requested"}
                     </span>
                   </div>
                 ))
               ) : (
-                <p className="mt-3 type-card-description text-slate-500">
+                <p className="mt-3 type-card-description text-[var(--ws-text-muted)]">
                   No signers configured.
                 </p>
               )}
@@ -497,12 +497,12 @@ export function ContractLifecycleDrawer({
             <section className={card}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-amber-300" />
+                  <MessageSquare className="h-4 w-4 text-[var(--warning-text,var(--warning-500))]" />
                   <p className="type-card-description font-bold text-white">Negotiations</p>
                 </div>
                 <button
                   onClick={() => setAction("negotiation")}
-                  className="type-ui font-bold text-teal-300"
+                  className="type-ui font-bold text-[var(--brand-blue-300)]"
                 >
                   Open thread
                 </button>
@@ -510,16 +510,16 @@ export function ContractLifecycleDrawer({
               {workspace.negotiations.length ? (
                 workspace.negotiations.map((thread) => (
                   <div key={thread.id} className="mt-2">
-                    <p className="type-card-description font-semibold text-slate-300">
+                    <p className="type-card-description font-semibold text-[var(--ws-text-secondary)]">
                       {thread.title}
                     </p>
-                    <p className="type-card-description text-slate-500">
+                    <p className="type-card-description text-[var(--ws-text-muted)]">
                       {thread.status} · {thread.messages?.length || 0} comments
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="mt-3 type-card-description text-slate-500">
+                <p className="mt-3 type-card-description text-[var(--ws-text-muted)]">
                   No negotiation threads.
                 </p>
               )}
@@ -527,14 +527,14 @@ export function ContractLifecycleDrawer({
             <section className={card}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CalendarClock className="h-4 w-4 text-rose-300" />
+                  <CalendarClock className="h-4 w-4 text-[var(--error-text,var(--error-500))]" />
                   <p className="type-card-description font-bold text-white">
                     Obligations & milestones
                   </p>
                 </div>
                 <button
                   onClick={() => setAction("obligation")}
-                  className="type-ui font-bold text-teal-300"
+                  className="type-ui font-bold text-[var(--brand-blue-300)]"
                 >
                   Add obligation
                 </button>
@@ -544,15 +544,15 @@ export function ContractLifecycleDrawer({
                   key={item.id}
                   className="mt-2 flex justify-between gap-2 type-ui"
                 >
-                  <span className="text-slate-300">{item.title}</span>
-                  <span className="text-slate-500">
+                  <span className="text-[var(--ws-text-secondary)]">{item.title}</span>
+                  <span className="text-[var(--ws-text-muted)]">
                     {item.due_date
                       ? new Date(item.due_date).toLocaleDateString()
                       : item.status}
                   </span>
                 </div>
               ))}
-              <p className="mt-2 type-card-description text-slate-500">
+              <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">
                 {workspace.milestones.length} billing milestones
               </p>
             </section>
@@ -560,7 +560,7 @@ export function ContractLifecycleDrawer({
           {workspace.redline ? (
             <section className={card}>
               <div className="flex items-center gap-2">
-                <FileDiff className="h-4 w-4 text-sky-300" />
+                <FileDiff className="h-4 w-4 text-[var(--info-text,var(--info-500))]" />
                 <p className="type-card-description font-bold text-white">
                   Side-by-side redline · v{workspace.redline.leftVersion} → v
                   {workspace.redline.rightVersion}
@@ -568,7 +568,7 @@ export function ContractLifecycleDrawer({
               </div>
               <div className="mt-3 grid gap-3 lg:grid-cols-2">
                 <div className="max-h-64 overflow-auto rounded-lg border border-rose-500/15 bg-rose-500/5 p-3">
-                  <p className="type-caption font-black uppercase text-rose-300">
+                  <p className="type-caption font-black uppercase text-[var(--error-text,var(--error-500))]">
                     Removed
                   </p>
                   {workspace.redline.removals.length ? (
@@ -581,26 +581,26 @@ export function ContractLifecycleDrawer({
                       </p>
                     ))
                   ) : (
-                    <p className="mt-2 type-card-description text-slate-500">
+                    <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">
                       No removed lines.
                     </p>
                   )}
                 </div>
                 <div className="max-h-64 overflow-auto rounded-lg border border-emerald-500/15 bg-emerald-500/5 p-3">
-                  <p className="type-caption font-black uppercase text-emerald-300">
+                  <p className="type-caption font-black uppercase text-[var(--success-text,var(--success-500))]">
                     Added
                   </p>
                   {workspace.redline.additions.length ? (
                     workspace.redline.additions.map((line, index) => (
                       <p
                         key={`add-${index}`}
-                        className="mt-1 type-ui leading-4 text-emerald-200"
+                        className="mt-1 type-ui leading-4 text-[var(--success-text,var(--success-500))]"
                       >
                         + {line}
                       </p>
                     ))
                   ) : (
-                    <p className="mt-2 type-card-description text-slate-500">
+                    <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">
                       No added lines.
                     </p>
                   )}
@@ -610,7 +610,7 @@ export function ContractLifecycleDrawer({
           ) : null}
           <section className={card}>
             <div className="flex items-center gap-2">
-              <Signature className="h-4 w-4 text-emerald-300" />
+              <Signature className="h-4 w-4 text-[var(--success-text,var(--success-500))]" />
               <p className="type-card-description font-bold text-white">Signature evidence</p>
             </div>
             {workspace.signatures.length ? (
@@ -619,16 +619,16 @@ export function ContractLifecycleDrawer({
                   key={event.id}
                   className="mt-2 flex items-center justify-between type-ui"
                 >
-                  <span className="text-slate-300">
+                  <span className="text-[var(--ws-text-secondary)]">
                     {event.event_type} · {event.signer_email || "signer"}
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-[var(--ws-text-muted)]">
                     {new Date(event.occurred_at).toLocaleString()}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="mt-3 type-card-description text-slate-500">
+              <p className="mt-3 type-card-description text-[var(--ws-text-muted)]">
                 No signature evidence recorded yet.
               </p>
             )}
@@ -636,20 +636,20 @@ export function ContractLifecycleDrawer({
               <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="type-card-description font-bold text-emerald-200">Signature audit certificate</p>
-                    <p className="mt-1 max-w-[24rem] truncate font-mono type-card-description text-slate-500" title={workspace.auditCertificate.hash || undefined}>
+                    <p className="type-card-description font-bold text-[var(--success-text,var(--success-500))]">Signature audit certificate</p>
+                    <p className="mt-1 max-w-[24rem] truncate font-mono type-card-description text-[var(--ws-text-muted)]" title={workspace.auditCertificate.hash || undefined}>
                       SHA-256 {workspace.auditCertificate.hash || "Recorded"}
                     </p>
                   </div>
                   {workspace.auditCertificate.url ? (
                     <a
                       href={workspace.auditCertificate.url}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 px-2 py-1 type-ui font-bold text-emerald-200"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 px-2 py-1 type-ui font-bold text-[var(--success-text,var(--success-500))]"
                     >
                       <Download className="h-3 w-3" /> Download certificate
                     </a>
                   ) : (
-                    <span className="type-ui text-amber-300">Certificate link unavailable</span>
+                    <span className="type-ui text-[var(--warning-text,var(--warning-500))]">Certificate link unavailable</span>
                   )}
                 </div>
               </div>
@@ -658,7 +658,7 @@ export function ContractLifecycleDrawer({
           {action ? (
             <section className={`${card} border-teal-500/25`}>
               <div className="flex items-center gap-2">
-                <Scale className="h-4 w-4 text-teal-300" />
+                <Scale className="h-4 w-4 text-[var(--brand-blue-300)]" />
                 <p className="type-card-description font-bold text-white">
                   {action === "signer"
                     ? "Add signer"
@@ -678,7 +678,7 @@ export function ContractLifecycleDrawer({
                         setForm({ ...form, name: e.target.value })
                       }
                       placeholder="Signer name"
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                     />
                     <input
                       value={form.email}
@@ -687,7 +687,7 @@ export function ContractLifecycleDrawer({
                       }
                       placeholder="Signer email"
                       type="email"
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                     />
                   </>
                 ) : action === "version" ? (
@@ -698,7 +698,7 @@ export function ContractLifecycleDrawer({
                         setForm({ ...form, changeSummary: e.target.value })
                       }
                       placeholder="What changed?"
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                     />
                     <textarea
                       value={form.body}
@@ -706,7 +706,7 @@ export function ContractLifecycleDrawer({
                         setForm({ ...form, body: e.target.value })
                       }
                       placeholder="Contract content"
-                      className="min-h-72 rounded-lg border border-white/10 bg-slate-950 p-3 font-mono type-caption text-white"
+                      className="min-h-72 rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-3 font-mono type-caption text-white"
                     />
                   </>
                 ) : (
@@ -721,7 +721,7 @@ export function ContractLifecycleDrawer({
                           ? "Obligation title"
                           : "Thread title"
                       }
-                      className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                      className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                     />
                     <textarea
                       value={form.body}
@@ -729,7 +729,7 @@ export function ContractLifecycleDrawer({
                         setForm({ ...form, body: e.target.value })
                       }
                       placeholder="Details"
-                      className="min-h-20 rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                      className="min-h-20 rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                     />
                     {action === "obligation" ? (
                       <input
@@ -738,7 +738,7 @@ export function ContractLifecycleDrawer({
                           setForm({ ...form, dueDate: e.target.value })
                         }
                         type="datetime-local"
-                        className="rounded-lg border border-white/10 bg-slate-950 p-2 type-caption text-white"
+                        className="rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-2 type-caption text-white"
                       />
                     ) : null}
                   </>
@@ -753,7 +753,7 @@ export function ContractLifecycleDrawer({
                   </button>
                   <button
                     onClick={() => setAction(null)}
-                    className="rounded-lg bg-slate-800 px-3 py-2 type-caption font-bold text-slate-300"
+                    className="rounded-lg bg-[var(--ws-surface-secondary)] px-3 py-2 type-caption font-bold text-[var(--ws-text-secondary)]"
                   >
                     Cancel
                   </button>
@@ -772,7 +772,7 @@ export function ContractLifecycleDrawer({
           ) : null}
         </div>
       ) : (
-        <p className="p-8 text-center type-card-description text-slate-500">
+        <p className="p-8 text-center type-card-description text-[var(--ws-text-muted)]">
           Contract workspace unavailable.
         </p>
       )}

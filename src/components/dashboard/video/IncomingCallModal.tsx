@@ -104,21 +104,21 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
             {incomingCall ? (
         <div className="fixed inset-0 ac-layer-urgent flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
 
-            <div className="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl shadow-teal-500/20 w-full max-w-sm p-8 text-center relative overflow-hidden">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)]/50 rounded-2xl shadow-2xl shadow-teal-500/20 w-full max-w-sm p-8 text-center relative overflow-hidden">
                 {/* Background Animation */}
                 <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
                 <div className="absolute -top-20 -left-20 w-40 h-40 bg-teal-500/20 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl animate-pulse delay-700" />
 
                 <div className="relative z-10">
-                    <div className="w-24 h-24 rounded-full bg-slate-800 mx-auto mb-6 flex items-center justify-center relative">
+                    <div className="w-24 h-24 rounded-full bg-[var(--ws-surface-secondary)] mx-auto mb-6 flex items-center justify-center relative">
                         <div className="absolute inset-0 rounded-full border-2 border-teal-500 animate-ping opacity-20" />
                         <div className="absolute inset-0 rounded-full border border-teal-500 animate-pulse opacity-40" />
                         <Video className="w-10 h-10 text-teal-400" />
                     </div>
 
-                    <h3 className="text-2xl font-bold text-white mb-2">Incoming Call</h3>
-                    <p className="text-slate-400 mb-8 flex items-center justify-center gap-2">
+                    <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Incoming Call</h3>
+                    <p className="text-[var(--ws-text-muted)] mb-8 flex items-center justify-center gap-2">
                         from <span className="text-teal-400 font-semibold">{incomingCall.callerName}</span>
                     </p>
 
@@ -127,10 +127,10 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             onClick={handleDecline}
                             className="flex flex-col items-center gap-2 group"
                         >
-                            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-300 transform group-hover:scale-110">
-                                <PhoneOff className="w-6 h-6 text-red-500 group-hover:text-white" />
+                            <div className="w-16 h-16 rounded-full bg-[var(--error-500)]/10 border border-red-500/20 flex items-center justify-center group-hover:bg-[var(--error-500)] group-hover:text-[var(--ws-text-primary)] transition-all duration-300 transform group-hover:scale-110">
+                                <PhoneOff className="w-6 h-6 text-red-500 group-hover:text-[var(--ws-text-primary)]" />
                             </div>
-                            <span className="type-ui text-slate-400 group-hover:text-white transition-colors">Decline</span>
+                            <span className="type-ui text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-primary)] transition-colors">Decline</span>
                         </button>
 
                         <button
@@ -138,9 +138,9 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             className="flex flex-col items-center gap-2 group"
                         >
                             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 transform group-hover:scale-110 animate-bounce">
-                                <Phone className="w-6 h-6 text-white fill-current" />
+                                <Phone className="w-6 h-6 text-[var(--ws-text-primary)] fill-current" />
                             </div>
-                            <span className="type-ui text-white font-medium">Answer</span>
+                            <span className="type-ui text-[var(--ws-text-primary)] font-medium">Answer</span>
                         </button>
                     </div>
                 </div>

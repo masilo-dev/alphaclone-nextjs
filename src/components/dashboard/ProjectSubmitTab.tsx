@@ -24,9 +24,9 @@ const ProjectSubmitTab: React.FC<ProjectSubmitTabProps> = ({
 }) => {
     return (
         <div className="max-w-2xl mx-auto animate-fade-in" data-tour="submit-request">
-            <Card className="bg-slate-900 border-slate-800 shadow-2xl p-4 sm:p-6">
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Initialize New Project</h2>
-                <p className="type-card-description md:text-base text-slate-400 mb-6 md:mb-8">Submit a request for a new module, feature, or entire platform. Our team will review instantly.</p>
+            <Card className="bg-[var(--ws-panel)] border-[var(--ws-border)] shadow-2xl p-4 sm:p-6">
+                <h2 className="text-xl md:text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Initialize New Project</h2>
+                <p className="type-card-description md:text-base text-[var(--ws-text-muted)] mb-6 md:mb-8">Submit a request for a new module, feature, or entire platform. Our team will review instantly.</p>
                 <div className="space-y-4 md:space-y-6">
                     <Input
                         label="Project Name"
@@ -41,9 +41,9 @@ const ProjectSubmitTab: React.FC<ProjectSubmitTabProps> = ({
                         placeholder="Web, Mobile, AI, Consulting..."
                     />
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-1.5">Description & Requirements</label>
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1.5">Description & Requirements</label>
                         <textarea
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
+                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-[var(--ws-text-secondary)] placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 min-h-[120px]"
                             value={newProject.description}
                             onChange={e => setNewProject({ ...newProject, description: e.target.value })}
                         />

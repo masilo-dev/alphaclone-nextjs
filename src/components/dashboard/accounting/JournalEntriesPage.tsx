@@ -115,7 +115,7 @@ export function JournalEntriesPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64 ac-enterprise-module">
-                <div className="text-slate-300">Loading journal entries...</div>
+                <div className="text-[var(--ws-text-secondary)]">Loading journal entries...</div>
             </div>
         );
     }
@@ -126,13 +126,13 @@ export function JournalEntriesPage() {
                 header={(
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
                         <div>
-                            <h1 className="text-lg font-semibold text-white">Ledger Entries</h1>
-                            <p className="type-card-description text-slate-300">Review and post the manual entries shaping your books.</p>
+                            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Ledger Entries</h1>
+                            <p className="type-card-description text-[var(--ws-text-secondary)]">Review and post the manual entries shaping your books.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white type-caption font-bold hover:bg-emerald-500"
+                            className="px-3 py-2 rounded-xl bg-emerald-600 text-[var(--text-inverse)] type-caption font-bold hover:bg-emerald-500"
                         >
                             + New ledger entry
                         </button>
@@ -142,7 +142,7 @@ export function JournalEntriesPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-emerald-500/50"
+                        className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
                     >
                         <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
@@ -152,7 +152,7 @@ export function JournalEntriesPage() {
                 )}
             >
                 {error && (
-                    <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl type-ui">
+                    <div className="mb-3 bg-[var(--error-500)]/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl type-ui">
                         {error}
                     </div>
                 )}
@@ -168,30 +168,30 @@ export function JournalEntriesPage() {
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="type-card-description font-semibold text-white">{entry.entryNumber}</p>
-                                    <p className="type-card-description text-slate-400">{new Date(entry.entryDate).toLocaleDateString()}</p>
+                                    <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{entry.entryNumber}</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">{new Date(entry.entryDate).toLocaleDateString()}</p>
                                 </div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full type-caption font-medium ${entry.status === 'posted'
                                     ? 'bg-green-900/50 text-green-300'
                                     : entry.status === 'void'
-                                        ? 'bg-red-900/50 text-red-300'
+                                        ? 'bg-red-900/50 text-[var(--error-text,var(--error-500))]'
                                         : 'bg-yellow-900/50 text-yellow-300'
                                     }`}>
                                     {entry.status.toUpperCase()}
                                 </span>
                             </div>
-                            <p className="type-card-description text-slate-200 leading-relaxed">{entry.description}</p>
+                            <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{entry.description}</p>
                             {entry.reference ? (
-                                <p className="type-card-description text-slate-500">Ref: {entry.reference}</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)]">Ref: {entry.reference}</p>
                             ) : null}
                             <div className="grid grid-cols-2 gap-3 type-ui font-mono">
                                 <div>
-                                    <span className="block type-caption uppercase tracking-wider text-slate-500">Debits</span>
-                                    <span className="text-white">${entry.totalDebits.toFixed(2)}</span>
+                                    <span className="block type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">Debits</span>
+                                    <span className="text-[var(--ws-text-primary)]">${entry.totalDebits.toFixed(2)}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block type-caption uppercase tracking-wider text-slate-500">Credits</span>
-                                    <span className="text-white">${entry.totalCredits.toFixed(2)}</span>
+                                    <span className="block type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">Credits</span>
+                                    <span className="text-[var(--ws-text-primary)]">${entry.totalCredits.toFixed(2)}</span>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2 pt-1">
@@ -214,7 +214,7 @@ export function JournalEntriesPage() {
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
-                                            className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 type-caption font-semibold hover:bg-red-500/10"
+                                            className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-[var(--error-text,var(--error-500))] type-caption font-semibold hover:bg-[var(--error-500)]/10"
                                         >
                                             Delete
                                         </button>
@@ -224,7 +224,7 @@ export function JournalEntriesPage() {
                                     <button
                                         type="button"
                                         onClick={(e) => { e.stopPropagation(); handleVoid(entry.id); }}
-                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 type-caption font-semibold hover:bg-red-500/10"
+                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-[var(--error-text,var(--error-500))] type-caption font-semibold hover:bg-[var(--error-500)]/10"
                                     >
                                         Void
                                     </button>
@@ -236,43 +236,43 @@ export function JournalEntriesPage() {
                 <ResponsiveTableDesktop>
                     <div className="overflow-x-auto min-w-0">
                         <table className="min-w-[880px] w-full divide-y divide-slate-700">
-                            <thead className="bg-slate-900">
+                            <thead className="bg-[var(--ws-panel)]">
                                 <tr>
-                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Entry #</th>
-                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Date</th>
-                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Description</th>
-                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Debits</th>
-                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Credits</th>
-                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-slate-400 uppercase">Status</th>
-                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-slate-400 uppercase">Actions</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-[var(--ws-text-muted)] uppercase">Entry #</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-[var(--ws-text-muted)] uppercase">Date</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-[var(--ws-text-muted)] uppercase">Description</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-[var(--ws-text-muted)] uppercase">Debits</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-[var(--ws-text-muted)] uppercase">Credits</th>
+                                    <th className="px-4 md:px-6 py-3 text-left type-caption font-medium text-[var(--ws-text-muted)] uppercase">Status</th>
+                                    <th className="px-4 md:px-6 py-3 text-right type-caption font-medium text-[var(--ws-text-muted)] uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-slate-900/60 divide-y divide-white/5">
+                            <tbody className="bg-[var(--ws-panel)]/60 divide-y divide-white/5">
                                 {entries.map((entry) => (
-                                    <tr key={entry.id} className={entry.status === 'void' ? 'bg-slate-900/50 opacity-60' : ''}>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-white">
+                                    <tr key={entry.id} className={entry.status === 'void' ? 'bg-[var(--ws-panel)]/50 opacity-60' : ''}>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-[var(--ws-text-primary)]">
                                             {entry.entryNumber}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-slate-200">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-[var(--ws-text-secondary)]">
                                             {new Date(entry.entryDate).toLocaleDateString()}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 type-table-cell text-slate-200">
+                                        <td className="px-4 md:px-6 py-4 type-table-cell text-[var(--ws-text-secondary)]">
                                             {entry.description}
                                             {entry.reference && (
-                                                <span className="ml-2 type-caption text-slate-400">({entry.reference})</span>
+                                                <span className="ml-2 type-caption text-[var(--ws-text-muted)]">({entry.reference})</span>
                                             )}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-[var(--ws-text-primary)] font-mono">
                                             ${entry.totalDebits.toFixed(2)}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-[var(--ws-text-primary)] font-mono">
                                             ${entry.totalCredits.toFixed(2)}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full type-caption font-medium ${entry.status === 'posted'
                                                 ? 'bg-green-900/50 text-green-300'
                                                 : entry.status === 'void'
-                                                    ? 'bg-red-900/50 text-red-300'
+                                                    ? 'bg-red-900/50 text-[var(--error-text,var(--error-500))]'
                                                     : 'bg-yellow-900/50 text-yellow-300'
                                                 }`}>
                                                 {entry.status.toUpperCase()}
@@ -295,7 +295,7 @@ export function JournalEntriesPage() {
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(entry.id)}
-                                                        className="text-red-400 hover:text-red-300 transition-colors"
+                                                        className="text-red-400 hover:text-[var(--error-text,var(--error-500))] transition-colors"
                                                     >
                                                         Delete
                                                     </button>
@@ -304,7 +304,7 @@ export function JournalEntriesPage() {
                                             {entry.status === 'posted' && (
                                                 <button
                                                     onClick={() => handleVoid(entry.id)}
-                                                    className="text-red-400 hover:text-red-300 transition-colors"
+                                                    className="text-red-400 hover:text-[var(--error-text,var(--error-500))] transition-colors"
                                                 >
                                                     Void
                                                 </button>
@@ -319,8 +319,8 @@ export function JournalEntriesPage() {
             </div>
 
             {entries.length === 0 && (
-            <div className="text-center py-12 rounded-xl border border-white/5 bg-slate-900/40">
-                    <p className="text-slate-300">No journal entries found</p>
+            <div className="text-center py-12 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+                    <p className="text-[var(--ws-text-secondary)]">No journal entries found</p>
                 </div>
             )}
             </ModulePageLayout>
@@ -342,43 +342,43 @@ export function JournalEntriesPage() {
                     <div className="space-y-4 pb-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Date</p>
-                                <p className="font-medium text-white">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
+                                <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Date</p>
+                                <p className="font-medium text-[var(--ws-text-primary)]">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
                             </div>
                             <div>
-                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Status</p>
-                                <p className="font-medium text-white capitalize">{viewingEntry.status}</p>
+                                <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Status</p>
+                                <p className="font-medium text-[var(--ws-text-primary)] capitalize">{viewingEntry.status}</p>
                             </div>
                             <div className="col-span-1 md:col-span-2">
-                                <p className="type-caption text-slate-400 uppercase tracking-wider mb-1">Description</p>
-                                <p className="text-white">{viewingEntry.description}</p>
+                                <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Description</p>
+                                <p className="text-[var(--ws-text-primary)]">{viewingEntry.description}</p>
                             </div>
                         </div>
-                        <div className="rounded-xl border border-white/5 overflow-x-auto">
+                        <div className="rounded-xl border border-[var(--ws-border)] overflow-x-auto">
                             <table className="min-w-[520px] w-full divide-y divide-white/5 type-ui">
-                                <thead className="bg-slate-900/80">
+                                <thead className="bg-[var(--ws-panel)]/80">
                                     <tr>
-                                        <th className="px-4 py-2 text-left type-caption text-slate-400 uppercase">Account</th>
-                                        <th className="px-4 py-2 text-left type-caption text-slate-400 uppercase">Description</th>
-                                        <th className="px-4 py-2 text-right type-caption text-slate-400 uppercase">Debit</th>
-                                        <th className="px-4 py-2 text-right type-caption text-slate-400 uppercase">Credit</th>
+                                        <th className="px-4 py-2 text-left type-caption text-[var(--ws-text-muted)] uppercase">Account</th>
+                                        <th className="px-4 py-2 text-left type-caption text-[var(--ws-text-muted)] uppercase">Description</th>
+                                        <th className="px-4 py-2 text-right type-caption text-[var(--ws-text-muted)] uppercase">Debit</th>
+                                        <th className="px-4 py-2 text-right type-caption text-[var(--ws-text-muted)] uppercase">Credit</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {viewingEntry.lines.map((line) => (
                                         <tr key={line.id}>
-                                            <td className="px-4 py-2 text-slate-200">{line.accountCode} - {line.accountName}</td>
-                                            <td className="px-4 py-2 text-slate-300">{line.description}</td>
-                                            <td className="px-4 py-2 text-right font-mono text-white">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
-                                            <td className="px-4 py-2 text-right font-mono text-white">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
+                                            <td className="px-4 py-2 text-[var(--ws-text-secondary)]">{line.accountCode} - {line.accountName}</td>
+                                            <td className="px-4 py-2 text-[var(--ws-text-secondary)]">{line.description}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-[var(--ws-text-primary)]">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-[var(--ws-text-primary)]">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="bg-slate-900/80">
+                                <tfoot className="bg-[var(--ws-panel)]/80">
                                     <tr>
-                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-white">Totals</td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalDebits.toFixed(2)}</td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalCredits.toFixed(2)}</td>
+                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-[var(--ws-text-primary)]">Totals</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-[var(--ws-text-primary)]">${viewingEntry.totalDebits.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-[var(--ws-text-primary)]">${viewingEntry.totalCredits.toFixed(2)}</td>
                                     </tr>
                                 </tfoot>
                             </table>

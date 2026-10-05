@@ -89,11 +89,11 @@ export function TaxSummaryPanel() {
     toast.success('Tax summary exported');
   }
 
-  const StatRow = ({ label, value, color = 'text-white', large = false }: {
+  const StatRow = ({ label, value, color = 'text-[var(--ws-text-primary)]', large = false }: {
     label: string; value: string; color?: string; large?: boolean;
   }) => (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-      <span className={`${large ? 'type-caption font-black uppercase tracking-wider' : 'type-caption'} text-slate-300`}>{label}</span>
+    <div className="flex items-center justify-between py-3 border-b border-[var(--ws-border)] last:border-0">
+      <span className={`${large ? 'type-caption font-black uppercase tracking-wider' : 'type-caption'} text-[var(--ws-text-secondary)]`}>{label}</span>
       <span className={`font-black ${large ? 'text-xl' : 'text-base'} font-mono ${color}`}>{value}</span>
     </div>
   );
@@ -102,25 +102,25 @@ export function TaxSummaryPanel() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <h3 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
             <Calculator className="text-emerald-400" size={20} />
             Tax Summary
           </h3>
-          <p className="type-card-description text-slate-400 mt-0.5">Estimated tax liability based on P&L data</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Estimated tax liability based on P&L data</p>
         </div>
         <div className="flex items-center gap-2">
           {(['month', 'quarter', 'year'] as const).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-emerald-500/20 text-[var(--success-text,var(--success-500))] border border-emerald-500/30' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)]'}`}
             >
               {p === 'month' ? 'MTD' : p === 'quarter' ? 'QTD' : 'YTD'}
             </button>
           ))}
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 type-caption font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ws-border)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-all"
           >
             <FileDown size={14} />
             Export
@@ -131,7 +131,7 @@ export function TaxSummaryPanel() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Tax Rate Selector */}
         <div className="ac-workspace-panel rounded-xl p-5 space-y-3">
-          <p className="type-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+          <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] flex items-center gap-1.5">
             <Percent size={14} /> Tax Rate
           </p>
           <div className="space-y-2">
@@ -139,10 +139,10 @@ export function TaxSummaryPanel() {
               <button
                 key={preset.label}
                 onClick={() => setSelectedPreset(i)}
-                className={`w-full text-left px-3 py-2 rounded-lg type-caption font-bold transition-all ${selectedPreset === i ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-white border border-white/5'}`}
+                className={`w-full text-left px-3 py-2 rounded-lg type-caption font-bold transition-all ${selectedPreset === i ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] border border-emerald-500/30' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)]'}`}
               >
                 {preset.label}
-                {preset.rate > 0 && <span className="float-right text-slate-500">{(preset.rate * 100).toFixed(0)}%</span>}
+                {preset.rate > 0 && <span className="float-right text-[var(--ws-text-muted)]">{(preset.rate * 100).toFixed(0)}%</span>}
               </button>
             ))}
           </div>
@@ -154,23 +154,23 @@ export function TaxSummaryPanel() {
                 max="99"
                 value={customRate}
                 onChange={e => setCustomRate(e.target.value)}
-                className="w-full bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500/40"
+                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/40"
                 placeholder="Rate %"
               />
-              <span className="text-slate-400 type-ui font-bold">%</span>
+              <span className="text-[var(--ws-text-muted)] type-ui font-bold">%</span>
             </div>
           )}
         </div>
 
         {/* Summary Panel */}
         <div className="lg:col-span-2 ac-workspace-panel rounded-xl p-5 space-y-1">
-          <p className="type-caption font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 mb-4">
+          <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] flex items-center gap-1.5 mb-4">
             <ShieldCheck size={14} className="text-emerald-400" /> Tax Computation
           </p>
           {loading ? (
             <div className="space-y-3 pt-2">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+                <div key={i} className="h-10 bg-[var(--ws-hover)] rounded-lg animate-pulse" />
               ))}
             </div>
           ) : (
@@ -187,14 +187,14 @@ export function TaxSummaryPanel() {
                 <StatRow
                   label="Net Income After Tax"
                   value={`$${netAfterTax.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                  color={netAfterTax >= 0 ? 'text-teal-300' : 'text-rose-400'}
+                  color={netAfterTax >= 0 ? 'text-[var(--brand-blue-300)]' : 'text-rose-400'}
                   large
                 />
               </div>
 
               <div className="mt-4 rounded-xl bg-amber-500/5 border border-amber-500/20 p-3">
-                <p className="type-caption text-amber-300 font-bold uppercase tracking-widest">⚠ Estimation Notice</p>
-                <p className="type-card-description text-slate-400 mt-1">
+                <p className="type-caption text-[var(--warning-text,var(--warning-500))] font-bold uppercase tracking-widest">⚠ Estimation Notice</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                   This is an estimate based on your posted journal entries. Consult a certified accountant for official tax filing. Deductions and credits are not factored in.
                 </p>
               </div>

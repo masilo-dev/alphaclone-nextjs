@@ -37,10 +37,10 @@ function pillsToKpiItems(pills: DashboardPill[], comparisonLabel: string): Platf
 
 function healthStatusLabel(color: string): string {
   const normalized = color.toLowerCase();
-  if (normalized.includes('fb7185') || normalized.includes('red') || normalized === '#ef4444') {
+  if (normalized.includes('fb7185') || normalized.includes('red') || normalized === 'var(--error-500)') {
     return 'Needs attention';
   }
-  if (normalized.includes('fbbf24') || normalized.includes('amber') || normalized === '#f59e0b') {
+  if (normalized.includes('fbbf24') || normalized.includes('amber') || normalized === 'var(--warning-500)') {
     return 'Watch';
   }
   return 'Healthy';
@@ -48,7 +48,7 @@ function healthStatusLabel(color: string): string {
 
 function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn('type-caption font-black uppercase tracking-widest text-slate-400', className)}>
+    <p className={cn('type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]', className)}>
       {children}
     </p>
   );
@@ -103,7 +103,7 @@ export function ModuleKpiRichSections({
             {healthItems.map((pill) => (
               <span
                 key={pill.label}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/50 px-3 py-1.5 type-ui font-semibold text-slate-200"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-3 py-1.5 type-ui font-semibold text-[var(--ws-text-secondary)]"
               >
                 <span
                   className="h-2 w-2 rounded-full shrink-0"
@@ -111,7 +111,7 @@ export function ModuleKpiRichSections({
                   aria-hidden
                 />
                 <span>{t(pill.label)}</span>
-                <span className="text-slate-500">·</span>
+                <span className="text-[var(--ws-text-muted)]">·</span>
                 <span style={{ color: pill.color }}>{t(healthStatusLabel(pill.color))}</span>
               </span>
             ))}

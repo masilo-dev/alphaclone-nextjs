@@ -423,12 +423,12 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     if (planFeatures && !planFeatures.contractGeneration && user.role === 'admin') {
         return (
             <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-                <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl p-8 text-center">
+                <div className="w-full max-w-md bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] shadow-2xl p-8 text-center">
                     <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <FileText className="w-8 h-8 text-teal-400" />
                     </div>
                     <h2 className="text-xl font-bold text-white mb-2">Upgrade to Pro</h2>
-                    <p className="text-slate-400 mb-6">
+                    <p className="text-[var(--ws-text-muted)] mb-6">
                         Contract generation and professional service agreements are available on our Pro and Enterprise plans.
                     </p>
                     <div className="flex flex-col gap-3">
@@ -438,7 +438,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                         >
                             Upgrade Plan
                         </Button>
-                        <Button variant="outline" onClick={onClose} className="border-slate-700 text-slate-400 hover:text-white">
+                        <Button variant="outline" onClick={onClose} className="border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-white">
                             Close
                         </Button>
                     </div>
@@ -448,15 +448,15 @@ const AlphaCloneContractModal: React.FC<Props> = ({
     }
     return (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="w-full max-w-6xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
+            <div className="w-full max-w-6xl bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] shadow-2xl my-8">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                             <FileText className="w-6 h-6 text-teal-400" />
                             {currentTenant?.name || 'Service'} Contract
                         </h2>
-                        <p className="type-card-description text-slate-400 mt-1">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                             {existingContractId ? 'Review and Sign' : 'Professional Service Agreement'}
                         </p>
                     </div>
@@ -472,7 +472,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 Comments ({comments.length})
                             </Button>
                         )}
-                        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                        <button onClick={onClose} className="text-[var(--ws-text-muted)] hover:text-white transition-colors">
                             <X className="w-6 h-6" />
                         </button>
                     </div>
@@ -486,7 +486,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold type-ui">Edit Contract Details</h3>
-                                    <p className="text-slate-400 type-card-description mt-1">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                                         Fill in the contract details below. Dates must be edited before sending.
                                     </p>
                                 </div>
@@ -494,9 +494,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="type-caption font-black text-slate-500 uppercase tracking-widest pl-1">Select Existing Client</label>
+                                    <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Select Existing Client</label>
                                     <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
                                         value={selectedClientId}
                                         onChange={e => setSelectedClientId(e.target.value)}
                                     >
@@ -544,7 +544,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 />
                             </div>
 
-                            <div className="border-t border-slate-800 pt-4">
+                            <div className="border-t border-[var(--ws-border)] pt-4">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <FileText className="w-5 h-5 text-teal-400" />
                                     Provider Details (Your Business)
@@ -606,7 +606,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-800 pt-4">
+                            <div className="border-t border-[var(--ws-border)] pt-4">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-teal-400" />
                                     Timeline & Dates
@@ -630,7 +630,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-800 pt-4">
+                            <div className="border-t border-[var(--ws-border)] pt-4">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <DollarSign className="w-5 h-5 text-green-400" />
                                     Financial Terms
@@ -651,9 +651,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     <div className="space-y-1.5">
-                                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest pl-1">Contract Template</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Contract Template</label>
                                         <select
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
                                             value={variables.templateType}
                                             onChange={e => handleVariableChange('templateType', e.target.value)}
                                         >
@@ -662,9 +662,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest pl-1">Contract Language</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest pl-1">Contract Language</label>
                                         <select
-                                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
+                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui outline-none focus:ring-2 focus:ring-teal-500/30"
                                             value={variables.language}
                                             onChange={e => handleVariableChange('language', e.target.value)}
                                         >
@@ -675,9 +675,9 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     </div>
                                 </div>
                                 <div className="mt-4">
-                                    <label className="type-label font-medium text-slate-300 mb-2 block">Payment Schedule *</label>
+                                    <label className="type-label font-medium text-[var(--ws-text-secondary)] mb-2 block">Payment Schedule *</label>
                                     <select
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
                                         value={variables.paymentSchedule}
                                         onChange={(e) => handleVariableChange('paymentSchedule', e.target.value)}
                                     >
@@ -690,10 +690,10 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 </div>
                             </div>
 
-                            <div className="border-t border-slate-800 pt-4">
+                            <div className="border-t border-[var(--ws-border)] pt-4">
                                 <h3 className="text-white font-bold mb-3">Project Scope *</h3>
                                 <textarea
-                                    className="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300"
+                                    className="w-full h-24 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
                                     value={variables.projectScope}
                                     onChange={(e) => handleVariableChange('projectScope', e.target.value)}
                                 />
@@ -702,13 +702,13 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             <div>
                                 <h3 className="text-white font-bold mb-3">Deliverables *</h3>
                                 <textarea
-                                    className="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300"
+                                    className="w-full h-24 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)]"
                                     value={variables.projectDeliverables}
                                     onChange={(e) => handleVariableChange('projectDeliverables', e.target.value)}
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                            <div className="flex justify-end gap-3 pt-4 border-t border-[var(--ws-border)]">
                                 <Button variant="outline" onClick={onClose}>Cancel</Button>
                                 <Button onClick={handleGeneratePreview} className="bg-teal-600 hover:bg-teal-500">
                                     <Save className="w-4 h-4 mr-2" />
@@ -720,7 +720,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                     {/* STEP 1.5: Drafting Visual Sequence */}
                     {step === 'drafting' && (
-                        <div className="absolute inset-0 z-[60] bg-slate-950 flex flex-col items-center justify-center rounded-2xl overflow-hidden">
+                        <div className="absolute inset-0 z-[60] bg-[var(--ws-canvas)] flex flex-col items-center justify-center rounded-2xl overflow-hidden">
                             <ContractDraftingVisual
                                 clientName={variables.clientCompany || variables.clientName}
                                 onComplete={handleDraftingComplete}
@@ -734,7 +734,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                         <div className="space-y-6">
                             <AIOutputDisclaimer type="contract" />
                             {/* Contract Preview */}
-                            <div className="bg-white text-black p-10 rounded-lg border-4 border-slate-700 max-h-[600px] overflow-y-auto shadow-inner prose prose-slate max-w-none">
+                            <div className="bg-white text-black p-10 rounded-lg border-4 border-[var(--ws-border)] max-h-[600px] overflow-y-auto shadow-inner prose prose-slate max-w-none">
                                 <ReactMarkdown
                                     remarkPlugins={[remarkGfm]}
                                     components={{
@@ -755,26 +755,26 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
                             {/* Comments Section (Client Only) */}
                             {showComments && user.role === 'client' && (
-                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                                <div className="bg-[var(--ws-surface-secondary)]/50 rounded-xl p-4 border border-[var(--ws-border)]">
                                     <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                         <MessageCircle className="w-5 h-5 text-purple-400" />
                                         Contract Comments
                                     </h3>
-                                    <p className="text-slate-400 type-card-description mb-4">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mb-4">
                                         If you disagree with any terms, add comments below. Admin will review and update the contract.
                                     </p>
 
                                     {/* Comments List */}
                                     <div className="space-y-2 mb-4 max-h-40 overflow-y-auto">
                                         {comments.map(comment => (
-                                            <div key={comment.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                                            <div key={comment.id} className="bg-[var(--ws-panel)] rounded-lg p-3 border border-[var(--ws-border)]">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-teal-400 type-caption font-bold">{comment.userName}</span>
-                                                    <span className="text-slate-500 type-caption">
+                                                    <span className="text-[var(--ws-text-muted)] type-caption">
                                                         {comment.createdAt.toLocaleTimeString()}
                                                     </span>
                                                 </div>
-                                                <p className="text-slate-300 type-card-description">{comment.text}</p>
+                                                <p className="text-[var(--ws-text-secondary)] type-card-description">{comment.text}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -783,7 +783,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
-                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-300 type-ui"
+                                            className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg p-3 text-[var(--ws-text-secondary)] type-ui"
                                             placeholder="Add a comment about the contract..."
                                             value={newComment}
                                             onChange={(e) => setNewComment(e.target.value)}
@@ -797,7 +797,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             )}
 
                             {/* Actions */}
-                            <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                            <div className="flex justify-between items-center pt-4 border-t border-[var(--ws-border)]">
                                 <div>
                                     {user.role === 'admin' && !existingContractId && (
                                         <Button variant="outline" onClick={() => setStep('edit')}>
@@ -824,7 +824,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-green-400 font-bold type-ui">Sign Contract</h3>
-                                    <p className="text-slate-400 type-card-description mt-1">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                                         By signing, you legally agree to all terms in this contract.
                                         {user.role === 'admin' && ` Signing as ${user.name} (Authorized Agent of ${currentTenant?.name || 'Company'}).`}
                                     </p>
@@ -835,7 +835,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <label className="type-label font-medium text-white mb-2 block">
                                     {user.role === 'admin' ? `Sign as ${user.name} (${currentTenant?.name || 'Provider'})` : `Sign as ${user.name}`}
                                 </label>
-                                <div className="border-2 border-slate-700 rounded-xl overflow-hidden bg-white">
+                                <div className="border-2 border-[var(--ws-border)] rounded-xl overflow-hidden bg-white">
                                     <SignaturePad
                                         onSave={(sig, name) => {
                                             handleSignContract(sig, name);
@@ -871,7 +871,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <CheckCircle className="w-10 h-10 text-green-400" />
                             </div>
                             <h3 className="text-2xl font-bold text-white mb-2">Contract Signed Successfully!</h3>
-                            <p className="text-slate-400 max-w-md mb-8">
+                            <p className="text-[var(--ws-text-muted)] max-w-md mb-8">
                                 The contract has been securely saved and logged. A notification has been sent to all parties.
                             </p>
 
@@ -904,7 +904,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 <Button
                                     variant="outline"
                                     onClick={() => window.print()}
-                                    className="border-slate-700 text-slate-300 hover:text-white"
+                                    className="border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-white"
                                 >
                                     <Printer className="w-4 h-4 mr-2" /> Print Contract
                                 </Button>
@@ -913,7 +913,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                     variant="outline"
                                     onClick={handleSaveToDrive}
                                     disabled={isSavingToDrive}
-                                    className="border-slate-700 text-slate-300 hover:text-white"
+                                    className="border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-white"
                                 >
                                     <Share2 className={`w-4 h-4 mr-2 ${isSavingToDrive ? 'animate-spin' : ''}`} />
                                     {isSavingToDrive ? 'Saving...' : 'Save to Drive'}
@@ -925,13 +925,13 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                             </div>
 
                             {existingContractId && (
-                                <div className="mt-8 pt-6 border-t border-slate-800 w-full max-w-md">
-                                    <p className="text-slate-500 type-card-description mb-3">Share External Signing Link</p>
+                                <div className="mt-8 pt-6 border-t border-[var(--ws-border)] w-full max-w-md">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mb-3">Share External Signing Link</p>
                                     <div className="flex gap-2">
                                         <input
                                             readOnly
                                             value={`${window.location.origin}/dashboard/business/contracts`}
-                                            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-400 type-ui"
+                                            className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 text-[var(--ws-text-muted)] type-ui"
                                         />
                                         <Button
                                             variant="outline"

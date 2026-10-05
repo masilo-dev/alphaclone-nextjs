@@ -17,8 +17,8 @@ const BrandingSettings = () => {
 
     // Form State
     const [branding, setBranding] = useState<any>({
-        brand_color_primary: currentTenant?.brand_color_primary || String(settingsBranding.brand_color_primary || settingsBranding.primaryColor || '#0d9488'),
-        brand_color_secondary: currentTenant?.brand_color_secondary || String(settingsBranding.brand_color_secondary || settingsBranding.secondaryColor || '#0f172a'),
+        brand_color_primary: currentTenant?.brand_color_primary || String(settingsBranding.brand_color_primary || settingsBranding.primaryColor || 'var(--brand-blue-600)'),
+        brand_color_secondary: currentTenant?.brand_color_secondary || String(settingsBranding.brand_color_secondary || settingsBranding.secondaryColor || 'var(--ws-canvas)'),
         logo_url: currentTenant?.logo_url || String(settingsBranding.logo_url || settingsBranding.logo || ''),
         legal_name: currentTenant?.legal_name || String(settingsBranding.legal_name || ''),
         tax_id: currentTenant?.tax_id || String(settingsBranding.tax_id || ''),
@@ -32,8 +32,8 @@ const BrandingSettings = () => {
         if (!currentTenant) return;
         const nextBranding = (currentTenant.settings?.branding || {}) as Record<string, unknown>;
         setBranding({
-            brand_color_primary: currentTenant.brand_color_primary || String(nextBranding.brand_color_primary || nextBranding.primaryColor || '#0d9488'),
-            brand_color_secondary: currentTenant.brand_color_secondary || String(nextBranding.brand_color_secondary || nextBranding.secondaryColor || '#0f172a'),
+            brand_color_primary: currentTenant.brand_color_primary || String(nextBranding.brand_color_primary || nextBranding.primaryColor || 'var(--brand-blue-600)'),
+            brand_color_secondary: currentTenant.brand_color_secondary || String(nextBranding.brand_color_secondary || nextBranding.secondaryColor || 'var(--ws-canvas)'),
             logo_url: currentTenant.logo_url || String(nextBranding.logo_url || nextBranding.logo || ''),
             legal_name: currentTenant.legal_name || String(nextBranding.legal_name || ''),
             tax_id: currentTenant.tax_id || String(nextBranding.tax_id || ''),
@@ -87,17 +87,17 @@ const BrandingSettings = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Form Section */}
             <div className="space-y-6">
-                <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                         <Palette className="w-5 h-5 text-teal-400" />
                         Brand Identity
                     </h3>
 
                     {/* Logo */}
                     <div className="mb-6">
-                        <label className="block type-label font-medium text-slate-400 mb-2">Organization Logo</label>
+                        <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-2">Organization Logo</label>
                         <div className="flex items-center gap-4">
-                            <div className="w-24 h-24 rounded-2xl bg-slate-950/50 border border-white/10 flex items-center justify-center overflow-hidden relative group">
+                            <div className="w-24 h-24 rounded-2xl bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] flex items-center justify-center overflow-hidden relative group">
                                 {isUploading ? (
                                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                                 ) : branding.logo_url ? (
@@ -116,7 +116,7 @@ const BrandingSettings = () => {
                                         onClick={() => fileInputRef.current?.click()}
                                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                                     >
-                                        <Upload className="w-5 h-5 text-white" />
+                                        <Upload className="w-5 h-5 text-[var(--ws-text-primary)]" />
                                     </button>
                                 )}
                                 <input
@@ -128,7 +128,7 @@ const BrandingSettings = () => {
                                 />
                             </div>
                             <div>
-                                <p className="type-card-description text-slate-500 mt-2">Recommended: PNG or SVG, max 2MB.</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-2">Recommended: PNG or SVG, max 2MB.</p>
                             </div>
                         </div>
                     </div>
@@ -136,7 +136,7 @@ const BrandingSettings = () => {
                     {/* Colors */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block type-label font-medium text-slate-400 mb-2">Primary Color</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-2">Primary Color</label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
@@ -148,12 +148,12 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_primary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_primary: e.target.value })}
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                                 />
                             </div>
                         </div>
                         <div>
-                            <label className="block type-caption font-medium text-slate-400 mb-2">Secondary Color</label>
+                            <label className="block type-caption font-medium text-[var(--ws-text-muted)] mb-2">Secondary Color</label>
                             <div className="flex items-center gap-3">
                                 <input
                                     type="color"
@@ -165,51 +165,51 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_secondary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_secondary: e.target.value })}
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-slate-900 border border-white/5 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                         <Info className="w-5 h-5 text-teal-400" />
                         Legal Information
                     </h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="block type-label font-medium text-slate-400 mb-1">Legal Business Name</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Legal Business Name</label>
                             <input
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
-                                className={`w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 placeholder="Legal Entity Name"
                                 disabled={!!currentTenant?.legal_name}
                             />
                             {currentTenant?.legal_name && (
-                                <p className="type-card-description text-slate-500 mt-1 flex items-center gap-1 italic">
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1 flex items-center gap-1 italic">
                                     <Building className="w-3 h-3" /> Business identity is locked. Contact support to change.
                                 </p>
                             )}
                         </div>
                         <div>
-                            <label className="block type-label font-medium text-slate-400 mb-1">Tax ID / VAT Number</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Tax ID / VAT Number</label>
                             <input
                                 type="text"
                                 value={branding.tax_id}
                                 onChange={(e) => setBranding({ ...branding, tax_id: e.target.value })}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none"
                                 placeholder="e.g. US-123456789"
                             />
                         </div>
                         <div>
-                            <label className="block type-label font-medium text-slate-400 mb-1">Business Address</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-1">Business Address</label>
                             <textarea
                                 value={branding.business_address}
                                 onChange={(e) => setBranding({ ...branding, business_address: e.target.value })}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none min-h-[100px]"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none min-h-[100px]"
                                 placeholder="Full registered address..."
                             />
                         </div>
@@ -217,7 +217,7 @@ const BrandingSettings = () => {
                 </div>
 
                 <div className="flex justify-end pt-4">
-                    <Button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-500/20">
+                    <Button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/20">
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                         Save Branding Settings
                     </Button>
@@ -226,7 +226,7 @@ const BrandingSettings = () => {
 
             {/* Live Preview */}
             <div className="sticky top-6 h-fit">
-                <h3 className="type-caption font-bold text-slate-500 uppercase tracking-widest mb-4">Document Preview</h3>
+                <h3 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Document Preview</h3>
                 <div className="bg-white rounded-lg shadow-xl overflow-hidden aspect-[210/297] w-full max-w-md mx-auto relative text-slate-900 type-caption leading-relaxed">
                     {/* Header Background */}
                     <div className="h-4 w-full" style={{ backgroundColor: branding.brand_color_primary }}></div>
@@ -250,12 +250,12 @@ const BrandingSettings = () => {
                                         {branding.legal_name || 'Organization Name'}
                                     </h1>
                                 )}
-                                <div className="text-slate-500">
+                                <div className="text-[var(--ws-text-muted)]">
                                     {branding.business_address || '123 Business St\nCity, Country'}
                                 </div>
                             </div>
                             <div className="text-right">
-                                <h2 className="text-2xl font-light text-slate-300">INVOICE</h2>
+                                <h2 className="text-2xl font-light text-[var(--ws-text-secondary)]">INVOICE</h2>
                                 <div className="font-bold mt-1">#INV-001</div>
                             </div>
                         </div>
@@ -264,7 +264,7 @@ const BrandingSettings = () => {
                         <div className="h-0.5 w-full mb-6 opacity-20" style={{ backgroundColor: branding.brand_color_secondary }}></div>
 
                         <div className="space-y-3 type-caption text-slate-600 border border-dashed border-slate-200 rounded-lg p-4 bg-white/80">
-                            <p className="type-caption uppercase tracking-wide text-slate-400 font-semibold">Sample line items (preview only)</p>
+                            <p className="type-caption uppercase tracking-wide text-[var(--ws-text-muted)] font-semibold">Sample line items (preview only)</p>
                             <div className="flex justify-between border-b border-slate-100 pb-2">
                                 <span>Service description</span>
                                 <span className="font-mono">0.00</span>
@@ -281,9 +281,9 @@ const BrandingSettings = () => {
 
                         {/* Footer Preview */}
                         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 bg-slate-50">
-                            <div className="text-center type-caption text-slate-400">
+                            <div className="text-center type-caption text-[var(--ws-text-muted)]">
                                 {branding.legal_name} • {branding.tax_id && `Tax ID: ${branding.tax_id}`}
-                                <div className="mt-1 font-medium text-slate-300">Generated by AlphaClone Systems</div>
+                                <div className="mt-1 font-medium text-[var(--ws-text-secondary)]">Generated by AlphaClone Systems</div>
                             </div>
                         </div>
                     </div>

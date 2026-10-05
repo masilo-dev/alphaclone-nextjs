@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
+import { portalOwnsResource } from '@/lib/auth/portalResourceOwnership';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
@@ -21,7 +22,14 @@ export async function GET(req: NextRequest) {
       .select('*')
       .eq('tenant_id', client.tenant_id).eq('client_id', client.id).eq('id', contractId).maybeSingle();
     if (error) throw error;
-    if (!data) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+    if (
+      !portalOwnsResource(
+        { clientId: client.id, tenantId: client.tenant_id },
+        data ? { id: data.id, tenant_id: data.tenant_id, client_id: data.client_id } : null
+      )
+    ) {
+      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+    }
     const shared = ['sent', 'viewed', 'client_signed', 'fully_signed', 'signed', 'completed'].includes(String(data.status || '').toLowerCase());
     if (!shared) {
       const { data: recipient } = await admin.from('business_clients').select('email')

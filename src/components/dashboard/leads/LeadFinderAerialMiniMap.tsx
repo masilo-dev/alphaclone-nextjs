@@ -9,7 +9,7 @@ const PinIcon = L.divIcon({
   className: '',
   html: `<div style="
     width:18px;height:18px;border-radius:999px;
-    background:#14b8a6;border:2px solid #ecfeff;
+    background:var(--brand-blue-500);border:2px solid var(--brand-blue-50);
     box-shadow:0 0 0 6px rgba(20,184,166,0.25),0 8px 20px rgba(0,0,0,0.45);
   "></div>`,
   iconSize: [18, 18],
@@ -70,7 +70,7 @@ export default function LeadFinderAerialMiniMap({
       attributionControl={false}
       scrollWheelZoom={false}
       dragging
-      style={{ width: '100%', height: '100%', background: '#020617' }}
+      style={{ width: '100%', height: '100%', background: 'var(--brand-violet-950)' }}
     >
       <TileLayer url={tile.url} attribution={tile.attribution} />
       {mode === 'satellite' && (

@@ -100,7 +100,7 @@ export function BusinessFlowGuardrail({ context, className }: BusinessFlowGuardr
             <p className="type-card-description text-[var(--ws-text-secondary)]">{s.message}</p>
             <Link
               href={s.href}
-              className="inline-flex items-center gap-1 mt-1.5 type-ui font-medium text-teal-400 hover:text-teal-300"
+              className="inline-flex items-center gap-1 mt-1.5 type-ui font-medium text-teal-400 hover:text-[var(--brand-blue-300)]"
             >
               {s.actionLabel}
               <ArrowRight className="w-3 h-3" aria-hidden="true" />

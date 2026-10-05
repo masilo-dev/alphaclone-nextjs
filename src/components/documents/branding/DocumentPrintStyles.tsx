@@ -11,14 +11,14 @@ const PRINT_CSS = `
     @bottom-center {
       content: "Page " counter(page) " of " counter(pages);
       font-size: 8pt;
-      color: #64748b;
+      color: var(--ws-text-muted);
     }
   }
   @media print {
     html, body {
-      background: #ffffff !important;
-      background-color: #ffffff !important;
-      color: #0f172a !important;
+      background: var(--color-white) !important;
+      background-color: var(--color-white) !important;
+      color: var(--ws-canvas) !important;
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
@@ -36,8 +36,8 @@ const PRINT_CSS = `
       margin: 0 !important;
       max-width: 100% !important;
       width: 100% !important;
-      background: #ffffff !important;
-      background-color: #ffffff !important;
+      background: var(--color-white) !important;
+      background-color: var(--color-white) !important;
       border-radius: 0 !important;
     }
     .doc-avoid-break,

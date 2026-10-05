@@ -33,15 +33,15 @@ export default function PlanActivationPanel() {
     const statusName = currentTenant.subscription_status || 'active';
 
     return (
-        <section className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/80 p-5">
+        <section className="space-y-4 rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 type-caption font-semibold uppercase tracking-caps text-teal-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-300)]">
                         <Sparkles className="h-3.5 w-3.5" />
                         Plan Visibility
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-white">Your plan, status, and usage are now visible here</h3>
+                        <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Your plan, status, and usage are now visible here</h3>
 
                     </div>
                 </div>
@@ -49,7 +49,7 @@ export default function PlanActivationPanel() {
                 <div className="flex flex-wrap gap-2">
                     <button
                         onClick={() => router.push('/dashboard/business/settings')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 transition-colors hover:bg-teal-400"
+                        className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 transition-colors hover:bg-[var(--brand-blue-400)]"
                     >
                         <CreditCard className="h-4 w-4" />
                         Manage Billing
@@ -58,15 +58,15 @@ export default function PlanActivationPanel() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-slate-500">Current Plan</div>
-                    <div className="text-lg font-bold text-white">{planName}</div>
-                    <div className="mt-1 type-ui text-slate-400">Quotas and support scale with your plan.</div>
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Current Plan</div>
+                    <div className="text-lg font-bold text-[var(--ws-text-primary)]">{planName}</div>
+                    <div className="mt-1 type-ui text-[var(--ws-text-muted)]">Quotas and support scale with your plan.</div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-slate-500">Subscription Status</div>
-                    <div className="text-lg font-bold capitalize text-white">{statusName}</div>
-                    <div className="mt-1 type-ui text-slate-400">
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                    <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Subscription Status</div>
+                    <div className="text-lg font-bold capitalize text-[var(--ws-text-primary)]">{statusName}</div>
+                    <div className="mt-1 type-ui text-[var(--ws-text-muted)]">
                         {trialInfo
                             ? trialInfo.expired
                                 ? 'Your trial has expired and billing needs attention.'
@@ -74,8 +74,8 @@ export default function PlanActivationPanel() {
                             : 'Your workspace is currently usable under this subscription state.'}
                     </div>
                 </div>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-                    <div className="mb-2 flex items-center gap-2 type-caption font-semibold uppercase tracking-caps text-slate-500">
+                <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
+                    <div className="mb-2 flex items-center gap-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">
                         <Gauge className="h-3.5 w-3.5" />
                         What Counts
                     </div>

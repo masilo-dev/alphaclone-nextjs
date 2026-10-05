@@ -19,7 +19,7 @@ type AgingBucket = {
 const BUCKET_CONFIG: AgingBucket[] = [
   { range: '0-30', label: '0–30 Days', count: 0, totalAmount: 0, color: CHART_COLORS.invoice.sent },
   { range: '31-60', label: '31–60 Days', count: 0, totalAmount: 0, color: SEMANTIC.warning[500] },
-  { range: '61-90', label: '61–90 Days', count: 0, totalAmount: 0, color: '#DE6A28' },
+  { range: '61-90', label: '61–90 Days', count: 0, totalAmount: 0, color: 'var(--warning-500)' },
   { range: '90+', label: '90+ Days (Critical)', count: 0, totalAmount: 0, color: CHART_COLORS.invoice.overdue },
 ];
 
@@ -127,8 +127,8 @@ export function InvoiceAgingReport() {
               <WrapChart height={240}>
                 <BarChart data={buckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.16)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#8491A6', fontSize: 'var(--type-caption-size)' }} />
-                  <YAxis tick={{ fill: '#8491A6', fontSize: 'var(--type-caption-size)' }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                  <XAxis dataKey="label" tick={{ fill: 'var(--ws-text-muted)', fontSize: 'var(--type-caption-size)' }} />
+                  <YAxis tick={{ fill: 'var(--ws-text-muted)', fontSize: 'var(--type-caption-size)' }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip
                     content={({ active, payload }: any) => {
                       if (!active || !payload?.length) return null;

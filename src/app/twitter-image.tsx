@@ -20,7 +20,7 @@ export default function TwitterImage() {
           flexDirection: 'column',
           justifyContent: 'center',
           padding: 72,
-          background: 'linear-gradient(135deg, #020617 0%, #0f172a 55%, #115e59 100%)',
+          background: 'linear-gradient(135deg, var(--brand-violet-950) 0%, var(--ws-canvas) 55%, var(--success-700) 100%)',
           color: 'white',
         }}
       >

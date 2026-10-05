@@ -18,7 +18,7 @@ export function DocumentThemePicker({ value, onChange, className }: DocumentThem
 
   return (
     <div className={cn('space-y-2', className)}>
-      <p className="type-caption font-black uppercase tracking-widest text-slate-500">
+      <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
         Document theme
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto pr-1">
@@ -31,7 +31,7 @@ export function DocumentThemePicker({ value, onChange, className }: DocumentThem
               'rounded-xl border p-2.5 text-left transition-all',
               value === theme.id
                 ? 'border-teal-500/50 bg-teal-500/10 ring-1 ring-teal-500/30'
-                : 'border-slate-800 bg-slate-950/50 hover:border-slate-600'
+                : 'border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 hover:border-slate-600'
             )}
           >
             <div

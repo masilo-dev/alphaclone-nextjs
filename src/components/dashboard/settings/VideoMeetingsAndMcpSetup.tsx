@@ -67,12 +67,12 @@ export function VideoMeetingsAndMcpSetup() {
   const [openDaily, setOpenDaily] = useState(true);
 
   return (
-    <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-700/80 flex items-center gap-2">
+    <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40 overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--ws-border)]/80 flex items-center gap-2">
         <Video className="w-5 h-5 text-teal-400" />
         <div>
-          <h2 className="type-ui font-semibold text-white">Video meetings and MCP</h2>
-          <p className="type-card-description text-slate-500">
+          <h2 className="type-ui font-semibold text-[var(--ws-text-primary)]">Video meetings and MCP</h2>
+          <p className="type-card-description text-[var(--ws-text-muted)]">
             Use built-in Daily.co rooms, LiveKit infrastructure, Microsoft Teams, or Zoom according to your connected provider.
           </p>
         </div>
@@ -82,15 +82,15 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenDaily((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
         >
-          <span className="type-ui font-medium text-slate-200 flex items-center gap-2">
+          <span className="type-ui font-medium text-[var(--ws-text-secondary)] flex items-center gap-2">
             Built-in video (Daily.co / LiveKit)
           </span>
           {openDaily ? (
-            <ChevronUp className="w-4 h-4 text-slate-500" />
+            <ChevronUp className="w-4 h-4 text-[var(--ws-text-muted)]" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-500" />
+            <ChevronDown className="w-4 h-4 text-[var(--ws-text-muted)]" />
           )}
         </button>
         <AnimatePresence initial={false}>
@@ -101,15 +101,15 @@ export function VideoMeetingsAndMcpSetup() {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 type-caption text-slate-400 space-y-2 leading-relaxed">
+              <div className="px-4 pb-4 type-caption text-[var(--ws-text-muted)] space-y-2 leading-relaxed">
                 <p>
                   Native AlphaClone rooms use the configured Daily.co or LiveKit provider and are created from the Meetings module.
                 </p>
-                <p className="text-teal-300/90">
+                <p className="text-[var(--brand-blue-300)]/90">
                   <strong className="text-teal-200">Provider choice:</strong> connect Microsoft 365 for Teams links, or use the built-in provider configured for your workspace.
                 </p>
-                <p className="text-slate-500">
-                  Technical reference: <code className="text-slate-400">src/VIDEO_ARCHITECTURE.md</code>
+                <p className="text-[var(--ws-text-muted)]">
+                  Technical reference: <code className="text-[var(--ws-text-muted)]">src/VIDEO_ARCHITECTURE.md</code>
                 </p>
               </div>
             </motion.div>
@@ -119,13 +119,13 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenZoom((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
         >
-          <span className="type-ui font-medium text-slate-200">Zoom (Meeting API or Video SDK)</span>
+          <span className="type-ui font-medium text-[var(--ws-text-secondary)]">Zoom (Meeting API or Video SDK)</span>
           {openZoom ? (
-            <ChevronUp className="w-4 h-4 text-slate-500" />
+            <ChevronUp className="w-4 h-4 text-[var(--ws-text-muted)]" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-500" />
+            <ChevronDown className="w-4 h-4 text-[var(--ws-text-muted)]" />
           )}
         </button>
         <AnimatePresence initial={false}>
@@ -139,12 +139,12 @@ export function VideoMeetingsAndMcpSetup() {
               <div className="px-4 pb-4 space-y-3">
                 <ol className="space-y-3">
                   {ZOOM_STEPS.map((s) => (
-                    <li key={s.n} className="flex gap-3 type-caption text-slate-400 leading-relaxed">
+                    <li key={s.n} className="flex gap-3 type-caption text-[var(--ws-text-muted)] leading-relaxed">
                       <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-teal-500/15 border border-teal-500/25 text-teal-400 font-bold flex items-center justify-center type-caption">
                         {s.n}
                       </span>
                       <div>
-                        <p className="text-slate-200 font-medium mb-0.5">{s.title}</p>
+                        <p className="text-[var(--ws-text-secondary)] font-medium mb-0.5">{s.title}</p>
                         <p>{s.body}</p>
                       </div>
                     </li>
@@ -174,8 +174,8 @@ export function VideoMeetingsAndMcpSetup() {
                     Meeting SDK docs
                   </Button>
                 </div>
-                <p className="type-card-description text-slate-500">
-                  Repository guide (engineers): <code className="text-slate-400">src/docs/MCP_AND_ZOOM_INTEGRATION.md</code>
+                <p className="type-card-description text-[var(--ws-text-muted)]">
+                  Repository guide (engineers): <code className="text-[var(--ws-text-muted)]">src/docs/MCP_AND_ZOOM_INTEGRATION.md</code>
                 </p>
               </div>
             </motion.div>
@@ -185,16 +185,16 @@ export function VideoMeetingsAndMcpSetup() {
         <button
           type="button"
           onClick={() => setOpenMcp((v) => !v)}
-          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
+          className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
         >
-          <span className="type-ui font-medium text-slate-200 flex items-center gap-2">
+          <span className="type-ui font-medium text-[var(--ws-text-secondary)] flex items-center gap-2">
             <Bot className="w-4 h-4 text-violet-400" />
             Claude and Manus (MCP)
           </span>
           {openMcp ? (
-            <ChevronUp className="w-4 h-4 text-slate-500" />
+            <ChevronUp className="w-4 h-4 text-[var(--ws-text-muted)]" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-slate-500" />
+            <ChevronDown className="w-4 h-4 text-[var(--ws-text-muted)]" />
           )}
         </button>
         <AnimatePresence initial={false}>
@@ -209,18 +209,18 @@ export function VideoMeetingsAndMcpSetup() {
                 <div className="flex items-start gap-2 type-caption text-teal-400/90 bg-teal-500/10 border border-teal-500/20 rounded-lg p-3">
                   <Server className="w-4 h-4 shrink-0 mt-0.5" />
                   <p>
-                  The MCP endpoint is <code className="text-slate-300">/api/mcp?api_key=...</code> for Claude, Grok, and ChatGPT, and <code className="text-slate-300">/api/mcp/sse?api_key=...</code> for Manus. The setup
+                  The MCP endpoint is <code className="text-[var(--ws-text-secondary)]">/api/mcp?api_key=...</code> for Claude, Grok, and ChatGPT, and <code className="text-[var(--ws-text-secondary)]">/api/mcp/sse?api_key=...</code> for Manus. The setup
                   guide copies the correct URL automatically. Workspace and user are resolved from the key.
                 </p>
                 </div>
                 <ol className="space-y-3">
                   {MCP_STEPS.map((s) => (
-                    <li key={s.n} className="flex gap-3 type-caption text-slate-400 leading-relaxed">
+                    <li key={s.n} className="flex gap-3 type-caption text-[var(--ws-text-muted)] leading-relaxed">
                       <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-300 font-bold flex items-center justify-center type-caption">
                         {s.n}
                       </span>
                       <div>
-                        <p className="text-slate-200 font-medium mb-0.5">{s.title}</p>
+                        <p className="text-[var(--ws-text-secondary)] font-medium mb-0.5">{s.title}</p>
                         <p>{s.body}</p>
                       </div>
                     </li>

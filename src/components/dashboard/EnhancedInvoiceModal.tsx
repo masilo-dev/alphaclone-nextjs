@@ -531,12 +531,12 @@ export default function EnhancedInvoiceModal({
   const renderDetailsTab = () => (
     <div className="space-y-6">
       <div className="relative" ref={dropdownRef}>
-        <label className="block type-label font-medium text-slate-300 mb-2">Search Client</label>
+        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Search Client</label>
         <div className="relative">
           <input
             type="text"
             placeholder="Search existing contacts..."
-            className="w-full px-3 py-2 pl-10 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 pl-10 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -544,7 +544,7 @@ export default function EnhancedInvoiceModal({
             }}
             onFocus={() => setShowContactDropdown(true)}
           />
-          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
         </div>
 
         <AnimatePresence>
@@ -553,7 +553,7 @@ export default function EnhancedInvoiceModal({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[110] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
+              className="absolute w-full mt-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl shadow-2xl z-[110] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
             >
               {clients.filter(c => 
                 !searchQuery || 
@@ -582,20 +582,20 @@ export default function EnhancedInvoiceModal({
                         setSearchQuery('');
                         setShowContactDropdown(false);
                       }}
-                      className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
+                      className="w-full text-left p-3 rounded-lg hover:bg-[var(--ws-hover)] flex items-center gap-3 transition-colors group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
                         <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0).toUpperCase()}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="type-ui font-bold text-slate-200">{c.name}</span>
-                        <span className="type-caption text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                        <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{c.name}</span>
+                        <span className="type-caption text-[var(--ws-text-muted)] font-medium uppercase tracking-tight">{c.email}</span>
                       </div>
                     </button>
                   ))
               ) : (
                 <div className="p-4 text-center">
-                  <p className="type-card-description text-slate-500 font-medium italic">No matches found.</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)] font-medium italic">No matches found.</p>
                 </div>
               )}
             </motion.div>
@@ -605,22 +605,22 @@ export default function EnhancedInvoiceModal({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-2">Client Name</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Client Name</label>
           <input
             type="text"
             value={formData.clientName}
             onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-            className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="Enter client name"
           />
         </div>
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-2">Client Email</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Client Email</label>
           <input
             type="email"
             value={formData.clientEmail}
             onChange={(e) => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
-            className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="client@example.com"
           />
         </div>
@@ -651,11 +651,11 @@ export default function EnhancedInvoiceModal({
       })()}
 
       <div>
-        <label className="block type-label font-medium text-slate-300 mb-2">Linked contract (optional)</label>
+        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Linked contract (optional)</label>
         <select
           value={formData.contractId}
           onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
-          className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         >
           <option value="">No contract linked</option>
           {contracts
@@ -666,7 +666,7 @@ export default function EnhancedInvoiceModal({
               </option>
             ))}
         </select>
-        <p className="mt-1 type-card-description text-slate-500">
+        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
           Billing documents filed to the vault will reference this agreement when sent.
         </p>
       </div>
@@ -682,12 +682,12 @@ export default function EnhancedInvoiceModal({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-2">Due Date</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Due Date</label>
           <input
             type="date"
             value={formData.dueDate}
             onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-            className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -709,11 +709,11 @@ export default function EnhancedInvoiceModal({
       />
 
       <div>
-        <label className="block type-label font-medium text-slate-300 mb-2">Notes</label>
+        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Notes</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           rows={3}
           placeholder="Additional notes..."
         />
@@ -724,14 +724,14 @@ export default function EnhancedInvoiceModal({
   const renderItemsTab = () => (
     <div className="space-y-4">
       {formData.items.map((item, index) => (
-        <div key={index} className="flex items-center space-x-2 p-4 border border-slate-800 bg-slate-900/50 rounded-lg">
+        <div key={index} className="flex items-center space-x-2 p-4 border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 rounded-lg">
           <div className="flex-1">
             <input
               type="text"
               value={item.description}
               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
               placeholder="Item description"
-              className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
           <div className="w-20">
@@ -739,7 +739,7 @@ export default function EnhancedInvoiceModal({
               type="number"
               value={item.quantity}
               onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               min="1"
             />
           </div>
@@ -748,11 +748,11 @@ export default function EnhancedInvoiceModal({
               type="number"
               value={item.rate}
               onChange={(e) => handleItemChange(index, 'rate', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               step="0.01"
             />
           </div>
-          <div className="w-24 text-right font-medium text-white">
+          <div className="w-24 text-right font-medium text-[var(--ws-text-primary)]">
             ${item.amount.toFixed(2)}
           </div>
           <button
@@ -774,7 +774,7 @@ export default function EnhancedInvoiceModal({
                 toast.error(message);
               }
             }}
-            className="p-2 text-slate-500 hover:text-teal-400 hover:bg-teal-400/10 rounded-lg transition-all"
+            className="p-2 text-[var(--ws-text-muted)] hover:text-teal-400 hover:bg-[var(--brand-blue-400)]/10 rounded-lg transition-all"
             title="Save as Service"
           >
             <Save className="w-4 h-4" />
@@ -791,13 +791,13 @@ export default function EnhancedInvoiceModal({
       <div className="flex gap-2">
         <button
           onClick={handleAddItem}
-          className="flex-1 py-2 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:border-slate-500 hover:text-slate-300 font-black uppercase type-caption tracking-widest"
+          className="flex-1 py-2 border-2 border-dashed border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:border-slate-500 hover:text-[var(--ws-text-secondary)] font-black uppercase type-caption tracking-widest"
         >
           + Add Custom Item
         </button>
         <button
           onClick={() => setShowServicePicker(true)}
-          className="flex-1 py-2 border-2 border-dashed border-teal-500/30 rounded-lg text-teal-400 hover:border-teal-500 hover:text-teal-300 font-black uppercase type-caption tracking-widest bg-teal-500/5"
+          className="flex-1 py-2 border-2 border-dashed border-teal-500/30 rounded-lg text-teal-400 hover:border-teal-500 hover:text-[var(--brand-blue-300)] font-black uppercase type-caption tracking-widest bg-teal-500/5"
         >
           <Package className="w-3 h-3 inline mr-1" /> Add From Catalog
         </button>
@@ -811,12 +811,12 @@ export default function EnhancedInvoiceModal({
             exit={{ opacity: 0, scale: 0.95 }}
             className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-white font-black uppercase tracking-tight flex items-center gap-2">
+                <h3 className="text-[var(--ws-text-primary)] font-black uppercase tracking-tight flex items-center gap-2">
                   <Package className="text-teal-500 w-4 h-4" /> Services Catalog
                 </h3>
-                <button onClick={() => setShowServicePicker(false)} className="text-slate-500 hover:text-white"><X size={18} /></button>
+                <button onClick={() => setShowServicePicker(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X size={18} /></button>
               </div>
               
               <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -831,12 +831,12 @@ export default function EnhancedInvoiceModal({
                       setShowServicePicker(false);
                       toast.success(`Added ${s.name}`);
                     }}
-                    className="w-full text-left p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group"
+                    className="w-full text-left p-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] transition-all group"
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-white font-bold">{s.name}</p>
-                        <p className="type-card-description text-slate-500 line-clamp-1">{s.description}</p>
+                        <p className="text-[var(--ws-text-primary)] font-bold">{s.name}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-1">{s.description}</p>
                       </div>
                       <span className="text-teal-400 font-black">${s.defaultPrice}</span>
                     </div>
@@ -844,7 +844,7 @@ export default function EnhancedInvoiceModal({
                 ))}
                 {services.length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-slate-500 type-card-description italic">Catalog is empty. Add services in the Billing Hub.</p>
+                    <p className="text-[var(--ws-text-muted)] type-card-description italic">Catalog is empty. Add services in the Billing Hub.</p>
                   </div>
                 )}
               </div>
@@ -853,16 +853,16 @@ export default function EnhancedInvoiceModal({
         )}
       </AnimatePresence>
 
-      <div className="mt-6 p-4 bg-slate-800/50 border border-slate-800 rounded-lg">
+      <div className="mt-6 p-4 bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-slate-400">Subtotal:</span>
-          <span className="font-medium text-white">${formData.subtotal.toFixed(2)}</span>
+          <span className="text-[var(--ws-text-muted)]">Subtotal:</span>
+          <span className="font-medium text-[var(--ws-text-primary)]">${formData.subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
-          <span className="text-slate-400">Tax (15%):</span>
-          <span className="font-medium text-white">${formData.tax.toFixed(2)}</span>
+          <span className="text-[var(--ws-text-muted)]">Tax (15%):</span>
+          <span className="font-medium text-[var(--ws-text-primary)]">${formData.tax.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center text-lg font-semibold border-t border-slate-700 pt-2 text-white">
+        <div className="flex justify-between items-center text-lg font-semibold border-t border-[var(--ws-border)] pt-2 text-[var(--ws-text-primary)]">
           <span>Total:</span>
           <span>${formData.total.toFixed(2)}</span>
         </div>
@@ -873,10 +873,10 @@ export default function EnhancedInvoiceModal({
   const renderPaymentTab = () => (
     <div className="space-y-6">
       <div>
-        <label className="block type-label font-medium text-slate-300 mb-3">Payment Methods</label>
+        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-3">Payment Methods</label>
         <div className="space-y-2">
           {PAYMENT_METHODS.map(method => (
-            <label key={method.id} className="flex items-center p-3 border border-slate-700 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700/50">
+            <label key={method.id} className="flex items-center p-3 border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] rounded-lg cursor-pointer hover:bg-[var(--ws-surface-tertiary)]/50">
               <input
                 type="checkbox"
                 checked={formData.paymentMethods.includes(method.id)}
@@ -893,10 +893,10 @@ export default function EnhancedInvoiceModal({
                     }));
                   }
                 }}
-                className="mr-3 rounded border-slate-600 text-teal-600 focus:ring-teal-500 bg-slate-900"
+                className="mr-3 rounded border-slate-600 text-teal-600 focus:ring-teal-500 bg-[var(--ws-panel)]"
               />
               <span className="mr-2">{method.icon}</span>
-              <span className="font-medium text-white">{method.name}</span>
+              <span className="font-medium text-[var(--ws-text-primary)]">{method.name}</span>
             </label>
           ))}
         </div>
@@ -910,7 +910,7 @@ export default function EnhancedInvoiceModal({
       {invoicePreviewInput ? (
         <DocumentPreview input={invoicePreviewInput} />
       ) : (
-        <p className="type-card-description text-slate-400">Add client details and line items to preview your themed invoice.</p>
+        <p className="type-card-description text-[var(--ws-text-muted)]">Add client details and line items to preview your themed invoice.</p>
       )}
 
       {invoice ? (
@@ -925,8 +925,8 @@ export default function EnhancedInvoiceModal({
               className={cn(
                 'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
                 copiedLink
-                  ? 'bg-green-600 text-white'
-                  : 'bg-teal-600 text-white hover:bg-teal-500'
+                  ? 'bg-green-600 text-[var(--ws-text-primary)]'
+                  : 'bg-teal-600 text-[var(--text-inverse)] hover:bg-teal-500'
               )}
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -934,7 +934,7 @@ export default function EnhancedInvoiceModal({
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center space-x-2 px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] rounded-lg hover:bg-[var(--ws-surface-tertiary)] transition-colors"
             >
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
@@ -960,15 +960,15 @@ export default function EnhancedInvoiceModal({
 
   return (
     <div className="fixed inset-0 ac-layer-modal flex items-center justify-center p-4 pt-safe pb-safe">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+      <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
           <div className="space-y-2">
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-[var(--ws-text-primary)]">
                 {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
               </h2>
-              <p className="type-card-description text-slate-400">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 {mode === 'send' ? 'Review and finalize invoice' : 'Update invoice details for your client'}
               </p>
             </div>
@@ -991,14 +991,14 @@ export default function EnhancedInvoiceModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg"
+            className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-800">
+        <div className="flex border-b border-[var(--ws-border)]">
           {[
             { id: 'details', label: 'Details', icon: FileText },
             { id: 'items', label: 'Items', icon: DollarSign },
@@ -1012,7 +1012,7 @@ export default function EnhancedInvoiceModal({
                 "flex items-center space-x-2 px-6 py-3 type-ui font-medium border-b-2 transition-colors",
                 activeTab === tab.id
                   ? "border-teal-500 text-teal-400"
-                  : "border-transparent text-slate-400 hover:text-slate-300 hover:bg-slate-800/50"
+                  : "border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/50"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -1022,7 +1022,7 @@ export default function EnhancedInvoiceModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-900/50">
+        <div className="flex-1 overflow-y-auto p-6 bg-[var(--ws-panel)]/50">
           {activeTab === 'details' && renderDetailsTab()}
           {activeTab === 'items' && renderItemsTab()}
           {activeTab === 'payment' && renderPaymentTab()}
@@ -1030,7 +1030,7 @@ export default function EnhancedInvoiceModal({
         </div>
 
         {/* Sticky action bar */}
-        <div className="sticky bottom-0 z-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 sm:p-6 border-t border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0">
+        <div className="sticky bottom-0 z-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 sm:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/95 backdrop-blur-md shrink-0">
           <div className="flex flex-wrap items-center gap-2">
             {mode !== 'send' && (
               <button
@@ -1039,8 +1039,8 @@ export default function EnhancedInvoiceModal({
                 className={cn(
                   "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
                   isLoading
-                    ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                    : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+                    ? "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed border border-[var(--ws-border)]"
+                    : "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)]"
                 )}
               >
                 <Save className="w-4 h-4" />
@@ -1062,7 +1062,7 @@ export default function EnhancedInvoiceModal({
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2.5 text-slate-300 hover:text-white order-last sm:order-first"
+              className="px-4 py-2.5 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] order-last sm:order-first"
             >
               Cancel
             </button>
@@ -1073,8 +1073,8 @@ export default function EnhancedInvoiceModal({
               className={cn(
                 "flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors",
                 isSending || !formData.clientName
-                  ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                  : "bg-teal-600 text-white hover:bg-teal-500"
+                  ? "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed border border-[var(--ws-border)]"
+                  : "bg-teal-600 text-[var(--text-inverse)] hover:bg-teal-500"
               )}
             >
               <Check className="w-4 h-4" />

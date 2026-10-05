@@ -322,14 +322,14 @@ export default function ResearchEngineWorkspace() {
                 Scrapy Engine
               </span>
             </div>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[var(--ws-text-muted)]">
               Autonomous discovery across public business sources, real-time website crawling, deduplication against CRM, and evidence-backed qualification.
             </p>
           </div>
 
           {jobs.length > 0 && (
             <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-500">Previous Runs:</label>
+              <label className="text-xs font-medium text-[var(--ws-text-muted)]">Previous Runs:</label>
               <select
                 aria-label="Select research run"
                 value={activeJob?.id || ''}
@@ -357,7 +357,7 @@ export default function ResearchEngineWorkspace() {
                 What are you looking for?
               </label>
               <div className="relative">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-[var(--ws-text-muted)]" />
                 <input
                   type="text"
                   value={query}
@@ -374,7 +374,7 @@ export default function ResearchEngineWorkspace() {
                 Location / Territory
               </label>
               <div className="relative">
-                <Building2 className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                <Building2 className="absolute left-3.5 top-3 h-4 w-4 text-[var(--ws-text-muted)]" />
                 <input
                   type="text"
                   value={location}
@@ -403,7 +403,7 @@ export default function ResearchEngineWorkspace() {
               <button
                 type="submit"
                 disabled={submitting || Boolean(isJobRunning)}
-                className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-[var(--ws-text-primary)] shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
               >
                 {submitting ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -534,7 +534,7 @@ export default function ResearchEngineWorkspace() {
                 <h3 className="text-sm font-bold text-slate-900">
                   {activeJob.query} {activeJob.location ? `in ${activeJob.location}` : ''}
                 </h3>
-                <p className="text-xs text-slate-500">{statusPhaseText}</p>
+                <p className="text-xs text-[var(--ws-text-muted)]">{statusPhaseText}</p>
               </div>
             </div>
 
@@ -551,7 +551,7 @@ export default function ResearchEngineWorkspace() {
 
           {/* Progress Bar */}
           <div className="space-y-1.5">
-            <div className="flex justify-between text-xs text-slate-500 font-medium">
+            <div className="flex justify-between text-xs text-[var(--ws-text-muted)] font-medium">
               <span>Overall Progress</span>
               <span>{activeJob.progress}%</span>
             </div>
@@ -567,23 +567,23 @@ export default function ResearchEngineWorkspace() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 border-t border-slate-100 text-center">
             <div className="p-2 rounded-xl bg-slate-50">
               <p className="text-lg font-bold text-slate-800">{activeJob.discovered_count}</p>
-              <p className="text-xs text-slate-500">Discovered</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Discovered</p>
             </div>
             <div className="p-2 rounded-xl bg-slate-50">
               <p className="text-lg font-bold text-blue-600">{activeJob.processed_count}</p>
-              <p className="text-xs text-slate-500">Analyzed</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Analyzed</p>
             </div>
             <div className="p-2 rounded-xl bg-slate-50">
               <p className="text-lg font-bold text-emerald-600">{activeJob.qualified_count}</p>
-              <p className="text-xs text-slate-500">Qualified</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Qualified</p>
             </div>
             <div className="p-2 rounded-xl bg-slate-50">
               <p className="text-lg font-bold text-amber-600">{activeJob.duplicate_count}</p>
-              <p className="text-xs text-slate-500">Duplicates</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Duplicates</p>
             </div>
             <div className="p-2 rounded-xl bg-slate-50">
               <p className="text-lg font-bold text-rose-600">{activeJob.error_count}</p>
-              <p className="text-xs text-slate-500">Failed Sites</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Failed Sites</p>
             </div>
           </div>
         </div>
@@ -594,7 +594,7 @@ export default function ResearchEngineWorkspace() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h3 className="text-base font-bold text-slate-900">Discovered Businesses</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">
               Review and qualify leads before importing into your CRM. Never guess or fabricate emails.
             </p>
           </div>
@@ -603,13 +603,13 @@ export default function ResearchEngineWorkspace() {
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
               <>
-                <span className="text-xs font-medium text-slate-500 mr-1">
+                <span className="text-xs font-medium text-[var(--ws-text-muted)] mr-1">
                   {selectedIds.size} selected
                 </span>
                 <button
                   type="button"
                   onClick={() => handleImportToCrm()}
-                  className="h-9 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+                  className="h-9 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-[var(--text-inverse)] shadow-sm hover:bg-emerald-700 transition"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add Selected to CRM
@@ -629,7 +629,7 @@ export default function ResearchEngineWorkspace() {
                 </>
               ) : (
                 <>
-                  <Square className="h-3.5 w-3.5 text-slate-400" />
+                  <Square className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
                   Select All ({filteredResults.length})
                 </>
               )}
@@ -653,7 +653,7 @@ export default function ResearchEngineWorkspace() {
                 onClick={() => setResultsFilter(tab.id as any)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                   resultsFilter === tab.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-[var(--ws-text-primary)]'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -663,7 +663,7 @@ export default function ResearchEngineWorkspace() {
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
             <input
               type="text"
               value={searchQuery}
@@ -676,22 +676,22 @@ export default function ResearchEngineWorkspace() {
 
         {/* Table View */}
         {loadingResults ? (
-          <div className="py-12 text-center text-slate-400">
+          <div className="py-12 text-center text-[var(--ws-text-muted)]">
             <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
             <p className="text-sm">Loading discovered research leads...</p>
           </div>
         ) : filteredResults.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl">
-            <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+          <div className="py-12 text-center text-[var(--ws-text-muted)] border border-dashed border-slate-200 rounded-xl">
+            <Building2 className="h-8 w-8 mx-auto mb-2 text-[var(--ws-text-secondary)]" />
             <p className="text-sm font-semibold text-slate-700">No leads found in this view</p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-[var(--ws-text-muted)] mt-1">
               Start a new research job above or adjust your filter criteria.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto border border-slate-200 rounded-xl">
             <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="p-3 w-10 text-center">
                     <input
@@ -744,7 +744,7 @@ export default function ResearchEngineWorkspace() {
                               <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : (
-                            <span className="text-[11px] text-slate-400">No public website</span>
+                            <span className="text-[11px] text-[var(--ws-text-muted)]">No public website</span>
                           )}
                         </div>
                       </td>
@@ -758,14 +758,14 @@ export default function ResearchEngineWorkspace() {
                             {lead.public_email}
                           </span>
                         ) : (
-                          <span className="text-[11px] text-slate-400 italic">not published</span>
+                          <span className="text-[11px] text-[var(--ws-text-muted)] italic">not published</span>
                         )}
                       </td>
 
                       <td className="p-3 text-slate-600">
                         {lead.public_phone ? (
                           <span className="inline-flex items-center gap-1 font-mono text-[11px]">
-                            <Phone className="h-3 w-3 text-slate-400" />
+                            <Phone className="h-3 w-3 text-[var(--ws-text-muted)]" />
                             {lead.public_phone}
                           </span>
                         ) : (
@@ -775,7 +775,7 @@ export default function ResearchEngineWorkspace() {
 
                       <td className="p-3">
                         <span className="font-bold text-slate-800">{lead.qualification_score}</span>
-                        <span className="text-[10px] text-slate-400">/100</span>
+                        <span className="text-[10px] text-[var(--ws-text-muted)]">/100</span>
                       </td>
 
                       <td className="p-3">
@@ -786,7 +786,7 @@ export default function ResearchEngineWorkspace() {
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                            <XCircle className="h-3 w-3 text-slate-400" />
+                            <XCircle className="h-3 w-3 text-[var(--ws-text-muted)]" />
                             Unqualified
                           </span>
                         )}
@@ -813,7 +813,7 @@ export default function ResearchEngineWorkspace() {
                           <button
                             type="button"
                             onClick={() => setInspectingLead(lead)}
-                            className="p-1 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+                            className="p-1 rounded-md hover:bg-slate-100 text-[var(--ws-text-muted)] hover:text-slate-800 transition"
                             title="Inspect Evidence & Signals"
                           >
                             <Eye className="h-4 w-4" />
@@ -823,7 +823,7 @@ export default function ResearchEngineWorkspace() {
                             <button
                               type="button"
                               onClick={() => handleImportToCrm([lead.id])}
-                              className="h-7 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
+                              className="h-7 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
                               title="Add to CRM"
                             >
                               <Plus className="h-3 w-3" />
@@ -845,7 +845,7 @@ export default function ResearchEngineWorkspace() {
 
       {/* Lead Detail & Evidence Inspection Modal */}
       {inspectingLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ws-panel)]/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
@@ -865,7 +865,7 @@ export default function ResearchEngineWorkspace() {
               <button
                 type="button"
                 onClick={() => setInspectingLead(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -874,17 +874,17 @@ export default function ResearchEngineWorkspace() {
             {/* Overview & Contact Provenance */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 space-y-1">
-                <span className="text-slate-500 font-medium">Public Email:</span>
+                <span className="text-[var(--ws-text-muted)] font-medium">Public Email:</span>
                 <p className="font-mono font-semibold text-slate-900">
                   {inspectingLead.public_email || 'Not publicly published'}
                 </p>
                 {inspectingLead.contact_page && (
-                  <p className="text-[10px] text-slate-400">Found on: {inspectingLead.contact_page}</p>
+                  <p className="text-[10px] text-[var(--ws-text-muted)]">Found on: {inspectingLead.contact_page}</p>
                 )}
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 space-y-1">
-                <span className="text-slate-500 font-medium">Public Phone:</span>
+                <span className="text-[var(--ws-text-muted)] font-medium">Public Phone:</span>
                 <p className="font-mono font-semibold text-slate-900">
                   {inspectingLead.public_phone || 'Not found'}
                 </p>
@@ -894,7 +894,7 @@ export default function ResearchEngineWorkspace() {
             {/* Description */}
             {inspectingLead.description && (
               <div className="p-3 rounded-xl bg-slate-50 text-xs">
-                <span className="text-slate-500 font-medium block mb-1">Company Description:</span>
+                <span className="text-[var(--ws-text-muted)] font-medium block mb-1">Company Description:</span>
                 <p className="text-slate-800 leading-relaxed">{inspectingLead.description}</p>
               </div>
             )}
@@ -939,15 +939,15 @@ export default function ResearchEngineWorkspace() {
 
             {/* Source URLs & Crawl Provenance */}
             <div className="space-y-1.5 text-xs">
-              <span className="text-slate-500 font-medium block">Source URLs & Evidence:</span>
+              <span className="text-[var(--ws-text-muted)] font-medium block">Source URLs & Evidence:</span>
               <div className="p-3 rounded-xl bg-slate-50 font-mono text-[11px] text-slate-700 break-all space-y-1">
                 {inspectingLead.source_urls.map((url, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    <ArrowRight className="h-3 w-3 text-slate-400 shrink-0" />
+                    <ArrowRight className="h-3 w-3 text-[var(--ws-text-muted)] shrink-0" />
                     <span>{url}</span>
                   </div>
                 ))}
-                <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
+                <div className="text-[10px] text-[var(--ws-text-muted)] pt-1 border-t border-slate-200">
                   Crawled at: {new Date(inspectingLead.crawl_timestamp).toLocaleString()}
                 </div>
               </div>
@@ -970,7 +970,7 @@ export default function ResearchEngineWorkspace() {
                     await handleImportToCrm([inspectingLead.id]);
                     setInspectingLead(null);
                   }}
-                  className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                  className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
                 >
                   Add to CRM
                 </button>

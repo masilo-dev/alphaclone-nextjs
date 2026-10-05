@@ -243,13 +243,13 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
 
   const CATEGORY_COLORS: Record<string, string> = {
     Legal: 'text-violet-300 bg-violet-500/10 border-violet-500/30',
-    Services: 'text-teal-300 bg-teal-500/10 border-teal-500/30',
+    Services: 'text-[var(--brand-blue-300)] bg-teal-500/10 border-teal-500/30',
     Operations: 'text-blue-300 bg-blue-500/10 border-blue-500/30',
     Retainer: 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30',
     Development: 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30',
-    General: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
-    Freelance: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
-    Project: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
+    General: 'text-[var(--success-text,var(--success-500))] bg-emerald-500/10 border-emerald-500/30',
+    Freelance: 'text-[var(--warning-text,var(--warning-500))] bg-amber-500/10 border-amber-500/30',
+    Project: 'text-[var(--success-text,var(--success-500))] bg-emerald-500/10 border-emerald-500/30',
   };
 
   function handleCopy(template: ContractTemplate) {
@@ -265,20 +265,20 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
           <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
             <FileText className="text-violet-400" size={20} /> Contract Templates
           </h3>
-          <p className="type-card-description text-slate-400 mt-0.5">Starter templates — clone into a new draft instantly</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Starter templates — clone into a new draft instantly</p>
         </div>
         <input
           type="text"
           placeholder="Search templates..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="px-3 py-2 bg-slate-900 border border-white/10 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 w-full sm:w-64"
+          className="px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 w-full sm:w-64"
         />
       </div>
 
       <div className="space-y-3">
         {filtered.map(template => {
-          const colorClass = CATEGORY_COLORS[template.category] || 'text-slate-300 bg-white/5 border-white/10';
+          const colorClass = CATEGORY_COLORS[template.category] || 'text-[var(--ws-text-secondary)] bg-white/5 border-white/10';
           const isOpen = expanded === template.id;
           return (
             <div key={template.id} className="ac-workspace-panel rounded-xl overflow-hidden transition-all">
@@ -297,12 +297,12 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                         {template.category}
                       </span>
                     </div>
-                    <p className="type-card-description text-slate-400 mt-0.5 truncate">{template.description}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 truncate">{template.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="type-ui text-slate-500">~{template.estimatedPages}p</span>
-                  {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                  <span className="type-ui text-[var(--ws-text-muted)]">~{template.estimatedPages}p</span>
+                  {isOpen ? <ChevronDown size={16} className="text-[var(--ws-text-muted)]" /> : <ChevronRight size={16} className="text-[var(--ws-text-muted)]" />}
                 </div>
               </div>
 
@@ -310,12 +310,12 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                 <div className="border-t border-white/5">
                   <div className="px-5 py-3 flex flex-wrap gap-2 border-b border-white/5 bg-white/[0.01]">
                     {template.tags.map(tag => (
-                      <span key={tag} className="type-ui font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">{tag}</span>
+                      <span key={tag} className="type-ui font-bold text-[var(--ws-text-muted)] bg-white/5 px-2 py-0.5 rounded-full">{tag}</span>
                     ))}
                     <div className="ml-auto flex gap-2">
                       <button
                         onClick={() => handleCopy(template)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-slate-300 border border-white/10 hover:bg-white/5 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-[var(--ws-text-secondary)] border border-white/10 hover:bg-white/5 transition-all"
                       >
                         <Copy size={12} /> Copy Text
                       </button>
@@ -329,7 +329,7 @@ export function ContractTemplateLibrary({ onUseTemplate }: ContractTemplateLibra
                       )}
                     </div>
                   </div>
-                  <pre className="px-5 py-4 type-caption text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-slate-950/40">
+                  <pre className="px-5 py-4 type-caption text-[var(--ws-text-secondary)] whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto bg-[var(--ws-canvas)]/40">
                     {template.body}
                   </pre>
                 </div>

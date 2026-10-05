@@ -457,14 +457,14 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     if (!isJoined) {
         if (!preJoinAccepted) {
             return (
-                <div className="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 overflow-hidden p-4">
-                    <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl">
-                        <h2 className="text-white text-2xl font-bold mb-2">Ready to join meeting</h2>
-                        <p className="text-slate-400 type-card-description mb-5">
+                <div className="fixed inset-0 bg-[var(--ws-canvas)] flex items-center justify-center z-50 overflow-hidden p-4">
+                    <div className="w-full max-w-xl rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-6 shadow-2xl">
+                        <h2 className="text-[var(--ws-text-primary)] text-2xl font-bold mb-2">Ready to join meeting</h2>
+                        <p className="text-[var(--ws-text-muted)] type-card-description mb-5">
                             Complete a quick device check, then join the full-screen meeting room. You can share your screen once connected.
                         </p>
                         {preJoinError && (
-                            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 type-ui text-red-300">
+                            <div className="mb-4 rounded-lg border border-red-500/30 bg-[var(--error-500)]/10 p-3 type-ui text-[var(--error-text,var(--error-500))]">
                                 {preJoinError}
                             </div>
                         )}
@@ -472,19 +472,19 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                             <button
                                 onClick={() => void handlePreflightCheck()}
                                 disabled={isCheckingDevices}
-                                className="px-4 py-2 rounded-xl border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-colors type-ui font-semibold disabled:opacity-60"
+                                className="px-4 py-2 rounded-xl border border-teal-500/30 text-[var(--brand-blue-300)] hover:bg-teal-500/10 transition-colors type-ui font-semibold disabled:opacity-60"
                             >
                                 {isCheckingDevices ? 'Checking devices...' : 'Check camera and mic'}
                             </button>
                             <button
                                 onClick={() => setPreJoinAccepted(true)}
-                                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition-colors type-ui font-semibold"
+                                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] transition-colors type-ui font-semibold"
                             >
                                 Join now
                             </button>
                             <button
                                 onClick={() => void handleLeave()}
-                                className="px-4 py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors type-ui font-semibold"
+                                className="px-4 py-2 rounded-xl border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] transition-colors type-ui font-semibold"
                             >
                                 Cancel
                             </button>
@@ -494,15 +494,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
             );
         }
         return (
-            <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 overflow-hidden">
+            <div className="fixed inset-0 bg-[var(--ws-canvas)] flex flex-col items-center justify-center z-50 overflow-hidden">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent opacity-50" />
                 <div className="relative text-center">
                     <div className="relative w-24 h-24 mx-auto mb-8">
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
                         <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                     </div>
-                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
-                    <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
+                    <h2 className="text-[var(--ws-text-primary)] text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
+                    <p className="text-[var(--ws-text-muted)] font-medium">Securing your encrypted channel</p>
                 </div>
             </div>
         );
@@ -511,17 +511,17 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     if (isMinimized) {
         const primaryParticipant = remoteParticipants[0] || localParticipant || participants[0];
         return (
-            <div className="fixed bottom-24 right-4 z-[120] w-[360px] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl overflow-hidden backdrop-blur-md">
-                <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-white/10">
-                    <div className="flex items-center gap-2 type-caption font-semibold text-slate-200">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <div className="fixed bottom-24 right-4 z-[120] w-[360px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 shadow-2xl overflow-hidden backdrop-blur-md">
+                <div className="flex items-center justify-between px-3 py-2 bg-[var(--ws-panel)]/90 border-b border-[var(--ws-border)]">
+                    <div className="flex items-center gap-2 type-caption font-semibold text-[var(--ws-text-secondary)]">
+                        <span className="w-2 h-2 rounded-full bg-[var(--error-500)] animate-pulse" />
                         Meeting in background
                     </div>
                     <div className="flex items-center gap-1">
                         {onToggleMinimize && (
                             <button
                                 onClick={onToggleMinimize}
-                                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                                className="p-1.5 rounded-lg text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
                                 title="Restore meeting"
                             >
                                 <Maximize2 className="w-3.5 h-3.5" />
@@ -529,14 +529,14 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                         )}
                         <button
                             onClick={() => void handleLeave()}
-                            className="p-1.5 rounded-lg text-red-300 hover:text-red-200 hover:bg-red-500/20 transition-colors"
+                            className="p-1.5 rounded-lg text-[var(--error-text,var(--error-500))] hover:text-red-200 hover:bg-[var(--error-500)]/20 transition-colors"
                             title="Leave meeting"
                         >
                             <PhoneOff className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
-                <div className="h-[200px] bg-slate-900">
+                <div className="h-[200px] bg-[var(--ws-panel)]">
                     {primaryParticipant ? (
                         <CustomVideoTile
                             participant={primaryParticipant}
@@ -545,7 +545,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                             variant="stage"
                         />
                     ) : (
-                        <div className="h-full w-full flex items-center justify-center type-ui text-slate-400">
+                        <div className="h-full w-full flex items-center justify-center type-ui text-[var(--ws-text-muted)]">
                             Waiting for participants...
                         </div>
                     )}
@@ -555,13 +555,13 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-950 ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay text-[var(--ws-text-primary)] flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Immersive Header */}
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-black/70 to-transparent z-[110] px-3 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl">
-                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="type-caption sm:text-xs font-bold uppercase tracking-widest text-white/90">
+                    <div className="flex items-center gap-2 bg-[var(--ws-panel)]/60 backdrop-blur-md border border-[var(--ws-border)] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[var(--error-500)] shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="type-caption sm:text-xs font-bold uppercase tracking-widest text-[var(--ws-text-primary)]">
                             {formatTime(secondsElapsed)}
                         </span>
                     </div>
@@ -577,10 +577,10 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
                     <div className={`px-2 sm:px-3 py-1 rounded-xl border type-caption sm:text-xs font-bold uppercase tracking-wide ${
                         networkQuality === 'good'
-                            ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
+                            ? 'bg-emerald-500/10 border-emerald-400/30 text-[var(--success-text,var(--success-500))]'
                             : networkQuality === 'poor'
-                                ? 'bg-amber-500/10 border-amber-400/30 text-amber-300'
-                                : 'bg-slate-500/10 border-white/10 text-slate-300'
+                                ? 'bg-amber-500/10 border-amber-400/30 text-[var(--warning-text,var(--warning-500))]'
+                                : 'bg-slate-500/10 border-[var(--ws-border)] text-[var(--ws-text-secondary)]'
                     }`}>
                         {networkQuality === 'good' ? <Wifi className="inline w-3 h-3" /> : <WifiOff className="inline w-3 h-3" />}
                         {!isMobile && (
@@ -590,23 +590,23 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     {(platformState === 'error' || networkQuality === 'poor') && !isMobile && (
                         <button
                             onClick={() => void reconnect()}
-                            className="px-3 py-1 rounded-xl border border-white/10 type-caption text-slate-200 hover:bg-white/10 transition-colors"
+                            className="px-3 py-1 rounded-xl border border-[var(--ws-border)] type-caption text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] transition-colors"
                             title="Reconnect"
                         >
                             <RefreshCw className="inline w-3 h-3 mr-1" />
                             Reconnect
                         </button>
                     )}
-                    <div className={`flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-0.5 sm:p-1 ${isMobile ? 'hidden' : ''}`}>
+                    <div className={`flex bg-[var(--ws-panel)]/40 backdrop-blur-xl rounded-2xl border border-[var(--ws-border)] p-0.5 sm:p-1 ${isMobile ? 'hidden' : ''}`}>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`px-4 py-2 rounded-xl type-caption font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl type-caption font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                         >
                             Grid
                         </button>
                         <button
                             onClick={() => setViewMode('speaker')}
-                            className={`px-4 py-2 rounded-xl type-caption font-bold transition-all ${viewMode === 'speaker' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl type-caption font-bold transition-all ${viewMode === 'speaker' ? 'bg-white text-black shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                         >
                             Speaker
                         </button>
@@ -619,9 +619,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 {viewMode === 'grid' ? (
                     <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
                         {participants.map(p => (
-                            <div key={p.sessionId} className="relative rounded-3xl overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-2xl transition-transform duration-500">
+                            <div key={p.sessionId} className="relative rounded-3xl overflow-hidden bg-[var(--ws-panel)] ring-1 ring-white/5 shadow-2xl transition-transform duration-500">
                                 <CustomVideoTile participant={p} isLocal={p.isLocal} isAdmin={isUserAdmin(user)} variant="stage" />
-                                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[var(--ws-border)]">
                                     {!p.audio.enabled && <MicOff className="w-3.5 h-3.5 text-red-500" />}
                                     <span className="type-caption font-semibold">{p.isLocal ? "You" : p.userName}</span>
                                 </div>
@@ -643,8 +643,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                                 </div>
                             ) : (
                                 <div className="animate-pulse flex flex-col items-center">
-                                    <div className="w-16 h-16 bg-slate-800 rounded-full mb-4" />
-                                    <div className="w-48 h-4 bg-slate-800 rounded-full" />
+                                    <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full mb-4" />
+                                    <div className="w-48 h-4 bg-[var(--ws-surface-secondary)] rounded-full" />
                                 </div>
                             )}
                         </div>
@@ -655,7 +655,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                                 {participants
                                     .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
                                     .map(p => (
-                                        <div key={p.sessionId} className="h-full aspect-video flex-shrink-0 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-xl group cursor-pointer active:scale-95 transition-transform">
+                                        <div key={p.sessionId} className="h-full aspect-video flex-shrink-0 rounded-2xl overflow-hidden ring-1 ring-[var(--ws-border)] shadow-xl group cursor-pointer active:scale-95 transition-transform">
                                             <CustomVideoTile
                                                 participant={p}
                                                 isLocal={p.isLocal}

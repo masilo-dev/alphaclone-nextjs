@@ -63,7 +63,7 @@ function DnsBadge({ label, status }: { label: string; status: 'pass' | 'fail' | 
       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
       : status === 'fail'
       ? 'bg-red-50 text-red-600 border-red-200'
-      : 'bg-slate-50 text-slate-500 border-slate-200';
+      : 'bg-slate-50 text-[var(--ws-text-muted)] border-slate-200';
   return (
     <span
       className={cn(
@@ -90,7 +90,7 @@ function ConnectionDot({ state }: { state: string }) {
     <span
       className={cn(
         'inline-block w-2.5 h-2.5 rounded-full shrink-0',
-        isConnected ? 'bg-emerald-500' : isError ? 'bg-red-500' : 'bg-amber-400'
+        isConnected ? 'bg-emerald-500' : isError ? 'bg-[var(--error-500)]' : 'bg-[var(--warning-500)]'
       )}
       title={state}
     />
@@ -150,7 +150,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
         <button
           type="button"
           onClick={onCancel}
-          className="text-slate-400 hover:text-slate-600 transition-colors"
+          className="text-[var(--ws-text-muted)] hover:text-slate-600 transition-colors"
           aria-label="Cancel"
         >
           <X className="w-4 h-4" />
@@ -165,7 +165,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
             Email address
           </label>
           <Input
@@ -179,7 +179,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
         </div>
 
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
             Provider
           </label>
           <select
@@ -196,7 +196,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
         </div>
 
         <div className="space-y-1">
-          <label className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <label className="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
             Daily send limit
           </label>
           <Input
@@ -214,7 +214,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
         <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={saving} className="bg-[#356AF4] hover:bg-[#2a5cd8] text-white">
+        <Button type="submit" size="sm" disabled={saving} className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)]">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
           Add Mailbox
         </Button>
@@ -240,9 +240,9 @@ function MailboxCard({ mailbox, onCheckDns, checkingDns }: MailboxCardProps) {
 
   const progressColor =
     pct >= 90
-      ? 'bg-red-500'
+      ? 'bg-[var(--error-500)]'
       : pct >= 70
-      ? 'bg-amber-400'
+      ? 'bg-[var(--warning-500)]'
       : 'bg-emerald-500';
 
   return (
@@ -253,7 +253,7 @@ function MailboxCard({ mailbox, onCheckDns, checkingDns }: MailboxCardProps) {
           <ConnectionDot state={mailbox.connection_state} />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate">{mailbox.email}</p>
-            <p className="text-[11px] text-slate-500 capitalize mt-0.5">
+            <p className="text-[11px] text-[var(--ws-text-muted)] capitalize mt-0.5">
               {mailbox.connection_state}
             </p>
           </div>
@@ -265,7 +265,7 @@ function MailboxCard({ mailbox, onCheckDns, checkingDns }: MailboxCardProps) {
 
       {/* Daily limit progress */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-[var(--ws-text-muted)]">
           <span className="font-medium">Daily sends</span>
           <span className="tabular-nums font-semibold text-slate-700">
             {used} / {limit}
@@ -282,8 +282,8 @@ function MailboxCard({ mailbox, onCheckDns, checkingDns }: MailboxCardProps) {
       {/* DNS Health */}
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5">
-          <Shield className="w-3 h-3 text-slate-400" />
-          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+          <Shield className="w-3 h-3 text-[var(--ws-text-muted)]" />
+          <span className="text-[10px] font-bold uppercase tracking-wide text-[var(--ws-text-muted)]">
             DNS Health
           </span>
         </div>
@@ -422,8 +422,8 @@ export default function MailboxHealthPanel() {
   if (!currentTenant?.id) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-8 text-center">
-        <Mail className="mx-auto mb-3 w-8 h-8 text-slate-300" />
-        <p className="text-sm font-medium text-slate-500">Select a workspace to view mailboxes</p>
+        <Mail className="mx-auto mb-3 w-8 h-8 text-[var(--ws-text-secondary)]" />
+        <p className="text-sm font-medium text-[var(--ws-text-muted)]">Select a workspace to view mailboxes</p>
       </div>
     );
   }
@@ -434,7 +434,7 @@ export default function MailboxHealthPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-slate-800">Mailbox Health</h2>
-          <p className="text-[12px] text-slate-500 mt-0.5">
+          <p className="text-[12px] text-[var(--ws-text-muted)] mt-0.5">
             Monitor sending limits, DNS records, and connection status for all mailboxes.
           </p>
         </div>
@@ -445,7 +445,7 @@ export default function MailboxHealthPanel() {
           </Button>
           <Button
             size="sm"
-            className="bg-[#356AF4] hover:bg-[#2a5cd8] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => setShowAddForm(true)}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -496,14 +496,14 @@ export default function MailboxHealthPanel() {
       {/* Mailbox grid */}
       {!loading && !error && mailboxes.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-10 text-center">
-          <Mail className="mx-auto mb-3 w-9 h-9 text-slate-300" />
+          <Mail className="mx-auto mb-3 w-9 h-9 text-[var(--ws-text-secondary)]" />
           <p className="text-sm font-semibold text-slate-600">No mailboxes configured</p>
-          <p className="text-xs text-slate-400 mt-1 mb-4">
+          <p className="text-xs text-[var(--ws-text-muted)] mt-1 mb-4">
             Add a sending mailbox to start dispatching outbound campaigns.
           </p>
           <Button
             size="sm"
-            className="bg-[#356AF4] hover:bg-[#2a5cd8] text-white"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)]"
             onClick={() => setShowAddForm(true)}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />

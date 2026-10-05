@@ -87,7 +87,7 @@ export default function BillableExpensesPicker({
   if (!clientId) return null;
   if (loading) {
     return (
-      <div className="type-caption text-slate-500 flex items-center gap-2 py-2">
+      <div className="type-caption text-[var(--ws-text-muted)] flex items-center gap-2 py-2">
         <Loader2 className="w-3 h-3 animate-spin" /> Loading billable expenses...
       </div>
     );
@@ -106,7 +106,7 @@ export default function BillableExpensesPicker({
       <ul className="space-y-2 max-h-40 overflow-y-auto">
         {expenses.map((exp) => (
           <li key={exp.id}>
-            <label className="flex items-start gap-3 cursor-pointer type-label text-slate-300">
+            <label className="flex items-start gap-3 cursor-pointer type-label text-[var(--ws-text-secondary)]">
               <input
                 type="checkbox"
                 checked={selected.has(exp.id)}
@@ -115,7 +115,7 @@ export default function BillableExpensesPicker({
               />
               <span className="flex-1">
                 {exp.description}
-                <span className="block type-caption text-slate-500">
+                <span className="block type-caption text-[var(--ws-text-muted)]">
                   {exp.date} · ${exp.total.toFixed(2)}
                 </span>
               </span>
@@ -128,7 +128,7 @@ export default function BillableExpensesPicker({
           type="button"
           disabled={attaching}
           onClick={attach}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-600/80 hover:bg-amber-600 text-white type-caption font-bold uppercase disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-600/80 hover:bg-amber-600 text-[var(--ws-text-primary)] type-caption font-bold uppercase disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
           {invoiceId

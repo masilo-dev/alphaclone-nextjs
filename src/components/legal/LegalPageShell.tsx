@@ -30,17 +30,17 @@ export function LegalPageShell({
               <div>
                 <p className="type-caption uppercase tracking-caps text-teal-400">{badge ?? 'Legal'}</p>
                 <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
-                <p className="mt-3 type-card-description leading-6 text-slate-400">{intro}</p>
+                <p className="mt-3 type-card-description leading-6 text-[var(--ws-text-muted)]">{intro}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-                <p className="type-caption font-semibold uppercase tracking-caps text-slate-500">On this page</p>
+              <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4">
+                <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">On this page</p>
                 <ul className="mt-3 space-y-2">
                   {sections.map((section) => (
                     <li key={section.id}>
                       <a
                         href={`#${section.id}`}
-                        className="type-ui text-slate-300 transition-colors hover:text-teal-300"
+                        className="type-ui text-[var(--ws-text-secondary)] transition-colors hover:text-[var(--brand-blue-300)]"
                       >
                         {section.title}
                       </a>
@@ -52,20 +52,20 @@ export function LegalPageShell({
           </aside>
 
           <div>
-            <div className="border-b border-slate-800 pb-6 lg:hidden">
+            <div className="border-b border-[var(--ws-border)] pb-6 lg:hidden">
               <p className="type-caption uppercase tracking-caps text-teal-400">{badge ?? 'Legal'}</p>
               <h1 className="mt-2 text-3xl font-semibold text-white">{title}</h1>
-              <p className="mt-3 type-card-description leading-6 text-slate-400">{intro}</p>
+              <p className="mt-3 type-card-description leading-6 text-[var(--ws-text-muted)]">{intro}</p>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 type-caption text-slate-500">
-              <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1">
+            <div className="mt-6 flex flex-wrap items-center gap-3 type-caption text-[var(--ws-text-muted)]">
+              <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-1">
                 Last updated {lastUpdated}
               </span>
-              <span className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1">
+              <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-1">
                 Alphaclone Systems, LLC
               </span>
-              <Link href="/legal/data-request" className="rounded-full border border-slate-800 bg-slate-900 px-3 py-1 text-slate-300 hover:text-teal-300">
+              <Link href="/legal/data-request" className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-1 text-[var(--ws-text-secondary)] hover:text-[var(--brand-blue-300)]">
                 Data rights
               </Link>
             </div>

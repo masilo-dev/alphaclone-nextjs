@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
           subject: `We received your request: ${payload.title}`,
           isPlatformNotification: true,
           html: `
-            <div style="font-family:sans-serif;padding:24px;color:#333;max-width:560px;">
-              <h2 style="color:#0d9488;margin:0 0 12px;">Request received</h2>
+            <div style="font-family:sans-serif;padding:24px;color:var(--text-primary);max-width:560px;">
+              <h2 style="color:var(--brand-blue-600);margin:0 0 12px;">Request received</h2>
               <p>Thank you for contacting us. We have logged your support request and will respond soon.</p>
               <p><strong>${payload.title}</strong></p>
               ${payload.description ? `<p style="color:#555;">${payload.description.slice(0, 1000)}</p>` : ''}
@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
           subject: `Update on your request: ${payload.title}`,
           isPlatformNotification: true,
           html: `
-            <div style="font-family:sans-serif;padding:24px;color:#333;max-width:560px;">
-              <h2 style="color:#0d9488;margin:0 0 12px;">Ticket update</h2>
+            <div style="font-family:sans-serif;padding:24px;color:var(--text-primary);max-width:560px;">
+              <h2 style="color:var(--brand-blue-600);margin:0 0 12px;">Ticket update</h2>
               <p>Your support request <strong>${payload.title}</strong> is now <strong>${payload.status.replace(/_/g, ' ')}</strong>.</p>
             </div>
           `,
@@ -113,10 +113,10 @@ export async function POST(req: NextRequest) {
           subject: `Reply to your request: ${payload.title}`,
           isPlatformNotification: true,
           html: `
-            <div style="font-family:sans-serif;padding:24px;color:#333;max-width:560px;">
-              <h2 style="color:#0d9488;margin:0 0 12px;">New reply</h2>
+            <div style="font-family:sans-serif;padding:24px;color:var(--text-primary);max-width:560px;">
+              <h2 style="color:var(--brand-blue-600);margin:0 0 12px;">New reply</h2>
               <p>Our team replied to <strong>${payload.title}</strong>:</p>
-              <blockquote style="border-left:3px solid #0d9488;padding-left:12px;color:#555;margin:16px 0;">
+              <blockquote style="border-left:3px solid var(--brand-blue-600);padding-left:12px;color:#555;margin:16px 0;">
                 ${payload.commentPreview.slice(0, 2000)}
               </blockquote>
             </div>

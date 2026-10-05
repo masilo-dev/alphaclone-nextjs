@@ -1813,9 +1813,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1828,9 +1828,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1843,9 +1843,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1858,9 +1858,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1873,9 +1873,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1888,9 +1888,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1903,9 +1903,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1918,9 +1918,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1933,9 +1933,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -1948,9 +1948,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <ShieldCheck className="w-12 h-12 text-[var(--ws-text-muted)] mb-4" />
             <h2 className="text-lg font-bold text-white">Access restricted</h2>
-            <p className="text-slate-400 type-card-description mt-2">
+            <p className="text-[var(--ws-text-muted)] type-card-description mt-2">
               Platform administrator access required.
             </p>
           </div>
@@ -2277,7 +2277,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case "/dashboard/contracts/manage":
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <div className="w-full h-full bg-slate-950 p-2 sm:p-4 rounded-3xl overflow-y-auto">
+            <div className="w-full h-full bg-[var(--ws-canvas)] p-2 sm:p-4 rounded-3xl overflow-y-auto">
               <ContractDashboard user={user} />
             </div>
           </React.Suspense>
@@ -2365,9 +2365,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             <h2 className="text-lg font-bold text-white mb-2">
               This section is not available
             </h2>
-            <p className="type-card-description text-slate-400 max-w-md mb-6">
+            <p className="type-card-description text-[var(--ws-text-muted)] max-w-md mb-6">
               The page{" "}
-              <span className="text-slate-300 font-mono type-caption">
+              <span className="text-[var(--ws-text-secondary)] font-mono type-caption">
                 {activeTab}
               </span>{" "}
               could not be loaded for your account role.
@@ -2442,17 +2442,17 @@ const Dashboard: React.FC<DashboardProps> = ({
         title="Secure Checkout"
       >
         <div className="space-y-6">
-          <div className="text-center p-4 bg-slate-950 rounded-lg border border-slate-800">
-            <p className="text-slate-400 type-card-description">Total Amount Due</p>
+          <div className="text-center p-4 bg-[var(--ws-canvas)] rounded-lg border border-[var(--ws-border)]">
+            <p className="text-[var(--ws-text-muted)] type-card-description">Total Amount Due</p>
             <div className="text-2xl sm:text-3xl font-bold text-white">
               ${selectedInvoice?.amount.toLocaleString()}
             </div>
-            <p className="type-card-description text-slate-500 mt-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
               Invoice #{selectedInvoice?.id.toUpperCase()}
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 type-ui text-slate-300">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4 type-ui text-[var(--ws-text-secondary)]">
             Card details are collected on Stripe&apos;s hosted checkout and
             never pass through AlphaClone.
           </div>
@@ -2467,7 +2467,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               : `Continue to pay $${selectedInvoice?.amount.toLocaleString()}`}
           </Button>
 
-          <p className="text-center type-card-description text-slate-500 flex items-center justify-center gap-1">
+          <p className="text-center type-card-description text-[var(--ws-text-muted)] flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Payments are processed securely
             by Stripe Checkout
           </p>
@@ -2497,7 +2497,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {isArchitecting ? (
           <div className="py-12 flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-slate-400">
+            <p className="text-[var(--ws-text-muted)]">
               AI is designing system architecture...
             </p>
           </div>
@@ -2507,7 +2507,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h4 className="text-teal-400 font-bold mb-2 flex items-center gap-2">
                 <Layers className="w-4 h-4" /> Tech Stack
               </h4>
-              <div className="bg-slate-950 p-3 rounded-lg type-ui text-slate-300">
+              <div className="bg-[var(--ws-canvas)] p-3 rounded-lg type-ui text-[var(--ws-text-secondary)]">
                 {architectData.techStack}
               </div>
             </div>
@@ -2518,7 +2518,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </h4>
               <div className="relative">
                 <textarea
-                  className="w-full h-32 bg-slate-950 text-slate-400 type-caption p-3 rounded-lg font-mono"
+                  className="w-full h-32 bg-[var(--ws-canvas)] text-[var(--ws-text-muted)] type-caption p-3 rounded-lg font-mono"
                   readOnly
                   value={architectData.developmentPrompt}
                 />
@@ -2528,7 +2528,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       architectData.developmentPrompt,
                     )
                   }
-                  className="absolute top-2 right-2 p-1 bg-slate-800 rounded hover:bg-slate-700"
+                  className="absolute top-2 right-2 p-1 bg-[var(--ws-surface-secondary)] rounded hover:bg-[var(--ws-surface-tertiary)]"
                 >
                   <Copy className="w-3 h-3 text-white" />
                 </button>
@@ -2539,7 +2539,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h4 className="text-indigo-400 font-bold mb-2 flex items-center gap-2">
                 <Cpu className="w-4 h-4" /> Mermaid.js Architecture
               </h4>
-              <pre className="bg-slate-950 p-3 rounded-lg type-caption text-green-400 overflow-x-auto font-mono">
+              <pre className="bg-[var(--ws-canvas)] p-3 rounded-lg type-caption text-green-400 overflow-x-auto font-mono">
                 {architectData.architectureDiagram}
               </pre>
             </div>
@@ -2571,7 +2571,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="type-label text-slate-400">Project Name</label>
+            <label className="type-label text-[var(--ws-text-muted)]">Project Name</label>
             <Input
               value={editForm.name || ""}
               onChange={(e) =>
@@ -2581,9 +2581,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="type-caption text-slate-400">Status</label>
+            <label className="type-caption text-[var(--ws-text-muted)]">Status</label>
             <select
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
               value={editForm.status || "Pending"}
               onChange={(e) =>
                 setEditForm({
@@ -2600,7 +2600,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="type-label text-slate-400 flex justify-between">
+            <label className="type-label text-[var(--ws-text-muted)] flex justify-between">
               <span>Progress</span>
               <span className="text-teal-400 font-bold">
                 {editForm.progress}%
@@ -2619,7 +2619,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="type-label text-slate-400">Due Date</label>
+            <label className="type-label text-[var(--ws-text-muted)]">Due Date</label>
             <Input
               type="date"
               value={editForm.dueDate || ""}
@@ -2718,7 +2718,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {activeMeetingCallId && (
                   <button
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
-                    className="ac-pwa-desktop-only hidden xl:inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full type-caption font-semibold hover:bg-teal-500/20 transition-colors"
+                    className="ac-pwa-desktop-only hidden xl:inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-[var(--brand-blue-300)] px-3 py-1.5 rounded-full type-caption font-semibold hover:bg-teal-500/20 transition-colors"
                     title="Return to active meeting"
                   >
                     <Video className="w-3.5 h-3.5" />
@@ -2726,7 +2726,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
-                  <div className="ac-pwa-desktop-only hidden xl:flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full type-caption font-semibold animate-pulse border border-teal-500/30">
+                  <div className="ac-pwa-desktop-only hidden xl:flex items-center gap-2 bg-[var(--ws-surface-secondary)]/50 text-teal-400 px-3 py-1.5 rounded-full type-caption font-semibold animate-pulse border border-teal-500/30">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span className="hidden sm:inline">
                       {activeBgTasksCount} Task(s)
@@ -2746,7 +2746,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => navigateToTab('/dashboard/bonnie')}
-                  className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-teal-400/25 bg-teal-500/10 text-teal-300 active:scale-95 md:hidden"
+                  className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-teal-400/25 bg-teal-500/10 text-[var(--brand-blue-300)] active:scale-95 md:hidden"
                   aria-label={t('Open Bonnie AI')}
                 >
                   <Bot className="h-5 w-5" aria-hidden="true" />
@@ -2845,9 +2845,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-slate-950 border-l border-white/10 z-[55] flex flex-col shadow-2xl"
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[500px] bg-[var(--ws-canvas)] border-l border-white/10 z-[55] flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-slate-900/80 backdrop-blur-sm shrink-0">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[var(--ws-panel)]/80 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-violet-500/10 rounded-xl">
                     <Clock className="w-4 h-4 text-violet-400" />
@@ -2856,14 +2856,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <h2 className="type-ui font-semibold text-white">
                       Task Scheduler
                     </h2>
-                    <p className="type-card-description text-slate-500">
+                    <p className="type-card-description text-[var(--ws-text-muted)]">
                       Runs automatically on your schedule
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setTaskSchedulerOpen(false)}
-                  className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-colors"
+                  className="p-2 hover:bg-white/5 rounded-xl text-[var(--ws-text-muted)] hover:text-white transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2871,7 +2871,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                 <React.Suspense
                   fallback={
-                    <div className="flex items-center justify-center h-32 text-slate-500 type-ui">
+                    <div className="flex items-center justify-center h-32 text-[var(--ws-text-muted)] type-ui">
                       Loading...
                     </div>
                   }

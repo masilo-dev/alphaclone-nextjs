@@ -90,7 +90,7 @@ export default function LeadFinderStreetViews({ lead, allLeads = [] }: Props) {
       >
         <VStack align="start" spacing={0} minW={0}>
           <HStack spacing={2}>
-            <Eye size={14} color="#2DD4BF" />
+            <Eye size={14} color="var(--brand-blue-400)" />
             <Text fontSize="sm" fontWeight="semibold" color="white" noOfLines={1}>
               Free location views
             </Text>
@@ -136,7 +136,7 @@ export default function LeadFinderStreetViews({ lead, allLeads = [] }: Props) {
 
       <Box
         h={{ base: '180px', md: '220px' }}
-        bgImage="radial-gradient(circle at 30% 20%, rgba(45,212,191,0.16), transparent 55%), linear-gradient(160deg,#0f172a,#020617)"
+        bgImage="radial-gradient(circle at 30% 20%, rgba(45,212,191,0.16), transparent 55%), linear-gradient(160deg,var(--ws-canvas),var(--brand-violet-950))"
         display="flex"
         alignItems="center"
         justifyContent="center"

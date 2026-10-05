@@ -2,7 +2,7 @@ import React from 'react';
 
 // Base Skeleton Component
 export const Skeleton: React.FC<{ className?: string; style?: React.CSSProperties }> = ({ className = '', style }) => (
-    <div className={`animate-pulse bg-slate-800 rounded ${className}`} style={style} />
+    <div className={`animate-pulse bg-[var(--ws-surface-secondary)] rounded ${className}`} style={style} />
 );
 
 // Table Skeleton (already exists, enhancing it)
@@ -15,7 +15,7 @@ export const TableSkeleton: React.FC<{ rows?: number; columns?: number }> = ({
     return (
     <div className="space-y-3">
         {/* Header */}
-        <div className="flex gap-4 pb-3 border-b border-slate-800">
+        <div className="flex gap-4 pb-3 border-b border-[var(--ws-border)]">
             {Array.from({ length: safeColumns }).map((_, i) => (
                 <Skeleton key={i} className="h-4 flex-1" />
             ))}
@@ -38,7 +38,7 @@ export const CardSkeleton: React.FC<{ count?: number }> = ({ count = 1 }) => {
     return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.from({ length: safeCount }).map((_, i) => (
-            <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+            <div key={i} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
                 <div className="flex items-start justify-between">
                     <Skeleton className="h-6 w-32" />
                     <Skeleton className="h-8 w-8 rounded-lg" />
@@ -61,7 +61,7 @@ export const StatsCardSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) =
     return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: safeCount }).map((_, i) => (
-            <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-3">
+            <div key={i} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 space-y-3">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-8 w-8 rounded-lg" />
@@ -80,7 +80,7 @@ export const ChartSkeleton: React.FC<{ height?: string }> = ({ height = 'h-64' }
     const barHeights = ['65%', '85%', '55%', '95%', '75%', '60%', '80%'];
 
     return (
-        <div className={`bg-slate-900 border border-slate-800 rounded-xl p-6 ${height}`}>
+        <div className={`bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-6 ${height}`}>
             <div className="space-y-4 h-full">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-6 w-32" />
@@ -106,7 +106,7 @@ export const ListItemSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) =>
     return (
     <div className="space-y-3">
         {Array.from({ length: safeCount }).map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 bg-slate-900 border border-slate-800 rounded-xl">
+            <div key={i} className="flex items-center gap-4 p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl">
                 <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />

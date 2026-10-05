@@ -95,8 +95,8 @@ export default function PlanAndUsageView({
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 sm:p-6">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl text-white">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl text-[var(--ws-text-primary)]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--ws-border)] pb-6">
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold">{formattedPlanName} Plan</h2>
@@ -111,13 +111,13 @@ export default function PlanAndUsageView({
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     : subscriptionStatus === 'trial'
                     ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
-                    : 'bg-slate-800 text-slate-400'
+                    : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                 }`}
               >
                 {subscriptionStatus}
               </span>
             </div>
-            <p className="mt-1 type-card-description text-slate-400">
+            <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
               {unlimited
                 ? 'Unlimited plan — usage is tracked for analytics only, never capped by AlphaClone.'
                 : 'Daily limits reset at 00:00 UTC · Free = 50/day · Starter and Pro = 300/day per category'}
@@ -128,18 +128,18 @@ export default function PlanAndUsageView({
               <button
                 onClick={handleOpenPortal}
                 disabled={portalLoading}
-                className="px-4 py-2 type-ui font-medium bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition-all disabled:opacity-50"
+                className="px-4 py-2 type-ui font-medium bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-xl border border-[var(--ws-border)] transition-all disabled:opacity-50"
               >
                 {portalLoading ? 'Opening Portal...' : 'Manage Billing'}
               </button>
             )}
-            <Link href="/pricing" className="px-4 py-2 type-ui font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg transition-all">
+            <Link href="/pricing" className="px-4 py-2 type-ui font-medium bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-xl shadow-lg transition-all">
               Compare Plans
             </Link>
           </div>
         </div>
         {currentPeriodEnd && (
-          <div className="mt-4 type-caption text-slate-400 flex items-center justify-between">
+          <div className="mt-4 type-caption text-[var(--ws-text-muted)] flex items-center justify-between">
             <span>
               {cancelAtPeriodEnd ? 'Cancels on:' : 'Renews on:'}{' '}
               {new Date(currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -149,18 +149,18 @@ export default function PlanAndUsageView({
         )}
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xl font-bold text-white">Daily Usage</h3>
-            <p className="type-card-description text-slate-400 mt-0.5">
+            <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Daily Usage</h3>
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
               {unlimited ? 'Analytics only — no subscription ceiling' : 'Per action category · UTC daily window'}
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-slate-500 type-ui">Loading usage metrics...</div>
+          <div className="py-12 text-center text-[var(--ws-text-muted)] type-ui">Loading usage metrics...</div>
         ) : usageSummary ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {metricsToShow.map((key) => {
@@ -175,9 +175,9 @@ export default function PlanAndUsageView({
               const isMaxed = !isMetricUnlimited && percent >= 100;
 
               return (
-                <div key={key} className="bg-slate-950/60 border border-slate-800 rounded-xl p-4">
+                <div key={key} className="bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="type-ui font-semibold text-slate-200 flex items-center gap-2">
+                    <span className="type-ui font-semibold text-[var(--ws-text-secondary)] flex items-center gap-2">
                       <span>{meta.icon}</span>
                       <span>{meta.label}</span>
                     </span>
@@ -189,14 +189,14 @@ export default function PlanAndUsageView({
                           ? 'bg-rose-500/20 text-rose-400'
                           : isNearLimit
                           ? 'bg-amber-500/20 text-amber-400'
-                          : 'bg-slate-800 text-slate-400'
+                          : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                       }`}
                     >
                       {isMetricUnlimited ? 'Unlimited' : `${metric.current} / ${metric.limit}`}
                     </span>
                   </div>
                   {!isMetricUnlimited && (
-                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden mt-3">
+                    <div className="w-full bg-[var(--ws-surface-secondary)] rounded-full h-2 overflow-hidden mt-3">
                       <div
                         className={`h-full transition-all duration-300 ${
                           isMaxed ? 'bg-rose-500' : isNearLimit ? 'bg-amber-500' : 'bg-teal-500'
@@ -205,7 +205,7 @@ export default function PlanAndUsageView({
                       />
                     </div>
                   )}
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 type-caption text-slate-500">
+                  <div className="mt-4 pt-3 border-t border-[var(--ws-border)]/80 type-caption text-[var(--ws-text-muted)]">
                     {isMetricUnlimited
                       ? `${metric.current.toLocaleString()} used today (analytics only)`
                       : `${metric.remaining} remaining today`}
@@ -215,12 +215,12 @@ export default function PlanAndUsageView({
             })}
           </div>
         ) : (
-          <div className="py-8 text-center text-slate-500 type-ui">Failed to load usage data.</div>
+          <div className="py-8 text-center text-[var(--ws-text-muted)] type-ui">Failed to load usage data.</div>
         )}
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h3 className="text-xl font-bold text-white mb-6">Available Plans</h3>
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl">
+        <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-6">Available Plans</h3>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PUBLIC_PRICING_PLANS.map((plan) => {
             const isCurrent =
@@ -232,45 +232,45 @@ export default function PlanAndUsageView({
             return (
               <div
                 key={plan.id}
-                className={`bg-slate-950 border rounded-xl p-5 flex flex-col justify-between ${
-                  isCurrent ? 'border-teal-500 ring-1 ring-teal-500/50' : 'border-slate-800'
+                className={`bg-[var(--ws-canvas)] border rounded-xl p-5 flex flex-col justify-between ${
+                  isCurrent ? 'border-teal-500 ring-1 ring-teal-500/50' : 'border-[var(--ws-border)]'
                 }`}
               >
                 <div>
                   <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-lg text-white">{plan.name}</h4>
+                    <h4 className="font-bold text-lg text-[var(--ws-text-primary)]">{plan.name}</h4>
                     {isCurrent && (
                       <span className="type-ui font-bold px-2 py-0.5 bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
                         CURRENT
                       </span>
                     )}
                   </div>
-                  <p className="text-2xl font-extrabold text-white mt-2">
+                  <p className="text-2xl font-extrabold text-[var(--ws-text-primary)] mt-2">
                     {plan.id === 'premium' ? (
                       <>Unlimited</>
                     ) : (
                       <>
                         ${plan.price}
-                        <span className="type-caption font-normal text-slate-400">/mo</span>
+                        <span className="type-caption font-normal text-[var(--ws-text-muted)]">/mo</span>
                       </>
                     )}
                   </p>
-                  <p className="type-card-description text-slate-400 mt-2 line-clamp-3">{plan.tagline}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)] mt-2 line-clamp-3">{plan.tagline}</p>
                 </div>
                 <div className="mt-6">
                   {isCurrent ? (
-                    <button disabled className="w-full py-2 type-ui font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
+                    <button disabled className="w-full py-2 type-ui font-semibold bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-lg cursor-not-allowed">
                       Active Plan
                     </button>
                   ) : plan.id === 'free' ? (
-                    <button disabled className="w-full py-2 type-ui font-semibold bg-slate-800 text-slate-400 rounded-lg cursor-not-allowed">
+                    <button disabled className="w-full py-2 type-ui font-semibold bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-lg cursor-not-allowed">
                       Free Tier
                     </button>
                   ) : (
                     <button
                       onClick={() => handleUpgrade(plan.id)}
                       disabled={checkoutLoading === plan.id}
-                      className="w-full py-2 type-caption font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all shadow-md disabled:opacity-50"
+                      className="w-full py-2 type-caption font-semibold bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-lg transition-all shadow-md disabled:opacity-50"
                     >
                       {checkoutLoading === plan.id ? 'Loading...' : `Upgrade to ${plan.name}`}
                     </button>

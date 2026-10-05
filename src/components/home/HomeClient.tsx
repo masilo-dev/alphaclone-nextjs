@@ -78,9 +78,9 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
           duration: 8000,
           position: 'top-center',
           style: {
-            background: '#0f172a',
-            color: '#fff',
-            border: '1px solid #0d9488',
+            background: 'var(--ws-canvas)',
+            color: 'var(--color-white)',
+            border: '1px solid var(--brand-blue-600)',
             padding: '16px',
             maxWidth: '400px'
           }

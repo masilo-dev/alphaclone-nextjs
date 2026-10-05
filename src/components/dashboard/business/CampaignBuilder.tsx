@@ -27,12 +27,12 @@ import {
 } from '@/lib/email/emailProviderOptions';
 
 const statusColors: Record<string, string> = {
-    draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+    draft: 'bg-slate-500/10 text-[var(--ws-text-muted)] border-slate-500/20',
     scheduled: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     queued: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
     sending: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     sent: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    paused: 'bg-slate-600/10 text-slate-500 border-slate-600/20',
+    paused: 'bg-slate-600/10 text-[var(--ws-text-muted)] border-slate-600/20',
     cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
@@ -1214,8 +1214,8 @@ Voice & rules:
     if (loading) {
         return (
             <BonnieModulePageShell showBonnieDock={false}>
-                <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
-                    <div className="flex flex-1 items-center justify-center p-8 text-slate-400 text-center">
+                <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+                    <div className="flex flex-1 items-center justify-center p-8 text-[var(--ws-text-muted)] text-center">
                         <div>
                             <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" />
                             Loading Campaigns...
@@ -1228,15 +1228,15 @@ Voice & rules:
 
     return (
         <BonnieModulePageShell showBonnieDock={false}>
-        <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+        <div className="flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-[var(--ws-border)] overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
 
             {recoveryBanner.length > 0 && (
                 <div className="border-b border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
-                    <p className="type-caption font-bold uppercase tracking-wider text-emerald-300">Revenue recovery queue</p>
-                    <p className="mt-1 type-card-description text-slate-300">Bonnie surfaced overdue invoices and stale quotes. Review the draft below, then approve send when ready.</p>
+                    <p className="type-caption font-bold uppercase tracking-wider text-[var(--success-text,var(--success-500))]">Revenue recovery queue</p>
+                    <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">Bonnie surfaced overdue invoices and stale quotes. Review the draft below, then approve send when ready.</p>
                     <ul className="mt-2 space-y-1">
                         {recoveryBanner.map((item, idx) => (
-                            <li key={`${item.title}-${idx}`} className="type-caption text-slate-400">
+                            <li key={`${item.title}-${idx}`} className="type-caption text-[var(--ws-text-muted)]">
                                 {item.title || 'Recovery action'} — {item.reason}
                             </li>
                         ))}
@@ -1245,41 +1245,41 @@ Voice & rules:
             )}
             
             {/* Header bar */}
-            <div className="h-16 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between shrink-0">
+            <div className="h-16 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                     {viewMode !== 'list' ? (
                         <button 
                             onClick={() => setViewMode('list')}
-                            className="p-1.5 hover:bg-slate-800 rounded-xl text-slate-400"
+                            className="p-1.5 hover:bg-[var(--ws-surface-secondary)] rounded-xl text-[var(--ws-text-muted)]"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                     ) : (
                         <div className="w-9 h-9 bg-teal-600 rounded-xl flex items-center justify-center">
-                            <Mail size={18} className="text-white" />
+                            <Mail size={18} className="text-[var(--text-inverse)]" />
                         </div>
                     )}
                     <div>
-                        <h1 className="type-caption font-black tracking-widest text-white uppercase">Campaigns</h1>
-                        <p className="type-caption text-slate-500 font-bold uppercase">Plain-English campaign builder</p>
+                        <h1 className="type-caption font-black tracking-widest text-[var(--ws-text-primary)] uppercase">Campaigns</h1>
+                        <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Plain-English campaign builder</p>
                     </div>
                 </div>
                 {viewMode === 'list' && (
                     <button 
                         onClick={startNewCompose} 
-                        className="px-4 py-2 bg-teal-600 text-white rounded-xl type-caption font-black uppercase tracking-wider"
+                        className="px-4 py-2 bg-teal-600 text-[var(--text-inverse)] rounded-xl type-caption font-black uppercase tracking-wider"
                     >
                         Create Campaign
                     </button>
                 )}
                 {viewMode === 'compose' && (
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center rounded-xl border border-white/5 bg-slate-950 p-1">
+                        <div className="flex items-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-1">
                             {(['simple', 'advanced'] as const).map((mode) => (
                                 <button
                                     key={mode}
                                     onClick={() => setCampaignMode(mode)}
-                                    className={`px-3 py-1.5 rounded-lg type-caption font-black uppercase tracking-wider transition-all ${campaignMode === mode ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                                    className={`px-3 py-1.5 rounded-lg type-caption font-black uppercase tracking-wider transition-all ${campaignMode === mode ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                                 >
                                     {mode}
                                 </button>
@@ -1288,7 +1288,7 @@ Voice & rules:
                         <button 
                             onClick={() => setShowCopilot(prev => !prev)}
                             className={`px-3 py-1.5 rounded-xl type-caption font-black uppercase tracking-wider flex items-center gap-1.5 transition-all ${
-                                showCopilot ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-slate-900 text-slate-400 border border-white/5'
+                                showCopilot ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'
                             }`}
                         >
                             <Sparkles className="w-3.5 h-3.5" /> Copilot {showCopilot ? 'ON' : 'OFF'}
@@ -1304,15 +1304,15 @@ Voice & rules:
                     {/* 1. LIST VIEW */}
                     {viewMode === 'list' && (
                         <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                            <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4 type-ui text-slate-300 leading-relaxed">
+                            <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4 type-ui text-[var(--ws-text-secondary)] leading-relaxed">
                                 <p className="font-semibold text-teal-200">You choose how campaigns are sent and styled</p>
                                 <p className="mt-1.5">
-                                    Zoho Mail is <span className="text-white font-medium">one option</span>, not the only path.
+                                    Zoho Mail is <span className="text-[var(--ws-text-primary)] font-medium">one option</span>, not the only path.
                                     Pick your delivery provider in{' '}
                                     <button
                                         type="button"
                                         onClick={() => router.push('/dashboard/business/settings')}
-                                        className="text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                                        className="text-teal-400 hover:text-[var(--brand-blue-300)] underline underline-offset-2"
                                     >
                                         Settings → Email Delivery
                                     </button>
@@ -1325,12 +1325,12 @@ Voice & rules:
                                     <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                                     <div className="type-ui">
                                         <p className="font-semibold text-amber-200">Draft campaigns stay draft until you launch them</p>
-                                        <p className="mt-1 text-slate-400 leading-relaxed">
-                                            Open a draft and tap <span className="text-white font-semibold">Run Now</span>, or connect an email provider in{' '}
+                                        <p className="mt-1 text-[var(--ws-text-muted)] leading-relaxed">
+                                            Open a draft and tap <span className="text-[var(--ws-text-primary)] font-semibold">Run Now</span>, or connect an email provider in{' '}
                                             <button
                                                 type="button"
                                                 onClick={() => router.push('/dashboard/business/settings')}
-                                                className="text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                                                className="text-teal-400 hover:text-[var(--brand-blue-300)] underline underline-offset-2"
                                             >
                                                 Settings → Integrations
                                             </button>{' '}
@@ -1340,13 +1340,13 @@ Voice & rules:
                                 </div>
                             )}
                             {campaigns.length === 0 ? (
-                                <div className="py-16 text-center border border-dashed border-white/5 rounded-2xl">
+                                <div className="py-16 text-center border border-dashed border-[var(--ws-border)] rounded-2xl">
                                     <Inbox className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                                    <h3 className="type-ui font-bold text-slate-400">No campaigns yet</h3>
+                                    <h3 className="type-ui font-bold text-[var(--ws-text-muted)]">No campaigns yet</h3>
                                     <p className="type-card-description text-slate-600 max-w-xs mx-auto mt-1">Create a simple campaign, choose who should receive it, and let the Copilot write the first draft.</p>
                                 </div>
                             ) : (
-                                <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
+                                <div className="divide-y divide-white/5 border border-[var(--ws-border)] rounded-2xl bg-[var(--ws-panel)]/30 overflow-hidden">
                                     {campaigns.map((camp) => {
                                         const offset = swipeState[camp.id] || 0;
                                         const provider = (camp.metadata as any)?.provider || 'tenant-default';
@@ -1359,16 +1359,16 @@ Voice & rules:
                                         return (
                                             <div 
                                                 key={camp.id}
-                                                className="relative select-none overflow-hidden bg-slate-950"
+                                                className="relative select-none overflow-hidden bg-[var(--ws-canvas)]"
                                                 onTouchStart={(e) => handleTouchStart(e, camp.id)}
                                                 onTouchMove={(e) => handleTouchMove(e, camp.id)}
                                                 onTouchEnd={(e) => handleTouchEnd(e, camp.id)}
                                             >
                                                 {/* Swipe actions */}
-                                                <div className="absolute inset-y-0 right-0 w-20 bg-rose-600 flex items-center justify-center text-white type-caption font-bold">
+                                                <div className="absolute inset-y-0 right-0 w-20 bg-rose-600 flex items-center justify-center text-[var(--text-inverse)] type-caption font-bold">
                                                     <Trash2 className="w-4 h-4" />
                                                 </div>
-                                                <div className="absolute inset-y-0 left-0 w-20 bg-emerald-600 flex items-center justify-center text-white type-caption font-bold">
+                                                <div className="absolute inset-y-0 left-0 w-20 bg-emerald-600 flex items-center justify-center text-[var(--text-inverse)] type-caption font-bold">
                                                     <Repeat className="w-4 h-4" />
                                                 </div>
 
@@ -1378,19 +1378,19 @@ Voice & rules:
                                                         setSelectedCampaign(camp);
                                                         setViewMode('detail');
                                                     }}
-                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-slate-900/70 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
+                                                    className="relative z-10 flex items-center justify-between p-3.5 bg-[var(--ws-panel)]/70 active:bg-[var(--ws-surface-secondary)] transition-transform duration-150 cursor-pointer"
                                                     style={{ transform: `translateX(${offset}px)` }}
                                                 >
                                                     <div className="flex items-center gap-3 min-w-0 flex-1">
                                                         {/* Avatar / provider badge */}
-                                                        <div className="w-9 h-9 rounded-full bg-slate-950 border border-white/5 flex items-center justify-center text-slate-400 font-bold type-caption uppercase flex-shrink-0">
+                                                        <div className="w-9 h-9 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] flex items-center justify-center text-[var(--ws-text-muted)] font-bold type-caption uppercase flex-shrink-0">
                                                             {provider.slice(0, 2)}
                                                         </div>
                                                         <div className="min-w-0 flex-1 flex flex-col">
-                                                            <span className="type-ui text-white font-bold truncate">
+                                                            <span className="type-ui text-[var(--ws-text-primary)] font-bold truncate">
                                                                 {camp.name}
                                                             </span>
-                                                            <span className="type-ui text-slate-500 font-medium truncate mt-0.5">
+                                                            <span className="type-ui text-[var(--ws-text-muted)] font-medium truncate mt-0.5">
                                                                 Subj: {camp.subject} • Opens: {openRate}% • Clicks: {clickRate}%
                                                             </span>
                                                         </div>
@@ -1416,14 +1416,14 @@ Voice & rules:
                         <motion.div key="detail" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                             
                             {/* Title & metadata panel */}
-                            <div className="bg-slate-900/50 p-5 rounded-3xl border border-white/5 space-y-3">
+                            <div className="bg-[var(--ws-panel)]/50 p-5 rounded-3xl border border-[var(--ws-border)] space-y-3">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <span className={`type-caption font-black uppercase px-2 py-0.5 rounded border ${statusColors[selectedCampaign.status]}`}>
                                             {selectedCampaign.status}
                                         </span>
-                                        <h2 className="text-lg font-black text-white mt-2 leading-tight">{selectedCampaign.name}</h2>
-                                        <p className="type-card-description text-slate-400 mt-1">Subject: "{selectedCampaign.subject}"</p>
+                                        <h2 className="text-lg font-black text-[var(--ws-text-primary)] mt-2 leading-tight">{selectedCampaign.name}</h2>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Subject: "{selectedCampaign.subject}"</p>
                                     </div>
                                     <div className="flex gap-2">
                                         {(selectedCampaign.status === 'draft' || selectedCampaign.status === 'scheduled') && (
@@ -1447,14 +1447,14 @@ Voice & rules:
                                                         toast.error(detail, { id: toastId, duration: 8000 });
                                                     }
                                                 }}
-                                                className="px-3 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white type-caption font-black uppercase tracking-wider flex items-center gap-1.5"
+                                                className="px-3 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider flex items-center gap-1.5"
                                             >
                                                 <Play className="w-3 h-3" /> Run Now
                                             </button>
                                         )}
                                         <button 
                                             onClick={() => handleDuplicateCampaign(selectedCampaign)}
-                                            className="p-2 bg-slate-950 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-colors"
+                                            className="p-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                                         >
                                             <Repeat className="w-4 h-4" />
                                         </button>
@@ -1481,7 +1481,7 @@ Voice & rules:
                                                     setRetryingFailedRecipients(false);
                                                 }}
                                                 disabled={retryingFailedRecipients}
-                                                className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-amber-300 type-caption font-black uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
+                                                className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-[var(--warning-text,var(--warning-500))] type-caption font-black uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
                                             >
                                                 {retryingFailedRecipients ? <Loader2 className="w-3 h-3 animate-spin" /> : <Repeat className="w-3 h-3" />}
                                                 Retry failed
@@ -1495,23 +1495,23 @@ Voice & rules:
                                 <div className="rounded-3xl border border-teal-500/20 bg-teal-500/5 p-5 space-y-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="type-caption font-black uppercase tracking-widest text-teal-300">Daily education sequence</p>
-                                            <h3 className="mt-1 type-ui font-bold text-white">
+                                            <p className="type-caption font-black uppercase tracking-widest text-[var(--brand-blue-300)]">Daily education sequence</p>
+                                            <h3 className="mt-1 type-ui font-bold text-[var(--ws-text-primary)]">
                                                 {(selectedCampaign.metadata as any).dailyEducationSequence.totalEmails || 5} emails from the same sender
                                             </h3>
-                                            <p className="mt-1 type-card-description text-slate-400">
+                                            <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                                                 Up to {(selectedCampaign.metadata as any).dailyEducationSequence.dailyLimit || 3} emails per day using {selectedCampaign.fromEmail}.
                                             </p>
                                         </div>
-                                        <span className="rounded-full border border-teal-500/20 bg-slate-950 px-3 py-1 type-caption font-black uppercase tracking-wider text-teal-200">
+                                        <span className="rounded-full border border-teal-500/20 bg-[var(--ws-canvas)] px-3 py-1 type-caption font-black uppercase tracking-wider text-teal-200">
                                             saved plan
                                         </span>
                                     </div>
                                     <div className="grid gap-2 md:grid-cols-2">
                                         {(((selectedCampaign.metadata as any).dailyEducationSequence.emails || []) as EducationSequenceEmail[]).map((email, index) => (
-                                            <div key={`${email.subject}-${index}`} className="rounded-2xl border border-white/5 bg-slate-950/70 p-3">
-                                                <p className="type-caption font-black uppercase tracking-wider text-slate-500">Day {email.day} · Email {email.slot}</p>
-                                                <p className="mt-1 type-card-description font-bold text-white">{email.subject}</p>
+                                            <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Day {email.day} · Email {email.slot}</p>
+                                                <p className="mt-1 type-card-description font-bold text-[var(--ws-text-primary)]">{email.subject}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -1519,25 +1519,25 @@ Voice & rules:
                             )}
 
                             {selectedCampaignDeliverySummary ? (
-                                <div className="rounded-3xl border border-white/5 bg-slate-900 p-5 space-y-4">
+                                <div className="rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5 space-y-4">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="type-caption font-black uppercase tracking-widest text-teal-400">Delivery summary</p>
-                                            <h3 className="mt-1 type-ui font-bold text-white">
+                                            <h3 className="mt-1 type-ui font-bold text-[var(--ws-text-primary)]">
                                                 Sent via {selectedCampaignDeliverySummary.topProvider}
                                             </h3>
-                                            <p className="mt-1 type-card-description text-slate-400">
+                                            <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                                                 {selectedCampaignDeliverySummary.sentCount} delivered or progressing, {selectedCampaignDeliverySummary.failedCount} failed, {selectedCampaignDeliverySummary.unsubscribedCount} unsubscribed, {selectedCampaignDeliverySummary.pendingCount} pending.
                                             </p>
                                         </div>
-                                        <span className="rounded-full border border-white/10 bg-slate-950 px-3 py-1 type-caption font-black uppercase tracking-wider text-slate-300">
+                                        <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-1 type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)]">
                                             {selectedCampaignRecipients.length} recipients
                                         </span>
                                     </div>
 
                                     {selectedCampaignDeliverySummary.topFailureReasons.length > 0 ? (
                                         <div className="rounded-2xl border border-rose-500/15 bg-rose-500/5 p-4">
-                                            <p className="type-caption font-black uppercase tracking-widest text-rose-300">Top failure reasons</p>
+                                            <p className="type-caption font-black uppercase tracking-widest text-[var(--error-text,var(--error-500))]">Top failure reasons</p>
                                             <ul className="mt-2 space-y-1 type-ui text-rose-100">
                                                 {selectedCampaignDeliverySummary.topFailureReasons.map(([reason, count]) => (
                                                     <li key={reason}>• {count}x {reason}</li>
@@ -1560,9 +1560,9 @@ Voice & rules:
                                     { label: 'Opened', value: selectedCampaign.totalOpened || 0, rate: `${selectedCampaign.totalSent ? Math.round((selectedCampaign.totalOpened / selectedCampaign.totalSent) * 100) : 0}% open rate` },
                                     { label: 'Clicked', value: selectedCampaign.totalClicked || 0, rate: `${selectedCampaign.totalSent ? Math.round((selectedCampaign.totalClicked / selectedCampaign.totalSent) * 100) : 0}% click rate` }
                                 ].map((stat, i) => (
-                                    <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
-                                        <span className="type-caption font-bold text-slate-500 uppercase">{stat.label}</span>
-                                        <div className="text-xl font-black text-white">{String(stat.value)}</div>
+                                    <div key={i} className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] space-y-1">
+                                        <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">{stat.label}</span>
+                                        <div className="text-xl font-black text-[var(--ws-text-primary)]">{String(stat.value)}</div>
                                         <span className="type-ui text-teal-400 font-bold block">{stat.rate}</span>
                                     </div>
                                 ))}
@@ -1570,32 +1570,32 @@ Voice & rules:
 
                             {/* Detailed analytics panel */}
                             {(selectedCampaign.status === 'sent' || selectedCampaign.totalSent > 0) && (
-                                <div className="bg-slate-900 p-5 rounded-3xl border border-white/5">
-                                    <h3 className="type-caption font-bold text-slate-400 tracking-wide mb-4">Campaign Analytics</h3>
+                                <div className="bg-[var(--ws-panel)] p-5 rounded-3xl border border-[var(--ws-border)]">
+                                    <h3 className="type-caption font-bold text-[var(--ws-text-muted)] tracking-wide mb-4">Campaign Analytics</h3>
                                     <EmailCampaignAnalytics campaign={selectedCampaign} embedded />
                                 </div>
                             )}
 
                             {/* Timeline status steps */}
-                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
-                                <h3 className="type-caption font-black text-slate-400 uppercase tracking-wider">Campaign Journey</h3>
-                                <div className="relative pl-6 space-y-4 border-l border-white/10 ml-2">
+                            <div className="bg-[var(--ws-panel)] p-5 rounded-3xl border border-[var(--ws-border)] space-y-4">
+                                <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-wider">Campaign Journey</h3>
+                                <div className="relative pl-6 space-y-4 border-l border-[var(--ws-border)] ml-2">
                                     <div className="relative">
-                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center type-ui text-white">✓</div>
-                                        <h4 className="type-card-title font-bold text-white">Campaign Created</h4>
-                                        <p className="type-card-description text-slate-500">Initialized by dashboard tenant</p>
+                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center type-ui text-[var(--text-inverse)]">✓</div>
+                                        <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">Campaign Created</h4>
+                                        <p className="type-card-description text-[var(--ws-text-muted)]">Initialized by dashboard tenant</p>
                                     </div>
                                     <div className="relative">
-                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center type-ui text-white">✓</div>
-                                        <h4 className="type-card-title font-bold text-white">Recipients Segmented</h4>
-                                        <p className="type-card-description text-slate-500">Audience parsed and matching rules checked</p>
+                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-emerald-500 border border-slate-950 flex items-center justify-center type-ui text-[var(--text-inverse)]">✓</div>
+                                        <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">Recipients Segmented</h4>
+                                        <p className="type-card-description text-[var(--ws-text-muted)]">Audience parsed and matching rules checked</p>
                                     </div>
                                     <div className="relative">
                                         <div className={`absolute -left-[30px] top-0.5 w-4 h-4 rounded-full border border-slate-950 ${selectedCampaign.status === 'sent' ? 'bg-emerald-500' : String(selectedCampaign.status) === 'failed' ? 'bg-rose-500' : 'bg-teal-500 animate-pulse'}`} />
-                                        <h4 className={`type-caption font-bold ${selectedCampaign.status === 'sent' ? 'text-emerald-400' : String(selectedCampaign.status) === 'failed' ? 'text-rose-300' : 'text-teal-400'}`}>
+                                        <h4 className={`type-caption font-bold ${selectedCampaign.status === 'sent' ? 'text-emerald-400' : String(selectedCampaign.status) === 'failed' ? 'text-[var(--error-text,var(--error-500))]' : 'text-teal-400'}`}>
                                             {selectedCampaign.status === 'sent' ? 'Delivery completed' : String(selectedCampaign.status) === 'failed' ? 'Delivery needs attention' : 'Delivery in progress'}
                                         </h4>
-                                        <p className="type-card-description text-slate-500">
+                                        <p className="type-card-description text-[var(--ws-text-muted)]">
                                             {selectedCampaign.status === 'sent'
                                                 ? 'Check the recipient delivery audit for sent and failed counts.'
                                                 : String(selectedCampaign.status) === 'failed'
@@ -1606,13 +1606,13 @@ Voice & rules:
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
+                            <div className="bg-[var(--ws-panel)] p-5 rounded-3xl border border-[var(--ws-border)] space-y-4">
                                 <div className="flex items-center justify-between gap-3">
-                                    <h3 className="type-caption font-black uppercase tracking-wider text-slate-400">Recipient delivery audit</h3>
+                                    <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Recipient delivery audit</h3>
                                     <button
                                         type="button"
                                         onClick={refreshSelectedCampaignRecipients}
-                                        className="rounded-xl border border-white/5 px-3 py-1.5 type-caption font-black uppercase tracking-wider text-slate-300 hover:text-white"
+                                        className="rounded-xl border border-[var(--ws-border)] px-3 py-1.5 type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
                                     >
                                         Refresh
                                     </button>
@@ -1625,25 +1625,25 @@ Voice & rules:
                                         { label: 'Failed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'failed' || recipient.status === 'bounced').length },
                                         { label: 'Unsubscribed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'unsubscribed').length },
                                     ].map((stat) => (
-                                        <div key={stat.label} className="rounded-2xl border border-white/5 bg-slate-950/60 p-3">
-                                            <p className="type-caption font-bold uppercase tracking-wider text-slate-500">{stat.label}</p>
-                                            <p className="mt-1 text-lg font-black text-white">{stat.value}</p>
+                                        <div key={stat.label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-3">
+                                            <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">{stat.label}</p>
+                                            <p className="mt-1 text-lg font-black text-[var(--ws-text-primary)]">{stat.value}</p>
                                         </div>
                                     ))}
                                 </div>
 
                                 {loadingSelectedRecipients ? (
-                                    <div className="flex items-center justify-center py-10 type-ui text-slate-500">
+                                    <div className="flex items-center justify-center py-10 type-ui text-[var(--ws-text-muted)]">
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin text-teal-400" />
                                         Loading recipient audit...
                                     </div>
                                 ) : selectedCampaignRecipients.length === 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-white/5 py-10 text-center type-ui text-slate-500">
+                                    <div className="rounded-2xl border border-dashed border-[var(--ws-border)] py-10 text-center type-ui text-[var(--ws-text-muted)]">
                                         No recipient rows recorded for this campaign yet.
                                     </div>
                                 ) : (
-                                    <div className="overflow-hidden rounded-2xl border border-white/5">
-                                        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 border-b border-white/5 bg-slate-950/80 px-4 py-3 type-caption font-black uppercase tracking-wider text-slate-500">
+                                    <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)]">
+                                        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 px-4 py-3 type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">
                                             <span>Recipient</span>
                                             <span>Provider</span>
                                             <span>Status</span>
@@ -1655,22 +1655,22 @@ Voice & rules:
                                                 return (
                                                     <div key={recipient.id} className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 px-4 py-3 type-ui">
                                                         <div className="min-w-0">
-                                                            <p className="truncate font-semibold text-white">{recipient.email}</p>
-                                                            <p className="mt-1 truncate type-card-description text-slate-500">
+                                                            <p className="truncate font-semibold text-[var(--ws-text-primary)]">{recipient.email}</p>
+                                                            <p className="mt-1 truncate type-card-description text-[var(--ws-text-muted)]">
                                                                 {recipient.errorMessage || recipient.bounceReason || `Created ${new Date(recipient.createdAt).toLocaleString()}`}
                                                             </p>
                                                         </div>
-                                                        <span className="self-start rounded-full border border-white/10 bg-slate-950 px-2 py-1 type-caption font-bold uppercase text-slate-300">
+                                                        <span className="self-start rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2 py-1 type-caption font-bold uppercase text-[var(--ws-text-secondary)]">
                                                             {provider}
                                                         </span>
                                                         <span className={`self-start rounded-full border px-2 py-1 type-caption font-bold uppercase ${
                                                             recipient.status === 'failed' || recipient.status === 'bounced'
-                                                                ? 'border-rose-500/20 bg-rose-500/10 text-rose-300'
+                                                                ? 'border-rose-500/20 bg-rose-500/10 text-[var(--error-text,var(--error-500))]'
                                                                 : recipient.status === 'unsubscribed'
-                                                                    ? 'border-amber-500/20 bg-amber-500/10 text-amber-300'
+                                                                    ? 'border-amber-500/20 bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]'
                                                                     : recipient.status === 'pending'
-                                                                        ? 'border-slate-600 bg-slate-800 text-slate-300'
-                                                                        : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                                                                        ? 'border-slate-600 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)]'
+                                                                        : 'border-emerald-500/20 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]'
                                                         }`}>
                                                             {recipient.status}
                                                         </span>
@@ -1690,12 +1690,12 @@ Voice & rules:
                             
                             {/* Main wizard step builder panel */}
                             <div className="flex-1 w-full space-y-6">
-                                <div className="bg-slate-900/70 border border-white/5 rounded-3xl p-5 space-y-4">
+                                <div className="bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
                                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                         <div className="space-y-2">
                                             <p className="type-caption font-black uppercase tracking-widest text-teal-400">Plain-English Start</p>
-                                            <h3 className="text-white text-lg font-black">Tell us what you want to say and who should hear it.</h3>
-                                            <p className="type-card-description text-slate-400 max-w-2xl">
+                                            <h3 className="text-[var(--ws-text-primary)] text-lg font-black">Tell us what you want to say and who should hear it.</h3>
+                                            <p className="type-card-description text-[var(--ws-text-muted)] max-w-2xl">
                                                 Pick a starter, describe the goal in one sentence, or let the Copilot write the first draft for you.
                                             </p>
                                         </div>
@@ -1705,7 +1705,7 @@ Voice & rules:
                                                     key={preset.id}
                                                     type="button"
                                                     onClick={() => applyQuickStart(preset)}
-                                                    className="px-3 py-2 rounded-xl border border-white/5 bg-slate-950 text-slate-300 type-caption font-bold hover:border-teal-500/40 hover:text-white transition-all"
+                                                    className="px-3 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] type-caption font-bold hover:border-teal-500/40 hover:text-[var(--ws-text-primary)] transition-all"
                                                 >
                                                     {preset.label}
                                                 </button>
@@ -1713,32 +1713,32 @@ Voice & rules:
                                             <button
                                                 type="button"
                                                 onClick={applyDailyEducationSequence}
-                                                className="px-3 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-200 type-caption font-bold hover:border-teal-400 hover:text-white transition-all"
+                                                className="px-3 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-200 type-caption font-bold hover:border-teal-400 hover:text-[var(--ws-text-primary)] transition-all"
                                             >
                                                 5-email daily sequence
                                             </button>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Goal</label>
+                                        <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Campaign Goal</label>
                                         <textarea
                                             value={campaignGoal}
                                             onChange={(e) => setCampaignGoal(e.target.value)}
                                             placeholder="Example: Re-engage cold leads who haven’t replied in 60 days."
-                                            className="w-full min-h-[88px] bg-slate-950 border border-white/5 rounded-2xl p-4 type-ui text-white outline-none resize-y"
+                                            className="w-full min-h-[88px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl p-4 type-ui text-[var(--ws-text-primary)] outline-none resize-y"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Thin Progress bar indicator */}
-                                <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
+                                <div className="h-1 bg-[var(--ws-panel)] rounded-full overflow-hidden">
                                     <div 
                                         className="h-full bg-teal-500 transition-all duration-300"
                                         style={{ width: `${(activeStep / 4) * 100}%` }}
                                     />
                                 </div>
 
-                                <div className="flex justify-between items-center type-caption font-black text-slate-500 uppercase tracking-widest px-1">
+                                <div className="flex justify-between items-center type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest px-1">
                                     <span>Step {activeStep} of 4</span>
                                     <span>
                                         {campaignMode === 'simple' ? (
@@ -1759,38 +1759,38 @@ Voice & rules:
                                 {activeStep === 1 && (
                                     <div className="space-y-5 animate-in fade-in duration-300">
                                         <div className="space-y-1.5">
-                                            <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Internal Name</label>
+                                            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Internal Name</label>
                                             <input 
                                                 value={form.name} 
                                                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                                 placeholder="e.g. Q2 Outreach Campaign"
-                                                className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                                className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                             />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Subject Line</label>
+                                            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Subject Line</label>
                                             <input 
                                                 value={form.subject} 
                                                 onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
                                                 placeholder="e.g. Quick question about workspace optimization"
-                                                className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                                className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                             />
                                         </div>
 
-                                        <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-white/5 bg-slate-950/40 p-4">
+                                        <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-4">
                                             <div className="space-y-1.5">
-                                                <label htmlFor="campaign-from-name" className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Sender name</label>
+                                                <label htmlFor="campaign-from-name" className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Sender name</label>
                                                 <input
                                                     id="campaign-from-name"
                                                     value={form.fromName}
                                                     onChange={(e) => setForm((f) => ({ ...f, fromName: e.target.value }))}
                                                     placeholder="e.g. Anna from Bistro Warszawa"
-                                                    className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                                    className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                                 />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label htmlFor="campaign-from-email" className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Business reply-to email</label>
+                                                <label htmlFor="campaign-from-email" className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Business reply-to email</label>
                                                 <input
                                                     id="campaign-from-email"
                                                     type="email"
@@ -1799,9 +1799,9 @@ Voice & rules:
                                                     placeholder="hello@yourbusiness.com"
                                                     aria-invalid={!form.fromEmail.trim()}
                                                     aria-describedby="campaign-from-email-help"
-                                                    className={`w-full h-11 bg-slate-900 border rounded-xl px-4 type-caption text-white outline-none focus:border-teal-500/50 ${form.fromEmail.trim() ? 'border-white/5' : 'border-amber-500/30'}`}
+                                                    className={`w-full h-11 bg-[var(--ws-panel)] border rounded-xl px-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50 ${form.fromEmail.trim() ? 'border-[var(--ws-border)]' : 'border-amber-500/30'}`}
                                                 />
-                                                <p id="campaign-from-email-help" className="type-card-description leading-relaxed text-slate-500">Customers will see this address and can reply to it. It must match a connected sender.</p>
+                                                <p id="campaign-from-email-help" className="type-card-description leading-relaxed text-[var(--ws-text-muted)]">Customers will see this address and can reply to it. It must match a connected sender.</p>
                                             </div>
                                         </div>
 
@@ -1821,10 +1821,10 @@ Voice & rules:
                                                         value={form.subjectB}
                                                         onChange={(e) => setForm((f) => ({ ...f, subjectB: e.target.value }))}
                                                         placeholder="Subject line B"
-                                                        className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 type-caption text-white"
+                                                        className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
                                                     />
                                                     <div className="flex items-center gap-3">
-                                                        <span className="type-ui text-slate-400">Split to B: {form.abSplitPercent}%</span>
+                                                        <span className="type-ui text-[var(--ws-text-muted)]">Split to B: {form.abSplitPercent}%</span>
                                                         <input
                                                             type="range"
                                                             min={10}
@@ -1846,21 +1846,21 @@ Voice & rules:
                                                     onChange={(e) => setForm((f) => ({ ...f, sequenceEnabled: e.target.checked }))}
                                                     className="rounded border-teal-500/50"
                                                 />
-                                                <span className="type-ui font-bold text-white">Use daily education sequence</span>
+                                                <span className="type-ui font-bold text-[var(--ws-text-primary)]">Use daily education sequence</span>
                                             </label>
                                             <div className="grid gap-3 md:grid-cols-[160px_1fr]">
                                                 <div>
-                                                    <label className="type-caption font-black uppercase tracking-wider text-slate-500">Emails per day</label>
+                                                    <label className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Emails per day</label>
                                                     <input
                                                         type="number"
                                                         min={1}
                                                         max={3}
                                                         value={form.sequenceDailyLimit}
                                                         onChange={(e) => setForm((f) => ({ ...f, sequenceDailyLimit: Math.max(1, Math.min(3, Number(e.target.value) || 1)) }))}
-                                                        className="mt-1 w-full h-10 rounded-xl border border-white/5 bg-slate-950 px-3 type-ui text-white outline-none"
+                                                        className="mt-1 w-full h-10 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 type-ui text-[var(--ws-text-primary)] outline-none"
                                                     />
                                                 </div>
-                                                <p className="self-end type-card-description leading-relaxed text-slate-400">
+                                                <p className="self-end type-card-description leading-relaxed text-[var(--ws-text-muted)]">
                                                     Preview only: the first email is loaded into the campaign body. Remaining sequence steps are not sent automatically until sequence enrollment is connected.
                                                 </p>
                                             </div>
@@ -1871,51 +1871,51 @@ Voice & rules:
                                                             key={`${email.day}-${email.slot}-${email.subject}`}
                                                             type="button"
                                                             onClick={() => setForm((f) => ({ ...f, subject: email.subject, bodyHtml: email.bodyHtml }))}
-                                                            className="rounded-2xl border border-white/5 bg-slate-950 p-3 text-left hover:border-teal-500/40"
+                                                            className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3 text-left hover:border-teal-500/40"
                                                         >
-                                                            <p className="type-caption font-black uppercase tracking-wider text-teal-300">Day {email.day} · Email {email.slot}</p>
-                                                            <p className="mt-1 type-card-description font-bold text-white">{email.subject}</p>
-                                                            <p className="mt-1 line-clamp-2 type-card-description text-slate-500">{plainFromHtml(email.bodyHtml)}</p>
+                                                            <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Day {email.day} · Email {email.slot}</p>
+                                                            <p className="mt-1 type-card-description font-bold text-[var(--ws-text-primary)]">{email.subject}</p>
+                                                            <p className="mt-1 line-clamp-2 type-card-description text-[var(--ws-text-muted)]">{plainFromHtml(email.bodyHtml)}</p>
                                                         </button>
                                                     ))}
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="rounded-2xl border border-white/5 bg-slate-900 p-4 space-y-4">
+                                        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <p className="type-caption font-black uppercase tracking-widest text-teal-400">Delivery readiness</p>
-                                                    <h4 className="mt-1 type-ui font-bold text-white">
+                                                    <h4 className="mt-1 type-ui font-bold text-[var(--ws-text-primary)]">
                                                         {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}
                                                     </h4>
-                                                    <p className="mt-1 type-card-description leading-relaxed text-slate-400">
+                                                    <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">
                                                         {campaignsProviderNote || 'Confirm the connected provider, sender identity, and test send before launch.'}
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={runComposeAudit}
-                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 type-caption font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20"
+                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)] hover:bg-teal-500/20"
                                                 >
                                                     {auditLoading ? 'Checking...' : 'Run audit'}
                                                 </button>
                                             </div>
 
                                             <div className="grid gap-3 md:grid-cols-2">
-                                                <div className="rounded-xl border border-white/5 bg-slate-950/70 p-3">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-slate-500">Workspace provider</p>
-                                                    <p className="mt-1 type-card-description font-semibold text-white">
+                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Workspace provider</p>
+                                                    <p className="mt-1 type-card-description font-semibold text-[var(--ws-text-primary)]">
                                                         {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}
                                                     </p>
-                                                    <p className="mt-1 type-card-description text-slate-500">
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                                                         {resolvedProviderMeta?.connected ? 'Connected and available.' : 'Not connected yet.'}
                                                     </p>
                                                 </div>
-                                                <div className="rounded-xl border border-white/5 bg-slate-950/70 p-3">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-slate-500">Sender identity</p>
-                                                    <p className="mt-1 type-card-description font-semibold text-white">{form.fromName || 'No sender name set'}</p>
-                                                    <p className="mt-1 type-card-description text-slate-500">{form.fromEmail || 'No sender email set'}</p>
+                                                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Sender identity</p>
+                                                    <p className="mt-1 type-card-description font-semibold text-[var(--ws-text-primary)]">{form.fromName || 'No sender name set'}</p>
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{form.fromEmail || 'No sender email set'}</p>
                                                 </div>
                                             </div>
 
@@ -1925,8 +1925,8 @@ Voice & rules:
                                                         key={provider.id}
                                                         className={`rounded-full border px-2.5 py-1 type-caption font-bold uppercase tracking-wider ${
                                                             provider.connected
-                                                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                                                                : 'border-slate-700 bg-slate-950 text-slate-500'
+                                                                ? 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]'
+                                                                : 'border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-muted)]'
                                                         }`}
                                                     >
                                                         {provider.label}
@@ -1938,7 +1938,7 @@ Voice & rules:
                                         {campaignMode === 'advanced' ? (
                                             <>
                                                 <div className="space-y-2">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Delivery Channel</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Delivery Channel</label>
                                                     <div className="grid grid-cols-3 gap-2">
                                                         {[
                                                             { id: 'email' as const, label: 'Email', icon: Mail },
@@ -1951,7 +1951,7 @@ Voice & rules:
                                                                     key={ch.id}
                                                                     type="button"
                                                                     onClick={() => setForm((f) => ({ ...f, deliveryChannel: ch.id }))}
-                                                                    className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                                    className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                                 >
                                                                     <ch.icon className="w-4 h-4" />
                                                                     <span className="type-caption font-bold uppercase">{ch.label}</span>
@@ -1960,14 +1960,14 @@ Voice & rules:
                                                         })}
                                                     </div>
                                                     {form.deliveryChannel !== 'email' && (
-                                                        <p className="type-card-description text-slate-500 px-1">WhatsApp uses phone numbers from leads, clients, or contacts matched by email.</p>
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] px-1">WhatsApp uses phone numbers from leads, clients, or contacts matched by email.</p>
                                                     )}
                                                 </div>
 
                                                 {/* Email Provider select cards */}
                                                 {(form.deliveryChannel === 'email' || form.deliveryChannel === 'both') && (
                                                 <div className="space-y-2">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Email Provider Service</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Email Provider Service</label>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         {[
                                                             { id: 'resend', label: 'Resend.com' },
@@ -1981,7 +1981,7 @@ Voice & rules:
                                                                     key={provider.id}
                                                                     type="button"
                                                                     onClick={() => setForm(f => ({ ...f, selectedProviders: [provider.id] }))}
-                                                                    className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                                    className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${isSelected ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                                 >
                                                                     <span className="type-caption font-bold uppercase">{provider.label}</span>
                                                                     {isSelected && <Check className="w-4 h-4 text-teal-400" />}
@@ -1993,13 +1993,13 @@ Voice & rules:
                                                 )}
 
                                                 <div className="space-y-1.5">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider px-1">Campaign Language</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Campaign Language</label>
                                                     <div className="relative">
-                                                        <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                                        <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)] pointer-events-none" />
                                                         <select
                                                             value={form.languageMode}
                                                             onChange={e => setForm(f => ({ ...f, languageMode: e.target.value as CampaignLanguageMode }))}
-                                                            className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl pl-9 pr-4 type-caption text-white outline-none focus:border-teal-500/50"
+                                                            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-4 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/50"
                                                         >
                                                             {CAMPAIGN_LANGUAGE_OPTIONS.map(option => (
                                                                 <option key={option.code} value={option.code}>{option.label}</option>
@@ -2009,22 +2009,22 @@ Voice & rules:
                                                 </div>
                                             </>
                                         ) : (
-                                            <div className="rounded-2xl border border-white/5 bg-slate-900 p-4 space-y-3">
-                                                <p className="type-card-description text-slate-300">
+                                            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-3">
+                                                <p className="type-card-description text-[var(--ws-text-secondary)]">
                                                     Simple mode keeps the setup focused on the essentials: name, message, audience, then send or schedule.
                                                 </p>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
-                                                        <p className="type-caption uppercase font-black text-slate-500">Delivery</p>
-                                                        <p className="type-card-description text-white font-semibold mt-1">Email by default</p>
+                                                    <div className="rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-3">
+                                                        <p className="type-caption uppercase font-black text-[var(--ws-text-muted)]">Delivery</p>
+                                                        <p className="type-card-description text-[var(--ws-text-primary)] font-semibold mt-1">Email by default</p>
                                                     </div>
-                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
-                                                        <p className="type-caption uppercase font-black text-slate-500">Language</p>
-                                                        <p className="type-card-description text-white font-semibold mt-1">Auto-detected</p>
+                                                    <div className="rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-3">
+                                                        <p className="type-caption uppercase font-black text-[var(--ws-text-muted)]">Language</p>
+                                                        <p className="type-card-description text-[var(--ws-text-primary)] font-semibold mt-1">Auto-detected</p>
                                                     </div>
-                                                    <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
-                                                        <p className="type-caption uppercase font-black text-slate-500">Provider</p>
-                                                        <p className="type-card-description text-white font-semibold mt-1">{form.selectedProviders[0] || 'tenant default'}</p>
+                                                    <div className="rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-3">
+                                                        <p className="type-caption uppercase font-black text-[var(--ws-text-muted)]">Provider</p>
+                                                        <p className="type-card-description text-[var(--ws-text-primary)] font-semibold mt-1">{form.selectedProviders[0] || 'tenant default'}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2035,7 +2035,7 @@ Voice & rules:
                                 {activeStep === 2 && (
                                     <div className="space-y-5 animate-in fade-in duration-300">
                                         <div className="flex items-center justify-between gap-3">
-                                            <p className="type-card-description text-slate-400">Recipients include CRM contacts, saved leads, and clients with email.</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)]">Recipients include CRM contacts, saved leads, and clients with email.</p>
                                             <button
                                                 type="button"
                                                 onClick={() => router.push('/dashboard/leads/campaigns')}
@@ -2055,7 +2055,7 @@ Voice & rules:
                                                 <button 
                                                     key={opt.id} 
                                                     onClick={() => setRecipientType(opt.id as any)} 
-                                                    className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${recipientType === opt.id ? 'bg-teal-500/10 border-teal-600 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-400'}`}
+                                                    className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${recipientType === opt.id ? 'bg-teal-500/10 border-teal-600 text-teal-400' : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                 >
                                                     <opt.icon className="w-5 h-5 mb-2" />
                                                     <span className="type-caption font-bold uppercase">{opt.title}</span>
@@ -2068,10 +2068,10 @@ Voice & rules:
                                             <SegmentBuilder
                                                 onApply={(ids) => setSelectedContactIds(ids)}
                                             />
-                                            <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
-                                                <span className="type-caption font-bold text-slate-500 uppercase">Select Industry Target</span>
+                                            <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl space-y-3">
+                                                <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Select Industry Target</span>
                                                 {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (
-                                                    <p className="type-card-description text-slate-500">No industry tags yet — find leads in Lead Finder, then return here to segment by industry.</p>
+                                                    <p className="type-card-description text-[var(--ws-text-muted)]">No industry tags yet — find leads in Lead Finder, then return here to segment by industry.</p>
                                                 )}
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => {
@@ -2085,7 +2085,7 @@ Voice & rules:
                                                                         isChecked ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]))
                                                                     );
                                                                 }}
-                                                                className={`p-3 rounded-xl border text-left flex items-center justify-between type-caption ${isChecked ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                                                                className={`p-3 rounded-xl border text-left flex items-center justify-between type-caption ${isChecked ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                             >
                                                                 <span>{industry}</span>
                                                                 <Check className={`w-3.5 h-3.5 ${isChecked ? 'text-teal-400' : 'text-transparent'}`} />
@@ -2098,19 +2098,19 @@ Voice & rules:
                                         )}
 
                                         {recipientType === 'few' && (
-                                            <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                                            <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl space-y-3">
                                                 <input 
                                                     value={contactSearch}
                                                     onChange={e => setContactSearch(e.target.value)}
                                                     placeholder="Search contacts name..."
-                                                    className="w-full h-9 bg-slate-950 border border-white/5 rounded-lg px-3 type-caption text-white outline-none"
+                                                    className="w-full h-9 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                                                 />
                                                 <div className="max-h-40 overflow-y-auto space-y-1">
                                                     {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase())).map(c => (
                                                         <button
                                                             key={c.id}
                                                             onClick={() => setSelectedContactIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
-                                                            className={`w-full p-2.5 rounded-lg border text-left flex items-center justify-between type-caption ${selectedContactIds.includes(c.id) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-slate-950 border-white/5 text-slate-400'}`}
+                                                            className={`w-full p-2.5 rounded-lg border text-left flex items-center justify-between type-caption ${selectedContactIds.includes(c.id) ? 'bg-teal-500/10 border-teal-500 text-teal-400' : 'bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                                                         >
                                                             <span>{c.name || c.email}</span>
                                                             <Check className={`w-3.5 h-3.5 ${selectedContactIds.includes(c.id) ? 'text-teal-400' : 'text-transparent'}`} />
@@ -2121,21 +2121,21 @@ Voice & rules:
                                         )}
 
                                         {recipientType === 'import' && (
-                                            <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-4">
+                                            <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl space-y-4">
                                                 <div className="flex flex-col space-y-1">
-                                                    <span className="type-caption font-bold text-slate-400 uppercase tracking-wider">Paste Leads List</span>
-                                                    <p className="type-card-description text-slate-500">Paste names and emails (e.g. "John Doe, john@example.com" or just "john@example.com" on separate lines).</p>
+                                                    <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Paste Leads List</span>
+                                                    <p className="type-card-description text-[var(--ws-text-muted)]">Paste names and emails (e.g. "John Doe, john@example.com" or just "john@example.com" on separate lines).</p>
                                                 </div>
                                                 <textarea
                                                     value={pasteLeadsText}
                                                     onChange={e => setPasteLeadsText(e.target.value)}
                                                     placeholder="John Doe, john@example.com&#10;Mary Smith, mary@example.com&#10;sales@clientcompany.com"
-                                                    className="w-full h-32 bg-slate-950 border border-white/5 rounded-xl p-3 type-caption text-white outline-none resize-none font-mono"
+                                                    className="w-full h-32 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-3 type-caption text-[var(--ws-text-primary)] outline-none resize-none font-mono"
                                                 />
                                                 <button
                                                     onClick={handleImportLeads}
                                                     disabled={importingLeads || !pasteLeadsText.trim()}
-                                                    className="w-full py-2.5 bg-teal-600 text-white rounded-xl type-caption font-black uppercase tracking-wider hover:bg-teal-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                                    className="w-full py-2.5 bg-teal-600 text-[var(--text-inverse)] rounded-xl type-caption font-black uppercase tracking-wider hover:bg-teal-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
                                                 >
                                                     {importingLeads ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                                                     Process and Import Leads
@@ -2155,11 +2155,11 @@ Voice & rules:
                                                         setForm(f => ({ ...f, bodyHtml: tmpl.html }));
                                                         toast.success(`${tmpl.title} loaded`);
                                                     }}
-                                                    className="p-4 bg-slate-900 border border-white/5 rounded-2xl text-left hover:border-teal-500 transition-all flex flex-col justify-between"
+                                                    className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl text-left hover:border-teal-500 transition-all flex flex-col justify-between"
                                                 >
                                                     <div>
-                                                        <h4 className="type-card-title font-bold text-white mb-1">{tmpl.title}</h4>
-                                                        <p className="type-card-description text-slate-500 line-clamp-2">"{tmpl.subject}"</p>
+                                                        <h4 className="type-card-title font-bold text-[var(--ws-text-primary)] mb-1">{tmpl.title}</h4>
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2">"{tmpl.subject}"</p>
                                                     </div>
                                                     <span className="type-caption text-teal-400 font-bold uppercase mt-4 block">Use Template</span>
                                                 </button>
@@ -2169,7 +2169,7 @@ Voice & rules:
                                         {campaignMode === 'simple' ? (
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center px-1">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider">Your message</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Your message</label>
                                                     <button
                                                         onClick={generateWithAI}
                                                         disabled={aiGenerating}
@@ -2182,24 +2182,24 @@ Voice & rules:
                                                     value={plainFromHtml(form.bodyHtml)}
                                                     onChange={e => setForm(f => ({ ...f, bodyHtml: htmlFromPlain(e.target.value) }))}
                                                     placeholder={"Type your email the way you'd write it to a customer.\n\nLeave a blank line between paragraphs. No code needed — we handle the formatting."}
-                                                    className="w-full h-48 bg-slate-900 border border-white/5 rounded-2xl p-4 type-ui text-white outline-none resize-none leading-relaxed focus:border-teal-500/40"
+                                                    className="w-full h-48 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 type-ui text-[var(--ws-text-primary)] outline-none resize-none leading-relaxed focus:border-teal-500/40"
                                                 />
-                                                <p className="type-card-description text-slate-500 px-1">Tip: pick a template above to start, or let AI write a first draft — then tweak the words.</p>
+                                                <p className="type-card-description text-[var(--ws-text-muted)] px-1">Tip: pick a template above to start, or let AI write a first draft — then tweak the words.</p>
                                                 <div className="space-y-2">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider">How it will look</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">How it will look</label>
                                                     <div
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[160px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
-                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic text-center py-8">Start typing your message above.</p>' }}
+                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-[var(--ws-text-muted)] italic text-center py-8">Start typing your message above.</p>' }}
                                                     />
                                                 </div>
                                             </div>
                                         ) : (
                                         <>
-                                        <div className="flex gap-2 border-b border-slate-800 pb-2">
+                                        <div className="flex gap-2 border-b border-[var(--ws-border)] pb-2">
                                             <button
                                                 onClick={() => setEditorTab('preview')}
                                                 className={`px-3 py-1.5 type-caption font-black uppercase tracking-wider rounded-lg transition-colors ${
-                                                    editorTab === 'preview' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                                                    editorTab === 'preview' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                                 }`}
                                             >
                                                 Visual Preview
@@ -2207,7 +2207,7 @@ Voice & rules:
                                             <button
                                                 onClick={() => setEditorTab('code')}
                                                 className={`px-3 py-1.5 type-caption font-black uppercase tracking-wider rounded-lg transition-colors ${
-                                                    editorTab === 'code' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'text-slate-500 hover:text-slate-300'
+                                                    editorTab === 'code' ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                                 }`}
                                             >
                                                 Code Editor
@@ -2217,7 +2217,7 @@ Voice & rules:
                                         {editorTab === 'code' ? (
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center px-1">
-                                                    <label className="type-caption font-bold text-slate-400 uppercase tracking-wider">Email Html Content</label>
+                                                    <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Email Html Content</label>
                                                     <button 
                                                         onClick={generateWithAI}
                                                         disabled={aiGenerating}
@@ -2230,20 +2230,20 @@ Voice & rules:
                                                     value={form.bodyHtml}
                                                     onChange={e => setForm(f => ({ ...f, bodyHtml: e.target.value }))}
                                                     placeholder="Write message HTML or plain text here..."
-                                                    className="w-full h-40 bg-slate-900 border border-white/5 rounded-2xl p-4 type-caption text-white outline-none resize-none font-mono"
+                                                    className="w-full h-40 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 type-caption text-[var(--ws-text-primary)] outline-none resize-none font-mono"
                                                 />
                                             </div>
                                         ) : (
                                             <div className="space-y-2">
-                                                <label className="type-caption font-bold text-slate-400 uppercase tracking-wider">Live HTML Render Preview</label>
-                                                <div className="bg-slate-950 border border-white/5 rounded-3xl overflow-hidden p-5 flex flex-col gap-4">
-                                                    <div className="bg-slate-900 rounded-xl p-3 border border-white/5 type-ui space-y-1">
-                                                        <div className="text-slate-400"><span className="font-bold text-slate-600">From:</span> {form.fromName}</div>
-                                                        <div className="text-slate-400"><span className="font-bold text-slate-600">Subject:</span> {previewSubject || '(No Subject)'}</div>
+                                                <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Live HTML Render Preview</label>
+                                                <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-3xl overflow-hidden p-5 flex flex-col gap-4">
+                                                    <div className="bg-[var(--ws-panel)] rounded-xl p-3 border border-[var(--ws-border)] type-ui space-y-1">
+                                                        <div className="text-[var(--ws-text-muted)]"><span className="font-bold text-slate-600">From:</span> {form.fromName}</div>
+                                                        <div className="text-[var(--ws-text-muted)]"><span className="font-bold text-slate-600">Subject:</span> {previewSubject || '(No Subject)'}</div>
                                                     </div>
                                                     <div 
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[220px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
-                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
+                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-[var(--ws-text-muted)] italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
                                                     />
                                                 </div>
                                             </div>
@@ -2255,30 +2255,30 @@ Voice & rules:
 
                                 {activeStep === 4 && (
                                     <div className="space-y-5 animate-in fade-in duration-300">
-                                        <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
-                                            <span className="type-caption font-bold text-slate-500 uppercase tracking-widest block">Review Details</span>
+                                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+                                            <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest block">Review Details</span>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Name</span>
-                                                    <p className="type-card-description text-white font-bold truncate">{form.name || 'Untitled'}</p>
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Name</span>
+                                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold truncate">{form.name || 'Untitled'}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Subject</span>
-                                                    <p className="type-card-description text-white font-bold truncate">{previewSubject || 'Empty'}</p>
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Subject</span>
+                                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold truncate">{previewSubject || 'Empty'}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Provider</span>
-                                                    <p className="type-caption text-white font-bold uppercase">{form.selectedProviders[0] || 'tenant default'}</p>
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Provider</span>
+                                                    <p className="type-caption text-[var(--ws-text-primary)] font-bold uppercase">{form.selectedProviders[0] || 'tenant default'}</p>
                                                 </div>
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Language</span>
-                                                    <p className="type-card-description text-white font-bold">
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Language</span>
+                                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold">
                                                         {CAMPAIGN_LANGUAGE_OPTIONS.find(option => option.code === form.languageMode)?.label || 'Auto'}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Recipients</span>
-                                                    <p className="type-card-description text-white font-bold">
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Recipients</span>
+                                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold">
                                                         {recipientType === 'all'
                                                             ? 'All contacts'
                                                             : recipientType === 'specific'
@@ -2291,8 +2291,8 @@ Voice & rules:
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <span className="type-caption text-slate-500 font-bold uppercase">Sequence</span>
-                                                    <p className="type-card-description text-white font-bold">
+                                                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">Sequence</span>
+                                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold">
                                                         {form.sequenceEnabled
                                                             ? `${form.sequenceEmails.length} emails · ${form.sequenceDailyLimit}/day`
                                                             : 'Single campaign'}
@@ -2305,20 +2305,20 @@ Voice & rules:
                                             <div className="rounded-3xl border border-teal-500/20 bg-teal-500/5 p-5 space-y-3">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div>
-                                                        <span className="block type-caption font-bold uppercase tracking-widest text-teal-300">Sequence preview</span>
-                                                        <p className="mt-1 type-card-description text-slate-300">
+                                                        <span className="block type-caption font-bold uppercase tracking-widest text-[var(--brand-blue-300)]">Sequence preview</span>
+                                                        <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">
                                                             Five educational/motivational emails will be saved with this campaign plan and tied to {form.fromEmail || 'the selected sender'}.
                                                         </p>
                                                     </div>
-                                                    <span className="rounded-full border border-teal-500/20 bg-slate-950 px-3 py-1 type-caption font-black uppercase tracking-wider text-teal-200">
+                                                    <span className="rounded-full border border-teal-500/20 bg-[var(--ws-canvas)] px-3 py-1 type-caption font-black uppercase tracking-wider text-teal-200">
                                                         max {form.sequenceDailyLimit}/day
                                                     </span>
                                                 </div>
                                                 <div className="grid gap-2 md:grid-cols-2">
                                                     {form.sequenceEmails.map((email, index) => (
-                                                        <div key={`${email.subject}-${index}`} className="rounded-2xl border border-white/5 bg-slate-950/70 p-3">
-                                                            <p className="type-caption font-black uppercase tracking-wider text-slate-500">Day {email.day} · Email {email.slot}</p>
-                                                            <p className="mt-1 type-card-description font-bold text-white">{email.subject}</p>
+                                                        <div key={`${email.subject}-${index}`} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
+                                                            <p className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Day {email.day} · Email {email.slot}</p>
+                                                            <p className="mt-1 type-card-description font-bold text-[var(--ws-text-primary)]">{email.subject}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -2327,27 +2327,27 @@ Voice & rules:
 
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center pb-1">
-                                                <span className="type-caption font-bold text-slate-500 uppercase tracking-widest block">Final Visual Content</span>
+                                                <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest block">Final Visual Content</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveStep(3)}
-                                                    className="type-caption text-teal-400 font-bold flex items-center gap-1 hover:text-teal-300 transition-colors uppercase tracking-wider border border-teal-400/20 bg-teal-400/5 px-2.5 py-1 rounded-xl"
+                                                    className="type-caption text-teal-400 font-bold flex items-center gap-1 hover:text-[var(--brand-blue-300)] transition-colors uppercase tracking-wider border border-teal-400/20 bg-[var(--brand-blue-400)]/5 px-2.5 py-1 rounded-xl"
                                                 >
                                                     ✎ Edit Content
                                                 </button>
                                             </div>
-                                            <div className="bg-slate-950 border border-white/5 rounded-3xl overflow-hidden p-5">
+                                            <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-3xl overflow-hidden p-5">
                                                 <div 
                                                     className="p-5 bg-white text-slate-800 rounded-2xl min-h-[200px] prose prose-sm max-w-none shadow-inner"
-                                                    dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
+                                                    dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-[var(--ws-text-muted)] italic">No email body content.</p>' }}
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="grid gap-4 lg:grid-cols-3">
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
-                                                <p className="type-caption font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
-                                                <p className="mt-1 type-card-description text-slate-500">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
+                                            <div className="rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
+                                                <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Desktop inbox</p>
+                                                <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
                                                 <div className="mt-3 rounded-2xl bg-white p-4 text-slate-800 shadow-inner">
                                                     <div className="mb-3 rounded-xl bg-slate-100 px-3 py-2 type-ui">
                                                         <div><span className="font-bold">From:</span> {form.fromName || 'Sender'} &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
@@ -2362,29 +2362,29 @@ Voice & rules:
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
-                                                <p className="type-caption font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
-                                                <p className="mt-1 type-card-description text-slate-500">Shorter lines and tighter spacing for phone inboxes.</p>
-                                                <div className="mt-3 mx-auto w-[220px] rounded-[28px] border border-slate-700 bg-slate-950 p-3">
+                                            <div className="rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
+                                                <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Mobile preview</p>
+                                                <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Shorter lines and tighter spacing for phone inboxes.</p>
+                                                <div className="mt-3 mx-auto w-[220px] rounded-[28px] border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
                                                     <div className="rounded-[22px] bg-white p-3 text-slate-800 shadow-inner">
-                                                        <div className="mb-2 type-ui text-slate-500">
+                                                        <div className="mb-2 type-ui text-[var(--ws-text-muted)]">
                                                             <div>{form.fromName || 'Sender'}</div>
                                                             <div className="font-semibold text-slate-700">{previewSubject || '(No subject yet)'}</div>
                                                         </div>
                                                         <div
                                                             className="prose prose-sm max-w-none text-slate-800"
-                                                            dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                            dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-[var(--ws-text-muted)] italic">Email preview will appear here.</p>' }}
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Mobile preview */}
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl">
+                                            <div className="rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-xl">
                                                 <div className="flex justify-between items-center mb-1">
                                                     <div>
-                                                        <p className="type-caption font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
-                                                        <p className="type-card-description text-slate-400">Shorter lines and phone inbox layouts.</p>
+                                                        <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Mobile preview</p>
+                                                        <p className="type-card-description text-[var(--ws-text-muted)]">Shorter lines and phone inbox layouts.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -2396,16 +2396,16 @@ Voice & rules:
                                                 </div>
 
                                                 {/* Smartphone notch and framing */}
-                                                <div className="mt-4 mx-auto w-[240px] rounded-[36px] border-[8px] border-slate-800 bg-slate-950 p-2 shadow-2xl relative overflow-hidden">
+                                                <div className="mt-4 mx-auto w-[240px] rounded-[36px] border-[8px] border-[var(--ws-border)] bg-[var(--ws-canvas)] p-2 shadow-2xl relative overflow-hidden">
                                                     {/* Phone Speaker/Camera notch */}
-                                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-800 rounded-full z-20 flex items-center justify-center">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-900 block" />
+                                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-4 bg-[var(--ws-surface-secondary)] rounded-full z-20 flex items-center justify-center">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--ws-panel)] block" />
                                                     </div>
 
                                                     {/* Device screen */}
                                                     <div className="rounded-[24px] bg-white border border-slate-200 overflow-hidden text-slate-800 relative z-10 pt-4">
                                                         {/* Status bar */}
-                                                        <div className="px-4 py-1 flex justify-between items-center type-ui text-slate-400 bg-slate-50 font-bold select-none">
+                                                        <div className="px-4 py-1 flex justify-between items-center type-ui text-[var(--ws-text-muted)] bg-slate-50 font-bold select-none">
                                                             <span>9:41</span>
                                                             <div className="flex gap-1 items-center">
                                                                 <span>📶</span>
@@ -2413,13 +2413,13 @@ Voice & rules:
                                                             </div>
                                                         </div>
                                                         <div className="p-3">
-                                                            <div className="mb-2 type-ui text-slate-500 border-b border-slate-100 pb-2">
+                                                            <div className="mb-2 type-ui text-[var(--ws-text-muted)] border-b border-slate-100 pb-2">
                                                                 <div className="font-bold text-slate-700">{form.fromName || 'Sender'}</div>
                                                                 <div className="font-semibold text-slate-900 truncate mt-0.5">{previewSubject || '(No subject yet)'}</div>
                                                             </div>
                                                             <div
                                                                 className="prose prose-sm max-w-none type-ui leading-relaxed text-slate-800 overflow-y-auto max-h-[220px]"
-                                                                dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                                dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-[var(--ws-text-muted)] italic">Email preview will appear here.</p>' }}
                                                             />
                                                         </div>
                                                     </div>
@@ -2428,34 +2428,34 @@ Voice & rules:
                                         </div>
 
                                         {/* Plain text fallback - Secondary & Collapsible */}
-                                        <details className="group rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl select-none">
+                                        <details className="group rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-xl select-none">
                                             <summary className="flex items-center justify-between cursor-pointer list-none">
                                                 <div>
-                                                    <p className="type-caption font-black uppercase tracking-widest text-slate-500">Plain text fallback</p>
-                                                    <p className="mt-1 type-card-description text-slate-400">Provider: {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}</p>
+                                                    <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Plain text fallback</p>
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Provider: {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}</p>
                                                 </div>
                                                 <span className="text-teal-400 type-caption font-bold group-open:rotate-180 transition-transform">
                                                     ▼ View Fallback
                                                 </span>
                                             </summary>
-                                            <div className="mt-4 rounded-2xl bg-slate-950 p-4 font-mono type-caption leading-relaxed text-slate-300 border border-white/5 select-text">
+                                            <div className="mt-4 rounded-2xl bg-[var(--ws-canvas)] p-4 font-mono type-caption leading-relaxed text-[var(--ws-text-secondary)] border border-[var(--ws-border)] select-text">
                                                 {plainFromHtml(previewBodyHtml) || 'Plain text version will appear here.'}
                                             </div>
                                         </details>
 
                                         {/* Pre-send audit - Expanded Checklist view */}
-                                        <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4 shadow-xl">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-white/5 pb-4">
+                                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4 shadow-xl">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-[var(--ws-border)] pb-4">
                                                 <div>
                                                     <span className="block type-caption font-bold uppercase tracking-widest text-teal-400">Pre-send audit checklist</span>
-                                                    <p className="mt-1 type-card-description text-slate-400">
+                                                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                                                         Checking delivery compliance and provider requirements:
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={runComposeAudit}
-                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 type-caption font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20 transition-all"
+                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)] hover:bg-teal-500/20 transition-all"
                                                 >
                                                     {auditLoading ? 'Checking...' : 'Refresh audit'}
                                                 </button>
@@ -2469,9 +2469,9 @@ Voice & rules:
                                                         <span className={form.fromEmail ? 'text-emerald-400 type-ui font-bold' : 'text-rose-400 type-ui font-bold'}>
                                                             {form.fromEmail ? '✓' : '⚠️'}
                                                         </span>
-                                                        <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Sender Identity</span>
+                                                        <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Sender Identity</span>
                                                     </div>
-                                                    <p className="mt-1.5 type-card-description text-slate-300 truncate">
+                                                    <p className="mt-1.5 type-card-description text-[var(--ws-text-secondary)] truncate">
                                                         {form.fromEmail || 'Missing email'}
                                                     </p>
                                                 </div>
@@ -2482,9 +2482,9 @@ Voice & rules:
                                                         <span className={connectedProviders.length > 0 ? 'text-emerald-400 type-ui font-bold' : 'text-rose-400 type-ui font-bold'}>
                                                             {connectedProviders.length > 0 ? '✓' : '⚠️'}
                                                         </span>
-                                                        <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Provider Link</span>
+                                                        <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Provider Link</span>
                                                     </div>
-                                                    <p className="mt-1.5 type-card-description text-slate-300">
+                                                    <p className="mt-1.5 type-card-description text-[var(--ws-text-secondary)]">
                                                         {connectedProviders.length > 0 ? `${connectedProviders.length} active` : 'No connected providers'}
                                                     </p>
                                                 </div>
@@ -2495,9 +2495,9 @@ Voice & rules:
                                                         <span className={form.subject && form.bodyHtml ? 'text-emerald-400 type-ui font-bold' : 'text-rose-400 type-ui font-bold'}>
                                                             {form.subject && form.bodyHtml ? '✓' : '⚠️'}
                                                         </span>
-                                                        <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Content Quality</span>
+                                                        <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Content Quality</span>
                                                     </div>
-                                                    <p className="mt-1.5 type-card-description text-slate-300">
+                                                    <p className="mt-1.5 type-card-description text-[var(--ws-text-secondary)]">
                                                         {form.subject && form.bodyHtml ? 'Ready & valid' : 'Missing subject or body'}
                                                     </p>
                                                 </div>
@@ -2508,9 +2508,9 @@ Voice & rules:
                                                         <span className={selectedContactIds.length > 0 || recipientType === 'all' ? 'text-emerald-400 type-ui font-bold' : 'text-rose-400 type-ui font-bold'}>
                                                             {selectedContactIds.length > 0 || recipientType === 'all' ? '✓' : '⚠️'}
                                                         </span>
-                                                        <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Recipients</span>
+                                                        <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Recipients</span>
                                                     </div>
-                                                    <p className="mt-1.5 type-card-description text-slate-300">
+                                                    <p className="mt-1.5 type-card-description text-[var(--ws-text-secondary)]">
                                                         {recipientType === 'all' ? 'All contacts' : `${selectedContactIds.length} contact(s)`}
                                                     </p>
                                                 </div>
@@ -2519,9 +2519,9 @@ Voice & rules:
                                                 <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 transition-all">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-emerald-400 type-ui font-bold">✓</span>
-                                                        <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Deliverability</span>
+                                                        <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Deliverability</span>
                                                     </div>
-                                                    <p className="mt-1.5 type-card-description text-slate-300">
+                                                    <p className="mt-1.5 type-card-description text-[var(--ws-text-secondary)]">
                                                         Spam check passed
                                                     </p>
                                                 </div>
@@ -2529,7 +2529,7 @@ Voice & rules:
 
                                             {composeAudit.issues.length > 0 ? (
                                                 <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-rose-300">Blocked</p>
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--error-text,var(--error-500))]">Blocked</p>
                                                     <ul className="mt-2 space-y-1 type-ui text-rose-100">
                                                         {composeAudit.issues.map((issue) => (
                                                             <li key={issue}>• {issue}</li>
@@ -2538,7 +2538,7 @@ Voice & rules:
                                                 </div>
                                             ) : (
                                                 <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-emerald-300">Ready to launch</p>
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--success-text,var(--success-500))]">Ready to launch</p>
                                                     <p className="mt-2 type-card-description text-emerald-100">
                                                         The builder has enough sender, content, provider, and audience information to attempt delivery.
                                                     </p>
@@ -2547,7 +2547,7 @@ Voice & rules:
 
                                             {composeAudit.warnings.length > 0 && (
                                                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-amber-300">Warnings</p>
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--warning-text,var(--warning-500))]">Warnings</p>
                                                     <ul className="mt-2 space-y-1 type-ui text-amber-100">
                                                         {composeAudit.warnings.map((warning) => (
                                                             <li key={warning}>• {warning}</li>
@@ -2558,7 +2558,7 @@ Voice & rules:
 
                                             {composeAudit.info.length > 0 && (
                                                 <div className="rounded-2xl border border-sky-500/20 bg-sky-500/10 p-4">
-                                                    <p className="type-caption font-black uppercase tracking-wider text-sky-300">Audit notes</p>
+                                                    <p className="type-caption font-black uppercase tracking-wider text-[var(--info-text,var(--info-500))]">Audit notes</p>
                                                     <ul className="mt-2 space-y-1 type-ui text-sky-100">
                                                         {composeAudit.info.map((item) => (
                                                             <li key={item}>• {item}</li>
@@ -2567,11 +2567,11 @@ Voice & rules:
                                                 </div>
                                             )}
 
-                                            <div className="rounded-2xl border border-white/5 bg-slate-950/70 p-4 space-y-3">
+                                            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-4 space-y-3">
                                                 <div className="flex items-center justify-between gap-3">
                                                     <div>
-                                                        <p className="type-caption font-black uppercase tracking-widest text-slate-500">Send test</p>
-                                                        <p className="mt-1 type-card-description text-slate-400">Verify how the email looks in a real inbox before bulk delivery.</p>
+                                                        <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Send test</p>
+                                                        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Verify how the email looks in a real inbox before bulk delivery.</p>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -2587,20 +2587,20 @@ Voice & rules:
                                                     value={testEmailAddress}
                                                     onChange={(e) => setTestEmailAddress(e.target.value)}
                                                     placeholder={senderProfile?.fromEmail || 'name@example.com'}
-                                                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 type-ui text-white outline-none"
+                                                    className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui text-[var(--ws-text-primary)] outline-none"
                                                 />
-                                                <p className="type-card-description text-slate-500">
+                                                <p className="type-card-description text-[var(--ws-text-muted)]">
                                                     Test uses {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]} with the current subject and message draft.
                                                 </p>
                                                 {PROVIDER_DELIVERY_NOTES[resolvedProvider] ? (
-                                                    <p className="type-card-description text-slate-500">
+                                                    <p className="type-card-description text-[var(--ws-text-muted)]">
                                                         {PROVIDER_DELIVERY_NOTES[resolvedProvider]}
                                                     </p>
                                                 ) : null}
                                             </div>
                                         </div>
 
-                                        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
+                                        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
                                                 <input
                                                     type="checkbox"
@@ -2608,14 +2608,14 @@ Voice & rules:
                                                     onChange={(e) => setForm((f) => ({ ...f, scheduleEnabled: e.target.checked }))}
                                                     className="rounded border-slate-600"
                                                 />
-                                                <span className="type-ui text-white font-medium">Schedule for later</span>
+                                                <span className="type-ui text-[var(--ws-text-primary)] font-medium">Schedule for later</span>
                                             </label>
                                             {form.scheduleEnabled && (
                                                 <input
                                                     type="datetime-local"
                                                     value={form.scheduledAt}
                                                     onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                                                    className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 type-ui text-white"
+                                                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                                                 />
                                             )}
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -2625,7 +2625,7 @@ Voice & rules:
                                                     onChange={(e) => setForm((f) => ({ ...f, skipPreviouslyContacted: e.target.checked }))}
                                                     className="rounded border-slate-600"
                                                 />
-                                                <span className="type-ui text-slate-400">Skip contacts already emailed</span>
+                                                <span className="type-ui text-[var(--ws-text-muted)]">Skip contacts already emailed</span>
                                             </label>
                                         </div>
 
@@ -2637,11 +2637,11 @@ Voice & rules:
                                                     ? 'border-sky-500/25 bg-sky-500/10 text-sky-100'
                                                     : submissionStatus?.includes('failed') || submissionStatus?.includes('blocked') || submissionStatus?.includes('could not')
                                                         ? 'border-rose-500/25 bg-rose-500/10 text-rose-100'
-                                                        : 'border-slate-800 bg-slate-950/60 text-slate-400'
+                                                        : 'border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 text-[var(--ws-text-muted)]'
                                             }`}
                                         >
                                             {isSubmitting ? (
-                                                <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-sky-300" aria-hidden="true" />{submissionStatus || 'Preparing your campaign...'}</span>
+                                                <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-[var(--info-text,var(--info-500))]" aria-hidden="true" />{submissionStatus || 'Preparing your campaign...'}</span>
                                             ) : (
                                                 submissionStatus || 'Your campaign will remain a draft until AlphaClone has confirmed delivery or saved the schedule.'
                                             )}
@@ -2651,7 +2651,7 @@ Voice & rules:
                                             onClick={handleCreate}
                                             disabled={isSubmitting || composeAudit.issues.length > 0}
                                             aria-describedby="campaign-launch-help"
-                                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl type-caption font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-2xl type-caption font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
                                             {isSubmitting
@@ -2660,7 +2660,7 @@ Voice & rules:
                                                     ? 'Schedule campaign'
                                                     : 'Review and send campaign'}
                                         </button>
-                                        <p id="campaign-launch-help" className="text-center type-card-description leading-relaxed text-slate-500">
+                                        <p id="campaign-launch-help" className="text-center type-card-description leading-relaxed text-[var(--ws-text-muted)]">
                                             Sending is confirmed only after the connected provider responds. AlphaClone will never report a queued or partial delivery as fully sent.
                                         </p>
                                     </div>
@@ -2671,7 +2671,7 @@ Voice & rules:
                                     {activeStep > 1 ? (
                                         <button 
                                             onClick={() => setActiveStep(prev => prev - 1)}
-                                            className="type-caption text-slate-500 font-bold px-4 py-2 hover:text-white"
+                                            className="type-caption text-[var(--ws-text-muted)] font-bold px-4 py-2 hover:text-[var(--ws-text-primary)]"
                                         >
                                             Back
                                         </button>
@@ -2699,7 +2699,7 @@ Voice & rules:
                                                 }
                                                 setActiveStep(prev => prev + 1);
                                             }}
-                                            className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white type-caption font-black uppercase rounded-xl border border-white/5"
+                                            className="px-6 py-2.5 bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] type-caption font-black uppercase rounded-xl border border-[var(--ws-border)]"
                                         >
                                             Continue
                                         </button>
@@ -2709,15 +2709,15 @@ Voice & rules:
 
                             {/* AI Copilot Side Drawer */}
                             {showCopilot && (
-                                <div className="w-full lg:w-[350px] bg-slate-900 border border-teal-500/20 rounded-3xl p-5 shadow-2xl space-y-4 shrink-0 animate-in slide-in-from-right-4 duration-300 lg:sticky lg:top-4">
-                                    <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <div className="w-full lg:w-[350px] bg-[var(--ws-panel)] border border-teal-500/20 rounded-3xl p-5 shadow-2xl space-y-4 shrink-0 animate-in slide-in-from-right-4 duration-300 lg:sticky lg:top-4">
+                                    <div className="flex justify-between items-center border-b border-[var(--ws-border)] pb-3">
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="w-4 h-4 text-teal-400 animate-pulse" />
-                                            <span className="type-caption font-black text-white uppercase tracking-widest">AI Campaign Copilot</span>
+                                            <span className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest">AI Campaign Copilot</span>
                                         </div>
                                         <button 
                                             onClick={() => setShowCopilot(false)}
-                                            className="p-1 hover:bg-slate-800 rounded-lg text-slate-400"
+                                            className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded-lg text-[var(--ws-text-muted)]"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
@@ -2729,8 +2729,8 @@ Voice & rules:
                                             <div key={i} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                                                 <div className={`p-3 rounded-2xl max-w-[90%] whitespace-pre-wrap leading-relaxed ${
                                                     msg.sender === 'user' 
-                                                        ? 'bg-teal-600 text-white rounded-tr-sm font-semibold' 
-                                                        : 'bg-slate-950 text-slate-200 border border-slate-800 rounded-tl-sm'
+                                                        ? 'bg-teal-600 text-[var(--text-inverse)] rounded-tr-sm font-semibold' 
+                                                        : 'bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] border border-[var(--ws-border)] rounded-tl-sm'
                                                 }`}>
                                                     {msg.text}
                                                 </div>
@@ -2745,7 +2745,7 @@ Voice & rules:
                                             </div>
                                         ))}
                                         {copilotLoading && (
-                                            <div className="flex items-center gap-2 text-slate-500 italic">
+                                            <div className="flex items-center gap-2 text-[var(--ws-text-muted)] italic">
                                                 <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-400" />
                                                 <span>AI Agent thinking...</span>
                                             </div>
@@ -2753,17 +2753,17 @@ Voice & rules:
                                     </div>
 
                                     {/* Input Form */}
-                                    <form onSubmit={handleCopilotSend} className="flex gap-2 pt-2 border-t border-slate-800">
+                                    <form onSubmit={handleCopilotSend} className="flex gap-2 pt-2 border-t border-[var(--ws-border)]">
                                         <input
                                             value={copilotInput}
                                             onChange={e => setCopilotInput(e.target.value)}
                                             placeholder="Suggest tech outreach, paste emails..."
-                                            className="flex-1 h-9 bg-slate-950 border border-slate-800 rounded-xl px-3 type-caption text-white placeholder-slate-600 outline-none focus:border-teal-500/40"
+                                            className="flex-1 h-9 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] placeholder-slate-600 outline-none focus:border-teal-500/40"
                                         />
                                         <button 
                                             type="submit"
                                             disabled={copilotLoading || !copilotInput.trim()}
-                                            className="h-9 w-9 bg-teal-600 text-white rounded-xl flex items-center justify-center hover:bg-teal-500 transition-colors disabled:opacity-50"
+                                            className="h-9 w-9 bg-teal-600 text-[var(--text-inverse)] rounded-xl flex items-center justify-center hover:bg-teal-500 transition-colors disabled:opacity-50"
                                         >
                                             <Send className="w-3.5 h-3.5" />
                                         </button>
@@ -2778,13 +2778,13 @@ Voice & rules:
 
             {/* iOS/PWA bottom nav overlay helper */}
             {viewMode === 'compose' && (
-                <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-white/5 px-4 flex items-center justify-between z-[50] pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-[var(--ws-panel)] border-t border-[var(--ws-border)] px-4 flex items-center justify-between z-[50] pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.4)]">
                     <button 
                         onClick={() => {
                             if (activeStep > 1) setActiveStep(prev => prev - 1);
                             else setViewMode('list');
                         }}
-                        className="text-slate-500 flex items-center gap-1 type-caption font-bold"
+                        className="text-[var(--ws-text-muted)] flex items-center gap-1 type-caption font-bold"
                     >
                         <ArrowLeft className="w-4 h-4" /> Prev
                     </button>
@@ -2792,7 +2792,7 @@ Voice & rules:
                         {[1, 2, 3, 4].map(s => (
                             <div 
                                 key={s} 
-                                className={`w-1.5 h-1.5 rounded-full ${activeStep === s ? 'bg-teal-500 w-4' : 'bg-slate-800'} transition-all`} 
+                                className={`w-1.5 h-1.5 rounded-full ${activeStep === s ? 'bg-teal-500 w-4' : 'bg-[var(--ws-surface-secondary)]'} transition-all`} 
                             />
                         ))}
                     </div>

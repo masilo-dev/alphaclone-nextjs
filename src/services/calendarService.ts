@@ -150,7 +150,7 @@ export const calendarService = {
                 start_time: t.start_date || t.due_date,
                 end_time: t.due_date,
                 type: 'task',
-                color: '#f59e0b', // Amber
+                color: 'var(--warning-500)', // Amber
                 is_all_day: !t.start_date,
                 reminder_minutes: 0,
                 metadata: { taskId: t.id, status: t.status, priority: t.priority },
@@ -169,7 +169,7 @@ export const calendarService = {
             start_time: inv.due_date,
             end_time: inv.due_date,
             type: 'invoice',
-            color: '#ef4444', // Red
+            color: 'var(--error-500)', // Red
             is_all_day: true,
             reminder_minutes: 0,
             metadata: { invoiceId: inv.id, amount: inv.total, status: inv.status },
@@ -187,7 +187,7 @@ export const calendarService = {
             start_time: c.payment_due_date,
             end_time: c.payment_due_date,
             type: 'invoice', // Reuse invoice type logic
-            color: '#dc2626', // Darker Red
+            color: 'var(--error-600)', // Darker Red
             is_all_day: true,
             reminder_minutes: 0,
             metadata: { contractId: c.id, amount: c.payment_amount, status: c.payment_status },
@@ -207,7 +207,7 @@ export const calendarService = {
             start_time: p.due_date,
             end_time: p.due_date,
             type: 'project',
-            color: '#8b5cf6', // Violet
+            color: 'var(--brand-violet-400)', // Violet
             is_all_day: true,
             reminder_minutes: 60,
             metadata: { projectId: p.id, health: p.health, budget: p.budget },
@@ -226,7 +226,7 @@ export const calendarService = {
             start_time: m.due_date,
             end_time: m.due_date,
             type: 'milestone',
-            color: '#ec4899', // Pink
+            color: 'var(--error-500)', // Pink
             is_all_day: true,
             reminder_minutes: 0,
             metadata: { milestoneId: m.id, projectId: m.project_id, clientId: m.projects?.client_id },
@@ -246,7 +246,7 @@ export const calendarService = {
                 start_time: start,
                 end_time: start,
                 type: 'lead' as const,
-                color: '#14b8a6',
+                color: 'var(--brand-blue-500)',
                 is_all_day: true,
                 reminder_minutes: 0,
                 metadata: { leadId: lead.id, stage: lead.stage },
@@ -268,7 +268,7 @@ export const calendarService = {
                 start_time: d.expected_close_date,
                 end_time: d.expected_close_date,
                 type: 'deal' as const,
-                color: '#f59e0b',
+                color: 'var(--warning-500)',
                 is_all_day: true,
                 reminder_minutes: 0,
                 metadata: { dealId: d.id, stage: d.stage, value: d.value },

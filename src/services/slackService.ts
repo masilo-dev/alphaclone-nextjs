@@ -184,7 +184,7 @@ export const slackService = {
       text: `Invoice ${action}: #${invoice.invoice_number}`,
       attachments: [
         {
-          color: action === 'created' ? '#36a64f' : action === 'paid' ? '#36a64f' : '#ff0000',
+          color: action === 'created' ? 'var(--logo-slack)' : action === 'paid' ? 'var(--logo-slack)' : '#ff0000',
           title: `Invoice ${action}`,
           fields: [
             { title: 'Invoice #', value: invoice.invoice_number, short: true },
@@ -217,7 +217,7 @@ export const slackService = {
       text: `Deal ${action}: ${deal.name}`,
       attachments: [
         {
-          color: action === 'won' ? '#36a64f' : action === 'lost' ? '#ff0000' : '#36a64f',
+          color: action === 'won' ? 'var(--logo-slack)' : action === 'lost' ? '#ff0000' : 'var(--logo-slack)',
           title: `Deal ${action}`,
           fields: [
             { title: 'Deal Name', value: deal.name, short: true },
@@ -250,7 +250,7 @@ export const slackService = {
       text: `Task ${action}: ${task.title}`,
       attachments: [
         {
-          color: action === 'completed' ? '#36a64f' : '#36a64f',
+          color: action === 'completed' ? 'var(--logo-slack)' : 'var(--logo-slack)',
           title: `Task ${action}`,
           fields: [
             { title: 'Task', value: task.title, short: true },

@@ -56,7 +56,7 @@ export const contactFormLegacyService = {
                     to: 'info@alphaclonesystems.com',
                     subject: `New Lead: ${name} via Contact Form`,
                     html: `
-                        <div style="font-family: sans-serif; color: #333;">
+                        <div style="font-family: sans-serif; color: var(--text-primary);">
                             <h2>New Website Submission</h2>
                             <p><strong>Name:</strong> ${name}</p>
                             <p><strong>Email:</strong> ${email}</p>

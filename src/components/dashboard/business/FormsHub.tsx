@@ -57,14 +57,14 @@ function SortableFieldRow({
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex flex-wrap gap-2 items-start p-3 rounded-xl bg-slate-950 border border-slate-800">
+    <div ref={setNodeRef} style={style} className="flex flex-wrap gap-2 items-start p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
       <button type="button" className="mt-2 shrink-0 cursor-grab text-slate-600" {...attributes} {...listeners}>
         <GripVertical className="w-4 h-4" />
       </button>
       <select
         value={field.type}
         onChange={(e) => onUpdate(idx, { ...field, type: e.target.value as FormFieldType })}
-        className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 type-caption text-white"
+        className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)]"
       >
         {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
       </select>
@@ -72,18 +72,18 @@ function SortableFieldRow({
         value={field.label}
         onChange={(e) => onUpdate(idx, { ...field, label: e.target.value })}
         placeholder="Label"
-        className="flex-1 min-w-[120px] rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 type-caption text-white"
+        className="flex-1 min-w-[120px] rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)]"
       />
-      <label className="flex items-center gap-1 type-label text-slate-400">
+      <label className="flex items-center gap-1 type-label text-[var(--ws-text-muted)]">
         <input type="checkbox" checked={!!field.required} onChange={(e) => onUpdate(idx, { ...field, required: e.target.checked })} />
         Required
       </label>
-      <button type="button" onClick={() => onRemove(idx)} className="p-1.5 text-slate-500 hover:text-red-400">
+      <button type="button" onClick={() => onRemove(idx)} className="p-1.5 text-[var(--ws-text-muted)] hover:text-red-400">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       {field.type === 'select' && (
         <div className="w-full basis-full space-y-1 mt-1">
-          <label className="type-caption font-bold text-slate-500 uppercase">Dropdown options (one per line)</label>
+          <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Dropdown options (one per line)</label>
           <textarea
             value={(field.options || []).join('\n')}
             onChange={(e) => {
@@ -92,7 +92,7 @@ function SortableFieldRow({
             }}
             rows={3}
             placeholder={'Option 1\nOption 2'}
-            className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 type-caption text-white font-mono"
+            className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-1.5 type-caption text-[var(--ws-text-primary)] font-mono"
           />
         </div>
       )}
@@ -337,12 +337,12 @@ export default function FormsHub() {
     <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6 ac-scroll-full ac-enterprise-module">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Branded Forms</h1>
-          <p className="type-card-description text-slate-400 mt-1">Native forms on your domain — like OpnForm, built into AlphaClone.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-[var(--ws-text-primary)]">Branded Forms</h1>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Native forms on your domain — like OpnForm, built into AlphaClone.</p>
         </div>
         <button
           onClick={handleNewForm}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-ui font-bold"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui font-bold"
         >
           <Plus className="w-4 h-4" /> New form
         </button>
@@ -364,35 +364,35 @@ export default function FormsHub() {
               onClick={() => selectForm(f)}
               className={`w-full text-left px-4 py-3 rounded-xl border transition-colors ${
                 selectedId === f.id
-                  ? 'bg-teal-500/15 border-teal-500/40 text-white'
-                  : 'bg-slate-900/50 border-slate-800 text-slate-300 hover:border-slate-700'
+                  ? 'bg-teal-500/15 border-teal-500/40 text-[var(--text-inverse)]'
+                  : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:border-[var(--ws-border)]'
               }`}
             >
               <div className="font-bold type-ui truncate">{f.title}</div>
-              <div className="type-caption text-slate-500 mt-0.5">{f.submission_count || 0} submissions</div>
+              <div className="type-caption text-[var(--ws-text-muted)] mt-0.5">{f.submission_count || 0} submissions</div>
             </button>
           ))}
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 md:p-6 space-y-5">
+        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5 md:p-6 space-y-5">
 
           {/* Mode toggle */}
-          <div className="flex gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl w-fit">
+          <div className="flex gap-1 p-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl w-fit">
             <button
               type="button"
               onClick={() => setViewMode('editor')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${viewMode === 'editor' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${viewMode === 'editor' ? 'bg-teal-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
             >
               <Settings2 className="w-3.5 h-3.5" /> Editor
             </button>
             <button
               type="button"
               onClick={() => setViewMode('submissions')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${viewMode === 'submissions' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${viewMode === 'submissions' ? 'bg-teal-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
             >
               <Inbox className="w-3.5 h-3.5" /> Submissions
               {(forms.find(f => f.id === selectedId)?.submission_count || 0) > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 type-ui">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-teal-500/20 text-[var(--brand-blue-300)] type-ui">
                   {forms.find(f => f.id === selectedId)?.submission_count}
                 </span>
               )}
@@ -409,50 +409,50 @@ export default function FormsHub() {
               ) : submissions.length === 0 ? (
                 <div className="text-center py-12">
                   <Inbox className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-400 type-card-description font-medium">No submissions yet</p>
-                  <p className="text-slate-500 type-card-description mt-1">Share your form link to start collecting responses</p>
+                  <p className="text-[var(--ws-text-muted)] type-card-description font-medium">No submissions yet</p>
+                  <p className="text-[var(--ws-text-muted)] type-card-description mt-1">Share your form link to start collecting responses</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {submissions.map((sub) => (
-                    <div key={sub.id} className="border border-slate-800 rounded-xl overflow-hidden">
+                    <div key={sub.id} className="border border-[var(--ws-border)] rounded-xl overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setExpandedSub(expandedSub === sub.id ? null : sub.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-800/50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-teal-500/10 flex items-center justify-center flex-shrink-0">
                             <User className="w-4 h-4 text-teal-400" />
                           </div>
                           <div className="min-w-0">
-                            <p className="type-card-description font-medium text-white truncate">{sub.submitter_name || 'Anonymous'}</p>
-                            <p className="type-card-description text-slate-500 truncate">{sub.submitter_email || '—'}</p>
+                            <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{sub.submitter_name || 'Anonymous'}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] truncate">{sub.submitter_email || '—'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-2">
-                          <span className="type-caption text-slate-500">{new Date(sub.created_at).toLocaleDateString()}</span>
+                          <span className="type-caption text-[var(--ws-text-muted)]">{new Date(sub.created_at).toLocaleDateString()}</span>
                           <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${expandedSub === sub.id ? 'rotate-90' : ''}`} />
                         </div>
                       </button>
                       {expandedSub === sub.id && (
-                        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-slate-800 bg-slate-950/40">
+                        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/40">
                           {sub.submitter_email && (
-                            <div className="flex items-center gap-2 type-caption text-slate-300">
-                              <Mail className="w-3.5 h-3.5 text-slate-500" />
+                            <div className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)]">
+                              <Mail className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                               <a href={`mailto:${sub.submitter_email}`} className="hover:text-teal-400 underline">{sub.submitter_email}</a>
                             </div>
                           )}
                           {sub.submitter_phone && (
-                            <div className="flex items-center gap-2 type-caption text-slate-300">
-                              <Phone className="w-3.5 h-3.5 text-slate-500" />
+                            <div className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)]">
+                              <Phone className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                               {sub.submitter_phone}
                             </div>
                           )}
                           {sub.data && typeof sub.data === 'object' && Object.entries(sub.data).filter(([k]) => !['name','email','phone','_hp'].includes(k)).map(([k, v]) => (
                             <div key={k} className="type-caption">
-                              <span className="text-slate-500 capitalize">{k.replace(/_/g, ' ')}:</span>{' '}
-                              <span className="text-slate-300">{String(v)}</span>
+                              <span className="text-[var(--ws-text-muted)] capitalize">{k.replace(/_/g, ' ')}:</span>{' '}
+                              <span className="text-[var(--ws-text-secondary)]">{String(v)}</span>
                             </div>
                           ))}
                           {sub.source && (
@@ -468,51 +468,51 @@ export default function FormsHub() {
           )}
 
           {viewMode === 'editor' && <>
-          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
             <Link2 className="w-4 h-4 text-teal-400 shrink-0" />
-            <code className="type-caption text-slate-300 truncate flex-1">{publicUrl || 'Set workspace slug in settings'}</code>
-            <button onClick={copyLink} className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white" title="Copy link">
+            <code className="type-caption text-[var(--ws-text-secondary)] truncate flex-1">{publicUrl || 'Set workspace slug in settings'}</code>
+            <button onClick={copyLink} className="p-2 rounded-lg bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]" title="Copy link">
               <Copy className="w-4 h-4" />
             </button>
             {publicUrl && (
-              <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white" title="Preview">
+              <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]" title="Preview">
                 <ExternalLink className="w-4 h-4" />
               </a>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+          <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
             <CheckSquare className="w-4 h-4 text-teal-400 shrink-0" />
-            <code className="type-caption text-slate-300 truncate flex-1">{submitEndpointUrl || '/api/forms/submit'}</code>
-            <button onClick={copySubmitEndpoint} className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white" title="Copy submit endpoint">
+            <code className="type-caption text-[var(--ws-text-secondary)] truncate flex-1">{submitEndpointUrl || '/api/forms/submit'}</code>
+            <button onClick={copySubmitEndpoint} className="p-2 rounded-lg bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]" title="Copy submit endpoint">
               <Copy className="w-4 h-4" />
             </button>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase">Form title</label>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 type-ui text-white" />
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Form title</label>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]" />
             </div>
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase">URL slug</label>
-              <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 type-ui text-white font-mono" />
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">URL slug</label>
+              <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] font-mono" />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="type-caption font-bold text-slate-500 uppercase">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 type-ui text-white resize-none" />
+            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] resize-none" />
           </div>
 
-          <div className="flex gap-2 border-b border-slate-800 pb-2">
+          <div className="flex gap-2 border-b border-[var(--ws-border)] pb-2">
             {(['fields', 'embed', 'external'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setEditorTab(tab)}
                 className={`px-3 py-1.5 rounded-lg type-caption font-bold capitalize ${
-                  editorTab === tab ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-white'
+                  editorTab === tab ? 'bg-teal-500/20 text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                 }`}
               >
                 {tab === 'external' ? 'Typeform / Tally' : tab}
@@ -521,13 +521,13 @@ export default function FormsHub() {
           </div>
 
           {editorTab === 'embed' && (
-            <div className="space-y-2 p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <div className="space-y-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
               <div className="flex items-center gap-2 text-teal-400 type-caption font-bold"><Code2 className="w-4 h-4" /> Embed snippet</div>
-              <textarea readOnly value={embedSnippet} rows={4} className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 type-ui text-slate-300 font-mono" />
+              <textarea readOnly value={embedSnippet} rows={4} className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 type-ui text-[var(--ws-text-secondary)] font-mono" />
               <button
                 type="button"
                 onClick={async () => { await navigator.clipboard.writeText(embedSnippet); toast.success('Embed code copied'); }}
-                className="type-caption font-bold text-teal-400 hover:text-teal-300"
+                className="type-caption font-bold text-teal-400 hover:text-[var(--brand-blue-300)]"
               >
                 Copy iframe code
               </button>
@@ -535,22 +535,22 @@ export default function FormsHub() {
           )}
 
           {editorTab === 'external' && (
-            <div className="space-y-3 p-3 rounded-xl bg-slate-950 border border-slate-800 type-caption">
-              <label className="type-caption font-bold text-slate-500 uppercase">Provider</label>
-              <select value={formProvider} onChange={(e) => setFormProvider(e.target.value as 'native' | 'typeform' | 'tally')} className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white">
+            <div className="space-y-3 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption">
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Provider</label>
+              <select value={formProvider} onChange={(e) => setFormProvider(e.target.value as 'native' | 'typeform' | 'tally')} className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]">
                 <option value="native">Native AlphaClone form</option>
                 <option value="typeform">Typeform embed + webhook</option>
                 <option value="tally">Tally embed + webhook</option>
               </select>
               {(formProvider === 'typeform' || formProvider === 'tally') && (
                 <>
-                  <input value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://form.typeform.com/to/..." className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white" />
-                  <input value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Webhook secret (optional)" className="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-2 text-white" />
+                  <input value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="https://form.typeform.com/to/..." className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]" />
+                  <input value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder="Webhook secret (optional)" className="w-full rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-2 py-2 text-[var(--ws-text-primary)]" />
                   <div className="space-y-1">
-                    <p className="text-slate-500">Typeform webhook URL</p>
-                    <code className="block type-ui text-slate-300 break-all">{typeformWebhookUrl}</code>
-                    <p className="text-slate-500 pt-2">Tally webhook URL</p>
-                    <code className="block type-ui text-slate-300 break-all">{tallyWebhookUrl}</code>
+                    <p className="text-[var(--ws-text-muted)]">Typeform webhook URL</p>
+                    <code className="block type-ui text-[var(--ws-text-secondary)] break-all">{typeformWebhookUrl}</code>
+                    <p className="text-[var(--ws-text-muted)] pt-2">Tally webhook URL</p>
+                    <code className="block type-ui text-[var(--ws-text-secondary)] break-all">{tallyWebhookUrl}</code>
                   </div>
                 </>
               )}
@@ -560,8 +560,8 @@ export default function FormsHub() {
           {editorTab === 'fields' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="type-ui font-bold text-white flex items-center gap-2"><FileText className="w-4 h-4 text-teal-400" /> Fields</h3>
-              <button type="button" onClick={() => setFields((f) => [...f, newField()])} className="type-ui font-bold text-teal-400 hover:text-teal-300">+ Add field</button>
+              <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2"><FileText className="w-4 h-4 text-teal-400" /> Fields</h3>
+              <button type="button" onClick={() => setFields((f) => [...f, newField()])} className="type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)]">+ Add field</button>
             </div>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
@@ -580,21 +580,21 @@ export default function FormsHub() {
           )}
 
           <div className="space-y-1">
-            <label className="type-caption font-bold text-slate-500 uppercase">Thank-you message</label>
-            <input value={thankYou} onChange={(e) => setThankYou(e.target.value)} className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 type-ui text-white" />
+            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Thank-you message</label>
+            <input value={thankYou} onChange={(e) => setThankYou(e.target.value)} className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]" />
           </div>
 
-          <label className="flex items-center gap-2 type-label text-slate-300">
+          <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">
             <input type="checkbox" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
             Email workspace admin on new submission
           </label>
 
-          <label className="flex items-center gap-2 type-label text-slate-300">
+          <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">
             <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
             Form is live (public link works)
           </label>
 
-          <label className="flex items-center gap-2 type-label text-slate-300">
+          <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">
             <input type="checkbox" checked={isDefault} onChange={(e) => setIsDefault(e.target.checked)} />
             Set as default contact form
           </label>
@@ -602,7 +602,7 @@ export default function FormsHub() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold type-ui disabled:opacity-50"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold type-ui disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save form

@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,13 +36,13 @@ export default function CRMScreen({ navigation }: { navigation: any }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'hot':
-        return '#FF6B6B';
+        return colors.error;
       case 'warm':
-        return '#FFA500';
+        return colors.warning;
       case 'cold':
-        return '#0077FF';
+        return colors.info;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
@@ -61,7 +62,7 @@ export default function CRMScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -69,7 +70,7 @@ export default function CRMScreen({ navigation }: { navigation: any }) {
           <View style={styles.header}>
             <Text style={styles.title}>CRM</Text>
             <TouchableOpacity style={styles.addButton}>
-              <Ionicons name="add" size={24} color="#FFFFFF" />
+              <Ionicons name="add" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -110,14 +111,14 @@ export default function CRMScreen({ navigation }: { navigation: any }) {
 
                 <View style={styles.leadFooter}>
                   <View style={styles.valueContainer}>
-                    <Ionicons name="cash" size={16} color="#94A3B8" />
+                    <Ionicons name="cash" size={16} color=colors.textSecondary />
                     <Text style={styles.valueText}>${Math.round(lead.value || 0).toLocaleString()}</Text>
                   </View>
                   <Text style={styles.lastContactText}>{lead.lastContact}</Text>
                 </View>
               </TouchableOpacity>
             ))}
-            {loading && <ActivityIndicator color="#00D2A0" />}
+            {loading && <ActivityIndicator color=colors.primary />}
             {!loading && leads.length === 0 && <Text style={styles.emptyText}>No leads yet.</Text>}
           </View>
         </ScrollView>
@@ -147,10 +148,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   addButton: {
-    backgroundColor: '#00D2A0',
+    backgroundColor: colors.primary,
     borderRadius: 25,
     width: 50,
     height: 50,
@@ -169,18 +170,18 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
     flex: 1,
     marginHorizontal: 5,
   },
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#00D2A0',
+    color: colors.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   leadCard: {
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   leadHeader: {
     flexDirection: 'row',
@@ -213,17 +214,17 @@ const styles = StyleSheet.create({
   leadName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 4,
   },
   leadEmail: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   leadCompany: {
     fontSize: 14,
-    color: '#64748B',
+    color: colors.textMuted,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -248,16 +249,16 @@ const styles = StyleSheet.create({
   },
   valueText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginLeft: 6,
     fontWeight: '600',
   },
   lastContactText: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
   },
   emptyText: {
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontSize: 14,
   },
 });

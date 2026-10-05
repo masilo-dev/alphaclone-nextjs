@@ -112,7 +112,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     userId,
                     userName,
                     position: e.target.selectionStart,
-                    color: '#10b981' // Teal
+                    color: 'var(--success-500)' // Teal
                 });
             }
 
@@ -142,7 +142,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4">
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-                <p className="text-slate-400 type-card-description font-medium animate-pulse">Syncing with Grid Node...</p>
+                <p className="text-[var(--ws-text-muted)] type-card-description font-medium animate-pulse">Syncing with Grid Node...</p>
             </div>
         );
     }
@@ -150,16 +150,16 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     return (
         <div className={`flex h-full flex-col overflow-hidden transition-all duration-500 ${WORKSPACE.panel.base} rounded-lg ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-slate-900/40 px-6 py-4 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-6 py-4 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
                     <div className="p-2 bg-teal-500/10 rounded-xl">
                         <Users className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="type-ui font-semibold text-white">Shared Notes</h3>
+                        <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">Shared Notes</h3>
                         <div className="flex items-center gap-2">
                             <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            <span className="type-caption text-slate-500">
+                            <span className="type-caption text-[var(--ws-text-muted)]">
                                 {cursors.length > 0 ? `${cursors.length + 1} people viewing` : 'Only you'}
                             </span>
                         </div>
@@ -172,13 +172,13 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     </div>
                     <button
                         onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
+                        className="p-2 hover:bg-[var(--ws-hover)] rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all"
                     >
                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                     </button>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-red-500/10 rounded-xl text-slate-400 hover:text-red-400 transition-all"
+                        className="p-2 hover:bg-[var(--error-500)]/10 rounded-xl text-[var(--ws-text-muted)] hover:text-red-400 transition-all"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -186,12 +186,12 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Editor Area */}
-            <div className="flex-1 relative bg-[#0a0a0a] group">
+            <div className="flex-1 relative bg-[var(--ws-canvas)] group">
                 <textarea
                     ref={editorRef}
                     defaultValue={document?.content}
                     onChange={handleContentChange}
-                    className="w-full h-full p-8 bg-transparent text-slate-300 font-mono type-ui leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
+                    className="w-full h-full p-8 bg-transparent text-[var(--ws-text-secondary)] font-mono type-ui leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
                     placeholder="Start typing your notes..."
                 />
 
@@ -200,14 +200,14 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     {cursors.map((cursor, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center type-caption font-black text-white shadow-xl"
+                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-[var(--ws-surface-secondary)] flex items-center justify-center type-caption font-black text-[var(--ws-text-primary)] shadow-xl"
                             title={cursor.userName}
                             style={{ borderColor: cursor.color }}
                         >
                             {cursor.userName.charAt(0)}
                         </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center type-caption font-black text-white shadow-xl z-10" title="You">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center type-caption font-black text-[var(--text-inverse)] shadow-xl z-10" title="You">
                         {userName.charAt(0)}
                     </div>
                 </div>
@@ -217,7 +217,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-slate-900/20 px-6 py-2 type-caption text-slate-600">
+            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/20 px-6 py-2 type-caption text-slate-600">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 <span>Auto-saving</span>
             </div>

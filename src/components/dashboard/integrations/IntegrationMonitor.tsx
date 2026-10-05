@@ -78,11 +78,11 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       case 'needs_attention':
         return 'text-amber-500';
       case 'not_connected':
-        return 'text-slate-500';
+        return 'text-[var(--ws-text-muted)]';
       case 'error':
         return 'text-red-500';
       default:
-        return 'text-slate-500';
+        return 'text-[var(--ws-text-muted)]';
     }
   };
 
@@ -93,11 +93,11 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       case 'needs_attention':
         return <AlertCircle className="w-5 h-5 text-amber-500" />;
       case 'not_connected':
-        return <XCircle className="w-5 h-5 text-slate-500" />;
+        return <XCircle className="w-5 h-5 text-[var(--ws-text-muted)]" />;
       case 'error':
         return <XCircle className="w-5 h-5 text-red-500" />;
       default:
-        return <XCircle className="w-5 h-5 text-slate-500" />;
+        return <XCircle className="w-5 h-5 text-[var(--ws-text-muted)]" />;
     }
   };
 
@@ -110,9 +110,9 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       case 'fair':
         return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
       case 'needs_attention':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
+        return 'bg-[var(--error-500)]/20 text-red-400 border-red-500/30';
       default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
+        return 'bg-slate-500/20 text-[var(--ws-text-muted)] border-slate-500/30';
     }
   };
 
@@ -137,27 +137,27 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
 
   if (loading) {
     return (
-      <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+      <div className="bg-[var(--ws-surface-secondary)] rounded-xl p-6 border border-[var(--ws-border)]">
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="w-8 h-8 text-teal-500 animate-spin" />
-          <span className="ml-3 text-slate-400">Loading integration status...</span>
+          <span className="ml-3 text-[var(--ws-text-muted)]">Loading integration status...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="integration-monitor bg-slate-800 rounded-xl p-6 border border-slate-700">
+    <div className="integration-monitor bg-[var(--ws-surface-secondary)] rounded-xl p-6 border border-[var(--ws-border)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Shield className="w-6 h-6 text-teal-500" />
-          <h3 className="text-xl font-semibold text-white">Integration Monitor</h3>
+          <h3 className="text-xl font-semibold text-[var(--ws-text-primary)]">Integration Monitor</h3>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-primary)] rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -188,12 +188,12 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       {/* Integration List */}
       <div className="space-y-4">
         {integrations.map((integration) => (
-          <div key={integration.type} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+          <div key={integration.type} className="bg-[var(--ws-surface-tertiary)]/50 rounded-lg p-4 border border-slate-600">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{getIntegrationIcon(integration.type)}</span>
                 <div>
-                  <h4 className="font-medium text-white flex items-center gap-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2">
                     {integration.name}
                     {getStatusIcon(integration.status)}
                   </h4>
@@ -206,7 +206,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                 <div className={`text-2xl font-bold ${getStatusColor(integration.status)}`}>
                   {integration.percentage}%
                 </div>
-                <div className="type-ui text-slate-400">Functional</div>
+                <div className="type-ui text-[var(--ws-text-muted)]">Functional</div>
               </div>
             </div>
 
@@ -218,7 +218,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                     integration.percentage === 100 ? 'bg-green-500' :
                     integration.percentage >= 80 ? 'bg-blue-500' :
                     integration.percentage >= 60 ? 'bg-amber-500' :
-                    'bg-red-500'
+                    'bg-[var(--error-500)]'
                   }`}
                   style={{ width: `${integration.percentage}%` }}
                 />
@@ -229,7 +229,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             {integration.issues.length > 0 && (
               <div className="mb-3">
                 <h5 className="type-ui font-medium text-amber-400 mb-1">Issues:</h5>
-                <ul className="type-ui text-slate-300 space-y-1">
+                <ul className="type-ui text-[var(--ws-text-secondary)] space-y-1">
                   {integration.issues.map((issue, index) => (
                     <li key={index} className="flex items-center gap-2">
                       <AlertCircle className="w-3 h-3 text-amber-500" />
@@ -255,7 +255,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                     <button
                       key={index}
                       onClick={() => onIntegrationAction?.(integration.type, action)}
-                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded type-ui text-white transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded type-ui text-[var(--ws-text-primary)] transition-colors flex items-center gap-2"
                     >
                       <Zap className="w-3 h-3" />
                       {action}
@@ -266,12 +266,12 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
             )}
 
             {/* Last Checked */}
-            <div className="flex items-center justify-between type-caption text-slate-500">
+            <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
               <span>Last checked: {new Date(integration.lastChecked).toLocaleString()}</span>
               {integration.connected ? (
                 <span className="text-green-500">Connected</span>
               ) : (
-                <span className="text-slate-500">Not Connected</span>
+                <span className="text-[var(--ws-text-muted)]">Not Connected</span>
               )}
             </div>
           </div>
@@ -279,31 +279,31 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       </div>
 
       {/* Summary */}
-      <div className="mt-6 pt-6 border-t border-slate-700">
+      <div className="mt-6 pt-6 border-t border-[var(--ws-border)]">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-green-500">
               {integrations.filter(i => i.status === 'working').length}
             </div>
-            <div className="type-ui text-slate-400">Working</div>
+            <div className="type-ui text-[var(--ws-text-muted)]">Working</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-amber-500">
               {integrations.filter(i => i.status === 'needs_attention').length}
             </div>
-            <div className="type-ui text-slate-400">Needs Attention</div>
+            <div className="type-ui text-[var(--ws-text-muted)]">Needs Attention</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-500">
+            <div className="text-2xl font-bold text-[var(--ws-text-muted)]">
               {integrations.filter(i => i.status === 'not_connected').length}
             </div>
-            <div className="type-ui text-slate-400">Not Connected</div>
+            <div className="type-ui text-[var(--ws-text-muted)]">Not Connected</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-red-500">
               {integrations.filter(i => i.status === 'error').length}
             </div>
-            <div className="type-ui text-slate-400">Errors</div>
+            <div className="type-ui text-[var(--ws-text-muted)]">Errors</div>
           </div>
         </div>
       </div>

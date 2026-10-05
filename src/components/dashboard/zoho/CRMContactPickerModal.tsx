@@ -80,26 +80,26 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                className="relative w-full max-w-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-teal-600/10 to-teal-600/10 flex items-center justify-between shadow-sm">
+                <div className="p-6 border-b border-[var(--ws-border)] bg-gradient-to-r from-teal-600/10 to-teal-600/10 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-teal-600/20 rounded-xl text-teal-400">
                             <Mail size={24} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white tracking-tight">Bulk CRM Selection</h2>
+                            <h2 className="text-xl font-black text-[var(--ws-text-primary)] tracking-tight">Bulk CRM Selection</h2>
                             <p className="type-caption font-bold text-gray-500 uppercase tracking-widest mt-0.5">Select multiple recipients for your email</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button onClick={onClose} className="p-2 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all">
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Search Bar */}
-                <div className="p-4 border-b border-white/5 flex gap-2">
+                <div className="p-4 border-b border-[var(--ws-border)] flex gap-2">
                     <div className="relative flex-1 group">
                         <div className="absolute inset-y-0 left-4 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={18} />
@@ -109,7 +109,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             placeholder="Search by name, email, or industry..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-12 pr-4 py-3 type-ui focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full bg-gray-950/50 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-3 type-ui focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
                         />
                     </div>
                 </div>
@@ -133,10 +133,10 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             <button 
                                 key={lead.id}
                                 onClick={() => toggleSelection(lead.email as string)}
-                                className={`w-full text-left bg-slate-950/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-white/5 hover:border-teal-500/30 hover:bg-teal-500/5'}`}
+                                className={`w-full text-left bg-[var(--ws-canvas)]/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-[var(--ws-border)] hover:border-teal-500/30 hover:bg-teal-500/5'}`}
                             >
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-white text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
+                                    <h3 className="font-bold text-[var(--ws-text-primary)] text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
                                     <div className="flex items-center gap-3 type-caption text-gray-500">
                                         <div className="flex items-center gap-1.5 font-medium">
                                             <Mail size={12} className="text-teal-400/50" />
@@ -155,7 +155,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                                         )}
                                     </div>
                                 </div>
-                                <div className={`p-2 rounded-xl transition-all ${selectedEmails.has(lead.email as string) ? 'bg-teal-500 text-white' : 'bg-gray-800/50 text-gray-400 group-hover:text-teal-400'}`}>
+                                <div className={`p-2 rounded-xl transition-all ${selectedEmails.has(lead.email as string) ? 'bg-teal-500 text-[var(--text-inverse)]' : 'bg-gray-800/50 text-gray-400 group-hover:text-teal-400'}`}>
                                     <CheckCircle2 size={18} />
                                 </div>
                             </button>
@@ -164,17 +164,17 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 border-t border-white/5 bg-slate-950/50 flex items-center justify-between">
+                <div className="p-6 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 flex items-center justify-between">
                     <p className="type-card-description font-bold text-gray-500">
                         {selectedEmails.size} recipients selected
                     </p>
                     <div className="flex gap-3">
-                        <button onClick={onClose} className="px-6 py-2.5 rounded-xl type-ui font-bold text-gray-400 hover:text-white transition-all">
+                        <button onClick={onClose} className="px-6 py-2.5 rounded-xl type-ui font-bold text-gray-400 hover:text-[var(--ws-text-primary)] transition-all">
                             Cancel
                         </button>
                         <button 
                             onClick={handleConfirm}
-                            className="px-8 py-2.5 rounded-xl bg-teal-500 text-white type-caption font-black uppercase tracking-widest shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
+                            className="px-8 py-2.5 rounded-xl bg-teal-500 text-[var(--text-inverse)] type-caption font-black uppercase tracking-widest shadow-lg shadow-teal-900/40 active:scale-95 transition-all"
                         >
                             Add Recipients
                         </button>

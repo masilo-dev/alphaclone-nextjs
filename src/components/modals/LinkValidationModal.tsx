@@ -18,15 +18,15 @@ export const LinkValidationModal: React.FC<LinkValidationModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-md w-full">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-white">Link Validation Warning</h3>
                     <button
                         onClick={onClose}
-                        className="p-1 hover:bg-slate-800 rounded transition-colors"
+                        className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded transition-colors"
                     >
-                        <X className="w-5 h-5 text-slate-400" />
+                        <X className="w-5 h-5 text-[var(--ws-text-muted)]" />
                     </button>
                 </div>
 
@@ -42,24 +42,24 @@ export const LinkValidationModal: React.FC<LinkValidationModalProps> = ({
                     <h4 className="text-lg font-bold text-white mb-2">
                         External Link Detected
                     </h4>
-                    <p className="text-slate-400 type-card-description">
+                    <p className="text-[var(--ws-text-muted)] type-card-description">
                         {warning}
                     </p>
                 </div>
 
                 {/* Link Display */}
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-6">
+                <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-4 mb-6">
                     <div className="flex items-start gap-3">
-                        <ExternalLink className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        <ExternalLink className="w-5 h-5 text-[var(--ws-text-muted)] flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                            <p className="type-card-description text-slate-500 mb-1">Blocked Link:</p>
-                            <p className="type-card-description text-slate-300 break-all">{link}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] mb-1">Blocked Link:</p>
+                            <p className="type-card-description text-[var(--ws-text-secondary)] break-all">{link}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Security Notice */}
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
+                <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-4 mb-6">
                     <div className="flex items-start gap-3">
                         <Shield className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -74,7 +74,7 @@ export const LinkValidationModal: React.FC<LinkValidationModalProps> = ({
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-white font-medium"
+                        className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors text-white font-medium"
                     >
                         Dismiss
                     </button>

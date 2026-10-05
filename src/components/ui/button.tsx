@@ -40,10 +40,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const variants: Record<ButtonVariant, string> = {
   // Primary CTA — coral (brand anchor color for interactive primary)
   primary:
-    'bg-[var(--interactive-primary)] text-white hover:bg-[var(--interactive-primary-hover)] active:scale-[0.98]',
+    'bg-[var(--interactive-primary)] text-[var(--text-inverse)] hover:bg-[var(--interactive-primary-hover)] active:scale-[0.98]',
   // Secondary action — teal (brand intelligence color)
   secondary:
-    'bg-[var(--interactive-secondary)] text-white hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]',
+    'bg-[var(--interactive-secondary)] text-[var(--text-inverse)] hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]',
   // Default / neutral — outlined ghost, adapts to light/dark
   default:
     'border border-[var(--ws-border,var(--border-default))] bg-[var(--ws-panel,transparent)] text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] active:scale-[0.98]',
@@ -55,9 +55,9 @@ const variants: Record<ButtonVariant, string> = {
     'bg-transparent text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',
   // Danger / destructive
   danger:
-    'bg-[var(--error-500,#D64545)] text-white hover:bg-[var(--error-600,#B93636)] active:scale-[0.98]',
+    'bg-[var(--error-500)] text-[var(--text-inverse)] hover:bg-[var(--error-600)] active:scale-[0.98]',
   destructive:
-    'bg-[var(--error-500,#D64545)] text-white hover:bg-[var(--error-600,#B93636)] active:scale-[0.98]',
+    'bg-[var(--error-500)] text-[var(--text-inverse)] hover:bg-[var(--error-600)] active:scale-[0.98]',
   // Icon-only button (square)
   icon:
     'bg-transparent text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',
@@ -66,7 +66,7 @@ const variants: Record<ButtonVariant, string> = {
     'w-full justify-start text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',
   // Prominent branded gradient CTA — use sparingly (marketing sections / onboarding)
   cta:
-    'bg-gradient-to-r from-[var(--ac-accent)] to-[var(--ac-accent-deep)] text-white shadow-md hover:brightness-110 active:scale-[0.98]',
+    'bg-gradient-to-r from-[var(--ac-accent)] to-[var(--ac-accent-deep)] text-[var(--text-inverse)] shadow-md hover:brightness-110 active:scale-[0.98]',
 };
 
 const sizes: Record<ButtonSize, string> = {

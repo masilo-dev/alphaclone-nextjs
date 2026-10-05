@@ -3,14 +3,14 @@ import LoomVideo from '@/components/ui/LoomVideo';
 
 const VideoExplainer = () => {
     return (
-        <section className="py-24 bg-slate-950 relative overflow-hidden">
+        <section className="py-24 bg-[var(--ws-canvas)] relative overflow-hidden">
             {/* Background Glows */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Introduction to AlphaClone Systems</h2>
-                    <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
+                    <h2 className="text-4xl md:text-5xl font-bold text-[var(--ws-text-primary)] mb-6">Introduction to AlphaClone Systems</h2>
+                    <p className="text-[var(--ws-text-muted)] text-lg max-w-2xl mx-auto font-medium">
                         Experience the world&apos;s most advanced Multi-Tenant Business OS through our interactive 10-minute platform tour.
                         Unifying CRM, Projects, AI, and Security into one premium experience.
                     </p>
@@ -42,10 +42,10 @@ const VideoExplainer = () => {
                             desc: "One platform for your entire organization, globally accessible and infinitely scalable."
                         }
                     ].map((item, i) => (
-                        <div key={i} className="p-8 bg-slate-900/40 border border-slate-800/50 rounded-2xl backdrop-blur-sm hover:border-slate-700 transition-colors group">
+                        <div key={i} className="p-8 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/50 rounded-2xl backdrop-blur-sm hover:border-[var(--ws-border)] transition-colors group">
                             <div className="mb-4">{item.icon}</div>
-                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-teal-400 transition-colors">{item.title}</h4>
-                            <p className="text-slate-400 type-card-description leading-relaxed">{item.desc}</p>
+                            <h4 className="text-lg font-bold text-[var(--ws-text-primary)] mb-2 group-hover:text-teal-400 transition-colors">{item.title}</h4>
+                            <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">{item.desc}</p>
                         </div>
                     ))}
                 </div>

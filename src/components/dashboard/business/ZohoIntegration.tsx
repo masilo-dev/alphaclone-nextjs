@@ -136,21 +136,21 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4">Zoho Workspace Integration</h3>
-                <p className="text-slate-400 mb-6">
+                <h3 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tight mb-4">Zoho Workspace Integration</h3>
+                <p className="text-[var(--ws-text-muted)] mb-6">
                     Connect your Zoho account to synchronize CRM data and manage Zoho Mail directly within the platform.
                 </p>
             </div>
 
-            <div className={`p-6 rounded-3xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'} relative overflow-hidden transition-all duration-500`}>
+            <div className={`p-6 rounded-3xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'} relative overflow-hidden transition-all duration-500`}>
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                     <div className="flex items-start gap-5">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${isConnected ? 'bg-teal-500/10 text-teal-400 shadow-teal-500/10' : 'bg-slate-800 text-slate-500'}`}>
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${isConnected ? 'bg-teal-500/10 text-teal-400 shadow-teal-500/10' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                             <Database className="w-7 h-7" />
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-black text-white uppercase tracking-wider">
+                                <h4 className="font-black text-[var(--ws-text-primary)] uppercase tracking-wider">
                                     Zoho Business Services
                                 </h4>
                                 {isConnected ? (
@@ -159,20 +159,20 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                         <span className="type-caption font-black text-green-400 uppercase tracking-tighter">Connected</span>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-800 border border-white/5 rounded-full">
-                                        <AlertCircle className="w-3 h-3 text-slate-500" />
-                                        <span className="type-caption font-black text-slate-400 uppercase tracking-tighter">Inactive</span>
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full">
+                                        <AlertCircle className="w-3 h-3 text-[var(--ws-text-muted)]" />
+                                        <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-tighter">Inactive</span>
                                     </div>
                                 )}
                             </div>
-                            <p className="type-card-description text-slate-400 max-w-xl leading-relaxed">
+                            <p className="type-card-description text-[var(--ws-text-muted)] max-w-xl leading-relaxed">
                                 {isConnected
                                     ? "Your Zoho account is active. CRM synchronization and Mail services are fully operational."
                                     : "Integrate your Zoho CRM and Mail for a unified business experience. Select your data region to begin."
                                 }
                             </p>
                             {isConnected && configuredRegion && (
-                                <div className="mt-2 type-caption font-semibold text-slate-400 flex items-center gap-1.5">
+                                <div className="mt-2 type-caption font-semibold text-[var(--ws-text-muted)] flex items-center gap-1.5">
                                     <Globe className="w-3.5 h-3.5 text-teal-400" />
                                     <span>Active Datacenter: <strong className="text-teal-400 uppercase">{configuredRegion}</strong></span>
                                     {campaignsReady && (
@@ -186,13 +186,13 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                         {!isConnected && (
                             <div className="relative group">
-                                <label className="absolute -top-2 left-3 px-1 bg-[#0f172a] type-caption font-black text-teal-500 uppercase tracking-widest z-10 transition-colors group-focus-within:text-teal-400">
+                                <label className="absolute -top-2 left-3 px-1 bg-[var(--ws-canvas)] type-caption font-black text-teal-500 uppercase tracking-widest z-10 transition-colors group-focus-within:text-teal-400">
                                     Select Region
                                 </label>
                                 <select
                                     value={selectedRegion}
                                     onChange={(e) => setSelectedRegion(e.target.value)}
-                                    className="appearance-none bg-slate-950 border border-white/10 rounded-xl px-4 py-3 type-ui text-white focus:outline-none focus:border-teal-500 transition-all min-w-[200px] cursor-pointer"
+                                    className="appearance-none bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 transition-all min-w-[200px] cursor-pointer"
                                 >
                                     {ZOHO_REGIONS.map(region => (
                                         <option key={region.id} value={region.id}>
@@ -200,7 +200,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                         </option>
                                     ))}
                                 </select>
-                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-500 group-hover:text-teal-500 transition-colors">
+                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[var(--ws-text-muted)] group-hover:text-teal-500 transition-colors">
                                     <Globe className="w-4 h-4" />
                                 </div>
                                 <div className="mt-2 type-ui text-amber-500 flex items-center gap-1.5 max-w-[200px]">
@@ -213,7 +213,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                         {isConnected ? (
                             <button
                                 onClick={handleDisconnect}
-                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-black type-caption uppercase tracking-widest rounded-xl border border-white/5 transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] font-black type-caption uppercase tracking-widest rounded-xl border border-[var(--ws-border)] transition-all active:scale-95"
                             >
                                 <XCircle className="w-4 h-4" />
                                 Disconnect
@@ -222,7 +222,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                             <button
                                 onClick={handleConnect}
                                 disabled={connecting}
-                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-black type-caption uppercase tracking-widest rounded-xl shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-black type-caption uppercase tracking-widest rounded-xl shadow-lg shadow-teal-600/20 transition-all active:scale-95 disabled:opacity-50"
                             >
                                 {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                                 {connecting ? 'Connecting...' : 'Connect Zoho'}
@@ -233,27 +233,27 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-2 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
                         CRM Sync
                     </h4>
-                    <p className="type-card-description text-slate-400 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         Sync leads, contacts, and opportunities between AlphaClone and Zoho CRM automatically.
                     </p>
                 </div>
-                <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-2 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-teal-500 rounded-full" />
                         Zoho Mail
                     </h4>
-                    <p className="type-card-description text-slate-400 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         Access your Zoho Mail inbox, send emails, and track communications without leaving AlphaClone.
                     </p>
                 </div>
             </div>
             {isConnected && (
-                <div className="p-5 bg-slate-900/40 border border-white/5 rounded-2xl">
+                <div className="p-5 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl">
                     <h4 className="type-ui font-semibold text-teal-400 mb-3">Send Test Email</h4>
                     <div className="flex flex-col md:flex-row gap-3">
                         <input
@@ -261,12 +261,12 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                             value={testRecipient}
                             onChange={(e) => setTestRecipient(e.target.value)}
                             placeholder="recipient@domain.com"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500"
+                            className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
                         />
                         <button
                             onClick={handleSendTest}
                             disabled={isTesting}
-                            className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-60 text-white font-black type-caption uppercase tracking-widest rounded-xl border border-white/5 transition-all"
+                            className="px-6 py-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-60 text-[var(--ws-text-primary)] font-black type-caption uppercase tracking-widest rounded-xl border border-[var(--ws-border)] transition-all"
                         >
                             {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Test'}
                         </button>

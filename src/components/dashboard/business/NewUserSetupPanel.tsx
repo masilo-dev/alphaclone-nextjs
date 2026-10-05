@@ -54,7 +54,7 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
           <p className="type-caption font-semibold uppercase tracking-label text-[var(--ac-accent)]">
             Start here
           </p>
-          <h2 className="text-lg font-semibold text-white tracking-tight mt-1">
+          <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] tracking-tight mt-1">
             Welcome, {firstName} — choose one first win
           </h2>
           <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 max-w-xl">
@@ -68,7 +68,7 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
           <button
             type="button"
             onClick={onDismiss}
-            className="p-1.5 rounded-md text-[var(--ws-text-tertiary)] hover:text-white hover:bg-[var(--ws-hover)]"
+            className="p-1.5 rounded-md text-[var(--ws-text-tertiary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
             aria-label="Dismiss setup guide"
           >
             <X className="w-4 h-4" />
@@ -92,7 +92,7 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
                 </span>
                 <Icon className="w-4 h-4 text-[var(--ac-accent)] ml-auto" />
               </div>
-              <p className="type-card-description font-semibold text-white group-hover:text-[var(--ac-accent-hover)]">
+              <p className="type-card-description font-semibold text-[var(--ws-text-primary)] group-hover:text-[var(--ac-accent-hover)]">
                 {item.title}
               </p>
               <p className="type-card-description text-[var(--ws-text-secondary)] mt-1 leading-relaxed">

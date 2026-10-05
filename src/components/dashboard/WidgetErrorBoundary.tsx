@@ -55,14 +55,14 @@ export class WidgetErrorBoundary extends Component<Props, State> {
             if (this.props.fallback) return this.props.fallback;
 
             return (
-                <Card className="h-full min-h-[200px] flex flex-col items-center justify-center p-6 border-red-500/20 bg-red-500/5">
-                    <div className="p-3 bg-red-500/10 rounded-full mb-4">
+                <Card className="h-full min-h-[200px] flex flex-col items-center justify-center p-6 border-red-500/20 bg-[var(--error-500)]/5">
+                    <div className="p-3 bg-[var(--error-500)]/10 rounded-full mb-4">
                         <AlertCircle className="w-6 h-6 text-red-400" />
                     </div>
-                    <h3 className="text-white font-medium mb-2">
+                    <h3 className="text-[var(--ws-text-primary)] font-medium mb-2">
                         {this.props.title ? `${this.props.title} failed` : 'Widget failed to load'}
                     </h3>
-                    <p className="type-card-description text-slate-400 text-center mb-2 max-w-md">
+                    <p className="type-card-description text-[var(--ws-text-muted)] text-center mb-2 max-w-md">
                         {this.state.error?.message || 'An unexpected error occurred'}
                     </p>
                     {(this.state.error?.message?.includes('310') || this.state.error?.message?.includes('re-render')) && (
@@ -72,7 +72,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
                     )}
                     <button
                         onClick={this.handleRetry}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white type-caption rounded transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption rounded transition-colors"
                     >
                         <RefreshCw className="w-3 h-3" />
                         Retry

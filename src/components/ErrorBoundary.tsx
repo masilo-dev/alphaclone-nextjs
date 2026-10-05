@@ -105,26 +105,26 @@ export class ErrorBoundary extends Component<Props, State> {
 
             // Default fallback UI
             return (
-                <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                    <div className="max-w-md w-full glass-card p-8 rounded-2xl border border-slate-800">
+                <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center p-4">
+                    <div className="max-w-md w-full glass-card p-8 rounded-2xl border border-[var(--ws-border)]">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-red-500/10 rounded-xl">
+                            <div className="p-3 bg-[var(--error-500)]/10 rounded-xl">
                                 <AlertCircle className="w-8 h-8 text-red-400" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-white">This screen crashed</h2>
-                                <p className="type-card-description text-slate-400">Reload the page, or try again to return to the last stable view.</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)]">Reload the page, or try again to return to the last stable view.</p>
                             </div>
                         </div>
 
                         {this.state.error && (
-                            <div className="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-800">
-                                <p className="type-card-description font-mono text-red-300 mb-2">
+                            <div className="mb-6 p-4 bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)]">
+                                <p className="type-card-description font-mono text-[var(--error-text,var(--error-500))] mb-2">
                                     {this.state.error.message}
                                 </p>
                                 {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
                                     <details className="mt-2">
-                                        <summary className="type-ui text-slate-500 cursor-pointer hover:text-slate-400">
+                                        <summary className="type-ui text-[var(--ws-text-muted)] cursor-pointer hover:text-[var(--ws-text-muted)]">
                                             Stack trace
                                         </summary>
                                         <pre className="type-caption text-slate-600 mt-2 overflow-auto max-h-40">
@@ -145,13 +145,13 @@ export class ErrorBoundary extends Component<Props, State> {
                             </button>
                             <button
                                 onClick={this.handleReset}
-                                className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
+                                className="flex-1 px-4 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-lg font-medium transition-colors"
                             >
                                 Try Again
                             </button>
                         </div>
 
-                        <p className="type-card-description text-slate-500 text-center mt-4">
+                        <p className="type-card-description text-[var(--ws-text-muted)] text-center mt-4">
                             If this problem persists, please contact support
                         </p>
                     </div>

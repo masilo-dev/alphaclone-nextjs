@@ -120,7 +120,7 @@ export default function BonnieLauncher() {
           onClick={() => setMenuOpen((open) => !open)}
           className={cn(
             'inline-flex h-11 w-11 sm:h-12 sm:min-w-12 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-3',
-            'bg-[var(--brand-violet-500)] text-white border border-[var(--brand-violet-400)]/40',
+            'bg-[var(--brand-violet-500)] text-[var(--ws-text-primary)] border border-[var(--brand-violet-400)]/40',
             'shadow-md hover:bg-[var(--brand-violet-600)] active:scale-95 transition-all',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-violet-300)]'
           )}
@@ -134,7 +134,7 @@ export default function BonnieLauncher() {
           </span>
         ) : null}
         {pendingCount > 0 ? (
-          <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background,#0C1220)] text-[10px] font-bold px-1">
+          <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background)] text-[10px] font-bold px-1">
             {pendingCount}
           </span>
         ) : null}

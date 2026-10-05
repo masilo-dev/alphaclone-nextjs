@@ -195,11 +195,11 @@ async function sendBookingEmails(
     subject: `Confirmation: ${input.bookingTypeName || 'Meeting'} on ${when}`,
     templateName: 'bookingConfirmation',
     html: `
-      <div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a;">
+      <div style="font-family:Arial,sans-serif;padding:24px;color:var(--ws-canvas);">
         <h1 style="margin:0 0 16px;">Booking Confirmed</h1>
         <p>Hi <strong>${input.clientName}</strong>, your session for <strong>${input.bookingTypeName || 'Meeting'}</strong> is confirmed.</p>
         <p><strong>When:</strong> ${when}${input.timeZone ? ` (${input.timeZone})` : ''}</p>
-        ${input.meetingUrl ? `<p><a href="${input.meetingUrl}" style="display:inline-block;padding:12px 18px;background:#0d9488;color:#fff;text-decoration:none;border-radius:8px;">Join meeting</a></p>` : ''}
+        ${input.meetingUrl ? `<p><a href="${input.meetingUrl}" style="display:inline-block;padding:12px 18px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:8px;">Join meeting</a></p>` : ''}
       </div>
     `,
   });
@@ -218,7 +218,7 @@ async function sendBookingEmails(
     subject: `New booking: ${input.clientName} - ${input.bookingTypeName || 'Meeting'}`,
     isPlatformNotification: true,
     html: `
-      <div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a;">
+      <div style="font-family:Arial,sans-serif;padding:24px;color:var(--ws-canvas);">
         <h2>New client booking</h2>
         <p><strong>${input.clientName}</strong> (${input.clientEmail}) booked <strong>${input.bookingTypeName || 'Meeting'}</strong>.</p>
         <p><strong>When:</strong> ${when}</p>

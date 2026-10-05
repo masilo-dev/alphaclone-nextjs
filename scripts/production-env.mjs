@@ -227,16 +227,35 @@ export function validateProductionEnv(env = process.env) {
     configured["credential encryption secret"] = encryptionResolved.source;
   }
 
+  const portalSigning = env.CLIENT_PORTAL_SESSION_SIGNING_SECRET?.trim();
+  if (!portalSigning || portalSigning.length < 32) {
+    errors.push(
+      "CLIENT_PORTAL_SESSION_SIGNING_SECRET is required in production (32+ characters; dedicated secret — never reuse SUPABASE_SERVICE_ROLE_KEY)",
+    );
+  } else if (isSupabaseServiceRoleKey(portalSigning)) {
+    errors.push(
+      "CLIENT_PORTAL_SESSION_SIGNING_SECRET must not be the Supabase service_role JWT",
+    );
+  } else {
+    configured["client portal signing secret"] = "CLIENT_PORTAL_SESSION_SIGNING_SECRET";
+  }
+
   const redisUrl =
     env.REDIS_URL?.trim() ||
     env.CACHE_REDIS_URL?.trim() ||
     env.STORE_REDIS_URL?.trim();
   const upstashUrl = env.UPSTASH_REDIS_REST_URL?.trim();
   const upstashToken = env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  // Production defaults to requiring distributed Redis (RATE-001). Opt out only with REDIS_REQUIRED=false.
+  const redisOptOut =
+    env.REDIS_REQUIRED === "false" || env.REQUIRE_REDIS === "false";
   const redisRequired =
-    env.REDIS_REQUIRED === "true" ||
-    env.REDIS_REQUIRED === "1" ||
-    env.REQUIRE_REDIS === "true";
+    !redisOptOut &&
+    (env.REDIS_REQUIRED === "true" ||
+      env.REDIS_REQUIRED === "1" ||
+      env.REQUIRE_REDIS === "true" ||
+      env.NODE_ENV === "production" ||
+      env.RAILWAY_ENVIRONMENT === "production");
   if (redisRequired) {
     if (redisUrl) {
       configured.Redis = "REDIS_URL";
@@ -248,7 +267,7 @@ export function validateProductionEnv(env = process.env) {
       }
     } else {
       errors.push(
-        "Redis is required when REDIS_REQUIRED=true (set REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).",
+        "Distributed Redis is required in production for rate limiting (set REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN). Set REDIS_REQUIRED=false only for explicit degraded mode.",
       );
     }
   } else if (redisUrl) {

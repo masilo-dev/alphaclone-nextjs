@@ -59,8 +59,8 @@ export default function BillsPayablePage() {
       {aging.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {aging.slice(0, 4).map((a, i) => (
-            <div key={i} className="bg-slate-900 border border-white/5 rounded-xl p-3">
-              <div className="type-caption text-slate-500">{a.bucket || 'Bucket'}</div>
+            <div key={i} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3">
+              <div className="type-caption text-[var(--ws-text-muted)]">{a.bucket || 'Bucket'}</div>
               <div className="text-lg font-bold text-violet-400">${Number(a.amount || 0).toLocaleString()}</div>
             </div>
           ))}
@@ -78,7 +78,7 @@ export default function BillsPayablePage() {
 
       {loading ? (
         <div className="ac-workspace-panel rounded-lg min-h-[240px] flex items-center justify-center">
-          <div className="flex items-center gap-3 text-slate-400">
+          <div className="flex items-center gap-3 text-[var(--ws-text-muted)]">
             <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
             <span className="type-ui font-medium">Loading bills payable...</span>
           </div>
@@ -102,16 +102,16 @@ export default function BillsPayablePage() {
           }
         />
       ) : (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           {filtered.map((b) => (
             <div key={b.id} className="px-4 py-3 flex justify-between items-center">
               <div>
-                <div className="type-ui font-bold text-white">{b.vendor_name || 'Vendor'}</div>
-                <div className="type-caption text-slate-500">Due {b.due_date || '—'}</div>
+                <div className="type-ui font-bold text-[var(--ws-text-primary)]">{b.vendor_name || 'Vendor'}</div>
+                <div className="type-caption text-[var(--ws-text-muted)]">Due {b.due_date || '—'}</div>
               </div>
               <div className="text-right">
                 <div className="type-ui font-bold text-teal-400">${Number(b.total || 0).toLocaleString()}</div>
-                <div className="type-caption text-slate-500 capitalize">{b.status}</div>
+                <div className="type-caption text-[var(--ws-text-muted)] capitalize">{b.status}</div>
               </div>
             </div>
           ))}

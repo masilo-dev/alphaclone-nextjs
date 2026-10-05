@@ -16,7 +16,7 @@ type ContractAlert = {
 };
 
 const URGENCY_CONFIG = {
-  critical: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30', label: 'Expires Soon', days: 30 },
+  critical: { color: 'text-red-400', bg: 'bg-[var(--error-500)]/10', border: 'border-red-500/30', label: 'Expires Soon', days: 30 },
   warning: { color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', label: 'Renew Soon', days: 60 },
   notice: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', label: 'Upcoming Renewal', days: 90 },
 };
@@ -95,11 +95,11 @@ export function ContractRenewalAlertsPanel({ onOpenContract }: ContractRenewalAl
           <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
             <Bell className="text-amber-400" size={20} /> Contract Renewal Alerts
           </h3>
-          <p className="type-card-description text-slate-400 mt-0.5">Active contracts expiring within 90 days</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Active contracts expiring within 90 days</p>
         </div>
         <button
           onClick={load}
-          className="flex items-center gap-1.5 type-caption text-slate-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg"
+          className="flex items-center gap-1.5 type-caption text-[var(--ws-text-muted)] hover:text-white border border-white/10 px-3 py-1.5 rounded-lg"
         >
           <RefreshCw size={12} /> Refresh
         </button>
@@ -114,8 +114,8 @@ export function ContractRenewalAlertsPanel({ onOpenContract }: ContractRenewalAl
       ) : alerts.length === 0 ? (
         <div className="ac-workspace-panel rounded-xl p-10 text-center">
           <CheckCircle2 className="text-emerald-400 mx-auto mb-3" size={36} />
-          <p className="text-slate-300 font-semibold">No contracts expiring within 90 days</p>
-          <p className="text-slate-500 type-caption mt-1">All active contracts have sufficient time remaining.</p>
+          <p className="text-[var(--ws-text-secondary)] font-semibold">No contracts expiring within 90 days</p>
+          <p className="text-[var(--ws-text-muted)] type-caption mt-1">All active contracts have sufficient time remaining.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -142,13 +142,13 @@ export function ContractRenewalAlertsPanel({ onOpenContract }: ContractRenewalAl
                         </div>
                         <div className="min-w-0">
                           <p className="type-card-description font-bold text-white truncate">{alert.title}</p>
-                          <p className="type-card-description text-slate-400">{alert.client_name} · Expires {new Date(alert.end_date).toLocaleDateString()}</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)]">{alert.client_name} · Expires {new Date(alert.end_date).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
                           <p className={`text-lg font-black ${cfg.color}`}>{alert.daysUntilExpiry}</p>
-                          <p className="type-card-description text-slate-500">days left</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)]">days left</p>
                         </div>
                         {onOpenContract && (
                           <button

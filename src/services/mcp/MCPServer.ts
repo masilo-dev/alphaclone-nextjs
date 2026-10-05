@@ -347,7 +347,7 @@ function appendSignatureToEmail(input: { html?: unknown; text?: unknown }, signa
   const sigBlock = signature ? `${signature}\n\n` : '';
   const textSignature = signature ? `${sigBlock}--\n${signature}` : '';
   const htmlSigBlock = signature ? `${signature.replace(/\n/g, '<br>')}<br><br>` : '';
-  const htmlSignature = signature ? `${htmlSigBlock}<p style="margin:0;color:#64748b;font-size:12px;">--</p>` : '';
+  const htmlSignature = signature ? `${htmlSigBlock}<p style="margin:0;color:var(--ws-text-muted);font-size:12px;">--</p>` : '';
 
   return {
     html: input.html && signature ? `${String(input.html)}<br><br>${htmlSignature}` : (input.html ? String(input.html) : undefined),
@@ -377,7 +377,7 @@ function appendDocumentLinksToEmail(
     '<ul>',
     ...links.map(
       (link) =>
-        `<li><a href="${link.url}">${link.name}</a> <span style="color:#64748b">(expires ${link.expiresAt})</span></li>`
+        `<li><a href="${link.url}">${link.name}</a> <span style="color:var(--ws-text-muted)">(expires ${link.expiresAt})</span></li>`
     ),
     '</ul>',
   ].join('');
@@ -4726,31 +4726,31 @@ class AlphaCloneMCPServer {
             receipt_url: receiptUrl,
           };
           let html = `
-              <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                  <h2 style="color: #10B981;">Payment Confirmed ✓</h2>
+              <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid var(--surface-secondary); border-radius: 10px;">
+                  <h2 style="color: var(--success-500);">Payment Confirmed ✓</h2>
                   <p>Hi there,</p>
                   <p>This is a formal receipt for your payment of <strong>{{amount}}</strong>.</p>
                   <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                       <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{invoice_number}}</td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary);"><strong>Invoice Number:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary); text-align: right;">{{invoice_number}}</td>
                       </tr>
                       <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Payment Date:</strong></td>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{payment_date}}</td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary);"><strong>Payment Date:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary); text-align: right;">{{payment_date}}</td>
                       </tr>
                       <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Amount Paid:</strong></td>
-                          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; color: #10B981;">{{amount}}</td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary);"><strong>Amount Paid:</strong></td>
+                          <td style="padding: 10px; border-bottom: 1px solid var(--surface-secondary); text-align: right; font-size: 18px; color: var(--success-500);">{{amount}}</td>
                       </tr>
                   </table>
                   <p>You can download the full PDF receipt here:</p>
                   <div style="text-align: center; margin: 30px 0;">
-                      <a href="{{receipt_url}}" style="background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                      <a href="{{receipt_url}}" style="background: var(--success-500); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
                           Download Receipt
                       </a>
                   </div>
-                  <p style="color: #666; font-size: 12px;">Thank you for your business!</p>
+                  <p style="color: var(--text-muted); font-size: 12px;">Thank you for your business!</p>
               </div>
           `;
           Object.entries(variables).forEach(([key, value]) => {

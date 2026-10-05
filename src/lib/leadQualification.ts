@@ -220,7 +220,7 @@ export function qualifyLead(
     hot:  { label: '🔥 Hot',  color: 'text-orange-400',  bgColor: 'bg-orange-500/10',  borderColor: 'border-orange-500/30' },
     warm: { label: '🌡 Warm', color: 'text-yellow-400',  bgColor: 'bg-yellow-500/10',  borderColor: 'border-yellow-500/30' },
     cold: { label: '🧊 Cold', color: 'text-blue-400',    bgColor: 'bg-blue-500/10',    borderColor: 'border-blue-500/30'   },
-    skip: { label: '✗ Skip',  color: 'text-slate-500',   bgColor: 'bg-slate-800/50',   borderColor: 'border-slate-700'     },
+    skip: { label: '✗ Skip',  color: 'text-[var(--ws-text-muted)]',   bgColor: 'bg-[var(--ws-surface-secondary)]/50',   borderColor: 'border-[var(--ws-border)]'     },
   };
 
   return {

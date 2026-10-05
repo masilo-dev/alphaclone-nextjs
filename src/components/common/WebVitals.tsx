@@ -9,9 +9,9 @@ export function WebVitals() {
             const { name, value, delta, id, rating } = metric;
 
             const color =
-                rating === 'good' ? 'color: #0cce6b' :
-                    rating === 'needs-improvement' ? 'color: #ffa400' :
-                        'color: #ff4e42';
+                rating === 'good' ? 'color: var(--success-500)' :
+                    rating === 'needs-improvement' ? 'color: var(--warning-500)' :
+                        'color: var(--error-500)';
 
             console.log(
                 `%c[Web Vitals] ${name}: ${value.toFixed(2)} (${rating})`,

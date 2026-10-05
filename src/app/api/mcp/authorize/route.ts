@@ -82,9 +82,9 @@ function serveConsentPage(params: {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      background: linear-gradient(135deg, var(--ws-canvas) 0%, var(--ws-panel) 100%);
       font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-      color: #f1f5f9;
+      color: var(--ws-surface-secondary);
     }
     .card {
       background: rgba(30, 41, 59, 0.9);
@@ -105,7 +105,7 @@ function serveConsentPage(params: {
     .logo-icon {
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      background: linear-gradient(135deg, var(--brand-blue-500), var(--brand-violet-500));
       border-radius: 10px;
       display: flex;
       align-items: center;
@@ -114,14 +114,14 @@ function serveConsentPage(params: {
       font-size: 1.1rem;
       color: white;
     }
-    .logo-text { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
-    h1 { font-size: 1.35rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.5rem; }
-    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .logo-text { font-size: 1.1rem; font-weight: 700; color: var(--ws-surface-secondary); }
+    h1 { font-size: 1.35rem; font-weight: 700; color: var(--ws-surface-secondary); margin-bottom: 0.5rem; }
+    .subtitle { color: var(--ws-text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
     label {
       display: block;
       font-size: 0.8rem;
       font-weight: 600;
-      color: #94a3b8;
+      color: var(--ws-text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 0.5rem;
@@ -132,27 +132,27 @@ function serveConsentPage(params: {
       background: rgba(15, 23, 42, 0.8);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 10px;
-      color: #f1f5f9;
+      color: var(--ws-surface-secondary);
       font-size: 0.9rem;
       outline: none;
       transition: border-color 0.2s;
       font-family: monospace;
     }
     input[type="text"]:focus, input[type="password"]:focus {
-      border-color: #14b8a6;
+      border-color: var(--brand-blue-500);
     }
     .field { margin-bottom: 1.25rem; }
     .help {
       font-size: 0.78rem;
-      color: #64748b;
+      color: var(--ws-text-muted);
       margin-top: 0.5rem;
       line-height: 1.5;
     }
-    .help a { color: #14b8a6; text-decoration: none; }
+    .help a { color: var(--brand-blue-500); text-decoration: none; }
     button[type="submit"] {
       width: 100%;
       padding: 0.85rem;
-      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      background: linear-gradient(135deg, var(--brand-blue-500), var(--brand-violet-500));
       border: none;
       border-radius: 10px;
       color: white;
@@ -169,7 +169,7 @@ function serveConsentPage(params: {
       border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 8px;
       padding: 0.75rem 1rem;
-      color: #f87171;
+      color: var(--error-500);
       font-size: 0.875rem;
       margin-bottom: 1.25rem;
     }
@@ -182,7 +182,7 @@ function serveConsentPage(params: {
       border-radius: 999px;
       padding: 0.2rem 0.65rem;
       font-size: 0.75rem;
-      color: #5eead4;
+      color: var(--brand-blue-300);
       font-weight: 600;
       margin-bottom: 1.5rem;
     }

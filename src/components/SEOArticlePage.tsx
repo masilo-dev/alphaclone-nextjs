@@ -49,7 +49,7 @@ const SEOArticlePage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="text-white text-xl">Loading...</div>
             </div>
         );
@@ -57,10 +57,10 @@ const SEOArticlePage: React.FC = () => {
 
     if (!article) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-4xl font-bold text-white mb-4">Article Not Found</h1>
-                    <p className="text-slate-400">The article you're looking for doesn't exist.</p>
+                    <p className="text-[var(--ws-text-muted)]">The article you're looking for doesn't exist.</p>
                     <a href="/" className="mt-6 inline-block px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600">
                         Go Home
                     </a>
@@ -110,10 +110,10 @@ const SEOArticlePage: React.FC = () => {
             </Helmet>
 
             {/* Article Content */}
-            <div className="min-h-screen bg-slate-950">
+            <div className="min-h-screen bg-[var(--ws-canvas)]">
                 <article className="max-w-4xl mx-auto px-6 py-16">
                     {/* Breadcrumb */}
-                    <nav className="type-ui text-slate-400 mb-8">
+                    <nav className="type-ui text-[var(--ws-text-muted)] mb-8">
                         <a href="/" className="hover:text-teal-400">Home</a>
                         <span className="mx-2">/</span>
                         <a href="/blog" className="hover:text-teal-400">Blog</a>
@@ -128,7 +128,7 @@ const SEOArticlePage: React.FC = () => {
                                 {article.category}
                             </span>
                             {article.tags.map(tag => (
-                                <span key={tag} className="px-3 py-1 bg-slate-800 text-slate-300 type-ui rounded-full">
+                                <span key={tag} className="px-3 py-1 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] type-ui rounded-full">
                                     {tag}
                                 </span>
                             ))}
@@ -138,7 +138,7 @@ const SEOArticlePage: React.FC = () => {
                             {article.title}
                         </h1>
 
-                        <div className="flex items-center gap-4 text-slate-400 type-ui">
+                        <div className="flex items-center gap-4 text-[var(--ws-text-muted)] type-ui">
                             <span>{new Date(article.created_at).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
@@ -152,7 +152,7 @@ const SEOArticlePage: React.FC = () => {
                     {/* Article Content (Markdown rendered as HTML) */}
                     <div className="prose prose-invert prose-lg max-w-none">
                         <div
-                            className="text-slate-300 leading-relaxed"
+                            className="text-[var(--ws-text-secondary)] leading-relaxed"
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content.replace(/\n/g, '<br />')) }}
                         />
                     </div>
@@ -162,7 +162,7 @@ const SEOArticlePage: React.FC = () => {
                         <h3 className="text-2xl font-bold text-white mb-4">
                             Ready to Start Your Project?
                         </h3>
-                        <p className="text-slate-300 mb-6">
+                        <p className="text-[var(--ws-text-secondary)] mb-6">
                             Contact AlphaClone Systems today for a free consultation on your custom software development needs.
                         </p>
                         <a

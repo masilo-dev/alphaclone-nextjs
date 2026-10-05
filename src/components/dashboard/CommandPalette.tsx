@@ -272,18 +272,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 placeholder="Search commands, tools, and sections..."
                                 className="w-full bg-transparent border-none focus:ring-0 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-lg font-medium"
                             />
-                            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-lg border border-slate-700">
-                                <span className="type-caption font-black text-slate-400">ESC</span>
+                            <div className="flex items-center gap-1.5 px-2 py-1 bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)]">
+                                <span className="type-caption font-black text-[var(--ws-text-muted)]">ESC</span>
                             </div>
                         </div>
 
                         <div id="command-palette-list" role="listbox" className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
                             {filteredCommands.length === 0 ? (
                                 <div className="p-8 text-center">
-                                    <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                                        <Sparkles className="w-6 h-6 text-slate-500" />
+                                    <div className="w-12 h-12 bg-[var(--ws-surface-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[var(--ws-border)]">
+                                        <Sparkles className="w-6 h-6 text-[var(--ws-text-muted)]" />
                                     </div>
-                                    <p className="text-slate-400 font-medium">No results found for "{search}"</p>
+                                    <p className="text-[var(--ws-text-muted)] font-medium">No results found for "{search}"</p>
                                     <p className="text-slate-600 type-caption mt-1 uppercase tracking-widest font-bold">Try searching for finance, crm, or actions</p>
                                 </div>
                             ) : (
@@ -308,23 +308,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                         onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                         className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-4 group ${isSelected
                                                             ? 'bg-teal-500/10 border-teal-500/20'
-                                                            : 'hover:bg-slate-800/50 border-transparent'
+                                                            : 'hover:bg-[var(--ws-surface-secondary)]/50 border-transparent'
                                                             } border`}
                                                     >
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                                                             }`}>
                                                             <cmd.icon className="w-5 h-5" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
+                                                                <span className={`font-bold ${isSelected ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
                                                                 {cmd.shortcut && (
-                                                                    <span className="type-caption font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                    <span className="type-caption font-black bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] px-1.5 py-0.5 rounded border border-[var(--ws-border)] uppercase tracking-tighter">
                                                                         {cmd.shortcut}
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="type-card-description text-slate-500 truncate">{cmd.description}</p>
+                                                            <p className="type-card-description text-[var(--ws-text-muted)] truncate">{cmd.description}</p>
                                                         </div>
                                                         {isSelected && (
                                                             <ArrowRight className="w-4 h-4 text-teal-400 mr-2" />
@@ -360,23 +360,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                                                             className={`w-full text-left p-3 rounded-lg transition-all flex items-center gap-4 group ${isSelected
                                                                 ? 'bg-teal-500/10 border-teal-500/20'
-                                                                : 'hover:bg-slate-800/50 border-transparent'
+                                                                : 'hover:bg-[var(--ws-surface-secondary)]/50 border-transparent'
                                                                 } border`}
                                                         >
-                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-teal-500 text-slate-950' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                                                                 }`}>
                                                                 <cmd.icon className="w-5 h-5" />
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className={`font-bold ${isSelected ? 'text-white' : 'text-slate-300'}`}>{cmd.title}</span>
+                                                                    <span className={`font-bold ${isSelected ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
                                                                     {cmd.shortcut && (
-                                                                        <span className="type-caption font-black bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-tighter">
+                                                                        <span className="type-caption font-black bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] px-1.5 py-0.5 rounded border border-[var(--ws-border)] uppercase tracking-tighter">
                                                                             {cmd.shortcut}
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="type-card-description text-slate-500 truncate">{cmd.description}</p>
+                                                                <p className="type-card-description text-[var(--ws-text-muted)] truncate">{cmd.description}</p>
                                                             </div>
                                                             {isSelected && (
                                                                 <ArrowRight className="w-4 h-4 text-teal-400 mr-2" />
@@ -391,22 +391,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             )}
                         </div>
 
-                        <div className="p-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between">
+                        <div className="p-3 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">↑↓</div>
+                                    <div className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded border border-[var(--ws-border)] type-caption font-black text-[var(--ws-text-muted)]">↑↓</div>
                                     <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">/</div>
+                                    <div className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded border border-[var(--ws-border)] type-caption font-black text-[var(--ws-text-muted)]">/</div>
                                     <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Open search</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 type-caption font-black text-slate-400">ENTER</div>
+                                    <div className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded border border-[var(--ws-border)] type-caption font-black text-[var(--ws-text-muted)]">ENTER</div>
                                     <span className="type-caption text-slate-600 font-bold uppercase tracking-wider">Select</span>
                                 </div>
                             </div>
-                                <div className="type-caption text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                                <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Sparkles className="w-3 h-3 bg-gradient-to-r from-teal-500 to-orange-500 text-transparent bg-clip-text" />
                                     Quick Actions
                                 </div>

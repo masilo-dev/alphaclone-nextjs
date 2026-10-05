@@ -72,7 +72,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     }, []);
 
     if (loading) {
-        return <div className="p-8 text-center text-slate-400">Loading payments...</div>;
+        return <div className="p-8 text-center text-[var(--ws-text-muted)]">Loading payments...</div>;
     }
 
     return (
@@ -93,17 +93,17 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-4 border-b border-slate-700">
+            <div className="flex gap-4 border-b border-[var(--ws-border)]">
                 <button
                     onClick={() => setActiveTab('invoices')}
-                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'invoices' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
+                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'invoices' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-[var(--ws-text-muted)] hover:text-white'
                         }`}
                 >
                     Invoices
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
-                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'history' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-400 hover:text-white'
+                    className={`pb-3 px-1 type-ui font-medium transition-colors ${activeTab === 'history' ? 'text-teal-400 border-b-2 border-teal-400' : 'text-[var(--ws-text-muted)] hover:text-white'
                         }`}
                 >
                     Payment History
@@ -114,7 +114,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             {activeTab === 'invoices' && (
                 <div className="space-y-4">
                     {invoices.length === 0 ? (
-                        <Card className="p-8 text-center text-slate-400">
+                        <Card className="p-8 text-center text-[var(--ws-text-muted)]">
                             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
                             No invoices yet. Create or send an invoice to start tracking payments.
                         </Card>
@@ -122,13 +122,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                         invoices.map((invoice) => (
                             <Card key={invoice.id} className="p-4 flex flex-col md:flex-row justify-between items-center gap-4">
                                 <div className="flex items-center gap-4 flex-1">
-                                    <div className={`p-3 rounded-full ${invoice.status === 'paid' ? 'bg-green-500/10 text-green-500' : 'bg-slate-700 text-slate-300'}`}>
+                                    <div className={`p-3 rounded-full ${invoice.status === 'paid' ? 'bg-green-500/10 text-green-500' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)]'}`}>
                                         <FileText className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-white">{invoice.description}</h3>
-                                        <div className="type-ui text-slate-400">Due: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}</div>
-                                        <div className="type-caption text-slate-500">ID: {invoice.id.slice(0, 8)}...</div>
+                                        <div className="type-ui text-[var(--ws-text-muted)]">Due: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}</div>
+                                        <div className="type-caption text-[var(--ws-text-muted)]">ID: {invoice.id.slice(0, 8)}...</div>
                                     </div>
                                 </div>
 
@@ -140,7 +140,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                                         <div className="flex flex-wrap gap-2 justify-end mt-1">
                                             {invoice.status === 'paid' && <Badge className="bg-green-500/20 text-green-400">PAID</Badge>}
                                             {invoice.status === 'sent' && <Badge className="bg-blue-500/20 text-blue-400">SENT</Badge>}
-                                            {invoice.status === 'draft' && <Badge className="bg-slate-500/20 text-slate-400">DRAFT</Badge>}
+                                            {invoice.status === 'draft' && <Badge className="bg-slate-500/20 text-[var(--ws-text-muted)]">DRAFT</Badge>}
                                             {!isStripeConfigured && <Badge className="bg-amber-500/20 text-amber-500">Setup Required</Badge>}
                                         </div>
                                     </div>
@@ -166,7 +166,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             {activeTab === 'history' && (
                 <div className="space-y-4">
                     {payments.length === 0 ? (
-                        <Card className="p-8 text-center text-slate-400">
+                        <Card className="p-8 text-center text-[var(--ws-text-muted)]">
                             <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
                             No payments recorded yet. Paid invoices will appear here.
                         </Card>
@@ -174,12 +174,12 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                         payments.map((payment) => (
                             <Card key={payment.id} className="p-4 flex justify-between items-center">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-2 bg-slate-700 rounded-full text-green-400">
+                                    <div className="p-2 bg-[var(--ws-surface-tertiary)] rounded-full text-green-400">
                                         <Check className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <div className="font-medium text-white">Payment via Stripe</div>
-                                        <div className="type-ui text-slate-400">{format(new Date(payment.created_at), 'PPP p')}</div>
+                                        <div className="type-ui text-[var(--ws-text-muted)]">{format(new Date(payment.created_at), 'PPP p')}</div>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -199,14 +199,14 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                     <Card className="w-full max-w-lg relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
                         <button
                             onClick={() => setShowCheckout(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-white"
+                            className="absolute top-4 right-4 text-[var(--ws-text-muted)] hover:text-white"
                         >
                             <X className="w-5 h-5" />
                         </button>
 
                         <div className="mb-6">
                             <h3 className="text-xl font-bold text-white mb-1">Secure Payment</h3>
-                            <p className="text-slate-400 type-card-description">Complete your payment for invoice #{selectedInvoice.id.slice(0, 8)}</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description">Complete your payment for invoice #{selectedInvoice.id.slice(0, 8)}</p>
                         </div>
 
                         <Elements stripe={stripePromise} options={{
@@ -221,7 +221,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                             />
                         </Elements>
 
-                        <div className="mt-4 pt-4 border-t border-slate-700 text-center type-caption text-slate-500 flex items-center justify-center gap-2">
+                        <div className="mt-4 pt-4 border-t border-[var(--ws-border)] text-center type-caption text-[var(--ws-text-muted)] flex items-center justify-center gap-2">
                             <CheckCircle className="w-3 h-3" />
                             Payments secured by Stripe. End-to-end encrypted.
                         </div>

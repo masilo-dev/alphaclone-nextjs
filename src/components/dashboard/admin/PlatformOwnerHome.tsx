@@ -172,8 +172,8 @@ export default function PlatformOwnerHome() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <p className="type-caption font-black uppercase tracking-caps text-teal-400/80">Platform owner</p>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Command Center</h1>
-          <p className="type-card-description text-slate-400 mt-1 max-w-xl">
+          <h1 className="text-2xl font-black text-[var(--ws-text-primary)] tracking-tight mt-1">Command Center</h1>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1 max-w-xl">
             Oversee tenants, production health, ops logs, missing service keys, and pre-customer review from one desk.
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function PlatformOwnerHome() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -191,7 +191,7 @@ export default function PlatformOwnerHome() {
       {loading && !health && tenants.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[0, 1, 2].map((key) => (
-            <div key={key} className="h-24 rounded-2xl border border-white/5 bg-slate-900/50 animate-pulse" />
+            <div key={key} className="h-24 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 animate-pulse" />
           ))}
         </div>
       ) : null}
@@ -200,7 +200,7 @@ export default function PlatformOwnerHome() {
         <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <KeyRound className="h-4 w-4 text-amber-300" />
+              <KeyRound className="h-4 w-4 text-[var(--warning-text,var(--warning-500))]" />
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="type-caption font-black text-amber-100 uppercase tracking-widest">
@@ -214,7 +214,7 @@ export default function PlatformOwnerHome() {
                 {missingKeys.map((item) => (
                   <span
                     key={item.key}
-                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)]/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {item.label}
                   </span>
@@ -222,7 +222,7 @@ export default function PlatformOwnerHome() {
                 {healthGaps.map((gap) => (
                   <span
                     key={gap}
-                    className="rounded-lg border border-amber-500/20 bg-slate-950/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
+                    className="rounded-lg border border-amber-500/20 bg-[var(--ws-canvas)]/40 px-2.5 py-1 type-ui font-semibold text-amber-100"
                   >
                     {gap}
                   </span>
@@ -230,7 +230,7 @@ export default function PlatformOwnerHome() {
               </div>
               <Link
                 href="/dashboard/admin/settings"
-                className="inline-block mt-3 type-caption font-bold text-teal-300 hover:text-teal-200"
+                className="inline-block mt-3 type-caption font-bold text-[var(--brand-blue-300)] hover:text-teal-200"
               >
                 Open Global Settings →
               </Link>
@@ -240,25 +240,25 @@ export default function PlatformOwnerHome() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+          <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <HeartPulse className="h-3.5 w-3.5" /> Health
           </div>
-          <p className={`mt-2 text-xl font-black ${healthStatus === 'healthy' ? 'text-emerald-400' : 'text-amber-300'}`}>
+          <p className={`mt-2 text-xl font-black ${healthStatus === 'healthy' ? 'text-emerald-400' : 'text-[var(--warning-text,var(--warning-500))]'}`}>
             {healthStatus}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+          <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <Building2 className="h-3.5 w-3.5" /> Active tenants
           </div>
-          <p className="mt-2 text-xl font-black text-white">{loading ? '—' : activeTenants || tenants.length}</p>
+          <p className="mt-2 text-xl font-black text-[var(--ws-text-primary)]">{loading ? '—' : activeTenants || tenants.length}</p>
         </div>
-        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-slate-400 type-caption font-black uppercase tracking-widest">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
+          <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <AlertTriangle className="h-3.5 w-3.5" /> Recent signals
           </div>
-          <p className="mt-2 text-xl font-black text-white">{recentErrors.length}</p>
+          <p className="mt-2 text-xl font-black text-[var(--ws-text-primary)]">{recentErrors.length}</p>
         </div>
       </div>
 
@@ -267,15 +267,15 @@ export default function PlatformOwnerHome() {
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-2xl border border-white/5 bg-slate-900/40 p-4 hover:border-teal-500/30 hover:bg-slate-900/70 transition-colors"
+            className="group rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4 hover:border-teal-500/30 hover:bg-[var(--ws-panel)]/70 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20">
-                <item.icon className="h-5 w-5 text-teal-300" />
+                <item.icon className="h-5 w-5 text-[var(--brand-blue-300)]" />
               </div>
               <div>
-                <p className="type-card-description font-bold text-white group-hover:text-teal-200">{item.label}</p>
-                <p className="type-card-description text-slate-500 mt-0.5">{item.description}</p>
+                <p className="type-card-description font-bold text-[var(--ws-text-primary)] group-hover:text-teal-200">{item.label}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{item.description}</p>
               </div>
             </div>
           </Link>
@@ -283,35 +283,35 @@ export default function PlatformOwnerHome() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Latest tenants</h2>
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+          <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Latest tenants</h2>
           {tenants.length === 0 ? (
-            <p className="type-card-description text-slate-500">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
           ) : (
             <ul className="space-y-2">
               {tenants.map((t) => (
                 <li key={t.id} className="flex items-center justify-between gap-2 type-ui">
-                  <span className="text-slate-200 font-medium truncate">{t.name}</span>
-                  <span className="type-caption font-black uppercase tracking-widest text-slate-500">
+                  <span className="text-[var(--ws-text-secondary)] font-medium truncate">{t.name}</span>
+                  <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                     {t.status || t.subscription || '—'}
                   </span>
                 </li>
               ))}
             </ul>
           )}
-          <Link href="/dashboard/admin/tenants" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-teal-300">
+          <Link href="/dashboard/admin/tenants" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)]">
             Open tenant manager →
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Ops log snapshot</h2>
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+          <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Ops log snapshot</h2>
           {recentErrors.length === 0 ? (
-            <p className="type-card-description text-slate-500">{loading ? 'Loading…' : 'No recent error signals.'}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No recent error signals.'}</p>
           ) : (
             <ul className="space-y-2">
               {recentErrors.map((row, idx) => (
-                <li key={row.id || idx} className="type-ui text-slate-300 border-b border-white/5 pb-2 last:border-0">
+                <li key={row.id || idx} className="type-ui text-[var(--ws-text-secondary)] border-b border-[var(--ws-border)] pb-2 last:border-0">
                   <span className="type-caption font-black uppercase tracking-widest text-amber-400/80 mr-2">
                     {row.severity || 'info'}
                   </span>
@@ -320,7 +320,7 @@ export default function PlatformOwnerHome() {
               ))}
             </ul>
           )}
-          <Link href="/dashboard/admin/operations" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-teal-300">
+          <Link href="/dashboard/admin/operations" className="inline-block mt-4 type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)]">
             Open operations console →
           </Link>
         </section>

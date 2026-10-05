@@ -26,7 +26,7 @@ import EmptyState from '@/components/ui/EmptyState';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
-  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border border-indigo-400">
+  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-[var(--text-inverse)] min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border border-indigo-400">
     <div className="flex items-center gap-2 font-bold mb-1">
       <Zap className="w-4 h-4 text-indigo-100" />
       {data.label}
@@ -59,20 +59,20 @@ function typeAbbrev(type: string) {
 }
 
 const ActionNode = ({ data }: { data: { label: string; description: string; type: string } }) => {
-  const style = NODE_STYLES[data.type] || { border: 'border-slate-200 dark:border-slate-700' };
+  const style = NODE_STYLES[data.type] || { border: 'border-slate-200 dark:border-[var(--ws-border)]' };
   const abbr = typeAbbrev(data.type);
 
   return (
-    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
-      <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
+    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-[var(--ws-panel)] text-slate-900 dark:text-[var(--ws-text-primary)] min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
+      <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-[var(--ws-border)] shadow-md cursor-crosshair" />
       <div className="flex items-center gap-2 font-bold type-ui mb-1 min-w-0">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 type-caption font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 type-caption font-black text-slate-600 dark:border-slate-600 dark:bg-[var(--ws-surface-secondary)] dark:text-[var(--ws-text-secondary)]" title={data.type}>
           {abbr}
         </span>
         <span className="truncate">{data.label}</span>
       </div>
-      <div className="type-ui text-slate-500 dark:text-slate-400 leading-tight">{data.description}</div>
-      <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
+      <div className="type-ui text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] leading-tight">{data.description}</div>
+      <Handle type="source" position={Position.Bottom} className="w-4 h-4 -bottom-2 bg-slate-400 border-2 border-white dark:border-[var(--ws-border)] shadow-md cursor-crosshair" />
     </div>
   );
 };
@@ -99,7 +99,7 @@ const initialNodes: Node[] = [
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: 'trigger-1', target: 'action-1', animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } },
+  { id: 'e1-2', source: 'trigger-1', target: 'action-1', animated: true, style: { stroke: 'var(--brand-blue-600)', strokeWidth: 2 } },
 ];
 
 const starterWorkflowTemplates = [
@@ -320,7 +320,7 @@ export default function AutomationBuilder() {
           source: idx === 0 ? 'trigger-1' : `action-${idx - 1}`,
           target: id,
           animated: true,
-          style: { stroke: '#0d9488', strokeWidth: 2 }
+          style: { stroke: 'var(--brand-blue-600)', strokeWidth: 2 }
         });
       });
       setNodes(reconstructedNodes);
@@ -332,7 +332,7 @@ export default function AutomationBuilder() {
   };
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds: Edge[]) => addEdge({ ...params, animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } } as Edge, eds)),
+    (params: Connection | Edge) => setEdges((eds: Edge[]) => addEdge({ ...params, animated: true, style: { stroke: 'var(--brand-blue-600)', strokeWidth: 2 } } as Edge, eds)),
     [setEdges],
   );
 
@@ -520,7 +520,7 @@ export default function AutomationBuilder() {
           source: idx === 0 ? 'trigger-1' : `action-${idx - 1}`,
           target: id,
           animated: true,
-          style: { stroke: '#0d9488', strokeWidth: 2 }
+          style: { stroke: 'var(--brand-blue-600)', strokeWidth: 2 }
         });
     });
     setNodes(reconstructedNodes);
@@ -530,9 +530,9 @@ export default function AutomationBuilder() {
   };
 
   return (
-    <div className="w-full h-full min-w-0 min-h-[min(100dvh,720px)] sm:min-h-[640px] lg:min-h-[700px] flex flex-col bg-slate-50 dark:bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
+    <div className="w-full h-full min-w-0 min-h-[min(100dvh,720px)] sm:min-h-[640px] lg:min-h-[700px] flex flex-col bg-slate-50 dark:bg-[var(--ws-canvas)] rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-[var(--ws-border)] relative shadow-inner">
         {/* Main Tab Controller */}
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between z-20 min-w-0">
+        <div className="bg-white dark:bg-[var(--ws-panel)] border-b border-slate-200 dark:border-[var(--ws-border)] px-3 sm:px-6 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between z-20 min-w-0">
             <ModuleJumpSelect
                 options={[
                     { label: 'Builder', href: 'editor' },
@@ -543,7 +543,7 @@ export default function AutomationBuilder() {
                 label="Automation section"
                 onNavigate={(href) => setActiveTab(href as typeof activeTab)}
             />
-            <div className="hidden md:flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
+            <div className="hidden md:flex gap-1 bg-slate-100 dark:bg-[var(--ws-surface-secondary)] p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
                 {[
                     { id: 'editor', label: 'Builder', icon: Zap },
                     { id: 'history', label: 'Audit Trail', icon: History },
@@ -554,8 +554,8 @@ export default function AutomationBuilder() {
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-11 rounded-lg type-caption sm:text-sm font-bold transition-all shrink-0 ${
                             activeTab === tab.id
-                                ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                                ? 'bg-white dark:bg-[var(--ws-surface-tertiary)] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-[var(--ws-text-secondary)]'
                         }`}
                     >
                         <tab.icon className="w-4 h-4" />
@@ -565,7 +565,7 @@ export default function AutomationBuilder() {
             </div>
             
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
-                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                <div className="flex gap-1 bg-slate-100 dark:bg-[var(--ws-surface-secondary)] p-1 rounded-xl">
                   {(Object.keys(COMPLEXITY_PRESETS) as AutomationComplexity[]).map((tier) => {
                     const preset = COMPLEXITY_PRESETS[tier];
                     const active = setupComplexity === tier;
@@ -578,9 +578,9 @@ export default function AutomationBuilder() {
                         className={`px-2.5 py-1.5 rounded-lg type-ui font-bold transition-all ${
                           active
                             ? tier === 'recommended'
-                              ? 'bg-teal-600 text-white shadow-sm'
-                              : 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                              ? 'bg-teal-600 text-[var(--text-inverse)] shadow-sm'
+                              : 'bg-indigo-600 text-[var(--text-inverse)] shadow-sm'
+                            : 'text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-[var(--ws-text-secondary)]'
                         }`}
                       >
                         {preset.label}
@@ -589,12 +589,12 @@ export default function AutomationBuilder() {
                   })}
                 </div>
                 <div className="hidden md:block text-right min-w-0">
-                    <div className="type-ui font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
-                    <div className="type-caption text-slate-500 uppercase tracking-widest font-bold">
+                    <div className="type-ui font-bold text-slate-900 dark:text-[var(--ws-text-primary)] truncate max-w-[200px]">{workflowName}</div>
+                    <div className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
                     </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold type-caption ring-2 ring-indigo-500/20 shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[var(--ws-text-primary)] font-bold type-caption ring-2 ring-indigo-500/20 shadow-lg">
                     {userId ? 'A' : '?'}
                 </div>
             </div>
@@ -608,7 +608,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex items-center gap-2">
                 <button 
                   onClick={centerView}
-                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
+                  className="bg-white/80 dark:bg-[var(--ws-panel)]/80 backdrop-blur-md p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-[var(--ws-border)]/50 text-slate-600 dark:text-[var(--ws-text-muted)] hover:text-indigo-500 transition"
                   title="Center View"
                 >
                   <Maximize className="w-5 h-5" />
@@ -618,7 +618,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex gap-2">
                 <button 
                   onClick={handleNew}
-                  className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition flex items-center gap-2 type-ui font-medium"
+                  className="bg-white dark:bg-[var(--ws-surface-secondary)] hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] text-slate-700 dark:text-[var(--ws-text-secondary)] px-3 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-[var(--ws-border)] transition flex items-center gap-2 type-ui font-medium"
                 >
                   <Plus className="w-4 h-4" /> New
                 </button>
@@ -629,27 +629,27 @@ export default function AutomationBuilder() {
                           setShowLoadMenu(!showLoadMenu);
                           if (!showLoadMenu) fetchWorkflows(userId);
                         }}
-                        className="flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transition type-ui font-medium"
+                        className="flex items-center gap-2 bg-white dark:bg-[var(--ws-surface-secondary)] hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] text-slate-700 dark:text-[var(--ws-text-secondary)] px-4 py-2 rounded-xl shadow-lg border border-slate-200 dark:border-[var(--ws-border)] transition type-ui font-medium"
                     >
                         <RefreshCw className="w-4 h-4" /> Load
                     </button>
                     {showLoadMenu && (
-                        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 w-[280px]">
-                            <div className="p-3 border-b border-slate-100 dark:border-slate-700 font-bold type-caption uppercase tracking-wider text-slate-500">
+                        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-[var(--ws-surface-secondary)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--ws-border)] overflow-hidden z-50 w-[280px]">
+                            <div className="p-3 border-b border-slate-100 dark:border-[var(--ws-border)] font-bold type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">
                                 Saved Automations
                             </div>
                             <div className="max-h-[300px] overflow-y-auto">
                                 {savedWorkflows.length === 0 ? (
-                                    <div className="p-4 text-center text-slate-400 type-caption italic">No saved workflows found</div>
+                                    <div className="p-4 text-center text-[var(--ws-text-muted)] type-caption italic">No saved workflows found</div>
                                 ) : (
                                     savedWorkflows.map(wf => (
                                         <button
                                             key={wf.id}
                                             onClick={() => loadWorkflow(wf)}
-                                            className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition"
+                                            className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] border-b border-slate-50 dark:border-[var(--ws-border)]/50 last:border-0 transition"
                                         >
-                                            <div className="type-ui font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
-                                            <div className="type-caption text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
+                                            <div className="type-ui font-bold text-slate-800 dark:text-[var(--ws-text-primary)] truncate">{wf.name}</div>
+                                            <div className="type-caption text-[var(--ws-text-muted)] mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
                                         </button>
                                     ))
                                 )}
@@ -661,21 +661,21 @@ export default function AutomationBuilder() {
                 <div className="relative">
                     <button 
                         onClick={() => setShowActionMenu(!showActionMenu)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition type-ui font-bold"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--ws-text-primary)] px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition type-ui font-bold"
                     >
                         <Plus className="w-4 h-4" /> Add Action
                     </button>
                     {showActionMenu && (
-                        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden z-50 w-[320px]">
-                            <div className="flex gap-1 p-2 border-b border-slate-100 dark:border-slate-700 overflow-x-auto">
+                        <div className="absolute top-full mt-2 right-0 bg-white dark:bg-[var(--ws-surface-secondary)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--ws-border)] overflow-hidden z-50 w-[320px]">
+                            <div className="flex gap-1 p-2 border-b border-slate-100 dark:border-[var(--ws-border)] overflow-x-auto">
                                 {actionCategories.map(cat => (
                                     <button
                                         key={cat.id}
                                         onClick={() => setActiveCategory(cat.id)}
                                         className={`px-2.5 py-1 rounded-lg type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                             activeCategory === cat.id
-                                                ? 'bg-indigo-500 text-white shadow'
-                                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                                ? 'bg-indigo-500 text-[var(--ws-text-primary)] shadow'
+                                                : 'text-[var(--ws-text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-tertiary)]'
                                         }`}
                                     >
                                         {cat.label}
@@ -687,14 +687,14 @@ export default function AutomationBuilder() {
                                     <button
                                         key={idx}
                                         onClick={() => addActionNode(template)}
-                                        className="w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex items-center gap-3 border-b border-slate-100/50 dark:border-slate-700/50 last:border-0"
+                                        className="w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)]/50 transition flex items-center gap-3 border-b border-slate-100/50 dark:border-[var(--ws-border)]/50 last:border-0"
                                     >
                                         <span className="text-base w-6 text-center shrink-0">
                                             {NODE_STYLES[template.type]?.icon || '⚡'}
                                         </span>
                                         <div className="min-w-0">
-                                            <div className="font-semibold type-caption text-slate-900 dark:text-white truncate">{template.label}</div>
-                                            <div className="type-caption text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
+                                            <div className="font-semibold type-caption text-slate-900 dark:text-[var(--ws-text-primary)] truncate">{template.label}</div>
+                                            <div className="type-caption text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] truncate">{template.description}</div>
                                         </div>
                                     </button>
                                 ))}
@@ -705,7 +705,7 @@ export default function AutomationBuilder() {
                 <button 
                     onClick={handleExecute}
                     disabled={!workflowId || executing}
-                    className="flex items-center gap-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl shadow-lg transition font-medium"
+                    className="flex items-center gap-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-slate-400 disabled:cursor-not-allowed text-[var(--text-inverse)] px-4 py-2 rounded-xl shadow-lg transition font-medium"
                 >
                     {executing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                     {executing ? 'Running...' : 'Test Run'}
@@ -713,7 +713,7 @@ export default function AutomationBuilder() {
                 <button 
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:bg-slate-400 disabled:cursor-not-allowed text-white px-5 py-2 rounded-xl shadow-lg shadow-amber-500/20 transition font-medium"
+                    className="flex items-center gap-2 bg-amber-500 hover:bg-[var(--warning-500)] disabled:bg-slate-400 disabled:cursor-not-allowed text-[var(--ws-text-primary)] px-5 py-2 rounded-xl shadow-lg shadow-amber-500/20 transition font-medium"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {saving ? 'Saving...' : (workflowId ? 'Update' : 'Publish')}
@@ -732,24 +732,24 @@ export default function AutomationBuilder() {
                 rfInstance.current = instance;
                 instance.fitView({ padding: 0.2 });
             }}
-            className="bg-slate-50 dark:bg-slate-950"
+            className="bg-slate-50 dark:bg-[var(--ws-canvas)]"
         >
-            <Controls className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-800" />
+            <Controls className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-none dark:border-[var(--ws-border)] dark:bg-[var(--ws-surface-secondary)]" />
             <MiniMap 
                 nodeStrokeColor={(n: Node) => {
-                    if (n.type === 'triggerNode') return '#4f46e5';
-                    if (n.type === 'actionNode') return '#0f172a';
-                    return '#eee';
+                    if (n.type === 'triggerNode') return 'var(--brand-violet-500)';
+                    if (n.type === 'actionNode') return 'var(--ws-canvas)';
+                    return 'var(--surface-secondary)';
                 }}
                 nodeColor={(n: Node) => {
-                    if (n.type === 'triggerNode') return '#6366f1';
-                    if (n.type === 'actionNode') return '#1e293b';
-                    return '#fff';
+                    if (n.type === 'triggerNode') return 'var(--brand-violet-500)';
+                    if (n.type === 'actionNode') return 'var(--ws-panel)';
+                    return 'var(--color-white)';
                 }}
                 maskColor="rgba(0, 0, 0, 0.1)"
-                className="rounded-lg border border-slate-200 bg-white/50 shadow-none backdrop-blur dark:border-slate-800 dark:bg-slate-900/50" 
+                className="rounded-lg border border-slate-200 bg-white/50 shadow-none backdrop-blur dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]/50" 
             />
-            <Background color="#94a3b8" gap={24} size={1} />
+            <Background color="var(--ws-text-secondary)" gap={24} size={1} />
         </ReactFlow>
 
         {/* Footer info */}
@@ -763,12 +763,12 @@ export default function AutomationBuilder() {
         )}
 
         {activeTab === 'history' && (
-            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-[var(--ws-canvas)] p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-[var(--ws-text-primary)] flex items-center gap-3">
                         <History className="w-6 h-6 text-indigo-500" /> Audit Trail
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Detailed execution history for <b>{workflowName}</b></p>
+                    <p className="text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] mt-1">Detailed execution history for <b>{workflowName}</b></p>
                 </div>
 
                 {!workflowId ? (
@@ -777,7 +777,7 @@ export default function AutomationBuilder() {
                             icon={Clock}
                             title="No history yet"
                             description="Save this workflow first, then test or run it to start building an audit trail."
-                            className="max-w-none rounded-lg border-2 border-dashed border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                            className="max-w-none rounded-lg border-2 border-dashed border-slate-200 bg-white py-16 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]"
                         />
                     </div>
                 ) : loadingHistory ? (
@@ -795,15 +795,15 @@ export default function AutomationBuilder() {
                                     Run a Test Now
                                 </button>
                             }
-                            className="max-w-none rounded-lg border border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                            className="max-w-none rounded-lg border border-slate-200 bg-white py-16 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]"
                         />
                     </div>
                 ) : (
                     <>
                     <ResponsiveTableMobile className="space-y-3">
                         {executions.map((ex) => (
-                            <MobileDataCard key={ex.id} className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                <p className="type-card-description font-medium text-slate-900 dark:text-slate-200">
+                            <MobileDataCard key={ex.id} className="border-slate-200 dark:border-[var(--ws-border)] bg-white dark:bg-[var(--ws-panel)]">
+                                <p className="type-card-description font-medium text-slate-900 dark:text-[var(--ws-text-secondary)]">
                                     {new Date(ex.executed_at).toLocaleString()}
                                 </p>
                                 {ex.status === 'completed' ? (
@@ -815,25 +815,25 @@ export default function AutomationBuilder() {
                                         <XCircle className="w-3 h-3" /> {ex.status}
                                     </span>
                                 )}
-                                <p className="type-card-description text-slate-500 dark:text-slate-400">
+                                <p className="type-card-description text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)]">
                                     {ex.error_message || 'Workflow executed successfully.'}
                                 </p>
                             </MobileDataCard>
                         ))}
                     </ResponsiveTableMobile>
-                    <ResponsiveTableDesktop className="rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
+                    <ResponsiveTableDesktop className="rounded-lg border border-slate-200 bg-white shadow-none dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]">
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Execution Date</th>
-                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Status</th>
-                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-slate-500">Details</th>
+                                <tr className="bg-slate-50 dark:bg-[var(--ws-surface-secondary)]/50 border-b border-slate-100 dark:border-[var(--ws-border)]">
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Execution Date</th>
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Status</th>
+                                    <th className="px-6 py-4 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Details</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {executions.map(ex => (
-                                    <tr key={ex.id} className="border-b border-slate-50 dark:border-slate-800 last:border-0">
-                                        <td className="px-6 py-5 type-table-cell font-medium text-slate-900 dark:text-slate-200">
+                                    <tr key={ex.id} className="border-b border-slate-50 dark:border-[var(--ws-border)] last:border-0">
+                                        <td className="px-6 py-5 type-table-cell font-medium text-slate-900 dark:text-[var(--ws-text-secondary)]">
                                             {new Date(ex.executed_at).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-5">
@@ -847,7 +847,7 @@ export default function AutomationBuilder() {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-5 type-table-cell text-slate-500 dark:text-slate-400">
+                                        <td className="px-6 py-5 type-table-cell text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)]">
                                             {ex.error_message || 'Workflow executed successfully.'}
                                         </td>
                                     </tr>
@@ -861,12 +861,12 @@ export default function AutomationBuilder() {
         )}
 
         {activeTab === 'templates' && (
-            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
+            <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-[var(--ws-canvas)] p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
                 <div className="mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-[var(--ws-text-primary)] flex items-center gap-3">
                         <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates
                     </h2>
-                            <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with business-ready patterns like referrals, invoicing, and lead nurture</p>
+                            <p className="text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] mt-1">Quick-start with business-ready patterns like referrals, invoicing, and lead nurture</p>
                 </div>
 
                 {loadingTemplates ? (
@@ -879,22 +879,22 @@ export default function AutomationBuilder() {
                             <button
                                 key={template.id}
                                 onClick={() => loadFromTemplate(template)}
-                                className="group relative bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all text-left shadow-lg hover:shadow-indigo-500/10"
+                                className="group relative bg-white dark:bg-[var(--ws-panel)] p-6 rounded-[2rem] border border-slate-200 dark:border-[var(--ws-border)] hover:border-indigo-500 dark:hover:border-indigo-500 transition-all text-left shadow-lg hover:shadow-indigo-500/10"
                             >
                                 <span className="absolute top-6 right-6 text-4xl group-hover:scale-110 transition-transform duration-300">
                                     {template.icon}
                                 </span>
                                 <div className="pr-12">
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-[var(--ws-text-primary)] mb-2">{template.name}</h3>
                                     <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 type-caption font-bold uppercase tracking-widest mb-4">
                                         {template.category}
                                     </div>
-                                    <p className="type-card-description text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                    <p className="type-card-description text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] leading-relaxed font-medium">
                                         {template.description}
                                     </p>
                                 </div>
-                                <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                    <span className="type-caption font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                                <div className="mt-6 pt-4 border-t border-slate-50 dark:border-[var(--ws-border)] flex items-center justify-between">
+                                    <span className="type-caption font-black text-[var(--ws-text-muted)] dark:text-slate-600 uppercase tracking-widest">
                                         {template.definition.steps.length} Steps
                                     </span>
                                     <Plus className="w-5 h-5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />

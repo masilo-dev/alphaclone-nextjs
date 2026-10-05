@@ -131,7 +131,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
             <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Meeting Title */}
                 <div>
-                    <label className="block type-label font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)] mb-2">
                         {isAdmin ? 'Meeting Title' : 'What do you need help with?'}
                     </label>
                     <input
@@ -139,36 +139,36 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder={isAdmin ? "e.g. Project Review" : "e.g. Project Discussion"}
-                        className="w-full px-4 py-3 bg-slate-800 border-2 border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                        className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                         required
                     />
                 </div>
 
                 {/* Date and Time - Clearer Layout */}
                 <div className="space-y-3">
-                    <label className="block type-label font-bold text-white">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)]">
                         <Calendar className="w-4 h-4 inline mr-2" />
                         When?
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block type-label text-slate-400 mb-1">Date</label>
+                            <label className="block type-label text-[var(--ws-text-muted)] mb-1">Date</label>
                             <input
                                 type="date"
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
-                                className="w-full px-4 py-3 bg-slate-800 border-2 border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block type-caption text-slate-400 mb-1">Time</label>
+                            <label className="block type-caption text-[var(--ws-text-muted)] mb-1">Time</label>
                             <input
                                 type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-800 border-2 border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                                 required
                             />
                         </div>
@@ -182,15 +182,15 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
                 {/* Participants - Simplified */}
                 <div>
-                    <label className="block type-label font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)] mb-2">
                         <UserIcon className="w-4 h-4 inline mr-2" />
                         {isAdmin ? 'Select Participants' : 'Book With'}
                     </label>
 
                     {isAdmin ? (
-                        <div className="space-y-2 max-h-48 overflow-y-auto bg-slate-800/50 border-2 border-slate-700 rounded-lg p-3">
+                        <div className="space-y-2 max-h-48 overflow-y-auto bg-[var(--ws-surface-secondary)]/50 border-2 border-[var(--ws-border)] rounded-lg p-3">
                             {profiles.map(p => (
-                                <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-slate-700/50 rounded cursor-pointer">
+                                <label key={p.id} className="flex items-center gap-3 p-2 hover:bg-[var(--ws-surface-tertiary)]/50 rounded cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={attendees.includes(p.id)}
@@ -201,10 +201,10 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                                 setAttendees(attendees.filter(id => id !== p.id));
                                             }
                                         }}
-                                        className="w-4 h-4 rounded bg-slate-700 border-slate-600"
+                                        className="w-4 h-4 rounded bg-[var(--ws-surface-tertiary)] border-slate-600"
                                     />
-                                    <span className="text-white type-ui">{p.name}</span>
-                                    <span className="text-slate-400 type-caption">({p.email})</span>
+                                    <span className="text-[var(--ws-text-primary)] type-ui">{p.name}</span>
+                                    <span className="text-[var(--ws-text-muted)] type-caption">({p.email})</span>
                                 </label>
                             ))}
                         </div>
@@ -212,7 +212,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         <select
                             value={attendees[0] || ''}
                             onChange={(e) => setAttendees([e.target.value])}
-                            className="w-full px-4 py-3 bg-slate-800 border-2 border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                         >
                             <option value="">Choose an admin...</option>
                             {profiles.map(p => (
@@ -226,10 +226,10 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
                 {/* Advanced Settings */}
                 {isAdmin && (
-                    <div className="border-t border-slate-800 pt-4">
+                    <div className="border-t border-[var(--ws-border)] pt-4">
                         <button
                             onClick={() => setShowAdvanced(!showAdvanced)}
-                            className="flex items-center gap-2 type-ui text-teal-400 hover:text-teal-300 mb-3"
+                            className="flex items-center gap-2 type-ui text-teal-400 hover:text-[var(--brand-blue-300)] mb-3"
                         >
                             <Settings className="w-4 h-4" />
                             {showAdvanced ? 'Hide' : 'Show'} Advanced Settings
@@ -238,7 +238,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         {showAdvanced && (
                             <div className="space-y-4 pl-6 border-l-2 border-teal-500/20">
                                 <div>
-                                    <label className="block type-label font-medium text-slate-300 mb-2">
+                                    <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                         Max Participants
                                     </label>
                                     <input
@@ -247,12 +247,12 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 10)}
                                         min="2"
                                         max="50"
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block type-label font-medium text-slate-300 mb-2">
+                                    <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                         Cancellation Policy (hours before meeting)
                                     </label>
                                     <input
@@ -261,9 +261,9 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setCancellationPolicyHours(parseInt(e.target.value) || 3)}
                                         min="0"
                                         max="72"
-                                        className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
                                     />
-                                    <p className="type-card-description text-slate-500 mt-1">
+                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                         Clients can cancel up to this many hours before the meeting
                                     </p>
                                 </div>
@@ -274,9 +274,9 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         id="recordingEnabled"
                                         checked={recordingEnabled}
                                         onChange={(e) => setRecordingEnabled(e.target.checked)}
-                                        className="w-4 h-4 rounded bg-slate-800 border-slate-700"
+                                        className="w-4 h-4 rounded bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]"
                                     />
-                                    <label htmlFor="recordingEnabled" className="type-label text-slate-300">
+                                    <label htmlFor="recordingEnabled" className="type-label text-[var(--ws-text-secondary)]">
                                         Enable Recording
                                     </label>
                                 </div>
@@ -287,9 +287,9 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         id="allowClientCancellation"
                                         checked={allowClientCancellation}
                                         onChange={(e) => setAllowClientCancellation(e.target.checked)}
-                                        className="w-4 h-4 rounded bg-slate-800 border-slate-700"
+                                        className="w-4 h-4 rounded bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]"
                                     />
-                                    <label htmlFor="allowClientCancellation" className="type-label text-slate-300">
+                                    <label htmlFor="allowClientCancellation" className="type-label text-[var(--ws-text-secondary)]">
                                         <Shield className="w-4 h-4 inline mr-1" />
                                         Allow Client Cancellation
                                     </label>
@@ -299,7 +299,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                     </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-5 border-t-2 border-slate-800">
+                <div className="flex justify-end gap-3 pt-5 border-t-2 border-[var(--ws-border)]">
                     <Button variant="ghost" onClick={onClose} disabled={loading} className="px-6">
                         Cancel
                     </Button>

@@ -205,6 +205,23 @@ function notificationLaunchUrl(candidate: unknown, tenantId: unknown): string {
 
 self.addEventListener('message', (event) => {
     if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting();
+    // Logout / tenant switch: drop any residual runtime caches (PWA-CACHE-001).
+    if (event.data?.type === 'CLEAR_AUTH_CACHES' || event.data?.type === 'LOGOUT') {
+        event.waitUntil(
+            (async () => {
+                const names = await caches.keys();
+                await Promise.all(
+                    names
+                        .filter(
+                            (name) =>
+                                !name.startsWith('ac-next-static-') &&
+                                name !== 'ac-public-pages-v1'
+                        )
+                        .map((name) => caches.delete(name))
+                );
+            })()
+        );
+    }
 });
 
 self.addEventListener('activate', (event) => {

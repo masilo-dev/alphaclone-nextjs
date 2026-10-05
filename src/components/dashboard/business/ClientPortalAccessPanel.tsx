@@ -118,7 +118,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
           </div>
 
           {!portalUrl ? (
-            <button type="button" onClick={grantAccess} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ac-accent)] px-4 py-3 type-ui font-bold text-white transition-colors hover:bg-[var(--ac-accent-hover)] disabled:cursor-wait disabled:opacity-60">
+            <button type="button" onClick={grantAccess} disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ac-accent)] px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] transition-colors hover:bg-[var(--ac-accent-hover)] disabled:cursor-wait disabled:opacity-60">
               {saving ? 'Creating secure access…' : 'Create client portal access'}
             </button>
           ) : (
@@ -130,7 +130,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
                 <p className="mt-1"><span className="text-[var(--ws-text-muted)]">Password:</span> {showPassword ? password : '••••••••••'}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">
-                <button type="button" onClick={copyHandoff} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--ac-accent)] px-4 py-2.5 type-ui font-bold text-white hover:bg-[var(--ac-accent-deep)]">
+                <button type="button" onClick={copyHandoff} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--ac-accent)] px-4 py-2.5 type-ui font-bold text-[var(--ws-text-primary)] hover:bg-[var(--ac-accent-deep)]">
                   {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
                   {copied ? 'Copied' : 'Copy handoff details'}
                 </button>

@@ -62,7 +62,7 @@ export default function SalesCopywriter() {
         <div className="max-w-6xl mx-auto p-6 space-y-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-3xl font-black text-[var(--ws-text-primary)] tracking-tight flex items-center gap-3">
                         <div className="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/20">
                             <Target size={24} />
                         </div>
@@ -81,7 +81,7 @@ export default function SalesCopywriter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Input Section */}
                 <div className="space-y-6">
-                    <div className="bg-gray-900/40 backdrop-blur-3xl border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
+                    <div className="bg-gray-900/40 backdrop-blur-3xl border border-[var(--ws-border)] rounded-3xl p-6 shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
                             <Quote size={120} />
                         </div>
@@ -95,7 +95,7 @@ export default function SalesCopywriter() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Paste the message you want to improve here..."
-                            className="w-full h-64 bg-black/40 border border-white/5 rounded-2xl p-5 text-gray-200 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all resize-none placeholder:text-gray-700 leading-relaxed"
+                            className="w-full h-64 bg-black/40 border border-[var(--ws-border)] rounded-2xl p-5 text-gray-200 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all resize-none placeholder:text-gray-700 leading-relaxed"
                         />
 
                         <div className="mt-6 space-y-4">
@@ -108,14 +108,14 @@ export default function SalesCopywriter() {
                                 value={context}
                                 onChange={(e) => setContext(e.target.value)}
                                 placeholder="e.g. SaaS Founders, high churn rates, early morning outreach"
-                                className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-3 type-ui text-gray-300 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all placeholder:text-gray-700"
+                                className="w-full bg-black/40 border border-[var(--ws-border)] rounded-xl px-5 py-3 type-ui text-gray-300 focus:ring-2 focus:ring-indigo-500/30 focus:outline-none transition-all placeholder:text-gray-700"
                             />
                         </div>
 
                         <button
                             onClick={handleOptimize}
                             disabled={loading || !input.trim()}
-                            className="w-full mt-8 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black uppercase tracking-caps type-caption py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-3"
+                            className="w-full mt-8 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-[var(--ws-text-primary)] font-black uppercase tracking-caps type-caption py-4 rounded-2xl transition-all shadow-xl shadow-indigo-600/20 active:scale-[0.98] flex items-center justify-center gap-3"
                         >
                             {loading ? (
                                 <>
@@ -147,21 +147,21 @@ export default function SalesCopywriter() {
                                 <div className="bg-indigo-600/5 backdrop-blur-3xl border border-indigo-500/20 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
                                     <div className="flex justify-between items-center mb-6">
                                         <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-indigo-500 rounded-lg text-white">
+                                            <div className="p-2 bg-indigo-500 rounded-lg text-[var(--ws-text-primary)]">
                                                 <CheckCircle2 size={14} />
                                             </div>
                                             <span className="type-caption font-black text-indigo-400 uppercase tracking-widest">Optimized Version</span>
                                         </div>
                                         <button 
                                             onClick={handleCopy}
-                                            className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-all flex items-center gap-2 type-caption font-bold uppercase"
+                                            className="p-2 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] rounded-xl text-gray-400 hover:text-[var(--ws-text-primary)] transition-all flex items-center gap-2 type-caption font-bold uppercase"
                                         >
                                             {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
                                             {copied ? 'Copied' : 'Copy Message'}
                                         </button>
                                     </div>
 
-                                    <div className="bg-black/60 rounded-2xl p-6 border border-white/5 shadow-inner">
+                                    <div className="bg-black/60 rounded-2xl p-6 border border-[var(--ws-border)] shadow-inner">
                                         <p className="text-gray-200 leading-relaxed whitespace-pre-wrap selection:bg-indigo-500/30">
                                             {parsed.message}
                                         </p>
@@ -170,14 +170,14 @@ export default function SalesCopywriter() {
 
                                 {/* Response Probability */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="bg-gray-900/60 border border-white/5 rounded-3xl p-6 shadow-xl">
+                                    <div className="bg-gray-900/60 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl">
                                         <span className="type-caption font-black text-gray-500 uppercase tracking-caps block mb-3">Predicted Response</span>
                                         <div className="flex items-end gap-3">
-                                            <span className="text-5xl font-black text-white leading-none">
+                                            <span className="text-5xl font-black text-[var(--ws-text-primary)] leading-none">
                                                 {parsed.probability}
                                             </span>
                                             <div className="mb-1">
-                                                <div className="w-24 h-2 bg-white/5 rounded-full overflow-hidden">
+                                                <div className="w-24 h-2 bg-[var(--ws-hover)] rounded-full overflow-hidden">
                                                     <motion.div 
                                                         initial={{ width: 0 }}
                                                         animate={{ width: parsed.probability }}
@@ -189,7 +189,7 @@ export default function SalesCopywriter() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-900/60 border border-white/5 rounded-3xl p-6 shadow-xl flex items-center justify-center text-center">
+                                    <div className="bg-gray-900/60 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl flex items-center justify-center text-center">
                                         <div className="space-y-1">
                                             <div className="type-caption font-black text-gray-500 uppercase tracking-caps">Status</div>
                                             <div className="text-lg font-black text-green-500 uppercase tracking-tighter">High Intent</div>
@@ -199,7 +199,7 @@ export default function SalesCopywriter() {
                                 </div>
 
                                 {/* Strategy Analysis */}
-                                <div className="bg-gray-900/40 border border-white/5 rounded-3xl p-6 shadow-xl">
+                                <div className="bg-gray-900/40 border border-[var(--ws-border)] rounded-3xl p-6 shadow-xl">
                                     <span className="type-caption font-black text-gray-500 uppercase tracking-caps block mb-4">Strategy Analysis</span>
                                     <div className="type-caption text-gray-400 leading-relaxed space-y-3 whitespace-pre-wrap">
                                         {parsed.analysis}
@@ -207,7 +207,7 @@ export default function SalesCopywriter() {
                                 </div>
                             </motion.div>
                         ) : (
-                            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-white/5 rounded-[40px] opacity-20">
+                            <div className="h-full min-h-[500px] flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-[var(--ws-border)] rounded-[40px] opacity-20">
                                 <BarChart3 size={64} className="mb-6 text-gray-600" />
                                 <h3 className="text-xl font-black uppercase tracking-widest text-gray-500">Awaiting Intelligence</h3>
                                 <p className="type-caption text-gray-600 mt-2 max-w-xs uppercase leading-relaxed font-bold tracking-tighter">

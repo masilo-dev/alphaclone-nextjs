@@ -76,7 +76,7 @@ export default function EmailProviderSettings() {
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-[var(--ws-text-muted)]" />
       </div>
     );
   }
@@ -89,9 +89,9 @@ export default function EmailProviderSettings() {
         <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-4 flex gap-3">
           <Mail className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
           <div>
-            <p className="type-card-description font-bold text-teal-300">Zoho is your native stack</p>
-            <p className="type-card-description text-slate-400 mt-1 leading-relaxed">
-              Inbox, CRM sync, and <strong className="text-slate-300">Campaigns</strong> run through Zoho when connected.
+            <p className="type-card-description font-bold text-[var(--brand-blue-300)]">Zoho is your native stack</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">
+              Inbox, CRM sync, and <strong className="text-[var(--ws-text-secondary)]">Campaigns</strong> run through Zoho when connected.
               Pick below which provider delivers one-to-one email — or leave on Auto to prefer Zoho when available.
             </p>
             <Link href="/dashboard/business/campaigns" className="type-ui text-teal-400 font-semibold mt-2 inline-block hover:underline">
@@ -110,9 +110,9 @@ export default function EmailProviderSettings() {
 
       <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
         <p className="type-card-description font-bold text-violet-300">AI email auto-reply</p>
-        <p className="type-card-description text-slate-400 leading-relaxed">
+        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
           When Zoho receives a qualified lead email, Bonnie can draft a reply. Default is{' '}
-          <strong className="text-slate-300">draft only</strong> — nothing sends until you review.
+          <strong className="text-[var(--ws-text-secondary)]">draft only</strong> — nothing sends until you review.
         </p>
         <div className="flex flex-col gap-2">
           {(Object.keys(EMAIL_AUTO_REPLY_MODE_LABELS) as EmailAutoReplyMode[]).map((mode) => (
@@ -121,7 +121,7 @@ export default function EmailProviderSettings() {
               className={`flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer ${
                 autoReplyMode === mode
                   ? 'border-violet-500/40 bg-violet-500/10'
-                  : 'border-white/10 hover:border-white/20'
+                  : 'border-[var(--ws-border)] hover:border-[var(--ws-border-strong)]'
               }`}
             >
               <input
@@ -132,7 +132,7 @@ export default function EmailProviderSettings() {
                 onChange={() => setAutoReplyMode(mode)}
                 className="mt-1"
               />
-              <span className="type-caption text-slate-300">{EMAIL_AUTO_REPLY_MODE_LABELS[mode]}</span>
+              <span className="type-caption text-[var(--ws-text-secondary)]">{EMAIL_AUTO_REPLY_MODE_LABELS[mode]}</span>
             </label>
           ))}
         </div>
@@ -141,7 +141,7 @@ export default function EmailProviderSettings() {
       <div className="flex items-center justify-between gap-3 pt-2">
         <div>
           {savedAt && (
-            <p className="type-card-description text-slate-500">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               Last saved: {new Date(savedAt).toLocaleString()}
             </p>
           )}
@@ -155,7 +155,7 @@ export default function EmailProviderSettings() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 type-caption font-black uppercase text-white"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 type-caption font-black uppercase text-[var(--text-inverse)]"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Save

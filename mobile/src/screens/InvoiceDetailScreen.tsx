@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,13 +26,13 @@ export default function InvoiceDetailScreen({ route, navigation }: { route: { pa
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return '#00D2A0';
+        return colors.primary;
       case 'pending':
-        return '#FFA500';
+        return colors.warning;
       case 'overdue':
-        return '#FF6B6B';
+        return colors.error;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
@@ -51,18 +52,18 @@ export default function InvoiceDetailScreen({ route, navigation }: { route: { pa
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color=colors.textInverse />
             </TouchableOpacity>
             <Text style={styles.title}>Invoice Details</Text>
             <TouchableOpacity>
-              <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+              <Ionicons name="ellipsis-horizontal" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -129,12 +130,12 @@ export default function InvoiceDetailScreen({ route, navigation }: { route: { pa
           <View style={styles.actionsSection}>
             {currentInvoice.status === 'pending' && (
               <TouchableOpacity style={styles.payButton}>
-                <Ionicons name="card" size={20} color="#FFFFFF" />
+                <Ionicons name="card" size={20} color=colors.textInverse />
                 <Text style={styles.actionButtonText}>Pay Now</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.downloadButton}>
-              <Ionicons name="download" size={20} color="#FFFFFF" />
+              <Ionicons name="download" size={20} color=colors.textInverse />
               <Text style={styles.actionButtonText}>Download PDF</Text>
             </TouchableOpacity>
           </View>
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   invoiceHeader: {
     flexDirection: 'row',
@@ -180,12 +181,12 @@ const styles = StyleSheet.create({
   invoiceNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 4,
   },
   invoiceClient: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   dateRow: {
     flexDirection: 'row',
@@ -215,11 +216,11 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   dateValue: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
   },
   itemsSection: {
@@ -229,12 +230,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   itemRow: {
@@ -243,31 +244,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: colors.card,
   },
   itemDescription: {
     flex: 1,
   },
   itemDescriptionText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 4,
   },
   itemQuantity: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
   },
   itemPrices: {
     alignItems: 'flex-end',
   },
   itemPrice: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   itemTotal: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
   },
   totalSection: {
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   totalRow: {
     flexDirection: 'row',
@@ -286,27 +287,27 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   totalValue: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
   },
   finalTotalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
+    borderTopColor: colors.card,
     paddingTop: 15,
     marginTop: 10,
   },
   finalTotalLabel: {
     fontSize: 18,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: 'bold',
   },
   finalTotalValue: {
     fontSize: 18,
-    color: '#00D2A0',
+    color: colors.primary,
     fontWeight: 'bold',
   },
   actionsSection: {
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   payButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00D2A0',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -326,13 +327,13 @@ const styles = StyleSheet.create({
   downloadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0077FF',
+    backgroundColor: colors.info,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

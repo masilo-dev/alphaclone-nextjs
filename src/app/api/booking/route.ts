@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
                 attendees: [clientDetails.email],
                 is_all_day: false,
                 reminder_minutes: 30,
-                color: '#8b5cf6',
+                color: 'var(--brand-violet-400)',
                 metadata: {
                     customFields: clientDetails.customFields || {},
                     topic: clientDetails.topic,

@@ -10,8 +10,8 @@ const AREAS = [
   { title: 'Sales & CRM', description: 'Store leads, contacts, conversations, and deal progress in one record.', action: 'Open CRM', href: '/dashboard/crm/workspace', icon: Users, color: 'text-blue-300' },
   { title: 'Projects', description: 'Turn approved work into stages, tasks, files, deadlines, and client updates.', action: 'Open Projects', href: '/dashboard/business/projects', icon: BriefcaseBusiness, color: 'text-violet-300' },
   { title: 'Marketing', description: 'Prepare email and social campaigns, review them, and track delivery results.', action: 'Open Marketing', href: '/dashboard/business/campaigns', icon: Mail, color: 'text-cyan-300' },
-  { title: 'Money', description: 'Create contracts, invoices, payment links, expenses, and financial reports.', action: 'Open Money', href: '/dashboard/business/billing/manage', icon: CircleDollarSign, color: 'text-emerald-300' },
-  { title: 'Bonnie', description: 'Ask for a business outcome. Bonnie prepares steps for review before external actions run.', action: 'Open Bonnie', href: '/dashboard/business/bonnie', icon: Bot, color: 'text-amber-300' },
+  { title: 'Money', description: 'Create contracts, invoices, payment links, expenses, and financial reports.', action: 'Open Money', href: '/dashboard/business/billing/manage', icon: CircleDollarSign, color: 'text-[var(--success-text,var(--success-500))]' },
+  { title: 'Bonnie', description: 'Ask for a business outcome. Bonnie prepares steps for review before external actions run.', action: 'Open Bonnie', href: '/dashboard/business/bonnie', icon: Bot, color: 'text-[var(--warning-text,var(--warning-500))]' },
 ] as const;
 
 interface WorkspaceGuideProps {
@@ -39,7 +39,7 @@ export function WorkspaceGuide({ user }: WorkspaceGuideProps) {
           <p className="mt-1 max-w-2xl type-caption leading-relaxed text-[var(--ws-text-secondary)]">You can start with any area. Each one keeps the next step connected instead of making you jump between separate systems.</p>
         </div>
         {open ? (
-          <button type="button" onClick={closeGuide} className="min-h-10 min-w-10 rounded-lg p-2 text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]" aria-label="Hide workspace map">
+          <button type="button" onClick={closeGuide} className="min-h-10 min-w-10 rounded-lg p-2 text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]" aria-label="Hide workspace map">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (

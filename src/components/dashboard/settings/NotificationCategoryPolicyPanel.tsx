@@ -63,7 +63,7 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
   };
 
   if (loading) {
-    return <p className="type-card-description text-slate-500 p-4">Loading notification policy…</p>;
+    return <p className="type-card-description text-[var(--ws-text-muted)] p-4">Loading notification policy…</p>;
   }
 
   return (
@@ -73,12 +73,12 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
         return (
           <div key={category} className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="type-ui font-bold text-white capitalize">{category.replace('_', ' ')}</h4>
+              <h4 className="type-ui font-bold text-[var(--ws-text-primary)] capitalize">{category.replace('_', ' ')}</h4>
               <button
                 type="button"
                 disabled={saving}
                 onClick={() => void saveCategory(category, { disabled: !row.disabled })}
-                className={`type-caption uppercase tracking-widest font-bold ${row.disabled ? 'text-rose-300' : 'text-slate-500'}`}
+                className={`type-caption uppercase tracking-widest font-bold ${row.disabled ? 'text-[var(--error-text,var(--error-500))]' : 'text-[var(--ws-text-muted)]'}`}
               >
                 {row.disabled ? 'Disabled' : 'Enabled'}
               </button>
@@ -91,7 +91,7 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
                   disabled={saving || row.disabled}
                   onClick={() => void saveCategory(category, { [channel.key]: !row[channel.key] })}
                   className={`px-2 py-1 rounded-md type-caption font-bold uppercase tracking-wide ${
-                    row[channel.key] ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400'
+                    row[channel.key] ? 'bg-teal-600 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                   }`}
                 >
                   {channel.label}

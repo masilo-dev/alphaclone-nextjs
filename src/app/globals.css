@@ -442,10 +442,21 @@ html.dark {
   background-size: cover;
 }
 
-/* Page-wide deep-space network background for all marketing pages */
+/* Page-wide canvas for auth / shared shells — AlphaClone navy, not electric blue */
 .page-network-bg {
-  background: linear-gradient(135deg, #020D1A 0%, #041525 50%, #020D1A 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in srgb, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
   position: relative;
+}
+
+html.dark .page-network-bg {
+  background: linear-gradient(
+    160deg,
+    var(--brand-violet-950, #0A0C16) 0%,
+    var(--brand-navy, #212446) 48%,
+    var(--brand-violet-950, #0A0C16) 100%
+  );
 }
 
 .marketing-glow-hero {
@@ -455,8 +466,7 @@ html.dark {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(53, 106, 244, 0.16) 0%, rgba(53, 106, 244, 0) 70%);
-  /* AlphaClone blue glow */
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-teal) 16%, transparent) 0%, transparent 70%);
   filter: blur(100px);
   z-index: -1;
   pointer-events: none;
@@ -485,7 +495,7 @@ html {
 }
 
 body {
-  background-color: #020D1A;
+  background-color: var(--background-app, #020D1A);
   background-image:
     radial-gradient(ellipse 70% 40% at 50% 0%, rgba(125, 211, 252, 0.1), transparent 72%),
     linear-gradient(180deg, rgba(2, 6, 23, 0.82) 0%, rgba(2, 6, 23, 0.92) 100%);
@@ -500,6 +510,15 @@ body {
   font-size: var(--type-body-size);
   font-weight: var(--type-body-weight);
   line-height: var(--type-body-leading);
+}
+
+html.light body,
+[data-theme="light"] body {
+  background-color: var(--background-app);
+  background-image:
+    radial-gradient(ellipse 60% 36% at 88% 0%, rgba(65, 153, 164, 0.06), transparent 72%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app) 100%);
+  color: var(--foreground);
 }
 
 :where(h1, h2, h3) {
@@ -632,26 +651,26 @@ body {
 /* Dashboard light theme: main shell surfaces (inner widgets keep their own styles) */
 html.light .ac-dashboard-root,
 [data-theme="light"] .ac-dashboard-root {
-  background-color: #F5F7FB;
-  color: #111827;
+  background-color: var(--background-app);
+  color: var(--text-primary);
 }
 
 html.light .ac-dashboard-shell-bg,
 html.light .ac-dashboard-main,
 [data-theme="light"] .ac-dashboard-shell-bg,
 [data-theme="light"] .ac-dashboard-main {
-  background-color: #F5F7FB;
+  background-color: var(--background-app);
 }
 
 html.light .ac-dashboard-header,
 [data-theme="light"] .ac-dashboard-header {
-  background-color: rgba(255, 255, 255, 0.92);
-  border-bottom-color: #e2e8f0;
+  background-color: color-mix(in srgb, var(--surface-primary) 92%, transparent);
+  border-bottom-color: var(--border-default);
 }
 
 html.light .ac-dashboard-mobile-title,
 [data-theme="light"] .ac-dashboard-mobile-title {
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 html.light .ac-business-root,
@@ -660,19 +679,19 @@ html.light .ac-business-scroll,
 [data-theme="light"] .ac-business-root,
 [data-theme="light"] .ac-business-main,
 [data-theme="light"] .ac-business-scroll {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: var(--background-subtle);
+  color: var(--text-primary);
 }
 
 html.light .ac-business-header,
 [data-theme="light"] .ac-business-header {
-  background-color: rgba(255, 255, 255, 0.95);
-  border-bottom-color: #e2e8f0;
+  background-color: color-mix(in srgb, var(--surface-primary) 95%, transparent);
+  border-bottom-color: var(--border-default);
 }
 
 html.light .ac-business-header h1,
 [data-theme="light"] .ac-business-header h1 {
-  color: rgb(15 23 42 / 0.9);
+  color: var(--text-primary);
 }
 
 /* Broader light surfaces inside dashboard content (cards and panels) */
@@ -680,14 +699,14 @@ html.light #main-content .bg-slate-950,
 html.light .ac-business-scroll .bg-slate-950,
 [data-theme="light"] #main-content .bg-slate-950,
 [data-theme="light"] .ac-business-scroll .bg-slate-950 {
-  background-color: #f1f5f9 !important;
+  background-color: var(--background-subtle) !important;
 }
 
 html.light #main-content .bg-slate-900,
 html.light .ac-business-scroll .bg-slate-900,
 [data-theme="light"] #main-content .bg-slate-900,
 [data-theme="light"] .ac-business-scroll .bg-slate-900 {
-  background-color: #f8fafc !important;
+  background-color: var(--surface-secondary) !important;
 }
 
 html.light #main-content .border-slate-800,
@@ -698,7 +717,7 @@ html.light .ac-business-scroll .border-slate-700,
 [data-theme="light"] .ac-business-scroll .border-slate-800,
 [data-theme="light"] #main-content .border-slate-700,
 [data-theme="light"] .ac-business-scroll .border-slate-700 {
-  border-color: #e2e8f0 !important;
+  border-color: var(--border-default) !important;
 }
 
 html.light #main-content .text-slate-200,
@@ -709,7 +728,52 @@ html.light .ac-business-scroll .text-slate-300,
 [data-theme="light"] .ac-business-scroll .text-slate-200,
 [data-theme="light"] #main-content .text-slate-300,
 [data-theme="light"] .ac-business-scroll .text-slate-300 {
-  color: #334155 !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Remap dark-only utilities that survive in module classNames under light mode */
+html.light .ac-dashboard-root .text-white,
+html.light .ac-business-root .text-white,
+[data-theme="light"] .ac-dashboard-root .text-white,
+[data-theme="light"] .ac-business-root .text-white {
+  color: var(--ws-text-primary) !important;
+}
+
+html.light .ac-dashboard-root .border-white\/10,
+html.light .ac-business-root .border-white\/10,
+html.light .ac-dashboard-root .border-white\/5,
+html.light .ac-business-root .border-white\/5,
+[data-theme="light"] .ac-dashboard-root .border-white\/10,
+[data-theme="light"] .ac-business-root .border-white\/10 {
+  border-color: var(--ws-border) !important;
+}
+
+html.light .ac-dashboard-root .bg-white\/5,
+html.light .ac-business-root .bg-white\/5,
+html.light .ac-dashboard-root .bg-white\/10,
+html.light .ac-business-root .bg-white\/10,
+[data-theme="light"] .ac-dashboard-root .bg-white\/5,
+[data-theme="light"] .ac-business-root .bg-white\/5 {
+  background-color: var(--ws-hover) !important;
+}
+
+html.light .ac-dashboard-root .hover\:text-white:hover,
+html.light .ac-business-root .hover\:text-white:hover,
+[data-theme="light"] .ac-dashboard-root .hover\:text-white:hover,
+[data-theme="light"] .ac-business-root .hover\:text-white:hover {
+  color: var(--ws-text-primary) !important;
+}
+
+/* Keep inverse text on solid brand CTAs in light mode */
+html.light .ac-dashboard-root .bg-\[var\(--interactive-primary\)\] .text-white,
+html.light .ac-dashboard-root .bg-\[var\(--interactive-secondary\)\] .text-white,
+html.light .ac-dashboard-root .bg-\[var\(--error-500\)\] .text-white,
+html.light .ac-dashboard-root .bg-\[var\(--success-500\)\] .text-white,
+html.light .ac-dashboard-root [class*="bg-[var(--interactive"][class*="text-white"],
+html.light .ac-dashboard-root [class*="bg-[var(--error"][class*="text-white"],
+html.light .ac-dashboard-root [class*="bg-[var(--success"][class*="text-white"],
+html.light .ac-dashboard-root .text-\[var\(--text-inverse\)\] {
+  color: var(--text-inverse) !important;
 }
 
 /* Typography Overrides - Scoped to Marketing Theme */
@@ -767,17 +831,35 @@ html.light .ac-business-scroll .text-slate-300,
   color: var(--dashboard-text);
   color-scheme: dark;
   background:
-    radial-gradient(circle at 18% 0%, rgba(0, 240, 255, 0.08) 0%, rgba(0, 240, 255, 0) 30%),
-    radial-gradient(circle at 82% 0%, rgba(127, 0, 255, 0.12) 0%, rgba(127, 0, 255, 0) 26%),
-    linear-gradient(180deg, #0f172a 0%, #0b1220 58%, #020617 100%);
+    radial-gradient(circle at 18% 0%, rgba(65, 153, 164, 0.08) 0%, rgba(65, 153, 164, 0) 30%),
+    radial-gradient(circle at 82% 0%, rgba(33, 36, 70, 0.18) 0%, rgba(33, 36, 70, 0) 26%),
+    linear-gradient(180deg, var(--background-app) 0%, var(--background-app) 58%, var(--background-app) 100%);
 }
 
-/* text-white / text-slate-50 → pure white */
+html.light .ac-dashboard-root,
+html.light .ac-business-root,
+[data-theme="light"] .ac-dashboard-root,
+[data-theme="light"] .ac-business-root {
+  color-scheme: light;
+  color: var(--ws-text-primary);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(65, 153, 164, 0.05) 0%, transparent 32%),
+    linear-gradient(180deg, var(--background-app) 0%, var(--background-subtle) 100%);
+}
+
+/* text-white / text-slate-50 → theme primary (dark: near-white, light: ink) */
 .ac-dashboard-root .text-white,
 .ac-business-root .text-white,
 .ac-dashboard-root .text-slate-50,
 .ac-business-root .text-slate-50 {
-  color: #ffffff !important;
+  color: var(--ws-text-primary) !important;
+}
+
+html.dark .ac-dashboard-root .text-white,
+html.dark .ac-business-root .text-white,
+html:not(.light) .ac-dashboard-root .text-white,
+html:not(.light) .ac-business-root .text-white {
+  color: var(--text-inverse, #ffffff) !important;
 }
 
 /* text-slate-100 / text-slate-200 → near-white (primary body) */
@@ -785,7 +867,7 @@ html.light .ac-business-scroll .text-slate-300,
 .ac-business-root .text-slate-100,
 .ac-dashboard-root .text-slate-200,
 .ac-business-root .text-slate-200 {
-  color: #f0f2f7 !important;
+  color: var(--ws-text-primary) !important;
 }
 
 /* text-slate-300 → secondary text */
@@ -899,7 +981,7 @@ html.light .ac-business-scroll .text-slate-300,
 
 .ac-dashboard-root [class*="bg-violet-"],
 .ac-business-root [class*="bg-violet-"] {
-  background-color: rgba(127, 0, 255, 0.16) !important;
+  background-color: color-mix(in srgb, var(--brand-violet-500) 16%, transparent) !important;
 }
 
 .ac-dashboard-root [class*="bg-emerald-"],
@@ -936,7 +1018,7 @@ html.light .ac-business-scroll .text-slate-300,
 
 .ac-dashboard-root [class*="border-violet-"],
 .ac-business-root [class*="border-violet-"] {
-  border-color: rgba(127, 0, 255, 0.22) !important;
+  border-color: color-mix(in srgb, var(--brand-violet-500) 22%, transparent) !important;
 }
 
 .ac-dashboard-root [class*="border-emerald-"],
@@ -1000,9 +1082,11 @@ html.light .next-step-highlight {
   color: #0f766e;
 }
 
-/* Auth / marketing pages in light mode — avoid dark-only network bg + card */
+/* Auth / marketing pages in light mode — soft teal wash on light canvas */
 html.light .page-network-bg.marketing-theme {
-  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f4 50%, #f6f7f9 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in srgb, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
 }
 
 .marketing-theme button,

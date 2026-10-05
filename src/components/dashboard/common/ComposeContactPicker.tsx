@@ -36,33 +36,33 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 type-caption font-bold uppercase tracking-wider text-teal-300 hover:bg-slate-800 hover:text-teal-200 transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/80 type-caption font-bold uppercase tracking-wider text-[var(--brand-blue-300)] hover:bg-[var(--ws-surface-secondary)] hover:text-teal-200 transition-colors"
       >
         <UserPlus className="w-3.5 h-3.5" />
         Pick contact
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full min-w-[280px] max-w-md rounded-xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
-          <div className="p-2 border-b border-slate-800 flex items-center gap-2">
-            <Search className="w-4 h-4 text-slate-500 shrink-0" />
+        <div className="absolute z-50 mt-2 w-full min-w-[280px] max-w-md rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl overflow-hidden">
+          <div className="p-2 border-b border-[var(--ws-border)] flex items-center gap-2">
+            <Search className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search CRM contacts..."
-              className="flex-1 bg-transparent type-ui text-white placeholder:text-slate-500 focus:outline-none"
+              className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none"
               autoFocus
             />
-            <button type="button" onClick={() => setOpen(false)} className="text-slate-500 hover:text-white">
+            <button type="button" onClick={() => setOpen(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
               <X className="w-4 h-4" />
             </button>
           </div>
           <div className="max-h-56 overflow-y-auto custom-scrollbar">
             {isLoading ? (
-              <p className="p-3 type-card-description text-slate-500">Loading contacts...</p>
+              <p className="p-3 type-card-description text-[var(--ws-text-muted)]">Loading contacts...</p>
             ) : withEmail.length === 0 ? (
-              <p className="p-3 type-card-description text-slate-500">No contacts with email found.</p>
+              <p className="p-3 type-card-description text-[var(--ws-text-muted)]">No contacts with email found.</p>
             ) : (
               withEmail.map((c) => (
                 <button
@@ -73,10 +73,10 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
                     setOpen(false);
                     setQuery('');
                   }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-slate-800 border-b border-slate-800/50 last:border-0"
+                  className="w-full text-left px-3 py-2.5 hover:bg-[var(--ws-surface-secondary)] border-b border-[var(--ws-border)]/50 last:border-0"
                 >
-                  <div className="type-ui font-medium text-white truncate">{c.name || 'Unnamed'}</div>
-                  <div className="type-caption text-slate-400 truncate">{c.email}</div>
+                  <div className="type-ui font-medium text-[var(--ws-text-primary)] truncate">{c.name || 'Unnamed'}</div>
+                  <div className="type-caption text-[var(--ws-text-muted)] truncate">{c.email}</div>
                 </button>
               ))
             )}

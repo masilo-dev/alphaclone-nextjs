@@ -32,9 +32,9 @@ export default function TenantSwitcher() {
 
   if (isLoading || !currentTenant) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 rounded-lg">
-        <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
-        <span className="type-ui text-slate-400">Loading...</span>
+      <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-surface-secondary)]/50 rounded-lg">
+        <Loader2 className="w-4 h-4 text-[var(--ws-text-muted)] animate-spin" />
+        <span className="type-ui text-[var(--ws-text-muted)]">Loading...</span>
       </div>
     );
   }
@@ -44,7 +44,7 @@ export default function TenantSwitcher() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors w-full max-w-xs"
+        className="flex items-center gap-3 px-4 py-2 bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg transition-colors w-full max-w-xs"
       >
         <Building2 className="w-5 h-5 text-teal-400" />
         <div className="flex-1 text-left">
@@ -52,12 +52,12 @@ export default function TenantSwitcher() {
             {currentTenant.name}
           </div>
           {userTenants.length > 1 && (
-            <div className="type-caption text-slate-400">
+            <div className="type-caption text-[var(--ws-text-muted)]">
               {userTenants.length} organizations
             </div>
           )}
         </div>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-[var(--ws-text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
@@ -70,11 +70,11 @@ export default function TenantSwitcher() {
           />
 
           {/* Menu */}
-          <div className="absolute top-full left-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden animate-fade-in">
+          <div className="absolute top-full left-0 mt-2 w-80 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg shadow-xl z-50 overflow-hidden animate-fade-in">
             {/* Header */}
-            <div className="px-4 py-3 border-b border-slate-700">
+            <div className="px-4 py-3 border-b border-[var(--ws-border)]">
               <h3 className="type-ui font-semibold text-white">Switch Organization</h3>
-              <p className="type-card-description text-slate-400 mt-1">
+              <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                 Select an organization to view its data
               </p>
             </div>
@@ -90,13 +90,13 @@ export default function TenantSwitcher() {
                     key={tenant.id}
                     onClick={() => handleSwitchTenant(tenant.id)}
                     disabled={isSwitching}
-                    className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${isActive ? 'bg-slate-700/30' : ''
+                    className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--ws-surface-tertiary)]/50 transition-colors ${isActive ? 'bg-[var(--ws-surface-tertiary)]/30' : ''
                       } ${isSwitching ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {/* Tenant Avatar/Icon */}
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${isActive
                       ? 'bg-gradient-to-br from-teal-500 to-teal-600 text-white'
-                      : 'bg-slate-700 text-slate-300'
+                      : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)]'
                       }`}>
                       {tenant.name.charAt(0).toUpperCase()}
                     </div>
@@ -104,7 +104,7 @@ export default function TenantSwitcher() {
                     {/* Tenant Info */}
                     <div className="flex-1 text-left min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`type-ui font-medium truncate ${isActive ? 'text-white' : 'text-slate-300'
+                        <span className={`type-ui font-medium truncate ${isActive ? 'text-white' : 'text-[var(--ws-text-secondary)]'
                           }`}>
                           {tenant.name}
                         </span>
@@ -117,11 +117,11 @@ export default function TenantSwitcher() {
                           ? 'bg-purple-500/20 text-purple-300'
                           : tenantRole === 'member'
                             ? 'bg-blue-500/20 text-blue-300'
-                            : 'bg-slate-600 text-slate-300'
+                            : 'bg-slate-600 text-[var(--ws-text-secondary)]'
                           }`}>
                           {tenantRole}
                         </span>
-                        <span className="type-caption text-slate-500 truncate">
+                        <span className="type-caption text-[var(--ws-text-muted)] truncate">
                           {tenant.slug}
                         </span>
                       </div>
@@ -129,7 +129,7 @@ export default function TenantSwitcher() {
 
                     {/* Switching Indicator */}
                     {isSwitching && tenant.id !== currentTenant?.id && (
-                      <Loader2 className="w-4 h-4 text-slate-400 animate-spin flex-shrink-0" />
+                      <Loader2 className="w-4 h-4 text-[var(--ws-text-muted)] animate-spin flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -137,11 +137,11 @@ export default function TenantSwitcher() {
             </div>
 
             {/* Create New Button */}
-            <div className="border-t border-slate-700 p-2">
+            <div className="border-t border-[var(--ws-border)] p-2">
               <button
                 onClick={handleCreateNew}
                 disabled={isSwitching}
-                className="w-full px-4 py-2.5 flex items-center gap-3 type-ui text-teal-400 hover:bg-slate-700/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 flex items-center gap-3 type-ui text-teal-400 hover:bg-[var(--ws-surface-tertiary)]/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="w-4 h-4" />
                 <span className="font-medium">Create New Organization</span>

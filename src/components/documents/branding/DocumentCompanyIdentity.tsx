@@ -30,7 +30,7 @@ export function DocumentCompanyIdentity({
   );
 
   const displayName = branding.name || branding.companyName || 'Unconfigured Business';
-  const brandColor = branding.primaryBrandColor || branding.primaryColor || '#0f172a';
+  const brandColor = branding.primaryBrandColor || branding.primaryColor || 'var(--ws-canvas)';
   const addressLines = (branding.businessAddress || '')
     .split('\n')
     .map((l) => l.trim())
@@ -53,7 +53,7 @@ export function DocumentCompanyIdentity({
         ) : (
           <div
             className="h-8 sm:h-9 flex items-center font-bold text-lg sm:text-xl tracking-tight text-slate-900"
-            style={{ color: brandColor !== '#ffffff' ? brandColor : '#0f172a' }}
+            style={{ color: brandColor !== 'var(--color-white)' ? brandColor : 'var(--ws-canvas)' }}
           >
             {displayName}
           </div>
@@ -62,7 +62,7 @@ export function DocumentCompanyIdentity({
 
       {/* Optional Details (Legal name, address, tax info, contact) */}
       {showDetails && (
-        <div className={`space-y-0.5 text-xs text-slate-500 leading-normal ${compact ? 'text-[11px]' : ''}`}>
+        <div className={`space-y-0.5 text-xs text-[var(--ws-text-muted)] leading-normal ${compact ? 'text-[11px]' : ''}`}>
           {branding.legalName && branding.legalName !== displayName && (
             <div className="font-medium text-slate-700">{branding.legalName}</div>
           )}

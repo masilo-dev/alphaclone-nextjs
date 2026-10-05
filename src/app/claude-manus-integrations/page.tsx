@@ -39,13 +39,13 @@ export default function ClaudeManusIntegrationsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <MarketingLandingShell>
-        <main className="min-h-screen bg-[#040A12] text-slate-200">
+        <main className="min-h-screen bg-[var(--brand-violet-950)] text-[var(--ws-text-secondary)]">
           <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <h1 className="text-4xl font-black text-white mb-4">Claude and Manus Integrations</h1>
-            <p className="text-slate-300 mb-6">
+            <p className="text-[var(--ws-text-secondary)] mb-6">
               AlphaClone supports AI integration patterns that help businesses execute CRM, lead, and project workflows with assisted intelligence. Also supports DeepSeek V3/R1.
             </p>
-            <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 type-ui text-slate-300">
+            <div className="rounded-2xl border border-cyan-500/20 bg-[var(--brand-violet-950)]/90 p-6 type-ui text-[var(--ws-text-secondary)]">
               <ul className="space-y-2">
                 <li>Integration-ready workspace model for AI assistants</li>
                 <li>Lead research and qualification support workflows</li>

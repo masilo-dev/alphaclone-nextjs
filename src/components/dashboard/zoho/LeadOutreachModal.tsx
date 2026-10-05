@@ -96,20 +96,20 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-4xl bg-gray-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                className="relative w-full max-w-4xl bg-gray-900 border border-[var(--ws-border)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-teal-600/10 to-teal-900/10 flex items-center justify-between">
+                <div className="p-6 border-b border-[var(--ws-border)] bg-gradient-to-r from-teal-600/10 to-teal-900/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-teal-600/20 rounded-xl text-teal-400">
                             <Sparkles size={24} className="animate-pulse" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white tracking-tight">AI Growth Agent: Lead Discovery</h2>
+                            <h2 className="text-xl font-black text-[var(--ws-text-primary)] tracking-tight">AI Growth Agent: Lead Discovery</h2>
                             <p className="type-caption font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+                    <button onClick={onClose} className="p-2 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all">
                         <X size={20} />
                     </button>
                 </div>
@@ -123,8 +123,8 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                     key={provider.id}
                                     onClick={() => setSelectedProvider(provider)}
                                     className={`px-4 py-2 rounded-2xl type-caption font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
-                                        ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
-                                        : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
+                                        ? 'bg-teal-600 text-[var(--text-inverse)] border-teal-500 shadow-lg shadow-teal-500/20'
+                                        : 'bg-gray-950/50 text-gray-500 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                         }`}
                                 >
                                     {provider.name}
@@ -147,12 +147,12 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                             placeholder="Identify companies in [Industry] located in [Location]..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-14 pr-32 py-5 text-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full bg-gray-950/50 border border-[var(--ws-border)] rounded-2xl pl-14 pr-32 py-5 text-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
                         />
                         <button 
                             type="submit"
                             disabled={searching || !query}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold type-ui transition-all shadow-lg flex items-center gap-2"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-[var(--text-inverse)] px-6 py-2.5 rounded-xl font-bold type-ui transition-all shadow-lg flex items-center gap-2"
                         >
                             {searching ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                             <span>Discovery</span>
@@ -183,18 +183,18 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                 key={lead.id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-gray-950/40 border border-white/5 rounded-2xl p-5 hover:border-teal-500/30 transition-all group relative overflow-hidden"
+                                className="bg-gray-950/40 border border-[var(--ws-border)] rounded-2xl p-5 hover:border-teal-500/30 transition-all group relative overflow-hidden"
                             >
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
                                 
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                                     <div className="space-y-3 flex-1">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-white/5 text-gray-400 font-bold">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-[var(--ws-border)] text-gray-400 font-bold">
                                                 {lead.businessName?.charAt(0)}
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-white text-lg">{lead.businessName}</h3>
+                                                <h3 className="font-bold text-[var(--ws-text-primary)] text-lg">{lead.businessName}</h3>
                                                 <div className="flex items-center gap-3 mt-0.5">
                                                     <div className="flex items-center gap-1 type-caption font-bold text-teal-400 uppercase tracking-widest">
                                                         <Briefcase size={10} />
@@ -235,7 +235,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                                                 )}
                                             </button>
                                         )}
-                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest border border-white/5 transition-all">
+                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-widest border border-[var(--ws-border)] transition-all">
                                             Quick View
                                         </button>
                                     </div>
@@ -246,7 +246,7 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
                 </div>
 
                 {/* Footer Info */}
-                <div className="p-4 bg-gray-950/80 border-t border-white/5 flex items-center justify-between px-8">
+                <div className="p-4 bg-gray-950/80 border-t border-[var(--ws-border)] flex items-center justify-between px-8">
                     <div className="flex items-center gap-2 type-caption font-bold text-gray-600 uppercase tracking-widest">
                         <CheckCircle2 size={14} className="text-teal-500" />
                         <span>Connected to Zoho CRM & AlphaClone Native Storage</span>

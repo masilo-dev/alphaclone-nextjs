@@ -151,7 +151,7 @@ export function BonnieDrawer() {
     >
       <button
         type="button"
-        className="absolute inset-0 bg-slate-950/85 backdrop-blur-md"
+        className="absolute inset-0 bg-[var(--ws-canvas)]/85 backdrop-blur-md"
         aria-label="Close Bonnie"
         onClick={() => {
           setStep("compose");
@@ -162,7 +162,7 @@ export function BonnieDrawer() {
         className={cn(
           "absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto",
           "flex flex-col w-full md:w-[min(100vw,28rem)] max-h-[88vh] md:max-h-none",
-          "bg-slate-950 border border-white/20 shadow-[0_0_80px_rgba(0,0,0,0.95)]",
+          "bg-[var(--ws-canvas)] border border-[var(--ws-border-strong)] shadow-[0_0_80px_rgba(0,0,0,0.95)]",
           "rounded-t-[18px] md:rounded-none md:border-y-0 md:border-r-0",
           ENTERPRISE.drawer.panelZ,
         )}
@@ -260,7 +260,7 @@ export function BonnieDrawer() {
                     className={cn(
                       "px-2.5 min-h-8 rounded-[8px] type-caption font-semibold whitespace-nowrap transition-colors",
                       mode === item.id
-                        ? "bg-[var(--brand-violet-500)] text-white"
+                        ? "bg-[var(--brand-violet-500)] text-[var(--ws-text-primary)]"
                         : "text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-secondary)]",
                     )}
                   >

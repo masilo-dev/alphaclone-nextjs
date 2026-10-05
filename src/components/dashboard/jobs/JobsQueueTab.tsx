@@ -143,7 +143,7 @@ export default function JobsQueueTab() {
     >
       <div className="ac-scroll-full pb-24">
         {loading ? (
-          <p className="p-6 type-card-description text-slate-500">Loading queue…</p>
+          <p className="p-6 type-card-description text-[var(--ws-text-muted)]">Loading queue…</p>
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Clock}
@@ -158,7 +158,7 @@ export default function JobsQueueTab() {
                   <div className="flex items-start gap-3">
                     {statusIcon(row.status)}
                     <div className="min-w-0 flex-1">
-                      <p className="type-card-description font-medium text-white truncate">{row.detail}</p>
+                      <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{row.detail}</p>
                       <p className="type-card-description text-[var(--ws-text-tertiary)] mt-0.5">
                         {row.kind.replace('_', ' ')} · {row.status}
                       </p>
@@ -185,7 +185,7 @@ export default function JobsQueueTab() {
                   {rows.map((row) => (
                     <tr key={`${row.kind}-${row.id}`}>
                       <td>{statusIcon(row.status)}</td>
-                      <td className="font-medium text-white max-w-[280px] truncate">{row.detail}</td>
+                      <td className="font-medium text-[var(--ws-text-primary)] max-w-[280px] truncate">{row.detail}</td>
                       <td className="text-[var(--ws-text-secondary)] capitalize">{row.kind.replace('_', ' ')}</td>
                       <td className="text-[var(--ws-text-secondary)] capitalize">{row.status}</td>
                       <td className="text-[var(--ws-text-tertiary)] type-table-cell whitespace-nowrap">

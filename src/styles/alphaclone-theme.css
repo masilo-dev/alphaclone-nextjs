@@ -154,9 +154,143 @@
   --marketing-primary: var(--brand-blue-500);
   --marketing-accent: var(--brand-navy);
   --marketing-radius: var(--radius-xl);
+  --marketing-ink: #07152f;
+  --marketing-ink-secondary: #102443;
+  --marketing-muted: #60708a;
+  --marketing-muted-strong: #76849a;
+  --marketing-text-secondary: #33445e;
+  --marketing-link: var(--brand-blue-600);
+  --marketing-link-hover: var(--brand-blue-700);
+  --marketing-surface: #ffffff;
+  --marketing-bg-secondary: #f7f9fc;
+  --marketing-bg-muted: #eef3f8;
+  --marketing-border: #dfe6ef;
+  --marketing-border-strong: #c8d5e4;
+  --marketing-border-subtle: #edf1f6;
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Integration / logo marks (fixed third-party hues) */
+  --logo-facebook: #1877f2;
+  --logo-linkedin: #0a66c2;
+  --logo-twitter: #1da1f2;
+  --logo-google-blue: #4285f4;
+  --logo-google-red: #ea4335;
+  --logo-microsoft: #0078d4;
+  --logo-stripe: #635bff;
+  --logo-slack: #36a64f;
+  --logo-openai: #10a37f;
+  --logo-google-green: #34a853;
+  --logo-google-yellow: #fbbc05;
+  --logo-facebook-hover: #166fe5;
+  --logo-linkedin-hover: #0958a8;
+  --logo-whatsapp: #25d366;
+  --logo-instagram: #e4405f;
+  --logo-slack-accent: #e01e5a;
+  --logo-zoom: #2d8cff;
+  --logo-calendly: #006bff;
+  --logo-zoho: #f4b400;
+  --logo-brevo: #0b996e;
+  --logo-supabase: #3ecf8e;
+  --logo-cloudflare: #f38020;
+
   --shadow-luxury-sm: var(--shadow-sm);
   --shadow-luxury-md: var(--shadow-md);
   --shadow-luxury-lg: var(--shadow-lg);
+
+  /* Marketing redesign one-off tones (referenced only via var in marketing-redesign.css) */
+  --marketing-tone-0666d7: #0666d7;
+  --marketing-tone-087747: #087747;
+  --marketing-tone-08844d: #08844d;
+  --marketing-tone-0a9b5f: #0a9b5f;
+  --marketing-tone-0b4fae: #0b4fae;
+  --marketing-tone-0d4f9d: #0d4f9d;
+  --marketing-tone-102033: #102033;
+  --marketing-tone-10223b: #10223b;
+  --marketing-tone-123f78: #123f78;
+  --marketing-tone-142033: #142033;
+  --marketing-tone-168457: #168457;
+  --marketing-tone-1767b4: #1767b4;
+  --marketing-tone-1769d2: #1769d2;
+  --marketing-tone-1769e8: #1769e8;
+  --marketing-tone-1a2e56: #1a2e56;
+  --marketing-tone-1c2b41: #1c2b41;
+  --marketing-tone-253b59: #253b59;
+  --marketing-tone-253c5c: #253c5c;
+  --marketing-tone-26374e: #26374e;
+  --marketing-tone-28cf7d: #28cf7d;
+  --marketing-tone-2d415d: #2d415d;
+  --marketing-tone-2e3c50: #2e3c50;
+  --marketing-tone-30435e: #30435e;
+  --marketing-tone-314157: #314157;
+  --marketing-tone-34445a: #34445a;
+  --marketing-tone-344963: #344963;
+  --marketing-tone-3b4b62: #3b4b62;
+  --marketing-tone-40526b: #40526b;
+  --marketing-tone-47729f: #47729f;
+  --marketing-tone-51647d: #51647d;
+  --marketing-tone-526d95: #526d95;
+  --marketing-tone-596a80: #596a80;
+  --marketing-tone-5b6a7e: #5b6a7e;
+  --marketing-tone-62748b: #62748b;
+  --marketing-tone-67778d: #67778d;
+  --marketing-tone-6a7a91: #6a7a91;
+  --marketing-tone-6c7d92: #6c7d92;
+  --marketing-tone-70829a: #70829a;
+  --marketing-tone-718096: #718096;
+  --marketing-tone-71839a: #71839a;
+  --marketing-tone-728096: #728096;
+  --marketing-tone-748196: #748196;
+  --marketing-tone-79e8da: #79e8da;
+  --marketing-tone-7b8795: #7b8795;
+  --marketing-tone-7d8ea6: #7d8ea6;
+  --marketing-tone-8090a5: #8090a5;
+  --marketing-tone-8090a6: #8090a6;
+  --marketing-tone-84d9ad: #84d9ad;
+  --marketing-tone-8b6d28: #8b6d28;
+  --marketing-tone-8bbcff: #8bbcff;
+  --marketing-tone-8ca4bf: #8ca4bf;
+  --marketing-tone-9cccfb: #9cccfb;
+  --marketing-tone-9eb0c5: #9eb0c5;
+  --marketing-tone-9fb4cf: #9fb4cf;
+  --marketing-tone-a9bfdf: #a9bfdf;
+  --marketing-tone-aeb8c5: #aeb8c5;
+  --marketing-tone-aebed1: #aebed1;
+  --marketing-tone-b8cbe2: #b8cbe2;
+  --marketing-tone-c3d1e1: #c3d1e1;
+  --marketing-tone-c8d6e7: #c8d6e7;
+  --marketing-tone-c9d7e8: #c9d7e8;
+  --marketing-tone-c9d8e8: #c9d8e8;
+  --marketing-tone-c9e2fb: #c9e2fb;
+  --marketing-tone-ced9e6: #ced9e6;
+  --marketing-tone-d4deea: #d4deea;
+  --marketing-tone-d5dfeb: #d5dfeb;
+  --marketing-tone-d6e0eb: #d6e0eb;
+  --marketing-tone-d8e0eb: #d8e0eb;
+  --marketing-tone-d9e3ee: #d9e3ee;
+  --marketing-tone-d9e5f2: #d9e5f2;
+  --marketing-tone-dbe5ef: #dbe5ef;
+  --marketing-tone-dbe6f4: #dbe6f4;
+  --marketing-tone-ddf7e9: #ddf7e9;
+  --marketing-tone-dfe4ea: #dfe4ea;
+  --marketing-tone-dff8ea: #dff8ea;
+  --marketing-tone-e0e7ef: #e0e7ef;
+  --marketing-tone-e39526: #e39526;
+  --marketing-tone-e3eaf3: #e3eaf3;
+  --marketing-tone-e5ebf2: #e5ebf2;
+  --marketing-tone-eaf9f1: #eaf9f1;
+  --marketing-tone-ebeff4: #ebeff4;
+  --marketing-tone-edf1f5: #edf1f5;
+  --marketing-tone-edf3f9: #edf3f9;
+  --marketing-tone-eef4fc: #eef4fc;
+  --marketing-tone-eef4ff: #eef4ff;
+  --marketing-tone-eef5ff: #eef5ff;
+  --marketing-tone-f2f7fd: #f2f7fd;
+  --marketing-tone-f4f8fc: #f4f8fc;
+  --marketing-tone-f4f9ff: #f4f9ff;
+  --marketing-tone-f8fbff: #f8fbff;
+  --marketing-tone-fbfcfe: #fbfcfe;
 }
 
 html.dark {
@@ -216,4 +350,63 @@ html.dark {
 .ac-ring-brand:focus-visible {
   outline: none;
   box-shadow: var(--interactive-focus-ring);
+}
+
+/* Untitled-aligned authenticated page primitives */
+.ac-untitled-page {
+  color: var(--ws-text-primary);
+}
+
+.ac-untitled-panel {
+  background: var(--ws-panel);
+  border-color: var(--ws-border);
+  color: var(--ws-text-primary);
+}
+
+/* Auth route root forces Untitled light surface semantics */
+.ac-auth-root {
+  min-height: 100dvh;
+  color-scheme: light;
+  --color-bg-primary: #ffffff;
+  --color-text-primary: var(--text-primary, #171923);
+  --color-text-secondary: var(--text-secondary, #5F6472);
+  --color-text-tertiary: var(--text-muted, #747A88);
+  --color-border-primary: var(--border-default, rgba(33, 36, 70, 0.14));
+  --ws-text-muted: var(--text-muted, #747A88);
+  --ws-text-secondary: var(--text-secondary, #5F6472);
+  --ws-border: var(--border-default, rgba(33, 36, 70, 0.14));
+  --ws-panel: #ffffff;
+  --ws-canvas: var(--background-app, #F6F7F9);
+}
+
+.ac-auth-canvas {
+  background:
+    radial-gradient(ellipse 70% 48% at 50% -8%, color-mix(in srgb, var(--brand-teal) 12%, transparent), transparent 62%),
+    radial-gradient(ellipse 40% 30% at 100% 100%, color-mix(in srgb, var(--brand-navy) 6%, transparent), transparent 70%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
+  color: var(--color-text-primary);
+}
+
+html.dark .ac-auth-canvas {
+  background: linear-gradient(
+    160deg,
+    var(--brand-violet-950) 0%,
+    var(--brand-navy) 45%,
+    var(--brand-violet-950) 100%
+  );
+  color: var(--color-text-primary);
+}
+
+.ac-auth-card {
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-xl, 0.75rem);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
+}
+
+html.dark .ac-auth-card {
+  background: var(--ws-panel, var(--surface-primary));
+  border-color: var(--ws-border);
+  box-shadow: var(--ws-card-shadow);
 }

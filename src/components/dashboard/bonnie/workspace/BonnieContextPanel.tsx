@@ -61,18 +61,18 @@ export default function BonnieContextPanel({
 
   return (
     <aside
-      className="flex h-full w-full flex-col border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 md:w-[300px]"
+      className="flex h-full w-full flex-col border-l border-slate-200 bg-white dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)] md:w-[300px]"
       aria-label="Bonnie context"
     >
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-[var(--ws-border)]">
         <div>
           <h2 className="type-card-title font-semibold text-slate-900 dark:text-slate-50">Operations</h2>
-          <p className="type-card-description text-slate-500">Goals, modules, and context</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">Goals, modules, and context</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 dark:hover:bg-slate-900"
+          className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 dark:hover:bg-[var(--ws-panel)]"
           aria-label="Close context panel"
         >
           <X className="h-4 w-4" />
@@ -80,29 +80,29 @@ export default function BonnieContextPanel({
       </div>
 
       <div className="space-y-4 overflow-y-auto p-4">
-        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-          <p className="type-caption font-semibold uppercase tracking-caps text-slate-400">
+        <div className="rounded-xl border border-slate-200 p-3 dark:border-[var(--ws-border)]">
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">
             Connection
           </p>
-          <p className="mt-1 type-card-description font-medium capitalize text-slate-800 dark:text-slate-100">
+          <p className="mt-1 type-card-description font-medium capitalize text-slate-800 dark:text-[var(--ws-text-primary)]">
             {connectionStatus}
           </p>
           {pendingApprovals > 0 && (
-            <p className="mt-2 type-card-description text-amber-700 dark:text-amber-300">
+            <p className="mt-2 type-card-description text-amber-700 dark:text-[var(--warning-text,var(--warning-500))]">
               {pendingApprovals} pending approval{pendingApprovals === 1 ? '' : 's'}
             </p>
           )}
         </div>
 
-        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-          <p className="type-caption font-semibold uppercase tracking-caps text-slate-400">
+        <div className="rounded-xl border border-slate-200 p-3 dark:border-[var(--ws-border)]">
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">
             Execute modules
           </p>
           <ul className="mt-2 space-y-1.5">
             <li>
               <a
                 href="/dashboard/leads/campaigns"
-                className="block type-caption font-medium text-teal-700 hover:underline dark:text-teal-300"
+                className="block type-caption font-medium text-teal-700 hover:underline dark:text-[var(--brand-blue-300)]"
               >
                 Lead Finder / scraping
               </a>
@@ -110,7 +110,7 @@ export default function BonnieContextPanel({
             <li>
               <a
                 href="/dashboard/business/social"
-                className="block type-caption font-medium text-teal-700 hover:underline dark:text-teal-300"
+                className="block type-caption font-medium text-teal-700 hover:underline dark:text-[var(--brand-blue-300)]"
               >
                 Social publishing
               </a>
@@ -118,7 +118,7 @@ export default function BonnieContextPanel({
             <li>
               <a
                 href="/dashboard/business/billing/manage"
-                className="block type-caption font-medium text-teal-700 hover:underline dark:text-teal-300"
+                className="block type-caption font-medium text-teal-700 hover:underline dark:text-[var(--brand-blue-300)]"
               >
                 Invoices & collections
               </a>
@@ -126,7 +126,7 @@ export default function BonnieContextPanel({
             <li>
               <a
                 href="/dashboard/accounting"
-                className="block type-caption font-medium text-teal-700 hover:underline dark:text-teal-300"
+                className="block type-caption font-medium text-teal-700 hover:underline dark:text-[var(--brand-blue-300)]"
               >
                 Accounting
               </a>
@@ -134,7 +134,7 @@ export default function BonnieContextPanel({
             <li>
               <a
                 href="/dashboard/outreach"
-                className="block type-caption font-medium text-teal-700 hover:underline dark:text-teal-300"
+                className="block type-caption font-medium text-teal-700 hover:underline dark:text-[var(--brand-blue-300)]"
               >
                 Outreach
               </a>
@@ -155,11 +155,11 @@ export default function BonnieContextPanel({
         {tenantId ? <BonnieRuntimePanel tenantId={tenantId} /> : null}
 
         <div>
-          <p className="mb-2 type-caption font-semibold uppercase tracking-caps text-slate-400">
+          <p className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">
             Active items
           </p>
           {items.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 type-card-description text-slate-500 dark:border-slate-800">
+            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 type-card-description text-[var(--ws-text-muted)] dark:border-[var(--ws-border)]">
               No context attached. Mention records with @customer, @invoice, @project, and more.
             </p>
           ) : (
@@ -167,7 +167,7 @@ export default function BonnieContextPanel({
               {items.map((item) => (
                 <li
                   key={item.id}
-                  className="flex items-start gap-2 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800"
+                  className="flex items-start gap-2 rounded-xl border border-slate-200 px-3 py-2 dark:border-[var(--ws-border)]"
                 >
                   <span className="mt-0.5 text-teal-600">
                     {item.kind === 'permission' ? (
@@ -177,17 +177,17 @@ export default function BonnieContextPanel({
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate type-card-description font-medium text-slate-800 dark:text-slate-100">
+                    <p className="truncate type-card-description font-medium text-slate-800 dark:text-[var(--ws-text-primary)]">
                       {item.label}
                     </p>
                     {item.detail && (
-                      <p className="truncate type-card-description text-slate-500">{item.detail}</p>
+                      <p className="truncate type-card-description text-[var(--ws-text-muted)]">{item.detail}</p>
                     )}
                   </div>
                   <button
                     type="button"
                     onClick={() => onRemove(item.id)}
-                    className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-900"
+                    className="rounded-md p-1 text-[var(--ws-text-muted)] hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-[var(--ws-panel)]"
                     aria-label={`Remove ${item.label}`}
                   >
                     <X className="h-3.5 w-3.5" />

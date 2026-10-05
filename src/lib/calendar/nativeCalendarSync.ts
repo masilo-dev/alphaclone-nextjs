@@ -108,7 +108,7 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     description: description || null,
     start_time: startTime,
     end_time: endFromStart(startTime, endTime, isAllDay),
-    color: color || (entityType === 'task' ? '#f59e0b' : entityType === 'milestone' ? '#ec4899' : '#8b5cf6'),
+    color: color || (entityType === 'task' ? 'var(--warning-500)' : entityType === 'milestone' ? 'var(--error-500)' : 'var(--brand-violet-400)'),
     is_all_day: isAllDay,
     reminder_minutes: reminderMinutes,
     client_id: clientId || null,

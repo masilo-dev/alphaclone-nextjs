@@ -67,9 +67,9 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                     <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
                         <CalendarIcon className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">{currentEvent.title}</h3>
-                    <p className="text-slate-400">This event was scheduled for {format(new Date(currentEvent.start_time), 'PPp')}.</p>
-                    <p className="text-slate-300 mt-2">What happened with this event?</p>
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">{currentEvent.title}</h3>
+                    <p className="text-[var(--ws-text-muted)]">This event was scheduled for {format(new Date(currentEvent.start_time), 'PPp')}.</p>
+                    <p className="text-[var(--ws-text-secondary)] mt-2">What happened with this event?</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
@@ -92,18 +92,18 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                     <Button
                         onClick={() => handleAction('cancelled')}
                         disabled={isUpdating}
-                        className="bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 h-12 px-2"
+                        className="bg-red-600 hover:bg-[var(--error-500)] flex items-center justify-center gap-2 h-12 px-2"
                     >
                         <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                         <span className="type-caption sm:text-sm">Cancelled</span>
                     </Button>
                 </div>
 
-                <div className="flex justify-between items-center pt-4 border-t border-slate-800">
-                    <span className="type-caption text-slate-500">
+                <div className="flex justify-between items-center pt-4 border-t border-[var(--ws-border)]">
+                    <span className="type-caption text-[var(--ws-text-muted)]">
                         {currentIndex + 1} of {actualCalendarEvents.length} past events
                     </span>
-                    <Button variant="ghost" onClick={handleDismiss} disabled={isUpdating} className="text-slate-400 hover:text-white hover:bg-slate-800">
+                    <Button variant="ghost" onClick={handleDismiss} disabled={isUpdating} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]">
                         Dismiss
                     </Button>
                 </div>

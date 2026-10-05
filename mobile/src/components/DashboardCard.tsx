@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,15 +31,15 @@ export default function DashboardCard({ activity }: DashboardCardProps) {
   const getIconColor = (type: string) => {
     switch (type) {
       case 'lead':
-        return '#0077FF';
+        return colors.info;
       case 'project':
-        return '#00D2A0';
+        return colors.primary;
       case 'finance':
-        return '#FFA500';
+        return colors.warning;
       case 'calendar':
-        return '#FF6B6B';
+        return colors.error;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   cardContent: {
     flexDirection: 'row',
@@ -81,12 +82,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '500',
     marginBottom: 2,
   },
   time: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
   },
 });

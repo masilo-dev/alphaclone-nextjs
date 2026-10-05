@@ -84,18 +84,18 @@ export default function DailyBrief() {
         exit={{ y: -100, opacity: 0 }}
         className="mb-8 relative z-40"
       >
-        <div className="bg-slate-900 border border-blue-500/30 rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/10">
+        <div className="bg-[var(--ws-panel)] border border-blue-500/30 rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/10">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-6 py-4 flex items-center justify-between border-b border-white/5">
+          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-6 py-4 flex items-center justify-between border-b border-[var(--ws-border)]">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Coffee className="w-4 h-4 text-white" />
+                <Coffee className="w-4 h-4 text-[var(--ws-text-primary)]" />
               </div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Your 5-Minute Brief</h2>
+              <h2 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">Your 5-Minute Brief</h2>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
+              className="p-1.5 hover:bg-[var(--ws-hover)] rounded-full transition-colors text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -105,7 +105,7 @@ export default function DailyBrief() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
-                <p className="text-xl font-medium text-slate-200 mb-2 leading-tight">
+                <p className="text-xl font-medium text-[var(--ws-text-secondary)] mb-2 leading-tight">
                   {content.greeting}
                 </p>
                 <div className="h-1 w-12 bg-blue-500 rounded-full" />
@@ -117,7 +117,7 @@ export default function DailyBrief() {
                   <Target className="w-3 h-3" />
                   Today's Main Objective
                 </div>
-                <p className="text-lg font-bold text-white leading-snug">
+                <p className="text-lg font-bold text-[var(--ws-text-primary)] leading-snug">
                   {content.focus}
                 </p>
               </div>
@@ -128,9 +128,9 @@ export default function DailyBrief() {
               <div className="space-y-4">
                 {content.alerts.length > 0 && (
                   <div className="space-y-2">
-                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">Immediate Attention</p>
+                    <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest">Immediate Attention</p>
                     {content.alerts.map((alert, i) => (
-                      <div key={i} className="flex items-start gap-3 type-ui text-red-400 bg-red-500/5 p-2 rounded-lg border border-red-500/10">
+                      <div key={i} className="flex items-start gap-3 type-ui text-red-400 bg-[var(--error-500)]/5 p-2 rounded-lg border border-red-500/10">
                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                         <p>{alert}</p>
                       </div>
@@ -140,7 +140,7 @@ export default function DailyBrief() {
 
                 {content.wins.length > 0 && (
                   <div className="space-y-2">
-                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">Positive Momentum</p>
+                    <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest">Positive Momentum</p>
                     {content.wins.map((win, i) => (
                       <div key={i} className="flex items-start gap-3 type-ui text-green-400 bg-green-500/5 p-2 rounded-lg border border-green-500/10">
                         <Trophy className="w-4 h-4 mt-0.5 shrink-0" />
@@ -151,8 +151,8 @@ export default function DailyBrief() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-white/5">
-                <p className="type-card-description italic text-slate-400 flex items-center gap-2">
+              <div className="pt-2 border-t border-[var(--ws-border)]">
+                <p className="type-card-description italic text-[var(--ws-text-muted)] flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                   {content.closing}
                 </p>
@@ -161,7 +161,7 @@ export default function DailyBrief() {
           </div>
           
           {/* Footer Action */}
-          <div className="bg-slate-900/50 px-6 py-3 border-t border-white/5 flex justify-end">
+          <div className="bg-[var(--ws-panel)]/50 px-6 py-3 border-t border-[var(--ws-border)] flex justify-end">
             <button 
               onClick={() => setIsOpen(false)}
               className="type-caption font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 group"

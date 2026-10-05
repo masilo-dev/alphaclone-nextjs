@@ -195,7 +195,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
       <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-white text-xl mb-2">Loading Video Call</h2>
+          <h2 className="text-[var(--ws-text-primary)] text-xl mb-2">Loading Video Call</h2>
           <p className="text-gray-400">Preparing your meeting environment...</p>
           
           {isMobileDevice() && (
@@ -221,13 +221,13 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
             </svg>
           </div>
           
-          <h2 className="text-white text-xl mb-2">Video Call Error</h2>
+          <h2 className="text-[var(--ws-text-primary)] text-xl mb-2">Video Call Error</h2>
           <p className="text-gray-400 mb-6">{error}</p>
           
           <div className="space-y-3">
             <button
               onClick={handleRetry}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-[var(--ws-text-primary)] px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -237,7 +237,7 @@ export default function VideoCallFix({ roomId, userName, userId, isAdmin = false
             
             <button
               onClick={handleLeaveCall}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="w-full bg-gray-700 hover:bg-gray-600 text-[var(--ws-text-primary)] px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Return to Dashboard
             </button>

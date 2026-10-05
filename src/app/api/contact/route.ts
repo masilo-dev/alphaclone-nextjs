@@ -43,35 +43,35 @@ function buildNotificationHtml(params: {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>New AlphaClone Inquiry</title></head>
-<body style="font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:0;">
-  <div style="max-width:600px;margin:32px auto;background:#1e293b;border-radius:12px;overflow:hidden;border:1px solid #334155;">
-    <div style="padding:20px 28px;background:#0f172a;border-bottom:1px solid #334155;">
-      <p style="margin:0;font-size:13px;color:#94a3b8;letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">AlphaClone Systems</p>
-      <h1 style="margin:6px 0 0;font-size:20px;font-weight:700;color:#f8fafc;">New Website Inquiry</h1>
+<body style="font-family:system-ui,sans-serif;background:var(--ws-canvas);color:var(--ws-border);margin:0;padding:0;">
+  <div style="max-width:600px;margin:32px auto;background:var(--ws-panel);border-radius:12px;overflow:hidden;border:1px solid var(--ws-surface-tertiary);">
+    <div style="padding:20px 28px;background:var(--ws-canvas);border-bottom:1px solid var(--ws-surface-tertiary);">
+      <p style="margin:0;font-size:13px;color:var(--ws-text-secondary);letter-spacing:0.05em;text-transform:uppercase;font-weight:600;">AlphaClone Systems</p>
+      <h1 style="margin:6px 0 0;font-size:20px;font-weight:700;color:var(--ws-surface-secondary);">New Website Inquiry</h1>
     </div>
     <div style="padding:24px 28px;">
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tr>
-          <td style="padding:8px 0;color:#94a3b8;width:100px;vertical-align:top;font-weight:600;">Name</td>
-          <td style="padding:8px 0;color:#f1f5f9;">${name}</td>
+          <td style="padding:8px 0;color:var(--ws-text-secondary);width:100px;vertical-align:top;font-weight:600;">Name</td>
+          <td style="padding:8px 0;color:var(--ws-surface-secondary);">${name}</td>
         </tr>
         <tr>
-          <td style="padding:8px 0;color:#94a3b8;vertical-align:top;font-weight:600;">Email</td>
-          <td style="padding:8px 0;"><a href="mailto:${email}" style="color:#38bdf8;">${email}</a></td>
+          <td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Email</td>
+          <td style="padding:8px 0;"><a href="mailto:${email}" style="color:var(--info-500);">${email}</a></td>
         </tr>
-        ${company ? `<tr><td style="padding:8px 0;color:#94a3b8;vertical-align:top;font-weight:600;">Company</td><td style="padding:8px 0;color:#f1f5f9;">${company}</td></tr>` : ''}
-        ${phone ? `<tr><td style="padding:8px 0;color:#94a3b8;vertical-align:top;font-weight:600;">Phone</td><td style="padding:8px 0;color:#f1f5f9;">${phone}</td></tr>` : ''}
+        ${company ? `<tr><td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Company</td><td style="padding:8px 0;color:var(--ws-surface-secondary);">${company}</td></tr>` : ''}
+        ${phone ? `<tr><td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Phone</td><td style="padding:8px 0;color:var(--ws-surface-secondary);">${phone}</td></tr>` : ''}
         <tr>
-          <td style="padding:8px 0;color:#94a3b8;vertical-align:top;font-weight:600;">Subject</td>
-          <td style="padding:8px 0;color:#f1f5f9;">${subject}</td>
+          <td style="padding:8px 0;color:var(--ws-text-secondary);vertical-align:top;font-weight:600;">Subject</td>
+          <td style="padding:8px 0;color:var(--ws-surface-secondary);">${subject}</td>
         </tr>
       </table>
-      <div style="margin-top:20px;padding:16px;background:#0f172a;border:1px solid #334155;border-radius:8px;">
-        <p style="margin:0 0 6px;font-size:12px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
-        <p style="margin:0;color:#e2e8f0;font-size:14px;line-height:1.6;white-space:pre-wrap;">${message}</p>
+      <div style="margin-top:20px;padding:16px;background:var(--ws-canvas);border:1px solid var(--ws-surface-tertiary);border-radius:8px;">
+        <p style="margin:0 0 6px;font-size:12px;color:var(--ws-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Message</p>
+        <p style="margin:0;color:var(--ws-border);font-size:14px;line-height:1.6;white-space:pre-wrap;">${message}</p>
       </div>
     </div>
-    <div style="padding:16px 28px;background:#0f172a;border-top:1px solid #334155;font-size:12px;color:#64748b;">
+    <div style="padding:16px 28px;background:var(--ws-canvas);border-top:1px solid var(--ws-surface-tertiary);font-size:12px;color:var(--ws-text-muted);">
       <p style="margin:0;">Submission ID: ${submissionId} &nbsp;·&nbsp; Received: ${submittedAt}</p>
       <p style="margin:6px 0 0;">Reply directly to this email to respond to the sender.</p>
     </div>

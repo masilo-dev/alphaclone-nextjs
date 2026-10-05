@@ -92,7 +92,7 @@ export default function IntegrationDetailPage({ integration }: { integration: Pu
             </dl>
             <div className="mt-5 flex gap-3 rounded-xl border border-slate-200 bg-white p-3 type-caption leading-5 text-slate-700"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" aria-hidden="true" />Connect only the account and permissions required for the workflow.</div>
             {specific?.boundary ? <p className="mt-4 type-card-description leading-5 text-amber-900"><CircleAlert className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />{specific.boundary}</p> : null}
-            <Link href={isAvailable ? '/dashboard/marketplace' : '/contact'} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-400 px-4 py-3 type-ui font-bold text-slate-950 transition hover:bg-teal-300">{isAvailable ? 'Open connection settings' : 'Ask about availability'}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+            <Link href={isAvailable ? '/dashboard/marketplace' : '/contact'} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-blue-400)] px-4 py-3 type-ui font-bold text-slate-950 transition hover:bg-teal-300">{isAvailable ? 'Open connection settings' : 'Ask about availability'}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
           </aside>
         </div>
         <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-7">

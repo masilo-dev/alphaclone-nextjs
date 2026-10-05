@@ -56,7 +56,7 @@ const FLOW_NODES: WorkflowNode[] = [
     trigger: 'Discovery Meeting Ended',
     automatedResult: 'Itemized proposal draft prepared in under 30 seconds for review.',
     icon: 'bonnie',
-    accent: 'border-teal-500/40 text-teal-300 bg-teal-500/10',
+    accent: 'border-teal-500/40 text-[var(--brand-blue-300)] bg-teal-500/10',
     previewSnippet: {
       badge: 'BONNIE AI PROPOSAL ENGINE',
       headline: 'Proposal #PROP-2026-089 Prepared',
@@ -77,7 +77,7 @@ const FLOW_NODES: WorkflowNode[] = [
     trigger: 'Proposal Approved',
     automatedResult: 'Contract sent, digital signature captured, audit certificate generated.',
     icon: 'documents',
-    accent: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
+    accent: 'border-amber-500/40 text-[var(--warning-text,var(--warning-500))] bg-amber-500/10',
     previewSnippet: {
       badge: 'E-SIGNATURE ENGINE',
       headline: 'Master Services Agreement — SIGNED',
@@ -119,7 +119,7 @@ const FLOW_NODES: WorkflowNode[] = [
     trigger: 'Milestone 1 Completed',
     automatedResult: 'Invoice #INV-4089 sent via email, payment received, P&L updated.',
     icon: 'invoicing',
-    accent: 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10',
+    accent: 'border-emerald-500/40 text-[var(--success-text,var(--success-500))] bg-emerald-500/10',
     previewSnippet: {
       badge: 'FINANCIAL RECONCILIATION',
       headline: 'Invoice #INV-4089 ($12,000.00)',
@@ -162,7 +162,7 @@ export default function InteractiveWorkflowStory() {
     <div className="w-full py-10">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-12 px-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 type-caption sm:text-sm font-medium mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-[var(--brand-blue-300)] type-caption sm:text-sm font-medium mb-4">
           <ClipboardCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
           <span>The Connected Business Story</span>
         </div>
@@ -172,7 +172,7 @@ export default function InteractiveWorkflowStory() {
             One Continuous Flow.
           </span>
         </h2>
-        <p className="text-slate-300 type-card-description sm:text-base leading-relaxed max-w-2xl mx-auto">
+        <p className="text-[var(--ws-text-secondary)] type-card-description sm:text-base leading-relaxed max-w-2xl mx-auto">
           Instead of running your business across 6 disconnected tools and copy-pasting data manually, AlphaClone executes your entire operational pipeline inside one connected backbone.
         </p>
       </div>
@@ -189,15 +189,15 @@ export default function InteractiveWorkflowStory() {
                 onClick={() => setActiveStepIndex(index)}
                 className={`p-3 rounded-xl border text-left transition-all duration-200 relative ${
                   isSelected
-                    ? 'bg-slate-900 border-teal-500/80 shadow-lg shadow-teal-950/40 ring-1 ring-teal-500/40'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/40'
+                    ? 'bg-[var(--ws-panel)] border-teal-500/80 shadow-lg shadow-teal-950/40 ring-1 ring-teal-500/40'
+                    : 'bg-[var(--ws-canvas)]/60 border-[var(--ws-border)] hover:border-[var(--ws-border)] hover:bg-[var(--ws-panel)]/40'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className={`type-ui font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-800 text-slate-400'}`}>
+                  <span className={`type-ui font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-teal-500/20 text-[var(--brand-blue-300)] border border-teal-500/40' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                     STEP {node.number}
                   </span>
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>}
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-[var(--brand-blue-400)] animate-ping"></span>}
                 </div>
                 <p className="type-card-description font-bold text-white truncate">{node.stage}</p>
               </button>
@@ -206,7 +206,7 @@ export default function InteractiveWorkflowStory() {
         </div>
 
         {/* Detailed Spotlight Card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Narrative Description */}
             <div className="lg:col-span-6 space-y-5">
@@ -214,32 +214,32 @@ export default function InteractiveWorkflowStory() {
                 <span className={`px-3 py-1 rounded-full type-caption font-mono font-bold border ${activeNode.accent}`}>
                   STEP {activeNode.number} OF 06
                 </span>
-                <span className="type-caption text-slate-400 font-medium">Automatic Hand-off</span>
+                <span className="type-caption text-[var(--ws-text-muted)] font-medium">Automatic Hand-off</span>
               </div>
 
               <div>
                 <h3 className="text-xl sm:text-2xl font-bold text-white font-marketing-heading">
                   {activeNode.title}
                 </h3>
-                <p className="text-slate-300 type-card-description sm:text-base leading-relaxed mt-2">
+                <p className="text-[var(--ws-text-secondary)] type-card-description sm:text-base leading-relaxed mt-2">
                   {activeNode.description}
                 </p>
               </div>
 
               {/* Automation details */}
               <div className="space-y-3 pt-2">
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)]">
                   <Workflow className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
-                    <p className="type-card-description font-semibold text-slate-200">System Trigger</p>
-                    <p className="type-card-description text-slate-400">{activeNode.trigger}</p>
+                    <p className="type-card-description font-semibold text-[var(--ws-text-secondary)]">System Trigger</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">{activeNode.trigger}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-teal-950/30 border border-teal-800/40">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="type-card-description font-semibold text-teal-300">Automated Outcome</p>
+                    <p className="type-card-description font-semibold text-[var(--brand-blue-300)]">Automated Outcome</p>
                     <p className="type-card-description text-teal-200/80">{activeNode.automatedResult}</p>
                   </div>
                 </div>
@@ -249,14 +249,14 @@ export default function InteractiveWorkflowStory() {
               <div className="flex items-center gap-4 pt-4">
                 <button
                   onClick={() => setActiveStepIndex((prev) => (prev + 1) % FLOW_NODES.length)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white type-caption font-semibold transition-colors flex items-center gap-2 border border-slate-700"
+                  className="px-4 py-2 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-semibold transition-colors flex items-center gap-2 border border-[var(--ws-border)]"
                 >
                   <span>Next Flow Step</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
                 <Link
                   href="/auth/login?register=true&plan=starter"
-                  className="type-caption text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
+                  className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] font-semibold flex items-center gap-1"
                 >
                   Test this full flow live →
                 </Link>
@@ -266,12 +266,12 @@ export default function InteractiveWorkflowStory() {
             {/* Right Live UI Preview Box */}
             <div className="lg:col-span-6">
               <div
-                className="rounded-xl border border-slate-700/80 bg-slate-950 p-5 shadow-xl relative overflow-hidden select-none"
+                className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)] p-5 shadow-xl relative overflow-hidden select-none"
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
               >
                 {/* Visual Header */}
-                <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-[var(--ws-border)]">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
@@ -293,16 +293,16 @@ export default function InteractiveWorkflowStory() {
                 {/* Details Table */}
                 <div className="space-y-2 mb-4">
                   {activeNode.previewSnippet.details.map((d) => (
-                    <div key={d.label} className="flex justify-between items-center type-caption p-2 rounded bg-slate-900/60 border border-slate-800/60">
-                      <span className="text-slate-400 font-medium">{d.label}:</span>
-                      <span className="text-slate-200 font-semibold font-mono">{d.value}</span>
+                    <div key={d.label} className="flex justify-between items-center type-caption p-2 rounded bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]/60">
+                      <span className="text-[var(--ws-text-muted)] font-medium">{d.label}:</span>
+                      <span className="text-[var(--ws-text-secondary)] font-semibold font-mono">{d.value}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Footnote */}
                 {activeNode.previewSnippet.codeOrNote && (
-                  <div className="p-2.5 rounded bg-slate-900 border border-teal-500/30 type-ui font-mono text-teal-300">
+                  <div className="p-2.5 rounded bg-[var(--ws-panel)] border border-teal-500/30 type-ui font-mono text-[var(--brand-blue-300)]">
                     {activeNode.previewSnippet.codeOrNote}
                   </div>
                 )}

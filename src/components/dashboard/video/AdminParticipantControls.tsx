@@ -45,17 +45,17 @@ const AdminParticipantControls: React.FC<AdminParticipantControlsProps> = ({
         <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             {/* Admin badge */}
             <div className="bg-teal-500/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center space-x-1">
-                <Shield className="w-3 h-3 text-white" />
-                <span className="type-caption text-white font-medium">Admin</span>
+                <Shield className="w-3 h-3 text-[var(--text-inverse)]" />
+                <span className="type-caption text-[var(--ws-text-primary)] font-medium">Admin</span>
             </div>
 
             {/* Mute button */}
             <button
                 onClick={handleMute}
-                className="p-2 bg-red-500/90 hover:bg-red-600/90 backdrop-blur-sm rounded-full transition-colors"
+                className="p-2 bg-[var(--error-500)]/90 hover:bg-red-600/90 backdrop-blur-sm rounded-full transition-colors"
                 title={`Mute ${participant.userName}`}
             >
-                <MicOff className="w-3 h-3 text-white" />
+                <MicOff className="w-3 h-3 text-[var(--ws-text-primary)]" />
             </button>
 
             {/* Remove button */}
@@ -64,7 +64,7 @@ const AdminParticipantControls: React.FC<AdminParticipantControlsProps> = ({
                 className="p-2 bg-red-600/90 hover:bg-red-700/90 backdrop-blur-sm rounded-full transition-colors"
                 title={`Remove ${participant.userName}`}
             >
-                <UserX className="w-3 h-3 text-white" />
+                <UserX className="w-3 h-3 text-[var(--ws-text-primary)]" />
             </button>
         </div>
     );

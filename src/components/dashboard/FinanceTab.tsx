@@ -68,33 +68,33 @@ const InvoiceDetailContent: React.FC<{
         }
       />
       <div className={`space-y-2 p-5 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="type-ui text-slate-500">Amount due</div>
+        <div className="type-ui text-[var(--ws-text-muted)]">Amount due</div>
         <div className="text-3xl font-bold text-[var(--brand-blue-400)]">{amountDisplay}</div>
       </div>
       <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="flex justify-between py-1.5 border-b border-white/5">
-          <span className="type-ui text-slate-400">Subtotal</span>
-          <span className="type-ui text-white font-mono">{amountDisplay}</span>
+        <div className="flex justify-between py-1.5 border-b border-[var(--ws-border)]">
+          <span className="type-ui text-[var(--ws-text-muted)]">Subtotal</span>
+          <span className="type-ui text-[var(--ws-text-primary)] font-mono">{amountDisplay}</span>
         </div>
         <div className="flex justify-between pt-2">
-          <span className="text-lg font-bold text-white">Total</span>
+          <span className="text-lg font-bold text-[var(--ws-text-primary)]">Total</span>
           <span className="text-xl font-bold text-[var(--brand-blue-400)] font-mono">{amountDisplay}</span>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => onSend(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
+        <button onClick={() => onSend(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] transition-colors">
           <Send className="w-4 h-4 text-sky-400" />
-          <span className="type-ui text-slate-400 font-bold">Send</span>
+          <span className="type-ui text-[var(--ws-text-muted)] font-bold">Send</span>
         </button>
-        <button onClick={() => onMarkPaid(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
+        <button onClick={() => onMarkPaid(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] transition-colors">
           <CheckCircle className="w-4 h-4 text-emerald-400" />
-          <span className="type-ui text-slate-400 font-bold">Mark Paid</span>
+          <span className="type-ui text-[var(--ws-text-muted)] font-bold">Mark Paid</span>
         </button>
-        <button onClick={() => onDownload(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
-          <Download className="w-4 h-4 text-slate-400" />
-          <span className="type-ui text-slate-400 font-bold">PDF</span>
+        <button onClick={() => onDownload(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)] transition-colors">
+          <Download className="w-4 h-4 text-[var(--ws-text-muted)]" />
+          <span className="type-ui text-[var(--ws-text-muted)] font-bold">PDF</span>
         </button>
-        <button onClick={() => onDelete(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 transition-colors">
+        <button onClick={() => onDelete(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-[var(--error-500)]/10 transition-colors">
           <Trash2 className="w-4 h-4 text-red-400" />
           <span className="type-ui text-red-400 font-bold">Delete</span>
         </button>
@@ -299,8 +299,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       sortValue: (i) => i.number || i.id,
       accessor: (i) => (
         <div>
-          <span className="type-ui font-bold text-white block">{i.client_name?.trim() || 'Unnamed Client'}</span>
-          <span className="type-ui text-slate-500">#{i.number || i.id.slice(0, 6)}</span>
+          <span className="type-ui font-bold text-[var(--ws-text-primary)] block">{i.client_name?.trim() || 'Unnamed Client'}</span>
+          <span className="type-ui text-[var(--ws-text-muted)]">#{i.number || i.id.slice(0, 6)}</span>
         </div>
       ),
     },
@@ -334,8 +334,8 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       sortValue: (e) => e.description,
       accessor: (e) => (
         <div>
-          <span className="type-ui font-bold text-white block">{e.description}</span>
-          {e.vendor && <span className="type-ui text-slate-500">{e.vendor}</span>}
+          <span className="type-ui font-bold text-[var(--ws-text-primary)] block">{e.description}</span>
+          {e.vendor && <span className="type-ui text-[var(--ws-text-muted)]">{e.vendor}</span>}
         </div>
       ),
     },
@@ -349,7 +349,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     {
       id: 'category',
       header: 'Category',
-      accessor: (e) => <span className="capitalize text-slate-300">{e.category}</span>,
+      accessor: (e) => <span className="capitalize text-[var(--ws-text-secondary)]">{e.category}</span>,
     },
     {
       id: 'status',
@@ -372,23 +372,23 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       {/* Main tabs */}
-      <div className="flex border-b border-white/5 bg-slate-950">
+      <div className="flex border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]">
         {(['invoices', 'expenses'] as MainTab[]).map(t => (
-          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 type-ui font-bold capitalize ${mainTab === t ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}>{t}</button>
+          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 type-ui font-bold capitalize ${mainTab === t ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-[var(--ws-text-muted)]'}`}>{t}</button>
         ))}
       </div>
 
-      <div className="flex-1 ac-scroll-full pb-20 bg-slate-950">
+      <div className="flex-1 ac-scroll-full pb-20 bg-[var(--ws-canvas)]">
         {mainTab === 'invoices' && (
           <>
             {/* Filter pills */}
             <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
               {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
-                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full type-ui font-bold capitalize transition-all ${invFilter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full type-ui font-bold capitalize transition-all ${invFilter === f ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)]' : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
               ))}
             </div>
             {loading ? (
-              <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+              <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
             ) : invoices.length === 0 && invFilter === 'all' ? (
               <div className="p-6">
                 <EmptyStateFromPreset moduleId="invoices" onAction={handleFabClick} />
@@ -413,9 +413,9 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             <div className={`mx-4 mt-4 mb-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="type-ui text-slate-400 mb-1">This Month</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-white">${thisTotal.toLocaleString()}</div>
-                  <div className="type-ui text-slate-500 opacity-55 flex items-center gap-1 mt-0.5">
+                  <div className="type-ui text-[var(--ws-text-muted)] mb-1">This Month</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[var(--ws-text-primary)]">${thisTotal.toLocaleString()}</div>
+                  <div className="type-ui text-[var(--ws-text-muted)] opacity-55 flex items-center gap-1 mt-0.5">
                     <TrendingDown className="w-3 h-3" />
                     <span>{thisMonth.length} transactions</span>
                   </div>
@@ -430,7 +430,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
                 </button>
               </div>
               {aiExpenseInsight && (
-                <div className="mt-3 border-t border-[var(--ws-border)] pt-3 type-caption leading-relaxed whitespace-pre-wrap text-slate-300">
+                <div className="mt-3 border-t border-[var(--ws-border)] pt-3 type-caption leading-relaxed whitespace-pre-wrap text-[var(--ws-text-secondary)]">
                   {aiExpenseInsight}
                 </div>
               )}
@@ -438,12 +438,12 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Category filter */}
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
               {EXP_CATS.map(c => (
-                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full type-ui font-bold transition-all ${expCat === c ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
+                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full type-ui font-bold transition-all ${expCat === c ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)]' : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{c}</button>
               ))}
             </div>
             <div className="px-2">
               {loading ? (
-                <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+                <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
               ) : (
                 <EnterpriseDataTable
                   columns={expenseColumns}
@@ -465,7 +465,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
         aria-label={mainTab === 'invoices' ? 'Create invoice' : 'Add expense'}
         className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}
       >
-        {mainTab === 'invoices' ? <FilePlus className="w-6 h-6 text-white" /> : <Receipt className="w-6 h-6 text-white" />}
+        {mainTab === 'invoices' ? <FilePlus className="w-6 h-6 text-[var(--text-inverse)]" /> : <Receipt className="w-6 h-6 text-[var(--text-inverse)]" />}
       </button>
 
       <DetailDrawer open={showAddExpense} onOpenChange={setShowAddExpense} title="Add expense">
@@ -495,7 +495,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             <button
               type="submit"
               disabled={savingExpense}
-            className="w-full min-h-11 rounded-lg bg-rose-600 type-ui font-semibold text-white disabled:opacity-50"
+            className="w-full min-h-11 rounded-lg bg-rose-600 type-ui font-semibold text-[var(--text-inverse)] disabled:opacity-50"
             >
               {savingExpense ? 'Saving…' : 'Save expense'}
             </button>
@@ -548,9 +548,9 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
               <StatusBadge variant={expenseStatusVariant(selectedExpense.status)}>{selectedExpense.status}</StatusBadge>
             </div>
             <div className={`space-y-2 p-4 type-ui ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-              <div className="flex justify-between"><span className="text-slate-400">Category</span><span className="text-white capitalize">{selectedExpense.category}</span></div>
-              {selectedExpense.vendor && <div className="flex justify-between"><span className="text-slate-400">Vendor</span><span className="text-white">{selectedExpense.vendor}</span></div>}
-              {selectedExpense.date && <div className="flex justify-between"><span className="text-slate-400">Date</span><span className="text-white">{new Date(selectedExpense.date).toLocaleDateString()}</span></div>}
+              <div className="flex justify-between"><span className="text-[var(--ws-text-muted)]">Category</span><span className="text-[var(--ws-text-primary)] capitalize">{selectedExpense.category}</span></div>
+              {selectedExpense.vendor && <div className="flex justify-between"><span className="text-[var(--ws-text-muted)]">Vendor</span><span className="text-[var(--ws-text-primary)]">{selectedExpense.vendor}</span></div>}
+              {selectedExpense.date && <div className="flex justify-between"><span className="text-[var(--ws-text-muted)]">Date</span><span className="text-[var(--ws-text-primary)]">{new Date(selectedExpense.date).toLocaleDateString()}</span></div>}
             </div>
             <button
               type="button"
@@ -558,7 +558,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
                 await deleteExpense(selectedExpense.id);
                 setSelectedExpense(null);
               }}
-              className="w-full min-h-11 rounded-lg border border-red-500/30 type-ui font-semibold text-red-400 hover:bg-red-500/10"
+              className="w-full min-h-11 rounded-lg border border-red-500/30 type-ui font-semibold text-red-400 hover:bg-[var(--error-500)]/10"
             >
               Delete expense
             </button>

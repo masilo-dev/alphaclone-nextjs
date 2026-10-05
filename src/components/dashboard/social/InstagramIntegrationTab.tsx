@@ -171,7 +171,7 @@ export default function InstagramIntegrationTab() {
   if (loading) {
     return (
       <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-5xl mx-auto p-4 ac-safe-bottom lg:pb-4">
-        <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-10 flex items-center justify-center gap-3 text-slate-400`}>
+        <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-10 flex items-center justify-center gap-3 text-[var(--ws-text-muted)]`}>
           <RefreshCw className="w-5 h-5 animate-spin" />
           <span className="type-ui font-medium">Loading Instagram workspace...</span>
         </div>
@@ -188,16 +188,16 @@ export default function InstagramIntegrationTab() {
               <Instagram className="w-7 h-7 text-pink-300" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Instagram Business</h1>
-              <p className="text-slate-400 type-card-description mt-1">
+              <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Instagram Business</h1>
+              <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                 Connect a Professional Instagram account linked to your Facebook Page to publish photos and reels.
               </p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-700/80 bg-slate-950/60 px-4 py-3 text-slate-300 type-ui mb-6 space-y-2">
-            <p className="font-semibold text-white">Before you connect</p>
-            <ul className="list-disc pl-5 space-y-1 text-slate-400">
+          <div className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/60 px-4 py-3 text-[var(--ws-text-secondary)] type-ui mb-6 space-y-2">
+            <p className="font-semibold text-[var(--ws-text-primary)]">Before you connect</p>
+            <ul className="list-disc pl-5 space-y-1 text-[var(--ws-text-muted)]">
               <li>Your Instagram must be a Business or Creator account.</li>
               <li>It must be linked to a Facebook Page in Meta Business Suite.</li>
               <li>Your Meta app needs <code className="text-pink-200">instagram_content_publish</code> approved.</li>
@@ -207,7 +207,7 @@ export default function InstagramIntegrationTab() {
           <button
             type="button"
             onClick={handleConnect}
-            className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold"
+            className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-[var(--text-inverse)] font-bold"
           >
             <Link2 className="w-5 h-5" />
             Connect Instagram Business
@@ -215,7 +215,7 @@ export default function InstagramIntegrationTab() {
 
           <Link
             href="/dashboard/business/facebook"
-            className="mt-4 inline-flex items-center gap-2 type-ui text-teal-400 hover:text-teal-300"
+            className="mt-4 inline-flex items-center gap-2 type-ui text-teal-400 hover:text-[var(--brand-blue-300)]"
           >
             Open Facebook &amp; Instagram Inbox
             <ExternalLink className="w-3.5 h-3.5 opacity-70" />
@@ -231,8 +231,8 @@ export default function InstagramIntegrationTab() {
         <div className="flex items-start gap-3">
           <ImageIcon className="mt-0.5 h-5 w-5 shrink-0 text-pink-300" />
           <div>
-            <h1 className="text-lg font-bold text-white">Instagram Business workspace</h1>
-            <p className="mt-1 type-card-description leading-6 text-slate-400">This tab connects your Professional Instagram account to AlphaClone. Use it to confirm the account and Facebook Page, publish a photo, and then manage scheduled or verified posts from Social Compose.</p>
+            <h1 className="text-lg font-bold text-[var(--ws-text-primary)]">Instagram Business workspace</h1>
+            <p className="mt-1 type-card-description leading-6 text-[var(--ws-text-muted)]">This tab connects your Professional Instagram account to AlphaClone. Use it to confirm the account and Facebook Page, publish a photo, and then manage scheduled or verified posts from Social Compose.</p>
             <div className="mt-3 flex flex-wrap gap-2 type-ui font-semibold">
               <span className="rounded-full border border-pink-300/20 bg-pink-300/10 px-2.5 py-1 text-pink-100">1. Account connection</span>
               <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2.5 py-1 text-cyan-100">2. Publish with image</span>
@@ -250,18 +250,18 @@ export default function InstagramIntegrationTab() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-white truncate">
+                  <h2 className="text-xl font-bold text-[var(--ws-text-primary)] truncate">
                     @{account.username || account.account_name || 'instagram'}
                   </h2>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-semibold bg-emerald-500/15 text-[var(--success-text,var(--success-500))] border border-emerald-500/30">
                     <CheckCircle2 className="w-3 h-3" />
                     Connected
                   </span>
                 </div>
-                <p className="text-slate-400 type-card-description mt-1">
+                <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                   Linked to Facebook Page: {account.facebook_page_name || account.facebook_page_id || '—'}
                 </p>
-                <p className="text-slate-500 type-card-description mt-1">
+                <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                   {account.followers_count ?? 0} followers · {account.media_count ?? 0} posts
                 </p>
               </div>
@@ -270,7 +270,7 @@ export default function InstagramIntegrationTab() {
               <button
                 type="button"
                 onClick={() => void loadAccounts()}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-900"
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-panel)]"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
@@ -278,7 +278,7 @@ export default function InstagramIntegrationTab() {
               <button
                 type="button"
                 onClick={() => void handleDisconnect(account.instagram_account_id)}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-rose-500/30 text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10"
               >
                 Disconnect
               </button>
@@ -288,18 +288,18 @@ export default function InstagramIntegrationTab() {
       ))}
 
       <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6`}>
-        <h3 className="text-lg font-bold text-white mb-1">Publish a photo</h3>
-        <p className="text-slate-400 type-card-description mb-4">
+        <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-1">Publish a photo</h3>
+        <p className="text-[var(--ws-text-muted)] type-card-description mb-4">
           Instagram requires an image for feed posts. Use a public HTTPS image URL.
         </p>
 
         {accounts.length > 1 && (
           <label className="block mb-4">
-            <span className="type-caption font-semibold uppercase tracking-wide text-slate-500">Account</span>
+            <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Account</span>
             <select
               value={selectedAccountId}
               onChange={(e) => setSelectedAccountId(e.target.value)}
-              className="mt-1 w-full h-11 rounded-xl border border-slate-700 bg-slate-950 px-3 text-white"
+              className="mt-1 w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-[var(--ws-text-primary)]"
             >
               {accounts.map((a) => (
                 <option key={a.instagram_account_id} value={a.instagram_account_id}>
@@ -312,36 +312,36 @@ export default function InstagramIntegrationTab() {
 
         <form onSubmit={handlePost} className="space-y-4">
           <label className="block">
-            <span className="type-caption font-semibold uppercase tracking-wide text-slate-500">Caption</span>
+            <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Caption</span>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
               placeholder="Write your caption..."
-              className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white resize-y"
+              className="mt-1 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-[var(--ws-text-primary)] resize-y"
             />
           </label>
           <label className="block">
-            <span className="type-caption font-semibold uppercase tracking-wide text-slate-500">Image URL</span>
+            <span className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">Image URL</span>
             <input
               type="url"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://..."
-              className="mt-1 w-full h-11 rounded-xl border border-slate-700 bg-slate-950 px-3 text-white"
+              className="mt-1 w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-[var(--ws-text-primary)]"
             />
           </label>
           <button
             type="submit"
             disabled={posting}
-            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white font-bold"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-[var(--ws-text-primary)] font-bold"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Post to Instagram
           </button>
         </form>
 
-        <div className="mt-4 flex items-start gap-2 type-caption text-slate-500">
+        <div className="mt-4 flex items-start gap-2 type-caption text-[var(--ws-text-muted)]">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             Reels, carousels, and scheduled posts are available via Social Compose and MCP tools once connected.
@@ -351,7 +351,7 @@ export default function InstagramIntegrationTab() {
 
       <Link
         href="/dashboard/business/social/compose"
-        className="inline-flex items-center gap-2 type-ui text-teal-400 hover:text-teal-300"
+        className="inline-flex items-center gap-2 type-ui text-teal-400 hover:text-[var(--brand-blue-300)]"
       >
         <ImageIcon className="w-4 h-4" />
         Open Social Compose

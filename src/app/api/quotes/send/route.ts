@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
         text: emailBody,
         html: `
           <p>${message || `Please find attached quote ${quote.quote_number}.`}</p>
-          <p><a href="${responseLink}" style="display:inline-block;padding:12px 24px;background:#0d9488;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">Review &amp; Respond</a></p>
-          <p style="color:#64748b;font-size:12px;">Or copy this link: ${responseLink}</p>
+          <p><a href="${responseLink}" style="display:inline-block;padding:12px 24px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:8px;font-weight:bold;">Review &amp; Respond</a></p>
+          <p style="color:var(--ws-text-muted);font-size:12px;">Or copy this link: ${responseLink}</p>
         `,
         attachments: [{
           filename: `Quote_${quote.quote_number}.pdf`,

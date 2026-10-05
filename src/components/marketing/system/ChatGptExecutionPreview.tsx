@@ -28,41 +28,41 @@ const MESSAGES = [
 export default function ChatGptExecutionPreview({ compact = false }: { compact?: boolean }) {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-white/10 bg-[#212121] shadow-2xl shadow-black/40 ${compact ? '' : 'ring-1 ring-emerald-500/20'}`}
+      className={`overflow-hidden rounded-2xl border border-white/10 bg-[var(--ws-panel)] shadow-2xl shadow-black/40 ${compact ? '' : 'ring-1 ring-emerald-500/20'}`}
       aria-label="ChatGPT conversation executing AlphaClone business workflows"
     >
-      <div className="flex items-center justify-between border-b border-white/10 bg-[#2f2f2f] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-white/10 bg-[var(--ws-panel)] px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#10a37f]/15">
-            <SiOpenai className="h-4 w-4 text-[#10a37f]" aria-hidden />
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--logo-openai)]/15">
+            <SiOpenai className="h-4 w-4 text-[var(--logo-openai)]" aria-hidden />
           </div>
           <div>
             <p className="type-card-description font-semibold text-white">ChatGPT</p>
-            <p className="type-card-description text-slate-400">AlphaClone MCP connected</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">AlphaClone MCP connected</p>
           </div>
         </div>
-        <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 type-ui font-bold text-emerald-300 sm:inline-flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/30 bg-[var(--success-500)]/10 px-2.5 py-1 type-ui font-bold text-[var(--success-text,var(--success-500))] sm:inline-flex">
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--success-500)] animate-pulse" />
           Live execution
         </span>
       </div>
 
-      <div className={`space-y-4 bg-[#212121] ${compact ? 'p-4 max-h-[320px] overflow-y-auto' : 'p-5 sm:p-6'}`}>
+      <div className={`space-y-4 bg-[var(--ws-panel)] ${compact ? 'p-4 max-h-[320px] overflow-y-auto' : 'p-5 sm:p-6'}`}>
         {MESSAGES.map((msg, index) => (
           <div
             key={index}
             className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role === 'assistant' && (
-              <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#10a37f] text-white">
+              <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--logo-openai)] text-white">
                 <ClipboardCheck className="h-3.5 w-3.5" aria-hidden />
               </div>
             )}
             <div
               className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 type-ui leading-6 sm:max-w-[85%] ${
                 msg.role === 'user'
-                  ? 'bg-[#2f2f2f] text-slate-100'
-                  : 'bg-transparent text-slate-200'
+                  ? 'bg-[var(--ws-panel)] text-[var(--ws-text-primary)]'
+                  : 'bg-transparent text-[var(--ws-text-secondary)]'
               }`}
             >
               <p>{msg.text}</p>
@@ -80,7 +80,7 @@ export default function ChatGptExecutionPreview({ compact = false }: { compact?:
                 </div>
               )}
               {msg.done && (
-                <p className="mt-2 flex items-center gap-1 type-card-description font-semibold text-emerald-300">
+                <p className="mt-2 flex items-center gap-1 type-card-description font-semibold text-[var(--success-text,var(--success-500))]">
                   <Check className="h-3.5 w-3.5" aria-hidden />
                   Verified in AlphaClone audit log
                 </p>
@@ -95,10 +95,10 @@ export default function ChatGptExecutionPreview({ compact = false }: { compact?:
         ))}
       </div>
 
-      <div className="border-t border-white/10 bg-[#2f2f2f] px-4 py-3">
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#212121] px-3 py-2.5 type-caption text-slate-500">
+      <div className="border-t border-white/10 bg-[var(--ws-panel)] px-4 py-3">
+        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[var(--ws-panel)] px-3 py-2.5 type-caption text-[var(--ws-text-muted)]">
           <span className="flex-1">Message ChatGPT…</span>
-          <span className="rounded-md bg-[#10a37f] px-2 py-1 type-ui font-bold text-white">Send</span>
+          <span className="rounded-md bg-[var(--logo-openai)] px-2 py-1 type-ui font-bold text-white">Send</span>
         </div>
       </div>
     </div>

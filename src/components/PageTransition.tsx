@@ -4,6 +4,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import useReducedMotion from '@/components/marketing/system/atmosphere/useReducedMotion';
+import { isPublicMarketingRoute } from '@/lib/isPublicMarketingRoute';
 
 interface PageTransitionProps {
   children: ReactNode;
@@ -41,6 +42,9 @@ const dashboardVariants: Variants = {
 export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname() ?? '/';
   const reduceMotion = useReducedMotion();
+  if (isPublicMarketingRoute(pathname)) {
+    return <>{children}</>;
+  }
   const isDashboard = pathname.startsWith('/dashboard');
   // Keep dashboard shell stable across internal dashboard routes so tab navigation
   // never causes full-tree remounts, opacity flicker, or click blocking.

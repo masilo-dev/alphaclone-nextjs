@@ -34,9 +34,9 @@ const PIPELINE_STAGES: PipelineStage[] = [
     shortLabel: 'Draft',
     description: 'Invoice created, not yet sent',
     icon: Clock,
-    color: 'text-slate-400',
-    bgColor: 'bg-slate-800',
-    borderColor: 'border-slate-700',
+    color: 'text-[var(--ws-text-muted)]',
+    bgColor: 'bg-[var(--ws-surface-secondary)]',
+    borderColor: 'border-[var(--ws-border)]',
   },
   {
     key: 'sent',
@@ -99,7 +99,7 @@ const TERMINAL_STAGES: PipelineStage[] = [
     description: 'Client flagged an issue',
     icon: AlertTriangle,
     color: 'text-red-400',
-    bgColor: 'bg-red-500/10',
+    bgColor: 'bg-[var(--error-500)]/10',
     borderColor: 'border-red-500/30',
     isTerminal: true,
   },
@@ -109,9 +109,9 @@ const TERMINAL_STAGES: PipelineStage[] = [
     shortLabel: 'VOID',
     description: 'Cancelled / written off',
     icon: XCircle,
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-900',
-    borderColor: 'border-slate-800',
+    color: 'text-[var(--ws-text-muted)]',
+    bgColor: 'bg-[var(--ws-panel)]',
+    borderColor: 'border-[var(--ws-border)]',
     isTerminal: true,
   },
   {
@@ -120,9 +120,9 @@ const TERMINAL_STAGES: PipelineStage[] = [
     shortLabel: 'CXL',
     description: 'Cancelled',
     icon: XCircle,
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-900',
-    borderColor: 'border-slate-800',
+    color: 'text-[var(--ws-text-muted)]',
+    bgColor: 'bg-[var(--ws-panel)]',
+    borderColor: 'border-[var(--ws-border)]',
     isTerminal: true,
   },
 ];
@@ -219,7 +219,7 @@ export default function InvoiceStatusPipeline({
           <terminalStage.icon className={cn('w-5 h-5 flex-shrink-0', terminalStage.color)} />
           <div>
             <p className={cn('font-bold type-card-description', terminalStage.color)}>{terminalStage.label}</p>
-            <p className="type-card-description text-slate-500">{terminalStage.description}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">{terminalStage.description}</p>
           </div>
         </div>
       )}
@@ -244,7 +244,7 @@ export default function InvoiceStatusPipeline({
                       ? cn(stage.bgColor, stage.borderColor)
                       : isActive
                       ? cn(stage.bgColor, stage.borderColor, 'ring-2 ring-offset-2 ring-offset-slate-950 ring-current')
-                      : 'bg-slate-900 border-slate-800'
+                      : 'bg-[var(--ws-panel)] border-[var(--ws-border)]'
                   )}
                 >
                   {isCompleted || isActive ? (
@@ -272,7 +272,7 @@ export default function InvoiceStatusPipeline({
                   'h-0.5 flex-1 mt-[18px] mx-1 rounded-full transition-colors',
                   isCompleted && currentIndex > idx && !terminalStage
                     ? 'bg-teal-500/40'
-                    : 'bg-slate-800'
+                    : 'bg-[var(--ws-surface-secondary)]'
                 )} />
               )}
             </React.Fragment>

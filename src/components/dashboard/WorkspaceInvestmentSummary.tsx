@@ -33,7 +33,7 @@ function HintRow({ hint }: { hint: ContinuityHint }) {
       {hint.href && hint.actionLabel ? (
         <Link
           href={hint.href}
-          className="inline-block mt-2 type-ui font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300"
+          className="inline-block mt-2 type-ui font-semibold text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-[var(--brand-blue-300)]"
         >
           {hint.actionLabel} →
         </Link>

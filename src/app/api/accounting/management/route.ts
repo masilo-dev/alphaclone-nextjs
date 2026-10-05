@@ -967,11 +967,11 @@ function generateInvoiceHTML(invoice: any, template: string) {
       <head>
         <meta charset="UTF-8" />
         <style>
-          body { font-family: Arial, sans-serif; color: #0f172a; }
-          .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
+          body { font-family: Arial, sans-serif; color: var(--ws-canvas); }
+          .header { border-bottom: 2px solid var(--ws-canvas); padding-bottom: 10px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 16px; }
           th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
-          th { background: #f8fafc; text-align: left; }
+          th { background: var(--ws-surface-secondary); text-align: left; }
           .total { margin-top: 16px; text-align: right; font-weight: bold; }
         </style>
       </head>

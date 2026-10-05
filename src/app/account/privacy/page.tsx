@@ -119,25 +119,25 @@ export default function PrivacyCenterPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-slate-950 px-6 py-20 text-slate-200">Loading privacy center...</div>;
+    return <div className="min-h-screen bg-[var(--ws-canvas)] px-6 py-20 text-[var(--ws-text-secondary)]">Loading privacy center...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
+    <main className="min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)]">
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8">
           <p className="type-caption uppercase tracking-caps text-teal-400">Account Privacy</p>
           <h1 className="mt-2 text-4xl font-semibold text-white">Privacy & Consent Center</h1>
-          <p className="mt-3 max-w-3xl type-card-description leading-7 text-slate-400">
+          <p className="mt-3 max-w-3xl type-card-description leading-7 text-[var(--ws-text-muted)]">
             Review what AlphaClone stores, manage your communication preferences, GDPR consent, and trigger export or deletion flows
             from one place.
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
             <h2 className="text-lg font-semibold text-white">Your data summary</h2>
-            <div className="mt-4 space-y-2 type-ui text-slate-300">
+            <div className="mt-4 space-y-2 type-ui text-[var(--ws-text-secondary)]">
               <p>Account created: {user ? 'Available in profile data' : 'Sign in required'}</p>
               <p>Stored data: profile, CRM data, emails sent, invoices, and contracts.</p>
               <p>Email providers: Zoho, Outlook, Gmail, SendGrid, Resend, Brevo</p>
@@ -147,14 +147,14 @@ export default function PrivacyCenterPage() {
                 type="button"
                 onClick={exportData}
                 disabled={exporting || !user}
-                className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-[var(--brand-blue-400)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {exporting ? 'Preparing export...' : 'Export my data'}
               </button>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
             <h2 className="text-lg font-semibold text-white">Communication preferences</h2>
             <div className="mt-4 space-y-3 type-ui">
               <ToggleRow label="Transactional emails" checked disabled description="Required for receipts, security alerts, and account notifications." />
@@ -176,45 +176,45 @@ export default function PrivacyCenterPage() {
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}
-                className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800"
+                className="rounded-lg border border-[var(--ws-border)] px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               >
                 Cookie settings
               </button>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
             <h2 className="text-lg font-semibold text-white">Data requests</h2>
-            <p className="mt-3 type-card-description leading-7 text-slate-400">
+            <p className="mt-3 type-card-description leading-7 text-[var(--ws-text-muted)]">
               Use the legal request flow to delete your account, or export your data from this page.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/legal/data-request?type=delete" className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800">
+              <Link href="/legal/data-request?type=delete" className="rounded-lg border border-[var(--ws-border)] px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]">
                 Delete my account
               </Link>
               <button
                 type="button"
                 onClick={exportData}
-                className="rounded-lg border border-slate-700 px-4 py-2 type-ui font-semibold text-slate-200 hover:bg-slate-800"
+                className="rounded-lg border border-[var(--ws-border)] px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
               >
                 Export my data
               </button>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
             <h2 className="text-lg font-semibold text-white">Third-party connections</h2>
             <div className="mt-4 space-y-3">
               {connectedApps.map((app) => (
-                <div key={app.label} className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+                <div key={app.label} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 px-4 py-3">
                   <div>
                     <p className="type-card-description font-medium text-white">{app.label}</p>
-                    <p className="type-card-description text-slate-500">{app.connected ? 'Connected' : 'Not connected'}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">{app.connected ? 'Connected' : 'Not connected'}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => revokeApp(app.label)}
-                    className="rounded-lg border border-rose-500/30 px-3 py-1.5 type-caption font-semibold text-rose-300 hover:bg-rose-500/10"
+                    className="rounded-lg border border-rose-500/30 px-3 py-1.5 type-caption font-semibold text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10"
                   >
                     Revoke
                   </button>
@@ -224,7 +224,7 @@ export default function PrivacyCenterPage() {
           </section>
         </div>
 
-        {status && <p className="mt-6 type-caption text-slate-300">{status}</p>}
+        {status && <p className="mt-6 type-caption text-[var(--ws-text-secondary)]">{status}</p>}
       </section>
     </main>
   );
@@ -244,16 +244,16 @@ function ToggleRow({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 px-4 py-3">
       <div>
         <p className="font-medium text-white">{label}</p>
-        <p className="mt-1 type-card-description leading-5 text-slate-500">{description}</p>
+        <p className="mt-1 type-card-description leading-5 text-[var(--ws-text-muted)]">{description}</p>
       </div>
       <button
         type="button"
         onClick={disabled ? undefined : onToggle}
         disabled={disabled}
-        className={`rounded-full px-3 py-1 type-caption font-semibold ${checked ? 'bg-teal-500/15 text-teal-300' : 'bg-slate-800 text-slate-400'} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
+        className={`rounded-full px-3 py-1 type-caption font-semibold ${checked ? 'bg-teal-500/15 text-[var(--brand-blue-300)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}
       >
         {checked ? 'On' : 'Off'}
       </button>

@@ -73,7 +73,7 @@ export function DetailDrawer({
           className
         )}
       >
-        <SheetHeader className={cn(hideHeader && 'sr-only', isInstalledMobileCompanion && !hideHeader && 'sticky top-0 z-20 border-b border-white/5 bg-[var(--ws-toolbar)] px-4 py-3')}>
+        <SheetHeader className={cn(hideHeader && 'sr-only', isInstalledMobileCompanion && !hideHeader && 'sticky top-0 z-20 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 py-3')}>
           <SheetTitle>{title}</SheetTitle>
           {description ? <SheetDescription>{description}</SheetDescription> : null}
         </SheetHeader>

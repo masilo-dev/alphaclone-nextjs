@@ -75,14 +75,14 @@ export async function POST(req: NextRequest) {
       emailFooterText,
     ].join('\n');
     const html = `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #e2e8f0; background: #020617; padding: 24px;">
-        <div style="max-width: 640px; margin: 0 auto; background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 24px;">
-          <h1 style="margin: 0 0 12px; color: #ffffff;">Your data request was received</h1>
+      <div style="font-family: Arial, Helvetica, sans-serif; color: var(--ws-border); background: var(--brand-violet-950); padding: 24px;">
+        <div style="max-width: 640px; margin: 0 auto; background: var(--ws-canvas); border: 1px solid var(--ws-panel); border-radius: 16px; padding: 24px;">
+          <h1 style="margin: 0 0 12px; color: var(--color-white);">Your data request was received</h1>
           <p style="line-height: 1.7;">We received your request type <strong>${escapeHtml(requestType)}</strong> for <strong>${escapeHtml(email)}</strong>.</p>
           <p style="line-height: 1.7;">We process all requests within 30 days.</p>
-          ${details ? `<p style="line-height: 1.7; color: #cbd5e1;"><strong>Additional details:</strong> ${escapeHtml(details)}</p>` : ''}
-          <div style="border-top: 1px solid #334155; margin: 16px 0;"></div>
-          <div style="font-size: 12px; line-height: 1.6; color: #94a3b8; text-align: center; white-space: pre-line;">${emailFooterText.replace(/</g, '&lt;')}</div>
+          ${details ? `<p style="line-height: 1.7; color: var(--ws-border);"><strong>Additional details:</strong> ${escapeHtml(details)}</p>` : ''}
+          <div style="border-top: 1px solid var(--ws-surface-tertiary); margin: 16px 0;"></div>
+          <div style="font-size: 12px; line-height: 1.6; color: var(--ws-text-secondary); text-align: center; white-space: pre-line;">${emailFooterText.replace(/</g, '&lt;')}</div>
         </div>
       </div>
     `;

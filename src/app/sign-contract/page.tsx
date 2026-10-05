@@ -23,18 +23,18 @@ export default async function Page({
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-200">
+    <main className="min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)]">
       <div className="mx-auto flex min-h-screen max-w-xl items-center px-6 py-16">
-        <div className="w-full rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl shadow-black/30">
+        <div className="w-full rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-8 shadow-2xl shadow-black/30">
           <p className="type-caption uppercase tracking-caps text-teal-400">Legacy link</p>
           <h1 className="mt-4 text-3xl font-semibold text-white">Signing token missing</h1>
-          <p className="mt-4 type-card-description leading-7 text-slate-400">
+          <p className="mt-4 type-card-description leading-7 text-[var(--ws-text-muted)]">
             This old contract link needs a token in the query string. If you opened a copied email, the correct format is
-            <span className="mx-1 rounded bg-slate-800 px-2 py-0.5 font-mono text-slate-200">/sign-contract?token=...</span>.
+            <span className="mx-1 rounded bg-[var(--ws-surface-secondary)] px-2 py-0.5 font-mono text-[var(--ws-text-secondary)]">/sign-contract?token=...</span>.
           </p>
           <Link
             href="/"
-            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 font-semibold text-slate-950 transition-colors hover:bg-teal-400"
+            className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 font-semibold text-slate-950 transition-colors hover:bg-[var(--brand-blue-400)]"
           >
             Go to homepage
           </Link>

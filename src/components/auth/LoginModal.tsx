@@ -170,8 +170,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             className="object-contain"
           />
         </div>
-        <h4 className="text-slate-200 font-medium text-base">AlphaClone Systems</h4>
-        <p className="type-card-description text-slate-500 mt-0.5">
+        <h4 className="text-[var(--ws-text-secondary)] font-medium text-base">AlphaClone Systems</h4>
+        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
           {isRegistering ? '14-day free trial · workspace auto-created' : 'Business OS secure access'}
         </p>
       </div>
@@ -191,7 +191,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             <div className="text-center space-y-2">
               <ShieldCheck className="w-12 h-12 text-teal-400 mx-auto" />
               <h5 className="font-bold text-white">Security Verification</h5>
-              <p className="type-card-description text-slate-400">Enter the 6-digit code from your authenticator app.</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Enter the 6-digit code from your authenticator app.</p>
             </div>
 
             <Input
@@ -205,7 +205,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
             <Button
               onClick={handleMfaVerify}
-              className="w-full h-12 text-base font-semibold bg-teal-500 hover:bg-teal-400"
+              className="w-full h-12 text-base font-semibold bg-teal-500 hover:bg-[var(--brand-blue-400)]"
               isLoading={isLoading}
               disabled={mfaCode.length !== 6 || isLoading}
             >
@@ -215,7 +215,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             <button
               type="button"
               onClick={() => setShowMfaChallenge(false)}
-              className="w-full type-caption text-slate-500 hover:text-slate-400"
+              className="w-full type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)]"
             >
               Back to Login
             </button>
@@ -225,10 +225,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             {!showMfaChallenge && (
               <div className="relative my-1">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-800" />
+                  <div className="w-full border-t border-[var(--ws-border)]" />
                 </div>
                 <div className="relative flex justify-center type-caption uppercase tracking-wide">
-                  <span className="bg-slate-900 px-2 text-slate-500">Or use email</span>
+                  <span className="bg-[var(--ws-panel)] px-2 text-[var(--ws-text-muted)]">Or use email</span>
                 </div>
               </div>
             )}
@@ -270,7 +270,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             />
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2 animate-fade-in">
+              <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2 animate-fade-in">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -284,13 +284,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
       </form>
 
-      <div className="mt-6 pt-6 border-t border-slate-800 text-center space-y-4">
+      <div className="mt-6 pt-6 border-t border-[var(--ws-border)] text-center space-y-4">
         <button
           onClick={() => {
             setIsRegistering(!isRegistering);
             setError('');
           }}
-          className="type-ui text-teal-400 hover:text-teal-300 font-medium flex items-center justify-center gap-2 mx-auto"
+          className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] font-medium flex items-center justify-center gap-2 mx-auto"
         >
           {isRegistering ? (
             <>
@@ -307,7 +307,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           Secured by AlphaClone 256-bit Encryption
         </p>
 
-        <div className="flex justify-center gap-4 type-caption text-slate-500">
+        <div className="flex justify-center gap-4 type-caption text-[var(--ws-text-muted)]">
           <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">Privacy Policy</a>
           <span>•</span>
           <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">Terms of Service</a>

@@ -159,31 +159,31 @@ export default function GoalsTab() {
       header={
         <div className="px-1 pb-2 flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-white">Goals &amp; Targets</h1>
-            <p className="type-card-description text-slate-400">Revenue and quota tracking by period</p>
+            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Goals &amp; Targets</h1>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Revenue and quota tracking by period</p>
           </div>
         </div>
       }
       stats={<ModuleStatCards stats={stats} />}
     >
       <div className="space-y-4 ac-scroll-full pb-6">
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Goal name"
-            className="flex-1 min-w-[160px] bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+            className="flex-1 min-w-[160px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
           />
           <input
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             placeholder="Target"
             type="number"
-            className="w-32 bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+            className="w-32 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
           />
           <button
             onClick={() => void handleCreate()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white type-ui font-semibold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-[var(--text-inverse)] type-ui font-semibold"
           >
             <Plus className="w-4 h-4" /> Add goal
           </button>
@@ -202,7 +202,7 @@ export default function GoalsTab() {
             previous={Math.round(goals.reduce((s, g) => s + g.currentValue, 0) / Math.max(goals.reduce((s, g) => s + g.targetValue, 0), 1) * 95)}
             target={100}
             icon={Gauge}
-            iconColor="#14b8a6"
+            iconColor="var(--brand-blue-500)"
             isPercentage
             isBetterHigher
           />
@@ -212,15 +212,15 @@ export default function GoalsTab() {
             previous={Math.max(0, goalInsights.length - 1)}
             target={goalInsights.length || 1}
             icon={Zap}
-            iconColor="#06b6d4"
+            iconColor="var(--info-500)"
             isBetterHigher
           />
         </div>
 
         {loading ? (
-          <p className="type-card-description text-slate-500 p-4">Loading goals…</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] p-4">Loading goals…</p>
         ) : goals.length === 0 ? (
-          <p className="type-card-description text-slate-500 p-4">No active goals. Create one above.</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] p-4">No active goals. Create one above.</p>
         ) : (
           goalInsights.map(({ goal: g, pace, status, severityLabel, shortfallPerDay }) => {
             const pct = Math.min(100, Math.round((g.currentValue / Math.max(g.targetValue, 1)) * 100));
@@ -236,7 +236,7 @@ export default function GoalsTab() {
                 : status === 'on_track' ? 'border-teal-500/30'
                 : status === 'at_risk' ? 'border-amber-500/30'
                 : status === 'off_track' ? 'border-rose-500/30'
-                : 'border-white/5';
+                : 'border-[var(--ws-border)]';
 
             return (
               <div key={g.id} className={cn(WORKSPACE.panel.base, 'rounded-xl p-4 md:p-5', statusRing)}>
@@ -245,25 +245,25 @@ export default function GoalsTab() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{g.name}</p>
                       <span className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-bold uppercase border border-white/10',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-bold uppercase border border-[var(--ws-border)]',
                         status === 'complete' ? 'bg-[var(--success-500)]/15 text-[var(--success-text)]'
-                          : status === 'on_track' ? 'bg-teal-500/15 text-teal-300'
-                          : status === 'at_risk' ? 'bg-amber-500/15 text-amber-300'
-                          : status === 'off_track' ? 'bg-rose-500/15 text-rose-300'
-                          : 'bg-slate-500/15 text-slate-300',
+                          : status === 'on_track' ? 'bg-teal-500/15 text-[var(--brand-blue-300)]'
+                          : status === 'at_risk' ? 'bg-amber-500/15 text-[var(--warning-text,var(--warning-500))]'
+                          : status === 'off_track' ? 'bg-rose-500/15 text-[var(--error-text,var(--error-500))]'
+                          : 'bg-slate-500/15 text-[var(--ws-text-secondary)]',
                       )}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'currentColor' }} />
                         {severityLabel}
                       </span>
                     </div>
-                    <p className="type-card-description text-slate-500 mt-1 flex items-center gap-1.5">
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1 flex items-center gap-1.5">
                       <CalendarDays className="w-3 h-3" />
                       {g.periodStart} → {g.periodEnd} · {g.goalType}
                     </p>
                   </div>
                   <button
                     onClick={() => forecastingService.deleteGoal(g.id).then(load)}
-                    className="text-slate-500 hover:text-red-400"
+                    className="text-[var(--ws-text-muted)] hover:text-red-400"
                     aria-label="Delete goal"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -272,40 +272,40 @@ export default function GoalsTab() {
 
                 <div className="mt-3 grid grid-cols-4 gap-3 type-ui">
                   <div>
-                    <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Current</p>
+                    <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Current</p>
                     <p className="mt-1 type-card-description font-black text-[var(--success-text)] tabular-nums">{format(g.currentValue)}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Target</p>
+                    <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Target</p>
                     <p className="mt-1 type-card-description font-black text-[var(--ws-text-primary)] tabular-nums">{format(g.targetValue)}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Days left</p>
+                    <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Days left</p>
                     <p className="mt-1 type-card-description font-black text-[var(--ws-text-primary)] tabular-nums">
                       {pace.daysRemaining < 0 ? '—' : pace.daysRemaining}
                     </p>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Progress</p>
+                    <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Progress</p>
                     <p className="mt-1 type-card-description font-black text-[var(--ws-text-primary)] tabular-nums">{pct}%</p>
                   </div>
                 </div>
 
-                <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div className="mt-3 h-2 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
                   <div className={cn('h-full rounded-full transition-all', statusColor)} style={{ width: `${pct}%` }} />
                 </div>
 
                 {status !== 'complete' && status !== 'expired' ? (
                   <div className="mt-3 pt-3 border-t border-white/[0.04] grid grid-cols-3 gap-3 type-ui">
                     <div>
-                      <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Required / day</p>
+                      <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Required / day</p>
                       <p className="mt-0.5 type-card-description font-bold text-[var(--ws-text-primary)] tabular-nums">{format(pace.requiredPace)}</p>
                     </div>
                     <div>
-                      <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Current / day</p>
+                      <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Current / day</p>
                       <p className={cn(
                         'mt-0.5 type-ui font-bold tabular-nums flex items-center gap-1',
-                        pace.currentPace >= pace.requiredPace ? 'text-[var(--success-text)]' : 'text-amber-300',
+                        pace.currentPace >= pace.requiredPace ? 'text-[var(--success-text)]' : 'text-[var(--warning-text,var(--warning-500))]',
                       )}>
                         {format(pace.currentPace)}
                         <span className="inline-flex items-center">
@@ -316,10 +316,10 @@ export default function GoalsTab() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-500 font-black uppercase tracking-wider type-caption">Daily shortfall</p>
+                      <p className="text-[var(--ws-text-muted)] font-black uppercase tracking-wider type-caption">Daily shortfall</p>
                       <p className={cn(
                         'mt-0.5 type-ui font-bold tabular-nums',
-                        shortfallPerDay <= 0 ? 'text-[var(--success-text)]' : 'text-rose-300',
+                        shortfallPerDay <= 0 ? 'text-[var(--success-text)]' : 'text-[var(--error-text,var(--error-500))]',
                       )}>
                         {shortfallPerDay <= 0 ? 'Surplus' : '+' + format(shortfallPerDay)}
                       </p>

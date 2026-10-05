@@ -17,7 +17,7 @@ const SheetOverlay = React.forwardRef<
   <SheetPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-[1100] bg-slate-900/40 backdrop-blur-sm transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
+      'fixed inset-0 z-[1100] bg-[var(--ws-panel)]/40 backdrop-blur-sm transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
       className
     )}
     {...props}
@@ -49,7 +49,7 @@ const SheetContent = React.forwardRef<
     <SheetPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed z-[1110] flex flex-col gap-4 border-slate-800/80 bg-slate-950/98 p-6 pt-safe shadow-[0_24px_64px_-16px_rgba(0,0,0,0.72)] transition-transform duration-300 ease-out data-[state=closed]:duration-200',
+        'fixed z-[1110] flex flex-col gap-4 border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/98 p-6 pt-safe shadow-[0_24px_64px_-16px_rgba(0,0,0,0.72)] transition-transform duration-300 ease-out data-[state=closed]:duration-200',
         sheetSideClasses[side],
         className
       )}
@@ -57,7 +57,7 @@ const SheetContent = React.forwardRef<
     >
       {children}
       {showCloseButton && (
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-lg p-2 text-slate-400 opacity-80 ring-offset-slate-950 transition-opacity hover:text-teal-300 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:ring-offset-2 disabled:pointer-events-none">
+        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-lg p-2 text-[var(--ws-text-muted)] opacity-80 ring-offset-slate-950 transition-opacity hover:text-[var(--brand-blue-300)] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:ring-offset-2 disabled:pointer-events-none">
           <X className="h-5 w-5" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
@@ -90,7 +90,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn('type-ui text-slate-400 leading-relaxed', className)}
+    className={cn('type-ui text-[var(--ws-text-muted)] leading-relaxed', className)}
     {...props}
   />
 ));

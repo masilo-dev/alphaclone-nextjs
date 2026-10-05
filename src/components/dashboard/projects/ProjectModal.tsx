@@ -113,11 +113,11 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                         required
                     />
                     <div>
-                        <label className="block type-label font-semibold text-slate-400 mb-1">Category</label>
+                        <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Category</label>
                         <select
                             value={formData.category}
                             onChange={(e: any) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-900 border border-white/10 rounded-lg type-ui text-slate-300 focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                         >
                             <option value="Consulting">Consulting</option>
                             <option value="Development">Development</option>
@@ -152,14 +152,14 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                     textarea
                 />
 
-                <div className="pt-4 border-t border-slate-800">
+                <div className="pt-4 border-t border-[var(--ws-border)]">
                     <TemplateSelector
                         selectedTemplateId={selectedTemplateId}
                         onSelect={setSelectedTemplateId}
                     />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+                <div className="flex justify-end gap-3 pt-6 border-t border-[var(--ws-border)]">
                     <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
                     <Button
                         variant="primary"

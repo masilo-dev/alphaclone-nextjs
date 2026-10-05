@@ -1,19 +1,19 @@
 /** Strip session-resolved IDs so MCP clients stop asking for tenant/user on every call. */
 const SESSION_FIELDS = new Set(['tenant_id', 'user_id', 'tenantId', 'userId']);
-/** Auto-filled server-side for write tools — do not require from chat agents. */
-const AUTO_FILLED_FIELDS = new Set(['idempotency_key', 'idempotencyKey']);
 
 export function sanitizeToolSchemaForClient(schema: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!schema || typeof schema !== 'object') return { type: 'object', properties: {} };
 
   const properties = { ...((schema.properties as Record<string, unknown>) || {}) };
-  for (const key of [...SESSION_FIELDS, ...AUTO_FILLED_FIELDS]) {
+  // Idempotency keys are client-controlled retry identities, not session secrets.
+  // The execution guard requires them before argument normalization or handlers run.
+  for (const key of SESSION_FIELDS) {
     delete properties[key];
   }
 
   const required = Array.isArray(schema.required)
     ? (schema.required as string[]).filter(
-        (f) => !SESSION_FIELDS.has(f) && !AUTO_FILLED_FIELDS.has(f)
+        (f) => !SESSION_FIELDS.has(f)
       )
     : [];
 

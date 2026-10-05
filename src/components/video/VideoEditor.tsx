@@ -137,10 +137,10 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center p-20 bg-slate-950/80 rounded-3xl border border-white/5 backdrop-blur-xl">
+            <div className="flex flex-col items-center justify-center p-20 bg-[var(--ws-canvas)]/80 rounded-3xl border border-white/5 backdrop-blur-xl">
                 <Loader2 className="w-12 h-12 text-teal-400 animate-spin mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Initializing Cloud Engine</h3>
-                <p className="text-slate-400 text-center max-w-xs">Loading open-source video processing modules into your browser.</p>
+                <p className="text-[var(--ws-text-muted)] text-center max-w-xs">Loading open-source video processing modules into your browser.</p>
             </div>
         );
     }
@@ -150,8 +150,8 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
             <div className="p-8 bg-rose-500/10 border border-rose-500/20 rounded-3xl text-center">
                 <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Requirement Error</h3>
-                <p className="text-slate-400 mb-6">{error}</p>
-                <Button onClick={onCancel} variant="outline" className="border-slate-800 text-white">Go Back</Button>
+                <p className="text-[var(--ws-text-muted)] mb-6">{error}</p>
+                <Button onClick={onCancel} variant="outline" className="border-[var(--ws-border)] text-white">Go Back</Button>
             </div>
         );
     }
@@ -159,19 +159,19 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
     const videoUrl = typeof source === 'string' ? source : URL.createObjectURL(source);
 
     return (
-        <div className="flex flex-col h-full bg-slate-900 rounded-3xl border border-white/10 shadow-2xl overflow-hidden max-h-[90vh]">
+        <div className="flex flex-col h-full bg-[var(--ws-panel)] rounded-3xl border border-white/10 shadow-2xl overflow-hidden max-h-[90vh]">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/50">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[var(--ws-canvas)]/50">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center">
                         <Scissors className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
                         <h2 className="text-base font-bold text-white">Video Studio</h2>
-                        <p className="type-caption text-slate-500 uppercase tracking-widest font-black">Open-Source Engine</p>
+                        <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-black">Open-Source Engine</p>
                     </div>
                 </div>
-                <button onClick={onCancel} className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors">
+                <button onClick={onCancel} className="p-2 hover:bg-white/5 rounded-full text-[var(--ws-text-muted)] transition-colors">
                     <X className="w-5 h-5" />
                 </button>
             </div>
@@ -194,17 +194,17 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
             </div>
 
             {/* Controls */}
-            <div className="p-6 bg-slate-950/80 border-t border-white/5 space-y-6">
+            <div className="p-6 bg-[var(--ws-canvas)]/80 border-t border-white/5 space-y-6">
                 {/* Timeline Sliders */}
                 <div className="space-y-4">
-                    <div className="flex justify-between type-caption font-bold text-slate-500 uppercase tracking-wider">
+                    <div className="flex justify-between type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                         <span>Timeline Control</span>
                         <span className="text-teal-400">{formatTime(startTime)} - {formatTime(endTime)}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="type-label text-slate-400">START POINT</label>
+                            <label className="type-label text-[var(--ws-text-muted)]">START POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -220,7 +220,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="type-label text-slate-400">END POINT</label>
+                            <label className="type-label text-[var(--ws-text-muted)]">END POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -232,7 +232,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                                     setEndTime(Math.max(val, startTime + 0.1));
                                     if (videoRef.current) videoRef.current.currentTime = val;
                                 }}
-                                className="w-full accent-teal-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-teal-500 h-1 bg-[var(--ws-surface-secondary)] rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
                     </div>
@@ -252,7 +252,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             onClick={() => {
                                 if (videoRef.current) videoRef.current.currentTime = startTime;
                             }}
-                            className="w-12 h-12 rounded-full p-0 flex items-center justify-center border-slate-800 text-slate-400 hover:text-white"
+                            className="w-12 h-12 rounded-full p-0 flex items-center justify-center border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-white"
                         >
                             <RotateCcw className="w-4 h-4" />
                         </Button>
@@ -260,14 +260,14 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
 
                     <div className="flex-1">
                         {isProcessing ? (
-                            <div className="bg-slate-900 border border-teal-500/30 rounded-2xl p-3 flex items-center gap-4">
+                            <div className="bg-[var(--ws-panel)] border border-teal-500/30 rounded-2xl p-3 flex items-center gap-4">
                                 <Loader2 className="w-4 h-4 text-teal-400 animate-spin shrink-0" />
                                 <div className="flex-1">
-                                    <div className="flex justify-between type-caption text-slate-400 mb-1 font-bold">
+                                    <div className="flex justify-between type-caption text-[var(--ws-text-muted)] mb-1 font-bold">
                                         <span>PROCESSING VIDEO</span>
                                         <span>{progress}%</span>
                                     </div>
-                                    <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="w-full h-1 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-teal-500 transition-all duration-300"
                                             style={{ width: `${progress}%` }}
@@ -278,7 +278,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                         ) : (
                             <Button 
                                 onClick={handleProcess}
-                                className="w-full py-6 bg-teal-500 hover:bg-teal-400 text-slate-950 font-black type-caption uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(20,184,166,0.3)] rounded-2xl"
+                                className="w-full py-6 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 font-black type-caption uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(20,184,166,0.3)] rounded-2xl"
                             >
                                 <Scissors className="w-4 h-4 mr-2" />
                                 Render Edits

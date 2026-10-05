@@ -131,7 +131,7 @@ const TwilioIntegration: React.FC = () => {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mb-3" />
-                <p className="type-card-description text-slate-400">Verifying Twilio connection...</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Verifying Twilio connection...</p>
             </div>
         );
     }
@@ -151,44 +151,44 @@ const TwilioIntegration: React.FC = () => {
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
                         connected 
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : 'bg-slate-800 text-slate-500 border-white/5'
+                            : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'
                     }`}>
                         <Phone className="w-6 h-6" />
                     </div>
                     <div>
-                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2 mb-1">
-                            <h2 className="text-lg font-bold text-white tracking-tight">Twilio SMS & Voice</h2>
+                            <h2 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">Twilio SMS & Voice</h2>
                             {connected ? (
                                 <span className="flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full type-caption uppercase font-black tracking-widest text-emerald-400">
                                     <CheckCircle2 className="w-3 h-3" /> Connected
                                 </span>
                             ) : (
-                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-slate-800 border border-white/5 rounded-full type-caption uppercase font-black tracking-widest text-slate-500">
+                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full type-caption uppercase font-black tracking-widest text-[var(--ws-text-muted)]">
                                     <AlertCircle className="w-3 h-3" /> Not connected
                                 </span>
                             )}
                         </div>
                         {connected ? (
-                            <div className="type-caption text-slate-400 space-y-1 mt-1">
+                            <div className="type-caption text-[var(--ws-text-muted)] space-y-1 mt-1">
                                 <p className="flex items-center gap-1.5">
-                                    <span className="text-slate-500 uppercase font-bold tracking-tighter">SID:</span> 
-                                    <span className="font-mono text-slate-300">{savedSid}</span>
+                                    <span className="text-[var(--ws-text-muted)] uppercase font-bold tracking-tighter">SID:</span> 
+                                    <span className="font-mono text-[var(--ws-text-secondary)]">{savedSid}</span>
                                 </p>
                                 <p className="flex items-center gap-1.5">
-                                    <span className="text-slate-500 uppercase font-bold tracking-tighter">Number:</span> 
-                                    <span className="font-mono text-slate-300">{savedPhone}</span>
+                                    <span className="text-[var(--ws-text-muted)] uppercase font-bold tracking-tighter">Number:</span> 
+                                    <span className="font-mono text-[var(--ws-text-secondary)]">{savedPhone}</span>
                                 </p>
                                 {connectedAt && (
-                                    <p className="text-slate-500 mt-2 italic">
+                                    <p className="text-[var(--ws-text-muted)] mt-2 italic">
                                         Established {new Date(connectedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                                     </p>
                                 )}
                             </div>
                         ) : (
-                            <p className="type-card-description text-slate-400 max-w-md mt-1">
+                            <p className="type-card-description text-[var(--ws-text-muted)] max-w-md mt-1">
                                 Connect your own Twilio account to send automated SMS and voice messages. Find your secrets at{' '}
-                                <a href="https://console.twilio.com" target="_blank" rel="noreferrer" className="text-teal-400 hover:text-teal-300 underline inline-flex items-center gap-0.5 transition-colors">
+                                <a href="https://console.twilio.com" target="_blank" rel="noreferrer" className="text-teal-400 hover:text-[var(--brand-blue-300)] underline inline-flex items-center gap-0.5 transition-colors">
                                     console.twilio.com <ExternalLink className="w-3 h-3" />
                                 </a>
                             </p>
@@ -210,36 +210,36 @@ const TwilioIntegration: React.FC = () => {
             </div>
 
             {!connected && (
-                <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-white/5">
+                <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-[var(--ws-border)]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="type-caption font-black text-slate-500 uppercase tracking-widest ml-1">Account SID</label>
+                            <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Account SID</label>
                             <div className="relative">
                                 <input
                                     type="text"
                                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                     value={accountSid}
                                     onChange={e => setAccountSid(e.target.value)}
-                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="type-caption font-black text-slate-500 uppercase tracking-widest ml-1">Auth Token</label>
+                            <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Auth Token</label>
                             <div className="relative">
                                 <input
                                     type={showToken ? 'text' : 'password'}
                                     placeholder="Your secret auth token"
                                     value={authToken}
                                     onChange={e => setAuthToken(e.target.value)}
-                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 pr-12 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 pr-12 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowToken(v => !v)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-400 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-700 hover:text-[var(--ws-text-muted)] transition-colors"
                                 >
                                     {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -247,15 +247,15 @@ const TwilioIntegration: React.FC = () => {
                         </div>
 
                         <div className="space-y-1.5 md:col-span-2">
-                            <label className="type-caption font-black text-slate-500 uppercase tracking-widest ml-1">From Phone Number</label>
+                            <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">From Phone Number</label>
                             <input
                                 type="tel"
                                 placeholder="+1234567890"
                                 value={phoneNumber}
                                 onChange={e => setPhoneNumber(e.target.value)}
-                                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                             />
-                            <p className="type-card-description text-slate-500 mt-1.5 ml-1">Must be an active Twilio number in E.164 format (e.g. +12125551234)</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5 ml-1">Must be an active Twilio number in E.164 format (e.g. +12125551234)</p>
                         </div>
                     </div>
 
@@ -263,7 +263,7 @@ const TwilioIntegration: React.FC = () => {
                         <Button
                             type="submit"
                             disabled={saving || !accountSid || !authToken || !phoneNumber}
-                            className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-8 shadow-[0_0_25px_-5px_rgba(20,184,166,0.3)] disabled:opacity-30"
+                            className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold px-8 shadow-[0_0_25px_-5px_rgba(20,184,166,0.3)] disabled:opacity-30"
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                             {saving ? 'Verifying Connection...' : 'Connect Twilio'}

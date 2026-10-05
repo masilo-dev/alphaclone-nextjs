@@ -70,13 +70,13 @@ export function SuccessFeedbackProvider({ children }: { children: React.ReactNod
                 <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">{toast.detail}</p>
               ) : null}
               {toast.impact ? (
-                <p className="type-card-description text-emerald-300/80 mt-1.5">{toast.impact}</p>
+                <p className="type-card-description text-[var(--success-text,var(--success-500))]/80 mt-1.5">{toast.impact}</p>
               ) : null}
             </div>
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="shrink-0 p-1 rounded hover:bg-white/5 text-[var(--ws-text-tertiary)]"
+              className="shrink-0 p-1 rounded hover:bg-[var(--ws-hover)] text-[var(--ws-text-tertiary)]"
               aria-label="Dismiss"
             >
               <X className="w-4 h-4" />

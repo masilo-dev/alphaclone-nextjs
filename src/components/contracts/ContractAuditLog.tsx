@@ -69,7 +69,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
     const getActionColor = (action: string) => {
         if (action.includes('created')) return 'text-blue-400';
         if (action.includes('signed')) return 'text-teal-400';
-        if (action.includes('viewed') || action.includes('opened')) return 'text-slate-400';
+        if (action.includes('viewed') || action.includes('opened')) return 'text-[var(--ws-text-muted)]';
         if (action.includes('modified')) return 'text-amber-400';
         if (action.includes('voided') || action.includes('declined')) return 'text-red-400';
         return 'text-white';
@@ -93,7 +93,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-teal-500/10 flex items-center justify-center">
@@ -101,7 +101,7 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-white">Compliance Audit Trail</h2>
-                            <p className="text-slate-400 type-card-description">{contractTitle}</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description">{contractTitle}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-teal-500/10 rounded-full border border-teal-500/20">
@@ -111,16 +111,16 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                 </div>
 
                 {/* Tabs */}
-                <div className="flex border-b border-slate-800">
+                <div className="flex border-b border-[var(--ws-border)]">
                     <button
                         onClick={() => setActiveTab('trail')}
-                        className={`px-6 py-3 type-ui font-semibold transition-all border-b-2 ${activeTab === 'trail' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                        className={`px-6 py-3 type-ui font-semibold transition-all border-b-2 ${activeTab === 'trail' ? 'border-teal-500 text-white' : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
                         History Log
                     </button>
                     <button
                         onClick={() => setActiveTab('signatures')}
-                        className={`px-6 py-3 type-ui font-semibold transition-all border-b-2 ${activeTab === 'signatures' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                        className={`px-6 py-3 type-ui font-semibold transition-all border-b-2 ${activeTab === 'signatures' ? 'border-teal-500 text-white' : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                     >
                         Tamper Seals
                     </button>
@@ -130,30 +130,30 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                     {activeTab === 'trail' ? (
                         <div className="space-y-4">
                             {auditTrail.length === 0 ? (
-                                <p className="text-center py-10 text-slate-500 italic">No audit events recorded yet.</p>
+                                <p className="text-center py-10 text-[var(--ws-text-muted)] italic">No audit events recorded yet.</p>
                             ) : (
                                 auditTrail.map((event) => (
-                                    <div key={event.id} className="flex gap-4 p-4 bg-slate-800/40 rounded-xl border border-slate-800/60 hover:border-slate-700 transition-all">
+                                    <div key={event.id} className="flex gap-4 p-4 bg-[var(--ws-surface-secondary)]/40 rounded-xl border border-[var(--ws-border)]/60 hover:border-[var(--ws-border)] transition-all">
                                         <div className={`mt-1 shrink-0 ${getActionColor(event.action)}`}>
                                             {getActionIcon(event.action)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <p className="type-caption font-bold text-white uppercase tracking-tight">{event.action.replace(/_/g, ' ')}</p>
-                                                <p className="type-card-description text-slate-500 font-mono">{format(new Date(event.created_at), 'MMM d, HH:mm:ss')}</p>
+                                                <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{format(new Date(event.created_at), 'MMM d, HH:mm:ss')}</p>
                                             </div>
                                             <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 type-caption">
-                                                <div className="flex items-center gap-2 text-slate-400">
+                                                <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
                                                     <User className="w-3.5 h-3.5" />
                                                     <span className="truncate">{event.actor_name} ({event.actor_role})</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-slate-400">
+                                                <div className="flex items-center gap-2 text-[var(--ws-text-muted)]">
                                                     <Globe className="w-3.5 h-3.5" />
                                                     <span>{event.ip_address}</span>
                                                 </div>
                                             </div>
                                             {event.details && Object.keys(event.details).length > 0 && (
-                                                <div className="mt-2 p-2 bg-slate-900/50 rounded-lg type-caption font-mono text-slate-500 overflow-x-auto">
+                                                <div className="mt-2 p-2 bg-[var(--ws-panel)]/50 rounded-lg type-caption font-mono text-[var(--ws-text-muted)] overflow-x-auto">
                                                     {JSON.stringify(event.details)}
                                                 </div>
                                             )}
@@ -165,36 +165,36 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
                     ) : (
                         <div className="space-y-4">
                             {sigEvents.length === 0 ? (
-                                <p className="text-center py-10 text-slate-500 italic">No signature events recorded yet.</p>
+                                <p className="text-center py-10 text-[var(--ws-text-muted)] italic">No signature events recorded yet.</p>
                             ) : (
                                 sigEvents.map((event) => (
-                                    <div key={event.id} className="p-5 bg-slate-900 border border-teal-900/30 rounded-xl space-y-4">
+                                    <div key={event.id} className="p-5 bg-[var(--ws-panel)] border border-teal-900/30 rounded-xl space-y-4">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2 text-teal-400">
                                                 <CheckCircle className="w-4 h-4" />
                                                 <span className="type-caption font-bold uppercase tracking-wider">Verified Signature</span>
                                             </div>
-                                            <span className="type-caption text-slate-500 font-mono">{format(new Date(event.timestamp), 'MMM d, yyyy HH:mm:ss')}</span>
+                                            <span className="type-caption text-[var(--ws-text-muted)] font-mono">{format(new Date(event.timestamp), 'MMM d, yyyy HH:mm:ss')}</span>
                                         </div>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block type-caption font-bold text-slate-500 uppercase tracking-widest mb-1">Signer</label>
+                                                <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-1">Signer</label>
                                                 <div className="type-ui text-white font-medium">{event.signer_name}</div>
-                                                <div className="type-caption text-slate-500">{event.signer_email}</div>
+                                                <div className="type-caption text-[var(--ws-text-muted)]">{event.signer_email}</div>
                                             </div>
                                             <div>
-                                                <label className="block type-caption font-bold text-slate-500 uppercase tracking-widest mb-1">Location</label>
+                                                <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-1">Location</label>
                                                 <div className="type-ui text-white font-medium">IP: {event.signer_ip}</div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-2">
                                             <div>
-                                                <label className="flex items-center gap-1.5 type-caption font-bold text-slate-500 uppercase tracking-widest mb-1">
+                                                <label className="flex items-center gap-1.5 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-1">
                                                     <Hash className="w-3 h-3" /> Content Hash at Signing
                                                 </label>
-                                                <div className="p-2 bg-slate-950 rounded border border-slate-800 type-caption font-mono text-slate-400 break-all leading-relaxed">
+                                                <div className="p-2 bg-[var(--ws-canvas)] rounded border border-[var(--ws-border)] type-caption font-mono text-[var(--ws-text-muted)] break-all leading-relaxed">
                                                     {event.content_hash_at_signing}
                                                 </div>
                                             </div>

@@ -29,7 +29,7 @@ function ActionRow({ item, featured }: { item: RankedRecommendation; featured?: 
         href={item.href}
         className={cn(
           'inline-block mt-2 type-ui font-semibold',
-          featured ? 'text-teal-700 hover:text-teal-600 dark:text-teal-300 dark:hover:text-teal-200' : 'text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-teal-300'
+          featured ? 'text-teal-700 hover:text-teal-600 dark:text-[var(--brand-blue-300)] dark:hover:text-teal-200' : 'text-teal-600 hover:text-teal-500 dark:text-teal-400 dark:hover:text-[var(--brand-blue-300)]'
         )}
       >
         {item.actionLabel} →

@@ -100,7 +100,7 @@ export function ProjectBlockersPanel({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 type-caption text-slate-500 py-2">
+      <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)] py-2">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
         Checking blockers…
       </div>
@@ -109,7 +109,7 @@ export function ProjectBlockersPanel({
 
   if (blockedTasks.length === 0 && issues.length === 0) {
     return (
-      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 type-caption text-emerald-300">
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 type-caption text-[var(--success-text,var(--success-500))]">
         No active blockers on this project.
       </div>
     );
@@ -118,44 +118,44 @@ export function ProjectBlockersPanel({
   return (
     <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 type-caption font-bold uppercase tracking-wider text-amber-300">
+        <div className="flex items-center gap-2 type-caption font-bold uppercase tracking-wider text-[var(--warning-text,var(--warning-500))]">
           <AlertTriangle className="w-3.5 h-3.5" />
           Blockers & risks
         </div>
         <button
           type="button"
           onClick={() => void addIssue()}
-          className="type-ui font-semibold text-amber-200 hover:text-white"
+          className="type-ui font-semibold text-amber-200 hover:text-[var(--ws-text-primary)]"
         >
           + Log issue
         </button>
       </div>
       <div className="space-y-2">
         {blockedTasks.map((task) => (
-          <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-slate-950/50 px-2.5 py-2">
+          <div key={task.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)]/50 px-2.5 py-2">
             <div className="min-w-0">
-              <p className="type-card-description font-medium text-white truncate">{task.title}</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{task.title}</p>
               <p className="type-card-description text-amber-200/80">Blocked task</p>
             </div>
             <button
               type="button"
               onClick={() => void unblockTask(task)}
-              className="shrink-0 type-ui font-semibold text-teal-300 hover:text-teal-200"
+              className="shrink-0 type-ui font-semibold text-[var(--brand-blue-300)] hover:text-teal-200"
             >
               Unblock
             </button>
           </div>
         ))}
         {issues.map((issue) => (
-          <div key={issue.id} className="flex items-start justify-between gap-2 rounded-md bg-slate-950/50 px-2.5 py-2">
+          <div key={issue.id} className="flex items-start justify-between gap-2 rounded-md bg-[var(--ws-canvas)]/50 px-2.5 py-2">
             <div className="min-w-0">
-              <p className="type-card-description font-medium text-white truncate">{issue.title}</p>
-              <p className="type-caption text-slate-400 capitalize">{issue.severity} · {issue.status}</p>
+              <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{issue.title}</p>
+              <p className="type-caption text-[var(--ws-text-muted)] capitalize">{issue.severity} · {issue.status}</p>
             </div>
             <button
               type="button"
               onClick={() => void resolveIssue(issue.id)}
-              className="shrink-0 inline-flex items-center gap-1 type-ui font-semibold text-teal-300 hover:text-teal-200"
+              className="shrink-0 inline-flex items-center gap-1 type-ui font-semibold text-[var(--brand-blue-300)] hover:text-teal-200"
             >
               <CheckCircle2 className="w-3 h-3" />
               Resolve

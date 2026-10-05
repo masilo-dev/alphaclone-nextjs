@@ -72,16 +72,16 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 ac-layer-panel flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/50">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-slate-400" />
+        <div className="fixed inset-0 ac-layer-panel flex items-center justify-center p-4 bg-[var(--ws-canvas)]/80 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                    <h2 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-[var(--ws-text-muted)]" />
                         Device Settings
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="p-2 rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -90,12 +90,12 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
                     {/* Camera */}
                     <div className="space-y-3">
-                        <label className="flex items-center gap-2 type-label font-semibold text-slate-300">
+                        <label className="flex items-center gap-2 type-label font-semibold text-[var(--ws-text-secondary)]">
                             <VideoIcon className="w-4 h-4 text-teal-400" />
                             Camera
                         </label>
                         {videoDevices.length === 0 ? (
-                            <div className="p-3 bg-white/5 rounded-xl border border-white/10 type-ui text-slate-400">
+                            <div className="p-3 bg-[var(--ws-hover)] rounded-xl border border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                                 No cameras found or permission denied
                             </div>
                         ) : (
@@ -107,7 +107,7 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
                                         className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
                                             activeVideoId === device.deviceId
                                                 ? 'bg-teal-500/10 border-teal-500/50 text-teal-100'
-                                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                                : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'
                                         }`}
                                     >
                                         <span className="type-ui truncate pr-2">{device.label || 'Unknown Camera'}</span>
@@ -120,12 +120,12 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
 
                     {/* Microphone */}
                     <div className="space-y-3">
-                        <label className="flex items-center gap-2 type-label font-semibold text-slate-300">
+                        <label className="flex items-center gap-2 type-label font-semibold text-[var(--ws-text-secondary)]">
                             <Mic className="w-4 h-4 text-amber-400" />
                             Microphone
                         </label>
                         {audioDevices.length === 0 ? (
-                            <div className="p-3 bg-white/5 rounded-xl border border-white/10 type-ui text-slate-400">
+                            <div className="p-3 bg-[var(--ws-hover)] rounded-xl border border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                                 No microphones found or permission denied
                             </div>
                         ) : (
@@ -137,7 +137,7 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
                                         className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left ${
                                             activeAudioId === device.deviceId
                                                 ? 'bg-amber-500/10 border-amber-500/50 text-amber-100'
-                                                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                                                : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'
                                         }`}
                                     >
                                         <span className="type-ui truncate pr-2">{device.label || 'Unknown Microphone'}</span>
@@ -149,10 +149,10 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
                     </div>
                 </div>
 
-                <div className="p-4 border-t border-white/10 bg-slate-900/50 flex justify-end">
+                <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors type-ui"
+                        className="px-6 py-2 bg-[var(--ws-hover)] hover:bg-white/20 text-[var(--ws-text-primary)] rounded-xl font-medium transition-colors type-ui"
                     >
                         Done
                     </button>

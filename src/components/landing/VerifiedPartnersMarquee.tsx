@@ -23,8 +23,8 @@ function PartnerChip({ partner }: { partner: VerifiedPartner }) {
       >
         <Icon aria-hidden className="h-5 w-5" style={{ color: partner.brandColor }} />
       </span>
-      <span className="whitespace-nowrap type-ui font-semibold text-slate-200">{partner.name}</span>
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 type-caption font-bold uppercase tracking-wide text-emerald-300">
+      <span className="whitespace-nowrap type-ui font-semibold text-[var(--ws-text-secondary)]">{partner.name}</span>
+      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 type-caption font-bold uppercase tracking-wide text-[var(--success-text,var(--success-500))]">
         <ShieldCheck className="h-3 w-3" aria-hidden />
         Verified
       </span>
@@ -39,11 +39,11 @@ export default function VerifiedPartnersMarquee() {
     <div className="relative w-full overflow-hidden" aria-label="Verified partner integrations">
       <div
         className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-24"
-        style={{ background: 'linear-gradient(to right, #020D1A, transparent)' }}
+        style={{ background: 'linear-gradient(to right, var(--brand-violet-950), transparent)' }}
       />
       <div
         className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-24"
-        style={{ background: 'linear-gradient(to left, #020D1A, transparent)' }}
+        style={{ background: 'linear-gradient(to left, var(--brand-violet-950), transparent)' }}
       />
       <div className="flex w-max" style={{ animation: 'marquee-scroll 48s linear infinite' }}>
         {items.map((partner, index) => (

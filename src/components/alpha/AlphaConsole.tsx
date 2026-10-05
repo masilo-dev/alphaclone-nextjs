@@ -93,35 +93,35 @@ export default function AlphaConsole() {
     };
 
     return (
-        <div className="h-full min-h-0 overflow-hidden rounded-2xl border border-[#00FFD1]/15 bg-[#000508] text-[#00FFD1] font-mono">
+        <div className="h-full min-h-0 overflow-hidden rounded-2xl border border-[var(--dashboard-mint)]/15 bg-[var(--color-black)508] text-[var(--dashboard-mint)] font-mono">
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
 
-            <header className="relative h-14 border-b border-[#00FFD1]/20 flex items-center justify-between px-4 md:px-6 bg-[#000A10]">
+            <header className="relative h-14 border-b border-[var(--dashboard-mint)]/20 flex items-center justify-between px-4 md:px-6 bg-[var(--color-black)A10]">
                 <div className="flex items-center gap-4">
                     <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                        className="p-1 border border-[#00FFD1] rounded-sm"
+                        className="p-1 border border-[var(--dashboard-mint)] rounded-sm"
                     >
                         <Lock className="w-3 h-3" />
                     </motion.div>
                     <div className="flex flex-col">
-                        <span className="type-caption text-[#00FFD1]/50 leading-none mb-1">SECURE_SHELL</span>
+                        <span className="type-caption text-[var(--dashboard-mint)]/50 leading-none mb-1">SECURE_SHELL</span>
                         <span className="type-caption font-bold tracking-widest uppercase">{typingText}</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <div className="flex bg-black/40 border border-[#00FFD1]/20 p-1 rounded-sm">
+                    <div className="flex bg-black/40 border border-[var(--dashboard-mint)]/20 p-1 rounded-sm">
                         <button
                             onClick={() => setView('terminal')}
-                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'terminal' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'terminal' ? 'bg-[var(--dashboard-mint)] text-black' : 'text-[var(--dashboard-mint)]/60 hover:text-[var(--dashboard-mint)]'}`}
                         >
                             <Terminal className="w-2.5 h-2.5" /> DIRECT_SHELL
                         </button>
                         <button
                             onClick={() => setView('fleet')}
-                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'fleet' ? 'bg-[#00FFD1] text-black' : 'text-[#00FFD1]/60 hover:text-[#00FFD1]'}`}
+                            className={`px-3 py-1 flex items-center gap-2 type-caption font-bold transition-all ${view === 'fleet' ? 'bg-[var(--dashboard-mint)] text-black' : 'text-[var(--dashboard-mint)]/60 hover:text-[var(--dashboard-mint)]'}`}
                         >
                             <LayoutDashboard className="w-2.5 h-2.5" /> FLEET_CONTROL
                         </button>
@@ -143,14 +143,14 @@ export default function AlphaConsole() {
             <div className="relative grid grid-cols-1 md:grid-cols-12 h-[calc(100%-56px)]">
                 {view === 'terminal' ? (
                     <>
-                        <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-4 md:p-6 flex flex-col gap-6 bg-[#00080D] min-h-0">
-                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-4 type-caption leading-relaxed text-[#00FFD1]/80">
+                        <div className="md:col-span-4 border-r border-[var(--dashboard-mint)]/10 p-4 md:p-6 flex flex-col gap-6 bg-[var(--color-black)80D] min-h-0">
+                            <div className="border border-[var(--dashboard-mint)]/20 bg-[var(--dashboard-mint)]/5 p-4 type-caption leading-relaxed text-[var(--dashboard-mint)]/80">
                                 Alpha runs authorized tools inside the selected workspace. Mission state and completion logs are stored durably and remain available after restarts.
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="type-ui font-bold flex items-center gap-2 text-white italic">
-                                    <Command className="w-4 h-4 text-[#00FFD1]" />
+                                <h2 className="type-ui font-bold flex items-center gap-2 text-[var(--ws-text-primary)] italic">
+                                    <Command className="w-4 h-4 text-[var(--dashboard-mint)]" />
                                     ASSISTED_EXECUTION_QUEUE
                                 </h2>
                                 <form onSubmit={runMission} className="relative group">
@@ -158,12 +158,12 @@ export default function AlphaConsole() {
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
                                         placeholder="DESCRIBE THE TASK YOU WANT ALPHA TO HANDLE..."
-                                        className="w-full bg-[#00121A] border border-[#00FFD1]/20 p-4 type-caption focus:outline-none focus:border-[#00FFD1] min-h-[150px] resize-none transition-all placeholder:opacity-30 uppercase"
+                                        className="w-full bg-[var(--brand-violet-950)] border border-[var(--dashboard-mint)]/20 p-4 type-caption focus:outline-none focus:border-[var(--dashboard-mint)] min-h-[150px] resize-none transition-all placeholder:opacity-30 uppercase"
                                     />
                                     <button
                                         type="submit"
                                         disabled={isExecuting || !prompt.trim()}
-                                        className="absolute bottom-4 right-4 p-2 bg-[#00FFD1] text-black hover:bg-[#00D1FF] transition-all disabled:opacity-30"
+                                        className="absolute bottom-4 right-4 p-2 bg-[var(--dashboard-mint)] text-black hover:bg-[var(--info-500)] transition-all disabled:opacity-30"
                                     >
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
@@ -171,19 +171,19 @@ export default function AlphaConsole() {
                             </div>
 
                             <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar min-h-0">
-                                <h3 className="type-caption font-bold text-[#00FFD1]/50 tracking-caps">CAPABILITY_MATRIX</h3>
+                                <h3 className="type-caption font-bold text-[var(--dashboard-mint)]/50 tracking-caps">CAPABILITY_MATRIX</h3>
                                 {[
                                     { icon: Target, label: 'LEAD_PROSPECTOR', status: 'ACTIVE' },
                                     { icon: Send, label: 'OUTREACH_EXECUTIVE', status: 'READY' },
                                     { icon: Zap, label: 'FAST_SCHEDULER', status: 'IDLE' },
                                     { icon: Shield, label: 'SEMANTIC_SECURE', status: 'ENABLED' }
                                 ].map((cap, i) => (
-                                    <div key={i} className="group p-3 border border-[#00FFD1]/10 bg-[#00121A] hover:border-[#00FFD1]/40 flex items-center justify-between transition-all">
+                                    <div key={i} className="group p-3 border border-[var(--dashboard-mint)]/10 bg-[var(--brand-violet-950)] hover:border-[var(--dashboard-mint)]/40 flex items-center justify-between transition-all">
                                         <div className="flex items-center gap-3">
                                             <cap.icon className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                            <span className="type-caption font-bold group-hover:text-white">{cap.label}</span>
+                                            <span className="type-caption font-bold group-hover:text-[var(--ws-text-primary)]">{cap.label}</span>
                                         </div>
-                                        <span className={`type-caption px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[#00FFD1] bg-[#00FFD1]/10' : 'border-white/10 opacity-30 italic'}`}>
+                                        <span className={`type-caption px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[var(--dashboard-mint)] bg-[var(--dashboard-mint)]/10' : 'border-[var(--ws-border)] opacity-30 italic'}`}>
                                             {cap.status}
                                         </span>
                                     </div>
@@ -191,7 +191,7 @@ export default function AlphaConsole() {
                             </div>
                         </div>
 
-                        <div className="md:col-span-8 p-4 md:p-6 flex flex-col bg-[#000508] min-h-0">
+                        <div className="md:col-span-8 p-4 md:p-6 flex flex-col bg-[var(--color-black)508] min-h-0">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="type-caption font-bold tracking-widest flex items-center gap-2">
                                     <Activity className="w-3 h-3 animate-pulse" />
@@ -213,12 +213,12 @@ export default function AlphaConsole() {
                                                 initial={{ opacity: 0, x: 20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 key={mission.id}
-                                                className="border border-[#00FFD1]/10 bg-[#000F15] p-5 relative group hover:border-[#00FFD1]/30 transition-all"
+                                                className="border border-[var(--dashboard-mint)]/10 bg-[var(--color-black)F15] p-5 relative group hover:border-[var(--dashboard-mint)]/30 transition-all"
                                             >
-                                                <div className="flex items-center justify-between mb-4 border-b border-[#00FFD1]/10 pb-3">
+                                                <div className="flex items-center justify-between mb-4 border-b border-[var(--dashboard-mint)]/10 pb-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[#00FFD1]' : 'bg-[#00D1FF] animate-pulse'}`} />
-                                                        <span className="type-caption font-bold text-white uppercase">{mission.description}</span>
+                                                        <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[var(--dashboard-mint)]' : 'bg-[var(--info-500)] animate-pulse'}`} />
+                                                        <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase">{mission.description}</span>
                                                     </div>
                                                     <span className="type-caption font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
                                                 </div>
@@ -227,7 +227,7 @@ export default function AlphaConsole() {
                                                     {mission.logs.map((log, li) => (
                                                         <div key={li} className="flex gap-4 group/log">
                                                             <span className="opacity-20 select-none">{li.toString().padStart(3, '0')}</span>
-                                                            <span className={`flex-1 ${log.includes('ERROR') ? 'text-red-400 bg-red-400/10 px-1' : log.includes('EXECUTING') ? 'text-white font-bold underline decoration-[#00FFD1]/40' : 'text-[#00FFD1]/80 hover:text-white transition-colors'}`}>
+                                                            <span className={`flex-1 ${log.includes('ERROR') ? 'text-red-400 bg-red-400/10 px-1' : log.includes('EXECUTING') ? 'text-[var(--ws-text-primary)] font-bold underline decoration-[var(--dashboard-mint)]/40' : 'text-[var(--dashboard-mint)]/80 hover:text-[var(--ws-text-primary)] transition-colors'}`}>
                                                                 {log}
                                                             </span>
                                                         </div>

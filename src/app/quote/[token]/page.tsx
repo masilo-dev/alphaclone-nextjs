@@ -133,7 +133,7 @@ export default function PublicQuotePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-teal-400 animate-spin" />
             </div>
         );
@@ -141,7 +141,7 @@ export default function PublicQuotePage() {
 
     if (!quote) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center text-[var(--ws-text-muted)]">
                 Quote not found or link expired.
             </div>
         );
@@ -156,10 +156,10 @@ export default function PublicQuotePage() {
     const pdfUrl = `/api/quotes/${encodeURIComponent(token)}/pdf`;
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200 py-6 sm:py-8 px-4">
+        <div className="min-h-screen overflow-x-hidden bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] py-6 sm:py-8 px-4">
             <Toaster position="top-center" />
-            <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-6 sm:p-7 border-b border-slate-800 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4" style={{ borderTopColor: branding.primaryColor, borderTopWidth: 3 }}>
+            <div className="max-w-4xl mx-auto bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl overflow-hidden shadow-2xl">
+                <div className="p-6 sm:p-7 border-b border-[var(--ws-border)] flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4" style={{ borderTopColor: branding.primaryColor, borderTopWidth: 3 }}>
                     <div className="flex items-center gap-3">
                     {branding.logoUrl ? (
                         <img src={branding.logoUrl} alt="" className="h-10 w-auto object-contain" />
@@ -170,7 +170,7 @@ export default function PublicQuotePage() {
                     )}
                         <div>
                             <h1 className="text-xl font-bold text-white">Quote {quote.quoteNumber}</h1>
-                            <p className="type-card-description text-slate-400">{quote.name} · {branding.name}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">{quote.name} · {branding.name}</p>
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -178,14 +178,14 @@ export default function PublicQuotePage() {
                             href={pdfUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 type-ui font-bold text-slate-200 hover:border-teal-500/50 hover:text-white"
+                            className="inline-flex items-center justify-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-4 py-2 type-ui font-bold text-[var(--ws-text-secondary)] hover:border-teal-500/50 hover:text-white"
                         >
                             View PDF
                         </a>
                         <a
                             href={pdfUrl}
                             download
-                            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-4 py-2 type-ui font-black text-black hover:bg-teal-400"
+                            className="inline-flex items-center justify-center rounded-xl bg-teal-500 px-4 py-2 type-ui font-black text-black hover:bg-[var(--brand-blue-400)]"
                         >
                             Download PDF
                         </a>
@@ -194,18 +194,18 @@ export default function PublicQuotePage() {
 
                 <div className="p-6 sm:p-8 space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="type-caption uppercase tracking-widest text-slate-500">Status</div>
+                        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+                            <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Status</div>
                             <div className="mt-1 text-lg font-bold text-white capitalize">{quote.status}</div>
                         </div>
-                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="type-caption uppercase tracking-widest text-slate-500">Total</div>
+                        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+                            <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Total</div>
                             <div className="mt-1 text-lg font-bold text-teal-400">
                                 {Number(quote.totalAmount).toFixed(2)} {quote.currency || 'USD'}
                             </div>
                         </div>
-                        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-                            <div className="type-caption uppercase tracking-widest text-slate-500">Valid until</div>
+                        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
+                            <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Valid until</div>
                             <div className="mt-1 text-lg font-bold text-white">
                                 {quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : 'Open'}
                             </div>
@@ -217,7 +217,7 @@ export default function PublicQuotePage() {
                     <div className="overflow-x-auto">
                         <table className="w-full type-ui">
                             <thead>
-                                <tr className="text-left text-slate-500 border-b border-slate-800">
+                                <tr className="text-left text-[var(--ws-text-muted)] border-b border-[var(--ws-border)]">
                                     <th className="py-2 pr-4">Item</th>
                                     <th className="py-2 pr-4 text-right">Qty</th>
                                     <th className="py-2 pr-4 text-right">Price</th>
@@ -226,10 +226,10 @@ export default function PublicQuotePage() {
                             </thead>
                             <tbody>
                                 {items.map((item, i) => (
-                                    <tr key={i} className="border-b border-slate-800/50">
+                                    <tr key={i} className="border-b border-[var(--ws-border)]/50">
                                         <td className="py-3 pr-4">
                                             <div className="font-medium text-white">{item.productName}</div>
-                                            {item.description && <div className="type-caption text-slate-500">{item.description}</div>}
+                                            {item.description && <div className="type-caption text-[var(--ws-text-muted)]">{item.description}</div>}
                                         </td>
                                         <td className="py-3 pr-4 text-right">{item.quantity}</td>
                                         <td className="py-3 pr-4 text-right">{Number(item.unitPrice).toFixed(2)}</td>
@@ -244,21 +244,21 @@ export default function PublicQuotePage() {
                         Total: {Number(quote.totalAmount).toFixed(2)} {quote.currency || 'USD'}
                     </div>
                     {quote.validUntil && (
-                        <p className="type-card-description text-slate-500">Valid until {new Date(quote.validUntil).toLocaleDateString()}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Valid until {new Date(quote.validUntil).toLocaleDateString()}</p>
                     )}
                     {quote.termsAndConditions && (
-                        <div className="type-caption text-slate-500 border-t border-slate-800 pt-4 whitespace-pre-wrap">
+                        <div className="type-caption text-[var(--ws-text-muted)] border-t border-[var(--ws-border)] pt-4 whitespace-pre-wrap">
                             {quote.termsAndConditions}
                         </div>
                     )}
                 </div>
 
                 {isFinal ? (
-                    <div className="p-6 border-t border-slate-800 text-center">
+                    <div className="p-6 border-t border-[var(--ws-border)] text-center">
                         <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
                             (responded || quote.status) === 'accepted'
                                 ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                : 'bg-[var(--error-500)]/10 text-red-400 border border-red-500/20'
                         }`}>
                             {(responded || quote.status) === 'accepted' ? (
                                 <><CheckCircle className="w-5 h-5" /> Quote accepted</>
@@ -273,31 +273,31 @@ export default function PublicQuotePage() {
                         )}
                     </div>
                 ) : (
-                    <div className="p-6 border-t border-slate-800 space-y-4 bg-slate-950/40">
+                    <div className="p-6 border-t border-[var(--ws-border)] space-y-4 bg-[var(--ws-canvas)]/40">
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">Your name (required to accept)</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Your name (required to accept)</label>
                             <input
                                 type="text"
                                 value={acceptedBy}
                                 onChange={(e) => setAcceptedBy(e.target.value)}
                                 placeholder="Full name"
-                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white"
+                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-white"
                             />
                         </div>
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">Signature (required to accept)</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Signature (required to accept)</label>
                             <SignaturePad
                                 onSave={(dataUrl) => setSignatureUrl(dataUrl)}
                                 onClear={() => setSignatureUrl(null)}
                             />
                         </div>
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">Note (optional)</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Note (optional)</label>
                             <textarea
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 placeholder="Questions, requested changes, or reason for declining..."
-                                className="w-full h-24 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 type-ui text-white resize-none"
+                                className="w-full h-24 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-white resize-none"
                             />
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
@@ -318,7 +318,7 @@ export default function PublicQuotePage() {
                             <button
                                 onClick={() => handleRespond('reject')}
                                 disabled={responding}
-                                className="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 rounded-xl font-bold text-slate-200 flex items-center justify-center gap-2"
+                                className="flex-1 py-3 px-4 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 rounded-xl font-bold text-[var(--ws-text-secondary)] flex items-center justify-center gap-2"
                             >
                                 <XCircle className="w-5 h-5" />
                                 Decline

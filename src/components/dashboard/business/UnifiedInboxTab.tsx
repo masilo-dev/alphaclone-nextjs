@@ -656,7 +656,7 @@ export default function UnifiedInboxTab({
       case "instagram":
         return <MessageCircle className="w-4 h-4 text-pink-400" />;
       default:
-        return <MessageSquare className="w-4 h-4 text-slate-400" />;
+        return <MessageSquare className="w-4 h-4 text-[var(--ws-text-muted)]" />;
     }
   };
 
@@ -669,7 +669,7 @@ export default function UnifiedInboxTab({
       case "normal":
         return "bg-blue-500/10 text-blue-400 border-blue-500/20";
       default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/20";
+        return "bg-slate-500/10 text-[var(--ws-text-muted)] border-slate-500/20";
     }
   };
 
@@ -762,9 +762,9 @@ export default function UnifiedInboxTab({
   if (!tenant?.id) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3 px-6 text-center">
-        <Inbox className="w-10 h-10 text-slate-500" />
-        <p className="text-white font-semibold">Select a workspace</p>
-        <p className="text-slate-400 type-card-description max-w-md">
+        <Inbox className="w-10 h-10 text-[var(--ws-text-muted)]" />
+        <p className="text-[var(--ws-text-primary)] font-semibold">Select a workspace</p>
+        <p className="text-[var(--ws-text-muted)] type-card-description max-w-md">
           Choose your business workspace to load email, social, and messaging conversations.
         </p>
       </div>
@@ -775,7 +775,7 @@ export default function UnifiedInboxTab({
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
         <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-        <p className="text-slate-400 type-card-description">
+        <p className="text-[var(--ws-text-muted)] type-card-description">
           Aggregating solopreneur conversation feeds...
         </p>
       </div>
@@ -790,14 +790,14 @@ export default function UnifiedInboxTab({
         </div>
       )}
       <div
-        className="flex flex-1 min-h-0 border border-slate-800 rounded-lg overflow-hidden bg-slate-950"
+        className="flex flex-1 min-h-0 border border-[var(--ws-border)] rounded-lg overflow-hidden bg-[var(--ws-canvas)]"
         role="region"
         aria-label="All channels inbox"
       >
         {/* 1. Channel & Folder Navigation Sidebar */}
-        <div className="hidden xl:flex w-48 border-r border-slate-800 flex-col bg-slate-900/40 p-3 shrink-0 select-none overflow-y-auto">
+        <div className="hidden xl:flex w-48 border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)]/40 p-3 shrink-0 select-none overflow-y-auto">
           <div className="flex items-center justify-between mb-3 px-2 pt-1">
-            <span className="type-caption font-bold uppercase tracking-wider text-slate-400">
+            <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
               Inboxes
             </span>
             <span className="type-ui bg-teal-500/15 text-teal-400 px-2 py-0.5 rounded-full font-semibold">
@@ -813,20 +813,20 @@ export default function UnifiedInboxTab({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterSource === "all" && filterPriority === "all"
-                  ? "bg-teal-500/15 text-teal-300 font-semibold border border-teal-500/20"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  ? "bg-teal-500/15 text-[var(--brand-blue-300)] font-semibold border border-teal-500/20"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
               }`}
             >
               <span className="flex items-center gap-2">
                 <Inbox className="w-4 h-4 text-teal-400" />
                 All Inboxes
               </span>
-              <span className="type-ui text-slate-500 font-mono">
+              <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                 {messages.length}
               </span>
             </button>
 
-            <div className="pt-3 pb-1 px-2 type-caption uppercase tracking-wider font-semibold text-slate-500">
+            <div className="pt-3 pb-1 px-2 type-caption uppercase tracking-wider font-semibold text-[var(--ws-text-muted)]">
               Channels
             </div>
 
@@ -864,22 +864,22 @@ export default function UnifiedInboxTab({
                   onClick={() => setFilterSource(ch.id)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                     filterSource === ch.id
-                      ? "bg-teal-500/15 text-teal-300 font-semibold border border-teal-500/20"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                      ? "bg-teal-500/15 text-[var(--brand-blue-300)] font-semibold border border-teal-500/20"
+                      : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
                   }`}
                 >
                   <span className="flex items-center gap-2">
                     <Icon className={`w-3.5 h-3.5 ${ch.color}`} />
                     {ch.name}
                   </span>
-                  <span className="type-ui text-slate-500 font-mono">
+                  <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                     {count}
                   </span>
                 </button>
               );
             })}
 
-            <div className="pt-3 pb-1 px-2 type-caption uppercase tracking-wider font-semibold text-slate-500">
+            <div className="pt-3 pb-1 px-2 type-caption uppercase tracking-wider font-semibold text-[var(--ws-text-muted)]">
               Smart Folders
             </div>
 
@@ -891,15 +891,15 @@ export default function UnifiedInboxTab({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterNeedsReply
-                  ? "bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/20"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  ? "bg-amber-500/15 text-[var(--warning-text,var(--warning-500))] font-semibold border border-amber-500/20"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
               }`}
             >
               <span className="flex items-center gap-2">
                 <CornerUpLeft className="w-3.5 h-3.5 text-amber-400" />
                 Needs Reply
               </span>
-              <span className="type-ui text-slate-500 font-mono">
+              <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                 {messages.filter((m) => m.needs_response).length}
               </span>
             </button>
@@ -913,14 +913,14 @@ export default function UnifiedInboxTab({
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterUnreadOnly
                   ? "bg-blue-500/15 text-blue-300 font-semibold border border-blue-500/20"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
               }`}
             >
               <span className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-blue-400" />
                 Unread
               </span>
-              <span className="type-ui text-slate-500 font-mono">
+              <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                 {messages.filter((m) => !m.read).length}
               </span>
             </button>
@@ -936,15 +936,15 @@ export default function UnifiedInboxTab({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterPriority === "urgent"
-                  ? "bg-rose-500/15 text-rose-300 font-semibold border border-rose-500/20"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  ? "bg-rose-500/15 text-[var(--error-text,var(--error-500))] font-semibold border border-rose-500/20"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
               }`}
             >
               <span className="flex items-center gap-2">
                 <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
                 High Priority
               </span>
-              <span className="type-ui text-slate-500 font-mono">
+              <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                 {
                   messages.filter(
                     (m) => m.priority === "urgent" || m.priority === "high",
@@ -961,8 +961,8 @@ export default function UnifiedInboxTab({
               }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
                 filterStarredOnly
-                  ? "bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/20"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
+                  ? "bg-amber-500/15 text-[var(--warning-text,var(--warning-500))] font-semibold border border-amber-500/20"
+                  : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]/40"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -971,7 +971,7 @@ export default function UnifiedInboxTab({
                 />
                 Starred
               </span>
-              <span className="type-ui text-slate-500 font-mono">
+              <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                 {starredIds.size}
               </span>
             </button>
@@ -980,12 +980,12 @@ export default function UnifiedInboxTab({
 
         {/* 2. Middle Message List Section */}
         <div
-          className={`${selectedMessage ? "hidden md:flex" : "flex"} w-full md:w-80 xl:w-[22rem] border-r border-slate-800 flex-col bg-slate-900/20 shrink-0 min-h-0`}
+          className={`${selectedMessage ? "hidden md:flex" : "flex"} w-full md:w-80 xl:w-[22rem] border-r border-[var(--ws-border)] flex-col bg-[var(--ws-panel)]/20 shrink-0 min-h-0`}
         >
           {/* Header & Filter Controls & Search */}
-          <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-900/40">
+          <div className="p-3 border-b border-[var(--ws-border)] space-y-2 bg-[var(--ws-panel)]/40">
             <div className="flex items-center justify-between">
-              <span className="type-caption font-semibold text-slate-300 capitalize">
+              <span className="type-caption font-semibold text-[var(--ws-text-secondary)] capitalize">
                 {filterStarredOnly
                   ? "⭐ Starred"
                   : filterNeedsReply
@@ -999,7 +999,7 @@ export default function UnifiedInboxTab({
                           : `${filterSource.charAt(0).toUpperCase() + filterSource.slice(1)} Messages`}
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="type-ui text-slate-500 font-mono">{filteredMessages.length}</span>
+                <span className="type-ui text-[var(--ws-text-muted)] font-mono">{filteredMessages.length}</span>
                 <button
                   onClick={() => { setComposing(true); setSelectedMessage(null); }}
                   className="p-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-400 border border-teal-500/20 transition-all"
@@ -1017,15 +1017,15 @@ export default function UnifiedInboxTab({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by sender, subject, text..."
-                className="w-full pl-8 pr-3 py-1.5 bg-slate-950/80 border border-slate-800 rounded-xl type-caption text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                className="w-full pl-8 pr-3 py-1.5 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
               />
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-[var(--ws-text-muted)] absolute left-2.5 top-2.5 pointer-events-none" />
             </div>
 
             {/* Bulk Actions Bar */}
             {selectedIds.size > 0 && (
               <div className="flex items-center justify-between pt-1 type-caption bg-teal-500/10 border border-teal-500/20 p-1.5 rounded-lg">
-                <span className="type-ui font-semibold text-teal-300">
+                <span className="type-ui font-semibold text-[var(--brand-blue-300)]">
                   {selectedIds.size} selected
                 </span>
                 <div className="flex items-center gap-1">
@@ -1037,7 +1037,7 @@ export default function UnifiedInboxTab({
                   </button>
                   <button
                     onClick={handleBulkArchive}
-                    className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 type-ui font-bold rounded flex items-center gap-1"
+                    className="px-2 py-0.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-bold rounded flex items-center gap-1"
                   >
                     <Archive className="w-3 h-3" />
                     Archive
@@ -1054,8 +1054,8 @@ export default function UnifiedInboxTab({
                 {messages.length === 0 ? (
                   <EmptyStateFromPreset moduleId="messages" />
                 ) : (
-                  <div className="p-4 text-center text-slate-500 space-y-3">
-                    <Inbox className="w-10 h-10 mx-auto opacity-30 text-slate-400" />
+                  <div className="p-4 text-center text-[var(--ws-text-muted)] space-y-3">
+                    <Inbox className="w-10 h-10 mx-auto opacity-30 text-[var(--ws-text-muted)]" />
                     <p className="type-card-description font-medium">No matches</p>
                     <p className="type-card-description opacity-60">
                       Try a different filter or clear your search.
@@ -1069,7 +1069,7 @@ export default function UnifiedInboxTab({
                         setFilterNeedsReply(false);
                         setFilterUnreadOnly(false);
                       }}
-                      className="mt-1 type-caption text-teal-400 hover:text-teal-300 underline"
+                      className="mt-1 type-caption text-teal-400 hover:text-[var(--brand-blue-300)] underline"
                     >
                       Clear all filters
                     </button>
@@ -1083,9 +1083,9 @@ export default function UnifiedInboxTab({
                   onClick={() => handleSelectMessage(msg)}
                   className={`p-3.5 cursor-pointer transition-all flex flex-col gap-2 relative ${
                     selectedMessage?.id === msg.id
-                      ? "bg-slate-800/40 border-l-4 border-teal-500"
-                      : "hover:bg-slate-900/30"
-                  } ${!msg.read ? "bg-slate-900/10" : ""}`}
+                      ? "bg-[var(--ws-surface-secondary)]/40 border-l-4 border-teal-500"
+                      : "hover:bg-[var(--ws-panel)]/30"
+                  } ${!msg.read ? "bg-[var(--ws-panel)]/10" : ""}`}
                 >
                   {/* Meta details */}
                   <div className="flex items-center justify-between">
@@ -1095,7 +1095,7 @@ export default function UnifiedInboxTab({
                         checked={selectedIds.has(msg.id)}
                         onChange={() => toggleSelect(msg.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                        className="rounded border-[var(--ws-border)] bg-[var(--ws-panel)] text-teal-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       />
                       <button
                         onClick={(e) => toggleStar(msg.id, e)}
@@ -1110,12 +1110,12 @@ export default function UnifiedInboxTab({
                       </button>
                       {getSourceIcon(msg.source)}
                       <span
-                        className={`font-semibold type-caption truncate max-w-[120px] ${!msg.read ? "text-white font-bold" : "text-slate-300"}`}
+                        className={`font-semibold type-caption truncate max-w-[120px] ${!msg.read ? "text-[var(--ws-text-primary)] font-bold" : "text-[var(--ws-text-secondary)]"}`}
                       >
                         {msg.from_name || msg.from_address || "Unknown"}
                       </span>
                     </div>
-                    <span className="type-ui text-slate-500 font-mono">
+                    <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                       {msg.received_at
                         ? new Date(msg.received_at).toLocaleTimeString([], {
                             hour: "2-digit",
@@ -1129,12 +1129,12 @@ export default function UnifiedInboxTab({
                   <div className="space-y-1">
                     {msg.subject && (
                       <h4
-                        className={`type-caption truncate ${!msg.read ? "text-white font-bold" : "text-slate-400"}`}
+                        className={`type-caption truncate ${!msg.read ? "text-[var(--ws-text-primary)] font-bold" : "text-[var(--ws-text-muted)]"}`}
                       >
                         {msg.subject}
                       </h4>
                     )}
-                    <p className="type-card-description text-slate-500 line-clamp-2">
+                    <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2">
                       {msg.body}
                     </p>
                   </div>
@@ -1165,7 +1165,7 @@ export default function UnifiedInboxTab({
                     </div>
                     {msg.needs_response && (
                       <span
-                        className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+                        className="w-2 h-2 rounded-full bg-[var(--warning-500)] animate-pulse"
                         title="Needs Response"
                       />
                     )}
@@ -1178,24 +1178,24 @@ export default function UnifiedInboxTab({
 
         {/* 3. Right Detail & Intelligence Panel */}
         <div
-          className={`${selectedMessage || composing ? "flex" : "hidden md:flex"} flex-1 flex-col bg-slate-900/10 min-w-0 min-h-0 overflow-hidden`}
+          className={`${selectedMessage || composing ? "flex" : "hidden md:flex"} flex-1 flex-col bg-[var(--ws-panel)]/10 min-w-0 min-h-0 overflow-hidden`}
         >
           {/* ── Compose New Email Panel ── */}
           {composing && !selectedMessage && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/20 shrink-0">
-                <h3 className="type-ui font-bold text-white flex items-center gap-2">
+              <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-panel)]/20 shrink-0">
+                <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <PenSquare className="w-4 h-4 text-teal-400" />
                   New Email
                 </h3>
-                <button onClick={() => setComposing(false)} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                <button onClick={() => setComposing(false)} className="p-1.5 rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {/* To field with contact autocomplete */}
                 <div className="relative">
-                  <label className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1 block">To</label>
+                  <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">To</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -1204,24 +1204,24 @@ export default function UnifiedInboxTab({
                       onBlur={() => setTimeout(() => setShowContactDrop(false), 150)}
                       onFocus={() => contactSearch && contactResults.length > 0 && setShowContactDrop(true)}
                       placeholder="Search contacts or type email..."
-                      className="w-full pl-3 pr-8 py-2.5 bg-slate-900 border border-slate-700 rounded-xl type-ui text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                      className="w-full pl-3 pr-8 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
                     />
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-3 pointer-events-none" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[var(--ws-text-muted)] absolute right-2.5 top-3 pointer-events-none" />
                   </div>
                   {showContactDrop && contactResults.length > 0 && (
-                    <div className="absolute z-50 top-full mt-1 w-full bg-slate-900 border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                    <div className="absolute z-50 top-full mt-1 w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl shadow-xl overflow-hidden">
                       {contactResults.map((c) => (
                         <button
                           key={c.id}
                           onMouseDown={() => handleSelectContact(c)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-left transition-colors"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[var(--ws-surface-secondary)] text-left transition-colors"
                         >
                           <div className="w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center text-teal-400 font-bold type-caption shrink-0">
                             {c.name?.[0] || c.email[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <p className="type-card-description font-semibold text-white truncate">{c.name || c.email}</p>
-                            <p className="type-card-description text-slate-400 truncate font-mono">{c.email}</p>
+                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{c.name || c.email}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] truncate font-mono">{c.email}</p>
                           </div>
                         </button>
                       ))}
@@ -1240,38 +1240,38 @@ export default function UnifiedInboxTab({
                 )}
 
                 <div>
-                  <label className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1 block">Subject</label>
+                  <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">Subject</label>
                   <input
                     type="text"
                     value={composeSubject}
                     onChange={(e) => setComposeSubject(e.target.value)}
                     placeholder="Email subject"
-                    className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl type-ui text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1 block">Message</label>
+                  <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1 block">Message</label>
                   <textarea
                     rows={12}
                     value={composeBody}
                     onChange={(e) => setComposeBody(e.target.value)}
                     placeholder="Write your message..."
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl type-ui leading-6 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-y min-h-48"
+                    className="w-full px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-ui leading-6 text-[var(--ws-text-secondary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-y min-h-48"
                   />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-1">
                   <button
                     onClick={() => setComposing(false)}
-                    className="px-4 py-2 text-slate-400 hover:text-white type-caption font-semibold rounded-xl hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-caption font-semibold rounded-xl hover:bg-[var(--ws-surface-secondary)] transition-colors"
                   >
                     Discard
                   </button>
                   <button
                     onClick={handleSendCompose}
                     disabled={!composeTo.trim() || !composeSubject.trim() || !composeBody.trim() || sendingCompose}
-                    className="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10"
+                    className="px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10"
                   >
                     {sendingCompose ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                     {sendingCompose ? "Sending..." : "Send Email"}
@@ -1284,33 +1284,33 @@ export default function UnifiedInboxTab({
           {selectedMessage ? (
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
               {/* Thread Header */}
-              <div className="p-4 border-b border-slate-800 flex items-start justify-between gap-3 bg-slate-900/20 shrink-0">
+              <div className="p-4 border-b border-[var(--ws-border)] flex items-start justify-between gap-3 bg-[var(--ws-panel)]/20 shrink-0">
                 <div className="min-w-0">
                   <button
                     type="button"
                     onClick={() => setSelectedMessage(null)}
-                    className="md:hidden mb-3 inline-flex items-center gap-1 type-caption font-semibold text-slate-400 hover:text-white"
+                    className="md:hidden mb-3 inline-flex items-center gap-1 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                   >
                     <CornerUpLeft className="w-3.5 h-3.5" />
                     Back
                   </button>
-                  <h3 className="type-ui font-bold text-white">
+                  <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">
                     {selectedMessage.subject ||
                       `Conversation with ${selectedMessage.from_name || "Client"}`}
                   </h3>
-                  <p className="type-card-description text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                  <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 flex flex-wrap items-center gap-2">
                     From:{" "}
                     {selectedMessage.from_address ? (
                       <button
                         type="button"
                         onClick={handleQuickEmailAction}
-                        className="font-mono text-teal-400 hover:text-teal-300 underline-offset-2 hover:underline"
+                        className="font-mono text-teal-400 hover:text-[var(--brand-blue-300)] underline-offset-2 hover:underline"
                         title="Prepare reply and send in platform"
                       >
                         {selectedMessage.from_address}
                       </button>
                     ) : (
-                      <span className="font-mono text-slate-300">Unknown</span>
+                      <span className="font-mono text-[var(--ws-text-secondary)]">Unknown</span>
                     )}
                     <span>
                       | Channel:{" "}
@@ -1327,7 +1327,7 @@ export default function UnifiedInboxTab({
                       <button
                         type="button"
                         onClick={handleQuickEmailAction}
-                        className="px-3 py-2 rounded-xl border border-teal-500/20 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 type-caption font-bold flex items-center gap-1.5 transition-all"
+                        className="px-3 py-2 rounded-xl border border-teal-500/20 bg-teal-500/10 hover:bg-teal-500/20 text-[var(--brand-blue-300)] type-caption font-bold flex items-center gap-1.5 transition-all"
                       >
                         <Send className="w-3.5 h-3.5" />
                         Send email
@@ -1343,7 +1343,7 @@ export default function UnifiedInboxTab({
                     className={`p-2 rounded-xl border type-caption font-semibold flex items-center gap-1.5 transition-all ${
                       selectedMessage.needs_response
                         ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20"
-                        : "bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700"
+                        : "bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]"
                     }`}
                     title={
                       selectedMessage.needs_response
@@ -1359,7 +1359,7 @@ export default function UnifiedInboxTab({
 
                   <button
                     onClick={() => handleArchiveMessage(selectedMessage.id)}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition-all"
+                    className="p-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] border border-[var(--ws-border)] rounded-xl transition-all"
                     title="Archive conversation"
                   >
                     <Archive className="w-4 h-4" />
@@ -1384,15 +1384,15 @@ export default function UnifiedInboxTab({
                 <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-6 min-w-0 custom-scrollbar">
                   {selectedThreadMessages.map((threadMsg, idx) => (
                     <div key={threadMsg.id || idx} className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 font-bold type-ui shrink-0 border border-slate-700">
+                      <div className="w-8 h-8 rounded-full bg-[var(--ws-surface-secondary)] flex items-center justify-center text-teal-400 font-bold type-ui shrink-0 border border-[var(--ws-border)]">
                         {threadMsg.from_name?.[0] ||
                           threadMsg.from_address?.[0] ||
                           "C"}
                       </div>
-                      <div className="flex-1 min-w-0 bg-slate-900/40 border border-slate-800 rounded-lg p-4 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex-1 min-w-0 bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold type-ui text-white">
+                            <span className="font-semibold type-ui text-[var(--ws-text-primary)]">
                               {threadMsg.from_name || threadMsg.from_address}
                             </span>
                             {threadMsg.direction === "outbound" && (
@@ -1401,7 +1401,7 @@ export default function UnifiedInboxTab({
                               </span>
                             )}
                           </div>
-                          <span className="type-caption text-slate-500 font-mono">
+                          <span className="type-caption text-[var(--ws-text-muted)] font-mono">
                             {threadMsg.received_at || threadMsg.sent_at
                               ? new Date(
                                   threadMsg.received_at || threadMsg.sent_at!,
@@ -1411,11 +1411,11 @@ export default function UnifiedInboxTab({
                         </div>
                         {threadMsg.html_body ? (
                           <div
-                            className="type-ui text-slate-200 leading-7 break-words email-html-body"
+                            className="type-ui text-[var(--ws-text-secondary)] leading-7 break-words email-html-body"
                             dangerouslySetInnerHTML={{ __html: threadMsg.html_body }}
                           />
                         ) : (
-                          <div className="type-ui text-slate-200 leading-7 whitespace-pre-wrap break-words">
+                          <div className="type-ui text-[var(--ws-text-secondary)] leading-7 whitespace-pre-wrap break-words">
                             {threadMsg.body}
                           </div>
                         )}
@@ -1426,10 +1426,10 @@ export default function UnifiedInboxTab({
                   {/* Reply drafting interface */}
                   <div
                     id="inbox-reply-compose"
-                    className="mt-8 pt-6 border-t border-slate-800 space-y-4 scroll-mt-4"
+                    className="mt-8 pt-6 border-t border-[var(--ws-border)] space-y-4 scroll-mt-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="type-caption font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                         <CornerUpLeft className="w-3.5 h-3.5" />
                         Compose Response
                       </span>
@@ -1463,7 +1463,7 @@ export default function UnifiedInboxTab({
                         value={replySubject}
                         onChange={(e) => setReplySubject(e.target.value)}
                         placeholder="Email subject"
-                        className="w-full px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl type-caption text-slate-300 focus:outline-none focus:border-teal-500"
+                        className="w-full px-3 py-2 bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                       />
                     )}
 
@@ -1474,7 +1474,7 @@ export default function UnifiedInboxTab({
                         placeholder="Add instructions for draft (e.g. 'say yes, book for Friday at 3pm')"
                         value={customReplyPrompt}
                         onChange={(e) => setCustomReplyPrompt(e.target.value)}
-                        className="flex-1 px-3 py-2 bg-slate-900/60 border border-slate-800 rounded-xl type-caption text-slate-300 focus:outline-none focus:border-teal-500"
+                        className="flex-1 px-3 py-2 bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                       />
                     </div>
 
@@ -1483,14 +1483,14 @@ export default function UnifiedInboxTab({
                       value={draftReplyText}
                       onChange={(e) => setDraftReplyText(e.target.value)}
                       placeholder="AI draft or manual message response..."
-                      className="w-full min-h-48 px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg type-ui leading-6 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500 resize-y"
+                      className="w-full min-h-48 px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg type-ui leading-6 text-[var(--ws-text-secondary)] placeholder-slate-600 focus:outline-none focus:border-teal-500 resize-y"
                     />
 
                     <div className="flex justify-end gap-2">
                       {draftReplyText && (
                         <button
                           onClick={() => setDraftReplyText("")}
-                          className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-400 rounded-xl type-caption font-semibold"
+                          className="px-4 py-2 bg-slate-850 hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-xl type-caption font-semibold"
                         >
                           Clear Draft
                         </button>
@@ -1500,7 +1500,7 @@ export default function UnifiedInboxTab({
                           <button
                             onClick={handleSaveDraftToMailbox}
                             disabled={savingDraft}
-                            className="px-4 py-2 border border-white/10 text-slate-300 hover:text-white rounded-xl type-caption font-semibold disabled:opacity-40"
+                            className="px-4 py-2 border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] rounded-xl type-caption font-semibold disabled:opacity-40"
                           >
                             {savingDraft ? "Saving…" : "Save to Drafts"}
                           </button>
@@ -1508,7 +1508,7 @@ export default function UnifiedInboxTab({
                       <button
                         onClick={handleSendReply}
                         disabled={!draftReplyText.trim() || sendingReply}
-                        className="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10"
+                        className="px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all shadow-lg shadow-teal-500/10"
                       >
                         {sendingReply ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1522,16 +1522,16 @@ export default function UnifiedInboxTab({
                 </div>
 
                 {/* Sidebar AI Intelligence Panel */}
-                <div className="hidden 2xl:block w-80 border-l border-slate-800 bg-slate-900/30 p-4 space-y-6 overflow-y-auto custom-scrollbar">
+                <div className="hidden 2xl:block w-80 border-l border-[var(--ws-border)] bg-[var(--ws-panel)]/30 p-4 space-y-6 overflow-y-auto custom-scrollbar">
                   <div className="flex items-center justify-between">
-                    <h4 className="type-caption font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <h4 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest flex items-center gap-1.5">
                       <Brain className="w-4 h-4 text-violet-400 animate-pulse" />
                       AI Copilot Intelligence
                     </h4>
                     <button
                       onClick={handleProcessIntelligence}
                       disabled={processingIntelligence}
-                      className="p-1 hover:bg-slate-850 rounded text-slate-500 hover:text-white transition-colors"
+                      className="p-1 hover:bg-slate-850 rounded text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                       title="Run AI Triage analysis"
                     >
                       {processingIntelligence ? (
@@ -1544,10 +1544,10 @@ export default function UnifiedInboxTab({
 
                   {/* Intent Summary */}
                   <div className="space-y-2">
-                    <span className="type-caption font-black uppercase text-slate-500">
+                    <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                       Extracted Intent
                     </span>
-                    <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-850 type-caption text-slate-300 leading-relaxed font-semibold">
+                    <div className="p-3 bg-[var(--ws-canvas)]/60 rounded-xl border border-slate-850 type-caption text-[var(--ws-text-secondary)] leading-relaxed font-semibold">
                       {selectedMessage.intent ||
                         "Classification pending. Click refresh above to analyze."}
                     </div>
@@ -1555,14 +1555,14 @@ export default function UnifiedInboxTab({
 
                   {/* AI Sentiment Analysis */}
                   <div className="space-y-2">
-                    <span className="type-caption font-black uppercase text-slate-500">
+                    <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                       Sentiment Rating
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="text-xl">
                         {getSentimentEmoji(selectedMessage.sentiment)}
                       </span>
-                      <span className="type-caption font-bold text-slate-300 capitalize">
+                      <span className="type-caption font-bold text-[var(--ws-text-secondary)] capitalize">
                         {selectedMessage.sentiment || "neutral"}
                       </span>
                     </div>
@@ -1570,7 +1570,7 @@ export default function UnifiedInboxTab({
 
                   {/* Priority / Response urgencies */}
                   <div className="space-y-2">
-                    <span className="type-caption font-black uppercase text-slate-500">
+                    <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                       Priority Tier
                     </span>
                     <div>
@@ -1585,10 +1585,10 @@ export default function UnifiedInboxTab({
                   {/* Recommended Next Action */}
                   {selectedMessage.metadata?.suggested_action && (
                     <div className="space-y-2">
-                      <span className="type-caption font-black uppercase text-slate-500">
+                      <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                         AI Suggested Next Action
                       </span>
-                      <div className="p-3 bg-teal-500/5 text-teal-300 rounded-xl border border-teal-500/10 type-caption leading-relaxed flex gap-2">
+                      <div className="p-3 bg-teal-500/5 text-[var(--brand-blue-300)] rounded-xl border border-teal-500/10 type-caption leading-relaxed flex gap-2">
                         <ArrowRight className="w-4 h-4 flex-shrink-0 text-teal-400 mt-0.5" />
                         <p>{selectedMessage.metadata.suggested_action}</p>
                       </div>
@@ -1598,10 +1598,10 @@ export default function UnifiedInboxTab({
                   {/* Summary block */}
                   {selectedMessage.metadata?.summary && (
                     <div className="space-y-2">
-                      <span className="type-caption font-black uppercase text-slate-500">
+                      <span className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                         Executive Summary
                       </span>
-                      <p className="type-card-description text-slate-400 leading-relaxed">
+                      <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         {selectedMessage.metadata.summary}
                       </p>
                     </div>
@@ -1610,9 +1610,9 @@ export default function UnifiedInboxTab({
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-[var(--ws-text-muted)]">
               <Inbox className="w-12 h-12 mb-4 text-slate-700 animate-pulse" />
-              <p className="font-semibold text-lg text-white mb-1">
+              <p className="font-semibold text-lg text-[var(--ws-text-primary)] mb-1">
                 Select a message
               </p>
               <p className="type-card-description max-w-sm">

@@ -4,6 +4,7 @@ import { validateProductionEnv } from "../../scripts/production-env.mjs";
 
 function validEnv(overrides = {}) {
   return {
+    NODE_ENV: "production",
     NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
     SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.test-signature",
@@ -14,6 +15,8 @@ function validEnv(overrides = {}) {
     TURNSTILE_SECRET: "turnstile-secret",
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAAD53DAgC52ZBZnji",
     UNSUBSCRIBE_SECRET: "unsubscribe-secret-at-least-32-characters",
+    CLIENT_PORTAL_SESSION_SIGNING_SECRET: "client-portal-signing-secret-32chars-min",
+    REDIS_URL: "redis://redis.example.internal:6379",
     ...overrides,
   };
 }
@@ -100,4 +103,25 @@ test("rejects partial SMTP and missing Stripe webhook configuration", () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join("\n"), /SMTP configuration is incomplete/);
   assert.match(result.errors.join("\n"), /STRIPE_WEBHOOK_SECRET/);
+});
+
+test("requires CLIENT_PORTAL_SESSION_SIGNING_SECRET and rejects service_role reuse", () => {
+  const missing = validateProductionEnv(validEnv({
+    CLIENT_PORTAL_SESSION_SIGNING_SECRET: "",
+  }));
+  assert.equal(missing.ok, false);
+  assert.match(missing.errors.join("\n"), /CLIENT_PORTAL_SESSION_SIGNING_SECRET/);
+
+  const reused = validateProductionEnv(validEnv({
+    CLIENT_PORTAL_SESSION_SIGNING_SECRET:
+      "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.test-signature",
+  }));
+  assert.equal(reused.ok, false);
+  assert.match(reused.errors.join("\n"), /must not be the Supabase service_role JWT/);
+});
+
+test("requires distributed Redis in production", () => {
+  const result = validateProductionEnv(validEnv({ REDIS_URL: "" }));
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /Distributed Redis is required/);
 });

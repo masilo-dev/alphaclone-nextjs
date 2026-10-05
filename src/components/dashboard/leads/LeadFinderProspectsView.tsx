@@ -251,7 +251,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
               </FormLabel>
               <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none" h="32px">
-                  <Search size={14} color="#64748B" />
+                  <Search size={14} color="var(--ws-text-muted)" />
                 </InputLeftElement>
                 <Input
                   value={niche}
@@ -274,7 +274,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
               </FormLabel>
               <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none" h="32px">
-                  <MapPin size={14} color="#64748B" />
+                  <MapPin size={14} color="var(--ws-text-muted)" />
                 </InputLeftElement>
                 <Input
                   value={location}
@@ -297,7 +297,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
               </FormLabel>
               <InputGroup size="sm">
                 <InputLeftElement pointerEvents="none" h="32px">
-                  <Radar size={14} color="#64748B" />
+                  <Radar size={14} color="var(--ws-text-muted)" />
                 </InputLeftElement>
                 <Select
                   value={radiusKm}

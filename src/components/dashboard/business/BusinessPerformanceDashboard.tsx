@@ -176,8 +176,8 @@ const BusinessPerformanceDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="w-12 h-12 border-4 border-[#adebb3]/20 border-t-[#adebb3] rounded-full animate-spin" />
-        <p className="text-[#c0c0c0] animate-pulse">Syncing Business Intelligence...</p>
+        <div className="w-12 h-12 border-4 border-[var(--success-500)]/20 border-t-[var(--success-500)] rounded-full animate-spin" />
+        <p className="text-[var(--border-default)] animate-pulse">Syncing Business Intelligence...</p>
       </div>
     );
   }
@@ -216,23 +216,23 @@ const BusinessPerformanceDashboard: React.FC = () => {
       {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Revenue Performance Chart */}
-        <Card className="lg:col-span-2 p-8 border-white/5 bg-white/5 backdrop-blur-md overflow-hidden relative">
+        <Card className="lg:col-span-2 p-8 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md overflow-hidden relative">
           <div className="absolute top-0 right-0 p-8">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#adebb3]" />
-                <span className="type-caption text-[#c0c0c0]">Revenue</span>
+                <div className="w-3 h-3 rounded-full bg-[var(--success-500)]" />
+                <span className="type-caption text-[var(--border-default)]">Revenue</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#00f0ff]" />
-                <span className="type-caption text-[#c0c0c0]">Projects</span>
+                <div className="w-3 h-3 rounded-full bg-[var(--brand-blue-400)]" />
+                <span className="type-caption text-[var(--border-default)]">Projects</span>
               </div>
             </div>
           </div>
           
           <div className="mb-8">
-             <h3 className="text-xl font-bold text-[#f5f5f5] mb-1">Revenue Momentum</h3>
-             <p className="type-card-description text-[#94a3b8]">Trailing 30-day performance snapshot.</p>
+             <h3 className="text-xl font-bold text-[var(--surface-secondary)] mb-1">Revenue Momentum</h3>
+             <p className="type-card-description text-[var(--ws-text-secondary)]">Trailing 30-day performance snapshot.</p>
           </div>
 
           <div className="h-[350px] w-full">
@@ -241,34 +241,34 @@ const BusinessPerformanceDashboard: React.FC = () => {
                 <AreaChart data={data?.revenue?.byPeriod || []}>
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#adebb3" stopOpacity={0.34} />
-                      <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--success-500)" stopOpacity={0.34} />
+                      <stop offset="95%" stopColor="var(--success-500)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#c0c0c0" 
+                    stroke="var(--border-default)" 
                     fontSize={12} 
                     tickFormatter={(val: any) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
-                    stroke="#c0c0c0" 
+                    stroke="var(--border-default)" 
                     fontSize={12} 
                     axisLine={false} 
                     tickLine={false}
                     tickFormatter={(val: any) => `$${val > 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                   />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(2, 6, 23, 0.94)', border: '1px solid rgba(148, 163, 184, 0.16)', borderRadius: '12px', color: '#f5f5f5' }}
-                    itemStyle={{ color: '#f5f5f5' }}
+                    contentStyle={{ backgroundColor: 'rgba(2, 6, 23, 0.94)', border: '1px solid rgba(148, 163, 184, 0.16)', borderRadius: '12px', color: 'var(--surface-secondary)' }}
+                    itemStyle={{ color: 'var(--surface-secondary)' }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#adebb3" 
+                    stroke="var(--success-500)" 
                     strokeWidth={3} 
                     fillOpacity={1} 
                     fill="url(#revenueGrad)" 
@@ -282,55 +282,55 @@ const BusinessPerformanceDashboard: React.FC = () => {
         {/* Sidebar Insights */}
         <div className="space-y-6">
           {/* Strategic Insights */}
-          <Card className="p-6 border-white/5 bg-white/5 backdrop-blur-md">
-            <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#adebb3]" /> Executive Insights
+          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md">
+            <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-6 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[var(--success-500)]" /> Executive Insights
             </h3>
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)]">
                 <div className="flex gap-3">
                   <div className="mt-1 p-1.5 rounded-full bg-teal-500/10 text-teal-400">
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="type-card-description font-bold text-[#f5f5f5]">
+                    <p className="type-card-description font-bold text-[var(--surface-secondary)]">
                       Revenue momentum{' '}
                       {data?.revenue?.trend == null
                         ? 'unavailable'
                         : `${data.revenue.trend >= 0 ? '+' : ''}${Number(data.revenue.trend).toFixed(1)}%`}
                     </p>
-                    <p className="type-card-description text-[#94a3b8] mt-1">
+                    <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">
                       Based on paid revenue for the selected analytics period versus the prior period.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)]">
                 <div className="flex gap-3">
                   <div className="mt-1 p-1.5 rounded-full bg-amber-500/10 text-amber-400">
                     <AlertCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="type-card-description font-bold text-[#f5f5f5]">Pipeline health</p>
-                    <p className="type-card-description text-[#94a3b8] mt-1">
+                    <p className="type-card-description font-bold text-[var(--surface-secondary)]">Pipeline health</p>
+                    <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">
                       Review deals and follow-ups in Sales for stagnant opportunities. Counts are not estimated on this panel.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+              <div className="p-4 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)]">
                 <div className="flex gap-3">
                   <div className="mt-1 p-1.5 rounded-full bg-emerald-500/10 text-emerald-400">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="type-card-description font-bold text-[#f5f5f5]">
+                    <p className="type-card-description font-bold text-[var(--surface-secondary)]">
                       Automation runs:{' '}
                       {Number(data?.businessOS?.automation?.totalRuns ?? 0).toLocaleString()}
                     </p>
-                    <p className="type-card-description text-[#94a3b8] mt-1">
+                    <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">
                       Success rate:{' '}
                       {Number(data?.businessOS?.automation?.successRate ?? 0).toFixed(0)}% from recorded workflow runs.
                     </p>
@@ -339,17 +339,17 @@ const BusinessPerformanceDashboard: React.FC = () => {
               </div>
             </div>
             
-            <button className="w-full mt-6 py-3 px-4 bg-[#3eb489] hover:bg-[#adebb3] text-[#0f172a] font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+            <button className="w-full mt-6 py-3 px-4 bg-[var(--success-500)] hover:bg-[var(--success-500)] text-[var(--ws-canvas)] font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
               Launch Orchestrator <ArrowRight className="w-4 h-4" />
             </button>
           </Card>
 
           {/* Activity Log Snapshot */}
-          <Card className="p-6 border-white/5 bg-white/5 backdrop-blur-md">
-            <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[#c0c0c0]" /> Recent Events
+          <Card className="p-6 border-[var(--ws-border)] bg-[var(--ws-hover)] backdrop-blur-md">
+            <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-6 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[var(--border-default)]" /> Recent Events
             </h3>
-            <p className="type-card-description text-[#94a3b8] leading-relaxed">
+            <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
               No recent workspace events are available for this period. Activity from deals, invoices,
               automations, and leads will appear here once recorded in your tenant.
             </p>

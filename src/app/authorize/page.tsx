@@ -124,7 +124,7 @@ function AuthorizeContent() {
 
     if (loading || !user) {
         return (
-            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-3 text-slate-400">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center gap-3 text-[var(--ws-text-muted)]">
                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                 <p className="type-card-description">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
             </div>
@@ -133,12 +133,12 @@ function AuthorizeContent() {
 
     if (!redirectUri) {
         return (
-            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-white text-center">
-                <div className="bg-slate-900/40 p-8 rounded-3xl border border-slate-800 max-w-md w-full">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-white text-center">
+                <div className="bg-[var(--ws-panel)]/40 p-8 rounded-3xl border border-[var(--ws-border)] max-w-md w-full">
                     <X className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h1 className="text-xl font-bold mb-2">Invalid Request</h1>
-                    <p className="text-slate-400 mb-6">Missing redirect_uri parameter.</p>
-                    <Link href="/dashboard" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
+                    <p className="text-[var(--ws-text-muted)] mb-6">Missing redirect_uri parameter.</p>
+                    <Link href="/dashboard" className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors">
                         Return to Dashboard
                     </Link>
                 </div>
@@ -147,18 +147,18 @@ function AuthorizeContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-white relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center p-6 text-white relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-[20%] left-[30%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse" />
             </div>
 
-            <div className="relative z-10 bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div className="relative z-10 bg-[var(--ws-panel)]/60 backdrop-blur-xl border border-[var(--ws-border)] p-8 rounded-3xl shadow-2xl max-w-md w-full text-center">
                 <div className="w-20 h-20 bg-teal-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-teal-500/20">
                     <Bot className="w-10 h-10 text-teal-400" />
                 </div>
 
                 <h1 className="text-2xl font-bold mb-2">Authorize Connection</h1>
-                <p className="text-slate-400 mb-2">
+                <p className="text-[var(--ws-text-muted)] mb-2">
                     An AI assistant (ChatGPT, Claude, or another connector) is requesting access to your AlphaClone workspace.
                 </p>
 
@@ -169,20 +169,20 @@ function AuthorizeContent() {
                     </div>
                 )}
 
-                <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 type-ui space-y-2">
-                    <p className="text-slate-300 font-medium">This will allow the connector to:</p>
-                    <ul className="text-slate-400 space-y-1 list-disc list-inside">
+                <div className="text-left bg-[var(--ws-surface-secondary)]/40 rounded-xl p-4 mb-6 type-ui space-y-2">
+                    <p className="text-[var(--ws-text-secondary)] font-medium">This will allow the connector to:</p>
+                    <ul className="text-[var(--ws-text-muted)] space-y-1 list-disc list-inside">
                         <li>Read your CRM, deals, and contacts</li>
                         <li>Manage tasks and projects on your behalf</li>
                         <li>Access your workspace tools via MCP</li>
                     </ul>
                     {clientId && (
-                        <p className="text-slate-500 type-card-description pt-1">Client: {clientId}</p>
+                        <p className="text-[var(--ws-text-muted)] type-card-description pt-1">Client: {clientId}</p>
                     )}
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl type-ui">
+                    <div className="mb-6 p-4 bg-[var(--error-500)]/10 border border-red-500/20 text-red-400 rounded-xl type-ui">
                         {error}
                     </div>
                 )}
@@ -191,7 +191,7 @@ function AuthorizeContent() {
                     <button
                         onClick={handleApprove}
                         disabled={approving}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl font-bold transition-all disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 rounded-xl font-bold transition-all disabled:opacity-50"
                     >
                         {approving ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -204,7 +204,7 @@ function AuthorizeContent() {
                     <button
                         onClick={handleDeny}
                         disabled={approving}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-slate-800 text-slate-300 rounded-xl font-medium transition-all disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-transparent hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-xl font-medium transition-all disabled:opacity-50"
                     >
                         <X className="w-5 h-5" />
                         Deny Access
@@ -218,7 +218,7 @@ function AuthorizeContent() {
 export default function AuthorizePage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
             </div>
         }>

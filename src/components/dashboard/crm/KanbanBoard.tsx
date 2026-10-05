@@ -43,7 +43,7 @@ import { ContextualBulkBar } from '@/components/ui/workspace';
 
 // Active pipeline columns only — won/lost are terminal actions (removed from board).
 const KANBAN_STAGES = [
-  { id: 'lead', title: 'Discovered', color: 'bg-slate-800' },
+  { id: 'lead', title: 'Discovered', color: 'bg-[var(--ws-surface-secondary)]' },
   { id: 'qualified', title: 'Qualified', color: 'bg-blue-900/20' },
   { id: 'proposal', title: 'Proposal', color: 'bg-indigo-900/20' },
   { id: 'negotiation', title: 'Negotiation', color: 'bg-amber-900/20' },
@@ -80,15 +80,15 @@ function KanbanCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative flex gap-1.5 p-2 sm:p-3 bg-slate-900 border ${
-        isDragging ? 'border-[var(--brand-blue-500)] shadow-xl z-50' : 'border-slate-800'
+      className={`relative flex gap-1.5 p-2 sm:p-3 bg-[var(--ws-panel)] border ${
+        isDragging ? 'border-[var(--brand-blue-500)] shadow-xl z-50' : 'border-[var(--ws-border)]'
       } rounded-xl shadow-sm hover:shadow-md transition-shadow group
       ${isOverlay ? 'scale-105 shadow-2xl rotate-2 z-50 border-[var(--brand-blue-500)]' : ''}`}
     >
       <div className="flex flex-col gap-2 shrink-0 pt-0.5">
         <button
           type="button"
-          className="min-h-11 min-w-11 rounded-md text-slate-400 hover:text-[var(--brand-blue-400)] hover:bg-slate-800 cursor-grab active:cursor-grabbing flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]"
+          className="min-h-11 min-w-11 rounded-md text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] hover:bg-[var(--ws-surface-secondary)] cursor-grab active:cursor-grabbing flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]"
           aria-label="Drag to move lead"
           {...listeners}
           {...attributes}
@@ -102,9 +102,9 @@ function KanbanCard({
               e.stopPropagation();
               onToggleSelect?.(lead.id);
             }}
-            className={`min-h-11 min-w-11 rounded border flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-700 hover:border-[var(--brand-blue-500)]'}`}
+            className={`min-h-11 min-w-11 rounded border flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'}`}
           >
-            {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+            {isSelected && <CheckCircle2 className="w-3 h-3 text-[var(--ws-text-primary)]" />}
           </button>
         )}
       </div>
@@ -125,15 +125,15 @@ function KanbanCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {/* 36px Circular Initials */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-violet-600)] flex items-center justify-center font-bold text-white type-ui shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-violet-600)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-ui shrink-0 shadow-sm">
               {(lead.businessName || '?').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h4 className="font-bold type-ui text-white truncate">{lead.businessName}</h4>
+              <h4 className="font-bold type-ui text-[var(--ws-text-primary)] truncate">{lead.businessName}</h4>
               
               <div className="flex flex-wrap items-center gap-1 mt-0.5">
                 {lead.industry && (
-                  <span className="type-ui font-medium px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 truncate max-w-full">
+                  <span className="type-ui font-medium px-1.5 py-0.5 rounded bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] truncate max-w-full">
                     {lead.industry}
                   </span>
                 )}
@@ -151,7 +151,7 @@ function KanbanCard({
                 )}
 
                 {/* Client stage pill */}
-                <span className="type-caption font-extrabold px-1.5 py-0.5 rounded-full bg-slate-950 border border-slate-800 text-slate-400 uppercase tracking-wider">
+                <span className="type-caption font-extrabold px-1.5 py-0.5 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] text-[var(--ws-text-muted)] uppercase tracking-wider">
                   {lead.stage}
                 </span>
               </div>
@@ -160,7 +160,7 @@ function KanbanCard({
         </div>
 
         {(lead.email || lead.phone || lead.location) && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 type-caption text-slate-400">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 type-caption text-[var(--ws-text-muted)]">
             {lead.location && (
               <div className="flex items-center gap-1 min-w-0">
                 <MapPin className="w-3 h-3 shrink-0" />{' '}
@@ -182,7 +182,7 @@ function KanbanCard({
           </div>
         )}
 
-        <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
+        <div className="pt-2 border-t border-[var(--ws-border)] flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {lead.trustScore ? (
               <div
@@ -235,12 +235,12 @@ function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col w-[min(88vw,300px)] shrink-0 snap-center rounded-2xl md:w-auto md:min-w-0 md:max-w-none md:shrink md:snap-none ${column.color} border border-slate-700/30 overflow-hidden`}
+      className={`flex flex-col w-[min(88vw,300px)] shrink-0 snap-center rounded-2xl md:w-auto md:min-w-0 md:max-w-none md:shrink md:snap-none ${column.color} border border-[var(--ws-border)]/30 overflow-hidden`}
     >
-      <div className="p-3 bg-slate-900/50 backdrop-blur-sm border-b border-slate-800 flex items-center justify-between sticky top-0 z-10">
-        <h3 className="font-bold type-ui text-slate-200 flex items-center gap-2">
+      <div className="p-3 bg-[var(--ws-panel)]/50 backdrop-blur-sm border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 z-10">
+        <h3 className="font-bold type-ui text-[var(--ws-text-secondary)] flex items-center gap-2">
             {column.title}
-            <span className="type-caption bg-slate-800 px-2 py-0.5 rounded-full text-slate-400 font-medium">
+            <span className="type-caption bg-[var(--ws-surface-secondary)] px-2 py-0.5 rounded-full text-[var(--ws-text-muted)] font-medium">
                 {leads?.length || 0}
             </span>
         </h3>
@@ -259,7 +259,7 @@ function KanbanColumn({
           ))}
         </SortableContext>
         {leads.length === 0 && (
-            <div className="pointer-events-none absolute inset-0 m-4 border-2 border-dashed border-slate-600/30 rounded-xl flex items-center justify-center type-caption text-slate-400 font-medium text-center px-4">
+            <div className="pointer-events-none absolute inset-0 m-4 border-2 border-dashed border-slate-600/30 rounded-xl flex items-center justify-center type-caption text-[var(--ws-text-muted)] font-medium text-center px-4">
                 Drag leads here to update pipeline
             </div>
         )}
@@ -290,10 +290,10 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden md:hidden"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden md:hidden"
           >
             {/* Grab Handle */}
-            <div className="flex justify-center py-3 shrink-0 bg-slate-900/40 border-b border-white/5">
+            <div className="flex justify-center py-3 shrink-0 bg-[var(--ws-panel)]/40 border-b border-[var(--ws-border)]">
               <div className="w-12 h-1 bg-white/20 rounded-full" />
             </div>
 
@@ -301,29 +301,29 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
               {/* Header: Circle Initials & Name */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-blue-400)] to-[var(--brand-violet-600)] flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-[var(--brand-blue-500)]/10 shrink-0">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-blue-400)] to-[var(--brand-violet-600)] flex items-center justify-center font-black text-[var(--text-inverse)] text-2xl shadow-xl shadow-[var(--brand-blue-500)]/10 shrink-0">
                   {(lead.businessName || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="type-caption font-black uppercase tracking-widest text-slate-500 font-mono">
+                  <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] font-mono">
                     {lead.industry || 'Unknown Industry'}
                   </span>
-                  <h3 className="text-xl font-black text-white uppercase tracking-tight truncate mt-0.5">
+                  <h3 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tight truncate mt-0.5">
                     {lead.businessName}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-blue-500)] animate-pulse" />
-                    <span className="type-caption text-slate-400">Trust Score: <span className="text-[var(--brand-blue-400)] font-bold">{lead.trustScore || 'N/A'}</span></span>
+                    <span className="type-caption text-[var(--ws-text-muted)]">Trust Score: <span className="text-[var(--brand-blue-400)] font-bold">{lead.trustScore || 'N/A'}</span></span>
                   </div>
                 </div>
-                <button onClick={onClose} className="min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]" aria-label="Close lead details">
+                <button onClick={onClose} className="min-h-11 min-w-11 flex items-center justify-center rounded-full bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]" aria-label="Close lead details">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Status Dot Selectors */}
-              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-4">
-                <p className="type-caption font-black uppercase tracking-widest text-slate-500 font-mono mb-3 text-center">
+              <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-3xl p-4">
+                <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] font-mono mb-3 text-center">
                   Stage Pipeline Controller
                 </p>
                 <div className="flex items-center justify-between px-2">
@@ -333,7 +333,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     if (stage.id === 'lead') dotColor = 'bg-slate-400';
                     else if (stage.id === 'qualified') dotColor = 'bg-blue-400';
                     else if (stage.id === 'proposal') dotColor = 'bg-indigo-400';
-                    else if (stage.id === 'negotiation') dotColor = 'bg-amber-400';
+                    else if (stage.id === 'negotiation') dotColor = 'bg-[var(--warning-500)]';
 
                     return (
                       <button
@@ -344,12 +344,12 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                           isActive 
-                            ? 'scale-110 ring-2 ring-[var(--brand-blue-500)] ring-offset-2 ring-offset-slate-950 bg-white/10' 
-                            : 'hover:bg-white/5'
+                            ? 'scale-110 ring-2 ring-[var(--brand-blue-500)] ring-offset-2 ring-offset-slate-950 bg-[var(--ws-hover)]' 
+                            : 'hover:bg-[var(--ws-hover)]'
                         }`}>
                           <span className={`w-3.5 h-3.5 rounded-full ${dotColor} ${isActive ? 'scale-110 shadow-lg shadow-current' : 'opacity-60'}`} />
                         </div>
-                        <span className={`type-caption font-mono uppercase tracking-wider ${isActive ? 'text-white font-bold' : 'text-slate-500'}`}>
+                        <span className={`type-caption font-mono uppercase tracking-wider ${isActive ? 'text-[var(--ws-text-primary)] font-bold' : 'text-[var(--ws-text-muted)]'}`}>
                           {stage.title.split(' ')[0]}
                         </span>
                       </button>
@@ -379,15 +379,15 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                 {lead.phone ? (
                   <a
                     href={`tel:${lead.phone}`}
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-[var(--brand-blue-500)]/10 rounded-xl">
                       <Phone className="w-5 h-5 text-[var(--brand-blue-400)]" />
                     </div>
-                    <span className="type-caption font-black uppercase tracking-widest text-slate-300 font-mono">Call</span>
+                    <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Call</span>
                   </a>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <Phone className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Phone</span>
                   </div>
@@ -397,15 +397,15 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                   <button
                     type="button"
                     onClick={() => router.push(buildMailComposeUrl(lead.email, `Re: ${lead.businessName || 'your inquiry'}`))}
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-indigo-500/10 rounded-xl">
                       <Mail className="w-5 h-5 text-indigo-400" />
                     </div>
-                    <span className="type-caption font-black uppercase tracking-widest text-slate-300 font-mono">Email</span>
+                    <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Email</span>
                   </button>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <Mail className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Email</span>
                   </div>
@@ -416,15 +416,15 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     href={`https://maps.google.com/?q=${encodeURIComponent(lead.location)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-amber-500/10 rounded-xl">
                       <MapPin className="w-5 h-5 text-amber-400" />
                     </div>
-                    <span className="type-caption font-black uppercase tracking-widest text-slate-300 font-mono">Locate</span>
+                    <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-secondary)] font-mono">Locate</span>
                   </a>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-dashed border-white/5 rounded-2xl opacity-40">
+                  <div className="flex flex-col items-center gap-2 p-3 bg-[var(--ws-panel)]/30 border border-dashed border-[var(--ws-border)] rounded-2xl opacity-40">
                     <MapPin className="w-5 h-5 text-slate-600" />
                     <span className="type-caption font-black uppercase tracking-widest text-slate-600 font-mono">No Map</span>
                   </div>
@@ -433,14 +433,14 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
 
               {/* SDR Insights Section */}
               {lead.sdrInsight && (
-                <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-5 space-y-3">
+                <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-3xl p-5 space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="p-1 bg-indigo-500/10 rounded-lg">
                       <Sparkles className="w-4 h-4 text-indigo-400" />
                     </div>
-                    <h4 className="type-caption font-black uppercase tracking-widest text-white font-mono">AI Outreach Strategy</h4>
+                    <h4 className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)] font-mono">AI Outreach Strategy</h4>
                   </div>
-                  <p className="type-card-description text-slate-300 leading-relaxed font-sans bg-slate-950/40 p-3.5 rounded-2xl border border-white/5">
+                  <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-sans bg-[var(--ws-canvas)]/40 p-3.5 rounded-2xl border border-[var(--ws-border)]">
                     {lead.sdrInsight}
                   </p>
                 </div>
@@ -452,7 +452,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                   onOpenFullDetails();
                   onClose();
                 }}
-                className="w-full py-4 bg-white/5 hover:bg-white/10 active:bg-white/20 border border-white/10 rounded-2xl text-center type-caption font-black uppercase tracking-widest text-white transition-all"
+                className="w-full py-4 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] active:bg-white/20 border border-[var(--ws-border)] rounded-2xl text-center type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)] transition-all"
               >
                 Open Full Conversation Hub
               </button>
@@ -803,7 +803,7 @@ export default function KanbanBoard() {
     <div className="w-full min-w-0 p-3 sm:p-4 pb-8 overflow-x-auto md:overflow-x-visible">
         <div className="mb-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
-            <span className="type-caption uppercase tracking-wider text-slate-400 font-semibold whitespace-nowrap mr-1">Sources:</span>
+            <span className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] font-semibold whitespace-nowrap mr-1">Sources:</span>
             {[
               { value: 'all', label: `All (${sourceCounts.all})` },
               { value: 'ai_mcp', label: `Claude/MCP (${sourceCounts.ai_mcp})` },
@@ -814,8 +814,8 @@ export default function KanbanBoard() {
                 onClick={() => setSourceFilter(filter.value as any)}
                 className={`h-7 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border ${
                   sourceFilter === filter.value
-                    ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-500)]/10'
-                    : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-white hover:bg-slate-800'
+                    ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-500)]/10'
+                    : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-slate-750 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]'
                 }`}
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
@@ -835,7 +835,7 @@ export default function KanbanBoard() {
                   }
                 }
               }}
-              className="h-7 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-[var(--brand-blue-400)] hover:bg-slate-800"
+              className="h-7 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-slate-750 hover:text-[var(--brand-blue-400)] hover:bg-[var(--ws-surface-secondary)]"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
@@ -861,7 +861,7 @@ export default function KanbanBoard() {
               <button
                 type="button"
                 onClick={() => setShowOutreachModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs font-bold rounded-lg transition-all shadow-md shadow-blue-900/30"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs font-bold rounded-lg transition-all shadow-md shadow-blue-900/30"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Bulk Outreach</span>
@@ -872,9 +872,9 @@ export default function KanbanBoard() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {KANBAN_STAGES.map((stage) => (
-              <div key={stage.id} className="px-2 py-1.5 rounded-lg border border-slate-700 bg-slate-900 type-caption text-slate-300 flex justify-between">
+              <div key={stage.id} className="px-2 py-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] type-caption text-[var(--ws-text-secondary)] flex justify-between">
                 <span>{stage.title}</span>
-                <span className="font-bold text-white">{stageCounts[stage.id] || 0}</span>
+                <span className="font-bold text-[var(--ws-text-primary)]">{stageCounts[stage.id] || 0}</span>
               </div>
             ))}
           </div>
@@ -921,7 +921,7 @@ export default function KanbanBoard() {
             type="button"
             disabled={loadingMore}
             onClick={() => void loadMoreLeads()}
-            className="mt-4 w-full rounded-xl border border-slate-700 bg-slate-900 p-3 text-sm text-white disabled:opacity-50"
+            className="mt-4 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-3 text-sm text-[var(--ws-text-primary)] disabled:opacity-50"
           >
             {loadingMore ? 'Loading more leads…' : 'Load more leads'}
           </button>
@@ -963,7 +963,7 @@ export default function KanbanBoard() {
           onClick={() => {
             router.push('/dashboard/crm/workspace?quickAdd=true');
           }}
-          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 z-50 md:hidden w-14 h-14 rounded-full bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/30 cursor-pointer active:scale-95 transition-transform"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 z-50 md:hidden w-14 h-14 rounded-full bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/30 cursor-pointer active:scale-95 transition-transform"
           style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
         >
           <Plus className="w-6 h-6" />

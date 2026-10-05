@@ -205,7 +205,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const currentTenant = propTenant || contextTenant;
     const tenantBranding = useMemo(() => extractTenantBranding(currentTenant), [currentTenant]);
     const tenantBrandStyle = useMemo(
-        () => ({ '--brand-blue-500': tenantBranding.primaryColor || '#356AF4' } as React.CSSProperties),
+        () => ({ '--brand-blue-500': tenantBranding.primaryColor || 'var(--brand-blue-500)' } as React.CSSProperties),
         [tenantBranding.primaryColor],
     );
     const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
@@ -547,14 +547,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6">
                     <ShieldCheck className="w-10 h-10 text-teal-400" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">{feature} is Locked</h3>
-                <p className="text-slate-400 max-w-md mb-8">
+                <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">{feature} is Locked</h3>
+                <p className="text-[var(--ws-text-muted)] max-w-md mb-8">
                     The full CRM suite, including Leads and Pipelines, is available on our Pro and Enterprise plans. Upgrade to supercharge your sales workflow.
                 </p>
                 <div className="flex gap-4">
                     <button
                         onClick={() => setActiveTab('/dashboard/business/settings')}
-                        className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                        className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         View Upgrade Options
                     </button>
@@ -664,7 +664,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/pwa-settings':
                 return (
-                    <React.Suspense fallback={<div className="min-h-screen bg-[#0a0f1a]" />}>
+                    <React.Suspense fallback={<div className="min-h-screen bg-[var(--ws-canvas)]" />}>
                         <PwaSettingsScreen
                             user={user}
                             onBack={() => setActiveTab('/dashboard/business')}
@@ -1067,11 +1067,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             default:
                 return (
                     <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
-                        <p className="text-slate-400 type-card-description mb-4">{t('This section could not be loaded.')}</p>
+                        <p className="text-[var(--ws-text-muted)] type-card-description mb-4">{t('This section could not be loaded.')}</p>
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard')}
-                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-ui font-semibold"
+                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui font-semibold"
                         >
                             {t('Back to Dashboard')}
                         </button>
@@ -1192,7 +1192,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center">
-                    <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
+                    <div className="text-[var(--ws-text-muted)] text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
             </div>
         );
@@ -1221,8 +1221,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center max-w-md p-8">
-                    <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
-                    <div className="text-slate-400 mb-6">
+                    <div className="text-[var(--ws-text-secondary)] text-xl mb-4">{t('No Organization Found')}</div>
+                    <div className="text-[var(--ws-text-muted)] mb-6">
                         {tenantError
                             ? tenantError
                             : t('Your business workspace was not set up yet. Create one below to continue.')}
@@ -1231,19 +1231,19 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <button
                             onClick={handleCreateWorkspace}
                             disabled={bootstrappingOrg}
-                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-[var(--text-inverse)] rounded-lg transition-colors font-medium border border-teal-400/20"
                         >
                             {bootstrappingOrg ? t('Creating workspace...') : t('Create My Workspace')}
                         </button>
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium border border-slate-700"
+                            className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-lg transition-colors font-medium border border-[var(--ws-border)]"
                         >
                             {t('Retry Loading')}
                         </button>
                         <button
                             onClick={() => onLogout()}
-                            className="text-slate-500 hover:text-slate-400 type-ui transition-colors py-1"
+                            className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-muted)] type-ui transition-colors py-1"
                         >
                             {t('Log out and switch account')}
                         </button>
@@ -1289,7 +1289,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             <span>{notification}</span>
                         </div>
                         <button
-                            className="text-[var(--brand-blue-400)] hover:text-white type-caption font-bold"
+                            className="text-[var(--brand-blue-400)] hover:text-[var(--ws-text-primary)] type-caption font-bold"
                             onClick={() => {
                                 setNotification(null);
                                 setActiveTab('/dashboard/tasks');
@@ -1329,7 +1329,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
                         {!isHubRoute(route) && (
                         <div className="ac-pwa-desktop-only hidden md:block">
-                            <h1 className="text-base md:text-lg font-bold text-white/90 tracking-tight">
+                            <h1 className="text-base md:text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">
                                 {getPageTitle()}
                             </h1>
                         </div>
@@ -1374,7 +1374,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 Create
                             </button>
                             {quickCreateOpen ? (
-                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] p-1.5 shadow-2xl" role="menu">
+                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] p-1.5 shadow-2xl" role="menu">
                                     {[
                                         ['Task', '/dashboard/tasks?create=true'],
                                         ['Lead', '/dashboard/crm/workspace?quickAdd=true'],
@@ -1415,7 +1415,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 Today
                             </button>
                             {todayOpen ? (
-                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] p-3 shadow-2xl" aria-label="Today’s work">
+                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] p-3 shadow-2xl" aria-label="Today’s work">
                                     <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Today</p>
                                     <p className="mt-1 type-caption text-[var(--ws-text-secondary)]">Start with work that needs a decision or response.</p>
                                     <div className="mt-2 space-y-1">

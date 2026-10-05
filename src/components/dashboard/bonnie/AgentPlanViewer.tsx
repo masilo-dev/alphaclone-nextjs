@@ -52,7 +52,7 @@ export type AgentPlanViewerProps = {
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
 const STATUS_ICON: Record<AgentPlanStep['status'], React.ReactNode> = {
-  pending: <Clock className="h-3.5 w-3.5 text-slate-500" />,
+  pending: <Clock className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />,
   running: <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />,
   done: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
   failed: <XCircle className="h-3.5 w-3.5 text-rose-400" />,
@@ -60,10 +60,10 @@ const STATUS_ICON: Record<AgentPlanStep['status'], React.ReactNode> = {
 };
 
 const STATUS_LABEL_CLASS: Record<AgentPlanStep['status'], string> = {
-  pending: 'text-slate-500',
-  running: 'text-teal-300 font-semibold',
-  done: 'text-slate-300 line-through opacity-60',
-  failed: 'text-rose-300',
+  pending: 'text-[var(--ws-text-muted)]',
+  running: 'text-[var(--brand-blue-300)] font-semibold',
+  done: 'text-[var(--ws-text-secondary)] line-through opacity-60',
+  failed: 'text-[var(--error-text,var(--error-500))]',
   skipped: 'text-slate-600 italic',
 };
 
@@ -83,7 +83,7 @@ export default function AgentPlanViewer({
   const failCount = steps.filter((s) => s.status === 'failed').length;
 
   return (
-    <div className="mt-2 rounded-xl border border-teal-500/20 bg-slate-900/60 overflow-hidden">
+    <div className="mt-2 rounded-xl border border-teal-500/20 bg-[var(--ws-panel)]/60 overflow-hidden">
       {/* Header ─── */}
       <button
         type="button"
@@ -99,38 +99,38 @@ export default function AgentPlanViewer({
             Agent Plan
           </p>
           {planTitle && (
-            <p className="type-card-description text-slate-300 truncate">{planTitle}</p>
+            <p className="type-card-description text-[var(--ws-text-secondary)] truncate">{planTitle}</p>
           )}
         </div>
 
         {/* Progress pill */}
         <div className="flex items-center gap-1.5 shrink-0">
           {isRunning && (
-            <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-teal-300">
+            <span className="flex items-center gap-1 rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-[var(--brand-blue-300)]">
               <Loader2 className="h-2.5 w-2.5 animate-spin" />
               Running
             </span>
           )}
           {!isRunning && failCount > 0 && (
-            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 type-ui font-bold text-rose-300">
+            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 type-ui font-bold text-[var(--error-text,var(--error-500))]">
               {failCount} failed
             </span>
           )}
           {!isRunning && failCount === 0 && (
-            <span className="type-ui text-slate-500">
+            <span className="type-ui text-[var(--ws-text-muted)]">
               {doneCount}/{steps.length}
             </span>
           )}
           {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+            <ChevronRight className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+            <ChevronDown className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />
           )}
         </div>
       </button>
 
       {/* Progress bar ─── */}
-      <div className="h-0.5 bg-slate-800">
+      <div className="h-0.5 bg-[var(--ws-surface-secondary)]">
         <motion.div
           className="h-full bg-teal-500 rounded-full"
           initial={{ width: 0 }}
@@ -164,7 +164,7 @@ export default function AgentPlanViewer({
                   className="flex items-start gap-2"
                 >
                   {/* Step number */}
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-700 type-ui font-black text-slate-500">
+                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[var(--ws-border)] type-ui font-black text-[var(--ws-text-muted)]">
                     {idx + 1}
                   </span>
 
@@ -185,7 +185,7 @@ export default function AgentPlanViewer({
                       </p>
                     )}
                     {step.detail && step.status !== 'done' && (
-                      <p className="mt-0.5 type-card-description text-slate-500 leading-snug">
+                      <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)] leading-snug">
                         {step.detail}
                       </p>
                     )}

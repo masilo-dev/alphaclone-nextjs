@@ -60,25 +60,25 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="inline-flex rounded-full bg-[var(--ac-accent-muted)] px-2.5 py-1 type-caption font-semibold uppercase tracking-label text-[var(--ac-accent)]">Simple campaign setup</p>
-              <h1 id="campaign-setup-heading" className="mt-3 text-2xl font-semibold tracking-tight text-white">Send a clear message in four steps</h1>
+              <h1 id="campaign-setup-heading" className="mt-3 text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)]">Send a clear message in four steps</h1>
               <p className="mt-1 max-w-2xl type-caption leading-relaxed text-[var(--ws-text-secondary)]">
                 AlphaClone keeps delivery safeguards in place while showing only what you need at each step. Your campaign stays a draft until you review and choose to send or schedule it.
               </p>
             </div>
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] px-3 py-2 type-caption text-[var(--ws-text-tertiary)]">
-              <CheckCircle2 className="h-4 w-4 text-[var(--success-text,#6FE0AD)]" aria-hidden="true" />
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,var(--ws-canvas))] px-3 py-2 type-caption text-[var(--ws-text-tertiary)]">
+              <CheckCircle2 className="h-4 w-4 text-[var(--success-text)]" aria-hidden="true" />
               You can go back without losing your draft.
             </p>
           </div>
 
           <ol className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {CAMPAIGN_STEPS.map(({ number, title, description, Icon }) => (
-              <li key={number} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] p-4 transition-colors hover:border-[var(--ac-accent)]/50">
+              <li key={number} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,var(--ws-canvas))] p-4 transition-colors hover:border-[var(--ac-accent)]/50">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ac-accent-muted)] type-caption font-semibold text-[var(--ac-accent)]">{number}</span>
                   <Icon className="ml-auto h-4 w-4 text-[var(--ac-accent)]" aria-hidden="true" />
                 </div>
-                <h2 className="mt-3 type-ui font-semibold text-white">{title}</h2>
+                <h2 className="mt-3 type-ui font-semibold text-[var(--ws-text-primary)]">{title}</h2>
                 <p className="mt-1 type-caption leading-relaxed text-[var(--ws-text-secondary)]">{description}</p>
               </li>
             ))}

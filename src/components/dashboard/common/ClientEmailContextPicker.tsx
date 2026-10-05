@@ -89,9 +89,9 @@ export function ClientEmailContextPicker({
   };
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3 space-y-3">
+    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 type-caption font-semibold text-slate-300 uppercase tracking-wider">
+        <div className="flex items-center gap-2 type-caption font-semibold text-[var(--ws-text-secondary)] uppercase tracking-wider">
           <Paperclip className="w-3.5 h-3.5 text-teal-400" />
           Include from workspace
         </div>
@@ -99,7 +99,7 @@ export function ClientEmailContextPicker({
           <button
             type="button"
             onClick={handleInsert}
-            className="type-ui font-bold text-teal-300 hover:text-teal-200"
+            className="type-ui font-bold text-[var(--brand-blue-300)] hover:text-teal-200"
           >
             Insert {selectedIds.size} reference{selectedIds.size === 1 ? '' : 's'}
           </button>
@@ -107,12 +107,12 @@ export function ClientEmailContextPicker({
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 type-caption text-slate-500 py-2">
+        <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)] py-2">
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
           Loading contracts, invoices, quotes, meetings...
         </div>
       ) : items.length === 0 ? (
-        <p className="type-card-description text-slate-500">No linked documents yet for this contact.</p>
+        <p className="type-card-description text-[var(--ws-text-muted)]">No linked documents yet for this contact.</p>
       ) : (
         <div className="space-y-3 max-h-44 overflow-y-auto custom-scrollbar">
           {Array.from(grouped.entries()).map(([type, groupItems]) => {
@@ -120,7 +120,7 @@ export function ClientEmailContextPicker({
             const Icon = meta.Icon;
             return (
               <div key={type}>
-                <p className="type-caption font-black uppercase tracking-widest text-slate-500 mb-1.5 flex items-center gap-1">
+                <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1.5 flex items-center gap-1">
                   <Icon className="w-3 h-3" />
                   {meta.label}
                 </p>
@@ -134,7 +134,7 @@ export function ClientEmailContextPicker({
                         className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 cursor-pointer transition-colors ${
                           checked
                             ? 'border-teal-500/30 bg-teal-500/10'
-                            : 'border-slate-800 hover:border-slate-700'
+                            : 'border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                         }`}
                       >
                         <input
@@ -144,8 +144,8 @@ export function ClientEmailContextPicker({
                           className="mt-0.5 accent-teal-500"
                         />
                         <span className="min-w-0">
-                          <span className="block type-caption font-medium text-white truncate">{item.label}</span>
-                          <span className="block type-ui text-slate-500 truncate">{item.detail}</span>
+                          <span className="block type-caption font-medium text-[var(--ws-text-primary)] truncate">{item.label}</span>
+                          <span className="block type-ui text-[var(--ws-text-muted)] truncate">{item.detail}</span>
                         </span>
                       </label>
                     );

@@ -818,7 +818,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             <button
                 type="button"
                 onClick={toggleSelectAllFiltered}
-                className="inline-flex items-center gap-2 type-caption font-semibold text-slate-400 hover:text-white"
+                className="inline-flex items-center gap-2 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
             >
                 {allFilteredClientsSelected ? (
                     <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
@@ -831,7 +831,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <button
                     type="button"
                     onClick={() => setSelectedClientIds([])}
-                    className="type-caption text-slate-500 hover:text-slate-300"
+                    className="type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
                 >
                     Clear ({selectedClientIds.length})
                 </button>
@@ -891,8 +891,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     };
 
     const crmSectionFallback = (
-        <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-slate-800 bg-slate-900/50">
-            <div className="text-slate-400 type-ui font-medium">Loading...</div>
+        <div className="flex items-center justify-center min-h-[320px] rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+            <div className="text-[var(--ws-text-muted)] type-ui font-medium">Loading...</div>
         </div>
     );
 
@@ -985,7 +985,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Customers</h2>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                            <p className="text-slate-500 type-caption font-bold uppercase tracking-wide">CRM</p>
+                            <p className="text-[var(--ws-text-muted)] type-caption font-bold uppercase tracking-wide">CRM</p>
                         </div>
                     </div>
                     <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -1003,12 +1003,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {filteredClients.map(client => (
                         <div key={client.id} className="p-3 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white type-caption">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-caption">
                                     {(client.name || '?').charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white type-ui">{client.name}</h3>
-                                    <p className="type-card-description text-slate-400">{client.email || client.phone || 'No contact'}</p>
+                                    <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">{client.name}</h3>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">{client.email || client.phone || 'No contact'}</p>
                                 </div>
                             </div>
                             <Badge variant={client.salesStage === 'customer' ? 'success' : 'blue'}>
@@ -1041,7 +1041,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 type-caption font-bold uppercase tracking-wide">Pipeline</p>
+                        <p className="text-[var(--ws-text-muted)] type-caption font-bold uppercase tracking-wide">Pipeline</p>
                     </div>
                 </div>
                 <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -1079,21 +1079,21 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <button
                             onClick={() => setViewMode('list')}
                             title="List view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <List className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('board')}
                             title="Card view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <LayoutGrid className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('micro')}
                             title="Micro grid view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <Grid3X3 className="w-4 h-4" />
                         </button>
@@ -1161,7 +1161,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {/* Search + Filter */}
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                             <input type="text" placeholder="Search contacts..."
                                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
                                 className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all type-ui"
@@ -1186,7 +1186,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             const isSelected = selectedClientIds.includes(client.id);
                             const stageDot: Record<string, string> = {
                                 lead: 'bg-cyan-400', prospect: 'bg-blue-400',
-                                customer: 'bg-emerald-400', lost: 'bg-rose-400'
+                                customer: 'bg-[var(--success-500)]', lost: 'bg-[var(--error-500)]'
                             };
                             const stageGrad: Record<string, string> = {
                                 lead: 'from-cyan-500 to-[var(--brand-blue-600)]',
@@ -1197,12 +1197,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             return (
                                 <div
                                     key={client.id}
-                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border transition-all text-center ${isSelected ? 'border-[var(--brand-blue-500)]/60 bg-[var(--brand-blue-500)]/10' : 'border-slate-800 hover:border-[var(--brand-blue-500)]/50 hover:bg-slate-800/80'}`}
+                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-[var(--ws-panel)]/70 border transition-all text-center ${isSelected ? 'border-[var(--brand-blue-500)]/60 bg-[var(--brand-blue-500)]/10' : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]/50 hover:bg-[var(--ws-surface-secondary)]/80'}`}
                                 >
                                     <button
                                         type="button"
                                         onClick={() => toggleClientSelection(client.id)}
-                                        className="absolute top-1 left-1 min-w-9 min-h-9 flex items-center justify-center text-slate-500 hover:text-[var(--brand-blue-400)]"
+                                        className="absolute top-1 left-1 min-w-9 min-h-9 flex items-center justify-center text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)]"
                                         aria-label={`Select ${client.name}`}
                                         role="checkbox"
                                         aria-checked={isSelected}
@@ -1216,12 +1216,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
                                     {/* Avatar */}
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-[var(--brand-blue-500)] to-[var(--brand-blue-700)]'} flex items-center justify-center font-bold text-white type-caption relative`}>
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-[var(--brand-blue-500)] to-[var(--brand-blue-700)]'} flex items-center justify-center font-bold text-[var(--text-inverse)] type-caption relative`}>
                                         {initials}
                                         <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
                                     </div>
                                     {/* Name truncated to ~8 chars */}
-                                    <p className="type-card-description font-semibold text-slate-300 group-hover:text-white leading-tight w-full truncate">
+                                    <p className="type-card-description font-semibold text-[var(--ws-text-secondary)] group-hover:text-[var(--ws-text-primary)] leading-tight w-full truncate">
                                         {(client.name || '').split(' ')[0]}
                                     </p>
                                     </button>
@@ -1241,7 +1241,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex items-center gap-4 type-caption text-slate-500 border-t border-slate-800/50 pt-2">
+                    <div className="flex items-center gap-4 type-caption text-[var(--ws-text-muted)] border-t border-[var(--ws-border)]/50 pt-2">
                         {[['cyan-400','Lead'],['blue-400','Prospect'],['emerald-400','Customer'],['rose-400','Lost']].map(([color, label]) => (
                             <span key={label} className="flex items-center gap-1">
                                 <span className={`w-2 h-2 rounded-full bg-${color}`} />{label}
@@ -1256,7 +1256,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {/* Search + Filter row */}
                     <div className="flex flex-col sm:flex-row gap-3">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                             <input
                                 type="text"
                                 placeholder="Search contacts..."
@@ -1315,7 +1315,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className={`flex flex-col gap-3 sm:gap-4 min-h-0 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
                         <div className="flex flex-col gap-4 shrink-0">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
                                 <input
                                     type="text"
                                     placeholder="Search clients..."
@@ -1337,7 +1337,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         onClick={() => setSelectedStage(stage.value)}
                                         className={`h-8 px-3 rounded-full type-caption font-semibold whitespace-nowrap transition-all border ${
                                             selectedStage === stage.value
-                                                ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
+                                                ? 'bg-[var(--brand-blue-600)] text-[var(--text-inverse)] border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
                                                 : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
                                         }`}
                                     >
@@ -1360,7 +1360,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
-                                className="type-caption font-semibold uppercase tracking-wide text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
+                                className="type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] transition-colors"
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
@@ -1400,7 +1400,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-white type-ui truncate">{client.name}</h3>
+                                        <h3 className="font-bold text-[var(--ws-text-primary)] type-ui truncate">{client.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <span className="px-2 py-0.5 rounded-full type-caption font-bold tracking-tight bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--brand-blue-400)] uppercase">
                                                 {client.salesStage}
@@ -1521,7 +1521,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     Project
                                                 </Button>
                                                 <Dropdown
-                                                    trigger={<Button size="sm" variant="ghost" aria-label={`More actions for ${selectedClient.name}`} className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
+                                                    trigger={<Button size="sm" variant="ghost" aria-label={`More actions for ${selectedClient.name}`} className="!p-2 hover:bg-[var(--ws-surface-secondary)] rounded-xl" icon={<MoreVertical className="w-5 h-5 text-[var(--ws-text-muted)]" />} />}
                                                     items={[
                                                         { label: 'Set up client portal', icon: <UserCheck className="w-4 h-4"/>, onClick: () => setPortalAccessClient(selectedClient) },
                                                         { label: 'Create Contract', icon: <FileCheck className="w-4 h-4"/>, onClick: () => router.push(`/dashboard/business/contracts?clientId=${encodeURIComponent(selectedClient.id)}`) },
@@ -1542,7 +1542,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'timeline'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Timeline
@@ -1552,7 +1552,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'projects'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Projects {clientProjects.length > 0 ? `(${clientProjects.length})` : ''}
@@ -1562,7 +1562,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'invoices'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Billing ({clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment')?.length || 0})
@@ -1572,7 +1572,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'contracts'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Contracts {clientContracts.length > 0 ? `(${clientContracts.length})` : ''}
@@ -1582,12 +1582,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors inline-flex items-center gap-1.5 ${
                                                 activeTab === 'portal'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             <span>Client Portal</span>
                                             {selectedClient.financePortalToken && (
-                                                <span className="w-2 h-2 rounded-full bg-emerald-400" title="Portal Active" />
+                                                <span className="w-2 h-2 rounded-full bg-[var(--success-500)]" title="Portal Active" />
                                             )}
                                         </button>
                                         <button
@@ -1595,7 +1595,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'messages'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Messages
@@ -1605,7 +1605,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'notes'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Notes
@@ -1615,7 +1615,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             className={`px-4 py-2 border-b-2 type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'properties'
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
-                                                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                                                    : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                             }`}
                                         >
                                             Properties
@@ -1653,14 +1653,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <div className="space-y-4">
                                                 {/* Add Note Form */}
                                                 <form onSubmit={handleAddNote} className="ac-workspace-panel rounded-lg p-4 space-y-3">
-                                                    <h3 className="type-caption font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
+                                                    <h3 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">Add Activity Note</h3>
                                                     <div>
                                                         <Input
                                                             type="text"
                                                             placeholder="Note Title (e.g. Call feedback, Meeting summary)"
                                                             value={newNoteTitle}
                                                             onChange={(e) => setNewNoteTitle(e.target.value)}
-                                                            className="text-white placeholder-slate-500 type-ui"
+                                                            className="text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] type-ui"
                                                             required
                                                         />
                                                     </div>
@@ -1669,7 +1669,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-slate-500 rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
+                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] rounded-lg p-3 type-ui focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1678,7 +1678,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             type="submit"
                                                             size="sm"
                                                             isLoading={noteSubmitting}
-                                                            className="text-white"
+                                                            className="text-[var(--ws-text-primary)]"
                                                             icon={<Send className="w-3.5 h-3.5" />}
                                                         >
                                                             Add Note
@@ -1700,11 +1700,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             <div key={note.id} className="ac-workspace-panel rounded-lg p-3">
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
                                                                     <h4 className="type-card-title font-bold text-[var(--brand-blue-400)]">{note.title}</h4>
-                                                                    <span className="type-ui text-slate-500 font-mono">
+                                                                    <span className="type-ui text-[var(--ws-text-muted)] font-mono">
                                                                         {new Date(note.created_at).toLocaleDateString()}
                                                                     </span>
                                                                 </div>
-                                                                <p className="type-card-description text-slate-300 leading-relaxed whitespace-pre-wrap">{note.description}</p>
+                                                                <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed whitespace-pre-wrap">{note.description}</p>
                                                             </div>
                                                         ))
                                                     )}
@@ -1730,14 +1730,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <div>
                                                                     <div className="flex items-center gap-2">
                                                                         <Receipt className={`w-4 h-4 ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`} />
-                                                                        <h4 className="type-caption font-bold text-slate-200">${inv.metadata?.amount?.toLocaleString() || '0.00'}</h4>
+                                                                        <h4 className="type-caption font-bold text-[var(--ws-text-secondary)]">${inv.metadata?.amount?.toLocaleString() || '0.00'}</h4>
                                                                         <Badge variant={isPaid ? 'success' : 'warning'}>
                                                                             {status.toUpperCase()}
                                                                         </Badge>
                                                                     </div>
-                                                                    <p className="type-card-description text-slate-400 mt-1">{inv.description}</p>
+                                                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{inv.description}</p>
                                                                     {inv.metadata?.due_date && (
-                                                                        <span className="type-caption text-slate-500 block mt-1 font-mono">Due: {new Date(inv.metadata.due_date).toLocaleDateString()}</span>
+                                                                        <span className="type-caption text-[var(--ws-text-muted)] block mt-1 font-mono">Due: {new Date(inv.metadata.due_date).toLocaleDateString()}</span>
                                                                     )}
                                                                 </div>
                                                                 {inv.metadata?.invoice_id && (
@@ -1774,7 +1774,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'projects' && (
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
+                                                    <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                                                         Client Projects {clientProjects.length > 0 ? `(${clientProjects.length})` : ''}
                                                     </p>
                                                     <Button
@@ -1805,18 +1805,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <Briefcase className="w-4 h-4 text-[var(--brand-blue-400)]" />
-                                                                    <h4 className="type-caption font-bold text-slate-200">{proj.name}</h4>
+                                                                    <h4 className="type-caption font-bold text-[var(--ws-text-secondary)]">{proj.name}</h4>
                                                                     <Badge variant={proj.status === 'completed' ? 'success' : proj.status === 'in_progress' ? 'blue' : 'neutral'}>
                                                                         {proj.status?.replace(/_/g, ' ') || 'active'}
                                                                     </Badge>
                                                                 </div>
                                                                 {proj.budget && (
-                                                                    <p className="type-card-description text-slate-400 mt-1 font-mono">
+                                                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1 font-mono">
                                                                         Budget: ${Number(proj.budget).toLocaleString()}
                                                                     </p>
                                                                 )}
                                                                 {proj.updated_at && (
-                                                                    <span className="type-caption text-slate-500 block mt-1 font-mono">
+                                                                    <span className="type-caption text-[var(--ws-text-muted)] block mt-1 font-mono">
                                                                         Updated {formatDistanceToNow(new Date(proj.updated_at), { addSuffix: true })}
                                                                     </span>
                                                                 )}
@@ -1838,7 +1838,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'contracts' && (
                                             <div className="space-y-3">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
+                                                    <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                                                         Contracts & Agreements {clientContracts.length > 0 ? `(${clientContracts.length})` : ''}
                                                     </p>
                                                     <Button
@@ -1869,18 +1869,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <FileCheck className="w-4 h-4 text-emerald-400" />
-                                                                    <h4 className="type-caption font-bold text-slate-200">{contract.title}</h4>
+                                                                    <h4 className="type-caption font-bold text-[var(--ws-text-secondary)]">{contract.title}</h4>
                                                                     <Badge variant={contract.status === 'signed' ? 'success' : contract.status === 'pending' ? 'warning' : 'neutral'}>
                                                                         {contract.status || 'draft'}
                                                                     </Badge>
                                                                 </div>
                                                                 {contract.value && (
-                                                                    <p className="type-card-description text-slate-400 mt-1 font-mono">
+                                                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1 font-mono">
                                                                         Value: ${Number(contract.value).toLocaleString()}
                                                                     </p>
                                                                 )}
                                                                 {contract.created_at && (
-                                                                    <span className="type-caption text-slate-500 block mt-1 font-mono">
+                                                                    <span className="type-caption text-[var(--ws-text-muted)] block mt-1 font-mono">
                                                                         Created {new Date(contract.created_at).toLocaleDateString()}
                                                                     </span>
                                                                 )}
@@ -1924,12 +1924,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     {portalUrlLoading ? (
                                                         <div className="py-6 text-center">
                                                             <Clock className="w-5 h-5 animate-spin text-cyan-400 mx-auto mb-2" />
-                                                            <p className="type-caption text-slate-400">Loading portal link...</p>
+                                                            <p className="type-caption text-[var(--ws-text-muted)]">Loading portal link...</p>
                                                         </div>
                                                     ) : portalUrl ? (
                                                         <div className="space-y-4 pt-2">
                                                             <div>
-                                                                <label className="type-caption font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                                                                <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1.5 block">
                                                                     Direct Portal Link
                                                                 </label>
                                                                 <div className="flex items-center gap-2">
@@ -1937,7 +1937,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                         type="text"
                                                                         readOnly
                                                                         value={portalUrl}
-                                                                        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 font-mono focus:outline-none"
+                                                                        className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-sm text-[var(--ws-text-secondary)] font-mono focus:outline-none"
                                                                     />
                                                                     <Button
                                                                         size="sm"
@@ -1962,8 +1962,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                     </Button>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex justify-between items-center pt-2 border-t border-slate-800">
-                                                                <span className="type-caption text-slate-500">Need to grant login credentials or reset access?</span>
+                                                            <div className="flex justify-between items-center pt-2 border-t border-[var(--ws-border)]">
+                                                                <span className="type-caption text-[var(--ws-text-muted)]">Need to grant login credentials or reset access?</span>
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
@@ -1994,7 +1994,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         </div>
                                                     ) : (
                                                         <div className="pt-2 text-center sm:text-left">
-                                                            <p className="type-card-description text-slate-300 mb-4">
+                                                            <p className="type-card-description text-[var(--ws-text-secondary)] mb-4">
                                                                 Client portal access has not been generated for this client yet. Set up login credentials or a direct access link to provide self-service billing and project tracking.
                                                             </p>
                                                             <Button
@@ -2015,8 +2015,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <div className="space-y-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="type-card-description text-slate-400 mb-1">Email</p>
-                                                        <div className="flex items-center gap-2 text-white type-ui">
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] mb-1">Email</p>
+                                                        <div className="flex items-center gap-2 text-[var(--ws-text-primary)] type-ui">
                                                             <Mail className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             {selectedClient.email ? (
                                                                 <button
@@ -2035,41 +2035,41 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         </div>
                                                     </div>
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="type-card-description text-slate-400 mb-1">Phone</p>
-                                                        <div className="flex items-center gap-2 text-white type-ui">
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] mb-1">Phone</p>
+                                                        <div className="flex items-center gap-2 text-[var(--ws-text-primary)] type-ui">
                                                             <Phone className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                                         </div>
                                                     </div>
                                                     {selectedClient.industry && (
                                                         <div className="ac-workspace-panel rounded-lg p-4">
-                                                            <p className="type-card-description text-slate-400 mb-1">Industry</p>
-                                                            <p className="text-white type-card-description font-semibold">{selectedClient.industry}</p>
+                                                            <p className="type-card-description text-[var(--ws-text-muted)] mb-1">Industry</p>
+                                                            <p className="text-[var(--ws-text-primary)] type-card-description font-semibold">{selectedClient.industry}</p>
                                                         </div>
                                                     )}
                                                     {selectedClient.location && (
                                                         <div className="ac-workspace-panel rounded-lg p-4">
-                                                            <p className="type-card-description text-slate-400 mb-1">Location</p>
-                                                            <p className="text-white type-card-description font-semibold">{selectedClient.location}</p>
+                                                            <p className="type-card-description text-[var(--ws-text-muted)] mb-1">Location</p>
+                                                            <p className="text-[var(--ws-text-primary)] type-card-description font-semibold">{selectedClient.location}</p>
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 {selectedClient.description && (
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="type-card-description text-slate-400 mb-2">Description</p>
-                                                        <p className="text-white type-card-description leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] mb-2">Description</p>
+                                                        <p className="text-[var(--ws-text-primary)] type-card-description leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
                                                     </div>
                                                 )}
 
                                                 {selectedClient.customFields && Object.keys(selectedClient.customFields).length > 0 && (
                                                     <div className="ac-workspace-panel rounded-lg p-4">
-                                                        <p className="type-card-description text-slate-400 mb-3">Custom Fields</p>
+                                                        <p className="type-card-description text-[var(--ws-text-muted)] mb-3">Custom Fields</p>
                                                         <div className="space-y-2">
                                                             {Object.entries(selectedClient.customFields).map(([key, val]) => (
-                                                                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-800/40 type-caption">
-                                                                    <span className="text-slate-400 font-bold uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
-                                                                    <span className="text-slate-200 font-semibold">{String(val)}</span>
+                                                                <div key={key} className="flex justify-between items-center py-1.5 border-b border-[var(--ws-border)]/40 type-caption">
+                                                                    <span className="text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">{key.replace(/_/g, ' ')}</span>
+                                                                    <span className="text-[var(--ws-text-secondary)] font-semibold">{String(val)}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -2081,7 +2081,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                     {/* Quick Actions Footer */}
                                     <div className="mt-auto bg-[var(--ws-toolbar)] pt-6 border-t border-[var(--ws-border)]">
-                                        <h3 className="type-caption font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
+                                        <h3 className="type-caption font-bold text-[var(--ws-text-muted)] mb-4 uppercase tracking-wider">Quick Actions</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
                                             <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
@@ -2173,7 +2173,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             )}
 
             {filteredClients.length === 0 && (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-[var(--ws-text-muted)]">
                     No clients found. Add your first client to get started!
                 </div>
             )}
@@ -2315,7 +2315,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                                 event.stopPropagation();
                                 onToggleSelect(client.id);
                             }}
-                            className="flex-shrink-0 min-w-9 min-h-9 flex items-center justify-center text-slate-500 hover:text-[var(--brand-blue-400)]"
+                            className="flex-shrink-0 min-w-9 min-h-9 flex items-center justify-center text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)]"
                             aria-label={`Select ${client.name} for bulk outreach`}
                             role="checkbox"
                             aria-checked={isSelected}
@@ -2323,12 +2323,12 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                             {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
                         </button>
                     )}
-                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white">
+                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-[var(--text-inverse)]">
                         {(client.name || '?').charAt(0)}
                     </div>
                     <div className="min-w-0">
-                        <h3 className="font-semibold text-white truncate" title={client.name}>{onOpen ? <button type="button" className="text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400" onClick={() => onOpen(client)}>Open {client.name}</button> : client.name}</h3>
-                        {client.industry && <p className="type-card-description text-slate-400 truncate">{client.industry}</p>}
+                        <h3 className="font-semibold text-[var(--ws-text-primary)] truncate" title={client.name}>{onOpen ? <button type="button" className="text-left hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400" onClick={() => onOpen(client)}>Open {client.name}</button> : client.name}</h3>
+                        {client.industry && <p className="type-card-description text-[var(--ws-text-muted)] truncate">{client.industry}</p>}
                     </div>
                 </div>
 
@@ -2363,13 +2363,13 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
 
             <div className="space-y-2 mb-4 flex-1">
                 {client.email && (
-                    <div className="flex items-center gap-2 type-ui text-slate-400">
+                    <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
                         <Mail className="w-4 h-4 shrink-0" />
                         <span className="truncate" title={client.email}>{client.email}</span>
                     </div>
                 )}
                 {client.phone && (
-                    <div className="flex items-center gap-2 type-ui text-slate-400">
+                    <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
                         <Phone className="w-4 h-4 shrink-0" />
                         <span className="truncate">{client.phone}</span>
                     </div>
@@ -2382,7 +2382,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                 )}
             </div>
 
-            <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-800/50">
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--ws-border)]/50">
                 <div className="flex items-center gap-2">
                     <Badge variant={stageVariants[client.salesStage as keyof typeof stageVariants] || 'neutral'}>
                         {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
@@ -2457,11 +2457,11 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                        <label className="block type-label font-medium text-slate-300">Target Stage</label>
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Target Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-medium"
+                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-medium"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -2485,7 +2485,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
 
-                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                <div className="flex gap-4 pt-4 border-t border-[var(--ws-border)]">
                     <Button variant="ghost" className="flex-1" onClick={onClose}>
                         Abort Registration
                     </Button>
@@ -2553,11 +2553,11 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                        <label className="block type-label font-medium text-slate-300">Sales Stage</label>
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Sales Stage</label>
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -2580,7 +2580,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
 
-                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                <div className="flex gap-4 pt-4 border-t border-[var(--ws-border)]">
                     <Button variant="outline" className="flex-1" onClick={onClose}>
                         Discard Changes
                     </Button>
@@ -2650,40 +2650,40 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                         {...getRootProps()}
                         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive
                             ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]/10'
-                            : 'border-slate-700 hover:border-slate-600'
+                            : 'border-[var(--ws-border)] hover:border-slate-600'
                             }`}
                     >
                         <input {...getInputProps()} />
-                        <Upload className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+                        <Upload className="w-12 h-12 mx-auto mb-4 text-[var(--ws-text-muted)]" />
                         <p className="text-lg font-medium mb-2">
                             {isDragActive ? 'Drop file here' : 'Drag & drop file here'}
                         </p>
-                        <p className="type-card-description text-slate-400 mb-4">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mb-4">
                             or click to browse
                         </p>
-                        <p className="type-card-description text-slate-500">
+                        <p className="type-card-description text-[var(--ws-text-muted)]">
                             Supports: Excel (.xlsx, .xls), CSV, PDF, Word (.doc, .docx)
                         </p>
                         {importing && <p className="mt-4 text-[var(--brand-blue-400)]">Importing...</p>}
                     </div>
                 ) : (
                     <div>
-                        <p className="mb-4 text-slate-400">
+                        <p className="mb-4 text-[var(--ws-text-muted)]">
                             Found {importedClients.length} contacts. Review and confirm import:
                         </p>
                         <div className="max-h-96 overflow-y-auto space-y-2 mb-6">
                             {importedClients.map((client, index) => (
-                                <div key={index} className="bg-slate-800/50 p-3 rounded-lg">
+                                <div key={index} className="bg-[var(--ws-surface-secondary)]/50 p-3 rounded-lg">
                                     <p className="font-medium">{client.name || 'No name'}</p>
-                                    <p className="type-card-description text-slate-400">{client.email || 'No email'}</p>
-                                    {client.phone && <p className="type-card-description text-slate-400">{client.phone}</p>}
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">{client.email || 'No email'}</p>
+                                    {client.phone && <p className="type-card-description text-[var(--ws-text-muted)]">{client.phone}</p>}
                                 </div>
                             ))}
                         </div>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setImportedClients([])}
-                                className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                                className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors"
                             >
                                 Cancel
                             </button>
@@ -2773,11 +2773,11 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                        <label className="block type-label font-medium text-slate-300">Project Category</label>
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)]">Project Category</label>
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-md text-[var(--ws-text-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
                         >
                             <option value="Web">Web Development</option>
                             <option value="Mobile">Mobile App</option>
@@ -2802,7 +2802,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
 
-                <div className="flex gap-4 pt-4 border-t border-slate-800">
+                <div className="flex gap-4 pt-4 border-t border-[var(--ws-border)]">
                     <Button variant="ghost" className="flex-1" onClick={onClose} disabled={isSubmitting}>
                         Cancel
                     </Button>
@@ -2922,7 +2922,7 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
 
-                <div className="flex gap-4 pt-2 border-t border-slate-800">
+                <div className="flex gap-4 pt-2 border-t border-[var(--ws-border)]">
                     <Button variant="ghost" className="flex-1" onClick={onClose} disabled={isSubmitting}>
                         Cancel
                     </Button>

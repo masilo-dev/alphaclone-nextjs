@@ -25,7 +25,7 @@ export default function MarketingRelatedLinks({ links }: MarketingRelatedLinksPr
   }
 
   return (
-    <p className="mt-6 type-card-description text-slate-400">
+    <p className="mt-6 type-card-description text-[var(--ws-text-muted)]">
       Related pages:{' '}
       {merged.map((link, index) => (
         <span key={link.href}>

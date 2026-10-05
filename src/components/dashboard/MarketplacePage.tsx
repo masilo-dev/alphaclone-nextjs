@@ -273,7 +273,7 @@ const ITEMS: MarketplaceItem[] = [
     installs: 1900,
     icon: Mail,
     iconBg: 'bg-slate-500/15',
-    iconColor: 'text-slate-300',
+    iconColor: 'text-[var(--ws-text-secondary)]',
     features: ['Email API', 'React Email templates', 'Delivery analytics', 'Webhooks', 'Domain authentication'],
     tags: ['email', 'resend', 'api', 'transactional'],
     developer: 'Resend',
@@ -304,7 +304,7 @@ const ITEMS: MarketplaceItem[] = [
     rating: 4.5,
     installs: 1300,
     icon: Mail,
-    iconBg: 'bg-red-500/15',
+    iconBg: 'bg-[var(--error-500)]/15',
     iconColor: 'text-red-400',
     features: ['Email outreach', 'Thread management', 'Open tracking', 'Business email', 'Calendar sync'],
     tags: ['email', 'zoho', 'outreach', 'business'],
@@ -421,8 +421,8 @@ const MarketplacePage: React.FC = () => {
   // ── MCP full-page view ─────────────────────────────────────────────────────
   if (activeMcp) {
     return (
-      <div className="min-h-screen bg-slate-950">
-        <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-slate-950/90 backdrop-blur border-b border-slate-800">
+      <div className="min-h-screen bg-[var(--ws-canvas)]">
+        <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-[var(--ws-canvas)]/90 backdrop-blur border-b border-[var(--ws-border)]">
           <button
             onClick={() => {
               setActiveMcp(null);
@@ -431,7 +431,7 @@ const MarketplacePage: React.FC = () => {
               url.searchParams.delete('mcp');
               window.history.replaceState({}, '', url.toString());
             }}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors type-ui font-medium"
+            className="flex items-center gap-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors type-ui font-medium"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -440,31 +440,31 @@ const MarketplacePage: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveMcp('claude')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'claude' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'claude' ? 'bg-indigo-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Claude AI
             </button>
             <button
               onClick={() => setActiveMcp('manus')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Manus AI
             </button>
             <button
               onClick={() => setActiveMcp('grok')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'grok' ? 'bg-fuchsia-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'grok' ? 'bg-fuchsia-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Grok AI
             </button>
             <button
               onClick={() => setActiveMcp('chatgpt')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               ChatGPT
             </button>
             <button
               onClick={() => setActiveMcp('cursor')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Cursor
             </button>
@@ -504,20 +504,20 @@ const MarketplacePage: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-bold">{item.name}</span>
-                    <span className={`px-2 py-0.5 rounded-full type-caption font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-teal-300 bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
+                    <span className="text-[var(--ws-text-primary)] font-bold">{item.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full type-caption font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-[var(--brand-blue-300)] bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
                     <span className="px-2 py-0.5 rounded-full type-caption font-bold bg-green-500/10 border border-green-500/20 text-green-400">Free</span>
                   </div>
-                  <p className="text-slate-400 type-card-description leading-relaxed line-clamp-2">{item.description}</p>
+                  <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed line-clamp-2">{item.description}</p>
                   <div className="flex items-center gap-4 mt-3">
                     <div className="flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                      <span className="text-slate-300 type-caption font-semibold">{item.rating}</span>
+                      <span className="text-[var(--ws-text-secondary)] type-caption font-semibold">{item.rating}</span>
                     </div>
-                    <span className="text-slate-500 type-caption">{item.installs.toLocaleString()} installs</span>
+                    <span className="text-[var(--ws-text-muted)] type-caption">{item.installs.toLocaleString()} installs</span>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold transition-all flex-shrink-0 ${isActive ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-teal-600 hover:bg-teal-500 text-white'}`}>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold transition-all flex-shrink-0 ${isActive ? 'bg-indigo-600 hover:bg-indigo-500 text-[var(--text-inverse)]' : 'bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)]'}`}>
                   Connect
                   <ArrowRight className="w-3 h-3" />
                 </div>
@@ -530,13 +530,13 @@ const MarketplacePage: React.FC = () => {
       {/* Search + Category filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search integrations, tools, templates…"
-            className="w-full pl-9 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 type-ui focus:outline-none focus:border-teal-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] type-ui focus:outline-none focus:border-teal-500 transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
@@ -549,8 +549,8 @@ const MarketplacePage: React.FC = () => {
                 onClick={() => setCategory(cat.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl type-caption font-semibold whitespace-nowrap transition-all border ${
                   active
-                    ? 'bg-teal-600 border-teal-500 text-white'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)]'
+                    : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-[var(--ws-border)] hover:text-[var(--ws-text-secondary)]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -562,7 +562,7 @@ const MarketplacePage: React.FC = () => {
       </div>
 
       {/* Count */}
-      <p className="text-slate-500 type-caption font-medium mb-4 uppercase tracking-wider">
+      <p className="text-[var(--ws-text-muted)] type-caption font-medium mb-4 uppercase tracking-wider">
         {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
       </p>
 
@@ -582,7 +582,7 @@ const MarketplacePage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, delay: i * 0.03 }}
-                className="group relative flex flex-col bg-slate-900/70 border border-slate-800 rounded-2xl p-5 transition-all hover:border-teal-500/30 hover:bg-slate-900 hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer"
+                className="group relative flex flex-col bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-2xl p-5 transition-all hover:border-teal-500/30 hover:bg-[var(--ws-panel)] hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer"
                 onClick={() => handleAction(item)}
               >
                 {/* Hover glow */}
@@ -595,7 +595,7 @@ const MarketplacePage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-white font-semibold type-ui leading-tight group-hover:text-teal-300 transition-colors">
+                      <h3 className="text-[var(--ws-text-primary)] font-semibold type-ui leading-tight group-hover:text-[var(--brand-blue-300)] transition-colors">
                         {item.name}
                       </h3>
                       {item.badge && (
@@ -604,7 +604,7 @@ const MarketplacePage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-500 type-card-description mt-0.5">{item.developer}</p>
+                    <p className="text-[var(--ws-text-muted)] type-card-description mt-0.5">{item.developer}</p>
                   </div>
                   <span className={`shrink-0 px-2 py-0.5 rounded-full type-caption font-bold border ${statusCfg.cls}`}>
                     {item.price ? `$${item.price}/mo` : statusCfg.label}
@@ -612,19 +612,19 @@ const MarketplacePage: React.FC = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-slate-400 type-card-description leading-relaxed mb-3 line-clamp-2 flex-1">
+                <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed mb-3 line-clamp-2 flex-1">
                   {item.description}
                 </p>
 
                 {/* Features (top 3) */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {item.features.slice(0, 3).map(f => (
-                    <span key={f} className="px-2 py-0.5 bg-slate-800 text-slate-400 type-caption rounded-md">
+                    <span key={f} className="px-2 py-0.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] type-caption rounded-md">
                       {f}
                     </span>
                   ))}
                   {item.features.length > 3 && (
-                    <span className="px-2 py-0.5 bg-slate-800 text-slate-500 type-caption rounded-md">
+                    <span className="px-2 py-0.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] type-caption rounded-md">
                       +{item.features.length - 3} more
                     </span>
                   )}
@@ -632,7 +632,7 @@ const MarketplacePage: React.FC = () => {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-3 type-caption text-slate-500">
+                  <div className="flex items-center gap-3 type-caption text-[var(--ws-text-muted)]">
                     <span className="flex items-center gap-1">
                       <Star className="w-3 h-3 text-amber-400 fill-current" />
                       {item.rating}
@@ -647,7 +647,7 @@ const MarketplacePage: React.FC = () => {
                       Connected
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1.5 type-caption font-semibold text-slate-300 group-hover:text-teal-400 transition-colors">
+                    <span className="flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-secondary)] group-hover:text-teal-400 transition-colors">
                       {item.isMCP ? 'Setup guide' : item.actionUrl ? 'Configure' : 'Connect'}
                       <ArrowRight className="w-3 h-3" />
                     </span>
@@ -661,11 +661,11 @@ const MarketplacePage: React.FC = () => {
 
       {filtered.length === 0 && (
         <div className="text-center py-20">
-          <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] flex items-center justify-center mx-auto mb-4">
             <Search className="w-7 h-7 text-slate-600" />
           </div>
-          <h3 className="text-white font-semibold mb-1">No results found</h3>
-          <p className="text-slate-500 type-card-description">Try a different search term or category.</p>
+          <h3 className="text-[var(--ws-text-primary)] font-semibold mb-1">No results found</h3>
+          <p className="text-[var(--ws-text-muted)] type-card-description">Try a different search term or category.</p>
         </div>
       )}
     </div>

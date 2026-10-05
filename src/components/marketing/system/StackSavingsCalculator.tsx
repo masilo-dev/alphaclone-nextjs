@@ -91,24 +91,24 @@ export default function StackSavingsCalculator() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 type-caption sm:text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[var(--warning-text,var(--warning-500))] type-caption sm:text-sm font-medium mb-4">
             <Calculator className="w-4 h-4 text-amber-400" />
             <span>Interactive ROI Calculator</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
             Calculate How Much You Stop Wasting Each Month
           </h2>
-          <p className="text-slate-300 type-card-description sm:text-base leading-relaxed">
+          <p className="text-[var(--ws-text-secondary)] type-card-description sm:text-base leading-relaxed">
             Select the software tools your business currently uses separately to see your instant monthly cost and time savings.
           </p>
         </div>
 
         {/* Calculator Main Box */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Tool Selection List */}
             <div className="lg:col-span-7 space-y-4">
-              <p className="type-caption font-bold text-slate-400 uppercase tracking-wider">
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                 Select Your Current Disconnected Software Stack:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -120,22 +120,22 @@ export default function StackSavingsCalculator() {
                       onClick={() => toggleTool(tool.id)}
                       className={`p-3.5 rounded-xl border text-left transition-all flex items-start justify-between gap-3 ${
                         isChecked
-                          ? 'bg-slate-800 border-teal-500/80 shadow-md ring-1 ring-teal-500/30'
-                          : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                          ? 'bg-[var(--ws-surface-secondary)] border-teal-500/80 shadow-md ring-1 ring-teal-500/30'
+                          : 'bg-[var(--ws-canvas)]/60 border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-[var(--ws-border)]'
                       }`}
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded flex items-center justify-center border type-ui ${isChecked ? 'bg-teal-500 border-teal-400 text-white' : 'border-slate-700 bg-slate-900'}`}>
+                          <div className={`w-4 h-4 rounded flex items-center justify-center border type-ui ${isChecked ? 'bg-teal-500 border-teal-400 text-white' : 'border-[var(--ws-border)] bg-[var(--ws-panel)]'}`}>
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
-                          <span className={`type-caption font-bold ${isChecked ? 'text-white' : 'text-slate-400'}`}>
+                          <span className={`type-caption font-bold ${isChecked ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>
                             {tool.name}
                           </span>
                         </div>
-                        <p className="type-card-description text-slate-400 mt-1 pl-6">{tool.category}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1 pl-6">{tool.category}</p>
                       </div>
-                      <span className="type-caption font-mono font-semibold text-slate-300">
+                      <span className="type-caption font-mono font-semibold text-[var(--ws-text-secondary)]">
                         ${tool.avgMonthlyCost}/mo
                       </span>
                     </button>
@@ -145,21 +145,21 @@ export default function StackSavingsCalculator() {
             </div>
 
             {/* Calculated Savings Box */}
-            <div className="lg:col-span-5 flex flex-col justify-between p-6 rounded-xl bg-slate-950 border border-slate-800">
+            <div className="lg:col-span-5 flex flex-col justify-between p-6 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
               <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <span className="type-caption font-bold text-slate-400 uppercase">Current Stack Cost:</span>
+                <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-4">
+                  <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Current Stack Cost:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-rose-400 font-mono">${currentMonthlyTotal} / mo</span>
-                    <p className="type-card-description text-slate-500">(${currentAnnualTotal.toLocaleString()} / year)</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">(${currentAnnualTotal.toLocaleString()} / year)</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <span className="type-caption font-bold text-slate-400 uppercase">AlphaClone Unified Engine:</span>
+                <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-4">
+                  <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">AlphaClone Unified Engine:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-teal-400 font-mono">${alphaCloneMonthly} / mo</span>
-                    <p className="type-card-description text-slate-500">(${alphaCloneAnnual.toLocaleString()} / year)</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">(${alphaCloneAnnual.toLocaleString()} / year)</p>
                   </div>
                 </div>
 
@@ -170,9 +170,9 @@ export default function StackSavingsCalculator() {
                     <span>Your Net Annual Savings:</span>
                   </div>
                   <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
-                    ${annualDollarSavings.toLocaleString()} <span className="type-ui font-normal text-emerald-300">/ yr saved</span>
+                    ${annualDollarSavings.toLocaleString()} <span className="type-ui font-normal text-[var(--success-text,var(--success-500))]">/ yr saved</span>
                   </div>
-                  <div className="flex items-center gap-2 type-caption text-slate-300 mt-2">
+                  <div className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)] mt-2">
                     <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                     <span>Plus <strong className="text-white">{currentHoursAnnual} hours / year</strong> saved on manual re-entry.</span>
                   </div>
@@ -180,7 +180,7 @@ export default function StackSavingsCalculator() {
               </div>
 
               {/* Action */}
-              <div className="mt-6 pt-4 border-t border-slate-800">
+              <div className="mt-6 pt-4 border-t border-[var(--ws-border)]">
                 <Link
                   href="/auth/login?register=true&plan=starter"
                   className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold type-caption sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-teal-950"
@@ -188,7 +188,7 @@ export default function StackSavingsCalculator() {
                   <span>Get Started & Save</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <p className="type-card-description text-center text-slate-400 mt-2">No credit card required • Instant CSV data import</p>
+                <p className="type-card-description text-center text-[var(--ws-text-muted)] mt-2">No credit card required • Instant CSV data import</p>
               </div>
             </div>
           </div>

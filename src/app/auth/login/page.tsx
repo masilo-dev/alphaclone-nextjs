@@ -23,7 +23,7 @@ import PublicStatusPill from '@/components/status/PublicStatusPill';
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex items-center justify-center" role="status" aria-label="Loading sign in"><div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" aria-hidden="true" /></main>}>
+        <Suspense fallback={<main className="ac-auth-canvas min-h-[100dvh] flex items-center justify-center" role="status" aria-label="Loading sign in"><div className="w-6 h-6 border-2 border-[var(--brand-teal)] border-t-transparent rounded-full animate-spin" aria-hidden="true" /></main>}>
             <LoginContent />
         </Suspense>
     );
@@ -458,13 +458,13 @@ function LoginContent() {
 
     if (showMfaChallenge) {
         return (
-            <main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="max-w-md w-full bg-white/95 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
-                    <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Shield className="w-10 h-10 text-teal-600 dark:text-teal-400" />
+            <main className="ac-auth-canvas min-h-[100dvh] flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="ac-auth-card max-w-md w-full p-6 sm:p-8 relative z-10 text-center my-auto animate-slide-up">
+                    <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--brand-teal)_12%,transparent)] rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Shield className="w-10 h-10 text-[var(--brand-teal)]" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h1>
-                    <p className="text-slate-600 dark:text-slate-400 mb-8 type-card-description">
+                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Two-Factor Authentication</h1>
+                    <p className="text-[var(--color-text-secondary)] mb-8 type-card-description">
                         Enter the 6-digit verification code from your authenticator app to continue.
                     </p>
 
@@ -503,7 +503,7 @@ function LoginContent() {
                             setMfaCode('');
                             setError('');
                         }}
-                        className="mt-6 type-ui text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                        className="mt-6 type-ui text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
                     >
                         Back to Login
                     </button>
@@ -513,8 +513,8 @@ function LoginContent() {
     }
 
     return (
-        <main className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-white/95 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
+        <main className="ac-auth-canvas min-h-[100dvh] flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
+            <div className="ac-auth-card w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain p-4 sm:p-5 relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-2 flex justify-center inline-block">
@@ -539,8 +539,8 @@ function LoginContent() {
                             />
                         </Link>
                     )}
-                    <h1 className="text-base font-bold text-slate-900 dark:text-white mb-0.5">AlphaClone Systems</h1>
-                    <p className="text-slate-600 dark:text-slate-400 type-card-description mb-2">
+                    <h1 className="text-base font-bold text-[var(--color-text-primary)] mb-0.5">AlphaClone Systems</h1>
+                    <p className="text-[var(--color-text-secondary)] type-card-description mb-2">
                         {isRegistering
                             ? '14-day free trial · workspace ready in seconds'
                             : 'Sign in to your business workspace'}
@@ -562,10 +562,10 @@ function LoginContent() {
 
                 <div className="relative my-3">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                        <div className="w-full border-t border-[var(--color-border-primary)]" />
                     </div>
                     <div className="relative flex justify-center type-caption uppercase tracking-wide">
-                        <span className="bg-white dark:bg-slate-900/80 px-2 text-slate-500">Or use email</span>
+                        <span className="bg-[var(--color-bg-primary)] px-2 text-[var(--ws-text-muted)]">Or use email</span>
                     </div>
                 </div>
 
@@ -603,7 +603,7 @@ function LoginContent() {
 
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <label htmlFor="login-password" className="type-label font-medium text-slate-600 dark:text-slate-400">Password</label>
+                            <label htmlFor="login-password" className="type-label font-medium text-[var(--color-text-secondary)]">Password</label>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -625,7 +625,7 @@ function LoginContent() {
                                         }
                                         setIsLoading(false);
                                     }}
-                                    className="type-ui font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                    className="type-ui font-semibold text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] transition-colors"
                                 >
                                     Forgot password?
                                 </button>
@@ -645,7 +645,7 @@ function LoginContent() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword((prev) => !prev)}
-                                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-teal-300 transition-colors"
+                                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[var(--ws-text-muted)] hover:text-[var(--brand-teal)] transition-colors"
                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                                 title={showPassword ? 'Hide password' : 'Show password'}
                             >
@@ -655,34 +655,34 @@ function LoginContent() {
                     </div>
 
                     {!isRegistering && passwordResetSentTo && (
-                        <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-teal-300 type-caption">
+                        <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-[var(--brand-teal)] type-caption">
                             Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>.
                         </div>
                     )}
 
                     {isRegistering && (
                         <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
-                            <div className={`flex items-center gap-1 type-ui ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                            <div className={`flex items-center gap-1 type-ui ${password.length >= 12 ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                 12+ chars
                             </div>
-                            <div className={`flex items-center gap-1 type-ui ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                            <div className={`flex items-center gap-1 type-ui ${/[A-Z]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                 Upper
                             </div>
-                            <div className={`flex items-center gap-1 type-ui ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                            <div className={`flex items-center gap-1 type-ui ${/[0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                 Number
                             </div>
-                            <div className={`flex items-center gap-1 type-ui ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                            <div className={`flex items-center gap-1 type-ui ${/[^A-Za-z0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                 Special
                             </div>
                         </div>
                     )}
 
                     {isRegistering && (
-                        <div className="space-y-1.5 type-ui text-slate-600 dark:text-slate-400">
+                        <div className="space-y-1.5 type-ui text-[var(--color-text-secondary)]">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -692,9 +692,9 @@ function LoginContent() {
                                 />
                                 <span>
                                     I agree to the{' '}
-                                    <Link href="/terms-of-service" target="_blank" className="text-teal-400 hover:text-teal-300 underline">Terms</Link>
+                                    <Link href="/terms-of-service" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">Terms</Link>
                                     {' '}and{' '}
-                                    <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline">Privacy Policy</Link>.
+                                    <Link href="/privacy-policy" target="_blank" className="text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] underline">Privacy Policy</Link>.
                                 </span>
                             </label>
                             <label className="flex items-start gap-2 cursor-pointer">
@@ -710,8 +710,8 @@ function LoginContent() {
                     )}
 
                     {isRegistering && isEuLikeRegistration && (
-                        <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 type-ui text-slate-600 dark:text-slate-400">
-                            <p className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide type-caption">EU / UK consent</p>
+                        <div className="space-y-1.5 rounded-lg border border-[var(--color-border-primary)] bg-[var(--color-bg-secondary)] p-2 type-ui text-[var(--color-text-secondary)]">
+                            <p className="font-semibold text-[var(--brand-teal)] uppercase tracking-wide type-caption">EU / UK consent</p>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
                                 <span>I consent to data processing per the Privacy Policy.</span>
@@ -724,7 +724,7 @@ function LoginContent() {
                     )}
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-red-400 type-caption flex items-start gap-2 animate-fade-in">
+                        <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-2 text-red-400 type-caption flex items-start gap-2 animate-fade-in">
                             <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
@@ -771,7 +771,7 @@ function LoginContent() {
                     </Button>
                 </form>
 
-                <div className="mt-3 pt-2 border-t border-slate-800 text-center space-y-1.5">
+                <div className="mt-3 pt-2 border-t border-[var(--ws-border)] text-center space-y-1.5">
                     <button
                         onClick={() => {
                             if (!registrationOpen && !isRegistering) {
@@ -781,7 +781,7 @@ function LoginContent() {
                             setIsRegistering(!isRegistering);
                             setError('');
                         }}
-                        className="type-ui text-teal-400 hover:text-teal-300 font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
+                        className="type-ui text-[var(--brand-teal)] hover:text-[var(--brand-blue-700)] font-medium flex items-center justify-center gap-2 mx-auto transition-colors"
                     >
                         {isRegistering ? (
                             <>
@@ -796,7 +796,7 @@ function LoginContent() {
                     {!registrationOpen && policyLoaded && (
                         <p className="type-card-description text-amber-400">Account registration is temporarily closed.</p>
                     )}
-                    <p className="type-caption text-slate-500 dark:text-slate-600 uppercase tracking-wider">
+                    <p className="type-caption text-[var(--ws-text-muted)] dark:text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
                 </div>

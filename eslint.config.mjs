@@ -67,6 +67,8 @@ const eslintConfig = defineConfig([
     "scripts/**",
     // Mobile sub-project has its own ESLint config
     "mobile/**",
+    "lint_check.log",
+    "lint_err.txt",
   ]),
 ]);
 

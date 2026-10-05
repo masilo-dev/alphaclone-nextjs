@@ -16,7 +16,7 @@ import { WrapChart } from '@/lib/chartWrapper';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 
-const COLORS = ['#14b8a6', '#06b6d4', '#8b5cf6', '#f87171', '#64748b'];
+const COLORS = ['var(--brand-blue-500)', 'var(--info-500)', 'var(--brand-violet-400)', 'var(--error-500)', 'var(--ws-text-muted)'];
 
 export default function CRMReportsTab() {
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,7 @@ export default function CRMReportsTab() {
           referencePeriod="Current CRM snapshot"
           href="/dashboard/leads"
           icon={Users}
-          iconColor="#14b8a6"
+          iconColor="var(--brand-blue-500)"
           isBetterHigher
           compact
         />
@@ -157,7 +157,7 @@ export default function CRMReportsTab() {
           referencePeriod="Current CRM snapshot"
           href="/dashboard/leads?status=qualified"
           icon={TrendingUp}
-          iconColor="#10b981"
+          iconColor="var(--success-500)"
           isBetterHigher
           compact
         />
@@ -168,7 +168,7 @@ export default function CRMReportsTab() {
           referencePeriod={leadStats.conversionUnavailable || 'Current CRM snapshot'}
           href="/dashboard/leads"
           icon={BarChart3}
-          iconColor="#06b6d4"
+          iconColor="var(--info-500)"
           isBetterHigher
           isPercentage
           compact
@@ -224,10 +224,10 @@ export default function CRMReportsTab() {
         <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-4">Pipeline by stage</h3>
         <WrapChart height={220}>
           <BarChart data={pipeline} margin={{ left: -12, right: 8 }}>
-            <XAxis dataKey="stage" tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#64748b', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
-            <Bar dataKey="totalValue" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+            <XAxis dataKey="stage" tick={{ fill: 'var(--ws-text-muted)', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: 'var(--ws-text-muted)', fontSize: 'var(--type-caption-size)' }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ background: 'var(--ws-canvas)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+            <Bar dataKey="totalValue" fill="var(--brand-blue-500)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </WrapChart>
       </section>
@@ -245,7 +245,7 @@ export default function CRMReportsTab() {
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+              <Tooltip contentStyle={{ background: 'var(--ws-canvas)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
             </PieChart>
           </WrapChart>
         </section>

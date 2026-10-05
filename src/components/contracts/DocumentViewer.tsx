@@ -187,14 +187,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
 
     return (
-        <div className={`relative flex flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[750px] shadow-2xl'}`}>
+        <div className={`relative flex flex-col bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden ${isFullscreen ? 'fixed inset-0 z-[60] m-0 rounded-none' : 'h-[750px] shadow-2xl'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-xl shrink-0">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/90 backdrop-blur-xl shrink-0">
                 <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
                     <Button size="sm" variant={tool === 'select' ? 'primary' : 'ghost'} onClick={() => setTool('select')} className="w-10 h-10 p-0 shrink-0">
                         <MousePointer2 className="w-4 h-4" />
                     </Button>
-                    <div className="w-px h-6 bg-slate-700 mx-1 shrink-0" />
+                    <div className="w-px h-6 bg-[var(--ws-surface-tertiary)] mx-1 shrink-0" />
                     <Button size="sm" variant={tool === 'note' ? 'primary' : 'ghost'} onClick={() => setTool('note')} className="flex items-center gap-2 shrink-0">
                         <MessageSquare className="w-4 h-4" />
                         <span className="hidden lg:inline">Comment</span>
@@ -213,12 +213,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     </Button>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <div className="hidden sm:flex items-center bg-slate-800 rounded-lg px-2 mr-2">
-                        <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.max(0.5, s - 0.25))} className="p-1 h-8 w-8 hover:bg-slate-700">
+                    <div className="hidden sm:flex items-center bg-[var(--ws-surface-secondary)] rounded-lg px-2 mr-2">
+                        <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.max(0.5, s - 0.25))} className="p-1 h-8 w-8 hover:bg-[var(--ws-surface-tertiary)]">
                             <span className="text-lg">-</span>
                         </Button>
-                        <span className="type-caption font-bold w-12 text-center text-slate-400">{Math.round(renderScale * 100)}%</span>
-                        <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.min(3, s + 0.25))} className="p-1 h-8 w-8 hover:bg-slate-700">
+                        <span className="type-caption font-bold w-12 text-center text-[var(--ws-text-muted)]">{Math.round(renderScale * 100)}%</span>
+                        <Button size="sm" variant="ghost" onClick={() => setRenderScale(s => Math.min(3, s + 0.25))} className="p-1 h-8 w-8 hover:bg-[var(--ws-surface-tertiary)]">
                             <span className="text-lg">+</span>
                         </Button>
                     </div>
@@ -244,9 +244,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </div>
 
             {/* Viewer Area */}
-            <div className="flex-1 overflow-auto bg-slate-950 p-4 sm:p-8 scroll-smooth" ref={containerRef}>
+            <div className="flex-1 overflow-auto bg-[var(--ws-canvas)] p-4 sm:p-8 scroll-smooth" ref={containerRef}>
                 {isLoading ? (
-                    <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
+                    <div className="h-full flex flex-col items-center justify-center gap-4 text-[var(--ws-text-muted)]">
                         <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
                         <p className="type-card-description font-medium animate-pulse">Initializing Secure PDF Canvas...</p>
                     </div>
@@ -256,7 +256,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                             <div key={pageNo} className="relative group">
                                 <div className="absolute -left-12 top-0 text-slate-600 font-black type-caption h-full flex flex-col items-center pt-2 gap-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                                     <span>P. {pageNo}</span>
-                                    <div className="w-px flex-1 bg-slate-800" />
+                                    <div className="w-px flex-1 bg-[var(--ws-surface-secondary)]" />
                                 </div>
                                 <PDFPage
                                     pageNumber={pageNo}
@@ -288,12 +288,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 )}
             </div>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-slate-900/90 backdrop-blur-xl text-white type-caption font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2.5 bg-[var(--ws-panel)]/90 backdrop-blur-xl text-white type-caption font-bold rounded-full shadow-2xl border border-white/10 uppercase tracking-widest pointer-events-none z-50 ring-1 ring-white/5">
                 {tool === 'note' && <span className="flex items-center gap-2"><MessageSquare className="w-3 h-3 text-teal-400" /> Click to drop a note</span>}
                 {tool === 'redact' && <span className="flex items-center gap-2"><Eraser className="w-3 h-3 text-red-400" /> Click to redact content</span>}
                 {tool === 'text' && <span className="flex items-center gap-2"><Type className="w-3 h-3 text-blue-400" /> Click to type text</span>}
                 {tool === 'signature' && <span className="flex items-center gap-2"><PenLine className="w-3 h-3 text-teal-400" /> Click to drop signature</span>}
-                {tool === 'select' && <span className="text-slate-400">Select tools from top to edit document</span>}
+                {tool === 'select' && <span className="text-[var(--ws-text-muted)]">Select tools from top to edit document</span>}
             </div>
         </div>
     );
@@ -340,7 +340,7 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
 
                 // Clear previous content
                 context.clearRect(0, 0, canvas.width, canvas.height);
-                context.fillStyle = '#ffffff';
+                context.fillStyle = 'var(--color-white)';
                 context.fillRect(0, 0, canvas.width, canvas.height);
 
                 const renderContext = {
@@ -383,7 +383,7 @@ const PDFPage = React.forwardRef<HTMLDivElement, PDFPageProps>(({
         >
             <canvas ref={canvasRef} className="block shadow-inner" />
             {renderPending && (
-                <div className="absolute inset-0 bg-slate-900/10 backdrop-blur-[1px] flex items-center justify-center">
+                <div className="absolute inset-0 bg-[var(--ws-panel)]/10 backdrop-blur-[1px] flex items-center justify-center">
                     <Loader2 className="w-6 h-6 animate-spin text-teal-400 opacity-50" />
                 </div>
             )}
@@ -435,16 +435,16 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                         <MessageSquare className="w-3.5 h-3.5 text-white" />
                     </button>
                     {isActive && (
-                        <div className="absolute top-0 left-full ml-4 w-72 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in duration-200 origin-left ring-1 ring-white/5">
+                        <div className="absolute top-0 left-full ml-4 w-72 bg-[var(--ws-panel)]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 z-[100] animate-in fade-in zoom-in duration-200 origin-left ring-1 ring-white/5">
                             <div className="flex items-center justify-between mb-3">
-                                <span className="type-caption font-black text-teal-400 uppercase tracking-widest bg-teal-400/10 px-2 py-0.5 rounded-md">Note - {annotation.author}</span>
-                                <button onClick={onDelete} className="text-slate-500 hover:text-red-400 transition-colors p-1 hover:bg-red-500/10 rounded-lg">
+                                <span className="type-caption font-black text-teal-400 uppercase tracking-widest bg-[var(--brand-blue-400)]/10 px-2 py-0.5 rounded-md">Note - {annotation.author}</span>
+                                <button onClick={onDelete} className="text-[var(--ws-text-muted)] hover:text-red-400 transition-colors p-1 hover:bg-[var(--error-500)]/10 rounded-lg">
                                     <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                             </div>
                             <textarea
                                 autoFocus
-                                className="w-full bg-slate-950/50 border border-white/5 rounded-xl p-3 type-ui text-slate-200 outline-none focus:border-teal-500/50 min-h-[100px] shadow-inner transition-all placeholder:text-slate-700"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 rounded-xl p-3 type-ui text-[var(--ws-text-secondary)] outline-none focus:border-teal-500/50 min-h-[100px] shadow-inner transition-all placeholder:text-slate-700"
                                 value={annotation.text}
                                 onChange={(e) => onUpdate({ text: e.target.value })}
                                 placeholder="Write your comment..."
@@ -485,7 +485,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
 
             {annotation.type === 'redact' && (
                 <div
-                    className={`bg-slate-950 border border-white/20 relative group shadow-2xl rounded-sm ${isActive ? 'ring-2 ring-red-500 border-red-500/50' : ''}`}
+                    className={`bg-[var(--ws-canvas)] border border-white/20 relative group shadow-2xl rounded-sm ${isActive ? 'ring-2 ring-red-500 border-red-500/50' : ''}`}
                     style={{
                         width: annotation.width ? `${annotation.width * 5}px` : '100px',
                         height: annotation.height ? `${annotation.height * 4}px` : '20px'
@@ -495,7 +495,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                     {isActive && (
                         <button
                             onClick={onDelete}
-                            className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full p-1.5 shadow-2xl border border-white/20 hover:bg-red-500 active:scale-90 transition-all"
+                            className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full p-1.5 shadow-2xl border border-white/20 hover:bg-[var(--error-500)] active:scale-90 transition-all"
                         >
                             <Trash2 className="w-3 h-3" />
                         </button>
@@ -529,23 +529,23 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                     )}
 
                     {isActive && (
-                        <div className="absolute top-0 left-full ml-6 w-80 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-5 z-[100] animate-in fade-in zoom-in duration-200 pointer-events-auto origin-left ring-1 ring-white/5">
+                        <div className="absolute top-0 left-full ml-6 w-80 bg-[var(--ws-panel)]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-5 z-[100] animate-in fade-in zoom-in duration-200 pointer-events-auto origin-left ring-1 ring-white/5">
                             <div className="flex items-center justify-between mb-5">
-                                <div className="flex bg-slate-950/80 p-1 rounded-xl border border-white/5 ring-1 ring-white/5">
+                                <div className="flex bg-[var(--ws-canvas)]/80 p-1 rounded-xl border border-white/5 ring-1 ring-white/5">
                                     <button
                                         onClick={() => onUpdate({ signatureType: 'type' })}
-                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'type' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'type' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
                                     >
                                         Type
                                     </button>
                                     <button
                                         onClick={() => onUpdate({ signatureType: 'draw' })}
-                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'draw' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                                        className={`px-4 py-2 type-caption font-black uppercase tracking-widest rounded-lg transition-all ${annotation.signatureType === 'draw' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
                                     >
                                         Draw
                                     </button>
                                 </div>
-                                <button onClick={onDelete} className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-colors ring-1 ring-transparent hover:ring-red-500/20">
+                                <button onClick={onDelete} className="p-2 hover:bg-[var(--error-500)]/10 text-[var(--ws-text-muted)] hover:text-red-400 rounded-xl transition-colors ring-1 ring-transparent hover:ring-red-500/20">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
@@ -554,7 +554,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                                 <input
                                     autoFocus
                                     placeholder="Enter your full legal name"
-                                    className="w-full bg-slate-950/50 border border-white/5 rounded-xl p-4 text-lg text-white outline-none focus:border-teal-500/50 shadow-inner font-signature placeholder:text-slate-700"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 rounded-xl p-4 text-lg text-white outline-none focus:border-teal-500/50 shadow-inner font-signature placeholder:text-slate-700"
                                     style={{ fontFamily: "'Dancing Script', cursive" }}
                                     value={annotation.text}
                                     onChange={(e) => onUpdate({ text: e.target.value })}
@@ -566,7 +566,7 @@ const AnnotationItem: React.FC<AnnotationItemProps> = ({
                                 />
                             )}
                             <div className="mt-4 flex justify-between items-center">
-                                <span className="type-caption text-slate-500 font-medium">ESIGN Secure Signature</span>
+                                <span className="type-caption text-[var(--ws-text-muted)] font-medium">ESIGN Secure Signature</span>
                                 <Button size="sm" variant="primary" onClick={onDeactivate} className="type-caption h-9 px-6 bg-teal-600 hover:bg-teal-500">Done</Button>
                             </div>
                         </div>
@@ -613,7 +613,7 @@ const SignatureCanvas: React.FC<{ onSave: (data: string) => void; initialData?: 
 
         ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = '#0d9488'; // teal-600
+        ctx.strokeStyle = 'var(--brand-blue-600)'; // teal-600
 
         if (!('touches' in e) || e.touches.length === 1) {
             ctx.lineTo(x, y);
@@ -629,7 +629,7 @@ const SignatureCanvas: React.FC<{ onSave: (data: string) => void; initialData?: 
                 ref={canvasRef}
                 width={280}
                 height={140}
-                className="w-full h-[140px] bg-slate-950/80 rounded-xl border border-white/5 cursor-crosshair touch-none shadow-inner"
+                className="w-full h-[140px] bg-[var(--ws-canvas)]/80 rounded-xl border border-white/5 cursor-crosshair touch-none shadow-inner"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
@@ -644,7 +644,7 @@ const SignatureCanvas: React.FC<{ onSave: (data: string) => void; initialData?: 
                     ctx?.clearRect(0, 0, 280, 140);
                     onSave('');
                 }}
-                className="absolute top-3 right-3 p-2 bg-slate-900 border border-white/5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-all shadow-xl opacity-0 group-hover/canvas:opacity-100"
+                className="absolute top-3 right-3 p-2 bg-[var(--ws-panel)] border border-white/5 hover:bg-[var(--ws-surface-secondary)] rounded-lg text-[var(--ws-text-muted)] hover:text-white transition-all shadow-xl opacity-0 group-hover/canvas:opacity-100"
                 title="Clear Signature"
             >
                 <Eraser className="w-3.5 h-3.5" />

@@ -70,12 +70,12 @@ const ControlButton: React.FC<ControlButtonProps> = ({
                 w-12 h-12 sm:w-14 sm:h-14 rounded-full
                 transition-all duration-300 transform active:scale-90
                 ${danger
-                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/40'
+                    ? 'bg-red-600 hover:bg-[var(--error-500)] text-[var(--text-inverse)] shadow-lg shadow-red-900/40'
                     : highlight
-                        ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40'
+                        ? 'bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/40'
                         : active
-                            ? 'bg-red-500/20 border-2 border-red-500/50 text-red-500 hover:bg-red-500/30'
-                            : 'bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-white/10'
+                            ? 'bg-[var(--error-500)]/20 border-2 border-red-500/50 text-red-500 hover:bg-[var(--error-500)]/30'
+                            : 'bg-[var(--ws-surface-secondary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] border border-[var(--ws-border)]'
                 }
             `}
             title={label}
@@ -85,13 +85,13 @@ const ControlButton: React.FC<ControlButtonProps> = ({
             {badgeCount && badgeCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-slate-900 type-caption font-bold text-white items-center justify-center">
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-[var(--error-500)] border-2 border-slate-900 type-caption font-bold text-[var(--text-inverse)] items-center justify-center">
                         {badgeCount && badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                 </span>
             )}
         </button>
-        <span className="type-caption sm:text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
+        <span className="type-caption sm:text-xs font-medium text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-primary)] transition-colors">
             {label}
         </span>
     </div>
@@ -167,7 +167,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
             <div className="relative max-w-5xl mx-auto flex flex-col items-center pointer-events-auto">
                 {/* Secondary Actions (More Menu) */}
                 {showMoreActions && isMobile && (
-                    <div className="mb-4 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-4 grid grid-cols-3 gap-4 animate-fade-in-up w-full shadow-2xl">
+                    <div className="mb-4 bg-[var(--ws-panel)]/95 backdrop-blur-xl border border-[var(--ws-border)] rounded-2xl p-4 grid grid-cols-3 gap-4 animate-fade-in-up w-full shadow-2xl">
                         <ControlButton
                             onClick={() => { onToggleScreenShare(); setShowMoreActions(false); }}
                             highlight={isScreenSharing}
@@ -223,7 +223,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                 )}
 
                 {/* Main Controls Bar */}
-                <div className="bg-slate-950/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-3 sm:p-5 flex items-center justify-center gap-4 sm:gap-8 shadow-2xl ring-1 ring-white/10">
+                <div className="bg-[var(--ws-canvas)]/40 backdrop-blur-2xl border border-[var(--ws-border)] rounded-3xl p-3 sm:p-5 flex items-center justify-center gap-4 sm:gap-8 shadow-2xl ring-1 ring-[var(--ws-border)]">
 
                     {/* Audio/Video Section */}
                     <div className="flex items-center gap-3 sm:gap-6">
@@ -246,7 +246,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                     {/* Share + invite — desktop main bar; mobile uses More menu */}
                     {!isMobile && (
                         <>
-                            <div className="w-px h-10 bg-white/10" />
+                            <div className="w-px h-10 bg-[var(--ws-hover)]" />
                             <ControlButton
                                 onClick={onToggleScreenShare}
                                 highlight={isScreenSharing}
@@ -272,7 +272,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                     {/* Desktop-only Extra Actions */}
                     {!isMobile && (
                         <>
-                            <div className="w-px h-10 bg-white/10" />
+                            <div className="w-px h-10 bg-[var(--ws-hover)]" />
                             <div className="flex items-center gap-3 sm:gap-6">
                                 {onToggleChat && (
                                     <ControlButton

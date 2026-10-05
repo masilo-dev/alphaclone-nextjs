@@ -119,7 +119,7 @@ export default function BonnieModuleDock() {
       bg={BC.bg}
     >
       <Flex align="center" gap={2} borderBottomWidth="1px" borderColor={BC.border} px={3} py={2.5}>
-        <Brain size={16} color="#2DD4BF" />
+        <Brain size={16} color="var(--brand-blue-400)" />
         {!isCollapsed && (
           <Box minW={0} flex={1}>
             <Text fontSize="xs" fontWeight="bold" color="teal.300">

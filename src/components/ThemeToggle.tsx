@@ -61,7 +61,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
                 onClick={() => handleThemeChange('dark')}
                 className={`p-2 rounded-md transition-all ${
                     theme === 'dark'
-                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,#4199A4)] font-medium'
+                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,var(--brand-teal))] font-medium'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
                 }`}
                 title="Dark mode"
@@ -74,7 +74,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
                 onClick={() => handleThemeChange('auto')}
                 className={`p-2 rounded-md transition-all ${
                     theme === 'auto'
-                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,#4199A4)] font-medium'
+                        ? 'bg-[var(--surface-elevated)] shadow-sm text-[var(--interactive-secondary,var(--brand-teal))] font-medium'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'
                 }`}
                 title="Auto (system)"

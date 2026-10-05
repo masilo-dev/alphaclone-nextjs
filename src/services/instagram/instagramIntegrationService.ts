@@ -78,8 +78,12 @@ export async function getInstagramIntegration(
     requireActive?: boolean;
   }
 ): Promise<InstagramIntegrationRow | null> {
+  // Multi-tenant: never look up Instagram accounts without tenant scope (SOC-IDENT-001).
+  if (!query.tenantId?.trim()) {
+    return null;
+  }
   let q = admin.from('instagram_integrations').select(`${SAFE_COLUMNS}, page_access_token`);
-  if (query.tenantId) q = q.eq('tenant_id', query.tenantId);
+  q = q.eq('tenant_id', query.tenantId.trim());
   if (query.userId) q = q.eq('user_id', query.userId);
   if (query.instagramAccountId) q = q.eq('instagram_account_id', query.instagramAccountId);
   if (query.facebookPageId) q = q.eq('facebook_page_id', query.facebookPageId);

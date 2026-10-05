@@ -36,12 +36,12 @@ interface HubShellProps {
 }
 
 const LEGACY_ACCENT: Record<NonNullable<HubShellProps['accent']>, string> = {
-  teal: '#0F9F8F',
-  blue: '#356AF4',
-  amber: '#E69222',
-  violet: '#8950F5',
-  rose: '#DE4C7A',
-  green: '#16A36A',
+  teal: 'var(--success-500)',
+  blue: 'var(--brand-blue-500)',
+  amber: 'var(--warning-500)',
+  violet: 'var(--brand-violet-500)',
+  rose: 'var(--error-500)',
+  green: 'var(--success-500)',
 };
 
 const ROUTES_WITH_PAGE_GUIDES = new Set([

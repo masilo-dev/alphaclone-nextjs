@@ -39,7 +39,7 @@ export function LeadScoreBadge({ contact, hasDeal = false, dealStage = '', size 
     ? { color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/30', label: 'Warm' }
     : score >= 25
     ? { color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/30', label: 'Cool' }
-    : { color: 'text-slate-400', bg: 'bg-white/5 border-white/10', label: 'Cold' };
+    : { color: 'text-[var(--ws-text-muted)]', bg: 'bg-[var(--ws-hover)] border-[var(--ws-border)]', label: 'Cold' };
 
   if (size === 'sm') {
     return (

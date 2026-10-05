@@ -193,40 +193,40 @@ export function EmailOutreachComposer() {
 
   return (
     <div className="h-full min-h-0 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-3 p-3 md:p-5">
-      <div className="rounded-2xl border border-white/5 bg-slate-900/50 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between gap-2">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-3 py-2.5 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <Users className="w-4 h-4 text-teal-400 shrink-0" />
             <div className="min-w-0">
-              <p className="type-card-description font-semibold text-white truncate">Tenant contacts</p>
-              <p className="type-card-description text-slate-500">{selectedEmails.size} selected</p>
+              <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">Tenant contacts</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">{selectedEmails.size} selected</p>
             </div>
           </div>
           {filtered.length > 0 && (
             <button
               type="button"
               onClick={toggleSelectAll}
-              className="type-ui font-bold text-teal-400 hover:text-teal-300 px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20"
+              className="type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)] px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20"
             >
               {selectedEmails.size >= filtered.length ? 'Deselect all' : 'Select all'}
             </button>
           )}
         </div>
-        <div className="p-2 border-b border-white/5">
+        <div className="p-2 border-b border-[var(--ws-border)]">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name or email…"
-            className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+            className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
           />
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto p-1.5 space-y-0.5">
           {loading ? (
-            <p className="type-card-description text-slate-500 p-3 flex items-center gap-2">
+            <p className="type-card-description text-[var(--ws-text-muted)] p-3 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading…
             </p>
           ) : filtered.length === 0 ? (
-            <p className="type-card-description text-slate-500 p-3">No contacts with email found.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] p-3">No contacts with email found.</p>
           ) : (
             filtered.map((c) => {
               const selected = selectedEmails.has(c.email);
@@ -237,7 +237,7 @@ export function EmailOutreachComposer() {
                   onClick={() => toggleEmail(c.email)}
                   className={cn(
                     'w-full text-left rounded-xl px-2.5 py-2 flex items-start gap-2 transition-colors',
-                    selected ? 'bg-teal-500/10 border border-teal-500/30' : 'hover:bg-white/5 border border-transparent'
+                    selected ? 'bg-teal-500/10 border border-teal-500/30' : 'hover:bg-[var(--ws-hover)] border border-transparent'
                   )}
                 >
                   {selected ? (
@@ -246,8 +246,8 @@ export function EmailOutreachComposer() {
                     <Square className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
                   )}
                   <span className="min-w-0">
-                    <span className="block type-ui text-white truncate">{c.name}</span>
-                    <span className="block type-ui text-slate-500 truncate">{c.email}</span>
+                    <span className="block type-ui text-[var(--ws-text-primary)] truncate">{c.name}</span>
+                    <span className="block type-ui text-[var(--ws-text-muted)] truncate">{c.email}</span>
                     <span className="block type-caption text-slate-600 uppercase tracking-wider mt-0.5">
                       {c.source}
                       {c.stage ? ` · ${c.stage}` : ''}
@@ -260,22 +260,22 @@ export function EmailOutreachComposer() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-slate-900/50 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-3 py-2.5 border-b border-white/5 flex flex-wrap items-center gap-2 justify-between">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-3 py-2.5 border-b border-[var(--ws-border)] flex flex-wrap items-center gap-2 justify-between">
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-teal-400" />
-            <p className="type-card-description font-semibold text-white">Email outreaches</p>
+            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Email outreaches</p>
           </div>
           <button
             type="button"
             onClick={addStep}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 type-ui font-bold text-slate-300 hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2.5 py-1.5 type-ui font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
           >
             <Plus className="w-3.5 h-3.5" /> Add outreach
           </button>
         </div>
 
-        <div className="px-3 py-2 flex gap-1.5 overflow-x-auto border-b border-white/5">
+        <div className="px-3 py-2 flex gap-1.5 overflow-x-auto border-b border-[var(--ws-border)]">
           {steps.map((step) => (
             <div key={step.id} className="flex items-center gap-1 shrink-0">
               <button
@@ -284,8 +284,8 @@ export function EmailOutreachComposer() {
                 className={cn(
                   'rounded-lg px-3 py-1.5 type-ui font-medium',
                   activeStepId === step.id
-                    ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30'
-                    : 'text-slate-400 hover:bg-white/5 border border-transparent'
+                    ? 'bg-teal-500/15 text-[var(--brand-blue-300)] border border-teal-500/30'
+                    : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] border border-transparent'
                 )}
               >
                 {step.label}
@@ -306,49 +306,49 @@ export function EmailOutreachComposer() {
 
         <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
           <div>
-            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Direct Recipients (Optional Manual Emails)
             </label>
             <input
               value={manualEmailsInput}
               onChange={(e) => setManualEmailsInput(e.target.value)}
               placeholder="Or type emails manually: e.g. john@acme.com, sarah@company.org"
-              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 type-caption text-white outline-none focus:border-teal-500/40 placeholder:text-slate-600"
+              className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 placeholder:text-slate-600"
             />
           </div>
 
           <div>
-            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Subject
             </label>
             <input
               value={activeStep.subject}
               onChange={(e) => updateActiveStep({ subject: e.target.value })}
               placeholder="Outreach subject"
-              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 type-ui text-white outline-none focus:border-teal-500/40"
+              className="w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
             />
           </div>
           <div>
-            <label className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+            <label className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1.5">
               Message
             </label>
             <textarea
               value={activeStep.body}
               onChange={(e) => updateActiveStep({ body: e.target.value })}
               placeholder="Write this outreach… (no auto greeting)"
-              className="w-full h-[180px] max-h-[220px] rounded-xl bg-slate-950 border border-white/10 px-3 py-2.5 type-ui text-white outline-none focus:border-teal-500/40 resize-none overflow-y-auto"
+              className="w-full h-[180px] max-h-[220px] rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 resize-none overflow-y-auto"
             />
           </div>
-          <p className="type-card-description text-slate-500">
+          <p className="type-card-description text-[var(--ws-text-muted)]">
             Sending to {recipients.length} contact{recipients.length === 1 ? '' : 's'} · {activeStep.label}
           </p>
         </div>
 
-        <div className="px-3 py-3 border-t border-white/5 flex justify-end">
+        <div className="px-3 py-3 border-t border-[var(--ws-border)] flex justify-end">
           <button
             type="button"
             onClick={openCompose}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2.5 type-caption font-bold text-white"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2.5 type-caption font-bold text-[var(--text-inverse)]"
           >
             <Send className="w-3.5 h-3.5" />
             Send {activeStep.label}

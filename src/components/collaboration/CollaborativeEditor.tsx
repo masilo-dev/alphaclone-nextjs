@@ -80,7 +80,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                 userId: user.id,
                 userName: user.name,
                 position,
-                color: '#2dd4bf',
+                color: 'var(--brand-blue-400)',
             });
         }
 
@@ -95,20 +95,20 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
     };
 
     const getParticipantColors = (userId: string): string => {
-        const colors = ['#2dd4bf', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444'];
+        const colors = ['var(--brand-blue-400)', 'var(--brand-violet-400)', 'var(--info-500)', 'var(--warning-500)', 'var(--error-500)'];
         const index = participants.indexOf(userId) % colors.length;
-        return colors[index] ?? colors[0] ?? '#2dd4bf';
+        return colors[index] ?? colors[0] ?? 'var(--brand-blue-400)';
     };
 
     return (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <Card className="w-full max-w-5xl max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
                     <div className="flex items-center gap-4">
                         <h2 className="text-xl font-bold text-white">{document?.title || 'Collaborative Document'}</h2>
                         {isSaving && (
-                            <span className="type-caption text-slate-400 flex items-center gap-1">
+                            <span className="type-caption text-[var(--ws-text-muted)] flex items-center gap-1">
                                 <Save className="w-3 h-3 animate-spin" />
                                 Saving...
                             </span>
@@ -118,18 +118,18 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                     <div className="flex items-center gap-4">
                         {/* Participants */}
                         <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-slate-400" />
+                            <Users className="w-4 h-4 text-[var(--ws-text-muted)]" />
                             <div className="flex -space-x-2">
                                 {participants.slice(0, 3).map((participantId) => (
                                     <div
                                         key={participantId}
-                                        className="w-8 h-8 rounded-full border-2 border-slate-800"
+                                        className="w-8 h-8 rounded-full border-2 border-[var(--ws-border)]"
                                         style={{ backgroundColor: getParticipantColors(participantId) }}
                                         title={participantId === user.id ? user.name : 'Participant'}
                                     />
                                 ))}
                                 {participants.length > 3 && (
-                                    <div className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-800 flex items-center justify-center type-caption text-white">
+                                    <div className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] border-2 border-[var(--ws-border)] flex items-center justify-center type-caption text-white">
                                         +{participants.length - 3}
                                     </div>
                                 )}
@@ -139,7 +139,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                         {onClose && (
                             <button
                                 onClick={onClose}
-                                className="p-2 text-slate-400 hover:text-white transition-colors"
+                                className="p-2 text-[var(--ws-text-muted)] hover:text-white transition-colors"
                                 aria-label="Close editor"
                             >
                                 <X className="w-5 h-5" />
@@ -154,7 +154,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                         ref={editorRef}
                         value={content}
                         onChange={handleContentChange}
-                        className="flex-1 w-full p-6 bg-slate-950 text-white placeholder-slate-600 resize-none outline-none font-mono type-ui"
+                        className="flex-1 w-full p-6 bg-[var(--ws-canvas)] text-white placeholder-slate-600 resize-none outline-none font-mono type-ui"
                         placeholder="Start typing... Changes are saved automatically and synced in real-time."
                     />
 
@@ -183,7 +183,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 flex items-center justify-between type-ui text-slate-400">
+                <div className="p-4 border-t border-[var(--ws-border)] flex items-center justify-between type-ui text-[var(--ws-text-muted)]">
                     <div className="flex items-center gap-4">
                         <span>{participants.length} participant{participants.length !== 1 ? 's' : ''}</span>
                         <span>Version {document?.version || 1}</span>

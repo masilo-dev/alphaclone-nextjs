@@ -63,7 +63,7 @@ export default function CallPage() {
 
     if (loading || authLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-white">
                 <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
                 <h2 className="text-xl font-medium">Connecting to Secure Channel...</h2>
             </div>
@@ -72,14 +72,14 @@ export default function CallPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
-                <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl max-w-md text-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-white p-4">
+                <div className="bg-[var(--error-500)]/10 border border-red-500/50 p-6 rounded-2xl max-w-md text-center">
                     <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-bold mb-2">Connection Failed</h2>
-                    <p className="text-slate-400 mb-6">{error}</p>
+                    <p className="text-[var(--ws-text-muted)] mb-6">{error}</p>
                     <button
                         onClick={() => router.push('/dashboard')}
-                        className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700"
+                        className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors border border-[var(--ws-border)]"
                     >
                         Return to Admin Dashboard
                     </button>
@@ -90,9 +90,9 @@ export default function CallPage() {
 
     if (teamsJoinUrl) {
         return (
-            <div className="h-screen w-screen bg-slate-950 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-900/80">
-                    <p className="type-card-description text-slate-300">Microsoft Teams · 40 minute session</p>
+            <div className="h-screen w-screen bg-[var(--ws-canvas)] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[var(--ws-panel)]/80">
+                    <p className="type-card-description text-[var(--ws-text-secondary)]">Microsoft Teams · 40 minute session</p>
                     <a
                         href={teamsJoinUrl}
                         target="_blank"
@@ -113,7 +113,7 @@ export default function CallPage() {
     }
 
     return (
-        <div className="h-screen w-screen bg-slate-950 overflow-hidden overscroll-none touch-none">
+        <div className="h-screen w-screen bg-[var(--ws-canvas)] overflow-hidden overscroll-none touch-none">
             {user && (
                 <CustomVideoRoom
                     user={user}

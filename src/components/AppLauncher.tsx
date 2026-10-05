@@ -62,10 +62,10 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
   const formattedDate = currentTime?.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }) || '';
 
   return (
-    <div className="fixed inset-0 bg-[#000814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none overscroll-behavior-none touch-action-manipulation">
+    <div className="fixed inset-0 bg-[var(--color-black)814] text-white px-4 py-8 flex flex-col supports-[height:100dvh]:h-[100dvh] overflow-hidden select-none overscroll-behavior-none touch-action-manipulation">
       {/* Background - System Aesthetic */}
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#000814] via-[#0a1628] to-[#000814]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-black)814] via-[var(--brand-violet-950)] to-[var(--color-black)814]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-500/5 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
@@ -115,7 +115,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
-          className="type-caption text-slate-500 mb-6"
+          className="type-caption text-[var(--ws-text-muted)] mb-6"
         >
           {formattedDate}
         </motion.p>
@@ -201,7 +201,7 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
             <motion.div 
               initial={{ scale: 0.95, y: -20 }}
               animate={{ scale: 1, y: 0 }}
-              className="w-full max-w-xl bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-xl bg-[var(--ws-canvas)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center p-4 border-b border-white/10">

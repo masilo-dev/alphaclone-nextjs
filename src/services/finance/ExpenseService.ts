@@ -244,16 +244,16 @@ export const expenseService = {
 
     async seedDefaultCategories(tenantId: string): Promise<void> {
         const defaults = [
-            { name: 'Advertising & Marketing', account_code: '6100', color: '#f59e0b', icon: 'megaphone' },
-            { name: 'Software & Subscriptions', account_code: '6200', color: '#6366f1', icon: 'computer' },
-            { name: 'Office Supplies',          account_code: '6300', color: '#10b981', icon: 'briefcase' },
-            { name: 'Travel & Transportation',  account_code: '6400', color: '#3b82f6', icon: 'car' },
-            { name: 'Meals & Entertainment',    account_code: '6500', color: '#f97316', icon: 'utensils' },
-            { name: 'Utilities',                account_code: '6600', color: '#84cc16', icon: 'zap' },
-            { name: 'Professional Services',    account_code: '6700', color: '#8b5cf6', icon: 'users' },
-            { name: 'Insurance',                account_code: '6800', color: '#ec4899', icon: 'shield' },
-            { name: 'Bank Charges',             account_code: '6900', color: '#ef4444', icon: 'credit-card' },
-            { name: 'Miscellaneous',            account_code: '6999', color: '#6b7280', icon: 'more-horizontal' },
+            { name: 'Advertising & Marketing', account_code: '6100', color: 'var(--warning-500)', icon: 'megaphone' },
+            { name: 'Software & Subscriptions', account_code: '6200', color: 'var(--brand-violet-500)', icon: 'computer' },
+            { name: 'Office Supplies',          account_code: '6300', color: 'var(--success-500)', icon: 'briefcase' },
+            { name: 'Travel & Transportation',  account_code: '6400', color: 'var(--info-500)', icon: 'car' },
+            { name: 'Meals & Entertainment',    account_code: '6500', color: 'var(--warning-500)', icon: 'utensils' },
+            { name: 'Utilities',                account_code: '6600', color: 'var(--success-500)', icon: 'zap' },
+            { name: 'Professional Services',    account_code: '6700', color: 'var(--brand-violet-400)', icon: 'users' },
+            { name: 'Insurance',                account_code: '6800', color: 'var(--error-500)', icon: 'shield' },
+            { name: 'Bank Charges',             account_code: '6900', color: 'var(--error-500)', icon: 'credit-card' },
+            { name: 'Miscellaneous',            account_code: '6999', color: 'var(--ws-text-muted)', icon: 'more-horizontal' },
         ];
 
         const supabase = getSupabase();

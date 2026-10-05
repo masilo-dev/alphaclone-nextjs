@@ -19,7 +19,7 @@ const PrismBackground = React.memo(() => {
 
   return (
     <div
-      className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#041027]"
+      className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[var(--brand-violet-950)]"
       aria-hidden="true"
     />
   );

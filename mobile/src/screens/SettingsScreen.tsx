@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,7 +22,7 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -33,14 +34,14 @@ export default function SettingsScreen() {
           {/* User Profile */}
           <View style={styles.profileSection}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={40} color="#FFFFFF" />
+              <Ionicons name="person" size={40} color=colors.textInverse />
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{user?.name || 'User'}</Text>
               <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
             </View>
             <TouchableOpacity style={styles.editButton}>
-              <Ionicons name="pencil" size={20} color="#FFFFFF" />
+              <Ionicons name="pencil" size={20} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -50,27 +51,27 @@ export default function SettingsScreen() {
             
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Ionicons name="notifications" size={20} color="#94A3B8" />
+                <Ionicons name="notifications" size={20} color=colors.textSecondary />
                 <Text style={styles.settingText}>Push Notifications</Text>
               </View>
               <Switch
                 value={notifications}
                 onValueChange={setNotifications}
-                trackColor={{ false: '#1E293B', true: '#00D2A0' }}
-                thumbColor={notifications ? '#FFFFFF' : '#64748B'}
+                trackColor={{ false: colors.card, true: colors.primary }}
+                thumbColor={notifications ? colors.textInverse : colors.textMuted}
               />
             </View>
 
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Ionicons name="moon" size={20} color="#94A3B8" />
+                <Ionicons name="moon" size={20} color=colors.textSecondary />
                 <Text style={styles.settingText}>Dark Mode</Text>
               </View>
               <Switch
                 value={darkMode}
                 onValueChange={setDarkMode}
-                trackColor={{ false: '#1E293B', true: '#00D2A0' }}
-                thumbColor={darkMode ? '#FFFFFF' : '#64748B'}
+                trackColor={{ false: colors.card, true: colors.primary }}
+                thumbColor={darkMode ? colors.textInverse : colors.textMuted}
               />
             </View>
           </View>
@@ -80,17 +81,17 @@ export default function SettingsScreen() {
             {menuItems.map((item, index) => (
               <TouchableOpacity key={index} style={styles.menuItem}>
                 <View style={styles.menuLeft}>
-                  <Ionicons name={item.icon as any} size={20} color="#94A3B8" />
+                  <Ionicons name={item.icon as any} size={20} color=colors.textSecondary />
                   <Text style={styles.menuText}>{item.title}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#64748B" />
+                <Ionicons name="chevron-forward" size={20} color=colors.textMuted />
               </TouchableOpacity>
             ))}
           </View>
 
           {/* Logout Button */}
           <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-            <Ionicons name="log-out" size={20} color="#FF6B6B" />
+            <Ionicons name="log-out" size={20} color=colors.error />
             <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   profileSection: {
     flexDirection: 'row',
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.card,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -141,12 +142,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   editButton: {
     padding: 10,
@@ -158,12 +159,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   settingRow: {
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: colors.card,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
   settingText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginLeft: 12,
   },
   menuSection: {
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
     overflow: 'hidden',
   },
   menuItem: {
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: colors.card,
   },
   menuLeft: {
     flexDirection: 'row',
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginLeft: 12,
   },
   logoutButton: {
@@ -220,11 +221,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: colors.error,
   },
   logoutText: {
     fontSize: 16,
-    color: '#FF6B6B',
+    color: colors.error,
     marginLeft: 10,
     fontWeight: '600',
   },

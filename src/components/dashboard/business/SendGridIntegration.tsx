@@ -173,7 +173,7 @@ export default function SendGridIntegration() {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-indigo-400 mx-auto mb-3" />
-                <p className="type-card-description text-slate-400">Verifying SendGrid connection...</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Verifying SendGrid connection...</p>
             </div>
         );
     }
@@ -184,15 +184,15 @@ export default function SendGridIntegration() {
             animate={{ opacity: 1, y: 0 }}
             className="ac-workspace-panel rounded-lg overflow-hidden"
         >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
                         <Send className="w-6 h-6 text-indigo-400" />
                     </div>
                     <div>
-                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-white">SendGrid Email</h2>
+                            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">SendGrid Email</h2>
                             {status === 'connected' && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
@@ -200,7 +200,7 @@ export default function SendGridIntegration() {
                                 </span>
                             )}
                         </div>
-                        <p className="type-card-description text-slate-400">Connect your SendGrid account to send emails from your own domain.</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Connect your SendGrid account to send emails from your own domain.</p>
                     </div>
                 </div>
                 {status === 'connected' && (
@@ -208,7 +208,7 @@ export default function SendGridIntegration() {
                         variant="outline"
                         onClick={handleDisconnect}
                         disabled={isDisconnecting}
-                        className="border-slate-700 text-rose-300 hover:bg-rose-500/10"
+                        className="border-[var(--ws-border)] text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10"
                     >
                         <Unplug className="w-4 h-4 mr-2" />
                         Disconnect
@@ -219,70 +219,70 @@ export default function SendGridIntegration() {
             <form onSubmit={handleSave} className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">API Key</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">API Key</label>
                         <div className="relative">
                             <input
                                 type="password"
                                 value={config.apiKey}
                                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                                 placeholder="SG.xxxxxxxxxxxxxxxx"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 type-ui text-white outline-none focus:border-indigo-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 pl-10 type-ui text-[var(--ws-text-primary)] outline-none focus:border-indigo-500/40"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Verified Sender Email</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Verified Sender Email</label>
                         <input
                             type="email"
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="hello@yourdomain.com"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-indigo-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-indigo-500/40"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Sender Name</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Sender Name</label>
                         <input
                             type="text"
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Company Name"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-indigo-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-indigo-500/40"
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 pt-4 border-t border-[var(--ws-border)]">
                     <Button 
                         type="submit" 
                         disabled={isSaving}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)]"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-[var(--ws-text-primary)] font-bold px-8 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)]"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Settings' : 'Connect SendGrid'}
                     </Button>
-                    <p className="type-card-description text-slate-500 flex items-center gap-1">
+                    <p className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1">
                         <Lock className="w-3 h-3" />
                         Encrypted storage ensures your API keys are private.
                     </p>
                 </div>
                 {status === 'connected' && (
-                    <div className="pt-2 border-t border-white/5">
-                        <p className="type-caption font-black text-slate-500 uppercase tracking-widest mb-2">Send Test Email</p>
+                    <div className="pt-2 border-t border-[var(--ws-border)]">
+                        <p className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-2">Send Test Email</p>
                         <div className="flex flex-col md:flex-row gap-3">
                             <input
                                 type="email"
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-indigo-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-indigo-500/40"
                             />
                             <Button
                                 type="button"
                                 onClick={handleSendTest}
                                 disabled={isTesting}
-                                className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6"
+                                className="bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] font-bold px-6"
                             >
                                 {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                                 Send Test

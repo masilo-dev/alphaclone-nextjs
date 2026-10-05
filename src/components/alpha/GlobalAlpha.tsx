@@ -62,12 +62,12 @@ export default function GlobalAlpha() {
                 whileHover={{ scale: 1.1, boxShadow: "0 0 20px rgba(0,255,209,0.4)" }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 ac-layer-menu w-14 h-14 bg-[#000F15] border border-[#00FFD1]/40 rounded-sm flex items-center justify-center group"
+                className="fixed bottom-6 right-6 ac-layer-menu w-14 h-14 bg-[var(--color-black)F15] border border-[var(--dashboard-mint)]/40 rounded-sm flex items-center justify-center group"
             >
-                <div className="absolute inset-0 bg-[#00FFD1]/5 animate-pulse" />
-                <Cpu className={`w-6 h-6 text-[#00FFD1] ${isOpen ? 'rotate-90' : ''} transition-transform duration-500`} />
+                <div className="absolute inset-0 bg-[var(--dashboard-mint)]/5 animate-pulse" />
+                <Cpu className={`w-6 h-6 text-[var(--dashboard-mint)] ${isOpen ? 'rotate-90' : ''} transition-transform duration-500`} />
                 <div className="absolute top-0 right-0 p-1">
-                    <div className="w-1.5 h-1.5 bg-[#00FFD1] animate-ping" />
+                    <div className="w-1.5 h-1.5 bg-[var(--dashboard-mint)] animate-ping" />
                 </div>
             </motion.button>
 
@@ -78,15 +78,15 @@ export default function GlobalAlpha() {
                         initial={{ opacity: 0, y: 50, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                        className="fixed bottom-24 right-6 ac-layer-menu w-[380px] bg-[#000F15] border border-[#00FFD1]/30 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden font-mono"
+                        className="fixed bottom-24 right-6 ac-layer-menu w-[380px] bg-[var(--color-black)F15] border border-[var(--dashboard-mint)]/30 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-hidden font-mono"
                     >
                         {/* Scanline Overlay */}
                         <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[length:100%_2px] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)]" />
 
-                        <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
+                        <div className="p-3 border-b border-[var(--dashboard-mint)]/10 flex items-center justify-between bg-[var(--brand-violet-950)]">
                             <div className="flex items-center gap-3">
-                                <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
-                                <span className="type-caption font-bold tracking-caps text-[#00FFD1] uppercase">Alpha_Executive</span>
+                                <Activity className="w-3 h-3 text-[var(--dashboard-mint)] animate-pulse" />
+                                <span className="type-caption font-bold tracking-caps text-[var(--dashboard-mint)] uppercase">Alpha_Executive</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
                                 <X className="w-4 h-4" />
@@ -95,16 +95,16 @@ export default function GlobalAlpha() {
 
                         <div className="p-6 space-y-5">
                             <div className="space-y-1">
-                                <div className="type-caption text-white font-bold tracking-tight mb-1">
+                                <div className="type-caption text-[var(--ws-text-primary)] font-bold tracking-tight mb-1">
                                     GREETINGS, {(user.name || user.email || 'OPERATOR').toUpperCase()}
                                 </div>
-                                <div className="type-caption text-[#00FFD1]/60 flex items-center gap-2">
+                                <div className="type-caption text-[var(--dashboard-mint)]/60 flex items-center gap-2">
                                     <Terminal className="w-2.5 h-2.5" />
                                     <span>AUTHORIZED_ID: {user.id.slice(0, 8)}</span>
                                 </div>
                             </div>
 
-                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-3 type-caption leading-relaxed text-[#00FFD1]/80">
+                            <div className="border border-[var(--dashboard-mint)]/20 bg-[var(--dashboard-mint)]/5 p-3 type-caption leading-relaxed text-[var(--dashboard-mint)]/80">
                                 Missions are stored in your active workspace. Open Alpha Mission Control to review progress, approvals, results, and prior runs.
                             </div>
 
@@ -114,10 +114,10 @@ export default function GlobalAlpha() {
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
                                         placeholder="DESCRIBE THE TASK YOU WANT ALPHA TO HELP WITH..."
-                                        className="w-full bg-[#000508] border border-[#00FFD1]/20 p-4 type-caption text-[#00FFD1] placeholder:text-[#00FFD1]/20 focus:outline-none focus:border-[#00FFD1]/60 min-h-[120px] resize-none uppercase"
+                                        className="w-full bg-[var(--color-black)508] border border-[var(--dashboard-mint)]/20 p-4 type-caption text-[var(--dashboard-mint)] placeholder:text-[var(--dashboard-mint)]/20 focus:outline-none focus:border-[var(--dashboard-mint)]/60 min-h-[120px] resize-none uppercase"
                                     />
                                     {status === 'success' && (
-                                        <div className="absolute inset-0 bg-[#00FFD1] text-black flex flex-col items-center justify-center font-bold">
+                                        <div className="absolute inset-0 bg-[var(--dashboard-mint)] text-black flex flex-col items-center justify-center font-bold">
                                             <Zap className="w-8 h-8 mb-2 animate-bounce" />
                                             <span className="type-caption tracking-widest">MISSION_QUEUED</span>
                                         </div>
@@ -125,7 +125,7 @@ export default function GlobalAlpha() {
                                 </div>
 
                                 {status === 'error' && (
-                                    <p className="type-card-description text-red-300" role="alert">
+                                    <p className="type-card-description text-[var(--error-text,var(--error-500))]" role="alert">
                                         Mission dispatch failed. Confirm a workspace is selected and try again.
                                     </p>
                                 )}
@@ -134,22 +134,22 @@ export default function GlobalAlpha() {
                                     <button
                                         type="submit"
                                         disabled={isDeploying || !prompt.trim() || !currentTenant?.id}
-                                        className="flex-1 py-3 bg-[#00FFD1] text-black type-caption font-bold tracking-caps transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
+                                        className="flex-1 py-3 bg-[var(--dashboard-mint)] text-black type-caption font-bold tracking-caps transition-all hover:bg-[var(--info-500)] disabled:opacity-30 disabled:grayscale"
                                     >
                                         {isDeploying ? 'DISPATCHING...' : 'START MISSION'}
                                     </button>
                                     <Link 
                                         href="/alpha" 
                                         onClick={() => setIsOpen(false)}
-                                        className="px-4 bg-[#001720] border border-[#00FFD1]/20 flex items-center justify-center transition-all hover:border-[#00FFD1] group"
+                                        className="px-4 bg-[var(--brand-violet-950)] border border-[var(--dashboard-mint)]/20 flex items-center justify-center transition-all hover:border-[var(--dashboard-mint)] group"
                                     >
-                                        <ChevronRight className="w-4 h-4 text-[#00FFD1] group-hover:translate-x-1 transition-transform" />
+                                        <ChevronRight className="w-4 h-4 text-[var(--dashboard-mint)] group-hover:translate-x-1 transition-transform" />
                                     </Link>
                                 </div>
                             </form>
                         </div>
 
-                        <div className="px-6 py-2 bg-[#000508] border-t border-[#00FFD1]/10 flex items-center justify-between type-caption text-[#00FFD1]/40">
+                        <div className="px-6 py-2 bg-[var(--color-black)508] border-t border-[var(--dashboard-mint)]/10 flex items-center justify-between type-caption text-[var(--dashboard-mint)]/40">
                             <div className="flex gap-4">
                                 <span>SECURE: YES</span>
                                 <span>SESSION: ACTIVE</span>

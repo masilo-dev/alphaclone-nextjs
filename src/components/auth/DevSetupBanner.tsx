@@ -13,7 +13,7 @@ export default function DevSetupBanner() {
             <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                 <div className="space-y-1 type-caption text-amber-100/90">
-                    <p className="font-semibold text-amber-300">Local setup required</p>
+                    <p className="font-semibold text-[var(--warning-text,var(--warning-500))]">Local setup required</p>
                     <p>
                         Supabase credentials are missing. Copy <code className="text-amber-200">.env.example</code> to{' '}
                         <code className="text-amber-200">.env.local</code>, add your project URL and anon key from the

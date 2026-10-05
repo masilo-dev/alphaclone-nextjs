@@ -3,6 +3,11 @@ import { mcpStore } from '@/services/mcp/mcpStore';
 import type { BusinessAIAgentMode } from '@/services/mcp/businessAIState';
 import { resolveEffectiveAgentMode } from '@/lib/ai/resolveEffectiveAgentMode';
 import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
+import {
+  classifyMcpToolTier,
+  mcpToolRequiresApproval,
+  type McpToolTier,
+} from '@/lib/mcp/toolRiskTiers';
 
 /**
  * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
@@ -131,8 +136,19 @@ const DRAFT_TOOLS = new Set([
 export function classifyToolRisk(toolName: string): ToolRiskClass {
   const name = toolName.toLowerCase();
   if (META_ORCHESTRATION_TOOLS.has(name)) return 'read';
+
+  // Money-movement / financial tools keep financial class even when also EXTERNAL_WRITE.
+  if (isFinancialMoneyMovementTool(name) || FINANCIAL_TOOLS.has(name)) return 'financial';
+
+  // Canonical MCP tiers map into policy risk classes (MCP-SURFACE / MCP-IDEM).
+  const tier: McpToolTier = classifyMcpToolTier(name);
+  if (tier === 'HIGH_RISK_EXTERNAL_WRITE') {
+    if (name.startsWith('bulk_') || name.includes('_bulk') || name.includes('outreach')) return 'bulk';
+    return 'bulk';
+  }
+  if (tier === 'EXTERNAL_WRITE') return 'send';
+
   if (name.startsWith('bulk_') || name.includes('_bulk') || name === 'bulk_update') return 'bulk';
-  if (FINANCIAL_TOOLS.has(name)) return 'financial';
   if (SEND_TOOLS.has(name)) return 'send';
   if (name.startsWith('publish_') || name.startsWith('send_')) return 'send';
   if (DRAFT_TOOLS.has(name) || name.includes('draft')) return 'draft';
@@ -145,6 +161,7 @@ export function classifyToolRisk(toolName: string): ToolRiskClass {
   ) {
     return 'read';
   }
+  if (tier === 'INTERNAL_WRITE') return 'draft';
   if (name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_')) {
     return 'draft';
   }
@@ -202,9 +219,11 @@ export async function evaluateToolPolicy(params: {
     conversationId,
   } = params;
   const riskClass = classifyToolRisk(toolName);
+  const mcpTier = classifyMcpToolTier(toolName);
   const policyAttributes: Record<string, unknown> = {
     execution_source: source,
     risk_class: riskClass,
+    mcp_tool_tier: mcpTier,
   };
 
   const admin = createSupabaseAdminClient();
@@ -235,6 +254,11 @@ export async function evaluateToolPolicy(params: {
   let needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);
   let readinessReason: string | undefined;
 
+  // HIGH_RISK_EXTERNAL_WRITE always requires approval unless explicitly money-safe path handled below.
+  if (mcpToolRequiresApproval(toolName)) {
+    needsApproval = true;
+  }
+
   if (agentMode === 'autonomous' && riskClass !== 'read') {
     const evaluation = evaluateBusinessAIState(aiState, {
       requires_external_action: riskClass === 'send' || riskClass === 'bulk',
@@ -263,11 +287,12 @@ export async function evaluateToolPolicy(params: {
   }
 
   // MCP connectors: evaluated above (mode, readiness, tenant rules). High-risk
-  // financial/bulk actions still queue when tenant requires it; other MCP writes
-  // auto-allow with an explicit source attribute (not a silent bypass).
+  // financial/bulk/HIGH_RISK_EXTERNAL_WRITE actions still queue when required;
+  // other MCP writes auto-allow with an explicit source attribute (not a silent bypass).
   const mcpHighRiskQueue =
     source === 'mcp' &&
     (isFinancialMoneyMovementTool(toolName) ||
+      mcpToolRequiresApproval(toolName) ||
       (highRiskRequired && (riskClass === 'financial' || riskClass === 'bulk')));
 
   if (source === 'mcp' && !mcpHighRiskQueue) {

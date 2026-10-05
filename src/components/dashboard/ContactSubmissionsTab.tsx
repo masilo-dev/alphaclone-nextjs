@@ -61,7 +61,7 @@ const ContactSubmissionsTab: React.FC = () => {
             mobilePrimary: true,
             sortable: true,
             sortValue: (r) => r.name,
-            accessor: (r) => <span className="font-medium text-white">{r.name}</span>,
+            accessor: (r) => <span className="font-medium text-[var(--ws-text-primary)]">{r.name}</span>,
         },
         {
             id: 'email',
@@ -98,8 +98,8 @@ const ContactSubmissionsTab: React.FC = () => {
         <div className="space-y-6 ac-scroll-full ac-enterprise-module animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white">Contact Submissions</h2>
-                    <p className="text-slate-400 type-card-description sm:text-sm mt-1">Messages from your contact form</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-[var(--ws-text-primary)]">Contact Submissions</h2>
+                    <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1">Messages from your contact form</p>
                 </div>
                 <div className="flex gap-2 overflow-x-auto ios-scroll pb-1">
                     {['all', 'new', 'read', 'replied'].map((status) => (
@@ -108,7 +108,7 @@ const ContactSubmissionsTab: React.FC = () => {
                             type="button"
                             onClick={() => setFilter(status as typeof filter)}
                             className={`min-h-11 px-4 py-2 rounded-lg type-ui font-medium capitalize whitespace-nowrap ${
-                                filter === status ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                filter === status ? 'bg-teal-600 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
                             }`}
                         >
                             {status}
@@ -137,7 +137,7 @@ const ContactSubmissionsTab: React.FC = () => {
                     onRowClick={setSelected}
                     renderExpanded={(submission) => (
                         <div className="space-y-4">
-                            <p className="type-card-description text-slate-300 whitespace-pre-wrap">{submission.message}</p>
+                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap">{submission.message}</p>
                             <div className="flex flex-wrap gap-2">
                                 {submission.status !== 'read' && (
                                     <button
@@ -179,7 +179,7 @@ const ContactSubmissionsTab: React.FC = () => {
                 {selected ? (
                     <div className="space-y-4 pb-6">
                         <StatusBadge variant={inboxStatusVariant(selected.status)}>{selected.status}</StatusBadge>
-                        <p className="type-card-description text-slate-300 whitespace-pre-wrap">{selected.message}</p>
+                        <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap">{selected.message}</p>
                         <div className="flex flex-wrap gap-2">
                             {selected.status !== 'read' && (
                                 <button type="button" onClick={() => { handleStatusChange(selected.id, selected.source, 'read'); setSelected(null); }} className="min-h-11 px-3 rounded-lg bg-yellow-500/10 text-yellow-400 type-caption">Mark read</button>

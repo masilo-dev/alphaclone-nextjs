@@ -3,14 +3,11 @@ import { Suspense } from "react";
 
 import "./globals.css";
 import "@/styles/alphaclone-theme.css";
-import "@/styles/alphaclone-os-v3.css";
-import "@/styles/alphaclone-os-v3-pwa.css";
 import "@/styles/marketing-system.css";
 import "@/styles/marketing-redesign.css";
 import "@/styles/accessibility.css";
-import "@/styles/apple-fluid-system.css";
-import "@/styles/crisp-product-ui.css";
-import { Providers } from "@/components/Providers";
+import { marketingFontClassName } from "@/lib/marketingFonts";
+import { ProviderSwitcher } from "@/components/ProviderSwitcher";
 
 import { PWAProvider } from "@/contexts/PWAContext";
 import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
@@ -26,6 +23,7 @@ import { SITE_URL } from "@/lib/siteUrl";
 import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
 import { buildPublicPlanOffers, PUBLIC_PRICING_PLANS } from "@/config/pricingPlans";
 import { EXECUTION_LAYER } from "@/config/marketingPositioning";
+import { DARK_NEUTRALS, LIGHT_NEUTRALS } from "@/constants/brand";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -59,8 +57,8 @@ export const viewport: Viewport = {
   userScalable: true,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#020D1A" },
+    { media: "(prefers-color-scheme: light)", color: "var(--color-white)" },
+    { media: "(prefers-color-scheme: dark)", color: DARK_NEUTRALS.appBackground },
   ],
 };
 
@@ -96,22 +94,19 @@ function serializeJsonLd(value: object): string { return JSON.stringify(value).r
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={marketingFontClassName}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
         <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         <link rel="apple-touch-startup-image" href="/logo.png" />
-        <link rel="mask-icon" href="/favicon-192x192.png" color="#020D1A" />
+        <link rel="mask-icon" href="/favicon-192x192.png" color={DARK_NEUTRALS.appBackground} />
         <script
           id="ac-anti-flash-init"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ac-language=([^;]+)/);var l=m?decodeURIComponent(m[1]):null;if(!l){l=localStorage.getItem('ac-language')||'en';}if(l&&('en'===l||'es'===l||'pl'===l)){document.documentElement.lang=l;}var p=window.location.pathname||'/';var isApp=p.startsWith('/dashboard')||p.startsWith('/app')||p.startsWith('/meet');if(!isApp){document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#ffffff';}else{var t=null;try{t=localStorage.getItem('alphaclone:user-pref:ac-theme')||localStorage.getItem('ac-theme')||localStorage.getItem('theme-mode');}catch(te){}var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var isDark=t==='dark'?true:(t==='light'?false:(t==='auto'||t==='system'?prefersDark:true));if(isDark){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.style.colorScheme='dark';document.documentElement.style.backgroundColor='#020D1A';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='#F6F7F9';}}}catch(e){}})();`,
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ac-language=([^;]+)/);var l=m?decodeURIComponent(m[1]):null;if(!l){l=localStorage.getItem('ac-language')||'en';}if(l&&('en'===l||'es'===l||'pl'===l)){document.documentElement.lang=l;}var p=window.location.pathname||'/';var isApp=p.startsWith('/dashboard')||p.startsWith('/app')||p.startsWith('/meet');if(!isApp){document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='var(--color-white)';}else{var t=null;try{t=localStorage.getItem('alphaclone:user-pref:ac-theme')||localStorage.getItem('ac-theme')||localStorage.getItem('theme-mode');}catch(te){}var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var isDark=t==='dark'?true:(t==='light'?false:(t==='auto'||t==='system'?prefersDark:true));if(isDark){document.documentElement.classList.add('dark');document.documentElement.classList.remove('light');document.documentElement.style.colorScheme='dark';document.documentElement.style.backgroundColor='${DARK_NEUTRALS.appBackground}';}else{document.documentElement.classList.add('light');document.documentElement.classList.remove('dark');document.documentElement.style.colorScheme='light';document.documentElement.style.backgroundColor='${LIGHT_NEUTRALS.appBackground}';}}}catch(e){}})();`,
           }}
         />
         <script
@@ -127,7 +122,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationEntitySchema) }} />
         <WebVitals />
-        <Providers>
+        <ProviderSwitcher>
           <PWAProvider>
             <Suspense fallback={null}>
               <PwaPushBootstrap />
@@ -137,7 +132,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <PwaInstallPrompt />
           </PWAProvider>
           <CookieBanner />
-        </Providers>
+        </ProviderSwitcher>
         <ConsentAwareAnalytics />
       </body>
     </html>

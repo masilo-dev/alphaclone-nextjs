@@ -33,7 +33,7 @@ export default async function BlogPage() {
 
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
-                        <Link href="/" className="inline-flex items-center text-slate-400 hover:text-white mb-8 transition-colors">
+                        <Link href="/" className="inline-flex items-center text-[var(--ws-text-muted)] hover:text-white mb-8 transition-colors">
                             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home
                         </Link>
 
@@ -57,7 +57,7 @@ export default async function BlogPage() {
                                         <span className="px-3 py-1 type-caption font-semibold bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
                                             {article.category}
                                         </span>
-                                        <span className="type-caption text-slate-500 flex items-center gap-1">
+                                        <span className="type-caption text-[var(--ws-text-muted)] flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
                                             {new Date(article.created_at).toLocaleDateString()}
                                         </span>
@@ -80,7 +80,7 @@ export default async function BlogPage() {
                     </div>
                 ) : (
                     <div className="text-center py-20">
-                        <p className="text-slate-400 text-lg">No articles are published yet. Draft or publish the first article from the content dashboard.</p>
+                        <p className="text-[var(--ws-text-muted)] text-lg">No articles are published yet. Draft or publish the first article from the content dashboard.</p>
                     </div>
                 )}
             </div>

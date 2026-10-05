@@ -75,12 +75,12 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-          <span className="type-caption uppercase tracking-wider text-slate-500 font-semibold">Ghost Intelligence</span>
+          <span className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] font-semibold">Ghost Intelligence</span>
         </div>
         <button 
           onClick={handleRefresh}
           disabled={isLoading}
-          className="p-1 text-slate-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+          className="p-1 text-[var(--ws-text-muted)] hover:text-blue-400 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
@@ -107,8 +107,8 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
                 exit={{ opacity: 0 }}
                 className="space-y-2 py-1"
               >
-                <div className="h-3 w-full bg-slate-800 animate-pulse rounded" />
-                <div className="h-3 w-2/3 bg-slate-800 animate-pulse rounded" />
+                <div className="h-3 w-full bg-[var(--ws-surface-secondary)] animate-pulse rounded" />
+                <div className="h-3 w-2/3 bg-[var(--ws-surface-secondary)] animate-pulse rounded" />
               </motion.div>
             ) : (
               <motion.div
@@ -117,7 +117,7 @@ export default function GhostIntelligence({ lead, onAction }: GhostIntelligenceP
                 animate={{ opacity: 1 }}
                 className="space-y-3"
               >
-                <p className="type-card-description text-slate-200 leading-relaxed font-medium">
+                <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-medium">
                   {insight}
                 </p>
                 

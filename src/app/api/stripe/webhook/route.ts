@@ -273,13 +273,13 @@ export async function POST(req: Request) {
                                 to: user.email,
                                 subject: 'Payment Card Verified - AlphaClone',
                                 html: `
-                                    <div style="font-family: sans-serif; color: #333;">
+                                    <div style="font-family: sans-serif; color: var(--text-primary);">
                                         <h2>Payment Card Verified</h2>
                                         <p>Hello ${escapeHtml(user.name || 'there')},</p>
                                         <p>Your payment card has been successfully verified for <strong>${escapeHtml(tenant.name || 'your workspace')}</strong> on the AlphaClone platform.</p>
                                         <p>Your subscription is now active. You can manage your billing details at any time from your dashboard.</p>
                                         <hr />
-                                        <p style="font-size: 0.8em; color: #666;">This is an automated notification. Please do not reply to this email.</p>
+                                        <p style="font-size: 0.8em; color: var(--text-muted);">This is an automated notification. Please do not reply to this email.</p>
                                     </div>
                                 `
                             });
@@ -391,13 +391,13 @@ export async function POST(req: Request) {
                                     to: user.email,
                                     subject: 'Payment Failed - Action Required - AlphaClone',
                                     html: `
-                                        <div style="font-family: sans-serif; color: #333;">
+                                        <div style="font-family: sans-serif; color: var(--text-primary);">
                                             <h2>Payment Failed</h2>
                                             <p>Hello ${escapeHtml(user.name || 'there')},</p>
                                             <p>We attempted to process your subscription payment for <strong>${escapeHtml(tenantData.name || 'your workspace')}</strong> on the AlphaClone platform, but the payment failed.</p>
                                             <p>Your subscription is now past due. Please update your billing details from your dashboard to avoid any service interruption.</p>
                                             <hr />
-                                            <p style="font-size: 0.8em; color: #666;">This is an automated notification. Please do not reply to this email.</p>
+                                            <p style="font-size: 0.8em; color: var(--text-muted);">This is an automated notification. Please do not reply to this email.</p>
                                         </div>
                                     `
                                 });

@@ -92,10 +92,10 @@ export default function LeadFinderLiveProgress({
   const complete = status?.status === 'completed' || progress >= 100;
 
   return (
-    <div className="rounded-xl border border-teal-500/30 bg-slate-950/80 overflow-hidden">
-      <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-800">
+    <div className="rounded-xl border border-teal-500/30 bg-[var(--ws-canvas)]/80 overflow-hidden">
+      <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-[var(--ws-border)]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 type-ui font-semibold text-white">
+          <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
             {complete ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : (
@@ -103,33 +103,33 @@ export default function LeadFinderLiveProgress({
             )}
             {complete ? 'Scrape complete' : 'Live scrape running'}
           </div>
-          <p className="type-card-description text-slate-400 mt-1 truncate">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1 truncate">
             {niche || 'Businesses'}
             {location ? ` · ${location}` : ''}
             {` · ${radiusKm} km reach`}
           </p>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-lg font-bold tabular-nums text-teal-300">{progress}%</div>
-          <div className="type-caption uppercase tracking-wider text-slate-500">
+          <div className="text-lg font-bold tabular-nums text-[var(--brand-blue-300)]">{progress}%</div>
+          <div className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">
             {status?.mode || 'in-process'}
           </div>
         </div>
       </div>
 
       <div className="px-4 py-3 space-y-3">
-        <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
           <div
             className="h-full rounded-full bg-teal-500 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        <div className="flex items-center gap-2 type-caption text-slate-300">
+        <div className="flex items-center gap-2 type-caption text-[var(--ws-text-secondary)]">
           {searching && !complete ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-400" />
           ) : (
-            <Activity className="w-3.5 h-3.5 text-slate-500" />
+            <Activity className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
           )}
           <span className="truncate">
             {status?.current_step || STEP_HINTS[hintIdx]}
@@ -137,21 +137,21 @@ export default function LeadFinderLiveProgress({
         </div>
 
         <div className="grid grid-cols-2 gap-2 type-caption">
-          <div className="rounded-lg bg-slate-900 border border-slate-800 px-3 py-2">
-            <div className="text-slate-500">Discovered</div>
-            <div className="text-white font-semibold tabular-nums">
+          <div className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2">
+            <div className="text-[var(--ws-text-muted)]">Discovered</div>
+            <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">
               {status?.source_count ?? 0}
             </div>
           </div>
-          <div className="rounded-lg bg-slate-900 border border-slate-800 px-3 py-2">
-            <div className="text-slate-500">With contact</div>
-            <div className="text-white font-semibold tabular-nums">
+          <div className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2">
+            <div className="text-[var(--ws-text-muted)]">With contact</div>
+            <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">
               {status?.enriched_count ?? 0}
             </div>
           </div>
         </div>
 
-        <p className="type-card-description text-slate-500 flex items-start gap-1.5">
+        <p className="type-card-description text-[var(--ws-text-muted)] flex items-start gap-1.5">
           <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-teal-500" />
           Free sources + Railway Playwright enrichment. Every returned lead has phone or email — website-only rows are dropped.
         </p>

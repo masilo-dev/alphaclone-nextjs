@@ -35,7 +35,7 @@ export default function UpgradePage() {
 
     if (tenantLoading || authLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
             </div>
         );
@@ -106,7 +106,7 @@ export default function UpgradePage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-teal-500/30 overflow-x-hidden pb-20">
+        <div className="min-h-screen bg-[var(--ws-canvas)] text-white font-sans selection:bg-teal-500/30 overflow-x-hidden pb-20">
             {/* Background elements */}
             <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px]" />
@@ -138,7 +138,7 @@ export default function UpgradePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto"
+                        className="text-[var(--ws-text-muted)] text-lg md:text-xl max-w-2xl mx-auto"
                     >
                         You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan.
                         {currentTenant?.subscription_status === 'trial' && currentTenant?.trial_ends_at && (
@@ -167,11 +167,11 @@ export default function UpgradePage() {
                                 className={`relative group cursor-pointer rounded-3xl p-1 transition-all duration-500 ${
                                     isSelected 
                                         ? `bg-gradient-to-b from-${config.color}-500 to-transparent shadow-2xl shadow-${config.color}-500/20 scale-[1.02]` 
-                                        : 'bg-slate-800/50 hover:bg-slate-800 transition-colors'
+                                        : 'bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-secondary)] transition-colors'
                                 }`}
                             >
-                                <div className={`h-full rounded-[22px] p-8 bg-slate-900/95 backdrop-blur-xl flex flex-col ${
-                                    isSelected ? '' : 'border border-slate-800'
+                                <div className={`h-full rounded-[22px] p-8 bg-[var(--ws-panel)]/95 backdrop-blur-xl flex flex-col ${
+                                    isSelected ? '' : 'border border-[var(--ws-border)]'
                                 }`}>
                                     {/* Plan Header */}
                                     <div className="flex justify-between items-start mb-6">
@@ -187,7 +187,7 @@ export default function UpgradePage() {
 
                                     <div className="mb-8">
                                         <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">{planId}</h3>
-                                        <p className="text-slate-400 type-card-description leading-relaxed min-h-[40px]">
+                                        <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed min-h-[40px]">
                                             {pricing.description}
                                         </p>
                                     </div>
@@ -195,7 +195,7 @@ export default function UpgradePage() {
                                     <div className="mb-8">
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-4xl font-black text-white">${pricing.monthly}</span>
-                                            <span className="text-slate-500 font-bold">/mo</span>
+                                            <span className="text-[var(--ws-text-muted)] font-bold">/mo</span>
                                         </div>
                                         <div className="text-teal-500/80 type-caption font-bold mt-1">
                                             or ${pricing.yearly} billed annually (Save 20%)
@@ -205,7 +205,7 @@ export default function UpgradePage() {
                                     {/* Features */}
                                     <ul className="space-y-4 mb-10 flex-1">
                                         {pricing.featureList.map((feature, fIdx) => (
-                                            <li key={fIdx} className="flex items-start gap-3 type-ui text-slate-300">
+                                            <li key={fIdx} className="flex items-start gap-3 type-ui text-[var(--ws-text-secondary)]">
                                                 <div className={`mt-0.5 w-5 h-5 rounded-full bg-${config.color}-500/10 flex items-center justify-center shrink-0`}>
                                                     <Check className={`w-3 h-3 text-${config.color}-400`} />
                                                 </div>
@@ -227,7 +227,7 @@ export default function UpgradePage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="max-w-3xl mx-auto bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden"
+                    className="max-w-3xl mx-auto bg-[var(--ws-panel)]/80 backdrop-blur-md border border-[var(--ws-border)] rounded-3xl p-8 shadow-2xl relative overflow-hidden"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-10">
                         <ShieldCheck className="w-24 h-24 text-teal-500" />
@@ -239,7 +239,7 @@ export default function UpgradePage() {
                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
                                 Selected: {selectedPlan ? selectedPlan.toUpperCase() : 'Choose a plan'}
                             </h4>
-                            <p className="text-slate-400 type-card-description">
+                            <p className="text-[var(--ws-text-muted)] type-card-description">
                                 No long term contracts. Switch or cancel any time. 
                                 Securely processed via Stripe.
                             </p>
@@ -286,7 +286,7 @@ export default function UpgradePage() {
 
                 {/* Trust Section */}
                 <div className="mt-16 text-center">
-                    <p className="text-slate-500 type-caption font-bold uppercase tracking-caps mb-6">Secured by industry leaders</p>
+                    <p className="text-[var(--ws-text-muted)] type-caption font-bold uppercase tracking-caps mb-6">Secured by industry leaders</p>
                     <div className="flex flex-wrap justify-center items-center gap-8 opacity-40 grayscale contrast-125">
                         <span className="text-xl font-black italic">STRIPE</span>
                         <span className="text-xl font-black italic">VISA</span>

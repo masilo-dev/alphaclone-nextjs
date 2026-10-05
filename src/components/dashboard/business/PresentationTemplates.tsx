@@ -38,7 +38,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Professional corporate presentation with modern design',
         category: 'Corporate',
         thumbnail: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=500&q=80',
-        colors: ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd'],
+        colors: ['var(--info-700)', 'var(--info-500)', 'var(--info-500)', 'var(--info-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 12,
         tags: ['corporate', 'professional', 'business'],
@@ -50,7 +50,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Cutting-edge technology presentation with dynamic elements',
         category: 'Technology',
         thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80',
-        colors: ['#7c3aed', '#a855f7', '#c084fc', '#ddd6fe'],
+        colors: ['var(--brand-violet-500)', 'var(--brand-violet-400)', 'var(--brand-violet-400)', 'var(--brand-violet-100)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 15,
         tags: ['technology', 'innovation', 'startup'],
@@ -62,7 +62,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Bold and creative design for creative agencies',
         category: 'Creative',
         thumbnail: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=500&q=80',
-        colors: ['#dc2626', '#ef4444', '#f87171', '#fca5a5'],
+        colors: ['var(--error-600)', 'var(--error-500)', 'var(--error-500)', 'var(--error-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 10,
         tags: ['creative', 'design', 'agency'],
@@ -74,7 +74,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Clean and minimal design for maximum impact',
         category: 'Minimal',
         thumbnail: '🤍',
-        colors: ['#1f2937', '#374151', '#6b7280', '#9ca3af'],
+        colors: ['var(--ws-panel)', 'var(--ws-surface-tertiary)', 'var(--ws-text-muted)', 'var(--ws-text-muted)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 8,
         tags: ['minimal', 'clean', 'modern'],
@@ -86,7 +86,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Perfect for startup pitches and investor presentations',
         category: 'Startup',
         thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=500&q=80',
-        colors: ['#059669', '#10b981', '#34d399', '#6ee7b7'],
+        colors: ['var(--success-600)', 'var(--success-500)', 'var(--success-500)', 'var(--success-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 20,
         tags: ['startup', 'pitch', 'investor'],
@@ -98,7 +98,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'High-end luxury presentation for premium brands',
         category: 'Luxury',
         thumbnail: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=500&q=80',
-        colors: ['#1e293b', '#334155', '#475569', '#64748b'],
+        colors: ['var(--ws-panel)', 'var(--ws-surface-tertiary)', 'var(--ws-text-muted)', 'var(--ws-text-muted)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 14,
         tags: ['luxury', 'premium', 'high-end'],
@@ -228,7 +228,7 @@ export default function PresentationTemplates() {
 
 
     const renderSlideContent = (slide: SlideContent, index: number) => {
-        const primaryColor = selectedTemplate?.colors[selectedColor] || '#1e40af';
+        const primaryColor = selectedTemplate?.colors[selectedColor] || 'var(--info-700)';
         const fontFamily = selectedTemplate?.fonts[selectedFont] || 'Inter';
 
         return (
@@ -241,7 +241,7 @@ export default function PresentationTemplates() {
                 }}
             >
                 {slide.layout === 'title' && (
-                    <div className="text-center text-white">
+                    <div className="text-center text-[var(--ws-text-primary)]">
                         <h1 className="text-6xl font-bold mb-4">{slide.title}</h1>
                         {slide.subtitle && <h2 className="text-3xl font-light">{slide.subtitle}</h2>}
                         <div className="mt-8 space-y-2">
@@ -253,7 +253,7 @@ export default function PresentationTemplates() {
                 )}
 
                 {slide.layout === 'content' && (
-                    <div className="text-white">
+                    <div className="text-[var(--ws-text-primary)]">
                         <h1 className="text-5xl font-bold mb-8">{slide.title}</h1>
                         <div className="space-y-4">
                             {slide.content.map((item, i) => (
@@ -267,14 +267,14 @@ export default function PresentationTemplates() {
                 )}
 
                 {slide.layout === 'two-column' && (
-                    <div className="grid grid-cols-2 gap-12 text-white h-full">
+                    <div className="grid grid-cols-2 gap-12 text-[var(--ws-text-primary)] h-full">
                         <div className="flex flex-col justify-center">
                             <h1 className="text-5xl font-bold mb-8">{slide.title}</h1>
                             {slide.subtitle && <h2 className="text-2xl font-light mb-4">{slide.subtitle}</h2>}
                         </div>
                         <div className="flex flex-col justify-center space-y-4">
                             {slide.content.map((item, i) => (
-                                <div key={i} className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                                <div key={i} className="bg-[var(--ws-hover)] backdrop-blur-sm rounded-lg p-4">
                                     <p className="text-xl">{item}</p>
                                 </div>
                             ))}
@@ -289,7 +289,7 @@ export default function PresentationTemplates() {
         return (
             <div className="fixed inset-0 bg-black z-50 flex flex-col">
                 <div className="bg-gray-900 p-4 flex items-center justify-between">
-                    <div className="text-white">
+                    <div className="text-[var(--ws-text-primary)]">
                         <span className="type-ui opacity-75">Slide {currentSlide + 1} of {slides.length}</span>
                         <h3 className="font-semibold">{slides[currentSlide].title}</h3>
                     </div>
@@ -297,20 +297,20 @@ export default function PresentationTemplates() {
                         <button
                             onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
                             disabled={currentSlide === 0}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50"
+                            className="px-4 py-2 bg-gray-700 text-[var(--ws-text-primary)] rounded-lg disabled:opacity-50"
                         >
                             Previous
                         </button>
                         <button
                             onClick={() => setCurrentSlide(Math.min(slides.length - 1, currentSlide + 1))}
                             disabled={currentSlide === slides.length - 1}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50"
+                            className="px-4 py-2 bg-gray-700 text-[var(--ws-text-primary)] rounded-lg disabled:opacity-50"
                         >
                             Next
                         </button>
                         <button
                             onClick={() => setPreviewMode(false)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                            className="px-4 py-2 bg-red-600 text-[var(--text-inverse)] rounded-lg"
                         >
                             Exit Preview
                         </button>
@@ -330,7 +330,7 @@ export default function PresentationTemplates() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+                    <h1 className="text-4xl font-bold text-[var(--ws-text-primary)] mb-4 flex items-center justify-center gap-3">
                         <Presentation className="w-10 h-10 text-teal-400" />
                         AlphaClone Presentation Templates
                     </h1>
@@ -344,12 +344,12 @@ export default function PresentationTemplates() {
                 {!selectedTemplate && (
                     <div className="mb-12">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-white">Choose Your Template</h2>
+                            <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Choose Your Template</h2>
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+                                <button className="px-4 py-2 bg-gray-800 text-[var(--ws-text-primary)] rounded-lg hover:bg-gray-700">
                                     All Templates
                                 </button>
-                                <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700">
+                                <button className="px-4 py-2 bg-gray-800 text-[var(--ws-text-primary)] rounded-lg hover:bg-gray-700">
                                     Premium Only
                                 </button>
                             </div>
@@ -368,7 +368,7 @@ export default function PresentationTemplates() {
                                         <div className="mb-4 h-32 w-full overflow-hidden rounded-lg relative">
                                             <Image src={template.thumbnail} alt={template.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
+                                        <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">{template.name}</h3>
                                         <p className="text-gray-400 type-card-description mb-4">{template.description}</p>
 
                                         <div className="flex justify-center gap-1 mb-4">
@@ -410,7 +410,7 @@ export default function PresentationTemplates() {
                                     <div className="mb-4 h-48 w-full overflow-hidden rounded-lg relative">
                                         <Image src={selectedTemplate.thumbnail} alt={selectedTemplate.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 300px" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-white">{selectedTemplate.name}</h3>
+                                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">{selectedTemplate.name}</h3>
                                 </div>
 
                                 <div className="space-y-4">
@@ -434,7 +434,7 @@ export default function PresentationTemplates() {
                                         <select
                                             value={selectedFont}
                                             onChange={(e) => setSelectedFont(parseInt(e.target.value))}
-                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
                                         >
                                             {selectedTemplate.fonts.map((font, index) => (
                                                 <option key={index} value={index}>{font}</option>
@@ -447,10 +447,10 @@ export default function PresentationTemplates() {
                             {/* Slide List */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-white font-semibold">Slides ({slides.length})</h4>
+                                    <h4 className="text-[var(--ws-text-primary)] font-semibold">Slides ({slides.length})</h4>
                                     <button
                                         onClick={addSlide}
-                                        className="p-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                                        className="p-2 bg-teal-600 text-[var(--text-inverse)] rounded-lg hover:bg-teal-700"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </button>
@@ -468,7 +468,7 @@ export default function PresentationTemplates() {
                                         >
                                             <div className="flex items-center justify-between">
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-white type-card-description font-medium truncate">
+                                                    <p className="text-[var(--ws-text-primary)] type-card-description font-medium truncate">
                                                         {slide.title}
                                                     </p>
                                                     <p className="text-gray-400 type-card-description">
@@ -496,11 +496,11 @@ export default function PresentationTemplates() {
                             {/* Slide Preview */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h4 className="text-white font-semibold">Slide Preview</h4>
+                                    <h4 className="text-[var(--ws-text-primary)] font-semibold">Slide Preview</h4>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setPreviewMode(true)}
-                                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-blue-700"
                                         >
                                             <Eye className="w-4 h-4" />
                                             Preview
@@ -508,7 +508,7 @@ export default function PresentationTemplates() {
                                         <button
                                             onClick={exportToPDF}
                                             disabled={isExporting}
-                                            className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                                            className="flex items-center gap-2 px-3 py-2 bg-green-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-green-700 disabled:opacity-50"
                                         >
                                             <Download className="w-4 h-4" />
                                             {isExporting ? 'Exporting...' : 'Export PDF'}
@@ -523,7 +523,7 @@ export default function PresentationTemplates() {
 
                             {/* Slide Editor */}
                             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                                <h4 className="text-white font-semibold mb-4">Edit Slide</h4>
+                                <h4 className="text-[var(--ws-text-primary)] font-semibold mb-4">Edit Slide</h4>
 
                                 <div className="space-y-4">
                                     <div>
@@ -532,7 +532,7 @@ export default function PresentationTemplates() {
                                             type="text"
                                             value={slides[currentSlide].title}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'title', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
                                         />
                                     </div>
 
@@ -542,7 +542,7 @@ export default function PresentationTemplates() {
                                             type="text"
                                             value={slides[currentSlide].subtitle || ''}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'subtitle', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
                                         />
                                     </div>
 
@@ -551,7 +551,7 @@ export default function PresentationTemplates() {
                                         <select
                                             value={slides[currentSlide].layout}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'layout', e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
                                         >
                                             <option value="title">Title Slide</option>
                                             <option value="content">Content Only</option>
@@ -568,7 +568,7 @@ export default function PresentationTemplates() {
                                             value={slides[currentSlide].content.join('\n')}
                                             onChange={(e) => handleSlideEdit(currentSlide, 'content', e.target.value.split('\n').filter(line => line.trim()))}
                                             rows={6}
-                                            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2"
+                                            className="w-full bg-gray-700 border border-gray-600 text-[var(--ws-text-primary)] rounded-lg px-3 py-2"
                                             placeholder="Enter each bullet point on a new line"
                                         />
                                     </div>

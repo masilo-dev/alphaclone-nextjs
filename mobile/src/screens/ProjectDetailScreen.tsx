@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,31 +29,31 @@ export default function ProjectDetailScreen({ route, navigation }: { route: { pa
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#00D2A0';
+        return colors.primary;
       case 'in-progress':
-        return '#0077FF';
+        return colors.info;
       case 'planning':
-        return '#FFA500';
+        return colors.warning;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color=colors.textInverse />
             </TouchableOpacity>
             <Text style={styles.title}>Project Details</Text>
             <TouchableOpacity>
-              <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+              <Ionicons name="ellipsis-horizontal" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -89,14 +90,14 @@ export default function ProjectDetailScreen({ route, navigation }: { route: { pa
           <View style={styles.detailsSection}>
             <Text style={styles.sectionTitle}>Details</Text>
             <View style={styles.detailRow}>
-              <Ionicons name="calendar" size={20} color="#94A3B8" />
+              <Ionicons name="calendar" size={20} color=colors.textSecondary />
               <View style={styles.detailText}>
                 <Text style={styles.detailLabel}>Deadline</Text>
                 <Text style={styles.detailValue}>{currentProject.deadline || 'No deadline'}</Text>
               </View>
             </View>
             <View style={styles.detailRow}>
-              <Ionicons name="cash" size={20} color="#94A3B8" />
+              <Ionicons name="cash" size={20} color=colors.textSecondary />
               <View style={styles.detailText}>
                 <Text style={styles.detailLabel}>Budget</Text>
                 <Text style={styles.detailValue}>${Math.round(currentProject.budget || 0).toLocaleString()}</Text>
@@ -112,7 +113,7 @@ export default function ProjectDetailScreen({ route, navigation }: { route: { pa
                 <Ionicons 
                   name={task.completed ? "checkmark-circle" : "radio-button-off"} 
                   size={20} 
-                  color={task.completed ? '#00D2A0' : '#64748B'} 
+                  color={task.completed ? colors.primary : colors.textMuted} 
                 />
                 <Text style={[styles.taskText, task.completed && styles.taskCompleted]}>
                   {task.title}
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   projectInfo: {
     paddingHorizontal: 20,
@@ -162,12 +163,12 @@ const styles = StyleSheet.create({
   projectTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 8,
   },
   projectClient: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginBottom: 15,
   },
   statusBadge: {
@@ -190,12 +191,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.card,
     borderRadius: 4,
     marginBottom: 10,
   },
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   detailsSection: {
@@ -222,12 +223,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
   },
   tasksSection: {
@@ -241,12 +242,12 @@ const styles = StyleSheet.create({
   },
   taskText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginLeft: 12,
   },
   taskCompleted: {
     textDecorationLine: 'line-through',
-    color: '#64748B',
+    color: colors.textMuted,
   },
   descriptionSection: {
     paddingHorizontal: 20,
@@ -254,7 +255,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     lineHeight: 24,
   },
 });

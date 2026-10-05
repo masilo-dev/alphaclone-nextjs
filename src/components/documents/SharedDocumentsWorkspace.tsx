@@ -253,8 +253,8 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             aria-current={activeSection === key ? 'page' : undefined}
             className={`min-h-11 shrink-0 rounded-lg px-3 py-2 type-ui font-medium ${
               activeSection === key
-                ? 'bg-teal-500/15 text-teal-300'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                ? 'bg-teal-500/15 text-[var(--brand-blue-300)]'
+                : 'text-[var(--ws-text-muted)] hover:bg-white/5 hover:text-white'
             }`}
           >
             {t(label)}
@@ -276,7 +276,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               ] as Array<[string, string | number]>
             ).map(([label, value]) => (
               <div key={label} className="ac-workspace-panel rounded-xl p-4">
-                <p className="type-card-description text-slate-400">{t(label)}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">{t(label)}</p>
                 <p className="mt-1 text-xl font-semibold text-white">{value}</p>
               </div>
             ))}
@@ -286,51 +286,51 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
         {activeSection === 'settings' && (
           <section className="ac-workspace-panel rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white">{t('Document workspace settings')}</h2>
-            <p className="mt-1 type-card-description text-slate-400">
+            <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
               {t('Brand identity and retention defaults used by Document OS and the shared catalog.')}
             </p>
             {loading ? (
-              <p className="mt-6 type-card-description text-slate-500">Loading settings…</p>
+              <p className="mt-6 type-card-description text-[var(--ws-text-muted)]">Loading settings…</p>
             ) : (
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Legal business name</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Legal business name</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.legal_business_name || 'Not configured'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Trading name</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Trading name</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.trading_name || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Business email</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Business email</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.business_email || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Jurisdiction</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Jurisdiction</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.jurisdiction || '—'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Default currency</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Default currency</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.brand?.default_currency || 'USD'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Default confidentiality</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Default confidentiality</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.default_confidentiality || 'internal'}
                   </dd>
                 </div>
                 <div>
-                  <dt className="type-caption uppercase text-slate-500">Retention default</dt>
+                  <dt className="type-caption uppercase text-[var(--ws-text-muted)]">Retention default</dt>
                   <dd className="mt-1 type-ui text-white">
                     {settings?.retention_default_days || 2555} days
                   </dd>
@@ -344,20 +344,20 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
           <>
             <div className="flex flex-wrap items-center gap-2">
               <label className="relative min-w-[220px] flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" aria-hidden />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--ws-text-muted)]" aria-hidden />
                 <span className="sr-only">{t('Search documents')}</span>
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('Search name, number, description…')}
-                  className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-slate-950/40 pl-9 pr-3 type-ui text-white focus:border-teal-500 focus:outline-none"
+                  className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 pl-9 pr-3 type-ui text-white focus:border-teal-500 focus:outline-none"
                 />
               </label>
               <button
                 onClick={() => setGrid(false)}
                 aria-label={t('Table view')}
                 aria-pressed={!grid}
-                className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300"
+                className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]"
               >
                 <List className="h-4 w-4" />
               </button>
@@ -365,7 +365,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 onClick={() => setGrid(true)}
                 aria-label="Grid view"
                 aria-pressed={grid}
-                className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300"
+                className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]"
               >
                 <Grid2X2 className="h-4 w-4" />
               </button>
@@ -376,7 +376,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 onSubmit={createDocument}
                 className="ac-workspace-panel flex flex-wrap items-end gap-3 rounded-xl p-4"
               >
-                <label className="min-w-[240px] flex-1 type-label text-slate-300">
+                <label className="min-w-[240px] flex-1 type-label text-[var(--ws-text-secondary)]">
                   Document name
                   <input
                     autoFocus
@@ -384,7 +384,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                     onChange={(e) => setName(e.target.value)}
                     required
                     maxLength={300}
-                    className="mt-1 min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-slate-950/50 px-3 text-white"
+                    className="mt-1 min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-3 text-white"
                   />
                 </label>
                 <button className="min-h-11 rounded-lg bg-teal-600 px-4 font-semibold text-white">
@@ -395,7 +395,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                   type="button"
                   onClick={() => setCreating(false)}
                   aria-label="Cancel create document"
-                  className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300"
+                  className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -411,7 +411,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             ) : error ? (
               <div
                 role="alert"
-                className="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-200"
+                className="rounded-xl border border-red-500/30 bg-[var(--error-500)]/10 p-5 text-red-200"
               >
                 <p>{error}</p>
                 <button onClick={load} className="mt-3 underline">
@@ -420,9 +420,9 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
               </div>
             ) : documents.length === 0 ? (
               <div className="ac-workspace-panel rounded-xl p-10 text-center">
-                <Upload className="mx-auto h-8 w-8 text-slate-500" />
+                <Upload className="mx-auto h-8 w-8 text-[var(--ws-text-muted)]" />
                 <h2 className="mt-3 font-semibold text-white">No documents found</h2>
-                <p className="mt-1 type-card-description text-slate-400">
+                <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                   {activeSection
                     ? `${t('No records in')} ${t(sectionLabel).toLowerCase()} ${t('yet')}.`
                     : 'Upload a file or create a document draft to get started.'}
@@ -434,11 +434,11 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                   <article key={d.id} onClick={() => openDocument(d.id)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openDocument(d.id); }} className="ac-workspace-panel cursor-pointer rounded-xl p-4 hover:border-teal-500/30">
                     <FileText className="h-7 w-7 text-teal-400" />
                     <h2 className="mt-3 truncate font-semibold text-white">{d.name}</h2>
-                    <p className="mt-1 type-card-description text-slate-400">
+                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                       {d.document_type || 'General file'} · v{d.version || 1}
                       {d.source === 'doc_os' ? ' · Doc OS' : ''}
                     </p>
-                    <span className="mt-3 inline-block rounded-full bg-white/5 px-2 py-1 type-caption text-slate-300">
+                    <span className="mt-3 inline-block rounded-full bg-white/5 px-2 py-1 type-caption text-[var(--ws-text-secondary)]">
                       {d.status}
                     </span>
                   </article>
@@ -447,7 +447,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             ) : (
               <div className="overflow-x-auto rounded-xl border border-[var(--ws-border)]">
                 <table className="w-full min-w-[850px] text-left type-ui">
-                  <thead className="bg-white/[0.03] type-caption uppercase text-slate-400">
+                  <thead className="bg-white/[0.03] type-caption uppercase text-[var(--ws-text-muted)]">
                     <tr>
                       <th className="p-3">{t('Name')}</th>
                       <th className="p-3">{t('Type')}</th>
@@ -467,7 +467,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                         role="button"
                         tabIndex={0}
                         onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') openDocument(d.id); }}
-                        className="cursor-pointer border-t border-[var(--ws-border)] text-slate-300 hover:bg-white/[0.02]"
+                        className="cursor-pointer border-t border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-white/[0.02]"
                       >
                         <td className="p-3 font-medium text-white">
                           {d.name}
@@ -490,7 +490,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 </table>
               </div>
             )}
-            <p className="type-card-description text-slate-500">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               {total} tenant-scoped document{total === 1 ? '' : 's'}
             </p>
           </>
@@ -498,22 +498,22 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
       </div>
 
       {(detailLoading || selectedDocument) && (
-        <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-slate-950/70 backdrop-blur-sm" role="presentation" onClick={closeDocument}>
+        <div className="fixed inset-0 ac-layer-overlay flex justify-end bg-[var(--ws-canvas)]/70 backdrop-blur-sm" role="presentation" onClick={closeDocument}>
           <section
             role="dialog"
             aria-modal="true"
             aria-label="Document details"
             onClick={(event) => event.stopPropagation()}
-            className="h-full w-full max-w-2xl overflow-y-auto border-l border-[var(--ws-border)] bg-slate-950 p-5 shadow-2xl"
+            className="h-full w-full max-w-2xl overflow-y-auto border-l border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5 shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="type-caption font-black uppercase tracking-wider text-teal-300">Document details</p>
+                <p className="type-caption font-black uppercase tracking-wider text-[var(--brand-blue-300)]">Document details</p>
                 <h2 className="mt-1 text-xl font-semibold text-white">
                   {selectedDocument?.document?.title || selectedDocument?.document?.name || 'Loading document…'}
                 </h2>
               </div>
-              <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300" aria-label="Close document details">
+              <button type="button" onClick={closeDocument} className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-[var(--ws-text-secondary)]" aria-label="Close document details">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -522,33 +522,33 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             ) : selectedDocument ? (
               <div className="mt-6 space-y-5">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Status</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.status || '—'}</p></div>
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Approval</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.approval_status || 'Not requested'}</p></div>
-                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-slate-500">Signature</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.signature_status || 'Not requested'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Status</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.status || '—'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Approval</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.approval_status || 'Not requested'}</p></div>
+                  <div className="ac-workspace-panel rounded-xl p-3"><p className="type-caption text-[var(--ws-text-muted)]">Signature</p><p className="mt-1 font-semibold text-white">{selectedDocument.document?.signature_status || 'Not requested'}</p></div>
                 </div>
                 <section className="ac-workspace-panel rounded-xl p-4">
                   <h3 className="font-semibold text-white">Document intelligence</h3>
-                  <p className="mt-2 type-card-description text-slate-300">{selectedDocument.document?.summary || 'No summary has been generated yet.'}</p>
+                  <p className="mt-2 type-card-description text-[var(--ws-text-secondary)]">{selectedDocument.document?.summary || 'No summary has been generated yet.'}</p>
                   <div className="mt-4 space-y-2">
                     {(selectedDocument.findings || []).length ? (selectedDocument.findings || []).slice(0, 20).map((finding: any) => (
                       <div key={finding.id} className="rounded-lg border border-[var(--ws-border)] bg-white/[0.02] p-3">
                         <p className="type-ui font-semibold text-white">{finding.title || finding.finding_type || 'Finding'}</p>
-                        <p className="mt-1 type-card-description text-slate-400">{finding.summary || finding.description || finding.content || 'Review this finding in the document.'}</p>
+                        <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{finding.summary || finding.description || finding.content || 'Review this finding in the document.'}</p>
                       </div>
-                    )) : <p className="type-card-description text-slate-500">No intelligence findings yet.</p>}
+                    )) : <p className="type-card-description text-[var(--ws-text-muted)]">No intelligence findings yet.</p>}
                   </div>
                 </section>
                 <section className="ac-workspace-panel rounded-xl p-4">
                   <h3 className="font-semibold text-white">Relationships</h3>
-                  <p className="mt-2 type-card-description text-slate-400">{(selectedDocument.relationships || []).length} linked client, project, contract, invoice, or other workspace record(s).</p>
+                  <p className="mt-2 type-card-description text-[var(--ws-text-muted)]">{(selectedDocument.relationships || []).length} linked client, project, contract, invoice, or other workspace record(s).</p>
                 </section>
                 <section className="ac-workspace-panel rounded-xl p-4">
                   <h3 className="font-semibold text-white">Recent activity</h3>
                   <div className="mt-3 space-y-2">
                     {(selectedDocument.activity || []).slice(0, 10).map((activity: any) => (
                       <div key={activity.id} className="flex items-start justify-between gap-3 border-b border-[var(--ws-border)] py-2 last:border-0">
-                        <span className="type-card-description text-slate-300">{activity.action || 'Updated'}</span>
-                        <span className="type-caption text-slate-500">{activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}</span>
+                        <span className="type-card-description text-[var(--ws-text-secondary)]">{activity.action || 'Updated'}</span>
+                        <span className="type-caption text-[var(--ws-text-muted)]">{activity.created_at ? new Date(activity.created_at).toLocaleString() : ''}</span>
                       </div>
                     ))}
                   </div>

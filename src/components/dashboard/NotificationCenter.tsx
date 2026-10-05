@@ -24,7 +24,7 @@ const TYPE_CONFIG: Record<string, { Icon: any; color: string; bg: string; label:
     message: { Icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Message' },
     project: { Icon: FolderOpen, color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20', label: 'Project' },
     payment: { Icon: CreditCard, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20', label: 'Payment' },
-    system: { Icon: Settings, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20', label: 'System' },
+    system: { Icon: Settings, color: 'text-[var(--ws-text-muted)]', bg: 'bg-slate-500/10 border-slate-500/20', label: 'System' },
     alert: { Icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20', label: 'Alert' },
 };
 
@@ -164,7 +164,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
             {/* Bell Trigger */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-400 hover:text-white transition-colors rounded-xl hover:bg-slate-800"
+                className="relative p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors rounded-xl hover:bg-[var(--ws-surface-secondary)]"
                 aria-label="Open notifications"
             >
                 <Bell className="w-5 h-5" />
@@ -174,7 +174,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-white type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-[var(--text-inverse)] type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
                         >
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </motion.span>
@@ -192,7 +192,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 ac-layer-menu-backdrop bg-slate-950/30 backdrop-blur-[2px]"
+                            className="fixed inset-0 ac-layer-menu-backdrop bg-[var(--ws-canvas)]/30 backdrop-blur-[2px]"
                             onClick={() => setIsOpen(false)}
                         />
 
@@ -202,7 +202,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-slate-950 border border-[var(--border-default)] dark:border-white/10 rounded-2xl shadow-2xl shadow-black/50 ac-layer-menu flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-[var(--ws-canvas)] border border-[var(--border-default)] dark:border-[var(--ws-border)] rounded-2xl shadow-2xl shadow-black/50 ac-layer-menu flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">
@@ -216,26 +216,26 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={handleMarkAllAsRead}
-                                            className="type-caption font-bold text-teal-400 hover:text-teal-300 transition-colors px-2 py-1 rounded-lg hover:bg-teal-500/10"
+                                            className="type-caption font-bold text-teal-400 hover:text-[var(--brand-blue-300)] transition-colors px-2 py-1 rounded-lg hover:bg-teal-500/10"
                                         >
                                             Mark all read
                                         </button>
                                     )}
-                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-slate-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors rounded-lg hover:bg-[var(--ws-hover)]">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
 
                             {/* Filter Pills */}
-                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950 flex-wrap">
+                            <div className="flex gap-2 px-4 py-2 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] flex-wrap">
                                 {(['all', 'unread'] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
                                         className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${filter === f
-                                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
-                                            : 'text-slate-500 hover:text-slate-300 bg-white/5'
+                                            ? 'bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/20'
+                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-[var(--ws-hover)]'
                                             }`}
                                     >
                                         {f === 'all' ? 'All' : `Unread (${unreadCount})`}
@@ -247,7 +247,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         onClick={() => setSeverityFilter(f)}
                                         className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${severityFilter === f
                                             ? 'bg-amber-500 text-slate-950'
-                                            : 'text-slate-500 hover:text-slate-300 bg-white/5'
+                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-[var(--ws-hover)]'
                                             }`}
                                     >
                                         {f === 'all' ? 'Any severity' : 'Urgent'}
@@ -257,18 +257,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* Enable push on this device */}
                             {showPushPrompt && (
-                                <div className="px-4 py-3 border-b border-white/5 bg-gradient-to-r from-teal-500/10 to-violet-500/10 flex items-center gap-3">
+                                <div className="px-4 py-3 border-b border-[var(--ws-border)] bg-gradient-to-r from-teal-500/10 to-violet-500/10 flex items-center gap-3">
                                     <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0">
-                                        <Smartphone className="w-4 h-4 text-teal-300" />
+                                        <Smartphone className="w-4 h-4 text-[var(--brand-blue-300)]" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="type-card-description font-black text-white">Get alerts on this device</p>
-                                        <p className="type-card-description text-slate-400 leading-snug">Receive messages &amp; updates even when the app is closed.</p>
+                                        <p className="type-card-description font-black text-[var(--ws-text-primary)]">Get alerts on this device</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-snug">Receive messages &amp; updates even when the app is closed.</p>
                                     </div>
                                     <button
                                         onClick={handleEnablePush}
                                         disabled={pushBusy}
-                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white type-caption font-black uppercase tracking-wide transition-colors flex-shrink-0"
+                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-60 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wide transition-colors flex-shrink-0"
                                     >
                                         {pushBusy ? '…' : 'Enable'}
                                     </button>
@@ -279,11 +279,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {loadError ? (
                                     <div className="p-6 text-center space-y-3">
-                                        <p className="type-card-description text-rose-300">{loadError}</p>
+                                        <p className="type-card-description text-[var(--error-text,var(--error-500))]">{loadError}</p>
                                         <button
                                             type="button"
                                             onClick={() => void loadNotifications()}
-                                            className="type-caption font-bold text-teal-400 hover:text-teal-300"
+                                            className="type-caption font-bold text-teal-400 hover:text-[var(--brand-blue-300)]"
                                         >
                                             Retry
                                         </button>
@@ -307,7 +307,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         if (!typeGroups || Object.keys(typeGroups).length === 0) return null;
                                         return (
                                             <div key={dateGroup}>
-                                                <div className="px-4 py-2 type-caption font-black uppercase tracking-caps text-slate-600 bg-slate-950 sticky top-0 z-10">
+                                                <div className="px-4 py-2 type-caption font-black uppercase tracking-caps text-slate-600 bg-[var(--ws-canvas)] sticky top-0 z-10">
                                                     {dateGroup}
                                                 </div>
                                                 {Object.entries(typeGroups).map(([type, notifs]) => {
@@ -322,7 +322,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                 <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${cfg.bg}`}>
                                                                     <Icon className={`w-3 h-3 ${cfg.color}`} />
                                                                 </div>
-                                                                <span className="type-caption font-bold text-slate-400 uppercase tracking-wider flex-1">
+                                                                <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider flex-1">
                                                                     {cfg.label}
                                                                 </span>
                                                                 <span className="type-caption text-slate-600 font-mono">
@@ -341,15 +341,15 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                     className={`group px-4 py-3 border-b border-white/[0.02] hover:bg-white/[0.02] transition-all pl-12 ${!n.read ? 'bg-teal-500/[0.02]' : ''}`}
                                                                 >
                                                                     <div className="flex items-start justify-between gap-1">
-                                                                        <p className={`type-card-description font-bold leading-snug ${n.read ? 'text-slate-400' : 'text-white'}`}>
+                                                                        <p className={`type-card-description font-bold leading-snug ${n.read ? 'text-[var(--ws-text-muted)]' : 'text-[var(--ws-text-primary)]'}`}>
                                                                             {n.title}
                                                                         </p>
                                                                         {!n.read && (
-                                                                            <div className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0 mt-1 shadow-[0_0_6px_rgba(45,212,191,0.6)]" />
+                                                                            <div className="w-2 h-2 rounded-full bg-[var(--brand-blue-400)] flex-shrink-0 mt-1 shadow-[0_0_6px_rgba(45,212,191,0.6)]" />
                                                                         )}
                                                                     </div>
                                                                     {n.message && (
-                                                                        <p className="type-card-description text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                                                                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 line-clamp-2">{n.message}</p>
                                                                     )}
                                                                     <div className="flex items-center justify-between mt-2">
                                                                         <span className="type-caption text-slate-600">
@@ -359,7 +359,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                             {!n.read && (
                                                                                 <button
                                                                                     onClick={() => handleMarkAsRead(n.id)}
-                                                                                    className="p-1 rounded-md hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 transition-colors"
+                                                                                    className="p-1 rounded-md hover:bg-teal-500/10 text-[var(--ws-text-muted)] hover:text-teal-400 transition-colors"
                                                                                     title="Mark as read"
                                                                                 >
                                                                                     <Check className="w-3 h-3" />
@@ -368,7 +368,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                             {n.link && (
                                                                                 <a
                                                                                     href={n.link}
-                                                                                    className="p-1 rounded-md hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 transition-colors"
+                                                                                    className="p-1 rounded-md hover:bg-violet-500/10 text-[var(--ws-text-muted)] hover:text-violet-400 transition-colors"
                                                                                     onClick={() => setIsOpen(false)}
                                                                                 >
                                                                                     <ExternalLink className="w-3 h-3" />
@@ -376,7 +376,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                             )}
                                                                             <button
                                                                                 onClick={() => handleDelete(n.id)}
-                                                                                className="p-1 rounded-md hover:bg-red-500/10 text-slate-600 hover:text-red-400 transition-colors"
+                                                                                className="p-1 rounded-md hover:bg-[var(--error-500)]/10 text-slate-600 hover:text-red-400 transition-colors"
                                                                             >
                                                                                 <Trash2 className="w-3 h-3" />
                                                                             </button>
@@ -395,7 +395,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* Footer */}
                             {notifications.length > 0 && (
-                                <div className="p-3 border-t border-white/5 bg-slate-950 text-center">
+                                <div className="p-3 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] text-center">
                                     <p className="type-card-description text-slate-600 font-mono">{notifications.length} total notifications</p>
                                 </div>
                             )}

@@ -153,11 +153,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 
   if (error) {
     return (
-      <div className={`bg-slate-800 border border-slate-700 rounded-lg p-6 ${className}`}>
+      <div className={`bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg p-6 ${className}`}>
         <div className="flex flex-col items-center justify-center text-center">
           <FileText className="w-12 h-12 text-red-400 mb-4" />
           <h3 className="text-lg font-semibold text-white mb-2">Failed to Load PDF</h3>
-          <p className="text-slate-400 mb-4">{error}</p>
+          <p className="text-[var(--ws-text-muted)] mb-4">{error}</p>
           <div className="flex gap-2">
             <Button
               onClick={handleRefresh}
@@ -181,14 +181,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   }
 
   return (
-    <div className={`bg-slate-800 border border-slate-700 rounded-lg overflow-hidden ${className}`}>
+    <div className={`bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
+      <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)]">
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-teal-400" />
           <div>
             <h3 className="type-ui font-semibold text-white">{fileName}</h3>
-            <p className="type-card-description text-slate-400">PDF Document</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">PDF Document</p>
           </div>
         </div>
         
@@ -198,12 +198,12 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             size="sm"
             onClick={handleZoomOut}
             disabled={scale <= 0.5}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <ZoomOut className="w-4 h-4" />
           </Button>
           
-          <span className="type-ui text-slate-400 min-w-[50px] text-center">
+          <span className="type-ui text-[var(--ws-text-muted)] min-w-[50px] text-center">
             {Math.round(scale * 100)}%
           </span>
           
@@ -211,7 +211,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             size="sm"
             onClick={handleZoomIn}
             disabled={scale >= 3}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <ZoomIn className="w-4 h-4" />
           </Button>
@@ -220,7 +220,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <Button
             size="sm"
             onClick={handleRotate}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <RotateCw className="w-4 h-4" />
           </Button>
@@ -229,7 +229,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <Button
             size="sm"
             onClick={handlePrint}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -238,7 +238,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <Button
             size="sm"
             onClick={handleDownload}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <Download className="w-4 h-4" />
           </Button>
@@ -247,7 +247,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
           <Button
             size="sm"
             onClick={handleRefresh}
-            className="bg-slate-700 hover:bg-slate-600"
+            className="bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
@@ -257,7 +257,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
             <Button
               size="sm"
               onClick={onClose}
-              className="bg-red-500/20 text-red-400 hover:bg-red-500/30"
+              className="bg-[var(--error-500)]/20 text-red-400 hover:bg-[var(--error-500)]/30"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -268,7 +268,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       {/* PDF Container */}
       <div 
         ref={containerRef}
-        className="relative bg-slate-900"
+        className="relative bg-[var(--ws-panel)]"
         style={{ 
           height: typeof height === 'number' ? `${height}px` : height,
           width: typeof width === 'number' ? `${width}px` : width,
@@ -277,10 +277,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         }}
       >
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--ws-panel)]">
             <div className="text-center">
               <RefreshCw className="w-8 h-8 animate-spin text-teal-400 mx-auto mb-4" />
-              <p className="text-slate-400">Loading PDF...</p>
+              <p className="text-[var(--ws-text-muted)]">Loading PDF...</p>
             </div>
           </div>
         )}
@@ -300,8 +300,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       </div>
 
       {/* Footer with additional controls */}
-      <div className="flex items-center justify-between p-3 bg-slate-700/50 border-t border-slate-700">
-        <div className="flex items-center gap-2 type-ui text-slate-400">
+      <div className="flex items-center justify-between p-3 bg-[var(--ws-surface-tertiary)]/50 border-t border-[var(--ws-border)]">
+        <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
           <span>Page {currentPage} of {totalPages}</span>
         </div>
         

@@ -331,7 +331,7 @@ export async function PATCH(
             <p><strong>${project.name || before.name}</strong> was updated.</p>
             <ul>${changedForOwner.map((line) => `<li>${line}</li>`).join("")}</ul>
             ${projectPortalUrl ? `<p><a href="${projectPortalUrl}">Open client portal</a></p>` : ""}
-            <p style="color:#64748b;font-size:12px;">Automated notification from AlphaClone Systems.</p>
+            <p style="color:var(--ws-text-muted);font-size:12px;">Automated notification from AlphaClone Systems.</p>
           `,
         });
         notificationResults.owner = { sent: ownerEmail.success, skipped: ownerEmail.error };

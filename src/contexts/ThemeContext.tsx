@@ -41,7 +41,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const { user } = useAuth();
     const userId = user?.id ?? null;
 
-    const [backgroundColor, setBackgroundColor] = useState('#0f172a');
+    const [backgroundColor, setBackgroundColor] = useState('var(--ws-canvas)');
     const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
     const [isDark, setIsDark] = useState(true);
 
@@ -110,7 +110,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     );
 
     const resetToDefault = () => {
-        handleSetBackgroundColor('#0f172a');
+        handleSetBackgroundColor('var(--ws-canvas)');
         handleSetThemeMode('dark');
     };
 

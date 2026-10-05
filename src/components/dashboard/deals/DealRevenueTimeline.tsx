@@ -98,31 +98,31 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
         return (
             <div className={`flex items-center gap-2 py-4 ${className}`}>
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
-                <span className="type-caption text-slate-500">Loading revenue chain…</span>
+                <span className="type-caption text-[var(--ws-text-muted)]">Loading revenue chain…</span>
             </div>
         );
     }
 
     return (
-        <div className={`bg-slate-900 border border-teal-500/20 rounded-2xl p-4 space-y-4 ${className}`}>
+        <div className={`bg-[var(--ws-panel)] border border-teal-500/20 rounded-2xl p-4 space-y-4 ${className}`}>
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <h3 className="type-caption font-black uppercase tracking-widest text-teal-400">
                         Revenue chain
                     </h3>
-                    <p className="type-card-description text-slate-500 mt-1 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">
                         Find → qualify → conduct → propose → contract → invoice → project
                     </p>
                 </div>
                 <div className="text-right shrink-0">
-                    <div className="text-lg font-black text-white tabular-nums">{timeline.percent}%</div>
-                    <div className="type-ui text-slate-500 font-bold">
+                    <div className="text-lg font-black text-[var(--ws-text-primary)] tabular-nums">{timeline.percent}%</div>
+                    <div className="type-ui text-[var(--ws-text-muted)] font-bold">
                         {timeline.completedCount}/10 steps
                     </div>
                 </div>
             </div>
 
-            <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div className="h-2 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
                 <div
                     className="h-full bg-gradient-to-r from-teal-600 to-emerald-500 rounded-full transition-all duration-500"
                     style={{ width: `${timeline.percent}%` }}
@@ -132,7 +132,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
             {dealStage === 'closed_lost' && (
                 <div className="flex items-start gap-2 rounded-lg bg-red-950/30 border border-red-500/20 px-3 py-2">
                     <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                    <p className="type-card-description text-red-300/90 leading-relaxed">
+                    <p className="type-card-description text-[var(--error-text,var(--error-500))]/90 leading-relaxed">
                         Deal closed lost. Start a new deal if this opportunity reopens.
                     </p>
                 </div>
@@ -148,8 +148,8 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                         <div className="type-caption font-bold uppercase tracking-wide text-teal-400">
                             Next money move
                         </div>
-                        <div className="type-ui font-semibold text-white truncate">{timeline.nextAction.label}</div>
-                        <p className="type-card-description text-slate-400 mt-0.5 line-clamp-2">{timeline.nextAction.detail}</p>
+                        <div className="type-ui font-semibold text-[var(--ws-text-primary)] truncate">{timeline.nextAction.label}</div>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 line-clamp-2">{timeline.nextAction.detail}</p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-teal-400 shrink-0" />
                 </button>
@@ -176,7 +176,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                                 {!isLast && (
                                     <div
                                         className={`w-0.5 flex-1 min-h-[20px] my-0.5 ${
-                                            item.state === 'complete' ? 'bg-emerald-500/40' : 'bg-slate-700'
+                                            item.state === 'complete' ? 'bg-emerald-500/40' : 'bg-[var(--ws-surface-tertiary)]'
                                         }`}
                                     />
                                 )}
@@ -197,18 +197,18 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                                     <span
                                         className={`type-ui font-semibold ${
                                             item.state === 'complete'
-                                                ? 'text-slate-300'
+                                                ? 'text-[var(--ws-text-secondary)]'
                                                 : item.state === 'current'
-                                                  ? 'text-white'
+                                                  ? 'text-[var(--ws-text-primary)]'
                                                   : item.state === 'skipped'
                                                     ? 'text-slate-600 line-through'
-                                                    : 'text-slate-500'
+                                                    : 'text-[var(--ws-text-muted)]'
                                         }`}
                                     >
                                         {item.label}
                                     </span>
                                 </div>
-                                <p className="type-card-description text-slate-500 mt-0.5 leading-relaxed group-hover:text-slate-400">
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 leading-relaxed group-hover:text-[var(--ws-text-muted)]">
                                     {item.detail}
                                 </p>
                             </button>

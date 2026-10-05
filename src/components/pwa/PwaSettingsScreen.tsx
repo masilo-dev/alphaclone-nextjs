@@ -90,7 +90,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
 
       <NativeSection title="Notifications">
         <NativeListTile
-          icon={prefs.pushEnabled && isSubscribed ? <Bell className="w-5 h-5 text-teal-400" /> : <BellOff className="w-5 h-5 text-slate-500" />}
+          icon={prefs.pushEnabled && isSubscribed ? <Bell className="w-5 h-5 text-teal-400" /> : <BellOff className="w-5 h-5 text-[var(--ws-text-muted)]" />}
           title="Phone alerts"
           subtitle={
             !pushSupported
@@ -110,7 +110,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
           }
         />
         {permission === 'denied' ? (
-          <div className="px-4 py-2.5 bg-amber-500/10 border-t border-amber-500/20 text-xs text-amber-300">
+          <div className="px-4 py-2.5 bg-amber-500/10 border-t border-amber-500/20 text-xs text-[var(--warning-text,var(--warning-500))]">
             Notifications are blocked. Open browser or system site settings and allow notifications for AlphaClone.
           </div>
         ) : null}
@@ -118,7 +118,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
         {/* Test Alert Button */}
         {pushSupported && permission !== 'denied' ? (
           <div className="p-3 border-t border-white/5 flex items-center justify-between">
-            <span className="text-xs text-slate-400">Verify device delivery</span>
+            <span className="text-xs text-[var(--ws-text-muted)]">Verify device delivery</span>
             <button
               type="button"
               disabled={busy}
@@ -142,7 +142,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
                   setBusy(false);
                 }
               }}
-              className="px-3 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/30 text-xs font-semibold transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/30 text-[var(--brand-blue-300)] border border-teal-500/30 text-xs font-semibold transition-colors"
             >
               Send test alert
             </button>

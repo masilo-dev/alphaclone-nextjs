@@ -84,15 +84,15 @@ export default function SequenceBuilder() {
         <button onClick={() => setSelected(null)} className="type-ui text-teal-400 font-bold">
           ← Back
         </button>
-        <h2 className="text-lg font-bold text-white">{selected.name}</h2>
+        <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{selected.name}</h2>
         <div className="relative pl-6 border-l-2 border-teal-500/30 space-y-6">
           {(selected.steps || []).map((step, i) => (
             <div key={i} className="relative">
               <div className="absolute -left-[25px] w-3 h-3 rounded-full bg-teal-500" />
-              <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
+              <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4">
                 <div className="type-caption text-violet-400 font-bold mb-1">Day {step.delay_days}</div>
-                <div className="type-ui font-bold text-white">{step.subject}</div>
-                <p className="type-card-description text-slate-400 mt-2 line-clamp-3">{step.body}</p>
+                <div className="type-ui font-bold text-[var(--ws-text-primary)]">{step.subject}</div>
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-2 line-clamp-3">{step.body}</p>
               </div>
             </div>
           ))}
@@ -103,16 +103,16 @@ export default function SequenceBuilder() {
 
   return (
     <div className="p-4 space-y-5 overflow-y-auto pb-24">
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
-        <h3 className="type-ui font-bold text-white">New sequence</h3>
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">New sequence</h3>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Sequence name"
-          className="w-full h-10 px-3 rounded-xl bg-slate-950 border border-white/5 type-ui text-white"
+          className="w-full h-10 px-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
         />
         {steps.map((step, i) => (
-          <div key={i} className="space-y-2 p-3 rounded-xl bg-slate-950 border border-white/5">
+          <div key={i} className="space-y-2 p-3 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)]">
             <div className="flex gap-2">
               <input
                 type="number"
@@ -123,7 +123,7 @@ export default function SequenceBuilder() {
                   next[i].delay_days = Number(e.target.value);
                   setSteps(next);
                 }}
-                className="w-20 h-9 px-2 rounded-lg bg-slate-900 border border-white/5 type-ui text-white"
+                className="w-20 h-9 px-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
                 placeholder="Day"
               />
               <input
@@ -133,7 +133,7 @@ export default function SequenceBuilder() {
                   next[i].subject = e.target.value;
                   setSteps(next);
                 }}
-                className="flex-1 h-9 px-3 rounded-lg bg-slate-900 border border-white/5 type-ui text-white"
+                className="flex-1 h-9 px-3 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
                 placeholder="Subject"
               />
               {steps.length > 1 && (
@@ -150,7 +150,7 @@ export default function SequenceBuilder() {
                 setSteps(next);
               }}
               rows={2}
-              className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-white/5 type-ui text-white"
+              className="w-full px-3 py-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)]"
               placeholder="Email body"
             />
           </div>
@@ -162,7 +162,7 @@ export default function SequenceBuilder() {
           >
             <Plus className="w-3.5 h-3.5" /> Add step
           </button>
-          <button onClick={saveSequence} className="ml-auto h-9 px-4 rounded-xl bg-teal-500 text-white type-ui font-bold">
+          <button onClick={saveSequence} className="ml-auto h-9 px-4 rounded-xl bg-teal-500 text-[var(--text-inverse)] type-ui font-bold">
             Save sequence
           </button>
         </div>
@@ -171,11 +171,11 @@ export default function SequenceBuilder() {
       {sequences.length === 0 ? (
         <EmptyStateFromPreset moduleId="campaigns" onAction={() => setSteps([{ delay_days: 0, subject: '', body: '' }])} />
       ) : (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           {sequences.map((s) => (
-            <button key={s.id} onClick={() => loadSteps(s)} className="w-full px-4 py-3 text-left hover:bg-white/5">
-              <div className="type-ui font-bold text-white">{s.name}</div>
-              <div className="type-caption text-slate-500">{new Date(s.created_at).toLocaleDateString()}</div>
+            <button key={s.id} onClick={() => loadSteps(s)} className="w-full px-4 py-3 text-left hover:bg-[var(--ws-hover)]">
+              <div className="type-ui font-bold text-[var(--ws-text-primary)]">{s.name}</div>
+              <div className="type-caption text-[var(--ws-text-muted)]">{new Date(s.created_at).toLocaleDateString()}</div>
             </button>
           ))}
         </div>

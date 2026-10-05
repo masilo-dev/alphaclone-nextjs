@@ -45,16 +45,16 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-teal-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/50 shrink-0">
-                                <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                                <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--ws-text-primary)]" />
                             </div>
                             <div>
-                                <h2 className="text-lg sm:text-2xl font-bold text-white">Meeting Ready</h2>
+                                <h2 className="text-lg sm:text-2xl font-bold text-[var(--ws-text-primary)]">Meeting Ready</h2>
                                 <p className="type-card-description sm:text-sm text-gray-400">Copy link to invite</p>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-white transition-colors p-1"
+                            className="text-gray-400 hover:text-[var(--ws-text-primary)] transition-colors p-1"
                         >
                             <X className="w-5 h-5 sm:w-6 sm:h-6" />
                         </button>
@@ -65,7 +65,7 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                 <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                     {/* Meeting Link Display */}
                     <div>
-                        <label className="block type-label sm:text-sm font-bold text-white mb-2">
+                        <label className="block type-label sm:text-sm font-bold text-[var(--ws-text-primary)] mb-2">
                             Share This Link
                         </label>
                         <div className="bg-gray-800/50 border-2 border-teal-500/30 rounded-lg p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -100,20 +100,20 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                                 <Users className="w-3.5 h-3.5" />
                                 <span className="type-caption sm:text-xs uppercase tracking-wider">Max</span>
                             </div>
-                            <p className="text-base sm:text-xl font-bold text-white">10 people</p>
+                            <p className="text-base sm:text-xl font-bold text-[var(--ws-text-primary)]">10 people</p>
                         </div>
                         <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700">
                             <div className="flex items-center gap-1.5 text-gray-400 mb-1">
                                 <Clock className="w-3.5 h-3.5" />
                                 <span className="type-caption sm:text-xs uppercase tracking-wider">Room ID</span>
                             </div>
-                            <p className="type-card-description sm:text-sm font-mono text-white truncate">{roomName}</p>
+                            <p className="type-card-description sm:text-sm font-mono text-[var(--ws-text-primary)] truncate">{roomName}</p>
                         </div>
                     </div>
 
                     {/* Simple Instructions */}
                     <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 sm:p-4">
-                        <p className="text-white font-semibold mb-1 type-card-description sm:text-sm">
+                        <p className="text-[var(--ws-text-primary)] font-semibold mb-1 type-card-description sm:text-sm">
                             How to Use:
                         </p>
                         <ul className="type-caption sm:text-sm text-gray-300 space-y-0.5 sm:space-y-1 pl-1">
@@ -126,7 +126,7 @@ const MeetingLinkModal: React.FC<MeetingLinkModalProps> = ({
                     <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                             onClick={onJoinNow}
-                            className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-white font-semibold py-2.5 sm:py-3 h-auto"
+                            className="w-full bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 text-[var(--text-inverse)] font-semibold py-2.5 sm:py-3 h-auto"
                         >
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Join Now

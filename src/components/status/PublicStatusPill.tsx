@@ -27,10 +27,10 @@ export default function PublicStatusPill() {
 
   const colorClass =
     status === 'healthy'
-      ? 'bg-emerald-400'
+      ? 'bg-[var(--success-500)]'
       : status === 'degraded'
-        ? 'bg-amber-400'
-        : status === 'unhealthy' ? 'bg-rose-400' : 'bg-slate-400';
+        ? 'bg-[var(--warning-500)]'
+        : status === 'unhealthy' ? 'bg-[var(--error-500)]' : 'bg-slate-400';
 
   const labelText =
     status === 'healthy'
@@ -42,7 +42,7 @@ export default function PublicStatusPill() {
   return (
     <Link
       href="/platform-status"
-      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-2.5 py-1 type-ui font-medium text-slate-300 hover:border-white/20 hover:text-white transition-all"
+      className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[var(--ws-panel)]/80 px-2.5 py-1 type-ui font-medium text-[var(--ws-text-secondary)] hover:border-white/20 hover:text-white transition-all"
       title={`Live Platform Status: ${labelText}`}
     >
       <span className="relative flex h-2 w-2">

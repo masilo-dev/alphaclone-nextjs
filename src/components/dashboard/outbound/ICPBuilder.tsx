@@ -236,11 +236,11 @@ export default function ICPBuilder() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-800">Ideal Customer Profiles</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Define who you want to reach. Used by AI qualification.</p>
+          <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">Define who you want to reach. Used by AI qualification.</p>
         </div>
         <Button
           size="sm"
-          className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+          className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
           onClick={() => { resetForm(); setShowForm(true); }}
         >
           <Plus size={13} className="mr-1" /> New ICP
@@ -365,7 +365,7 @@ export default function ICPBuilder() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+              className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
               onClick={save}
               disabled={saving || !form.name.trim()}
             >
@@ -388,12 +388,12 @@ export default function ICPBuilder() {
         </div>
       ) : icps.length === 0 && !showForm ? (
         <div className="rounded-xl border-2 border-dashed border-slate-200 p-12 text-center">
-          <Target size={32} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500 text-sm">No ICPs yet</p>
-          <p className="text-slate-400 text-xs mt-1">Create an ICP to enable AI lead qualification</p>
+          <Target size={32} className="mx-auto text-[var(--ws-text-secondary)] mb-3" />
+          <p className="text-[var(--ws-text-muted)] text-sm">No ICPs yet</p>
+          <p className="text-[var(--ws-text-muted)] text-xs mt-1">Create an ICP to enable AI lead qualification</p>
           <Button
             size="sm"
-            className="mt-4 bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => { resetForm(); setShowForm(true); }}
           >
             Create first ICP
@@ -414,7 +414,7 @@ export default function ICPBuilder() {
                 <div className="p-4 flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <div className={cn('mt-0.5 p-1.5 rounded-lg shrink-0', icp.is_default ? 'bg-blue-50' : 'bg-slate-50')}>
-                      <Target size={13} className={icp.is_default ? 'text-blue-600' : 'text-slate-500'} />
+                      <Target size={13} className={icp.is_default ? 'text-blue-600' : 'text-[var(--ws-text-muted)]'} />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -424,14 +424,14 @@ export default function ICPBuilder() {
                         )}
                       </div>
                       {icp.description && (
-                        <p className="text-xs text-slate-500 mt-0.5 truncate">{icp.description}</p>
+                        <p className="text-xs text-[var(--ws-text-muted)] mt-0.5 truncate">{icp.description}</p>
                       )}
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {(icp.industries || []).slice(0, 3).map((ind) => (
                           <span key={ind} className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{ind}</span>
                         ))}
                         {(icp.industries || []).length > 3 && (
-                          <span className="text-xs text-slate-400">+{(icp.industries || []).length - 3} more</span>
+                          <span className="text-xs text-[var(--ws-text-muted)]">+{(icp.industries || []).length - 3} more</span>
                         )}
                       </div>
                     </div>
@@ -442,26 +442,26 @@ export default function ICPBuilder() {
                       <button
                         onClick={() => setDefault(icp.id)}
                         title="Set as default"
-                        className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 transition-colors"
+                        className="p-1.5 text-[var(--ws-text-muted)] hover:text-amber-500 rounded-lg hover:bg-amber-50 transition-colors"
                       >
                         <Star size={14} />
                       </button>
                     )}
                     <button
                       onClick={() => startEdit(icp)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+                      className="p-1.5 text-[var(--ws-text-muted)] hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
                     >
                       <Edit2 size={14} />
                     </button>
                     <button
                       onClick={() => deleteICP(icp.id)}
-                      className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                      className="p-1.5 text-[var(--ws-text-muted)] hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : icp.id)}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                      className="p-1.5 text-[var(--ws-text-muted)] hover:text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
                     >
                       {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
@@ -479,7 +479,7 @@ export default function ICPBuilder() {
                     )}
                     {(icp.company_size_min !== undefined || icp.company_size_max !== undefined) && (
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-slate-500 w-24 shrink-0">Company size</span>
+                        <span className="text-[var(--ws-text-muted)] w-24 shrink-0">Company size</span>
                         <span className="text-slate-700">{icp.company_size_min ?? '—'} – {icp.company_size_max ?? '—'} employees</span>
                       </div>
                     )}
@@ -509,7 +509,7 @@ export default function ICPBuilder() {
 function Row({ label, tags, tagClass }: { label: string; tags: string[]; tagClass?: string }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-xs text-slate-500 w-24 shrink-0 mt-0.5">{label}</span>
+      <span className="text-xs text-[var(--ws-text-muted)] w-24 shrink-0 mt-0.5">{label}</span>
       <div className="flex flex-wrap gap-1">
         {tags.map((tag) => (
           <span key={tag} className={cn('text-xs px-1.5 py-0.5 rounded border', tagClass || 'bg-white text-slate-600 border-slate-200')}>

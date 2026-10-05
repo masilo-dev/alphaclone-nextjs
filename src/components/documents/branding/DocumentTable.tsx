@@ -58,7 +58,7 @@ export function DocumentTable({
         <thead>
           <tr className="border-b-2 border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600">
             {showItemNumber && (
-              <th scope="col" className="py-3 pr-4 w-12 text-center text-slate-400">
+              <th scope="col" className="py-3 pr-4 w-12 text-center text-[var(--ws-text-muted)]">
                 #
               </th>
             )}
@@ -80,14 +80,14 @@ export function DocumentTable({
           {items.map((item, idx) => (
             <tr key={item.id || idx} className="doc-table-row break-inside-avoid">
               {showItemNumber && (
-                <td className="py-3.5 pr-4 text-center text-xs text-slate-400 font-mono">
+                <td className="py-3.5 pr-4 text-center text-xs text-[var(--ws-text-muted)] font-mono">
                   {item.itemNumber ?? idx + 1}
                 </td>
               )}
               <td className="py-3.5 pr-4 align-top">
                 <div className="font-semibold text-slate-900">{item.description}</div>
                 {item.notes && (
-                  <div className="text-xs text-slate-500 mt-0.5 whitespace-pre-line leading-relaxed">
+                  <div className="text-xs text-[var(--ws-text-muted)] mt-0.5 whitespace-pre-line leading-relaxed">
                     {item.notes}
                   </div>
                 )}

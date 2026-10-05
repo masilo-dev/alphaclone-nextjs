@@ -57,14 +57,14 @@ type HermeticActionKind =
 
 const HERMETIC_ACTION: Record<HermeticActionKind, { label: string; Icon: any; accent: string }> = {
   search:  { label: 'Searching',   Icon: Search,    accent: 'text-sky-400' },
-  read:    { label: 'Reading',     Icon: FileText,  accent: 'text-slate-400' },
+  read:    { label: 'Reading',     Icon: FileText,  accent: 'text-[var(--ws-text-muted)]' },
   save:    { label: 'Saving',      Icon: Save,      accent: 'text-teal-400' },
   send:    { label: 'Sending',     Icon: SendIcon,  accent: 'text-violet-400' },
   data:    { label: 'Syncing data',Icon: Database,  accent: 'text-amber-400' },
   people:  { label: 'Checking people', Icon: UserIcon, accent: 'text-emerald-400' },
   ai:      { label: 'Running AI',  Icon: Sparkles,  accent: 'text-fuchsia-400' },
   system:  { label: 'Running',     Icon: Bot,       accent: 'text-[color:var(--brand-blue-400)]' },
-  general: { label: 'Working',     Icon: Wrench,    accent: 'text-slate-400' },
+  general: { label: 'Working',     Icon: Wrench,    accent: 'text-[var(--ws-text-muted)]' },
 };
 
 function classifyHermeticAction(toolName: string): HermeticActionKind {
@@ -660,12 +660,12 @@ export default function BonnieChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-white/10 bg-slate-950 ${
+      className={`flex flex-col overflow-hidden rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] ${
         compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
       {!compact && messages.length > 1 && (
-        <div className="flex items-center justify-between border-b border-slate-800 px-3 py-1.5">
+        <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-3 py-1.5">
           {timelineEvents.length > 0 && (
             <span className="type-ui text-teal-400/70 font-semibold">
               {timelineEvents.filter(e => e.status === 'done').length}/{timelineEvents.length} steps
@@ -674,7 +674,7 @@ export default function BonnieChatPanel({
           <button
             type="button"
             onClick={clearChat}
-            className="ml-auto flex items-center gap-1 type-caption font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
+            className="ml-auto flex items-center gap-1 type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
           >
             <Trash2 className="h-3 w-3" />
             Clear
@@ -691,10 +691,10 @@ export default function BonnieChatPanel({
             <div
               className={`max-w-[90%] rounded-xl px-3 py-2 type-caption leading-relaxed sm:text-sm ${
                 msg.role === 'user'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-teal-600 text-[var(--text-inverse)]'
                   : msg.error
                     ? 'border border-rose-500/30 bg-rose-500/10 text-rose-200'
-                    : 'border border-slate-700/60 bg-slate-800/80 text-slate-100'
+                    : 'border border-[var(--ws-border)]/60 bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-primary)]'
               }`}
             >
               {msg.role === 'assistant' && msg.id !== 'intro' && (
@@ -734,12 +734,12 @@ export default function BonnieChatPanel({
                 </div>
               ) : null}
               {msg.tools && msg.tools.length > 0 && (
-                <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2 dark:border-slate-700/50">
+                <div className="mt-2 space-y-1 border-t border-[var(--ws-border)]/50 pt-2 dark:border-[var(--ws-border)]/50">
                   {workspaceMode ? (
                     <BonnieToolActivityCard tools={msg.tools} />
                   ) : (
                     <>
-                  <p className="flex items-center gap-1 type-caption font-bold uppercase tracking-wider text-slate-500">
+                  <p className="flex items-center gap-1 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
                     <Sparkles className="h-3 w-3 text-[color:var(--brand-blue-400)]" /> Bonnie did this
                   </p>
                   {/* Timeline events for live runs */}
@@ -751,14 +751,14 @@ export default function BonnieChatPanel({
                         const hermetic = hermeticBonnieActivityLabel(t.tool);
                         const Icon = hermetic.Icon || Wrench;
                         return (
-                          <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 type-ui text-slate-400">
+                          <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 type-ui text-[var(--ws-text-muted)]">
                             {t.success ? (
                               <Icon className={`mt-0.5 h-3 w-3 shrink-0 ${hermetic.accent}`} />
                             ) : (
                               <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
                             )}
                             <span>
-                              <span className="font-semibold text-slate-200">{hermetic.text}</span>
+                              <span className="font-semibold text-[var(--ws-text-secondary)]">{hermetic.text}</span>
                               {t.summary ? (
                                 <>
                                   {' — '}
@@ -841,18 +841,18 @@ export default function BonnieChatPanel({
           </div>
         ))}
         {sending && phaseLabel && (
-          <div className="flex items-center gap-2 type-caption text-slate-500">
+          <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
             <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />
             {phaseLabel}
           </div>
         )}
       </div>
 
-      <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-3">
+      <div className="shrink-0 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
         {tenantId && aiQuota && (
-          <div className="mb-2 rounded-lg border border-white/10 bg-slate-900 px-2.5 py-2">
+          <div className="mb-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2.5 py-2">
             <div className="mb-1.5 flex items-center justify-between gap-2 type-ui">
-              <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-500">
+              <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 <Zap className="h-3 w-3 text-teal-400" />
                 AI Priority Layer
               </span>
@@ -874,7 +874,7 @@ export default function BonnieChatPanel({
               )}
             </div>
             {aiQuota.limit >= 0 ? (
-              <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--ws-surface-secondary)]">
                 <div
                   className={`h-full rounded-full transition-all ${
                     aiQuota.percentUsed >= 90
@@ -891,7 +891,7 @@ export default function BonnieChatPanel({
         )}
         <Link
           href="/dashboard/help"
-          className="mb-2 inline-flex items-center gap-1 type-ui text-slate-500 hover:text-teal-400 transition-colors"
+          className="mb-2 inline-flex items-center gap-1 type-ui text-[var(--ws-text-muted)] hover:text-teal-400 transition-colors"
         >
           <BookOpen className="h-3 w-3" />
           Platform guide & glossary
@@ -912,7 +912,7 @@ export default function BonnieChatPanel({
             onClick={handleAttachFile}
             disabled={disabled || sending || uploadingAttachment || !tenantId}
             title="Attach file"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:border-teal-500/50 hover:text-teal-300 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] transition-colors hover:border-teal-500/50 hover:text-[var(--brand-blue-300)] disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Attach file"
           >
             {uploadingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
@@ -937,8 +937,8 @@ export default function BonnieChatPanel({
             aria-label="Message Bonnie"
             className={`min-h-[40px] flex-1 resize-none rounded-md border px-3 py-2 type-caption sm:text-sm focus:outline-none focus:ring-1 disabled:opacity-50 ${
               workspaceMode
-                ? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white'
-                : 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-teal-500'
+                ? 'border-slate-200 bg-white text-slate-900 placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)] dark:text-[var(--ws-text-primary)]'
+                : 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500'
             }`}
           />
           <button
@@ -949,8 +949,8 @@ export default function BonnieChatPanel({
             title={listening ? 'Listening… tap to stop' : 'Speak a command'}
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               listening
-                ? 'border-rose-500/50 bg-rose-500/20 text-rose-300'
-                : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-teal-500/50 hover:text-teal-300'
+                ? 'border-rose-500/50 bg-rose-500/20 text-[var(--error-text,var(--error-500))]'
+                : 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] hover:border-teal-500/50 hover:text-[var(--brand-blue-300)]'
             }`}
           >
             {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -960,7 +960,7 @@ export default function BonnieChatPanel({
               type="button"
               onClick={stopGeneration}
               aria-label="Stop generation"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-rose-600 text-white transition-colors hover:bg-rose-500"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-rose-600 text-[var(--text-inverse)] transition-colors hover:bg-rose-500"
             >
               <Square className="h-4 w-4" />
             </button>
@@ -970,13 +970,13 @@ export default function BonnieChatPanel({
               onClick={() => void handleSend()}
               disabled={disabled || !input.trim()}
               aria-label="Send to Bonnie"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-600 text-[var(--text-inverse)] transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Send className="h-4 w-4" />
             </button>
           )}
         </div>
-        <p className="mt-2 type-card-description leading-relaxed text-slate-500">
+        <p className="mt-2 type-card-description leading-relaxed text-[var(--ws-text-muted)]">
           Enter to send · Shift+Enter for newline · Stop cancels in-flight generation · High-risk actions always ask for approval
         </p>
       </div>

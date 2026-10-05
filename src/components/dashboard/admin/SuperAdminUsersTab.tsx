@@ -183,14 +183,14 @@ export const SuperAdminUsersTab: React.FC = () => {
             />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="font-bold text-white type-card-description truncate">{u.name}</p>
+                <p className="font-bold text-[var(--ws-text-primary)] type-card-description truncate">{u.name}</p>
                 {u.password_change_required && (
                   <span className="p-0.5 bg-amber-500/20 text-amber-400 rounded" title="Forced Password Reset Pending">
                     <Lock className="w-3 h-3" />
                   </span>
                 )}
               </div>
-              <p className="type-card-description text-slate-500 font-mono truncate">{u.email}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-mono truncate">{u.email}</p>
             </div>
           </div>
         ),
@@ -216,12 +216,12 @@ export const SuperAdminUsersTab: React.FC = () => {
                 });
               }
             }}
-            className={`px-2 py-1 rounded type-caption font-black uppercase tracking-tighter cursor-pointer bg-slate-900 border ${
+            className={`px-2 py-1 rounded type-caption font-black uppercase tracking-tighter cursor-pointer bg-[var(--ws-panel)] border ${
               u.role === 'super_admin' || u.role === 'admin'
                 ? 'text-purple-400 border-purple-500/40'
                 : u.role === 'tenant_admin'
                 ? 'text-blue-400 border-blue-500/40'
-                : 'text-slate-400 border-white/10'
+                : 'text-[var(--ws-text-muted)] border-[var(--ws-border)]'
             }`}
           >
             <option value="user">User</option>
@@ -251,7 +251,7 @@ export const SuperAdminUsersTab: React.FC = () => {
             }`}>
               {u.onboarding_status || 'pending'}
             </span>
-            <span className="block text-slate-500 type-ui">
+            <span className="block text-[var(--ws-text-muted)] type-ui">
               {u.email_verified ? 'Verified' : 'Unverified'}
             </span>
           </div>
@@ -264,7 +264,7 @@ export const SuperAdminUsersTab: React.FC = () => {
           <div className={`${rowActionsClass} justify-end`}>
             <button
               onClick={() => { setSelectedUser(u); setShowDetailModal(true); }}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-white/5"
+              className="p-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-lg border border-[var(--ws-border)]"
               title="View User Details"
             >
               <Info className="w-4 h-4" />
@@ -298,7 +298,7 @@ export const SuperAdminUsersTab: React.FC = () => {
 
             <button
               onClick={() => handlePermanentDelete(u)}
-              className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20"
+              className="p-2 bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 text-red-400 rounded-lg border border-red-500/20"
               title="Permanent Delete Account"
             >
               <Trash2 className="w-4 h-4" />
@@ -315,7 +315,7 @@ export const SuperAdminUsersTab: React.FC = () => {
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 font-medium">Synchronizing Platform Users...</p>
+          <p className="text-[var(--ws-text-muted)] font-medium">Synchronizing Platform Users...</p>
         </div>
       </div>
     );
@@ -325,19 +325,19 @@ export const SuperAdminUsersTab: React.FC = () => {
     <div className="space-y-6 animate-fade-in min-w-0 ac-scroll-full ac-enterprise-module">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Users className="w-6 h-6 text-teal-400" />
             Platform User Management
           </h2>
-          <p className="text-slate-400">Total Users: {users.length}</p>
+          <p className="text-[var(--ws-text-muted)]">Total Users: {users.length}</p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
             <Input
               placeholder="Search email or name..."
-              className="pl-10 w-full sm:w-64 h-10 bg-slate-900/50 border-slate-800"
+              className="pl-10 w-full sm:w-64 h-10 bg-[var(--ws-panel)]/50 border-[var(--ws-border)]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -353,8 +353,8 @@ export const SuperAdminUsersTab: React.FC = () => {
               onClick={() => setFilter(f)}
               className={`px-4 py-1.5 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${
                 filter === f
-                  ? 'bg-teal-500 text-white border-teal-500 shadow-lg shadow-teal-500/20'
-                  : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700'
+                  ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500 shadow-lg shadow-teal-500/20'
+                  : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
               }`}
             >
               {f}
@@ -368,19 +368,19 @@ export const SuperAdminUsersTab: React.FC = () => {
         data={filteredUsers}
         getRowId={(u) => u.id}
         emptyMessage="No users match your current criteria."
-        className="bg-slate-900/40 border border-slate-800 rounded-2xl p-2"
+        className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl p-2"
       />
 
       {/* Role Promotion Confirmation Modal */}
       {showRoleModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-900 border border-purple-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="bg-[var(--ws-panel)] border border-purple-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
+              <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-400" />
                 Confirm Role Elevation
               </h3>
-              <button onClick={() => setShowRoleModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowRoleModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -393,32 +393,32 @@ export const SuperAdminUsersTab: React.FC = () => {
               <p>
                 You are about to promote user <strong>{selectedUser.name}</strong> ({selectedUser.email}) to role <strong>{pendingRole}</strong>.
               </p>
-              <p className="text-slate-300">
+              <p className="text-[var(--ws-text-secondary)]">
                 This user will receive platform-wide administrative privileges across all workspaces. Continue?
               </p>
             </div>
 
             <div>
-              <label className="block type-label font-semibold text-slate-400 mb-1">Reason for Promotion (Optional)</label>
+              <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Reason for Promotion (Optional)</label>
               <input
                 type="text"
                 value={roleReason}
                 onChange={(e) => setRoleReason(e.target.value)}
                 placeholder="e.g. Assigned as Platform Operations Admin"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl type-caption text-white"
+                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)]"
               />
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption font-semibold"
+                className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-semibold"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRoleChangeSubmit(true)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl type-caption shadow-lg shadow-purple-500/20"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-[var(--ws-text-primary)] font-bold rounded-xl type-caption shadow-lg shadow-purple-500/20"
               >
                 Confirm Role Elevation
               </button>
@@ -430,58 +430,58 @@ export const SuperAdminUsersTab: React.FC = () => {
       {/* User Details Modal */}
       {showDetailModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
               <div className="flex items-center gap-3">
                 <Avatar src={selectedUser.avatar} name={selectedUser.name} email={selectedUser.email} size={44} shape="rounded" />
                 <div>
-                  <h3 className="text-lg font-bold text-white">{selectedUser.name}</h3>
-                  <p className="type-card-description text-slate-400 font-mono">{selectedUser.email}</p>
+                  <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">{selectedUser.name}</h3>
+                  <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{selectedUser.email}</p>
                 </div>
               </div>
-              <button onClick={() => setShowDetailModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowDetailModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 type-caption">
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">User Role</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">User Role</span>
                 <span className="font-black text-purple-400 uppercase">{selectedUser.role}</span>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">Account Status</span>
-                <span className="font-bold text-white uppercase">{selectedUser.account_status}</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Account Status</span>
+                <span className="font-bold text-[var(--ws-text-primary)] uppercase">{selectedUser.account_status}</span>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">Onboarding</span>
-                <span className="text-slate-300 font-semibold">{selectedUser.onboarding_status}</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Onboarding</span>
+                <span className="text-[var(--ws-text-secondary)] font-semibold">{selectedUser.onboarding_status}</span>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">Email Verification</span>
-                <span className="text-slate-300 font-semibold">{selectedUser.email_verified ? 'Verified' : 'Unverified'}</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Email Verification</span>
+                <span className="text-[var(--ws-text-secondary)] font-semibold">{selectedUser.email_verified ? 'Verified' : 'Unverified'}</span>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">Business Type</span>
-                <span className="text-slate-300">{selectedUser.business_type || 'Not specified'}</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Business Type</span>
+                <span className="text-[var(--ws-text-secondary)]">{selectedUser.business_type || 'Not specified'}</span>
               </div>
-              <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                <span className="text-slate-500 block uppercase font-bold type-caption">Company Name</span>
-                <span className="text-slate-300">{selectedUser.company_name || 'Not specified'}</span>
+              <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl">
+                <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Company Name</span>
+                <span className="text-[var(--ws-text-secondary)]">{selectedUser.company_name || 'Not specified'}</span>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-1 type-caption">
-              <span className="text-slate-500 block uppercase font-bold type-caption">Timestamps & Identifiers</span>
-              <p className="text-slate-400">User ID: <span className="font-mono text-white">{selectedUser.id}</span></p>
-              <p className="text-slate-400">Registered: <span className="text-slate-300">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}</span></p>
-              <p className="text-slate-400">Last Login: <span className="text-slate-300">{selectedUser.last_login_at ? new Date(selectedUser.last_login_at).toLocaleString() : 'Never'}</span></p>
+            <div className="p-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl space-y-1 type-caption">
+              <span className="text-[var(--ws-text-muted)] block uppercase font-bold type-caption">Timestamps & Identifiers</span>
+              <p className="text-[var(--ws-text-muted)]">User ID: <span className="font-mono text-[var(--ws-text-primary)]">{selectedUser.id}</span></p>
+              <p className="text-[var(--ws-text-muted)]">Registered: <span className="text-[var(--ws-text-secondary)]">{selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : 'N/A'}</span></p>
+              <p className="text-[var(--ws-text-muted)]">Last Login: <span className="text-[var(--ws-text-secondary)]">{selectedUser.last_login_at ? new Date(selectedUser.last_login_at).toLocaleString() : 'Never'}</span></p>
             </div>
 
             <div className="flex justify-end">
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl type-caption"
+                className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] font-bold rounded-xl type-caption"
               >
                 Close
               </button>
@@ -493,29 +493,29 @@ export const SuperAdminUsersTab: React.FC = () => {
       {/* Transfer Ownership Modal */}
       {showTransferModal && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="bg-[var(--ws-panel)] border border-amber-500/30 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
+              <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <ArrowRightLeft className="w-5 h-5 text-amber-400" />
                 Transfer Workspace Ownership
               </h3>
-              <button onClick={() => setShowTransferModal(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setShowTransferModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 type-caption text-amber-300">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 type-caption text-[var(--warning-text,var(--warning-500))]">
               User <strong>{selectedUser.name}</strong> is the sole owner of active workspace <span className="font-mono">{transferTenantId}</span>. Transfer ownership before deleting this user account.
             </div>
 
             <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div>
-                <label className="block type-label font-semibold text-slate-300 mb-1">Select New Owner</label>
+                <label className="block type-label font-semibold text-[var(--ws-text-secondary)] mb-1">Select New Owner</label>
                 <select
                   required
                   value={newOwnerId}
                   onChange={(e) => setNewOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl type-caption text-white"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)]"
                 >
                   <option value="">-- Choose active platform user --</option>
                   {users
@@ -532,13 +532,13 @@ export const SuperAdminUsersTab: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption"
+                  className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl type-caption shadow-lg"
+                  className="px-4 py-2 bg-amber-500 hover:bg-[var(--warning-500)] text-slate-950 font-bold rounded-xl type-caption shadow-lg"
                 >
                   Transfer Ownership
                 </button>

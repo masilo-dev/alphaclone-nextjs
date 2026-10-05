@@ -41,21 +41,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
 
   const baseStyles =
     'inline-flex items-center justify-center font-medium transition-all select-none touch-manipulation ' +
-    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app,#0C1220)] ' +
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,var(--brand-blue-500))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] ' +
     'disabled:cursor-[var(--interactive-disabled-cursor,not-allowed)] disabled:opacity-[var(--interactive-disabled-opacity,0.5)] ' +
     '[&:not(:disabled)]:cursor-[var(--interactive-cursor,pointer)] [&:not(:disabled)]:pointer-events-auto';
 
   const variants: Record<string, string> = {
     primary: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
     default: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
-    secondary: "bg-[var(--interactive-secondary,#4199A4)] text-white hover:bg-[var(--interactive-secondary-hover,#388A94)] active:scale-[0.98]",
-    outline: "border border-[var(--border-default,#282F45)] bg-[var(--surface-primary,#121A2A)] text-[var(--text-primary,#F4F7FC)] hover:bg-[var(--surface-hover,#172133)] active:scale-[0.98]",
-    ghost: "text-[var(--text-secondary,#8491A6)] hover:bg-[var(--surface-hover,#172133)] hover:text-[var(--text-primary,#F4F7FC)]",
-    danger: "bg-[var(--danger,#EF4444)] text-white hover:brightness-95 active:scale-[0.98]",
-    destructive: "bg-[var(--danger,#EF4444)] text-white hover:brightness-95 active:scale-[0.98]",
-    icon: "bg-transparent hover:bg-[var(--surface-hover,#172133)] text-[var(--text-secondary,#8491A6)] hover:text-[var(--text-primary,#F4F7FC)]",
+    secondary: "bg-[var(--interactive-secondary,var(--brand-teal))] text-[var(--text-inverse)] hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]",
+    outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover,var(--ws-panel))] active:scale-[0.98]",
+    ghost: "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,var(--ws-panel))] hover:text-[var(--text-primary)]",
+    danger: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
+    destructive: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
+    icon: "bg-transparent hover:bg-[var(--surface-hover,var(--ws-panel))] text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
     navigation: `${WORKSPACE.nav.item} justify-start`,
-    cta: "bg-gradient-to-r from-[#5f8fff] to-[#356af4] text-white shadow-lg hover:brightness-110 active:scale-[0.98]",
+    cta: "bg-gradient-to-r from-[var(--brand-blue-400)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg hover:brightness-110 active:scale-[0.98]",
   };
 
   const sizes: Record<string, string> = {
@@ -121,7 +121,7 @@ export const Card: React.FC<CardProps> = ({
         hoverEffect || isClickable
           ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]'
           : ''
-      } ${isClickable ? 'cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,#356AF4)]' : ''} ${className}`}
+      } ${isClickable ? 'cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring,var(--brand-blue-500))]' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -339,14 +339,14 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div className={`fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
         aria-labelledby={title ? titleId : undefined}
-        style={{ backgroundColor: 'var(--surface-primary, #171A26)' }}
+        style={{ backgroundColor: 'var(--surface-primary, var(--ws-panel))' }}
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
@@ -403,7 +403,7 @@ export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = 
 };
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`flex h-full w-full items-center justify-center rounded-full bg-[var(--ws-surface-secondary,#1B1E2B)] text-[var(--ws-text-muted,#a8b0c2)] border border-[var(--ws-border)] type-caption font-semibold ${className}`} {...props} />
+  <div className={`flex h-full w-full items-center justify-center rounded-full bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted,var(--ws-text-muted))] border border-[var(--ws-border)] type-caption font-semibold ${className}`} {...props} />
 );
 
 // --- Table (enterprise: sticky header, alternating rows via ac-data-table) ---
@@ -544,11 +544,11 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
         // The menu is portaled to body; copy inherited workspace tokens from
         // its trigger so it retains an opaque surface in both color schemes.
         ...Object.fromEntries(Object.entries({
-          '--ws-panel': '#171A26',
-          '--ws-border': '#374151',
-          '--ws-text-primary': '#F4F7FC',
-          '--ws-hover': '#252936',
-          '--state-danger': '#ef4444',
+          '--ws-panel': 'var(--ws-panel)',
+          '--ws-border': 'var(--ws-surface-tertiary)',
+          '--ws-text-primary': 'var(--marketing-bg-secondary)',
+          '--ws-hover': 'var(--ws-panel-hover)',
+          '--state-danger': 'var(--error-500)',
         }).map(([token, fallback]) => [
           token,
           typeof window !== 'undefined' && dropdownRef.current
@@ -556,7 +556,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
             : fallback,
         ])),
       } as React.CSSProperties}
-      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
+      className={`overflow-y-auto border border-[var(--ws-border)] bg-[var(--ws-panel,var(--ws-panel))] ${WORKSPACE.panel.radius} shadow-xl animate-in fade-in slide-in-from-top-1 duration-150`}
       data-layer="dropdown"
       data-z-index={menuLayer}
     >
@@ -571,7 +571,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
             }}
             className={`w-full flex items-center gap-2 px-3 py-2.5 ${WORKSPACE.typography.sectionLabel} rounded-lg transition-colors ${
               item.variant === 'danger'
-                ? 'text-[var(--state-danger,#ef4444)] hover:bg-[color-mix(in_srgb,var(--state-danger,#ef4444)_10%,transparent)]'
+                ? 'text-[var(--state-danger,var(--error-500))] hover:bg-[color-mix(in_srgb,var(--state-danger,var(--error-500))_10%,transparent)]'
                 : 'text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
             }`}
           >

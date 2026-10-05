@@ -94,12 +94,12 @@ export default function AllInOnePlatformShowcase() {
   const [activeScenario, setActiveScenario] = useState<string>("agency");
 
   return (
-    <div className="w-full my-12 text-slate-100 select-none">
+    <div className="w-full my-12 text-[var(--ws-text-primary)] select-none">
       {/* Header Banner */}
       <div className="text-center max-w-4xl mx-auto px-4 mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 type-caption sm:text-sm font-medium mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-[var(--brand-blue-300)] type-caption sm:text-sm font-medium mb-4">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--brand-blue-400)] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
           </span>
           AI Business Execution Layer
@@ -110,7 +110,7 @@ export default function AllInOnePlatformShowcase() {
             All in One Intelligent Platform.
           </span>
         </h2>
-        <p className="text-slate-300 type-card-description sm:text-base max-w-2xl mx-auto">
+        <p className="text-[var(--ws-text-secondary)] type-card-description sm:text-base max-w-2xl mx-auto">
           CRM, Projects, Finance, Marketing, Documents & more — connect via MCP
           and automate your entire operational workflow.
         </p>
@@ -150,20 +150,20 @@ export default function AllInOnePlatformShowcase() {
 
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center">
             <div className="p-3 sm:p-4">
-              <p className="type-card-description text-slate-400 font-medium">Connect Favorite Tools</p>
-              <p className="type-card-description font-semibold text-teal-300 mt-1">ChatGPT, Claude, Manus & Gmail</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium">Connect Favorite Tools</p>
+              <p className="type-card-description font-semibold text-[var(--brand-blue-300)] mt-1">ChatGPT, Claude, Manus & Gmail</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="type-card-description text-slate-400 font-medium">Model Context Protocol</p>
-              <p className="type-caption font-semibold text-emerald-300 mt-1">Secure Real-Time Action</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium">Model Context Protocol</p>
+              <p className="type-caption font-semibold text-[var(--success-text,var(--success-500))] mt-1">Secure Real-Time Action</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="type-card-description text-slate-400 font-medium">Publish Everywhere</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium">Publish Everywhere</p>
               <p className="type-caption font-semibold text-cyan-300 mt-1">Meta, LinkedIn, Zoho & Brevo</p>
             </div>
             <div className="p-3 sm:p-4">
-              <p className="type-card-description text-slate-400 font-medium">Platform Power</p>
-              <p className="type-card-description font-semibold text-amber-300 mt-1">489 Tools Exposable via MCP</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium">Platform Power</p>
+              <p className="type-card-description font-semibold text-[var(--warning-text,var(--warning-500))] mt-1">489 Tools Exposable via MCP</p>
             </div>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function AllInOnePlatformShowcase() {
 
       {/* 1-Minute Complete Workflow Demonstration */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-16">
-        <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 shadow-xl">
+        <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-[var(--ws-border)] shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <span className="type-caption font-bold uppercase tracking-wider text-teal-400">
@@ -181,8 +181,8 @@ export default function AllInOnePlatformShowcase() {
                 From Lead to Cash in Under 60 Seconds
               </h3>
             </div>
-            <div className="flex items-center gap-2 type-caption text-slate-400 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)] bg-[var(--ws-panel)] px-3 py-1.5 rounded-lg border border-[var(--ws-border)]">
+              <span className="w-2 h-2 rounded-full bg-[var(--success-500)] animate-pulse"></span>
               <span>Zero Context Switching Required</span>
             </div>
           </div>
@@ -197,13 +197,13 @@ export default function AllInOnePlatformShowcase() {
                   onClick={() => setActiveStep(idx)}
                   className={`text-left p-4 rounded-xl border transition-all relative overflow-hidden ${
                     isSelected
-                      ? "bg-slate-800/90 border-teal-500/80 shadow-lg shadow-teal-950/50"
-                      : "bg-slate-900/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50"
+                      ? "bg-[var(--ws-surface-secondary)]/90 border-teal-500/80 shadow-lg shadow-teal-950/50"
+                      : "bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]/50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`type-caption font-mono font-bold px-2 py-0.5 rounded bg-slate-950 border ${isSelected ? "border-teal-500/50 text-teal-300" : "border-slate-800 text-slate-400"}`}
+                      className={`type-caption font-mono font-bold px-2 py-0.5 rounded bg-[var(--ws-canvas)] border ${isSelected ? "border-teal-500/50 text-[var(--brand-blue-300)]" : "border-[var(--ws-border)] text-[var(--ws-text-muted)]"}`}
                     >
                       {s.step}
                     </span>
@@ -214,7 +214,7 @@ export default function AllInOnePlatformShowcase() {
                   <h4 className="font-bold text-white type-ui mb-1">
                     {s.title}
                   </h4>
-                  <p className="type-card-description text-slate-400 leading-relaxed">
+                  <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                     {s.desc}
                   </p>
                 </button>
@@ -223,7 +223,7 @@ export default function AllInOnePlatformShowcase() {
           </div>
 
           {/* Selected Step Deep Dive Banner */}
-          <div className="mt-6 p-4 sm:p-5 rounded-xl bg-slate-950 border border-teal-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="mt-6 p-4 sm:p-5 rounded-xl bg-[var(--ws-canvas)] border border-teal-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="p-2.5 rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20 shrink-0">
                 <AlphaIcon name={WORKFLOW_STEPS[activeStep].icon} size="md" />
@@ -233,14 +233,14 @@ export default function AllInOnePlatformShowcase() {
                   <span className="type-caption font-bold text-teal-400 uppercase font-mono">
                     Step {WORKFLOW_STEPS[activeStep].step} Spotlight
                   </span>
-                  <span className="type-caption text-slate-400">
+                  <span className="type-caption text-[var(--ws-text-muted)]">
                     • Automated Action
                   </span>
                 </div>
                 <h5 className="text-base font-bold text-white mt-0.5">
                   {WORKFLOW_STEPS[activeStep].title}
                 </h5>
-                <p className="type-card-description sm:text-sm text-slate-300 mt-1">
+                <p className="type-card-description sm:text-sm text-[var(--ws-text-secondary)] mt-1">
                   {WORKFLOW_STEPS[activeStep].desc}
                 </p>
               </div>
@@ -261,7 +261,7 @@ export default function AllInOnePlatformShowcase() {
           <h3 className="text-xl sm:text-3xl font-bold text-white font-marketing-heading">
             Representative Ways Service Businesses Work
           </h3>
-          <p className="type-card-description text-slate-400 mt-2">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
             Illustrative workflows for small teams and solo operators—not verified
             customer results or performance guarantees.
           </p>
@@ -274,12 +274,12 @@ export default function AllInOnePlatformShowcase() {
               onClick={() => setActiveScenario(sc.id)}
               className={`p-6 rounded-2xl border transition-all cursor-pointer ${
                 activeScenario === sc.id
-                  ? "bg-slate-900 border-teal-500/80 shadow-xl shadow-teal-950/30 ring-1 ring-teal-500/30"
-                  : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+                  ? "bg-[var(--ws-panel)] border-teal-500/80 shadow-xl shadow-teal-950/30 ring-1 ring-teal-500/30"
+                  : "bg-[var(--ws-panel)]/50 border-[var(--ws-border)] hover:border-[var(--ws-border)]"
               }`}
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 rounded-full type-caption font-bold bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                <span className="px-3 py-1 rounded-full type-caption font-bold bg-teal-500/10 text-[var(--brand-blue-300)] border border-teal-500/30">
                   {sc.role}
                 </span>
                 <span className="type-caption font-mono font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded">
@@ -304,7 +304,7 @@ export default function AllInOnePlatformShowcase() {
                   </svg>
                   Old Way:
                 </p>
-                <p className="type-card-description text-slate-400 leading-relaxed">
+                <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                   {sc.challenge}
                 </p>
               </div>
@@ -327,7 +327,7 @@ export default function AllInOnePlatformShowcase() {
                   </svg>
                   AlphaClone Way:
                 </p>
-                <p className="type-card-description text-slate-200 leading-relaxed font-medium">
+                <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed font-medium">
                   {sc.solution}
                 </p>
               </div>

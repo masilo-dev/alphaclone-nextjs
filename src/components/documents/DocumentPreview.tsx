@@ -16,11 +16,11 @@ export function DocumentPreview({ input, className, hideLabel = false }: Documen
   return (
     <div className={className}>
       {!hideLabel ? (
-        <p className="type-caption font-black uppercase tracking-widest text-slate-500 mb-2">
+        <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-2">
           Preview
         </p>
       ) : null}
-      <div className="overflow-hidden rounded-xl border border-slate-800 bg-white shadow-inner">
+      <div className="overflow-hidden rounded-xl border border-[var(--ws-border)] bg-white shadow-inner">
         <iframe
           title="Document preview"
           srcDoc={html}

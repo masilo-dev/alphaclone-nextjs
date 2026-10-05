@@ -92,7 +92,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         const canvas = canvasRef.current;
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
-            ctx.fillStyle = '#FFFFFF';
+            ctx.fillStyle = 'var(--color-white)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             setHasDrawn(false);
         }
@@ -147,9 +147,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             canvas.height = canvas.offsetHeight;
             const ctx = canvas.getContext('2d');
             if (ctx) {
-                ctx.fillStyle = '#FFFFFF';
+                ctx.fillStyle = 'var(--color-white)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = '#000000';
+                ctx.strokeStyle = 'var(--color-black)';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
             }
@@ -161,14 +161,14 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     if (isConfirmed && modalSignatureData) {
         return (
             <div className="space-y-4">
-                <div className="border border-green-500/30 bg-slate-900/40 rounded-2xl p-5 flex flex-col items-center justify-center relative">
-                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest mb-2">{t('Adopted Signature')}</p>
+                <div className="border border-green-500/30 bg-[var(--ws-panel)]/40 rounded-2xl p-5 flex flex-col items-center justify-center relative">
+                    <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mb-2">{t('Adopted Signature')}</p>
                     <img src={modalSignatureData} alt={t('Signature')} className="h-20 object-contain bg-white p-2 rounded-xl" />
                     <p className="type-card-description font-semibold text-white font-mono mt-3">{fullName}</p>
                     <button
                         type="button"
                         onClick={handleClear}
-                        className="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption font-bold transition-all"
+                        className="mt-4 px-4 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold transition-all"
                     >
                         {t('Clear & Sign Again')}
                     </button>
@@ -181,10 +181,10 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         <div className="space-y-4">
             {savedSignature ? (
                 <div
-                    className="border border-teal-500/30 bg-slate-900/40 rounded-2xl p-5 flex flex-col items-center gap-3"
+                    className="border border-teal-500/30 bg-[var(--ws-panel)]/40 rounded-2xl p-5 flex flex-col items-center gap-3"
                     data-testid="saved-signature-card"
                 >
-                    <p className="type-caption text-teal-300 font-black uppercase tracking-widest flex items-center gap-1.5">
+                    <p className="type-caption text-[var(--brand-blue-300)] font-black uppercase tracking-widest flex items-center gap-1.5">
                         <BookmarkCheck className="w-3.5 h-3.5" /> {t('Your saved signature')}
                     </p>
                     <img
@@ -206,7 +206,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(true)}
-                            className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption font-bold transition-all flex items-center justify-center gap-2"
+                            className="px-5 py-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold transition-all flex items-center justify-center gap-2"
                         >
                             <PenTool className="w-3.5 h-3.5" /> {t('Draw a new signature')}
                         </button>
@@ -216,30 +216,30 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                 <button
                     type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full h-36 border-2 border-dashed border-white/10 hover:border-teal-500/40 bg-slate-900/40 hover:bg-slate-900/60 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
+                    className="w-full h-36 border-2 border-dashed border-white/10 hover:border-teal-500/40 bg-[var(--ws-panel)]/40 hover:bg-[var(--ws-panel)]/60 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
                 >
                     <div className="p-3 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
                         <PenTool className="w-5 h-5 text-teal-400" />
                     </div>
                     <span className="type-caption font-bold text-white uppercase tracking-wider">{t('Click to Sign Document')}</span>
-                    <span className="type-ui text-slate-500">{t('Opens secure full-screen e-sign canvas')}</span>
+                    <span className="type-ui text-[var(--ws-text-muted)]">{t('Opens secure full-screen e-sign canvas')}</span>
                 </button>
             )}
 
             {/* Modal */}
             <AnimatePresence>
                 {isModalOpen && (
-                    <div className="fixed inset-0 ac-layer-modal flex flex-col bg-slate-950/95 backdrop-blur-md overflow-hidden">
+                    <div className="fixed inset-0 ac-layer-modal flex flex-col bg-[var(--ws-canvas)]/95 backdrop-blur-md overflow-hidden">
                         {/* Header */}
-                        <div className="px-6 py-4 bg-slate-900/50 border-b border-white/5 flex items-center justify-between">
+                        <div className="px-6 py-4 bg-[var(--ws-panel)]/50 border-b border-white/5 flex items-center justify-between">
                             <div>
                                 <h3 className="text-white text-base font-black uppercase tracking-wider">{t('Secure E-Signature')}</h3>
-                                <p className="type-caption text-slate-500 uppercase tracking-widest font-mono">{t('Sign below to execute the agreement')}</p>
+                                <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-mono">{t('Sign below to execute the agreement')}</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => { setIsModalOpen(false); handleClear(); }}
-                                className="p-2 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                                className="p-2 rounded-xl bg-slate-850 hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white transition-colors"
                                 aria-label={t('Close')}
                             >
                                 <X className="w-5 h-5" />
@@ -250,7 +250,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                         <div className="flex-1 p-6 flex flex-col gap-6 justify-between max-w-lg mx-auto w-full overflow-y-auto">
                             {/* Legal Name */}
                             <div className="flex flex-col gap-2">
-                                <label className="type-caption font-black text-slate-400 uppercase tracking-widest">
+                                <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">
                                     {t('Legal Full Name')} *
                                 </label>
                                 <input
@@ -264,7 +264,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
                             {/* Canvas Drawing Board */}
                             <div className="flex-1 flex flex-col gap-2 min-h-[250px]">
-                                <label className="type-caption font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest flex items-center gap-1.5">
                                     <PenTool className="w-3.5 h-3.5 text-teal-400" /> {t('Draw Signature')} *
                                 </label>
                                 <div className="flex-1 bg-white rounded-2xl overflow-hidden relative border border-white/10 shadow-inner min-h-[200px]">
@@ -283,7 +283,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                                         <button
                                             type="button"
                                             onClick={clearCanvasOnly}
-                                            className="absolute top-3 right-3 p-2 bg-slate-950/80 hover:bg-slate-900 text-slate-400 hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-1.5 type-caption font-bold"
+                                            className="absolute top-3 right-3 p-2 bg-[var(--ws-canvas)]/80 hover:bg-[var(--ws-panel)] text-[var(--ws-text-muted)] hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-1.5 type-caption font-bold"
                                         >
                                             <RotateCcw className="w-3.5 h-3.5" /> {t('Clear Canvas')}
                                         </button>
@@ -292,14 +292,14 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                             </div>
 
                             {onRememberSignature && (
-                                <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-slate-900/60 p-4 cursor-pointer">
+                                <label className="flex items-start gap-3 rounded-2xl border border-white/5 bg-[var(--ws-panel)]/60 p-4 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={rememberSignature}
                                         onChange={(e) => setRememberSignature(e.target.checked)}
-                                        className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                        className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-[var(--ws-panel)] text-teal-500 focus:ring-teal-500"
                                     />
-                                    <span className="type-caption text-slate-300 leading-relaxed">
+                                    <span className="type-caption text-[var(--ws-text-secondary)] leading-relaxed">
                                         <span className="font-bold text-white block">{t('Remember this signature')}</span>
                                         {t('Next time you can sign any contract with one click instead of drawing again. You can replace it anytime under My signature.')}
                                     </span>
@@ -311,7 +311,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => { setIsModalOpen(false); handleClear(); }}
-                                    className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 border border-white/5 text-slate-300 rounded-2xl font-bold type-ui transition-all text-center"
+                                    className="flex-1 py-4 bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] border border-white/5 text-[var(--ws-text-secondary)] rounded-2xl font-bold type-ui transition-all text-center"
                                 >
                                     {t('Cancel')}
                                 </button>

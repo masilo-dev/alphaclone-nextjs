@@ -172,7 +172,7 @@ const Sidebar = React.memo<SidebarProps>(({
                     <div className={`${sidebarOpen ? 'flex' : 'hidden'} items-center gap-2.5 overflow-hidden min-w-0`}>
                         <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
                             className="rounded-md object-contain flex-shrink-0" />
-                        <span className={`min-w-0 truncate font-semibold text-white type-caption tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                        <span className={`min-w-0 truncate font-semibold text-[var(--ws-text-primary)] type-caption tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             {t('Alphaclone Systems')}
                         </span>
                     </div>
@@ -266,7 +266,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     aria-current={active && !hasChildren ? 'page' : undefined}
                                     className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
                                 >
-                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-[var(--ws-text-tertiary)] group-hover:text-white'}`} />}
+                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-tertiary)] group-hover:text-[var(--ws-text-primary)]'}`} />}
 
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
@@ -279,7 +279,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                                     {/* Unread badge */}
                                     {(item.href === '/dashboard/messages' || item.href === '/dashboard/business/messages') && unreadMessageCount > 0 && (
-                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 type-caption font-bold text-white bg-red-500 rounded-full">
+                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 type-caption font-bold text-[var(--text-inverse)] bg-[var(--error-500)] rounded-full">
                                             {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                                         </span>
                                     )}
@@ -287,7 +287,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     {/* Expand chevron */}
                                     {hasChildren && sidebarOpen && (
                                         <span className="ml-auto flex-shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-300" />
+                                            <ChevronDown className="w-4 h-4 text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-secondary)]" />
                                         </span>
                                     )}
                                     {hasChildren && !sidebarOpen && (
@@ -339,7 +339,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <Activity className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                     <span className="type-ui font-medium text-[var(--ws-text-secondary)]">{t('Background work')}</span>
                                 </div>
-                                <span className="rounded-full bg-[var(--ws-hover)] px-2 py-0.5 type-caption font-semibold text-[var(--brand-blue-300,#91B5FF)]">
+                                <span className="rounded-full bg-[var(--ws-hover)] px-2 py-0.5 type-caption font-semibold text-[var(--brand-blue-300,var(--brand-blue-300))]">
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </summary>
@@ -351,15 +351,15 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 {task.status === 'running' ? (
                                                     <Loader2 className="w-3 h-3 text-[var(--brand-blue-400)] animate-spin" />
                                                 ) : task.status === 'completed' ? (
-                                                    <Activity className="w-3 h-3 text-[var(--success-text,#6FE0AD)]" />
+                                                    <Activity className="w-3 h-3 text-[var(--success-text)]" />
                                                 ) : (
-                                                    <Activity className="w-3 h-3 text-[var(--error-text,#FF9097)]" />
+                                                    <Activity className="w-3 h-3 text-[var(--error-text)]" />
                                                 )}
                                                 <span className="type-caption font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
                                                 <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-[var(--ws-hover)] rounded">
-                                                    <X className="w-2.5 h-2.5 text-slate-500" />
+                                                    <X className="w-2.5 h-2.5 text-[var(--ws-text-muted)]" />
                                                 </button>
                                             )}
                                         </div>
@@ -393,7 +393,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <button
                             onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
                             title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
-                            className="w-full flex items-center justify-center py-2 mb-2 text-[var(--ws-text-muted)] hover:text-amber-300 transition-colors rounded-lg hover:bg-[var(--ws-hover)]"
+                            className="w-full flex items-center justify-center py-2 mb-2 text-[var(--ws-text-muted)] hover:text-[var(--warning-text,var(--warning-500))] transition-colors rounded-lg hover:bg-[var(--ws-hover)]"
                         >
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
@@ -430,12 +430,12 @@ const Sidebar = React.memo<SidebarProps>(({
                                 sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
                             }`}
                         >
-                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white type-ui flex-shrink-0">
+                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-ui flex-shrink-0">
                                 {initials}
                             </span>
                             {sidebarOpen && (
                                 <span className="flex-1 min-w-0 text-left">
-                                    <span className="block type-ui font-semibold text-white truncate leading-tight">
+                                    <span className="block type-ui font-semibold text-[var(--ws-text-primary)] truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </span>
                                     <span className="block type-caption text-[var(--ws-text-muted)] truncate capitalize">{user.role || t('member')}</span>
@@ -448,7 +448,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                 onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
                                 title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
                                 aria-label={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
-                                className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-amber-300 hover:bg-[var(--ws-hover)] transition-colors active:scale-95 touch-manipulation shrink-0"
+                                className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--warning-text,var(--warning-500))] hover:bg-[var(--ws-hover)] transition-colors active:scale-95 touch-manipulation shrink-0"
                             >
                                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                             </button>
@@ -458,7 +458,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             onClick={onLogout}
                             title={t('Log Out')}
                             aria-label={t('Log Out')}
-                            className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
+                            className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-red-400 hover:bg-[var(--error-500)]/10 transition-colors active:scale-95 touch-manipulation shrink-0"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>

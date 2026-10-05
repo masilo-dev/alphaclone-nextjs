@@ -43,7 +43,7 @@ export function DesktopRequired({
             <button
               type="button"
               onClick={openDesktop}
-              className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 type-ui font-semibold text-white transition-transform active:scale-[0.98]"
+              className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 type-ui font-semibold text-[var(--ws-text-primary)] transition-transform active:scale-[0.98]"
             >
               Continue here anyway
             </button>

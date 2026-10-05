@@ -40,10 +40,10 @@ const TABS: { id: OverviewChartTab; label: string }[] = [
   { id: 'completion', label: 'Tasks done' },
 ];
 
-const CHART_STROKE = '#38bdf8';
+const CHART_STROKE = 'var(--info-500)';
 const CHART_FILL = 'rgba(56, 189, 248, 0.22)';
 const GRID_STROKE = 'rgba(148, 163, 184, 0.18)';
-const AXIS_FILL = '#94a3b8';
+const AXIS_FILL = 'var(--ws-text-secondary)';
 
 function formatAxisValue(value: number): string {
   const n = Number(value) || 0;
@@ -134,10 +134,10 @@ export function OverviewChartCard({
                 <Tooltip
                   cursor={{ fill: 'rgba(56, 189, 248, 0.08)' }}
                   contentStyle={{
-                    background: '#0f172a',
+                    background: 'var(--ws-canvas)',
                     border: '1px solid rgba(148, 163, 184, 0.25)',
                     borderRadius: 10,
-                    color: '#f8fafc',
+                    color: 'var(--ws-surface-secondary)',
                     fontSize: 'var(--type-caption-size)',
                   }}
                   formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'pipeline' ? 'Deals' : 'Value']}
@@ -173,10 +173,10 @@ export function OverviewChartCard({
                 />
                 <Tooltip
                   contentStyle={{
-                    background: '#0f172a',
+                    background: 'var(--ws-canvas)',
                     border: '1px solid rgba(148, 163, 184, 0.25)',
                     borderRadius: 10,
-                    color: '#f8fafc',
+                    color: 'var(--ws-surface-secondary)',
                     fontSize: 'var(--type-caption-size)',
                   }}
                   formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'revenue' ? 'Revenue' : 'Completed']}
@@ -188,7 +188,7 @@ export function OverviewChartCard({
                   fill="url(#osAreaFill)"
                   strokeWidth={2.5}
                   dot={{ r: 3, fill: CHART_STROKE, strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: CHART_STROKE, stroke: '#0f172a', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: CHART_STROKE, stroke: 'var(--ws-canvas)', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

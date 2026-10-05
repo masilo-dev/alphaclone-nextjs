@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 const BlockNoteEditor = dynamic(() => import('./BlockNoteEditorWrapper'), {
     ssr: false,
     loading: () => (
-        <div className="flex items-center justify-center h-full text-slate-500">
+        <div className="flex items-center justify-center h-full text-[var(--ws-text-muted)]">
             <Loader2 className="w-6 h-6 animate-spin" />
         </div>
     ),
@@ -175,13 +175,13 @@ export default function PagesTab() {
             <div>
                 <div
                     className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-all type-ui
-                        ${isSelected ? 'bg-teal-500/15 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        ${isSelected ? 'bg-teal-500/15 text-white' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-white'}`}
                     style={{ paddingLeft: `${0.5 + depth * 1.25}rem` }}
                     onClick={() => setSelectedPageId(page.id)}
                 >
                     {/* Expand toggle */}
                     <button
-                        className={`shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''} ${hasChildren ? 'text-slate-400 hover:text-white' : 'opacity-0 pointer-events-none'}`}
+                        className={`shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''} ${hasChildren ? 'text-[var(--ws-text-muted)] hover:text-white' : 'opacity-0 pointer-events-none'}`}
                         onClick={e => { e.stopPropagation(); toggleExpand(page.id); }}
                     >
                         <ChevronRight className="w-3 h-3" />
@@ -204,7 +204,7 @@ export default function PagesTab() {
                             onBlur={() => renameSubmit(page.id)}
                             onKeyDown={e => { if (e.key === 'Enter') renameSubmit(page.id); if (e.key === 'Escape') setRenamingId(null); }}
                             onClick={e => e.stopPropagation()}
-                            className="flex-1 bg-slate-900 text-white type-ui px-1 py-0 rounded border border-teal-500 outline-none min-w-0"
+                            className="flex-1 bg-[var(--ws-panel)] text-white type-ui px-1 py-0 rounded border border-teal-500 outline-none min-w-0"
                             placeholder="Page title"
                             autoFocus
                         />
@@ -215,7 +215,7 @@ export default function PagesTab() {
                     {/* Action buttons - visible on hover */}
                     <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                            className="p-0.5 rounded hover:bg-slate-700 text-slate-500 hover:text-white"
+                            className="p-0.5 rounded hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-white"
                             onClick={e => { e.stopPropagation(); createPage(page.id); }}
                             title="Add sub-page"
                         >
@@ -223,24 +223,24 @@ export default function PagesTab() {
                         </button>
                         <div className="relative">
                             <button
-                                className="p-0.5 rounded hover:bg-slate-700 text-slate-500 hover:text-white"
+                                className="p-0.5 rounded hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-white"
                                 onClick={e => { e.stopPropagation(); setShowMenu(!showMenu); }}
                             >
                                 <MoreHorizontal className="w-3 h-3" />
                             </button>
                             {showMenu && (
-                                <div className="absolute right-0 top-full mt-1 w-40 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 py-1">
-                                    <button onClick={e => { e.stopPropagation(); setRenamingId(page.id); setRenameValue(page.title); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
+                                <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl shadow-xl z-50 py-1">
+                                    <button onClick={e => { e.stopPropagation(); setRenamingId(page.id); setRenameValue(page.title); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white">
                                         <Edit3 className="w-3 h-3" /> Rename
                                     </button>
-                                    <button onClick={e => { e.stopPropagation(); createPage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
+                                    <button onClick={e => { e.stopPropagation(); createPage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white">
                                         <Plus className="w-3 h-3" /> Add sub-page
                                     </button>
-                                    <button onClick={e => { e.stopPropagation(); archivePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:bg-slate-800 hover:text-white">
+                                    <button onClick={e => { e.stopPropagation(); archivePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white">
                                         <Archive className="w-3 h-3" /> Archive
                                     </button>
-                                    <div className="my-1 border-t border-slate-800" />
-                                    <button onClick={e => { e.stopPropagation(); deletePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-red-400 hover:bg-red-500/10">
+                                    <div className="my-1 border-t border-[var(--ws-border)]" />
+                                    <button onClick={e => { e.stopPropagation(); deletePage(page.id); setShowMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 type-ui text-red-400 hover:bg-[var(--error-500)]/10">
                                         <Trash2 className="w-3 h-3" /> Delete
                                     </button>
                                 </div>
@@ -251,9 +251,9 @@ export default function PagesTab() {
 
                 {/* Icon picker */}
                 {showIconPicker === page.id && (
-                    <div className="mx-2 mb-1 p-2 bg-slate-900 border border-slate-700 rounded-xl grid grid-cols-8 gap-1 z-50">
+                    <div className="mx-2 mb-1 p-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl grid grid-cols-8 gap-1 z-50">
                         {ICONS.map(ic => (
-                            <button key={ic} onClick={() => updateIcon(page.id, ic)} className="text-base hover:scale-125 transition-transform p-0.5 rounded hover:bg-slate-700">
+                            <button key={ic} onClick={() => updateIcon(page.id, ic)} className="text-base hover:scale-125 transition-transform p-0.5 rounded hover:bg-[var(--ws-surface-tertiary)]">
                                 {ic}
                             </button>
                         ))}
@@ -274,7 +274,7 @@ export default function PagesTab() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full text-slate-500">
+            <div className="flex items-center justify-center h-full text-[var(--ws-text-muted)]">
                 <Loader2 className="w-6 h-6 animate-spin mr-2" />
                 Loading pages...
             </div>
@@ -282,18 +282,18 @@ export default function PagesTab() {
     }
 
     return (
-        <div className="flex h-full overflow-hidden bg-slate-950">
+        <div className="flex h-full overflow-hidden bg-[var(--ws-canvas)]">
             {/* ---- SIDEBAR ---- */}
-            <aside className="w-60 shrink-0 flex flex-col border-r border-slate-800/60 bg-slate-950 overflow-hidden">
+            <aside className="w-60 shrink-0 flex flex-col border-r border-[var(--ws-border)]/60 bg-[var(--ws-canvas)] overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-3 py-3 border-b border-slate-800/60">
-                    <div className="flex items-center gap-2 text-slate-300 type-ui font-semibold">
+                <div className="flex items-center justify-between px-3 py-3 border-b border-[var(--ws-border)]/60">
+                    <div className="flex items-center gap-2 text-[var(--ws-text-secondary)] type-ui font-semibold">
                         <FileText className="w-4 h-4 text-teal-400" />
                         Pages
                     </div>
                     <button
                         onClick={() => createPage(null)}
-                        className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-teal-400 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-teal-400 transition-colors"
                         title="New root page"
                     >
                         <Plus className="w-4 h-4" />
@@ -301,14 +301,14 @@ export default function PagesTab() {
                 </div>
 
                 {/* Search */}
-                <div className="px-3 py-2 border-b border-slate-800/40">
+                <div className="px-3 py-2 border-b border-[var(--ws-border)]/40">
                     <div className="relative">
-                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]" />
                         <input
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Search pages..."
-                            className="w-full bg-slate-900 text-slate-300 type-caption pl-8 pr-3 py-2 rounded-lg border border-slate-800 outline-none focus:border-teal-500/50 placeholder:text-slate-600"
+                            className="w-full bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] type-caption pl-8 pr-3 py-2 rounded-lg border border-[var(--ws-border)] outline-none focus:border-teal-500/50 placeholder:text-slate-600"
                         />
                     </div>
                 </div>
@@ -318,10 +318,10 @@ export default function PagesTab() {
                     {pages.length === 0 ? (
                         <div className="text-center py-8 px-4">
                             <FileText className="w-8 h-8 text-slate-700 mx-auto mb-3" />
-                            <p className="type-card-description text-slate-500 mb-3">No pages yet. Create your first client-facing page.</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] mb-3">No pages yet. Create your first client-facing page.</p>
                             <button
                                 onClick={() => createPage(null)}
-                                className="type-caption text-teal-400 hover:text-teal-300 font-medium"
+                                className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] font-medium"
                             >
                                 + Create your first page
                             </button>
@@ -330,7 +330,7 @@ export default function PagesTab() {
                         filteredPages.map(page => (
                             <div
                                 key={page.id}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer type-ui transition-colors ${selectedPageId === page.id ? 'bg-teal-500/15 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer type-ui transition-colors ${selectedPageId === page.id ? 'bg-teal-500/15 text-white' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-white'}`}
                                 onClick={() => { setSelectedPageId(page.id); setSearchTerm(''); }}
                             >
                                 <span>{page.icon}</span>
@@ -350,7 +350,7 @@ export default function PagesTab() {
                 {selectedPage ? (
                     <>
                         {/* Page header */}
-                        <div className="shrink-0 px-10 pt-10 pb-4 border-b border-slate-800/40 flex items-start gap-4">
+                        <div className="shrink-0 px-10 pt-10 pb-4 border-b border-[var(--ws-border)]/40 flex items-start gap-4">
                             <button
                                 className="text-4xl leading-none hover:scale-110 transition-transform mt-1"
                                 onClick={() => setShowIconPicker(showIconPicker === selectedPage.id ? null : selectedPage.id)}
@@ -359,9 +359,9 @@ export default function PagesTab() {
                                 {selectedPage.icon}
                             </button>
                             {showIconPicker === selectedPage.id && (
-                                <div className="absolute mt-12 ml-0 p-2 bg-slate-900 border border-slate-700 rounded-xl grid grid-cols-8 gap-1 z-50 shadow-2xl">
+                                <div className="absolute mt-12 ml-0 p-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl grid grid-cols-8 gap-1 z-50 shadow-2xl">
                                     {ICONS.map(ic => (
-                                        <button key={ic} onClick={() => updateIcon(selectedPage.id, ic)} className="text-xl hover:scale-125 transition-transform p-1 rounded hover:bg-slate-700">
+                                        <button key={ic} onClick={() => updateIcon(selectedPage.id, ic)} className="text-xl hover:scale-125 transition-transform p-1 rounded hover:bg-[var(--ws-surface-tertiary)]">
                                             {ic}
                                         </button>
                                     ))}
@@ -388,7 +388,7 @@ export default function PagesTab() {
                                         {selectedPage.title || 'Untitled'}
                                     </h1>
                                 )}
-                                <div className="flex items-center gap-3 mt-1 type-caption text-slate-500">
+                                <div className="flex items-center gap-3 mt-1 type-caption text-[var(--ws-text-muted)]">
                                     <span>
                                         {savingId === selectedPage.id ? (
                                             <span className="flex items-center gap-1 text-teal-500">
@@ -405,7 +405,7 @@ export default function PagesTab() {
                                     <span>·</span>
                                     <button
                                         onClick={() => createPage(selectedPage.id)}
-                                        className="text-teal-400 hover:text-teal-300"
+                                        className="text-teal-400 hover:text-[var(--brand-blue-300)]"
                                     >
                                         + Add sub-page
                                     </button>
@@ -427,10 +427,10 @@ export default function PagesTab() {
                     <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
                         <div className="text-6xl mb-6">📝</div>
                         <h2 className="text-2xl font-bold text-white mb-2">Your workspace</h2>
-                        <p className="text-slate-400 mb-6 max-w-sm">Create pages for meeting notes, SOPs, project briefs, client research — anything your team needs.</p>
+                        <p className="text-[var(--ws-text-muted)] mb-6 max-w-sm">Create pages for meeting notes, SOPs, project briefs, client research — anything your team needs.</p>
                         <button
                             onClick={() => createPage(null)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl transition-colors"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 font-bold rounded-xl transition-colors"
                         >
                             <Plus className="w-4 h-4" /> New Page
                         </button>

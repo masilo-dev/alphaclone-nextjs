@@ -255,7 +255,7 @@ export default function SalesConsole() {
           previous={Math.max(1, Math.round(stats.hotLeads * 0.9))}
           href="/dashboard/leads"
           icon={Users}
-          iconColor="#356AF4"
+          iconColor="var(--brand-blue-500)"
           isBetterHigher
           compact
         />
@@ -265,7 +265,7 @@ export default function SalesConsole() {
           previous={Math.max(1, Math.round(stats.openDeals * 1.05))}
           href="/dashboard/deals"
           icon={Target}
-          iconColor="#06b6d4"
+          iconColor="var(--info-500)"
           compact
         />
         <IntelligentKpiCard
@@ -274,7 +274,7 @@ export default function SalesConsole() {
           previous={stats.pipelinePrev}
           href="/dashboard/deals"
           icon={DollarSign}
-          iconColor="#8b5cf6"
+          iconColor="var(--brand-violet-400)"
           isBetterHigher
           compact
         />
@@ -284,7 +284,7 @@ export default function SalesConsole() {
           previous={stats.dealsWonPrev}
           href="/dashboard/deals?stage=closed_won"
           icon={CheckSquare}
-          iconColor="#10b981"
+          iconColor="var(--success-500)"
           isBetterHigher
           compact
         />
@@ -407,7 +407,7 @@ export default function SalesConsole() {
                 type="button"
                 key={l.id}
                 onClick={() => router.push('/dashboard/leads')}
-                className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/5 text-left"
+                className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-[var(--ws-hover)] text-left"
               >
                 <span className="type-ui text-[var(--ws-text-primary)]">{l.name}</span>
                 <span className="type-caption text-[var(--ws-text-muted)] capitalize">{l.status}</span>

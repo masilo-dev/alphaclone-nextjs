@@ -26,7 +26,7 @@ async function notifyPlatformStep(tenantId: string, payload: any) {
     const adminUserId = String(payload?.adminUserId || '').trim();
 
     const html = `
-        <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #111;">
+        <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: var(--ws-canvas);">
             <h2 style="margin: 0 0 8px;">New workspace created</h2>
             <p style="margin: 0 0 12px;">A new workspace was created on AlphaClone.</p>
             <ul style="margin: 0; padding-left: 18px;">

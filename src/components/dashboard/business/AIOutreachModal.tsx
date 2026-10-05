@@ -299,22 +299,22 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="relative w-full max-w-6xl h-[min(92dvh,900px)] bg-slate-950 border border-slate-800 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
+                className="relative w-full max-w-6xl h-[min(92dvh,900px)] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+                <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between bg-[var(--ws-canvas)]/50">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-teal-500/10 rounded-2xl flex items-center justify-center border border-teal-500/20">
                             <Sparkles className="w-7 h-7 text-teal-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">Bulk Outreach</h2>
-                            <p className="type-caption text-slate-500 font-medium tracking-wide">PERSONALIZED OUTREACH</p>
+                            <h2 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tighter">Bulk Outreach</h2>
+                            <p className="type-caption text-[var(--ws-text-muted)] font-medium tracking-wide">PERSONALIZED OUTREACH</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 text-slate-400 hover:text-white hover:bg-slate-900 rounded-2xl transition-all"
+                        className="p-3 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-panel)] rounded-2xl transition-all"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -322,44 +322,44 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
                 <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
                     {/* Left Side: Lead Selection */}
-                    <div className="w-full md:w-1/2 min-h-[350px] border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
+                    <div className="w-full md:w-1/2 min-h-[350px] border-r border-[var(--ws-border)] flex flex-col p-6 bg-[var(--ws-canvas)]/30">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-white type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
+                            <h3 className="text-[var(--ws-text-primary)] type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setSelectedLeads(filteredLeads.slice(0, 20).map(l => l.id))}
-                                    className="type-caption text-teal-400 hover:text-teal-300 uppercase font-bold tracking-widest transition-colors"
+                                    className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] uppercase font-bold tracking-widest transition-colors"
                                 >
                                     Select All
                                 </button>
                                 <button
                                     onClick={() => setSelectedLeads([])}
-                                    className="type-caption text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                    className="type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] uppercase font-bold tracking-widest transition-colors"
                                 >
                                     Clear All
                                 </button>
                             </div>
                         </div>
-                        <p className="-mt-4 mb-4 type-card-description leading-5 text-slate-500">Maximum 20 leads per AI outreach batch. Select All chooses the first 20 matching leads so you can review a controlled batch before sending.</p>
+                        <p className="-mt-4 mb-4 type-card-description leading-5 text-[var(--ws-text-muted)]">Maximum 20 leads per AI outreach batch. Select All chooses the first 20 matching leads so you can review a controlled batch before sending.</p>
 
                         <div className="relative mb-6">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder="Search leads by name or industry..."
-                                className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all"
+                                className="w-full bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl py-3 pl-12 pr-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all"
                             />
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                             {loading && leads.length === 0 ? (
                                 Array.from({ length: 6 }).map((_, i) => (
-                                    <div key={i} className="h-20 bg-slate-900/40 rounded-2xl animate-pulse" />
+                                    <div key={i} className="h-20 bg-[var(--ws-panel)]/40 rounded-2xl animate-pulse" />
                                 ))
                             ) : loadError && leads.length === 0 ? (
                                 <div role="alert" className="p-4 text-amber-200">
@@ -377,36 +377,36 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         onClick={() => toggleLead(lead.id)}
                                         className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${selectedLeads.includes(lead.id)
                                             ? 'bg-teal-500/10 border-teal-500/40 translate-x-1'
-                                            : 'bg-slate-900/20 border-slate-800 hover:bg-slate-900/50'
+                                            : 'bg-[var(--ws-panel)]/20 border-[var(--ws-border)] hover:bg-[var(--ws-panel)]/50'
                                             }`}
                                     >
                                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center border ${selectedLeads.includes(lead.id)
                                             ? 'bg-teal-500 border-teal-500'
-                                            : 'border-slate-700'
+                                            : 'border-[var(--ws-border)]'
                                             }`}>
                                             {selectedLeads.includes(lead.id) && <Check className="w-4 h-4 text-slate-900" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="type-card-description font-bold text-white truncate">{lead.businessName}</p>
+                                            <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{lead.businessName}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="type-caption text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
+                                                <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest">{lead.industry || 'Lead'}</span>
                                                 <span className="type-caption text-slate-700">·</span>
-                                                <span className="type-caption text-slate-500 truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
+                                                <span className="type-caption text-[var(--ws-text-muted)] truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
                                             </div>
                                         </div>
                                     </button>
                                 ))
                             )}
                             {loadError && leads.length > 0 && <p role="alert" className="text-amber-200">{loadError}</p>}
-                            {hasMore && <button className="w-full p-3 text-teal-300" disabled={loading} onClick={() => setPage(p => p + 1)}>{loading ? 'Loading…' : 'Load more recipients'}</button>}
+                            {hasMore && <button className="w-full p-3 text-[var(--brand-blue-300)]" disabled={loading} onClick={() => setPage(p => p + 1)}>{loading ? 'Loading…' : 'Load more recipients'}</button>}
                         </div>
                     </div>
 
                     {/* Right Side: Configuration & AI */}
-                    <div className="w-full md:w-1/2 flex flex-col p-6 overflow-y-auto bg-slate-950">
+                    <div className="w-full md:w-1/2 flex flex-col p-6 overflow-y-auto bg-[var(--ws-canvas)]">
                         {results ? (
                             <div className="space-y-6">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                                     <Zap className="w-5 h-5 text-teal-400" />
                                     Campaign Results
                                 </h3>
@@ -415,10 +415,10 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                     {results.map((res, i) => (
                                         <div key={i} className={`p-4 rounded-2xl border ${res.status === 'success'
                                             ? 'bg-green-500/10 border-green-500/20'
-                                            : 'bg-red-500/10 border-red-500/20'
+                                            : 'bg-[var(--error-500)]/10 border-red-500/20'
                                             }`}>
                                             <div className="flex justify-between items-center">
-                                                <span className="type-ui font-bold text-white">{res.name}</span>
+                                                <span className="type-ui font-bold text-[var(--ws-text-primary)]">{res.name}</span>
                                                 <Badge variant={res.status === 'success' ? 'success' : 'neutral'}>
                                                     {res.status === 'success' ? 'Sent' : 'Failed'}
                                                 </Badge>
@@ -429,7 +429,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <Button
-                                    className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-teal-400 text-white font-black uppercase type-caption"
+                                    className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] font-black uppercase type-caption"
                                     onClick={() => { setResults(null); setSelectedLeads([]); setLoadRetry(value => value + 1); }}
                                 >
                                     Start New Batch
@@ -438,7 +438,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         ) : (
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <Mail className="w-3.5 h-3.5" />
                                         Step 1: Outgoing Sender
                                     </h3>
@@ -454,20 +454,20 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                     className={`p-4 rounded-2xl border transition-all flex items-center justify-between group ${
                                                         selectedIntegrationId === integration.id
                                                             ? 'bg-teal-500/10 border-teal-500/40'
-                                                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                                            : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                                                             selectedIntegrationId === integration.id
                                                                 ? 'bg-teal-500/20 border-teal-500/30'
-                                                                : 'bg-slate-800 border-slate-700'
+                                                                : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]'
                                                         }`}>
-                                                            <Mail className={`w-5 h-5 ${selectedIntegrationId === integration.id ? 'text-teal-400' : 'text-slate-500'}`} />
+                                                            <Mail className={`w-5 h-5 ${selectedIntegrationId === integration.id ? 'text-teal-400' : 'text-[var(--ws-text-muted)]'}`} />
                                                         </div>
                                                         <div className="text-left">
-                                                            <p className="type-caption text-slate-500 uppercase font-black tracking-widest">{integration.name}</p>
-                                                            <p className="text-white type-card-description font-bold truncate max-w-[200px]">
+                                                            <p className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-widest">{integration.name}</p>
+                                                            <p className="text-[var(--ws-text-primary)] type-card-description font-bold truncate max-w-[200px]">
                                                                 {integration.config.fromEmail || integration.config.email || 'Connected Account'}
                                                             </p>
                                                         </div>
@@ -481,9 +481,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="bg-slate-900/50 border border-dashed border-slate-800 rounded-3xl p-6 text-center">
+                                        <div className="bg-[var(--ws-panel)]/50 border border-dashed border-[var(--ws-border)] rounded-3xl p-6 text-center">
                                             <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
-                                            <p className="type-card-description text-slate-500 mb-4">No email providers connected</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)] mb-4">No email providers connected</p>
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
@@ -498,7 +498,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Step 2: Tone of Voice
                                     </h3>
@@ -509,29 +509,29 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 onClick={() => setSelectedTone(tone.id)}
                                                 className={`p-4 rounded-3xl border transition-all text-left ${selectedTone === tone.id
                                                     ? 'bg-teal-500/10 border-teal-500/40 ring-1 ring-teal-500/20'
-                                                    : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                                    : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)] hover:border-[var(--ws-border)]'
                                                     }`}
                                             >
-                                                <p className={`type-caption font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-teal-400' : 'text-slate-400'}`}>
+                                                <p className={`type-caption font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-teal-400' : 'text-[var(--ws-text-muted)]'}`}>
                                                     {tone.label}
                                                 </p>
-                                                <p className="type-card-description text-slate-500 mt-1">{tone.description}</p>
+                                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{tone.description}</p>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <Zap className="w-3.5 h-3.5" />
                                         Step 3: Custom Instructions
                                     </h3>
-                                    <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-4 focus-within:border-teal-500/40 transition-all">
+                                    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-[2rem] p-4 focus-within:border-teal-500/40 transition-all">
                                         <textarea
                                             value={customPrompt}
                                             onChange={e => setCustomPrompt(e.target.value)}
                                             placeholder="Example: Mention our current promotion and ask for a quick chat."
-                                            className="w-full bg-transparent border-none focus:ring-0 text-white type-ui min-h-[140px] p-2 resize-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[var(--ws-text-primary)] type-ui min-h-[140px] p-2 resize-none"
                                         />
                                     </div>
                                     <p className="type-card-description text-slate-600 mt-3 px-2 italic">
@@ -543,7 +543,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                     <Button
                                         onClick={handleSend}
                                         disabled={sending || selectedLeads.length === 0}
-                                        className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
+                                        className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (
                                             <div className="flex flex-col items-center gap-1">
@@ -563,7 +563,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             </div>
                                         )}
                                     </Button>
-                                    <p className="text-center type-caption text-slate-500 mt-4 uppercase tracking-caps font-bold">
+                                    <p className="text-center type-caption text-[var(--ws-text-muted)] mt-4 uppercase tracking-caps font-bold">
                                         Powered by AlphaClone Intelligence
                                     </p>
                                 </div>

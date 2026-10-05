@@ -8,7 +8,7 @@ export default function MicrosoftMeetingEmbed({
   displayName,
 }: MicrosoftMeetingEmbedProps) {
   return (
-    <div className="h-full w-full bg-slate-950">
+    <div className="h-full w-full bg-[var(--ws-canvas)]">
       <iframe
         src={meetingLink}
         title={`Microsoft Teams meeting for ${displayName}`}

@@ -114,7 +114,7 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 .ac-business-root a:focus-visible,
 .ac-business-root [role="button"]:focus-visible,
 .ac-business-root [role="tab"]:focus-visible {
-  outline: 2px solid var(--focus-ring, #2dd4bf);
+  outline: 2px solid var(--focus-ring, var(--brand-blue-400));
   outline-offset: 2px;
 }
 
@@ -267,7 +267,7 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 .marketing-theme a:focus-visible,
 .marketing-theme button:focus-visible,
 .marketing-theme [role="button"]:focus-visible {
-  outline: 2px solid var(--focus-ring, #2dd4bf);
+  outline: 2px solid var(--focus-ring, var(--brand-blue-400));
   outline-offset: 3px;
 }
 

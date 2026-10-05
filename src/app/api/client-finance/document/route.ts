@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
+import { portalOwnsResource } from '@/lib/auth/portalResourceOwnership';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +50,18 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
     if (error) throw error;
     const document = Array.isArray((link as any)?.document) ? (link as any).document[0] : (link as any)?.document;
-    if (!document || document.deleted_at || !document.storage_path) {
+    // Defense-in-depth: explicit ownership assertion before signing URLs (PORTAL-IDOR-001).
+    if (
+      !portalOwnsResource(
+        { clientId: client.id, tenantId: client.tenant_id },
+        link
+          ? { id: documentId, tenant_id: client.tenant_id, client_id: client.id }
+          : null
+      ) ||
+      !document ||
+      document.deleted_at ||
+      !document.storage_path
+    ) {
       return NextResponse.json({ error: 'Document is unavailable' }, { status: 404 });
     }
 

@@ -31,10 +31,10 @@ export default async function TenantPolicyPage({
     <article className="mx-auto max-w-3xl">
       <p className="type-card-description font-medium text-teal-700">{brand?.trading_name || brand?.legal_company_name || 'Legal policy'}</p>
       <h1 className="mt-2 text-4xl font-semibold">{policy.title}</h1>
-      <p className="mt-3 type-card-description text-slate-500">Version {version.version_number} · Published {version.published_at ? new Date(version.published_at).toLocaleDateString(version.language) : '—'} · Language {version.language}</p>
+      <p className="mt-3 type-card-description text-[var(--ws-text-muted)]">Version {version.version_number} · Published {version.published_at ? new Date(version.published_at).toLocaleDateString(version.language) : '—'} · Language {version.language}</p>
       {version.language !== lang && <p role="status" className="mt-5 rounded-lg bg-amber-50 p-3 type-caption text-amber-900">An approved {lang} version is unavailable. This approved fallback is in {version.language}.</p>}
       <div className="prose prose-slate mt-10 max-w-none whitespace-pre-wrap">{version.content}</div>
-      <footer className="mt-12 border-t pt-5 type-caption text-slate-500">Integrity reference: {version.integrity_hash}</footer>
+      <footer className="mt-12 border-t pt-5 type-caption text-[var(--ws-text-muted)]">Integrity reference: {version.integrity_hash}</footer>
     </article>
   </div>;
 }

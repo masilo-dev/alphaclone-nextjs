@@ -15,11 +15,11 @@ export default function CampaignBuilder({ onClose, onCreated }: CampaignBuilderP
     if (!user?.id) return null;
 
     return (
-        <div className="flex h-full min-h-0 flex-col bg-slate-950">
-            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+        <div className="flex h-full min-h-0 flex-col bg-[var(--ws-canvas)]">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-4 py-3">
                 <div>
                     <p className="type-caption font-black uppercase tracking-widest text-teal-400">Unified Campaign Experience</p>
-                    <p className="type-card-description text-slate-500">Legacy marketing composer now routes through the main campaign builder.</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">Legacy marketing composer now routes through the main campaign builder.</p>
                 </div>
                 <button
                     type="button"
@@ -27,7 +27,7 @@ export default function CampaignBuilder({ onClose, onCreated }: CampaignBuilderP
                         onCreated();
                         onClose();
                     }}
-                    className="rounded-full bg-slate-800 p-2 text-slate-300 transition-colors hover:bg-slate-700"
+                    className="rounded-full bg-[var(--ws-surface-secondary)] p-2 text-[var(--ws-text-secondary)] transition-colors hover:bg-[var(--ws-surface-tertiary)]"
                     aria-label="Close campaign builder"
                 >
                     <X className="h-4 w-4" />

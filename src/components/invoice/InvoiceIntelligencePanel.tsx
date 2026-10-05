@@ -40,24 +40,24 @@ const EVENT_ICONS: Record<string, React.ElementType> = {
 };
 
 const EVENT_COLORS: Record<string, string> = {
-  created: 'text-slate-400',
+  created: 'text-[var(--ws-text-muted)]',
   sent: 'text-blue-400',
   viewed: 'text-violet-400',
   payment_received: 'text-teal-400',
   status_changed: 'text-amber-400',
   reminder_sent: 'text-orange-400',
   dispute_raised: 'text-red-400',
-  voided: 'text-slate-500',
+  voided: 'text-[var(--ws-text-muted)]',
   delivery_confirmed: 'text-teal-400',
   delivery_bounced: 'text-red-400',
   delivery_opened: 'text-blue-400',
-  default: 'text-slate-400',
+  default: 'text-[var(--ws-text-muted)]',
 };
 
 const DELIVERY_STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   PENDING: { label: 'Pending', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/30' },
   DELIVERED: { label: 'Delivered', color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/30' },
-  BOUNCED: { label: 'Bounced', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30' },
+  BOUNCED: { label: 'Bounced', color: 'text-red-400', bg: 'bg-[var(--error-500)]/10 border-red-500/30' },
   OPENED: { label: 'Opened', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/30' },
 };
 
@@ -179,8 +179,8 @@ export default function InvoiceIntelligencePanel({
   return (
     <div className="space-y-5 type-ui">
       {/* Status Pipeline */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-        <p className="type-caption font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Lifecycle</p>
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5">
+        <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)] mb-4">Invoice Lifecycle</p>
         <InvoiceStatusPipeline
           status={(invoice?.status || 'draft') as InvoiceStatus}
           timestamps={{
@@ -194,8 +194,8 @@ export default function InvoiceIntelligencePanel({
       </div>
 
       {/* Read Receipt Card */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Read Receipt</p>
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5 space-y-3">
+        <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Read Receipt</p>
         {viewedAt ? (
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 bg-violet-500/10 border border-violet-500/30 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -203,7 +203,7 @@ export default function InvoiceIntelligencePanel({
             </div>
             <div>
               <p className="font-semibold text-violet-300">Client opened invoice</p>
-              <p className="text-slate-500 type-card-description">{formatRelativeTime(viewedAt)}</p>
+              <p className="text-[var(--ws-text-muted)] type-card-description">{formatRelativeTime(viewedAt)}</p>
               {viewCount > 1 && (
                 <p className="text-slate-600 type-card-description mt-0.5">Viewed {viewCount} times total</p>
               )}
@@ -215,8 +215,8 @@ export default function InvoiceIntelligencePanel({
               <EyeOff className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <p className="font-semibold text-amber-300">Not yet opened</p>
-              <p className="text-slate-500 type-card-description">Sent {formatRelativeTime(sentAt)}</p>
+              <p className="font-semibold text-[var(--warning-text,var(--warning-500))]">Not yet opened</p>
+              <p className="text-[var(--ws-text-muted)] type-card-description">Sent {formatRelativeTime(sentAt)}</p>
             </div>
           </div>
         ) : (
@@ -228,26 +228,26 @@ export default function InvoiceIntelligencePanel({
       </div>
 
       {/* Delivery Status */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Email Delivery</p>
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5 space-y-3">
+        <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Email Delivery</p>
         <div className="flex items-center gap-3">
           <div className={cn('w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0', deliveryCfg.bg)}>
             <Shield className={cn('w-4 h-4', deliveryCfg.color)} />
           </div>
           <div>
             <span className={cn('font-bold', deliveryCfg.color)}>{deliveryCfg.label}</span>
-            {sentAt && <p className="text-slate-500 type-card-description">Sent {formatRelativeTime(sentAt)}</p>}
+            {sentAt && <p className="text-[var(--ws-text-muted)] type-card-description">Sent {formatRelativeTime(sentAt)}</p>}
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-3">
-        <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Actions</p>
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5 space-y-3">
+        <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Actions</p>
 
         <button
           onClick={handleDownloadCertificate}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-slate-300 hover:text-white"
+          className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-xl transition-colors text-[var(--ws-text-secondary)] hover:text-white"
         >
           <Download className="w-4 h-4 text-teal-400 flex-shrink-0" />
           <span className="type-ui font-medium">Download Delivery Certificate</span>
@@ -257,7 +257,7 @@ export default function InvoiceIntelligencePanel({
           <button
             onClick={handleSendReminder}
             disabled={sendingReminder}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors text-slate-300 hover:text-white disabled:opacity-50"
+            className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-xl transition-colors text-[var(--ws-text-secondary)] hover:text-white disabled:opacity-50"
           >
             {sendingReminder ? (
               <Loader2 className="w-4 h-4 animate-spin flex-shrink-0 text-orange-400" />
@@ -274,8 +274,8 @@ export default function InvoiceIntelligencePanel({
           className={cn(
             'w-full flex items-center gap-3 px-4 py-3 border rounded-xl transition-colors disabled:opacity-50',
             autoFollowup
-              ? 'bg-teal-500/10 border-teal-500/30 text-teal-300 hover:bg-teal-500/20'
-              : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+              ? 'bg-teal-500/10 border-teal-500/30 text-[var(--brand-blue-300)] hover:bg-teal-500/20'
+              : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-white'
           )}
         >
           {togglingFollowup ? (
@@ -292,12 +292,12 @@ export default function InvoiceIntelligencePanel({
       </div>
 
       {/* Audit Timeline */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <p className="type-caption font-bold uppercase tracking-widest text-slate-500">Activity Timeline</p>
+          <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">Activity Timeline</p>
           <button
             onClick={loadAuditLog}
-            className="p-1 text-slate-600 hover:text-slate-400 transition-colors"
+            className="p-1 text-slate-600 hover:text-[var(--ws-text-muted)] transition-colors"
           >
             <RefreshCw className="w-3 h-3" />
           </button>
@@ -311,7 +311,7 @@ export default function InvoiceIntelligencePanel({
           <p className="text-slate-600 type-card-description text-center py-4">No events yet</p>
         ) : (
           <div className="space-y-0 relative">
-            <div className="absolute left-4 top-4 bottom-4 w-px bg-slate-800" />
+            <div className="absolute left-4 top-4 bottom-4 w-px bg-[var(--ws-surface-secondary)]" />
             <AnimatePresence>
               {[...auditLog].reverse().map((event, idx) => {
                 const Icon = EVENT_ICONS[event.event_type] || EVENT_ICONS.default;
@@ -325,12 +325,12 @@ export default function InvoiceIntelligencePanel({
                     className="flex items-start gap-4 py-3 relative"
                   >
                     <div className={cn(
-                      'w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center flex-shrink-0 relative z-10',
+                      'w-8 h-8 rounded-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] flex items-center justify-center flex-shrink-0 relative z-10',
                     )}>
                       <Icon className={cn('w-3.5 h-3.5', color)} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-300 type-card-description leading-tight">
+                      <p className="font-semibold text-[var(--ws-text-secondary)] type-card-description leading-tight">
                         {formatEventLabel(event.event_type)}
                       </p>
                       {event.event_data?.status_changed_to && (

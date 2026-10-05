@@ -72,17 +72,17 @@ export const ServicesCatalog: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+                    <h2 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
                         <Package className="text-teal-500 w-5 h-5" /> Services Catalog
                     </h2>
-                    <p className="type-caption text-slate-500 font-bold uppercase tracking-widest mt-1">
+                    <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mt-1">
                         Reusable line items for fast invoicing
                     </p>
                 </div>
                 {!isAdding && (
                     <Button 
                         onClick={() => setIsAdding(true)} 
-                        className="bg-teal-600 hover:bg-teal-500 text-white gap-2 h-10 px-6"
+                        className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] gap-2 h-10 px-6"
                     >
                         <Plus size={16} /> Add Service
                     </Button>
@@ -96,22 +96,22 @@ export const ServicesCatalog: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                     >
-                        <Card className="p-6 bg-slate-900/60 border-teal-500/20">
+                        <Card className="p-6 bg-[var(--ws-panel)]/60 border-teal-500/20">
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Service Name</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Service Name</label>
                                         <Input 
                                             value={form.name} 
                                             onChange={e => setForm({...form, name: e.target.value})}
                                             placeholder="e.g. Website Design"
-                                            className="bg-slate-950 border-slate-800"
+                                            className="bg-[var(--ws-canvas)] border-[var(--ws-border)]"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Unit</label>
+                                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Unit</label>
                                         <select 
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
+                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                                             value={form.unit}
                                             onChange={e => setForm({...form, unit: e.target.value})}
                                         >
@@ -125,9 +125,9 @@ export const ServicesCatalog: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Description</label>
+                                    <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Description</label>
                                     <textarea 
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500 min-h-[100px]"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500 min-h-[100px]"
                                         value={form.description}
                                         onChange={e => setForm({...form, description: e.target.value})}
                                         placeholder="What does this service include?"
@@ -135,12 +135,12 @@ export const ServicesCatalog: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Default Price</label>
+                                    <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Default Price</label>
                                     <div className="relative">
-                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                                         <input 
                                             type="number"
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
+                                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg pl-10 pr-4 py-2.5 text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                                             value={form.defaultPrice}
                                             onChange={e => setForm({...form, defaultPrice: parseFloat(e.target.value) || 0})}
                                         />
@@ -151,7 +151,7 @@ export const ServicesCatalog: React.FC = () => {
                                     <Button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-500">
                                         {editingId ? 'Update Service' : 'Save to Catalog'}
                                     </Button>
-                                    <Button variant="outline" onClick={cancelEdit} className="border-slate-800 text-slate-400">
+                                    <Button variant="outline" onClick={cancelEdit} className="border-[var(--ws-border)] text-[var(--ws-text-muted)]">
                                         Cancel
                                     </Button>
                                 </div>
@@ -165,11 +165,11 @@ export const ServicesCatalog: React.FC = () => {
                         className="space-y-4"
                     >
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] w-4 h-4" />
                             <input 
                                 type="text"
                                 placeholder="Search services..."
-                                className="w-full bg-slate-900/40 border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-teal-500/50 transition-all"
+                                className="w-full bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-4 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50 transition-all"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
@@ -177,20 +177,20 @@ export const ServicesCatalog: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredServices.map((service) => (
-                                <Card key={service.id} className="group p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all relative overflow-hidden">
+                                <Card key={service.id} className="group p-5 bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:bg-white/[0.03] transition-all relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-1 h-full bg-teal-500/20 group-hover:bg-teal-500 transition-all" />
                                     
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
-                                            <h3 className="font-black text-white uppercase tracking-tight">{service.name}</h3>
-                                            <p className="type-caption text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1 mt-1">
+                                            <h3 className="font-black text-[var(--ws-text-primary)] uppercase tracking-tight">{service.name}</h3>
+                                            <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest flex items-center gap-1 mt-1">
                                                 <Clock className="w-3 h-3" /> {service.unit}
                                             </p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button 
                                                 onClick={() => startEdit(service)}
-                                                className="p-2 bg-white/5 rounded-lg text-slate-400 hover:text-teal-400 hover:bg-teal-400/10 transition-all"
+                                                className="p-2 bg-[var(--ws-hover)] rounded-lg text-[var(--ws-text-muted)] hover:text-teal-400 hover:bg-[var(--brand-blue-400)]/10 transition-all"
                                             >
                                                 <Edit2 size={14} />
                                             </button>
@@ -205,34 +205,34 @@ export const ServicesCatalog: React.FC = () => {
                                                         toast.error(message);
                                                     }
                                                 }}
-                                                className="p-2 bg-white/5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition-all"
+                                                className="p-2 bg-[var(--ws-hover)] rounded-lg text-[var(--ws-text-muted)] hover:text-rose-400 hover:bg-[var(--error-500)]/10 transition-all"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>
                                     
-                                    <p className="type-card-description text-slate-400 line-clamp-2 mb-4 h-10">
+                                    <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2 mb-4 h-10">
                                         {service.description || 'No description provided.'}
                                     </p>
                                     
-                                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                                        <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Base Rate</span>
+                                    <div className="flex justify-between items-center pt-4 border-t border-[var(--ws-border)]">
+                                        <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Base Rate</span>
                                         <span className="text-lg font-black text-teal-400">${service.defaultPrice.toLocaleString()}</span>
                                     </div>
                                 </Card>
                             ))}
 
                             {filteredServices.length === 0 && (
-                                <div className="col-span-full py-12 text-center bg-slate-900/20 rounded-3xl border border-dashed border-slate-800">
+                                <div className="col-span-full py-12 text-center bg-[var(--ws-panel)]/20 rounded-3xl border border-dashed border-[var(--ws-border)]">
                                     <Package className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                                    <p className="text-slate-500 font-bold uppercase tracking-widest type-caption">
+                                    <p className="text-[var(--ws-text-muted)] font-bold uppercase tracking-widest type-caption">
                                         {searchTerm ? "No services match your search" : "Your catalog is empty"}
                                     </p>
                                     {!searchTerm && (
                                         <button 
                                             onClick={() => setIsAdding(true)}
-                                            className="text-teal-400 type-caption font-black uppercase tracking-widest mt-4 hover:text-teal-300 underline underline-offset-4"
+                                            className="text-teal-400 type-caption font-black uppercase tracking-widest mt-4 hover:text-[var(--brand-blue-300)] underline underline-offset-4"
                                         >
                                             Add your first service
                                         </button>

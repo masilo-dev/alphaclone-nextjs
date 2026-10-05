@@ -14,7 +14,7 @@ const AccordionItem = React.forwardRef<
   <AccordionPrimitive.Item
     ref={ref}
     className={cn(
-      'rounded-2xl border border-[#dfe6ef] bg-white px-1 shadow-sm transition-colors data-[state=open]:border-[#0878f9]',
+      'rounded-2xl border border-[var(--marketing-border)] bg-white px-1 shadow-sm transition-colors data-[state=open]:border-[var(--marketing-link)]',
       className
     )}
     {...props}
@@ -30,13 +30,13 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        'flex flex-1 items-center justify-between gap-4 rounded-xl px-5 py-4 text-left text-base font-semibold text-[#07152f] transition-all hover:text-[#0878f9] [&[data-state=open]>svg]:rotate-180',
+        'flex flex-1 items-center justify-between gap-4 rounded-xl px-5 py-4 text-left text-base font-semibold text-[var(--marketing-ink)] transition-all hover:text-[var(--marketing-link)] [&[data-state=open]>svg]:rotate-180',
         className
       )}
       {...props}
     >
       {children}
-      <ChevronDown className="h-4 w-4 shrink-0 text-[#52627b] transition-transform duration-300" />
+      <ChevronDown className="h-4 w-4 shrink-0 text-[var(--marketing-muted)] transition-transform duration-300" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));
@@ -51,7 +51,7 @@ const AccordionContent = React.forwardRef<
     className="overflow-hidden type-ui data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
-    <div className={cn('px-5 pb-5 pt-0 text-[#33445e] leading-relaxed', className)}>{children}</div>
+    <div className={cn('px-5 pb-5 pt-0 text-[var(--marketing-text-secondary)] leading-relaxed', className)}>{children}</div>
   </AccordionPrimitive.Content>
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;

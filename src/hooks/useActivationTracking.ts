@@ -36,9 +36,9 @@ export const useActivationTracking = () => {
             duration: 5000,
             icon: '🚀',
             style: {
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #14b8a6',
+                background: 'var(--ws-canvas)',
+                color: 'var(--color-white)',
+                border: '1px solid var(--brand-blue-500)',
                 padding: '16px',
                 fontSize: 'var(--type-toast-size)',
                 fontWeight: 'var(--type-toast-weight)'

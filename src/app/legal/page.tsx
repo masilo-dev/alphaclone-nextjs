@@ -102,14 +102,14 @@ export default function LegalHubPage() {
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="mb-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300 text-xs font-semibold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-[var(--brand-blue-300)] text-xs font-semibold uppercase tracking-wider mb-4">
             <Shield className="w-3.5 h-3.5" />
             Compliance, Privacy & Trust Hub
           </div>
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
             Legal & Compliance Center
           </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-[var(--ws-text-secondary)] leading-relaxed">
             AlphaClone Systems LLC provides transparent, legally binding terms and privacy controls designed to
             protect your business, enforce strict data confidentiality, and comply with international regulations.
           </p>
@@ -129,25 +129,25 @@ export default function LegalHubPage() {
               <Link
                 key={doc.href}
                 href={doc.href}
-                className="group relative rounded-2xl border border-slate-800 bg-slate-950/70 p-6 transition-all duration-200 hover:border-teal-500/50 hover:bg-slate-900/60 shadow-lg shadow-black/40 flex flex-col justify-between"
+                className="group relative rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-6 transition-all duration-200 hover:border-teal-500/50 hover:bg-[var(--ws-panel)]/60 shadow-lg shadow-black/40 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-2.5 text-teal-300 group-hover:scale-105 transition-transform">
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/10 p-2.5 text-[var(--brand-blue-300)] group-hover:scale-105 transition-transform">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-slate-700 bg-slate-900 text-slate-300">
+                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-secondary)]">
                       {doc.badge}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-teal-300 transition-colors">
+                  <h3 className="text-lg font-bold text-white group-hover:text-[var(--brand-blue-300)] transition-colors">
                     {doc.title}
                   </h3>
-                  <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                  <p className="mt-2 text-sm text-[var(--ws-text-muted)] leading-relaxed">
                     {doc.description}
                   </p>
                 </div>
-                <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-teal-300 group-hover:text-teal-200">
+                <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--brand-blue-300)] group-hover:text-teal-200">
                   <span>View Document</span>
                   <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
                 </div>
@@ -163,10 +163,10 @@ export default function LegalHubPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-xl border border-slate-800/80 bg-slate-950/50 p-4 transition-colors hover:border-slate-700 hover:bg-slate-900/40"
+              className="rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/50 p-4 transition-colors hover:border-[var(--ws-border)] hover:bg-[var(--ws-panel)]/40"
             >
               <h3 className="text-sm font-semibold text-white mb-1">{item.title}</h3>
-              <p className="text-xs text-slate-400">{item.description}</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">{item.description}</p>
             </Link>
           ))}
         </div>

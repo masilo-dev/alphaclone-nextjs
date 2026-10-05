@@ -127,7 +127,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
-            case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
+            case 'critical': return 'bg-[var(--error-500)]/10 text-red-500 border-red-500/20';
             case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
             case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
             default: return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
@@ -145,7 +145,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                     <ShieldCheck className="w-6 h-6 text-teal-400" />
                     Security & Activity Monitor
                 </h2>
@@ -160,7 +160,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <Activity className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.totalLogs || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.totalLogs || 0}</div>
                                 <div className="type-caption text-blue-400">Total Activity Logs</div>
                             </div>
                         </div>
@@ -172,19 +172,19 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <CheckCircle className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.activeSessions || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.activeSessions || 0}</div>
                                 <div className="type-caption text-green-400">Active Sessions</div>
                             </div>
                         </div>
                     </Card>
 
-                    <Card className="bg-red-500/5 border-red-500/20">
+                    <Card className="bg-[var(--error-500)]/5 border-red-500/20">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-red-500/10 rounded-lg text-red-500">
+                            <div className="p-3 bg-[var(--error-500)]/10 rounded-lg text-red-500">
                                 <ShieldAlert className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.suspiciousLogs || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.suspiciousLogs || 0}</div>
                                 <div className="type-caption text-red-400">Suspicious Activity</div>
                             </div>
                         </div>
@@ -196,7 +196,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <AlertTriangle className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.unresolvedAlerts || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.unresolvedAlerts || 0}</div>
                                 <div className="type-caption text-yellow-400">Unresolved Alerts</div>
                             </div>
                         </div>
@@ -205,14 +205,14 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             )}
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-800 overflow-x-auto pb-1">
+            <div className="flex gap-2 border-b border-[var(--ws-border)] overflow-x-auto pb-1">
                 {['logs', 'sessions', 'alerts', 'failed_logins', 'errors', isPlatformAdminRole(user.role) && 'blocked'].filter(Boolean).map((tab) => (
                     <button
                         key={String(tab)}
                         onClick={() => setActiveTab(tab as any)}
                         className={`px-4 py-2 type-ui font-medium transition-colors whitespace-nowrap ${activeTab === tab
                             ? 'text-teal-400 border-b-2 border-teal-400'
-                            : 'text-slate-400 hover:text-white'
+                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                             }`}
                     >
                         {tab === 'logs' && 'Activity Logs'}
@@ -228,32 +228,32 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Activity Logs Tab */}
             {activeTab === 'logs' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Recent Activity</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Recent Activity</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {activityLogs.map((log) => (
                             <div
                                 key={log.id}
                                 className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${log.is_suspicious
-                                    ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
-                                    : 'bg-slate-800/50 border-slate-700 hover:bg-slate-800'
+                                    ? 'bg-[var(--error-500)]/5 border-red-500/20 hover:bg-[var(--error-500)]/10'
+                                    : 'bg-[var(--ws-surface-secondary)]/50 border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]'
                                     }`}
                             >
                                 <div className="flex items-center gap-4 flex-1">
-                                    <div className="flex items-center gap-2 text-slate-400 type-caption">
+                                    <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption">
                                         {getDeviceIcon(log.device_type)}
                                         <span className="font-mono">{new Date(log.created_at).toLocaleString()}</span>
                                     </div>
                                     <div className="flex-1">
-                                        <div className="text-white font-medium">{log.action}</div>
+                                        <div className="text-[var(--ws-text-primary)] font-medium">{log.action}</div>
                                         {isPlatformAdminRole(user.role) && log.profiles && (
-                                            <div className="type-caption text-slate-500">{log.profiles.email}</div>
+                                            <div className="type-caption text-[var(--ws-text-muted)]">{log.profiles.email}</div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 type-caption text-slate-400">
+                                    <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                                         <MapPin className="w-3 h-3" />
                                         <span>{log.city}, {log.country}</span>
                                     </div>
-                                    <div className="type-caption text-slate-500 font-mono">{log.ip_address}</div>
+                                    <div className="type-caption text-[var(--ws-text-muted)] font-mono">{log.ip_address}</div>
                                 </div>
                                 {log.is_suspicious && (
                                     <Badge variant="error" className="ml-4">Suspicious</Badge>
@@ -261,7 +261,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                         ))}
                         {activityLogs.length === 0 && (
-                            <div className="text-center text-slate-500 py-8">No activity logs found</div>
+                            <div className="text-center text-[var(--ws-text-muted)] py-8">No activity logs found</div>
                         )}
                     </div>
                 </Card>
@@ -270,24 +270,24 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Login Sessions Tab */}
             {activeTab === 'sessions' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Login Sessions</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Login Sessions</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {loginSessions.map((session) => (
                             <div
                                 key={session.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700 hover:bg-slate-800 transition-colors"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] transition-colors"
                             >
                                 <div className="flex items-center gap-4 flex-1">
                                     <div className={`w-2 h-2 rounded-full ${session.is_active ? 'bg-green-500' : 'bg-slate-600'}`} />
                                     <div className="flex-1">
                                         {isPlatformAdminRole(user.role) && session.profiles && (
-                                            <div className="text-white font-medium">{session.profiles.email}</div>
+                                            <div className="text-[var(--ws-text-primary)] font-medium">{session.profiles.email}</div>
                                         )}
-                                        <div className="type-caption text-slate-400">
+                                        <div className="type-caption text-[var(--ws-text-muted)]">
                                             {getDeviceIcon(session.device_info?.deviceType)} {session.device_info?.browser}
                                         </div>
                                     </div>
-                                    <div className="type-caption text-slate-400">
+                                    <div className="type-caption text-[var(--ws-text-muted)]">
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             <span>{new Date(session.login_time).toLocaleString()}</span>
@@ -298,7 +298,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="type-caption text-slate-500">
+                                    <div className="type-caption text-[var(--ws-text-muted)]">
                                         <MapPin className="w-3 h-3 inline mr-1" />
                                         {session.city}, {session.country}
                                     </div>
@@ -310,7 +310,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                         ))}
                         {loginSessions.length === 0 && (
-                            <div className="text-center text-slate-500 py-8">No login sessions found</div>
+                            <div className="text-center text-[var(--ws-text-muted)] py-8">No login sessions found</div>
                         )}
                     </div>
                 </Card>
@@ -319,7 +319,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Security Alerts Tab */}
             {activeTab === 'alerts' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Security Alerts</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Security Alerts</h3>
                     <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {securityAlerts.map((alert) => (
                             <div
@@ -357,7 +357,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                         ))}
                         {securityAlerts.length === 0 && (
-                            <div className="text-center text-slate-500 py-8">No security alerts</div>
+                            <div className="text-center text-[var(--ws-text-muted)] py-8">No security alerts</div>
                         )}
                     </div>
                 </Card>
@@ -366,19 +366,19 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Failed Logins Tab */}
             {activeTab === 'failed_logins' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Failed Login Attempts</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Failed Login Attempts</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {failedLogins.map((login) => (
                             <div
                                 key={login.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-red-500/5 border border-red-500/20"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--error-500)]/5 border border-red-500/20"
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-white font-medium">{login.email}</span>
+                                        <span className="text-[var(--ws-text-primary)] font-medium">{login.email}</span>
                                         <Badge variant="error" className="type-caption">{login.failure_reason}</Badge>
                                     </div>
-                                    <div className="flex items-center gap-4 type-caption text-slate-400">
+                                    <div className="flex items-center gap-4 type-caption text-[var(--ws-text-muted)]">
                                         <div className="flex items-center gap-1">
                                             <span className="font-mono">{login.ip_address}</span>
                                         </div>
@@ -392,13 +392,13 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="type-caption text-slate-500 text-right">
+                                <div className="type-caption text-[var(--ws-text-muted)] text-right">
                                     {new Date(login.created_at).toLocaleString()}
                                 </div>
                             </div>
                         ))}
                         {failedLogins.length === 0 && (
-                            <div className="text-center text-slate-500 py-8">No failed login attempts</div>
+                            <div className="text-center text-[var(--ws-text-muted)] py-8">No failed login attempts</div>
                         )}
                     </div>
                 </Card>
@@ -407,29 +407,29 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* System Errors Tab */}
             {activeTab === 'errors' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">System Errors</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">System Errors</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {errorLogs.map((error) => (
                             <div
                                 key={error.id}
-                                className="p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                                className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                        <Badge className="bg-slate-700 text-slate-300">{error.error_type}</Badge>
+                                        <Badge className="bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)]">{error.error_type}</Badge>
                                         <Badge variant="error">{error.severity}</Badge>
                                     </div>
-                                    <span className="type-caption text-slate-500">{new Date(error.created_at).toLocaleString()}</span>
+                                    <span className="type-caption text-[var(--ws-text-muted)]">{new Date(error.created_at).toLocaleString()}</span>
                                 </div>
 
                                 <p className="text-red-400 type-card-description font-mono break-all mb-2">{error.error_message}</p>
 
-                                <div className="grid grid-cols-2 gap-4 type-caption text-slate-500">
+                                <div className="grid grid-cols-2 gap-4 type-caption text-[var(--ws-text-muted)]">
                                     {error.endpoint && (
-                                        <div>Endpoint: <span className="text-slate-400">{error.endpoint}</span></div>
+                                        <div>Endpoint: <span className="text-[var(--ws-text-muted)]">{error.endpoint}</span></div>
                                     )}
                                     {error.status_code && (
-                                        <div>Status: <span className="text-slate-400">{error.status_code}</span></div>
+                                        <div>Status: <span className="text-[var(--ws-text-muted)]">{error.status_code}</span></div>
                                     )}
                                     {error.user_id && (
                                         <div className="col-span-2">User ID: {error.user_id}</div>
@@ -438,7 +438,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             </div>
                         ))}
                         {errorLogs.length === 0 && (
-                            <div className="text-center text-slate-500 py-8">No errors logged</div>
+                            <div className="text-center text-[var(--ws-text-muted)] py-8">No errors logged</div>
                         )}
                     </div>
                 </Card>
@@ -447,22 +447,22 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Blocked Countries Tab (Admin Only) */}
             {activeTab === 'blocked' && isPlatformAdminRole(user.role) && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Blocked Countries</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Blocked Countries</h3>
                     <div className="space-y-2">
                         {blockedCountries.map((country) => (
                             <div
                                 key={country.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 border border-slate-700"
+                                className="flex items-center justify-between p-3 rounded-lg bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]"
                             >
                                 <div className="flex items-center gap-4">
                                     <Globe className="w-5 h-5 text-red-500" />
                                     <div>
-                                        <div className="text-white font-medium">{country.country_name}</div>
-                                        <div className="type-caption text-slate-400">{country.reason}</div>
+                                        <div className="text-[var(--ws-text-primary)] font-medium">{country.country_name}</div>
+                                        <div className="type-caption text-[var(--ws-text-muted)]">{country.reason}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="type-caption font-mono text-slate-500">{country.country_code}</span>
+                                    <span className="type-caption font-mono text-[var(--ws-text-muted)]">{country.country_code}</span>
                                     <Badge variant="error">Blocked</Badge>
                                 </div>
                             </div>

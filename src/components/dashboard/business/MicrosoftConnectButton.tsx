@@ -23,7 +23,7 @@ export default function MicrosoftConnectButton({
       variant="outline"
       disabled={loading}
       onClick={onDisconnect}
-      className="border-slate-700 text-rose-300 hover:bg-rose-500/10"
+      className="border-[var(--ws-border)] text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Unplug className="w-4 h-4 mr-2" />}
       Disconnect
@@ -33,7 +33,7 @@ export default function MicrosoftConnectButton({
       type="button"
       disabled={loading}
       onClick={onConnect}
-      className="bg-blue-600 hover:bg-blue-500 text-white font-bold"
+      className="bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)] font-bold"
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
       Connect Microsoft 365

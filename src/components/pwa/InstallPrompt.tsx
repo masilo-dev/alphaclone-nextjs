@@ -56,7 +56,7 @@ const InstallPrompt: React.FC = () => {
     if (!showPrompt) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 max-w-sm z-50 animate-slide-up">
+        <div className="fixed bottom-4 right-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl shadow-2xl p-6 max-w-sm z-50 animate-slide-up">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-teal-500/10 rounded-xl flex items-center justify-center">
@@ -64,12 +64,12 @@ const InstallPrompt: React.FC = () => {
                     </div>
                     <div>
                         <h3 className="text-white font-semibold">Install AlphaClone</h3>
-                        <p className="type-card-description text-slate-400">Add to your home screen for quick access</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Add to your home screen for quick access</p>
                     </div>
                 </div>
                 <button
                     onClick={handleDismiss}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                     aria-label="Dismiss"
                 >
                     <X className="w-5 h-5" />

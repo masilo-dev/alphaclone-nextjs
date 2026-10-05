@@ -34,11 +34,11 @@ export function RevenueChart() {
   const [data, setData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const bgCard = useColorModeValue('white', '#0f172a');
+  const bgCard = useColorModeValue('white', 'var(--ws-canvas)');
   const borderColor = useColorModeValue('gray.200', 'rgba(148, 163, 184, 0.16)');
-  const textColor = useColorModeValue('gray.800', '#f5f5f5');
-  const gridColor = useColorModeValue('#edf2f7', 'rgba(255, 255, 255, 0.05)');
-  const labelColor = useColorModeValue('gray.600', '#c0c0c0');
+  const textColor = useColorModeValue('gray.800', 'var(--surface-secondary)');
+  const gridColor = useColorModeValue('var(--marketing-bg-muted)', 'rgba(255, 255, 255, 0.05)');
+  const labelColor = useColorModeValue('gray.600', 'var(--border-default)');
 
   useEffect(() => {
     if (!tenantId) return;
@@ -141,8 +141,8 @@ export function RevenueChart() {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#adebb3" stopOpacity={0.38} />
-                <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--success-500)" stopOpacity={0.38} />
+                <stop offset="95%" stopColor="var(--success-500)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -173,7 +173,7 @@ export function RevenueChart() {
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#adebb3"
+              stroke="var(--success-500)"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#colorRevenue)"

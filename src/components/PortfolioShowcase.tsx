@@ -88,7 +88,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 uppercase tracking-tighter font-marketing-heading">
                         Our <span className="bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Portfolio</span>
                     </h2>
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                    <p className="text-xl text-[var(--ws-text-muted)] max-w-2xl mx-auto">
                         Delivering exceptional digital experiences for clients worldwide
                     </p>
                 </div>
@@ -110,7 +110,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: index * 0.1 }}
-                                className="group relative bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-teal-500/50 transition-all duration-300"
+                                className="group relative bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden hover:border-teal-500/50 transition-all duration-300"
                             >
                                 {/* Featured Badge */}
                                 {project.featured && (
@@ -135,7 +135,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                             className="object-cover group-hover:scale-105 transition-transform duration-700"
                                             loading="lazy"
                                         />
-                                        <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-colors duration-300" />
+                                        <div className="absolute inset-0 bg-[var(--ws-canvas)]/20 group-hover:bg-transparent transition-colors duration-300" />
                                     </a>
                                 </div>
 
@@ -149,7 +149,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                         {title}
                                     </h3>
 
-                                    <p className="text-slate-400 type-card-description mb-6 line-clamp-2 leading-relaxed">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mb-6 line-clamp-2 leading-relaxed">
                                         {description}
                                     </p>
 
@@ -157,7 +157,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                                         {technologies.slice(0, 3).map((tech: string, i: number) => (
                                             <span
                                                 key={i}
-                                                className="px-2 py-1 bg-slate-800/50 text-slate-400 type-caption font-bold rounded border border-slate-700"
+                                                className="px-2 py-1 bg-[var(--ws-surface-secondary)]/50 text-[var(--ws-text-muted)] type-caption font-bold rounded border border-[var(--ws-border)]"
                                             >
                                                 {tech}
                                             </span>
@@ -183,7 +183,7 @@ const PortfolioShowcase: React.FC<{ projects?: any[] }> = ({ projects }) => {
                 <div className="text-center mt-20">
                     <button
                         onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="inline-flex items-center gap-3 px-10 py-5 bg-teal-500 text-slate-950 font-black rounded-xl hover:bg-teal-400 transition-all group scale-100 hover:scale-105 active:scale-95 shadow-2xl shadow-teal-500/20 uppercase tracking-tighter"
+                        className="inline-flex items-center gap-3 px-10 py-5 bg-teal-500 text-slate-950 font-black rounded-xl hover:bg-[var(--brand-blue-400)] transition-all group scale-100 hover:scale-105 active:scale-95 shadow-2xl shadow-teal-500/20 uppercase tracking-tighter"
                     >
                         Start Your Project
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

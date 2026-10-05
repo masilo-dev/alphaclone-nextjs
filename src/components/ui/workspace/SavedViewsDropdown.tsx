@@ -155,7 +155,7 @@ export function SavedViewsDropdown({
                   />
                   <button
                     type="submit"
-                    className="h-7 px-2 text-xs font-semibold rounded bg-[var(--brand-blue-500)] text-white hover:bg-[var(--brand-blue-600)]"
+                    className="h-7 px-2 text-xs font-semibold rounded bg-[var(--brand-blue-500)] text-[var(--text-inverse)] hover:bg-[var(--brand-blue-600)]"
                   >
                     Save
                   </button>

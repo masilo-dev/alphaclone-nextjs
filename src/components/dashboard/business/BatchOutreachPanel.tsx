@@ -98,17 +98,17 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
 
     return (
         <div className="fixed inset-0 ac-layer-overlay flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 sm:items-center">
-            <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-[2.5rem] border-t border-slate-800 bg-slate-900 p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-500 sm:max-w-xl sm:rounded-[2.5rem] sm:border sm:p-8">
+            <div className="w-full max-h-[92vh] overflow-y-auto rounded-t-[2.5rem] border-t border-[var(--ws-border)] bg-[var(--ws-panel)] p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-500 sm:max-w-xl sm:rounded-[2.5rem] sm:border sm:p-8">
                 <div className="mb-7 flex items-start justify-between gap-4">
                     <div>
-                        <h3 className="text-2xl font-black tracking-tight text-white">
+                        <h3 className="text-2xl font-black tracking-tight text-[var(--ws-text-primary)]">
                             {step === 'review' ? 'Review outreach batch' : 'Prepare outreach batch'}
                         </h3>
-                        <p className="mt-1 type-caption font-bold uppercase tracking-widest text-slate-400">
+                        <p className="mt-1 type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">
                             {uniqueIds.length} selected · maximum {MAX_BATCH_RECIPIENTS}
                         </p>
                     </div>
-                    <button onClick={onClose} aria-label="Close batch outreach" className="rounded-2xl bg-slate-800 p-3 text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
+                    <button onClick={onClose} aria-label="Close batch outreach" className="rounded-2xl bg-[var(--ws-surface-secondary)] p-3 text-[var(--ws-text-muted)] transition-all hover:bg-[var(--ws-surface-tertiary)] hover:text-[var(--ws-text-primary)]">
                         <X className="h-6 w-6" />
                     </button>
                 </div>
@@ -123,7 +123,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         )}
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                                 <Zap className="h-4 w-4 text-amber-400" />
                                 Engagement tone
                             </label>
@@ -135,7 +135,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                         className={`rounded-xl border px-4 py-3 type-ui font-bold transition-all ${
                                             tone === item
                                                 ? 'border-teal-500 bg-teal-500/10 text-teal-400 shadow-lg shadow-teal-500/10'
-                                                : 'border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-600'
+                                                : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 text-[var(--ws-text-muted)] hover:border-slate-600'
                                         }`}
                                     >
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -145,7 +145,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                         </div>
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                                 <Target className="h-4 w-4 text-teal-400" />
                                 Helpful context for the draft
                             </label>
@@ -153,19 +153,19 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 value={context}
                                 onChange={(event) => setContext(event.target.value)}
                                 placeholder="For example: mention our recent industry report on Q3 growth."
-                                className="h-28 w-full resize-none rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 type-ui text-white transition-all placeholder:text-slate-600 focus:border-teal-500 focus:outline-none"
+                                className="h-28 w-full resize-none rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] transition-all placeholder:text-slate-600 focus:border-teal-500 focus:outline-none"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-slate-500">
+                            <label className="mb-3 flex items-center gap-2 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                                 <ShieldCheck className="h-4 w-4 text-blue-400" />
                                 Delivery channel
                             </label>
                             <select
                                 value={provider}
                                 onChange={(event) => setProvider(event.target.value)}
-                                className="w-full rounded-2xl border border-slate-700 bg-slate-800/50 px-4 py-3 type-ui text-white transition-all focus:border-teal-500 focus:outline-none"
+                                className="w-full rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] transition-all focus:border-teal-500 focus:outline-none"
                             >
                                 <option value="sendgrid">SendGrid</option>
                                 <option value="resend">Resend</option>
@@ -181,7 +181,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             onClick={handleReview}
                             isLoading={reviewing}
                             disabled={!uniqueIds.length || capExceeded}
-                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-teal-600 py-4 text-lg font-black uppercase tracking-widest text-white shadow-xl shadow-teal-500/20 hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-teal-600 py-4 text-lg font-black uppercase tracking-widest text-[var(--text-inverse)] shadow-xl shadow-teal-500/20 hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Eye className="h-6 w-6" />
                             Review recipients
@@ -199,13 +199,13 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             </div>
                         </div>
 
-                        <div className="overflow-hidden rounded-2xl border border-slate-700">
-                            <div className="border-b border-slate-700 bg-slate-800/70 px-4 py-3 type-caption font-black uppercase tracking-widest text-slate-400">Recipients to queue</div>
-                            <div className="max-h-52 divide-y divide-slate-800 overflow-y-auto bg-slate-950/30">
+                        <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)]">
+                            <div className="border-b border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/70 px-4 py-3 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Recipients to queue</div>
+                            <div className="max-h-52 divide-y divide-slate-800 overflow-y-auto bg-[var(--ws-canvas)]/30">
                                 {reviewedRecipients.map((recipient) => (
                                     <div key={`${recipient.kind}-${recipient.id}`} className="px-4 py-3">
-                                        <p className="truncate type-card-description font-bold text-white">{recipient.name}</p>
-                                        <p className="truncate type-card-description text-slate-400">{recipient.email}</p>
+                                        <p className="truncate type-card-description font-bold text-[var(--ws-text-primary)]">{recipient.name}</p>
+                                        <p className="truncate type-card-description text-[var(--ws-text-muted)]">{recipient.email}</p>
                                     </div>
                                 ))}
                             </div>
@@ -226,7 +226,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                             <Button
                                 onClick={() => setStep('configure')}
                                 disabled={queueing}
-                                className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800 py-3 font-bold text-slate-200 hover:bg-slate-700"
+                                className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] py-3 font-bold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Back
@@ -235,13 +235,13 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
                                 onClick={handleQueue}
                                 isLoading={queueing}
                                 disabled={!reviewedRecipients.length || queueing}
-                                className="flex items-center justify-center gap-2 rounded-2xl bg-teal-600 py-3 font-black text-white hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex items-center justify-center gap-2 rounded-2xl bg-teal-600 py-3 font-black text-[var(--text-inverse)] hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Send className="h-4 w-4" />
                                 Queue batch
                             </Button>
                         </div>
-                        <p className="text-center type-caption font-bold uppercase tracking-wide text-slate-500">Queuing does not send from this screen. Processing is tracked in the outreach log and audit trail.</p>
+                        <p className="text-center type-caption font-bold uppercase tracking-wide text-[var(--ws-text-muted)]">Queuing does not send from this screen. Processing is tracked in the outreach log and audit trail.</p>
                     </div>
                 )}
             </div>

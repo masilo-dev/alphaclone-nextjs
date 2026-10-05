@@ -336,7 +336,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 title={connected ? `Send with ${providerLabels[p]}` : `Connect ${providerLabels[p]} in Settings`}
                                 className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] type-caption font-semibold transition-all ${
                                     selectedProvider === p && connected
-                                    ? 'bg-[var(--brand-blue-500)] text-white shadow-sm' 
+                                    ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-sm' 
                                     : connected
                                         ? 'text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'
                                         : 'text-[var(--ws-text-disabled)] bg-[var(--ws-surface-tertiary)] cursor-not-allowed border border-[var(--ws-border)]'
@@ -359,7 +359,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                 {/* Recipient selector — hidden when locked to a deal/quote recipient */}
                 {!recipient && (
                 <div ref={pickerRef}>
-                    <label className="block type-label font-medium text-slate-300 mb-2">Recipient</label>
+                    <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Recipient</label>
                     <div className="relative">
                         <button
                             type="button"
@@ -372,34 +372,34 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             <div className="flex-1 min-w-0">
                                 {selectedClient ? (
                                     <>
-                                        <p className="text-white font-medium type-card-description truncate">{selectedClient.name}</p>
-                                        <p className="text-slate-400 type-card-description truncate">{selectedClient.email}</p>
+                                        <p className="text-[var(--ws-text-primary)] font-medium type-card-description truncate">{selectedClient.name}</p>
+                                        <p className="text-[var(--ws-text-muted)] type-card-description truncate">{selectedClient.email}</p>
                                     </>
                                 ) : (
-                                    <p className="text-slate-400 type-card-description">Select a client from your directory...</p>
+                                    <p className="text-[var(--ws-text-muted)] type-card-description">Select a client from your directory...</p>
                                 )}
                             </div>
-                            <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform shrink-0 ${showPicker ? 'rotate-180' : ''}`} />
+                            <ChevronDown className={`w-4 h-4 text-[var(--ws-text-muted)] transition-transform shrink-0 ${showPicker ? 'rotate-180' : ''}`} />
                         </button>
 
                         {showPicker && (
-                            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
-                                <div className="p-2 border-b border-slate-700">
+                            <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl shadow-2xl overflow-hidden">
+                                <div className="p-2 border-b border-[var(--ws-border)]">
                                     <div className="relative">
-                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                                         <input
                                             autoFocus
                                             type="text"
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-slate-900 text-white type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-[var(--brand-blue-500)]/50 transition-all"
+                                            className="w-full bg-[var(--ws-panel)] text-[var(--ws-text-primary)] type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-[var(--ws-border)] focus:border-[var(--brand-blue-500)]/50 transition-all"
                                         />
                                     </div>
                                 </div>
                                 <div className="max-h-52 overflow-y-auto">
                                     {filteredContacts.length === 0 ? (
-                                        <p className="text-slate-500 type-card-description text-center py-4">No clients with email found</p>
+                                        <p className="text-[var(--ws-text-muted)] type-card-description text-center py-4">No clients with email found</p>
                                     ) : filteredContacts.map(contact => (
                                         <button
                                             key={contact.id}
@@ -409,14 +409,14 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                                 setShowPicker(false);
                                                 setContactSearch('');
                                             }}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors ${selectedClient?.id === contact.id ? 'bg-[var(--brand-blue-500)]/10' : ''}`}
+                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-[var(--ws-surface-tertiary)] transition-colors ${selectedClient?.id === contact.id ? 'bg-[var(--brand-blue-500)]/10' : ''}`}
                                         >
                                             <div className="w-7 h-7 rounded-full bg-[var(--brand-blue-600)]/20 border border-[var(--brand-blue-500)]/20 flex items-center justify-center shrink-0">
                                                 <User className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-white type-card-description font-medium truncate">{contact.name}</p>
-                                                <p className="text-slate-400 type-card-description truncate">{contact.email}</p>
+                                                <p className="text-[var(--ws-text-primary)] type-card-description font-medium truncate">{contact.name}</p>
+                                                <p className="text-[var(--ws-text-muted)] type-card-description truncate">{contact.email}</p>
                                             </div>
                                             <span className={`type-caption px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
                                                 contact.salesStage === 'customer' ? 'bg-emerald-500/20 text-emerald-400' :
@@ -430,7 +430,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                         )}
                     </div>
                     {selectedClient && !selectedClient.email && (
-                        <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 type-caption">
+                        <div className="mt-2 p-2 bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg text-red-400 type-caption">
                             This client has no email address. Please update their profile.
                         </div>
                     )}
@@ -467,7 +467,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
 
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
-                            <label className="type-label font-medium text-slate-300">Message</label>
+                            <label className="type-label font-medium text-[var(--ws-text-secondary)]">Message</label>
                             <button
                                 type="button"
                                 onClick={handleGenerateWithAI}
@@ -506,7 +506,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             onClick={handleSend}
                             disabled={isSending || loadingProvider || !selectedClient?.email || !selectedProvider}
                             icon={isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold"
+                            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] font-semibold"
                         >
                             {isSending ? 'Sending...' : 'Send message'}
                         </Button>

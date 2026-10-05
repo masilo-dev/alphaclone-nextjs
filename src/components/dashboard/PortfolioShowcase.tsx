@@ -341,8 +341,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
         <div className="space-y-8 animate-fade-in relative">
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto relative">
-                <h1 className="text-4xl font-bold text-white mb-4">Our Portfolio</h1>
-                <p className="text-slate-400 text-lg">
+                <h1 className="text-4xl font-bold text-[var(--ws-text-primary)] mb-4">Our Portfolio</h1>
+                <p className="text-[var(--ws-text-muted)] text-lg">
                     Showcasing our finest work in web development, mobile apps, and AI solutions
                 </p>
 
@@ -363,13 +363,13 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                 {/* Search */}
                 <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
                     <input
                         type="text"
                         placeholder="Search projects..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-colors"
                     />
                 </div>
 
@@ -380,8 +380,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                             key={cat.id}
                             onClick={() => setFilter(cat.id as any)}
                             className={`px-4 py-2 rounded-lg font-medium transition-all ${filter === cat.id
-                                ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/50'
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                ? 'bg-teal-600 text-[var(--text-inverse)] shadow-lg shadow-teal-900/50'
+                                : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] hover:text-[var(--ws-text-primary)]'
                                 }`}
                         >
                             {cat.label} ({cat.count})
@@ -421,14 +421,14 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                         className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
                                         title="Edit project"
                                     >
-                                        <Edit className="w-4 h-4 text-white" />
+                                        <Edit className="w-4 h-4 text-[var(--ws-text-primary)]" />
                                     </button>
                                     <button
                                         onClick={() => handleDeleteClick(project)}
-                                        className="p-2 bg-red-600 hover:bg-red-500 rounded-lg transition-colors"
+                                        className="p-2 bg-red-600 hover:bg-[var(--error-500)] rounded-lg transition-colors"
                                         title="Delete project"
                                     >
-                                        <Trash2 className="w-4 h-4 text-white" />
+                                        <Trash2 className="w-4 h-4 text-[var(--ws-text-primary)]" />
                                     </button>
                                 </div>
                             )}
@@ -437,7 +437,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         {/* Project Info */}
                         <div className="p-6 space-y-3">
                             <div className="flex items-start justify-between gap-2">
-                                <h3 className="text-xl font-bold text-white">{project.name}</h3>
+                                <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">{project.name}</h3>
                                 {project.externalUrl && (
                                     <a
                                         href={project.externalUrl}
@@ -451,7 +451,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                 )}
                             </div>
 
-                            <p className="text-slate-400 type-card-description line-clamp-3">{project.description}</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description line-clamp-3">{project.description}</p>
 
                             <div className="flex items-center gap-2 pt-2">
                                 <Tag className="w-4 h-4 text-teal-400" />
@@ -465,7 +465,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             {filteredProjects.length === 0 && (
                 <div className="text-center py-20">
                     <ImageIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400 text-lg">No projects found</p>
+                    <p className="text-[var(--ws-text-muted)] text-lg">No projects found</p>
                 </div>
             )}
 
@@ -479,13 +479,13 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                     <div className="space-y-4">
                         {/* Image Upload Section */}
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Project Image
                             </label>
                             <div className="space-y-3">
                                 {/* Preview */}
                                 {previewImage && (
-                                    <div className="relative w-full h-48 rounded-lg overflow-hidden border border-slate-700">
+                                    <div className="relative w-full h-48 rounded-lg overflow-hidden border border-[var(--ws-border)]">
                                         <Image
                                             src={previewImage}
                                             alt="Preview"
@@ -505,7 +505,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                             disabled={isUploading}
                                             className="hidden"
                                         />
-                                        <div className={`w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-700 transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                        <div className={`w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] flex items-center justify-center gap-2 cursor-pointer hover:bg-[var(--ws-surface-tertiary)] transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             {isUploading ? (
                                                 <>
                                                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -523,7 +523,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                                 {/* Upload Progress */}
                                 {isUploading && (
-                                    <div className="w-full bg-slate-800 rounded-full h-2">
+                                    <div className="w-full bg-[var(--ws-surface-secondary)] rounded-full h-2">
                                         <div
                                             className="bg-teal-600 h-2 rounded-full transition-all duration-300"
                                             style={{ width: `${uploadProgress}%` }}
@@ -535,7 +535,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Project Name */}
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Project Name *
                             </label>
                             <Input
@@ -548,13 +548,13 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Category */}
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Category *
                             </label>
                             <select
                                 value={formData.category || 'Website'}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                             >
                                 <option value="Website">Website</option>
                                 <option value="Mobile App">Mobile App</option>
@@ -566,7 +566,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
 
                         {/* Description */}
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 Description
                             </label>
                             <textarea
@@ -574,13 +574,13 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Brief description of the project..."
                                 rows={4}
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
                             />
                         </div>
 
                         {/* External URL */}
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                                 External URL
                             </label>
                             <Input
@@ -595,7 +595,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         <div className="flex gap-3 pt-4">
                             <Button
                                 onClick={() => setIsModalOpen(false)}
-                                className="flex-1 bg-slate-700 hover:bg-slate-600"
+                                className="flex-1 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
                                 disabled={isSaving}
                             >
                                 Cancel

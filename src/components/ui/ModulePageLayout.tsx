@@ -45,7 +45,7 @@ export function ModulePageLayout({
       className={cn(
         'flex flex-1 flex-col min-h-0 overflow-hidden relative',
         isInstalledMobileCompanion ? 'gap-2' : 'gap-4',
-        isFocused && 'fixed inset-0 z-[100] h-[100dvh] w-screen bg-[var(--ws-canvas,#0B1220)] p-3 md:p-4',
+        isFocused && 'fixed inset-0 z-[100] h-[100dvh] w-screen bg-[var(--ws-canvas)] p-3 md:p-4',
         phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
         className,
       )}
@@ -57,7 +57,7 @@ export function ModulePageLayout({
           aria-pressed={isFocused}
           aria-label={isFocused ? 'Exit focus mode' : 'Focus this module'}
           title={isFocused ? 'Exit focus mode' : 'Focus this module'}
-          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#0F172A)] text-[var(--ws-text-muted)] shadow-lg transition hover:text-[var(--ws-text-primary)]"
+          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,var(--ws-canvas))] text-[var(--ws-text-muted)] shadow-lg transition hover:text-[var(--ws-text-primary)]"
         >
           {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>

@@ -27,7 +27,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
             scale: mode === 'opening' ? 1.5 : 1,
             transition: { duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }
           }}
-          className={`fixed inset-0 ac-layer-startup flex items-center justify-center bg-[#020D1A] overflow-hidden ${className}`}
+          className={`fixed inset-0 ac-layer-startup flex items-center justify-center bg-[var(--brand-violet-950)] overflow-hidden ${className}`}
         >
           {/* Animated Background */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-transparent" />
@@ -76,7 +76,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               transition={{ delay: 0.3, duration: 0.8 }}
               className="flex flex-col items-center gap-2"
             >
-              <h1 className="text-2xl sm:text-3xl font-black tracking-caps text-white">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-caps text-[var(--ws-text-primary)]">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
               <p className="type-caption uppercase tracking-caps text-teal-400/60 font-medium text-center px-4">
@@ -104,7 +104,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
                     delay: i * 0.1,
                     ease: "easeInOut"
                   }}
-                  className="w-1 h-4 bg-teal-400 rounded-full"
+                  className="w-1 h-4 bg-[var(--brand-blue-400)] rounded-full"
                 />
               ))}
             </motion.div>
@@ -116,7 +116,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 4, opacity: 1 }}
               transition={{ delay: 0.2, duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-full pointer-events-none"
+              className="absolute inset-0 bg-[var(--ws-hover)] backdrop-blur-sm rounded-full pointer-events-none"
             />
           )}
         </motion.div>

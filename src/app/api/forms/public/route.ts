@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     const settings = (tenant.settings || {}) as Record<string, unknown>;
-    const brandColor = String(settings.brand_color || '#14b8a6');
+    const brandColor = String(settings.brand_color || 'var(--brand-blue-500)');
 
     return NextResponse.json({
       success: true,

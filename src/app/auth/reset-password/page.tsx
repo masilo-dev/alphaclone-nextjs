@@ -88,13 +88,13 @@ export default function ResetPasswordPage() {
 
     if (isSuccess) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+            <div className="ac-auth-canvas min-h-screen flex items-center justify-center p-4">
+                <div className="ac-auth-card max-w-md w-full p-8 text-center">
                     <div className="w-20 h-20 bg-teal-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 className="w-10 h-10 text-teal-400" />
+                        <CheckCircle2 className="w-10 h-10 text-[var(--brand-teal)]" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Password Reset!</h2>
-                    <p className="text-slate-400 mb-8">
+                    <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Password Reset!</h2>
+                    <p className="text-[var(--ws-text-muted)] mb-8">
                         Your password has been updated. You will be redirected to the login page shortly.
                     </p>
                     <Button onClick={() => router.push('/auth/login')} className="w-full">
@@ -107,11 +107,11 @@ export default function ResetPasswordPage() {
 
     if (linkValid === null) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
-                    <Loader2 className="w-10 h-10 text-teal-400 animate-spin mx-auto mb-6" />
-                    <h2 className="text-xl font-bold text-white mb-2">Verifying your reset link…</h2>
-                    <p className="text-slate-400 type-card-description">Just a moment while we securely open your password reset session.</p>
+            <div className="ac-auth-canvas min-h-screen flex items-center justify-center p-4">
+                <div className="ac-auth-card max-w-md w-full p-8 text-center">
+                    <Loader2 className="w-10 h-10 text-[var(--brand-teal)] animate-spin mx-auto mb-6" />
+                    <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-2">Verifying your reset link…</h2>
+                    <p className="text-[var(--ws-text-muted)] type-card-description">Just a moment while we securely open your password reset session.</p>
                 </div>
             </div>
         );
@@ -119,13 +119,13 @@ export default function ResetPasswordPage() {
 
     if (linkValid === false) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl text-center">
+            <div className="ac-auth-canvas min-h-screen flex items-center justify-center p-4">
+                <div className="ac-auth-card max-w-md w-full p-8 text-center">
                     <div className="w-20 h-20 bg-amber-500/15 rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertCircle className="w-10 h-10 text-amber-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Reset link expired</h2>
-                    <p className="text-slate-400 mb-8">
+                    <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Reset link expired</h2>
+                    <p className="text-[var(--ws-text-muted)] mb-8">
                         This password reset link is invalid or has expired. Reset links are single-use and time-limited — please request a new one.
                     </p>
                     <Button onClick={() => router.push('/auth/login')} className="w-full">
@@ -137,13 +137,8 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/5 blur-[80px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[80px]" />
-            </div>
-
-            <div className="max-w-md w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl relative z-10">
+        <div className="ac-auth-canvas min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+            <div className="ac-auth-card max-w-md w-full p-8 relative z-10">
                 <div className="mb-8 text-center">
                     <Image
                         src={LOGO_URL}
@@ -153,8 +148,8 @@ export default function ResetPasswordPage() {
                         className="object-contain mx-auto mb-4"
                         priority
                     />
-                    <h1 className="text-2xl font-bold text-white mb-2">Set New Password</h1>
-                    <p className="text-slate-400">Secure your account with a strong password</p>
+                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-2">Set New Password</h1>
+                    <p className="text-[var(--ws-text-muted)]">Secure your account with a strong password</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -172,7 +167,7 @@ export default function ResetPasswordPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword((prev) => !prev)}
-                                className="absolute right-3 top-9 text-slate-400 hover:text-teal-400 transition-colors"
+                                className="absolute right-3 top-9 text-[var(--ws-text-muted)] hover:text-[var(--brand-teal)] transition-colors"
                                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                                 title={showPassword ? 'Hide password' : 'Show password'}
                             >
@@ -193,7 +188,7 @@ export default function ResetPasswordPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword((prev) => !prev)}
-                                className="absolute right-3 top-9 text-slate-400 hover:text-teal-400 transition-colors"
+                                className="absolute right-3 top-9 text-[var(--ws-text-muted)] hover:text-[var(--brand-teal)] transition-colors"
                                 aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                                 title={showConfirmPassword ? 'Hide password' : 'Show password'}
                             >
@@ -201,23 +196,23 @@ export default function ResetPasswordPage() {
                             </button>
                         </div>
 
-                        <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
-                            <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
+                        <div className="bg-[var(--ws-surface-secondary)]/30 border border-[var(--ws-border)]/50 rounded-xl p-3 space-y-2">
+                            <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Security Requirements</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <div className={`flex items-center gap-2 type-caption ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                <div className={`flex items-center gap-2 type-caption ${password.length >= 12 ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                     12+ Characters
                                 </div>
-                                <div className={`flex items-center gap-2 type-caption ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                <div className={`flex items-center gap-2 type-caption ${/[A-Z]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                     Uppercase
                                 </div>
-                                <div className={`flex items-center gap-2 type-caption ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                <div className={`flex items-center gap-2 type-caption ${/[0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                     Number
                                 </div>
-                                <div className={`flex items-center gap-2 type-caption ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                <div className={`flex items-center gap-2 type-caption ${/[^A-Za-z0-9]/.test(password) ? 'text-[var(--brand-teal)]' : 'text-[var(--ws-text-muted)]'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-[var(--brand-teal)]' : 'bg-[var(--color-border-primary)]'}`} />
                                     Special Char
                                 </div>
                             </div>
@@ -225,13 +220,13 @@ export default function ResetPasswordPage() {
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2">
+                        <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg p-3 text-red-400 type-ui flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <Button type="submit" className="w-full h-12 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 shadow-lg shadow-teal-500/20" isLoading={isLoading}>
+                    <Button type="submit" className="w-full h-12 text-base font-semibold bg-[var(--interactive-primary)] text-white shadow-sm" isLoading={isLoading}>
                         Update Password
                     </Button>
                 </form>

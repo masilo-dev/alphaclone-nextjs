@@ -148,25 +148,25 @@ async function getStatusReport() {
 function StatusDot({ status }: { status: HealthStatus }) {
   const cls =
     status === 'healthy'
-      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+      ? 'bg-[var(--success-500)] shadow-[0_0_8px_rgba(52,211,153,0.5)]'
       : status === 'degraded'
-        ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+        ? 'bg-[var(--warning-500)] shadow-[0_0_8px_rgba(251,191,36,0.5)]'
         : status === 'unhealthy'
-          ? 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'
+          ? 'bg-[var(--error-500)] shadow-[0_0_8px_rgba(251,113,113,0.5)]'
       : 'bg-slate-400';
   return <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls}`} />;
 }
 
 function statusBadgeClass(status: HealthStatus) {
-  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
-  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-500/30 bg-slate-500/10 text-slate-300';
+  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]';
+  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-[var(--error-text,var(--error-500))]';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]' : 'border-slate-500/30 bg-slate-500/10 text-[var(--ws-text-secondary)]';
 }
 
 function statusRowBadge(status: HealthStatus) {
-  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-amber-300';
-  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-rose-300';
-  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-slate-500/30 bg-slate-500/10 text-slate-300';
+  if (status === 'degraded') return 'border-amber-500/30 bg-amber-500/10 text-[var(--warning-text,var(--warning-500))]';
+  if (status === 'unhealthy') return 'border-rose-500/30 bg-rose-500/10 text-[var(--error-text,var(--error-500))]';
+  return status === 'healthy' ? 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]' : 'border-slate-500/30 bg-slate-500/10 text-[var(--ws-text-secondary)]';
 }
 
 export default async function PlatformStatusPage() {
@@ -183,7 +183,7 @@ export default async function PlatformStatusPage() {
 
   return (
     <MarketingLandingShell>
-      <div className="min-h-screen bg-[#030712] pt-20 text-slate-200">
+      <div className="min-h-screen bg-[var(--brand-violet-950)] pt-20 text-[var(--ws-text-secondary)]">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -203,22 +203,22 @@ export default async function PlatformStatusPage() {
                 <h1 className="text-3xl font-black text-white sm:text-4xl">
                   System Status & Reliability
                 </h1>
-                <p className="mt-2 max-w-2xl type-card-description leading-6 text-slate-300">
+                <p className="mt-2 max-w-2xl type-card-description leading-6 text-[var(--ws-text-secondary)]">
                   {report.summary}
                 </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-slate-900/80 p-4 text-right type-caption text-slate-400">
-                <div className="font-semibold uppercase tracking-wider text-slate-500">
+              <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/80 p-4 text-right type-caption text-[var(--ws-text-muted)]">
+                <div className="font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Last Health Check
                 </div>
-                <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-slate-200">
+                <time dateTime={report.checkedAt} className="mt-1 block font-mono type-caption text-[var(--ws-text-secondary)]">
                   {new Date(report.checkedAt).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
                   })}
                 </time>
-                <div className="mt-0.5 type-ui text-slate-500">Auto-refreshes every 30s</div>
+                <div className="mt-0.5 type-ui text-[var(--ws-text-muted)]">Auto-refreshes every 30s</div>
               </div>
             </div>
           </div>
@@ -243,26 +243,26 @@ export default async function PlatformStatusPage() {
             ].map(({ icon, value, label }) => (
               <div
                 key={label}
-                className="rounded-xl border border-white/10 bg-slate-950/80 p-5 shadow-lg backdrop-blur-sm"
+                className="rounded-xl border border-white/10 bg-[var(--ws-canvas)]/80 p-5 shadow-lg backdrop-blur-sm"
               >
                 {icon}
                 <div className="text-2xl font-black text-white">{value}</div>
-                <div className="mt-1 type-caption font-medium text-slate-400">{label}</div>
+                <div className="mt-1 type-caption font-medium text-[var(--ws-text-muted)]">{label}</div>
               </div>
             ))}
           </div>
 
           {/* ── Service Status Grid ───────────────────────────────── */}
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-            <section className="rounded-2xl border border-white/10 bg-slate-950/90 p-6 shadow-xl backdrop-blur-md">
+            <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
               <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
                   <h2 className="text-xl font-bold text-white">Platform Components</h2>
-                  <p className="mt-0.5 type-card-description text-slate-400">
+                  <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)]">
                     Platform areas are listed here; the health endpoint does not independently verify each service.
                   </p>
                 </div>
-                <ShieldCheck className="h-6 w-6 text-slate-400" />
+                <ShieldCheck className="h-6 w-6 text-[var(--ws-text-muted)]" />
               </div>
               <div className="divide-y divide-white/5">
                 {report.checks.map((check) => (
@@ -275,7 +275,7 @@ export default async function PlatformStatusPage() {
                         <StatusDot status={check.status} />
                         <span>{check.name}</span>
                       </div>
-                      <p className="mt-1 pl-5 type-card-description text-slate-400">{check.detail}</p>
+                      <p className="mt-1 pl-5 type-card-description text-[var(--ws-text-muted)]">{check.detail}</p>
                     </div>
                     <span
                       className={`w-fit rounded-full border px-3 py-1 type-caption font-bold capitalize ${statusRowBadge(check.status)}`}
@@ -293,12 +293,12 @@ export default async function PlatformStatusPage() {
 
             <aside className="space-y-6">
               {/* Trust & Security panel — business-friendly only */}
-              <section className="rounded-2xl border border-white/10 bg-slate-950/90 p-6 shadow-xl backdrop-blur-md">
+              <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
                 <div className="flex items-center gap-2.5 mb-4">
                   <Zap className="h-5 w-5 text-teal-400" />
                   <h2 className="text-lg font-bold text-white">Security & Compliance</h2>
                 </div>
-                <p className="type-caption text-slate-400">The runtime health check does not verify security controls. Review the published documents for policy and support information.</p>
+                <p className="type-caption text-[var(--ws-text-muted)]">The runtime health check does not verify security controls. Review the published documents for policy and support information.</p>
                 <div className="mt-4 flex flex-col gap-2 type-ui">
                   <Link href="/security-policy" className="text-cyan-300 underline">Security policy</Link>
                   <Link href="/compliance" className="text-cyan-300 underline">Compliance overview</Link>
@@ -307,12 +307,12 @@ export default async function PlatformStatusPage() {
               </section>
 
               {/* Incident Log */}
-              <section className="rounded-2xl border border-white/10 bg-slate-950/90 p-6 shadow-xl backdrop-blur-md">
+              <section className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="mt-0.5 h-5 w-5 text-teal-400 shrink-0" />
                   <div>
                     <h2 className="text-base font-bold text-white">Incident Log</h2>
-                    <p className="mt-1.5 type-card-description leading-5 text-slate-400">
+                    <p className="mt-1.5 type-card-description leading-5 text-[var(--ws-text-muted)]">
                       An incident history is not available on this page. The health check above only reports current web application liveness.
                     </p>
                   </div>
@@ -322,9 +322,9 @@ export default async function PlatformStatusPage() {
           </div>
 
           {/* ── Enterprise Modules ────────────────────────────────── */}
-          <section className="mt-8 rounded-2xl border border-white/10 bg-slate-950/90 p-6 shadow-xl backdrop-blur-md">
+          <section className="mt-8 rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/90 p-6 shadow-xl backdrop-blur-md">
             <h2 className="text-lg font-bold text-white">Product Areas</h2>
-            <p className="mt-1 type-caption text-slate-400">These areas are not independently monitored by this health check.</p>
+            <p className="mt-1 type-caption text-[var(--ws-text-muted)]">These areas are not independently monitored by this health check.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 'CRM & Lead Pipeline',
@@ -335,13 +335,13 @@ export default async function PlatformStatusPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 type-caption font-semibold text-slate-200"
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-3 type-caption font-semibold text-[var(--ws-text-secondary)]"
                 >
                   {item}
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex flex-wrap gap-5 border-t border-white/10 pt-4 type-caption font-medium text-slate-400">
+            <div className="mt-6 flex flex-wrap gap-5 border-t border-white/10 pt-4 type-caption font-medium text-[var(--ws-text-muted)]">
               <Link href="/sla" className="text-cyan-400 transition-colors hover:text-cyan-300">
                 SLA Agreement
               </Link>
