@@ -44,9 +44,12 @@ export function domainResultFromGateway<TResult>(params: {
     execution_id: params.gateway.actionId,
     status,
     verification_state: status,
-    business_object_type: params.businessObject?.type || params.gateway.receipt?.entity_type,
-    business_object_id: params.businessObject?.id || params.gateway.receipt?.entity_id,
-    provider_reference: params.gateway.receipt?.provider_reference,
+    // ActionReceipt allows null; DomainExecutionResult uses optional string only.
+    business_object_type:
+      (params.businessObject?.type ?? params.gateway.receipt?.entity_type) ?? undefined,
+    business_object_id:
+      (params.businessObject?.id ?? params.gateway.receipt?.entity_id) ?? undefined,
+    provider_reference: params.gateway.receipt?.provider_reference ?? undefined,
     receipt_id: params.gateway.auditLogId || undefined,
     approval_state: params.approvalState,
     failure_code: params.gateway.error?.code,
