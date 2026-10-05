@@ -15,8 +15,15 @@ import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
  */
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
-export type PolicySource = 'bonnie' | 'mcp' | 'playbook';
+export type PolicySource = 'bonnie' | 'mcp' | 'playbook' | 'cron' | 'ui';
 export type PolicyOutcome = 'allow' | 'queue_approval' | 'deny';
+
+export type PolicySourceAttribute =
+  | 'mcp_connector_auto_allow'
+  | 'tenant_autonomy'
+  | 'default_allow'
+  | 'approval_required'
+  | 'mode_blocked';
 
 export type PolicyDecision = {
   outcome: PolicyOutcome;
@@ -24,6 +31,10 @@ export type PolicyDecision = {
   reason: string;
   approvalId?: string;
   isDuplicate?: boolean;
+  /** Explicit source policy — never silent bypass. */
+  sourcePolicy?: PolicySourceAttribute;
+  approvalState?: 'none' | 'required' | 'queued' | 'mcp_auto_allowed' | 'approved';
+  policyAttributes?: Record<string, unknown>;
 };
 
 const SEND_TOOLS = new Set([
@@ -154,18 +165,10 @@ export async function evaluateToolPolicy(params: {
     conversationId,
   } = params;
   const riskClass = classifyToolRisk(toolName);
-
-  // ChatGPT / Claude MCP connectors: authenticated connector user already issued
-  // the command. Auto-execute — do not block on DPA or approval queues.
-  // In-app Bonnie continues through the policy path below (reads/drafts still
-  // execute immediately; send / bulk / financial follow workspace mode).
-  if (source === 'mcp') {
-    return {
-      outcome: 'allow',
-      riskClass,
-      reason: 'MCP connector auto-approves tool execution.',
-    };
-  }
+  const policyAttributes: Record<string, unknown> = {
+    execution_source: source,
+    risk_class: riskClass,
+  };
 
   const admin = createSupabaseAdminClient();
 
@@ -186,6 +189,9 @@ export async function evaluateToolPolicy(params: {
       outcome: 'deny',
       riskClass,
       reason: `Agent mode "${agentMode}" blocks ${riskClass} actions for tool "${toolName}".`,
+      sourcePolicy: 'mode_blocked',
+      approvalState: 'required',
+      policyAttributes,
     };
   }
 
@@ -209,7 +215,39 @@ export async function evaluateToolPolicy(params: {
   }
 
   if (!needsApproval) {
-    return { outcome: 'allow', riskClass, reason: 'Policy allows execution.' };
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason: 'Policy allows execution.',
+      sourcePolicy: source === 'mcp' ? 'mcp_connector_auto_allow' : 'default_allow',
+      approvalState: 'none',
+      policyAttributes,
+    };
+  }
+
+  // MCP connectors: evaluated above (mode, readiness, tenant rules). High-risk
+  // financial/bulk actions still queue when tenant requires it; other MCP writes
+  // auto-allow with an explicit source attribute (not a silent bypass).
+  const mcpHighRiskQueue =
+    source === 'mcp' &&
+    highRiskRequired &&
+    (riskClass === 'financial' || riskClass === 'bulk');
+
+  if (source === 'mcp' && !mcpHighRiskQueue) {
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason:
+        readinessReason ||
+        'MCP connector policy: authenticated user command allowed after full policy evaluation.',
+      sourcePolicy: 'mcp_connector_auto_allow',
+      approvalState: 'mcp_auto_allowed',
+      policyAttributes: {
+        ...policyAttributes,
+        mcp_connector_auto_allow: true,
+        readiness_reason: readinessReason || null,
+      },
+    };
   }
 
   const { data: approval, error } = await admin
@@ -265,5 +303,11 @@ export async function evaluateToolPolicy(params: {
     riskClass,
     reason: `Action queued for approval (ID: ${approval?.id}). Use list_pending_approvals / approve_pending_action or the Approval Center.`,
     approvalId: approval?.id,
+    sourcePolicy: 'approval_required',
+    approvalState: 'queued',
+    policyAttributes: {
+      ...policyAttributes,
+      approval_id: approval?.id,
+    },
   };
 }

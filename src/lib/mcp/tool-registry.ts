@@ -17,6 +17,8 @@ import {
   structuredErrorToMcpContent,
 } from '@/lib/mcp/formatMcpError';
 import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
+import type { PolicyDecision } from '@/lib/ai/ToolPolicyGate';
+import { attachLlmExecutionTruth, buildLlmExecutionTruth } from '@/lib/mcp/llmTruthfulResponse';
 
 const registry = new Map<string, MCPTool>();
 const toolModules = new Map<string, string>();
@@ -27,6 +29,30 @@ const toolModules = new Map<string, string>();
  * route a bridged tool back into the registry, or the two recurse until OOM.
  */
 export const MANIFEST_BRIDGE_MODULE = 'manifest-bridge';
+
+function enrichMcpResultWithExecutionTruth(
+  result: MCPToolExecutionResult,
+  toolName: string,
+  policy: PolicyDecision | null
+): MCPToolExecutionResult {
+  if (result.isError || !result.content?.[0]?.text) return result;
+  try {
+    const parsed = JSON.parse(result.content[0].text);
+    if (!parsed || typeof parsed !== 'object') return result;
+    const truth = buildLlmExecutionTruth({
+      toolName,
+      policy: policy || undefined,
+      parsedResult: parsed,
+    });
+    const enriched = attachLlmExecutionTruth(parsed as Record<string, unknown>, truth);
+    return {
+      ...result,
+      content: [{ type: 'text', text: JSON.stringify(enriched, null, 2) }],
+    };
+  } catch {
+    return result;
+  }
+}
 
 function errorTextFromMcpContent(content: unknown): string | undefined {
   if (!Array.isArray(content) || !content[0]) return undefined;
@@ -148,11 +174,17 @@ import {
   validateProjectedUsage,
 } from '@/lib/entitlements/meteringService';
 
+export type ExecuteToolOptions = {
+  executionSource?: import('@/lib/ai/ToolPolicyGate').PolicySource;
+  skipPolicyEvaluation?: boolean;
+};
+
 export async function executeTool(
   tenantId: string,
   userId: string,
   toolName: string,
-  args: Record<string, any>
+  args: Record<string, any>,
+  options?: ExecuteToolOptions
 ): Promise<MCPToolExecutionResult> {
   initializeRegistry();
   const requestedTool = resolveMcpToolName(normalizeToolName(toolName));
@@ -161,6 +193,21 @@ export async function executeTool(
   let errorMessage: string | undefined;
   let resolvedToolName = requestedTool;
   let executionResult: MCPToolExecutionResult | undefined;
+
+  const { guardToolExecution } = await import('@/lib/execution/toolExecutionGuard');
+  const guard = await guardToolExecution({
+    tenantId,
+    userId,
+    toolName: requestedTool,
+    args,
+    options: {
+      executionSource: options?.executionSource || 'mcp',
+      skipPolicyEvaluation: options?.skipPolicyEvaluation,
+    },
+  });
+  if (!guard.allowed) {
+    return guard.mcpResult;
+  }
 
   const primaryMetric = determinePrimaryQuotaMetric(requestedTool);
   const bulkProjected = isBulkMeteredTool(requestedTool)
@@ -252,7 +299,7 @@ export async function executeTool(
       }
     }
     executionResult = result;
-    return result;
+    return enrichMcpResultWithExecutionTruth(result, requestedTool, guard.policy);
   } catch (err: any) {
     console.error(`[tool-registry] ${resolvedToolName} error:`, err);
     const structured = formatToolExecutionError(resolvedToolName, err);

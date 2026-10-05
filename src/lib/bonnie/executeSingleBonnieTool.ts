@@ -148,7 +148,10 @@ export async function executeSingleBonnieTool(params: {
         const { businessToolActivity, humanizeTechnicalFailure } = await import(
           '@/lib/copy/businessFriendlyErrors'
         );
-        const result = await executeTool(tenantId, userId, tool, args);
+        const result = await executeTool(tenantId, userId, tool, args, {
+          executionSource: policySource,
+          skipPolicyEvaluation: true,
+        });
         const text = extractToolText(result);
         toolResult = {
           tool,

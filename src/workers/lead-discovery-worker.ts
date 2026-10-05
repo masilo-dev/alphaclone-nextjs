@@ -129,26 +129,30 @@ function autoAcceptAndSyncHighQuality(
   if (toAccept.length === 0) return Promise.resolve({ accepted: 0, synced: 0 });
 
   return (async () => {
-    const { data: leads, error: leadInsertErr } = await supabase
-      .from('leads')
-      .upsert(toLeadInsert, { onConflict: 'tenant_id,canonical_business_key', ignoreDuplicates: true, defaultToNull: false })
-      .select('id,email,canonical_business_key');
-    if (leadInsertErr) throw leadInsertErr;
-    const byEmail = new Map<string, string>(); const byKey = new Map<string, string>();
-    for (const l of (leads || []) as Array<{ id: string; email?: string | null; canonical_business_key?: string | null }>) {
-      if (l.email) byEmail.set(String(l.email).toLowerCase(), l.id);
-      if (l.canonical_business_key) byKey.set(l.canonical_business_key, l.id);
+    const { promoteToCanonicalLead } = await import('@/services/leads/canonicalLeadPromotion');
+    let synced = 0;
+    for (const row of toAccept) {
+      const candidateId = String((row as { id?: string }).id || '');
+      if (!candidateId) continue;
+      try {
+        await promoteToCanonicalLead({
+          admin: supabase,
+          tenantId: workspaceId,
+          ownerId,
+          source: { kind: 'lead_candidate', candidateId, candidate: row as Record<string, unknown> },
+          idempotencyKey: `lead-candidate-auto:${workspaceId}:${candidateId}`,
+          skipQualificationGate: true,
+        });
+        synced += 1;
+      } catch (err) {
+        console.warn('[lead-discovery-worker] canonical promotion warning:', err);
+      }
     }
-    const acceptedRows = toAccept.map(r => {
-      const em = String((r as any).public_email || '').toLowerCase();
-      const leadId = byEmail.get(em) || byKey.get(String((r as any).canonical_business_key || '')) || null;
-      return { ...(r as any), synced_lead_id: leadId };
-    });
     const { error: updateErr } = await supabase
       .from('lead_candidates')
-      .upsert(acceptedRows, { onConflict: 'workspace_id,canonical_business_key', ignoreDuplicates: false, defaultToNull: false });
+      .upsert(toAccept, { onConflict: 'workspace_id,canonical_business_key', ignoreDuplicates: false, defaultToNull: false });
     if (updateErr) throw updateErr;
-    return { accepted: acceptedRows.length, synced: leads?.length || 0 };
+    return { accepted: toAccept.length, synced };
   })().catch(err => {
     console.warn('[lead-discovery-worker] Auto-accept sync warning:', err);
     return { accepted: 0, synced: 0 };

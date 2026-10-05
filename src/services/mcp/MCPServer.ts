@@ -1094,52 +1094,7 @@ class AlphaCloneMCPServer {
       });
     }
 
-    const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
-    const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
-    if (tenantIdForPolicy && userIdForPolicy) {
-      const { evaluateToolPolicy } = await import('@/lib/ai/ToolPolicyGate');
-      const policy = await evaluateToolPolicy({
-        tenantId: tenantIdForPolicy,
-        userId: userIdForPolicy,
-        toolName: name,
-        source: 'mcp',
-        args: args || {},
-      });
-      if (policy.outcome === 'deny') {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                error: true,
-                code: 'POLICY_DENIED',
-                message: policy.reason,
-                risk_class: policy.riskClass,
-              }),
-            },
-          ],
-          isError: true,
-        };
-      }
-      if (policy.outcome === 'queue_approval') {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                success: true,
-                queued_for_approval: true,
-                approval_id: policy.approvalId,
-                risk_class: policy.riskClass,
-                message: policy.reason,
-                next_step:
-                  'Call list_pending_approvals then approve_pending_action with approval_id to execute.',
-              }),
-            },
-          ],
-        };
-      }
-    }
+    // Policy + idempotency: unified in tool-registry executeTool (ToolPolicyGate chain).
 
     // Check new registry first
     const telemetryStart = Date.now();
@@ -1158,7 +1113,9 @@ class AlphaCloneMCPServer {
         executedViaRegistry = true;
         const tenantId = this.requireTenant((args || {}) as Record<string, any>);
         const userId = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
-        return await executeTool(tenantId, userId, name, (args || {}) as Record<string, any>);
+        return await executeTool(tenantId, userId, name, (args || {}) as Record<string, any>, {
+          executionSource: 'mcp',
+        });
       }
     } catch (regErr: any) {
       console.error(`Registry execution error for tool ${name}:`, regErr);

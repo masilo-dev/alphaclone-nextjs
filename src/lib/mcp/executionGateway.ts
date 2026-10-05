@@ -260,9 +260,10 @@ export async function executeMcpWrite<TResult>(
           details: result,
         }
       );
-      const outcomeUnknown = error.code === 'OUTCOME_UNKNOWN';
+      const outcomeUnknown =
+        error.code === 'OUTCOME_UNKNOWN' || error.code === 'UNKNOWN_EXECUTION_STATE';
       await updateExternalAction(actionId, {
-        status: outcomeUnknown ? 'outcome_unknown' : 'failed',
+        status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
         failure_reason: error.message,
       }).catch(() => undefined);
       await persistActionReceipt({
@@ -272,7 +273,7 @@ export async function executeMcpWrite<TResult>(
         idempotencyKey,
         receipt: {
           action_id: actionId,
-          status: outcomeUnknown ? 'outcome_unknown' : 'failed',
+          status: outcomeUnknown ? 'unknown_execution_state' : 'failed',
           timestamp: new Date().toISOString(),
           entity_type: params.target.resource_type || undefined,
         },
@@ -331,14 +332,14 @@ export async function executeMcpWrite<TResult>(
     const error = enrichError({ code, message, retryable: /network|timeout|ECONN/i.test(message) });
     const outcomeUnknown = /network|timeout|abort|socket|ECONN/i.test(message);
     await updateExternalAction(actionId, {
-      status: outcomeUnknown ? 'outcome_unknown' : 'failed', failure_reason: message,
+      status: outcomeUnknown ? 'unknown_execution_state' : 'failed', failure_reason: message,
     }).catch(() => undefined);
     await persistActionReceipt({
       tenantId: params.tenantId,
       userId: params.userId,
       tool: params.tool,
       idempotencyKey,
-      receipt: { action_id: actionId, status: outcomeUnknown ? 'outcome_unknown' : 'failed', timestamp: new Date().toISOString() },
+      receipt: { action_id: actionId, status: outcomeUnknown ? 'unknown_execution_state' : 'failed', timestamp: new Date().toISOString() },
       success: false,
       errorCode: error.code,
       errorMessage: error.message,
