@@ -557,9 +557,25 @@
 }
 
 .page-network-bg {
-  /* Stable canvas for auth + shared shells — no photo backgrounds */
-  background: #041027;
+  /* Stable canvas for auth + shared shells — brand navy wash, not electric blue */
+  background: var(--background-app, #F6F7F9);
   position: relative;
+}
+
+html.dark .page-network-bg {
+  background: linear-gradient(
+    160deg,
+    var(--brand-violet-950, #0A0C16) 0%,
+    var(--brand-navy, #212446) 48%,
+    var(--brand-violet-950, #0A0C16) 100%
+  );
+}
+
+html.light .page-network-bg,
+html.light .page-network-bg.marketing-theme {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in srgb, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
 }
 
 .marketing-glow-hero {

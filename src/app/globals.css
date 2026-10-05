@@ -442,10 +442,21 @@ html.dark {
   background-size: cover;
 }
 
-/* Page-wide deep-space network background for all marketing pages */
+/* Page-wide canvas for auth / shared shells — AlphaClone navy, not electric blue */
 .page-network-bg {
-  background: linear-gradient(135deg, #020D1A 0%, #041525 50%, #020D1A 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in srgb, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
   position: relative;
+}
+
+html.dark .page-network-bg {
+  background: linear-gradient(
+    160deg,
+    var(--brand-violet-950, #0A0C16) 0%,
+    var(--brand-navy, #212446) 48%,
+    var(--brand-violet-950, #0A0C16) 100%
+  );
 }
 
 .marketing-glow-hero {
@@ -455,8 +466,7 @@ html.dark {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(53, 106, 244, 0.16) 0%, rgba(53, 106, 244, 0) 70%);
-  /* AlphaClone blue glow */
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand-teal) 16%, transparent) 0%, transparent 70%);
   filter: blur(100px);
   z-index: -1;
   pointer-events: none;
@@ -1072,9 +1082,11 @@ html.light .next-step-highlight {
   color: #0f766e;
 }
 
-/* Auth / marketing pages in light mode — avoid dark-only network bg + card */
+/* Auth / marketing pages in light mode — soft teal wash on light canvas */
 html.light .page-network-bg.marketing-theme {
-  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f4 50%, #f6f7f9 100%);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, color-mix(in srgb, var(--brand-teal) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
 }
 
 .marketing-theme button,

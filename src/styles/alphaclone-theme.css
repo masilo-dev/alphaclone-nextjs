@@ -362,3 +362,51 @@ html.dark {
   border-color: var(--ws-border);
   color: var(--ws-text-primary);
 }
+
+/* Auth route root forces Untitled light surface semantics */
+.ac-auth-root {
+  min-height: 100dvh;
+  color-scheme: light;
+  --color-bg-primary: #ffffff;
+  --color-text-primary: var(--text-primary, #171923);
+  --color-text-secondary: var(--text-secondary, #5F6472);
+  --color-text-tertiary: var(--text-muted, #747A88);
+  --color-border-primary: var(--border-default, rgba(33, 36, 70, 0.14));
+  --ws-text-muted: var(--text-muted, #747A88);
+  --ws-text-secondary: var(--text-secondary, #5F6472);
+  --ws-border: var(--border-default, rgba(33, 36, 70, 0.14));
+  --ws-panel: #ffffff;
+  --ws-canvas: var(--background-app, #F6F7F9);
+}
+
+.ac-auth-canvas {
+  background:
+    radial-gradient(ellipse 70% 48% at 50% -8%, color-mix(in srgb, var(--brand-teal) 12%, transparent), transparent 62%),
+    radial-gradient(ellipse 40% 30% at 100% 100%, color-mix(in srgb, var(--brand-navy) 6%, transparent), transparent 70%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app, #F6F7F9) 100%);
+  color: var(--color-text-primary);
+}
+
+html.dark .ac-auth-canvas {
+  background: linear-gradient(
+    160deg,
+    var(--brand-violet-950) 0%,
+    var(--brand-navy) 45%,
+    var(--brand-violet-950) 100%
+  );
+  color: var(--color-text-primary);
+}
+
+.ac-auth-card {
+  background: var(--color-bg-primary, #ffffff);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-xl, 0.75rem);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
+}
+
+html.dark .ac-auth-card {
+  background: var(--ws-panel, var(--surface-primary));
+  border-color: var(--ws-border);
+  box-shadow: var(--ws-card-shadow);
+}
