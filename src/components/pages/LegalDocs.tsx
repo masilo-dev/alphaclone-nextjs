@@ -49,7 +49,7 @@ function LegalLayout({
             <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 type-caption text-[var(--marketing-text-muted)]">
                <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Privacy Policy</Link>
                <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Terms of Service</Link>
-               <Link href="/cookie-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
+               <Link href="/legal/cookies" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
                <a href="mailto:legal@alphaclonesystems.com" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Contact Legal</a>
             </div>
          </div>
@@ -60,11 +60,11 @@ function LegalLayout({
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
    return (
       <section id={id} className="scroll-mt-24">
-         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <ChevronRight className="w-5 h-5 text-teal-500 flex-shrink-0" />
+         <h2 className="text-xl font-bold text-[var(--marketing-text-primary)] mb-4 flex items-center gap-2">
+            <ChevronRight className="w-5 h-5 text-[var(--marketing-accent-hover)] flex-shrink-0" />
             {title}
          </h2>
-         <div className="pl-7 space-y-4 text-slate-400 leading-relaxed type-ui">
+         <div className="pl-7 space-y-4 text-[var(--marketing-text-secondary)] leading-relaxed type-ui">
             {children}
          </div>
       </section>
@@ -74,8 +74,8 @@ function Section({ id, title, children }: { id: string; title: string; children:
 function Sub({ title, children }: { title: string; children: React.ReactNode }) {
    return (
       <div>
-         <h3 className="text-white font-semibold mb-2 type-ui">{title}</h3>
-         <div className="text-slate-400 leading-relaxed">{children}</div>
+         <h3 className="text-[var(--marketing-text-primary)] font-semibold mb-2 type-ui">{title}</h3>
+         <div className="text-[var(--marketing-text-secondary)] leading-relaxed">{children}</div>
       </div>
    );
 }
@@ -84,8 +84,8 @@ function BulletList({ items }: { items: string[] }) {
    return (
       <ul className="space-y-1.5 ml-4">
          {items.map((item, i) => (
-            <li key={i} className="flex gap-2 text-slate-400 type-ui">
-               <span className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-2 flex-shrink-0" />
+            <li key={i} className="flex gap-2 text-[var(--marketing-text-secondary)] type-ui">
+               <span className="w-1.5 h-1.5 rounded-full bg-[var(--marketing-accent-hover)] mt-2 flex-shrink-0" />
                {item}
             </li>
          ))}
@@ -95,8 +95,8 @@ function BulletList({ items }: { items: string[] }) {
 
 function InfoBox({ children, variant = 'info' }: { children: React.ReactNode; variant?: 'info' | 'warn' }) {
    const styles = variant === 'warn'
-      ? 'bg-amber-500/5 border-amber-500/20 text-amber-300'
-      : 'bg-teal-500/5 border-teal-500/20 text-teal-300';
+      ? 'bg-amber-50 border-amber-200 text-amber-900'
+      : 'bg-sky-50 border-sky-200 text-sky-950';
    const Icon = variant === 'warn' ? AlertTriangle : Shield;
    return (
       <div className={`p-4 rounded-xl border ${styles} flex gap-3 type-caption leading-relaxed`}>
@@ -126,13 +126,13 @@ export function PrivacyPolicy() {
             <p>
                The data controller responsible for your personal information is:
             </p>
-            <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 type-ui not-italic">
-               <p><strong className="text-white">{COMPANY_LEGAL.legalName}</strong></p>
-               <p className="text-slate-300">{formatLegalAddress()}</p>
-               <p className="text-slate-400">{COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}</p>
-               <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
-               <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
-               <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>
+            <div className="mt-3 p-4 bg-[var(--marketing-bg-secondary)] rounded-xl border border-[var(--marketing-border)] type-ui not-italic">
+               <p><strong className="text-[var(--marketing-text-primary)]">{COMPANY_LEGAL.legalName}</strong></p>
+               <p className="text-[var(--marketing-text-secondary)]">{formatLegalAddress()}</p>
+               <p className="text-[var(--marketing-text-secondary)]">{COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}</p>
+               <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">legal@alphaclonesystems.com</a></p>
+               <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a></p>
+               <p>Website: <a href="https://alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">https://alphaclonesystems.com</a></p>
             </div>
          </Section>
 
@@ -158,7 +158,7 @@ export function PrivacyPolicy() {
                   'gmail.compose — to draft and compose emails',
                   'gmail.modify — to label and manage emails (e.g., mark as read)',
                ]} />
-               <p className="mt-3"><strong className="text-white">What we do NOT do with Gmail data:</strong></p>
+               <p className="mt-3"><strong className="text-[var(--marketing-text-primary)]">What we do NOT do with Gmail data:</strong></p>
                <BulletList items={[
                   'We do not store your email content on AlphaClone servers',
                   'We do not use Gmail data for advertising or marketing purposes',
@@ -166,14 +166,14 @@ export function PrivacyPolicy() {
                   'We do not allow humans to read your email content unless you explicitly request support access',
                   'We do not use Gmail data to train AI models',
                ]} />
-               <p className="mt-3">Gmail data is retrieved in real time via Google's API and displayed only to the authenticated user. You can revoke AlphaClone's Gmail access at any time from your <a href="https://myaccount.google.com/permissions" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Google Account Permissions page</a>.</p>
+               <p className="mt-3">Gmail data is retrieved in real time via Google's API and displayed only to the authenticated user. You can revoke AlphaClone's Gmail access at any time from your <a href="https://myaccount.google.com/permissions" className="text-[var(--marketing-accent-hover)] hover:underline" target="_blank" rel="noreferrer">Google Account Permissions page</a>.</p>
             </Sub>
             <Sub title="2.4 LinkedIn API & Lead Gen Forms Data">
                <InfoBox>
                   AlphaClone integrates with LinkedIn APIs to manage organization and profile publishing, retrieve engagement analytics, and automatically synchronize Lead Gen Form responses directly into your workspace CRM.
                </InfoBox>
                <p className="mt-3">When you authorize LinkedIn OAuth integration, AlphaClone requests access to requested product scopes including: openid, profile, email, r_basicprofile, r_profile_basicinfo, w_member_social, w_organization_social, r_organization_social, r_organization_admin, rw_organization_admin, r_ads, rw_ads, r_ads_reporting, r_events, rw_events, r_1st_connections_size, and r_verify.</p>
-               <p className="mt-3"><strong className="text-white">LinkedIn Lead Gen Forms & Lead Data Processing:</strong></p>
+               <p className="mt-3"><strong className="text-[var(--marketing-text-primary)]">LinkedIn Lead Gen Forms & Lead Data Processing:</strong></p>
                <BulletList items={[
                   'When prospects submit a LinkedIn Lead Gen Form connected to your account, form responses (such as full name, email address, company name, job title, and phone number) are securely received via real-time webhooks or API sync.',
                   'Lead data is mapped directly into your AlphaClone CRM leads table to enable automated follow-ups and lead management.',
@@ -200,7 +200,7 @@ export function PrivacyPolicy() {
                <p>We automatically collect technical data when you use the platform: IP address, browser type and version, operating system, device type, pages visited, features used, session duration, and error logs. This data is used for platform security, debugging, and improving the user experience.</p>
             </Sub>
             <Sub title="2.10 Payment Data">
-               <p>Payment processing is handled entirely by Stripe, Inc. AlphaClone never stores, processes, or has access to your credit card details. What we retain is limited to: Stripe Customer ID, subscription plan details, billing address, and payment history (invoice amounts and dates). See <a href="https://stripe.com/privacy" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Stripe's Privacy Policy</a> for how they handle payment data.</p>
+               <p>Payment processing is handled entirely by Stripe, Inc. AlphaClone never stores, processes, or has access to your credit card details. What we retain is limited to: Stripe Customer ID, subscription plan details, billing address, and payment history (invoice amounts and dates). See <a href="https://stripe.com/privacy" className="text-[var(--marketing-accent-hover)] hover:underline" target="_blank" rel="noreferrer">Stripe's Privacy Policy</a> for how they handle payment data.</p>
             </Sub>
             <Sub title="2.11 AI Growth Agent Data">
                <p>The AI Growth Agent uses publicly available business directory data to identify prospective leads. We do not scrape private data or use data obtained through unauthorized means. Outreach conversations managed by the AI agent are stored in your workspace and are not accessible to other users or AlphaClone staff without your consent.</p>
@@ -222,9 +222,9 @@ export function PrivacyPolicy() {
                   { basis: 'Legal Obligation (Art. 6(1)(c) GDPR)', desc: 'Responding to lawful government or court orders, tax compliance, and financial record-keeping obligations.' },
                   { basis: 'Consent (Art. 6(1)(a) GDPR)', desc: 'Non-essential cookies (analytics, marketing), Gmail API access, and marketing communications. You may withdraw consent at any time.' },
                ].map((item, i) => (
-                  <div key={i} className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800">
-                     <p className="text-white font-semibold type-card-description mb-1">{item.basis}</p>
-                     <p className="text-slate-400 type-card-description">{item.desc}</p>
+                  <div key={i} className="p-4 bg-[var(--marketing-bg-secondary)] rounded-xl border border-[var(--marketing-border)]">
+                     <p className="text-[var(--marketing-text-primary)] font-semibold type-card-description mb-1">{item.basis}</p>
+                     <p className="text-[var(--marketing-text-secondary)] type-card-description">{item.desc}</p>
                   </div>
                ))}
             </div>
@@ -249,10 +249,10 @@ export function PrivacyPolicy() {
             <div className="mt-4 overflow-x-auto min-w-0">
                <table className="w-full min-w-[480px] type-caption border-collapse">
                   <thead>
-                     <tr className="border-b border-slate-700">
-                        <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Provider</th>
-                        <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Purpose</th>
-                        <th className="text-left py-2 text-slate-300 font-semibold">Data Shared</th>
+                     <tr className="border-b border-[var(--marketing-border)]">
+                        <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Provider</th>
+                        <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Purpose</th>
+                        <th className="text-left py-2 text-[var(--marketing-text-secondary)] font-semibold">Data Shared</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50">
@@ -272,9 +272,9 @@ export function PrivacyPolicy() {
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
                         <tr key={i}>
-                           <td className="py-2 pr-4 text-white">{row.p}</td>
-                           <td className="py-2 pr-4 text-slate-400">{row.pu}</td>
-                           <td className="py-2 text-slate-400">{row.d}</td>
+                           <td className="py-2 pr-4 text-[var(--marketing-text-primary)]">{row.p}</td>
+                           <td className="py-2 pr-4 text-[var(--marketing-text-secondary)]">{row.pu}</td>
+                           <td className="py-2 text-[var(--marketing-text-secondary)]">{row.d}</td>
                         </tr>
                      ))}
                   </tbody>
@@ -297,7 +297,7 @@ export function PrivacyPolicy() {
          </Section>
 
          <Section id="your-rights" title="7. Your Rights (GDPR, POPIA, CCPA)">
-            <p>Depending on your jurisdiction, you have the following rights regarding your personal data. To exercise any of these rights, email <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>. We will respond within 30 days.</p>
+            <p>Depending on your jurisdiction, you have the following rights regarding your personal data. To exercise any of these rights, email <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a>. We will respond within 30 days.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 mb-6">
                {[
                   { right: 'Right of Access / Right to Know', desc: 'Request a copy of all personal data we hold about you (GDPR, CCPA).' },
@@ -309,9 +309,9 @@ export function PrivacyPolicy() {
                   { right: 'Right to Opt-Out of Sale or Sharing', desc: 'California residents can opt out of the sale or sharing of their personal information (CCPA). AlphaClone does not sell personal data.' },
                   { right: 'Right to Non-Discrimination', desc: 'You will not receive discriminatory treatment for exercising your privacy rights (CCPA).' },
                ].map((item, i) => (
-                  <div key={i} className="p-3 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
-                     <p className="text-white font-semibold type-card-description mb-1">{item.right}</p>
-                     <p className="text-slate-500 type-card-description">{item.desc}</p>
+                  <div key={i} className="p-3 bg-[var(--marketing-bg-secondary)] rounded-lg border border-[var(--marketing-border)]">
+                     <p className="text-[var(--marketing-text-primary)] font-semibold type-card-description mb-1">{item.right}</p>
+                     <p className="text-[var(--marketing-text-muted)] type-card-description">{item.desc}</p>
                   </div>
                ))}
             </div>
@@ -330,9 +330,9 @@ export function PrivacyPolicy() {
                'Regular automated security audits and penetration testing',
                'Zero-knowledge architecture for financial data (your accountant sees only what you grant)',
             ]} />
-            <div className="mt-4 p-4 border border-teal-500/20 bg-teal-500/5 rounded-xl">
+            <div className="mt-4 p-4 border border-sky-200 bg-sky-50 rounded-xl">
                <h4 className="text-teal-300 type-ui font-semibold mb-2">Data Breach Notification Policy</h4>
-               <p className="text-slate-400 type-card-description leading-relaxed">
+               <p className="text-[var(--marketing-text-secondary)] type-card-description leading-relaxed">
                   In the event of a security breach that poses a high risk to the rights and freedoms of individuals (e.g., unauthorized access to unencrypted personal data), AlphaClone Systems will notify all affected users and relevant supervisory authorities without undue delay, and in any event within 72 hours of becoming aware of the breach. Notifications will include the nature of the breach, potential consequences, and the mitigation measures taken.
                </p>
             </div>
@@ -340,11 +340,11 @@ export function PrivacyPolicy() {
 
          <Section id="cookies" title="9. Cookies">
             <p>We use cookies and similar tracking technologies. Our Cookie Policy (linked below) provides full details on all cookies used, their purposes, and how to manage your preferences. You may update your cookie preferences at any time using the cookie preference center accessible from the bottom of any page.</p>
-            <p><Link href="/cookie-policy" className="text-teal-400 hover:underline">→ Read the Full Cookie Policy</Link></p>
+            <p><Link href="/legal/cookies" className="text-[var(--marketing-accent-hover)] hover:underline">→ Read the Full Cookie Policy</Link></p>
          </Section>
 
          <Section id="children" title="10. Children's Privacy">
-            <p>The AlphaClone Business OS is intended for use by businesses and professionals aged 18 and over. We do not knowingly collect personal data from anyone under 18. If you believe a minor has provided us with personal data, contact us at <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a> and we will delete the data immediately.</p>
+            <p>The AlphaClone Business OS is intended for use by businesses and professionals aged 18 and over. We do not knowingly collect personal data from anyone under 18. If you believe a minor has provided us with personal data, contact us at <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a> and we will delete the data immediately.</p>
          </Section>
 
          <Section id="changes" title="11. Changes to This Policy">
@@ -353,10 +353,10 @@ export function PrivacyPolicy() {
 
          <Section id="contact" title="12. Contact Us">
             <p>For privacy-related enquiries, data subject rights requests, or complaints:</p>
-            <div className="p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 type-ui mt-3">
-               <p><strong className="text-white">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
-               <p><strong className="text-white">Legal Department:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
-               <p><strong className="text-white">General Support:</strong> <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
+            <div className="p-4 bg-[var(--marketing-bg-secondary)] rounded-xl border border-[var(--marketing-border)] type-ui mt-3">
+               <p><strong className="text-[var(--marketing-text-primary)]">Privacy & Data Protection:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a></p>
+               <p><strong className="text-[var(--marketing-text-primary)]">Legal Department:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">legal@alphaclonesystems.com</a></p>
+               <p><strong className="text-[var(--marketing-text-primary)]">General Support:</strong> <a href="mailto:support@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">support@alphaclonesystems.com</a></p>
             </div>
          </Section>
       </LegalLayout>
@@ -380,7 +380,7 @@ export function TermsOfService() {
          </InfoBox>
 
          <Section id="acceptance" title="1. Acceptance of Terms">
-            <p>By accessing or using the AlphaClone Business OS platform at <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">alphaclonesystems.com</a> or any associated mobile or desktop applications ("Platform"), you agree to be bound by these Terms of Service ("Terms"), our Privacy Policy, and Cookie Policy. If you are using the Platform on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
+            <p>By accessing or using the AlphaClone Business OS platform at <a href="https://alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">alphaclonesystems.com</a> or any associated mobile or desktop applications ("Platform"), you agree to be bound by these Terms of Service ("Terms"), our Privacy Policy, and Cookie Policy. If you are using the Platform on behalf of an organization, you represent that you have the authority to bind that organization to these Terms.</p>
             <p>If you do not agree to these Terms, you must not use the Platform. Continued use of the Platform after any modification to these Terms constitutes your acceptance of the revised Terms.</p>
          </Section>
 
@@ -397,7 +397,7 @@ export function TermsOfService() {
 
          <Section id="account" title="3. Account Registration & Security">
             <Sub title="3.1 Account Responsibility">
-               <p>You are solely responsible for all activity that occurs under your account. You must: choose a strong password, keep your credentials confidential, notify us immediately at <a href="mailto:security@alphaclonesystems.com" className="text-teal-400 hover:underline">security@alphaclonesystems.com</a> of any unauthorized access or security breach, and not share your account with unauthorized third parties.</p>
+               <p>You are solely responsible for all activity that occurs under your account. You must: choose a strong password, keep your credentials confidential, notify us immediately at <a href="mailto:security@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">security@alphaclonesystems.com</a> of any unauthorized access or security breach, and not share your account with unauthorized third parties.</p>
             </Sub>
             <Sub title="3.2 Team Members">
                <p>Subscription plans allow you to invite team members. You are responsible for all actions taken by your team members within your workspace. Each team member must individually agree to these Terms. You may revoke team member access at any time from Settings → Team Management.</p>
@@ -545,7 +545,7 @@ export function TermsOfService() {
 
          <Section id="contact-legal" title="18. Contact">
             <p>For legal enquiries, contract disputes, or formal notices:</p>
-            <p><strong className="text-white">Email:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
+            <p><strong className="text-[var(--marketing-text-primary)]">Email:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">legal@alphaclonesystems.com</a></p>
          </Section>
       </LegalLayout>
    );
@@ -559,9 +559,9 @@ const cookieCategories = [
       name: 'Strictly Necessary',
       required: true,
       color: 'teal',
-      surfaceClass: 'bg-teal-500/5 border-teal-500/15',
-      iconClass: 'text-teal-400',
-      labelClass: 'text-teal-300',
+      surfaceClass: 'bg-sky-50 border-sky-200',
+      iconClass: 'text-[var(--marketing-accent-hover)]',
+      labelClass: 'text-teal-700',
       icon: Lock,
       desc: 'These cookies are essential for the platform to function. They handle authentication, session management, CSRF protection, and security features. You cannot disable these cookies — without them, the platform cannot operate.',
       cookies: [
@@ -576,9 +576,9 @@ const cookieCategories = [
       name: 'Analytics & Performance',
       required: false,
       color: 'blue',
-      surfaceClass: 'bg-blue-500/5 border-blue-500/15',
-      iconClass: 'text-blue-400',
-      labelClass: 'text-blue-300',
+      surfaceClass: 'bg-blue-50 border-blue-200',
+      iconClass: 'text-blue-600',
+      labelClass: 'text-blue-700',
       icon: Eye,
       desc: 'These cookies help us understand how users interact with the platform. Data is anonymized and aggregated — we cannot identify individual users from analytics data. We use this to improve the platform experience.',
       cookies: [
@@ -590,9 +590,9 @@ const cookieCategories = [
       name: 'Functional',
       required: false,
       color: 'indigo',
-      surfaceClass: 'bg-indigo-500/5 border-indigo-500/15',
-      iconClass: 'text-indigo-400',
-      labelClass: 'text-indigo-300',
+      surfaceClass: 'bg-indigo-50 border-indigo-200',
+      iconClass: 'text-indigo-600',
+      labelClass: 'text-indigo-700',
       icon: Database,
       desc: 'Functional cookies remember your preferences to enhance your experience — such as your selected language, sidebar state, theme preference, and dashboard layout settings.',
       cookies: [
@@ -606,9 +606,9 @@ const cookieCategories = [
       name: 'Marketing',
       required: false,
       color: 'violet',
-      surfaceClass: 'bg-violet-500/5 border-violet-500/15',
-      iconClass: 'text-violet-400',
-      labelClass: 'text-violet-300',
+      surfaceClass: 'bg-violet-50 border-violet-200',
+      iconClass: 'text-violet-600',
+      labelClass: 'text-violet-700',
       icon: ExternalLink,
       desc: 'Marketing cookies track your activity across websites to help us deliver relevant advertising. We currently use these sparingly — only for retargeting visitors who did not complete registration.',
       cookies: [
@@ -623,20 +623,20 @@ function CookieCategoryTable({ cookies }: { cookies: typeof cookieCategories[0][
       <div className="mt-3 overflow-x-auto min-w-0">
          <table className="w-full min-w-[520px] type-caption border-collapse">
             <thead>
-               <tr className="border-b border-slate-700/50">
-                  <th className="text-left py-2 pr-3 text-slate-400 font-semibold w-1/3">Cookie Name</th>
-                  <th className="text-left py-2 pr-3 text-slate-400 font-semibold">Purpose</th>
-                  <th className="text-left py-2 pr-3 text-slate-400 font-semibold w-24">Duration</th>
-                  <th className="text-left py-2 text-slate-400 font-semibold w-28">Provider</th>
+               <tr className="border-b border-[var(--marketing-border)]">
+                  <th className="text-left py-2 pr-3 text-[var(--marketing-text-secondary)] font-semibold w-1/3">Cookie Name</th>
+                  <th className="text-left py-2 pr-3 text-[var(--marketing-text-secondary)] font-semibold">Purpose</th>
+                  <th className="text-left py-2 pr-3 text-[var(--marketing-text-secondary)] font-semibold w-24">Duration</th>
+                  <th className="text-left py-2 text-[var(--marketing-text-secondary)] font-semibold w-28">Provider</th>
                </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/30">
                {cookies.map((c, i) => (
                   <tr key={i}>
-                     <td className="py-2 pr-3 font-mono text-teal-400 type-table-cell">{c.name}</td>
-                     <td className="py-2 pr-3 text-slate-400">{c.purpose}</td>
-                     <td className="py-2 pr-3 text-slate-500">{c.duration}</td>
-                     <td className="py-2 text-slate-500">{c.party}</td>
+                     <td className="py-2 pr-3 font-mono text-[var(--marketing-accent-hover)] type-table-cell">{c.name}</td>
+                     <td className="py-2 pr-3 text-[var(--marketing-text-secondary)]">{c.purpose}</td>
+                     <td className="py-2 pr-3 text-[var(--marketing-text-muted)]">{c.duration}</td>
+                     <td className="py-2 text-[var(--marketing-text-muted)]">{c.party}</td>
                   </tr>
                ))}
             </tbody>
@@ -673,7 +673,7 @@ export function CookiePolicy() {
                   <div key={i} className={`p-3 rounded-xl border text-center ${cat.surfaceClass}`}>
                      <cat.icon className={`w-4 h-4 mx-auto mb-2 ${cat.iconClass}`} />
                      <p className={`type-card-description font-semibold ${cat.labelClass}`}>{cat.name}</p>
-                     {cat.required && <p className="type-card-description text-slate-500 mt-1">Always Active</p>}
+                     {cat.required && <p className="type-card-description text-[var(--marketing-text-muted)] mt-1">Always Active</p>}
                   </div>
                ))}
             </div>
@@ -683,31 +683,31 @@ export function CookiePolicy() {
             <p>Below is a full list of all cookies used by AlphaClone, organized by category. Click each category to expand the full cookie table.</p>
             <div className="mt-6 space-y-4">
                {cookieCategories.map((cat, i) => (
-                  <div key={i} className="rounded-2xl border border-slate-800 overflow-hidden">
+                  <div key={i} className="rounded-2xl border border-[var(--marketing-border)] overflow-hidden">
                      <button
                         type="button"
                         onClick={() => setExpanded(expanded === i ? null : i)}
                         aria-expanded={expanded === i}
                         aria-controls={`cookie-category-${i}`}
-                        className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-900/50 transition-colors"
+                        className="w-full flex items-center justify-between p-5 text-left hover:bg-[var(--marketing-bg-secondary)] transition-colors"
                      >
                         <div className="flex items-center gap-3">
                            <cat.icon className={`w-5 h-5 ${cat.iconClass}`} />
                            <div>
                               <div className="flex items-center gap-2">
-                                 <span className="text-white font-semibold type-ui">{cat.name}</span>
+                                 <span className="text-[var(--marketing-text-primary)] font-semibold type-ui text-[var(--marketing-text-primary)]">{cat.name}</span>
                                  {cat.required && (
-                                    <span className="type-caption bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
+                                    <span className="type-caption bg-teal-500/10 text-[var(--marketing-accent-hover)] border border-teal-500/20 rounded-full px-2 py-0.5">Always Active</span>
                                  )}
                               </div>
-                              <p className="text-slate-500 type-card-description mt-0.5">{cat.cookies.length} cookie{cat.cookies.length > 1 ? 's' : ''}</p>
+                              <p className="text-[var(--marketing-text-muted)] type-card-description mt-0.5">{cat.cookies.length} cookie{cat.cookies.length > 1 ? 's' : ''}</p>
                            </div>
                         </div>
-                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expanded === i ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-[var(--marketing-text-secondary)] transition-transform ${expanded === i ? 'rotate-180' : ''}`} />
                      </button>
                      {expanded === i && (
-                        <div id={`cookie-category-${i}`} className="px-5 pb-5 border-t border-slate-800/50">
-                           <p className="text-slate-400 type-card-description mt-4 mb-4 leading-relaxed">{cat.desc}</p>
+                        <div id={`cookie-category-${i}`} className="px-5 pb-5 border-t border-[var(--marketing-border)]">
+                           <p className="text-[var(--marketing-text-secondary)] type-card-description mt-4 mb-4 leading-relaxed">{cat.desc}</p>
                            <CookieCategoryTable cookies={cat.cookies} />
                         </div>
                      )}
@@ -730,14 +730,14 @@ export function CookiePolicy() {
                      { name: 'Edge', url: 'https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09' },
                      { name: 'Brave', url: 'https://support.brave.com/hc/en-us/articles/360022806212-How-do-I-use-Shields-while-browsing' },
                   ].map((b, i) => (
-                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 type-ui text-teal-400 hover:underline p-2 bg-white/[0.04] backdrop-blur-sm rounded-lg border border-slate-800">
+                     <a key={i} href={b.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 type-ui text-[var(--marketing-accent-hover)] hover:underline p-2 bg-[var(--marketing-bg-secondary)] rounded-lg border border-[var(--marketing-border)]">
                         {b.name} Settings <ExternalLink className="w-3 h-3" />
                      </a>
                   ))}
                </div>
             </Sub>
             <Sub title="4.3 Opt-Out of Analytics">
-               <p>You can opt out of Google Analytics tracking across all websites using the <a href="https://tools.google.com/dlpage/gaoptout" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Google Analytics Opt-out Browser Add-on</a>.</p>
+               <p>You can opt out of Google Analytics tracking across all websites using the <a href="https://tools.google.com/dlpage/gaoptout" className="text-[var(--marketing-accent-hover)] hover:underline" target="_blank" rel="noreferrer">Google Analytics Opt-out Browser Add-on</a>.</p>
             </Sub>
          </Section>
 
@@ -757,7 +757,7 @@ export function CookiePolicy() {
          </Section>
 
          <Section id="contact-cookie" title="7. Contact">
-            <p>Cookie-related enquiries: <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
+            <p>Cookie-related enquiries: <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a></p>
          </Section>
       </LegalLayout>
    );
@@ -777,7 +777,7 @@ export function SLA() {
             </InfoBox>
 
             <Section id="uptime-commitment" title="1. Uptime Commitment">
-                <p>AlphaClone Systems ("AlphaClone") commits to a monthly uptime target of <strong className="text-white">99.9%</strong> for all core platform services, including:</p>
+                <p>AlphaClone Systems ("AlphaClone") commits to a monthly uptime target of <strong className="text-[var(--marketing-text-primary)]">99.9%</strong> for all core platform services, including:</p>
                 <BulletList items={[
                     'Dashboard and user-facing application (alphaclonesystems.com/dashboard)',
                     'CRM, invoicing, contract, and project modules',
@@ -785,7 +785,7 @@ export function SLA() {
                     'Authentication and account management services',
                     'Email delivery (transactional) via our platform',
                 ]} />
-                <p className="mt-3">Monthly uptime percentage is calculated as: <span className="text-white font-mono type-card-description">((total minutes in month − downtime minutes) / total minutes in month) × 100</span>. Scheduled maintenance windows do not count as downtime if announced ≥48 hours in advance.</p>
+                <p className="mt-3">Monthly uptime percentage is calculated as: <span className="text-[var(--marketing-text-primary)] font-mono type-card-description">((total minutes in month − downtime minutes) / total minutes in month) × 100</span>. Scheduled maintenance windows do not count as downtime if announced ≥48 hours in advance.</p>
             </Section>
 
             <Section id="definitions" title="2. Definitions">
@@ -796,9 +796,9 @@ export function SLA() {
                         { term: 'Emergency Maintenance', def: 'Unplanned maintenance required to protect platform security or stability. AlphaClone will provide as much advance notice as practicable. Emergency maintenance counts as downtime if it exceeds 30 minutes.' },
                         { term: 'Service Credit', def: 'A pro-rated credit applied to your next billing cycle as a remedy for verified downtime exceeding the SLA threshold. Credits are non-transferable and have no cash value.' },
                     ].map((item, i) => (
-                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
-                            <p className="text-white font-semibold type-card-description mb-1">{item.term}</p>
-                            <p className="text-slate-400 type-card-description">{item.def}</p>
+                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-[var(--marketing-border)]">
+                            <p className="text-[var(--marketing-text-primary)] font-semibold type-card-description mb-1">{item.term}</p>
+                            <p className="text-[var(--marketing-text-secondary)] type-card-description">{item.def}</p>
                         </div>
                     ))}
                 </div>
@@ -809,12 +809,12 @@ export function SLA() {
                 <div className="mt-4 overflow-x-auto min-w-0">
                     <table className="w-full min-w-[480px] type-caption border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-700">
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Priority</th>
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Condition</th>
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Starter</th>
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Pro</th>
-                                <th className="text-left py-2 text-slate-300 font-semibold">Enterprise</th>
+                            <tr className="border-b border-[var(--marketing-border)]">
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Priority</th>
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Condition</th>
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Starter</th>
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Pro</th>
+                                <th className="text-left py-2 text-[var(--marketing-text-secondary)] font-semibold">Enterprise</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/50">
@@ -825,17 +825,17 @@ export function SLA() {
                                 { p: 'P3 — Low', c: 'General question or feature request', s: '7 days', pro: '5 days', ent: '48h' },
                             ].map((row, i) => (
                                 <tr key={i}>
-                                    <td className="py-2 pr-4 text-white font-semibold">{row.p}</td>
-                                    <td className="py-2 pr-4 text-slate-400">{row.c}</td>
-                                    <td className="py-2 pr-4 text-slate-400">{row.s}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-primary)] font-semibold">{row.p}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-secondary)]">{row.c}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-secondary)]">{row.s}</td>
                                     <td className="py-2 pr-4 text-indigo-400">{row.pro}</td>
-                                    <td className="py-2 text-teal-400">{row.ent}</td>
+                                    <td className="py-2 text-[var(--marketing-accent-hover)]">{row.ent}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                <p className="mt-4 type-caption text-slate-500">Response time = time to first meaningful response, not time to resolution. Resolution times vary by issue complexity.</p>
+                <p className="mt-4 type-caption text-[var(--marketing-text-muted)]">Response time = time to first meaningful response, not time to resolution. Resolution times vary by issue complexity.</p>
             </Section>
 
             <Section id="service-credits" title="4. Service Credits">
@@ -843,9 +843,9 @@ export function SLA() {
                 <div className="mt-4 overflow-x-auto min-w-0">
                     <table className="w-full min-w-[340px] type-caption border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-700">
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Monthly Uptime</th>
-                                <th className="text-left py-2 text-slate-300 font-semibold">Credit</th>
+                            <tr className="border-b border-[var(--marketing-border)]">
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Monthly Uptime</th>
+                                <th className="text-left py-2 text-[var(--marketing-text-secondary)] font-semibold">Credit</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/50">
@@ -855,7 +855,7 @@ export function SLA() {
                                 { uptime: 'Below 95.0%', credit: '50% of monthly fee' },
                             ].map((row, i) => (
                                 <tr key={i}>
-                                    <td className="py-2 pr-4 text-white">{row.uptime}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-primary)]">{row.uptime}</td>
                                     <td className="py-2 text-indigo-400 font-semibold">{row.credit}</td>
                                 </tr>
                             ))}
@@ -863,7 +863,7 @@ export function SLA() {
                     </table>
                 </div>
                 <Sub title="How to Claim a Credit">
-                    <p>Submit a credit request to <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a> within <strong className="text-white">30 calendar days</strong> of the incident, with the subject line "SLA Credit Request — [Month Year]". Include your account email, approximate downtime window, and any error messages observed. Credits will be applied to the next billing cycle within 10 business days of verification.</p>
+                    <p>Submit a credit request to <a href="mailto:support@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">support@alphaclonesystems.com</a> within <strong className="text-[var(--marketing-text-primary)]">30 calendar days</strong> of the incident, with the subject line "SLA Credit Request — [Month Year]". Include your account email, approximate downtime window, and any error messages observed. Credits will be applied to the next billing cycle within 10 business days of verification.</p>
                 </Sub>
             </Section>
 
@@ -882,11 +882,11 @@ export function SLA() {
             </Section>
 
             <Section id="monitoring" title="6. Status &amp; Monitoring">
-                <p>Real-time platform status is published at <a href="/platform-status" className="text-teal-400 hover:underline">/platform-status</a>. You can subscribe to status alerts by emailing <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a> with "Status Alerts" in the subject line. Incident post-mortems for P0 events are published within 5 business days of resolution.</p>
+                <p>Real-time platform status is published at <a href="/platform-status" className="text-[var(--marketing-accent-hover)] hover:underline">/platform-status</a>. You can subscribe to status alerts by emailing <a href="mailto:support@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">support@alphaclonesystems.com</a> with "Status Alerts" in the subject line. Incident post-mortems for P0 events are published within 5 business days of resolution.</p>
             </Section>
 
             <Section id="contact-sla" title="7. Contact">
-                <p>For SLA queries or credit claims: <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
+                <p>For SLA queries or credit claims: <a href="mailto:support@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">support@alphaclonesystems.com</a></p>
             </Section>
         </LegalLayout>
     );
@@ -911,9 +911,9 @@ export function DPA() {
                         { role: 'Customer (Data Controller)', def: 'The business or individual subscribing to AlphaClone. The Controller determines the purposes and means of processing personal data of their clients, contacts, and team members. The Controller is responsible for ensuring their instructions to AlphaClone are lawful.' },
                         { role: 'Alphaclone Systems, LLC (Data Processor)', def: 'AlphaClone processes personal data only on behalf of and according to the documented instructions of the Controller. AlphaClone acts as a Controller only for its own account administration data (billing, authentication).' },
                     ].map((item, i) => (
-                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-slate-800">
-                            <p className="text-white font-semibold type-card-description mb-1">{item.role}</p>
-                            <p className="text-slate-400 type-card-description">{item.def}</p>
+                        <div key={i} className="p-4 bg-white/[0.04] rounded-xl border border-[var(--marketing-border)]">
+                            <p className="text-[var(--marketing-text-primary)] font-semibold type-card-description mb-1">{item.role}</p>
+                            <p className="text-[var(--marketing-text-secondary)] type-card-description">{item.def}</p>
                         </div>
                     ))}
                 </div>
@@ -932,8 +932,8 @@ export function DPA() {
                                 { k: 'Data Subjects', v: "Customer's clients, leads, employees, team members, and contractors" },
                             ].map((row, i) => (
                                 <tr key={i}>
-                                    <td className="py-2 pr-4 text-slate-300 font-semibold w-1/3">{row.k}</td>
-                                    <td className="py-2 text-slate-400">{row.v}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold w-1/3">{row.k}</td>
+                                    <td className="py-2 text-[var(--marketing-text-secondary)]">{row.v}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -959,11 +959,11 @@ export function DPA() {
                 <div className="mt-4 overflow-x-auto min-w-0">
                     <table className="w-full min-w-[520px] type-caption border-collapse">
                         <thead>
-                            <tr className="border-b border-slate-700">
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Sub-processor</th>
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Purpose</th>
-                                <th className="text-left py-2 pr-4 text-slate-300 font-semibold">Location</th>
-                                <th className="text-left py-2 text-slate-300 font-semibold">Safeguard</th>
+                            <tr className="border-b border-[var(--marketing-border)]">
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Sub-processor</th>
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Purpose</th>
+                                <th className="text-left py-2 pr-4 text-[var(--marketing-text-secondary)] font-semibold">Location</th>
+                                <th className="text-left py-2 text-[var(--marketing-text-secondary)] font-semibold">Safeguard</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/50">
@@ -976,16 +976,16 @@ export function DPA() {
                                 { sp: 'Sentry, Inc.', pu: 'Error monitoring', loc: 'US', sg: 'SCCs + DPA' },
                             ].map((row, i) => (
                                 <tr key={i}>
-                                    <td className="py-2 pr-4 text-white">{row.sp}</td>
-                                    <td className="py-2 pr-4 text-slate-400">{row.pu}</td>
-                                    <td className="py-2 pr-4 text-slate-400">{row.loc}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-primary)]">{row.sp}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-secondary)]">{row.pu}</td>
+                                    <td className="py-2 pr-4 text-[var(--marketing-text-secondary)]">{row.loc}</td>
                                     <td className="py-2 text-blue-400">{row.sg}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                <p className="mt-3 type-card-description text-slate-500">AlphaClone will notify the Customer of any intended addition or replacement of sub-processors by updating this DPA and sending an email notification at least 14 days before the change takes effect. The Customer may object to a new sub-processor in writing within 14 days.</p>
+                <p className="mt-3 type-card-description text-[var(--marketing-text-muted)]">AlphaClone will notify the Customer of any intended addition or replacement of sub-processors by updating this DPA and sending an email notification at least 14 days before the change takes effect. The Customer may object to a new sub-processor in writing within 14 days.</p>
             </Section>
 
             <Section id="transfers" title="5. International Data Transfers">
@@ -995,7 +995,7 @@ export function DPA() {
                     'UK International Data Transfer Addendum (IDTA) for transfers from the UK',
                     'Binding Corporate Rules where applicable',
                 ]} />
-                <p className="mt-3">Copies of the applicable SCCs are available on request from <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+                <p className="mt-3">Copies of the applicable SCCs are available on request from <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a>.</p>
             </Section>
 
             <Section id="audit-rights" title="6. Audit Rights">
@@ -1029,9 +1029,9 @@ export function DPA() {
 
             <Section id="contact-dpa" title="9. Contact &amp; DPA Requests">
                 <p>To request a signed copy of this DPA, or for any data processing queries:</p>
-                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 type-ui mt-3">
-                    <p><strong className="text-white">Privacy &amp; DPA:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
-                    <p><strong className="text-white">Legal:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-[var(--marketing-border)] type-ui mt-3">
+                    <p><strong className="text-[var(--marketing-text-primary)]">Privacy &amp; DPA:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a></p>
+                    <p><strong className="text-[var(--marketing-text-primary)]">Legal:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">legal@alphaclonesystems.com</a></p>
                 </div>
             </Section>
         </LegalLayout>
@@ -1065,9 +1065,9 @@ export function PrivacyChoices() {
                         { right: 'Right to Limit Use of Sensitive PI', desc: 'You have the right to limit our use and disclosure of your sensitive personal information to certain purposes.' },
                         { right: 'Right to Non-Discrimination', desc: 'We will not discriminate against you for exercising any of your CCPA rights.' },
                     ].map((item, i) => (
-                        <div key={i} className="p-3 bg-white/[0.04] rounded-lg border border-slate-800">
-                            <p className="text-white font-semibold type-card-description mb-1">{item.right}</p>
-                            <p className="text-slate-500 type-card-description">{item.desc}</p>
+                        <div key={i} className="p-3 bg-white/[0.04] rounded-lg border border-[var(--marketing-border)]">
+                            <p className="text-[var(--marketing-text-primary)] font-semibold type-card-description mb-1">{item.right}</p>
+                            <p className="text-[var(--marketing-text-muted)] type-card-description">{item.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -1077,12 +1077,12 @@ export function PrivacyChoices() {
                 <InfoBox>
                     AlphaClone Systems does not sell your personal information to third parties for money. We do not share your personal information with third parties for cross-context behavioural advertising. No opt-out action is required for the sale of personal data because we do not engage in this practice.
                 </InfoBox>
-                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Railway, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
+                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Railway, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-[var(--marketing-accent-hover)] hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
                 <p className="mt-3">If you believe we have incorrectly categorised any data sharing as non-sale, or if you wish to formally record an opt-out preference, contact us at the address below.</p>
             </Section>
 
             <Section id="sensitive-pi" title="3. Sensitive Personal Information">
-                <p>AlphaClone does not collect or process sensitive personal information as defined by the CPRA (e.g., social security numbers, financial account credentials, precise geolocation, health data, biometric data) in the ordinary course of providing our service. If you believe sensitive data has been inadvertently collected, contact us immediately at <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+                <p>AlphaClone does not collect or process sensitive personal information as defined by the CPRA (e.g., social security numbers, financial account credentials, precise geolocation, health data, biometric data) in the ordinary course of providing our service. If you believe sensitive data has been inadvertently collected, contact us immediately at <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a>.</p>
             </Section>
 
             <Section id="exercise-rights" title="4. How to Exercise Your Rights">
@@ -1092,19 +1092,19 @@ export function PrivacyChoices() {
                     'For account deletion: use Settings → Account → Delete Account within the platform',
                     'For data export: use Settings → Data → Export My Data within the platform',
                 ]} />
-                <p className="mt-4">We will respond to verified requests within <strong className="text-white">45 calendar days</strong>. If we need more time, we will notify you and may extend the response period by an additional 45 days. To verify your identity, we will ask you to confirm your registered email address and may request additional information to protect your data from unauthorised access.</p>
+                <p className="mt-4">We will respond to verified requests within <strong className="text-[var(--marketing-text-primary)]">45 calendar days</strong>. If we need more time, we will notify you and may extend the response period by an additional 45 days. To verify your identity, we will ask you to confirm your registered email address and may request additional information to protect your data from unauthorised access.</p>
                 <p className="mt-3">You may designate an authorised agent to submit a request on your behalf. Authorised agents must provide written proof of their authorisation and you must verify your identity directly with us.</p>
             </Section>
 
             <Section id="shine-the-light" title="5. California Shine the Light (Civil Code § 1798.83)">
-                <p>California Civil Code § 1798.83 permits California residents to request information about disclosure of personal information to third parties for direct marketing purposes. AlphaClone does not disclose personal information to third parties for their direct marketing purposes. Accordingly, no annual disclosure is required. To make a request, contact <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a>.</p>
+                <p>California Civil Code § 1798.83 permits California residents to request information about disclosure of personal information to third parties for direct marketing purposes. AlphaClone does not disclose personal information to third parties for their direct marketing purposes. Accordingly, no annual disclosure is required. To make a request, contact <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a>.</p>
             </Section>
 
             <Section id="contact-privacy-choices" title="6. Contact">
-                <div className="p-4 bg-white/[0.04] rounded-xl border border-slate-800 type-ui mt-3">
-                    <p><strong className="text-white">Privacy Requests:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
-                    <p><strong className="text-white">Subject line:</strong> CCPA Rights Request</p>
-                    <p className="text-slate-500 type-card-description mt-2">We respond within 45 days. No discrimination will result from exercising your rights.</p>
+                <div className="p-4 bg-white/[0.04] rounded-xl border border-[var(--marketing-border)] type-ui mt-3">
+                    <p><strong className="text-[var(--marketing-text-primary)]">Privacy Requests:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-[var(--marketing-accent-hover)] hover:underline">privacy@alphaclonesystems.com</a></p>
+                    <p><strong className="text-[var(--marketing-text-primary)]">Subject line:</strong> CCPA Rights Request</p>
+                    <p className="text-[var(--marketing-text-muted)] type-card-description mt-2">We respond within 45 days. No discrimination will result from exercising your rights.</p>
                 </div>
             </Section>
         </LegalLayout>

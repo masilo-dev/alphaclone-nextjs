@@ -106,10 +106,12 @@ const nextConfig: NextConfig = {
       { source: '/login', destination: '/auth/login', permanent: true },
       { source: '/marketing', destination: '/services', permanent: true },
       { source: '/solutions', destination: '/who-we-serve', permanent: true },
-      { source: '/legal/privacy', destination: '/privacy-policy', permanent: true },
-      { source: '/legal/terms', destination: '/terms-of-service', permanent: true },
-      { source: '/legal/cookies', destination: '/cookie-policy', permanent: true },
-      { source: '/legal/dpa', destination: '/dpa', permanent: true },
+      // Legacy vanity URLs → canonical /legal/* docs (never the reverse — that
+      // created a redirect loop with page-level permanentRedirect and blank pages).
+      { source: '/privacy-policy', destination: '/legal/privacy', permanent: true },
+      { source: '/terms-of-service', destination: '/legal/terms', permanent: true },
+      { source: '/cookie-policy', destination: '/legal/cookies', permanent: true },
+      { source: '/dpa', destination: '/legal/dpa', permanent: true },
       { source: '/legal/sla', destination: '/sla', permanent: true },
     ];
   },

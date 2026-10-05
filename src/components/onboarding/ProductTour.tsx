@@ -26,15 +26,16 @@ interface ProductTourProps {
     userRole: string; // 'admin' | 'client' | 'tenant_admin' etc.
 }
 
-/** Wait this long (10 × 200 ms) for lazily rendered anchors before giving up. */
-const TARGET_POLL_INTERVAL_MS = 200;
-const TARGET_POLL_MAX_RETRIES = 10;
+/** Wait this long (20 × 250 ms) for lazily rendered anchors before giving up. */
+const TARGET_POLL_INTERVAL_MS = 250;
+const TARGET_POLL_MAX_RETRIES = 20;
 
 function isVisibleAnchor(element: HTMLElement): boolean {
     if (!element || element.getClientRects().length === 0) return false;
     const style = window.getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
     const rect = element.getBoundingClientRect();
+    // Opacity-only fades (loading shells) still count if they occupy space.
     return rect.width > 0 && rect.height > 0;
 }
 
@@ -119,15 +120,19 @@ const ProductTour: React.FC<ProductTourProps> = ({
     }, []);
 
 
-    // Route watcher: auto-dismiss tour if the user navigates away
-    useEffect(() => {
-        if (prevPathnameRef.current !== pathname) {
-            prevPathnameRef.current = pathname;
-            if (isOpen || run) {
-                completeTour(true);
-            }
-        }
-    }, [pathname, isOpen, run]);
+  // Route watcher: auto-dismiss tour if the user navigates away (ignore
+  // trailing-slash / query noise so a remount does not instantly close itself).
+  useEffect(() => {
+    const normalize = (value: string | null) => String(value || '').split('?')[0].replace(/\/$/, '') || '/';
+    const previous = normalize(prevPathnameRef.current);
+    const current = normalize(pathname);
+    if (previous !== current) {
+      prevPathnameRef.current = pathname;
+      if (isOpen || run) {
+        completeTour(true);
+      }
+    }
+  }, [pathname, isOpen, run]);
 
     const steps = useMemo<Step[]>(() => {
         const adminSteps: Step[] = [
@@ -325,14 +330,14 @@ const ProductTour: React.FC<ProductTourProps> = ({
         let timerId: ReturnType<typeof setTimeout> | undefined;
 
         const checkAndStartTour = () => {
-            // Only keep steps whose anchor is actually on screen, and show every
-            // step's tooltip immediately.
+            // Keep CSS string selectors (not Element refs). Passing live HTMLElements
+            // breaks after React re-renders and makes Joyride appear to "do nothing".
             const available: Step[] = steps.flatMap((step) => {
                 if (typeof step.target !== 'string') return [{ ...step, disableBeacon: true }];
-                const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find(isVisibleAnchor);
-                if (!target) return [];
-                const placement = isOversizedAnchor(target) ? 'center' : step.placement;
-                return [{ ...step, target, placement, disableBeacon: true }];
+                const el = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find(isVisibleAnchor);
+                if (!el) return [];
+                const placement = isOversizedAnchor(el) ? 'center' : step.placement;
+                return [{ ...step, target: step.target, placement, disableBeacon: true }];
             });
 
             if (available.length > 0) {

@@ -47,10 +47,34 @@ export function sanitizeEmailHtmlServer(rawHtml?: string): string {
   });
 }
 
+/**
+ * Outlook (Word rendering engine) often collapses bare `<div>` blocks and
+ * drops unstyled fragments. Wrap sanitized HTML in a presentation table with
+ * inline Arial styles so the message body stays readable in Outlook/OWA.
+ */
 export function buildSafeEmailBodyHtmlServer(bodyHtml?: string, fallbackText?: string): string {
-  const safeBodyHtml = sanitizeEmailHtmlServer(bodyHtml);
-  if (safeBodyHtml) return safeBodyHtml;
+  let safeBodyHtml = sanitizeEmailHtmlServer(bodyHtml);
 
-  const safeFallbackText = escapeHtml(String(fallbackText || '').trim()).replace(/\r?\n/g, '<br />');
-  return safeFallbackText ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#334155;">${safeFallbackText}</p>` : '';
+  // Editors sometimes emit only <div>paragraph</div>; Outlook treats those poorly.
+  if (safeBodyHtml) {
+    safeBodyHtml = safeBodyHtml
+      .replace(/<div(\s[^>]*)?>/gi, '<p$1>')
+      .replace(/<\/div>/gi, '</p>')
+      .replace(/<p([^>]*)>\s*<\/p>/gi, '<p$1>&nbsp;</p>');
+  }
+
+  if (!safeBodyHtml) {
+    const safeFallbackText = escapeHtml(String(fallbackText || '').trim()).replace(/\r?\n/g, '<br />');
+    safeBodyHtml = safeFallbackText
+      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#334155;">${safeFallbackText}</p>`
+      : '';
+  }
+
+  if (!safeBodyHtml) return '';
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="left" style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#334155;word-break:break-word;">
+${safeBodyHtml}
+</td></tr>
+</table>`;
 }

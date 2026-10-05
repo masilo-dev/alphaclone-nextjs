@@ -224,29 +224,52 @@ export function renderEmail(input: RenderEmailInput): { html: string; text: stri
   });
 
   const html = `<!doctype html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
 <title>${escapeHtml(input.subject)}</title>
+<!--[if mso]>
+<noscript>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+</xml>
+</noscript>
+<style type="text/css">
+  table, td { border-collapse: collapse; }
+  .ac-email-body, .ac-email-body p, .ac-email-body td, .ac-email-body div {
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+</style>
+<![endif]-->
 </head>
 <body style="margin:0;padding:0;background:${EMAIL_DESIGN.pageBackground};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${EMAIL_DESIGN.pageBackground};">${escapeHtml(preheader)}</div>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:${EMAIL_DESIGN.pageBackground};">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:collapse;background:${EMAIL_DESIGN.pageBackground};">
 <tr>
 <td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_DESIGN.maxWidth}px;margin:0 auto;background:${EMAIL_DESIGN.cardBackground};border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;overflow:hidden;">
+<!--[if mso]>
+<table role="presentation" width="${EMAIL_DESIGN.maxWidth}" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td>
+<![endif]-->
+<table role="presentation" width="${EMAIL_DESIGN.maxWidth}" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:${EMAIL_DESIGN.maxWidth}px;margin:0 auto;background:${EMAIL_DESIGN.cardBackground};border:1px solid ${EMAIL_DESIGN.border};border-radius:8px;border-collapse:separate;">
 <tr><td>
 ${renderEmailHeader(logoUrl)}
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-<tr><td style="padding:28px 32px 8px 32px;font-family:${EMAIL_DESIGN.fontStack};color:${EMAIL_DESIGN.textPrimary};">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="ac-email-body" style="border-collapse:collapse;">
+<tr><td style="padding:28px 32px 8px 32px;font-family:${EMAIL_DESIGN.fontStack};font-size:15px;line-height:1.65;color:${EMAIL_DESIGN.textPrimary};">
 ${innerContentHtml}
 </td></tr>
 </table>
 ${footer.html}
 </td></tr>
 </table>
+<!--[if mso]>
+</td></tr></table>
+<![endif]-->
 </td></tr>
 </table>
 </body>

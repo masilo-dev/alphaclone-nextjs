@@ -142,7 +142,7 @@ export default function CookieBanner() {
               <button
                 type="button"
                 onClick={() => handleSave({ functional: false, analytics: false, marketing: false })}
-                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-sm"
+                className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm"
               >
                 {t('Essential only')}
               </button>
@@ -163,7 +163,7 @@ export default function CookieBanner() {
           ref={preferencesDialogRef}
           onClose={() => setOpenPrefs(false)}
           aria-labelledby="cookie-preferences-title"
-          className="cookie-preferences-dialog fixed inset-0 z-[10000] m-auto w-[calc(100%-2rem)] max-w-lg max-h-[88dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 text-slate-900 dark:text-white shadow-2xl shadow-slate-900/20 dark:shadow-black/80 backdrop:bg-slate-950/50 backdrop:backdrop-blur-sm"
+          className="cookie-preferences-dialog z-[10000] w-[calc(100%-2rem)] max-w-lg max-h-[88dvh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 text-slate-900 dark:text-white shadow-2xl shadow-slate-900/20 dark:shadow-black/80 open:flex open:flex-col backdrop:bg-slate-950/55 backdrop:backdrop-blur-sm"
         >
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <div>

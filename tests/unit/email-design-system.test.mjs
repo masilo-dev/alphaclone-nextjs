@@ -110,6 +110,25 @@ describe('renderEmail layout', () => {
     assert.ok(rendered.html.length > 100);
     assert.ok(rendered.text.length > 20);
   });
+
+  it('keeps Outlook-safe body layout (width attrs, no card overflow:hidden, MSO hints)', () => {
+    const rendered = renderEmail({
+      type: 'transactional',
+      subject: 'Outlook body check',
+      content: '<div>Line one</div><div>Line two with https://alphaclonesystems.com</div>',
+      contentIsHtml: true,
+    });
+    assert.match(rendered.html, /xmlns:o="urn:schemas-microsoft-com:office:office"/);
+    assert.match(rendered.html, /<!--\[if mso\]>/);
+    assert.match(rendered.html, /width="620"/);
+    assert.doesNotMatch(
+      rendered.html,
+      /max-width:620px;[^"]*overflow:hidden|overflow:hidden;[^"]*max-width:620px/,
+    );
+    assert.match(rendered.html, /<p[^>]*>Line one<\/p>/);
+    assert.match(rendered.html, /Line two/);
+    assert.match(rendered.html, /font-family:Arial,Helvetica,sans-serif/);
+  });
 });
 
 describe('gateway and legacy builders', () => {

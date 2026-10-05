@@ -233,8 +233,16 @@ const Sidebar = React.memo<SidebarProps>(({
                         const Icon = item.icon;
 
                         return (
-                            <div key={idx} {...(item.label === 'Money' || item.label === 'Money Hub' ? { 'data-tour': 'money-hub-nav' } : {})}>
-                                <button
+                            <div
+                                key={idx}
+                                {...(
+                                    item.label === 'Money' ||
+                                    item.label === 'Money Hub' ||
+                                    /money|billing|invoice|finance/i.test(String(item.href || item.id || item.label || ''))
+                                        ? { 'data-tour': 'money-hub-nav' }
+                                        : {}
+                                )}
+                            >                                <button
                                     onClick={() => {
                                         if (item.comingSoon) return;
                                         if (hasChildren) {
