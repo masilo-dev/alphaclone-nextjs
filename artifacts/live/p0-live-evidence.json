@@ -1,0 +1,59 @@
+{
+  "started_at": "2026-10-05T13:12:07.246Z",
+  "base": "https://alphaclonesystems.com",
+  "user": "sales@alphaclonesystems.com",
+  "test_to": "bonniiehendrix@gmail.com",
+  "steps": [
+    {
+      "name": "login",
+      "at": "2026-10-05T13:14:04.945Z",
+      "ok": false,
+      "url": "https://alphaclonesystems.com/auth/login"
+    },
+    {
+      "name": "tenant",
+      "at": "2026-10-05T13:14:04.949Z",
+      "tenantId": "066eb88e-3fb0-45c9-b4d1-c3c2063ea0d4",
+      "fromStorage": false
+    },
+    {
+      "name": "next_actions",
+      "at": "2026-10-05T13:14:05.120Z",
+      "status": 404,
+      "has_actions": false,
+      "preview": "{\"error\":\"Not found\"}"
+    },
+    {
+      "name": "action_queue",
+      "at": "2026-10-05T13:14:05.239Z",
+      "status": 401,
+      "itemCount": null
+    },
+    {
+      "name": "business_control",
+      "at": "2026-10-05T13:14:05.347Z",
+      "status": 401,
+      "has_next_actions": false,
+      "keys": [
+        "error",
+        "code",
+        "requestId"
+      ]
+    },
+    {
+      "name": "email_send_1",
+      "at": "2026-10-05T13:14:05.564Z",
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "preview": "{\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\",\"requestId\":\"cf4d9852-ee75-4451-adb4-80e3e8e33a92\"}"
+    },
+    {
+      "name": "email_send_2_same_key",
+      "at": "2026-10-05T13:14:05.564Z",
+      "status": 401,
+      "preview": "{\"error\":\"Unauthorized\",\"code\":\"UNAUTHORIZED\",\"requestId\":\"3f0495f7-623f-417c-9646-e8b7fa7eb9df\"}"
+    }
+  ],
+  "finished_at": "2026-10-05T13:14:05.564Z",
+  "ok": false
+}

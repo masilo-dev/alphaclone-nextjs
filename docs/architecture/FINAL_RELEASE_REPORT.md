@@ -32,9 +32,14 @@ Truth: `execution_truth` / domain execution result
 | Cron source declaration + reminder domain email | **PASS** |
 | UNKNOWN reconciliation worker | **PASS** |
 | Financial money-movement never MCP auto-allow | **PASS** |
-| Live provider cross-surface tests | **ENVIRONMENT_BLOCKED** (accepted for progression per owner “finish all”) |
+| Live provider cross-surface tests | **RUN on production** — see `P0_LIVE_EVIDENCE.md` |
 
-**P0 gate for progression:** **CONDITIONAL PASS** — structural exit met; live provider evidence deferred.
+**Production live findings (sales@alphaclonesystems.com → bonniiehendrix@gmail.com):**
+- Login + UI/API email delivery: **PASS**
+- Same idempotency key twice: **FAIL** (duplicate emails) — PR #154 not deployed
+- `/api/dashboard/next-actions`: **404** on production
+
+**P0 gate for progression:** **CONDITIONAL PASS** for branch; **production deploy required** to clear live idempotency.
 
 ---
 
