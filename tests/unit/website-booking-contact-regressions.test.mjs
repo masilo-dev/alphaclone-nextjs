@@ -322,3 +322,14 @@ test("Turnstile bypass sentinel is defined in server-safe verifyTurnstile module
     /import \{ TURNSTILE_BYPASS_TOKEN \} from '@\/lib\/verifyTurnstile'/,
   );
 });
+
+test("platform env email config defaults to verified Alphaclone From address", async () => {
+  const source = read("src/lib/email/providerIntegrationResolver.ts");
+  assert.match(source, /BREVO_PLATFORM_FROM_EMAIL/);
+  assert.match(source, /notifications@alphaclonesystems\.com/);
+  assert.match(
+    source,
+    /String\(existing\.email_address \|\| ''\)\.trim\(\) \|\| config\.fromEmail/,
+  );
+});
+

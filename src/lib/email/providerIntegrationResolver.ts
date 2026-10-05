@@ -44,15 +44,47 @@ function envProviderConfig(provider: EmailProvider): Omit<ResolvedEmailProviderC
   if (provider === 'brevo') {
     const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY || process.env.SENDINBLUE_API_KEY || '';
     if (!apiKey) return null;
-    return { provider, apiKey, fromEmail: process.env.BREVO_FROM_EMAIL || process.env.EMAIL_FROM || undefined, fromName: process.env.BREVO_FROM_NAME || undefined };
+    return {
+      provider,
+      apiKey,
+      fromEmail:
+        process.env.BREVO_PLATFORM_FROM_EMAIL ||
+        process.env.BREVO_FROM_EMAIL ||
+        process.env.EMAIL_FROM ||
+        process.env.DEFAULT_FROM_EMAIL ||
+        'notifications@alphaclonesystems.com',
+      fromName:
+        process.env.BREVO_PLATFORM_FROM_NAME ||
+        process.env.BREVO_FROM_NAME ||
+        process.env.DEFAULT_FROM_NAME ||
+        'AlphaClone',
+    };
   }
   if (provider === 'sendgrid') {
     if (!process.env.SENDGRID_API_KEY) return null;
-    return { provider, apiKey: process.env.SENDGRID_API_KEY, fromEmail: process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || undefined, fromName: process.env.SENDGRID_FROM_NAME || undefined };
+    return {
+      provider,
+      apiKey: process.env.SENDGRID_API_KEY,
+      fromEmail:
+        process.env.SENDGRID_FROM_EMAIL ||
+        process.env.EMAIL_FROM ||
+        process.env.DEFAULT_FROM_EMAIL ||
+        'notifications@alphaclonesystems.com',
+      fromName: process.env.SENDGRID_FROM_NAME || process.env.DEFAULT_FROM_NAME || 'AlphaClone',
+    };
   }
   if (provider === 'resend') {
     if (!process.env.RESEND_API_KEY) return null;
-    return { provider, apiKey: process.env.RESEND_API_KEY, fromEmail: process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || undefined, fromName: process.env.RESEND_FROM_NAME || undefined };
+    return {
+      provider,
+      apiKey: process.env.RESEND_API_KEY,
+      fromEmail:
+        process.env.RESEND_FROM_EMAIL ||
+        process.env.EMAIL_FROM ||
+        process.env.DEFAULT_FROM_EMAIL ||
+        'notifications@alphaclonesystems.com',
+      fromName: process.env.RESEND_FROM_NAME || process.env.DEFAULT_FROM_NAME || 'AlphaClone',
+    };
   }
   return null;
 }
@@ -189,13 +221,27 @@ async function ensurePlatformProviderAccount(tenantId: string, config: Omit<Reso
     .maybeSingle();
   if (lookupError) throw new Error(`PLATFORM_EMAIL_ACCOUNT_LOOKUP_FAILED: ${lookupError.message}`);
   if (existing) {
+    const fromEmail = String(existing.email_address || '').trim() || config.fromEmail;
+    const fromName = String(existing.display_name || '').trim() || config.fromName;
+    // Backfill blank platform sender identity so forcePlatform sends don't fail
+    // with "Tenant provider sender email is missing" after env provisioning.
+    if ((!existing.email_address || !String(existing.email_address).trim()) && fromEmail) {
+      await supabase
+        .from('email_provider_accounts')
+        .update({
+          email_address: fromEmail,
+          display_name: fromName || 'AlphaClone',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+    }
     return {
       ...config,
       tenantId,
       providerAccountId: String(existing.id),
       ownerUserId: existing.owner_user_id || null,
-      fromEmail: existing.email_address || config.fromEmail,
-      fromName: existing.display_name || config.fromName,
+      fromEmail,
+      fromName,
       accountType: existing.account_type || 'platform',
     };
   }
