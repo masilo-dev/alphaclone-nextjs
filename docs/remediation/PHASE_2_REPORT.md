@@ -34,7 +34,7 @@ Remaining (non-blocking for broader market validation if ops checklist completed
 | RATE-001 | P2 in-memory fallback | **FIXED** (fail-closed + Redis required) |
 | PORTAL-IDOR-001 | Needs validation | **FIXED** (ownership helper + route assertions + tests) |
 | SOC-IDENT-001 | Needs validation | **FIXED** (Instagram tenant required; FB/LI already) |
-| MCP-SURFACE / MCP-IDEM | P2 | **PARTIALLY FIXED** (tiers + idempotency expansion) |
+| MCP-SURFACE / MCP-IDEM | P2 | **FIXED** — tiers wired into ToolPolicyGate; stable key derivation in guard |
 | PWA-CACHE-001 | Needs validation | **FIXED** (NetworkOnly already; logout clear message) |
 | DEP-NEXT-001 | Needs validation | **MITIGATED** (Windows-only RCE; Linux prod) |
 | DOC-STORAGE-001 | Needs validation | **PARTIALLY FIXED** (portal path); broader upload pass deferred |

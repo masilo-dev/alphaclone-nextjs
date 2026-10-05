@@ -54,9 +54,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | **PARTIALLY FIXED** |
-| Change | Tool risk tiers + idempotency requirement expanded via `mcpToolRequiresIdempotency` |
-| Remaining | Per-tool inventory labeling of all 523 tools; approval wiring for HIGH_RISK |
+| Status | **FIXED** |
+| Change | Tool risk tiers drive `classifyToolRisk` + HIGH_RISK approval; `ensureMcpIdempotencyKey` derives stable keys for EXTERNAL/HIGH_RISK writes in `guardToolExecution` |
+| Invariant | Same tenant+tool+canonical args → same idempotency key (retries safe) |
 
 ## GATE 8–10 — Storage / PWA / deps
 
