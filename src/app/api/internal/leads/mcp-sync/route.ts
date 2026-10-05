@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
+import { promoteToCanonicalLead } from '@/services/leads/canonicalLeadPromotion';
 
 interface SyncLead {
   scraper_lead_id?: string;
@@ -38,45 +38,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createSupabaseAdminClient();
+    const admin = createSupabaseAdminClient();
     const created: Array<{ scraper_lead_id?: string; crm_lead_id?: string }> = [];
 
     for (const lead of leads) {
-      const result = await executeSingleBonnieTool({
-        tenantId,
-        userId,
-        tool: 'create_lead',
-        args: {
-          contact_name: lead.contact_name,
-          email: lead.email,
-          phone: lead.phone,
-          business_name: lead.business_name,
-          industry: lead.industry,
-          location: lead.location,
-          source: lead.source || 'scraper',
-          notes: lead.notes || `Score: ${lead.score ?? 'N/A'}, Grade: ${lead.grade ?? 'N/A'}`,
-        },
-        skipPolicy: true,
-        policySource: 'mcp',
-      });
-
       let crmLeadId: string | undefined;
-      if (result.success && result.details) {
-        try {
-          const parsed = JSON.parse(result.details);
-          crmLeadId = parsed.id || parsed.lead_id;
-        } catch {
-          const idMatch = result.details.match(/"id"\s*:\s*"([^"]+)"/);
-          crmLeadId = idMatch?.[1];
-        }
-      }
 
-      if (lead.scraper_lead_id && crmLeadId) {
-        await supabase
+      if (lead.scraper_lead_id) {
+        const { data: scraperRow } = await admin
           .from('scraper_leads')
-          .update({ crm_lead_id: crmLeadId, status: 'synced' })
+          .select('*')
           .eq('id', lead.scraper_lead_id)
-          .eq('tenant_id', tenantId);
+          .eq('tenant_id', tenantId)
+          .maybeSingle();
+
+        const promotion = await promoteToCanonicalLead({
+          admin,
+          tenantId,
+          ownerId: userId,
+          source: {
+            kind: 'scraper_lead',
+            scraperLeadId: lead.scraper_lead_id,
+            row: scraperRow || {
+              id: lead.scraper_lead_id,
+              business_name: lead.business_name,
+              email: lead.email,
+              phone: lead.phone,
+              industry: lead.industry,
+              location: lead.location,
+              source: lead.source || 'scraper',
+              notes: lead.notes,
+              campaign_id: campaignId,
+              contact_name: lead.contact_name,
+            },
+          },
+          idempotencyKey: `scraper-promote:${tenantId}:${lead.scraper_lead_id}`,
+          skipQualificationGate: true,
+        });
+
+        crmLeadId = String(promotion.lead.id || '');
+        if (crmLeadId) {
+          await admin
+            .from('scraper_leads')
+            .update({ crm_lead_id: crmLeadId, status: 'synced' })
+            .eq('id', lead.scraper_lead_id)
+            .eq('tenant_id', tenantId);
+        }
       }
 
       created.push({

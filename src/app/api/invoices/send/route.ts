@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
-import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
+import { executeInvoiceSendCommand } from '@/lib/execution/commands/invoiceSendCommand';
+import { mapProviderCodeToHttpStatus } from '@/lib/execution/domainCapabilityGuard';
 
 const schema = z.object({
   tenantId: z.string().uuid(),
@@ -10,6 +11,7 @@ const schema = z.object({
   recipients: z.union([z.string().email(), z.array(z.string().email()).min(1).max(20)]),
   subject: z.string().trim().min(1).max(250).optional(),
   message: z.string().trim().max(10_000).optional(),
+  idempotencyKey: z.string().min(8).max(200).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -37,23 +39,50 @@ export async function POST(req: NextRequest) {
     await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
     const normalizedRecipients = [...new Set(recipients.map((email) => email.toLowerCase()))];
-    const queued = await queueInvoiceSend({
+    const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');
+    const execution = await executeInvoiceSendCommand({
       tenantId,
       userId: user.id,
       invoiceId,
       recipients: normalizedRecipients,
       subject,
       message,
+      idempotencyKey: parsed.data.idempotencyKey || headerKey || undefined,
+      executionSource: 'ui',
     });
 
+    if (!execution.ok) {
+      const code = execution.failure_code || execution.error?.code || 'SEND_FAILED';
+      return NextResponse.json(
+        {
+          error: execution.error?.message || 'Invoice delivery blocked',
+          code,
+          execution_truth: {
+            status: execution.status,
+            verification_state: execution.verification_state,
+            may_claim_completed: false,
+          },
+        },
+        { status: mapProviderCodeToHttpStatus(code) }
+      );
+    }
+
+    const queued = execution.result!;
     return NextResponse.json(
       {
         success: true,
         ...queued,
         invoiceId,
+        execution_id: execution.execution_id,
+        idempotency_key: execution.idempotency_key,
         message: queued.durable
           ? 'Invoice delivery queued on Bonnie durable runtime'
           : 'Invoice delivery queued on workflow runtime',
+        execution_truth: {
+          status: execution.status,
+          verification_state: execution.verification_state,
+          may_claim_completed: false,
+        },
       },
       { status: 202 }
     );

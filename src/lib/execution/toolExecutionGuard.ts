@@ -6,33 +6,10 @@ import {
 import { structuredErrorToMcpContent } from '@/lib/mcp/formatMcpError';
 import type { MCPToolExecutionResult } from '@/types/mcp';
 
-const EXTERNAL_WRITE_IDEMPOTENCY_TOOLS = new Set([
-  'send_email',
-  'reply_to_email',
-  'microsoft_send_email',
-  'gmail_send_email',
-  'publish_social_post',
-  'publish_post',
-  'create_social_post',
-  'send_invoice',
-  'create_invoice',
-  'send_quote',
-  'send_contract',
-  'create_contract',
-  'send_contract',
-  'create_project',
-  'promote_lead_candidate',
-]);
+import { capabilityRequiresIdempotencyKey } from '@/lib/execution/domainCapabilityGuard';
 
 const WRITE_TOOL_PATTERN =
   /^(create|update|delete|send|publish|upload|queue|approve|reject|schedule|run|convert|assign|complete|cancel|void|promote)_/;
-
-function requiresIdempotencyKey(toolName: string): boolean {
-  const n = toolName.toLowerCase();
-  if (EXTERNAL_WRITE_IDEMPOTENCY_TOOLS.has(n)) return true;
-  if (/(^send_|^publish_|^create_invoice|^send_invoice|^create_project)/.test(n)) return true;
-  return false;
-}
 
 export type ToolExecutionGuardOptions = {
   executionSource: PolicySource;
@@ -116,7 +93,7 @@ export async function guardToolExecution(params: {
     }
   }
 
-  if (requiresIdempotencyKey(toolName)) {
+  if (capabilityRequiresIdempotencyKey(toolName)) {
     const key = typeof args.idempotency_key === 'string' ? args.idempotency_key.trim() : '';
     if (!key) {
       return {

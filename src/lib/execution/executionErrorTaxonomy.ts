@@ -1,0 +1,57 @@
+/**
+ * Normalized execution failure codes for all surfaces (UI, MCP, cron, workers).
+ * Provider-specific detail should live in `details.provider_*` fields.
+ */
+
+export const EXECUTION_ERROR_CODES = [
+  'AUTHORIZATION_FAILED',
+  'POLICY_BLOCKED',
+  'APPROVAL_REQUIRED',
+  'DUPLICATE_ACTION',
+  'IDEMPOTENCY_REQUIRED',
+  'PROVIDER_AUTH_EXPIRED',
+  'PROVIDER_RATE_LIMIT',
+  'PROVIDER_PROCESSING',
+  'EXECUTION_TIMEOUT',
+  'UNKNOWN_EXECUTION_STATE',
+  'OUTCOME_UNKNOWN',
+  'VERIFICATION_FAILED',
+  'DESTINATION_MISMATCH',
+  'IDENTITY_NOT_CONNECTED',
+  'VALIDATION_FAILED',
+  'DEPENDENCY_UNAVAILABLE',
+  'EXECUTION_FAILED',
+  'QUOTA_EXCEEDED',
+  'CONFIG_MISSING',
+] as const;
+
+export type ExecutionErrorCode = (typeof EXECUTION_ERROR_CODES)[number];
+
+const ALIASES: Record<string, ExecutionErrorCode> = {
+  AUTH_EXPIRED: 'PROVIDER_AUTH_EXPIRED',
+  OAUTH_EXPIRED: 'PROVIDER_AUTH_EXPIRED',
+  RATE_LIMITED: 'PROVIDER_RATE_LIMIT',
+  PROVIDER_TIMEOUT: 'EXECUTION_TIMEOUT',
+  PROVIDER_REJECTED: 'VALIDATION_FAILED',
+  MISSING_IDENTITY: 'IDENTITY_NOT_CONNECTED',
+  IDENTITY_NOT_FOUND: 'IDENTITY_NOT_CONNECTED',
+  TARGET_AMBIGUOUS: 'DESTINATION_MISMATCH',
+  POLICY_DENIED: 'POLICY_BLOCKED',
+  QUEUED_FOR_APPROVAL: 'APPROVAL_REQUIRED',
+};
+
+export function normalizeExecutionErrorCode(code: string | undefined | null): ExecutionErrorCode {
+  const raw = String(code || 'EXECUTION_FAILED').toUpperCase();
+  if ((EXECUTION_ERROR_CODES as readonly string[]).includes(raw)) {
+    return raw as ExecutionErrorCode;
+  }
+  return ALIASES[raw] || 'EXECUTION_FAILED';
+}
+
+export type NormalizedExecutionError = {
+  code: ExecutionErrorCode;
+  message: string;
+  retryable?: boolean;
+  remediation?: string;
+  details?: unknown;
+};

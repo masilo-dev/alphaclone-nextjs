@@ -79,8 +79,45 @@ const FINANCIAL_TOOLS = new Set([
   'update_invoice',
   'delete_invoice',
   'record_payment',
+  'reconcile_payment',
   'nexus_invoice_chasing',
+  'issue_refund',
+  'refund_payment',
+  'create_payout',
+  'initiate_payout',
+  'initiate_payment',
+  'transfer_funds',
 ]);
+
+/** Record-keeping in CRM/ledger — not the same risk as moving money externally. */
+export const FINANCIAL_RECORD_KEEPING_TOOLS = new Set([
+  'create_invoice',
+  'update_invoice',
+  'delete_invoice',
+  'create_quote',
+  'update_quote',
+]);
+
+/** Capabilities that can move, refund, or transfer real funds — never MCP auto-allow. */
+export const FINANCIAL_MONEY_MOVEMENT_TOOLS = new Set([
+  'record_payment',
+  'reconcile_payment',
+  'issue_refund',
+  'refund_payment',
+  'create_payout',
+  'initiate_payout',
+  'initiate_payment',
+  'transfer_funds',
+  'nexus_payroll_sync',
+]);
+
+export function isFinancialMoneyMovementTool(toolName: string): boolean {
+  return FINANCIAL_MONEY_MOVEMENT_TOOLS.has(toolName.toLowerCase());
+}
+
+export function isFinancialRecordKeepingTool(toolName: string): boolean {
+  return FINANCIAL_RECORD_KEEPING_TOOLS.has(toolName.toLowerCase());
+}
 
 const DRAFT_TOOLS = new Set([
   'generate_contract_draft',
@@ -230,8 +267,8 @@ export async function evaluateToolPolicy(params: {
   // auto-allow with an explicit source attribute (not a silent bypass).
   const mcpHighRiskQueue =
     source === 'mcp' &&
-    highRiskRequired &&
-    (riskClass === 'financial' || riskClass === 'bulk');
+    (isFinancialMoneyMovementTool(toolName) ||
+      (highRiskRequired && (riskClass === 'financial' || riskClass === 'bulk')));
 
   if (source === 'mcp' && !mcpHighRiskQueue) {
     return {

@@ -125,6 +125,11 @@ export async function handleProviderSend(
   request: NextRequest,
   providerId: 'resend' | 'sendgrid' | 'brevo'
 ): Promise<NextResponse> {
+  console.warn('[DEPRECATED_PROVIDER_ROUTE]', {
+    provider: providerId,
+    path: request.nextUrl.pathname,
+    guidance: 'Use POST /api/email/send — direct provider SDK routes bypass domain policy/receipts.',
+  });
   const config = PROVIDER_CONFIG[providerId];
   const CLIENT_ERRORS = buildClientErrors(config.displayName);
 

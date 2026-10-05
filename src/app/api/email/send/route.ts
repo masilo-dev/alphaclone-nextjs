@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { executeSendEmailCommand } from '@/lib/execution/commands/sendEmailCommand';
+import { mapProviderCodeToHttpStatus } from '@/lib/execution/domainCapabilityGuard';
 import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 
 const sendEmailSchema = z.object({
@@ -16,6 +17,7 @@ const sendEmailSchema = z.object({
   provider: z.enum(['auto', 'zoho', 'gmail', 'outlook', 'brevo', 'sendgrid', 'resend']).optional(),
   document_file_ids: z.array(z.string().uuid()).optional(),
   skipRecipientGate: z.boolean().optional(),
+  idempotencyKey: z.string().min(8).max(200).optional(),
 }).refine((data) => Boolean(data.body_html?.trim() || data.html?.trim()), {
   message: 'body_html or html is required',
   path: ['body_html'],
@@ -29,12 +31,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { tenantId, to, subject, contactId, clientId, threadId, provider, document_file_ids, skipRecipientGate } = parsed.data;
+    const { tenantId, to, subject, contactId, clientId, threadId, provider, document_file_ids, skipRecipientGate, idempotencyKey: bodyKey } = parsed.data;
+    const headerKey = req.headers.get('idempotency-key') || req.headers.get('Idempotency-Key');
+    const idempotencyKey = (bodyKey || headerKey || '').trim() || undefined;
     const bodyHtml = (parsed.data.body_html || parsed.data.html || '').trim();
     const { user } = await requireTenantAccess(tenantId, req);
     const attachments = document_file_ids?.length ? await resolveEmailAttachmentsFromFileIds(tenantId, document_file_ids) : undefined;
 
-    const result = await sendEmailServer({
+    const execution = await executeSendEmailCommand({
       tenantId,
       userId: user.id,
       actorId: user.id,
@@ -44,6 +48,8 @@ export async function POST(req: NextRequest) {
       attachments,
       skipRecipientGate: skipRecipientGate ?? Boolean(document_file_ids?.length),
       initiationSource: 'api.email.send',
+      executionSource: 'ui',
+      idempotencyKey,
       preferredProvider: provider && provider !== 'auto' ? provider : undefined,
       relatedRecord: contactId ? { type: 'contact', id: contactId } : clientId ? { type: 'client', id: clientId } : undefined,
       auditMetadata: {
@@ -56,17 +62,39 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!result.success) {
-      return NextResponse.json({ error: result.error || 'Failed to send email', code: result.code || 'SEND_FAILED', tried: result.errorDetails },
-        { status: result.code === 'CONFIG_MISSING' || result.code === 'VALIDATION_ERROR' || result.code === 'EMAIL_PROVIDER_ACCOUNT_TENANT_MISMATCH' ? 400 : 503 });
+    if (!execution.ok) {
+      const code = execution.failure_code || execution.error?.code || 'SEND_FAILED';
+      const status = mapProviderCodeToHttpStatus(code);
+      return NextResponse.json(
+        {
+          error: execution.error?.message || 'Failed to send email',
+          code,
+          execution_truth: {
+            status: execution.status,
+            verification_state: execution.verification_state,
+            may_claim_completed: false,
+            execution_id: execution.execution_id,
+            idempotency_key: execution.idempotency_key,
+          },
+        },
+        { status }
+      );
     }
 
+    const result = execution.result!;
     return NextResponse.json({
       success: true,
       provider: result.provider,
       providerAccountId: result.providerAccountId,
       emailId: result.emailId,
       canonicalMessageId: result.canonicalMessageId,
+      execution_id: execution.execution_id,
+      idempotency_key: execution.idempotency_key,
+      execution_truth: {
+        status: execution.status,
+        verification_state: execution.verification_state,
+        may_claim_completed: execution.verification_state === 'VERIFIED',
+      },
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to send email', req);

@@ -6,6 +6,11 @@ import {
   buildQuoteDocumentInput,
 } from '@/lib/documents/documentBuilders';
 import { generateThemedQuotePdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import {
+  guardDomainCapability,
+  mapProviderCodeToHttpStatus,
+} from '@/lib/execution/domainCapabilityGuard';
+import { quoteSendIdempotencyKey } from '@/lib/execution/domainIdempotencyKeys';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +18,26 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !quoteId || !recipients) {
       return NextResponse.json({ error: 'tenantId, quoteId, and recipients are required' }, { status: 400 });
     }
-    const { user, admin: supabase } = await requireTenantAccess(tenantId);
+    const { user, admin: supabase } = await requireTenantAccess(tenantId, req);
+    const recipientList = Array.isArray(recipients) ? recipients : [recipients];
+    const idempotencyKey =
+      quoteSendIdempotencyKey({
+        tenantId,
+        quoteId,
+        recipients: recipientList,
+      });
+
+    const guard = await guardDomainCapability({
+      tenantId,
+      userId: user.id,
+      capability: 'send_quote',
+      executionSource: 'ui',
+      args: { quote_id: quoteId, recipients: recipientList },
+      idempotencyKey,
+    });
+    if (!guard.allowed) {
+      return NextResponse.json(guard.body, { status: mapProviderCodeToHttpStatus(guard.body.code) });
+    }
     const { data: quote, error } = await supabase
       .from('quotes')
       .select('*, tenant:tenants(*)')
@@ -83,6 +107,7 @@ export async function POST(req: NextRequest) {
           content: pdfBuffer.toString('base64'),
           contentType: 'application/pdf',
         }],
+        idempotencyKey,
       }),
     });
 
