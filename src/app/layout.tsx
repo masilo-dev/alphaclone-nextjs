@@ -10,7 +10,6 @@ import { marketingFontClassName } from "@/lib/marketingFonts";
 import { ProviderSwitcher } from "@/components/ProviderSwitcher";
 
 import { PWAProvider } from "@/contexts/PWAContext";
-import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
 import CookieBanner from "@/components/legal/CookieBanner";
 import PwaInstallPrompt from "@/components/common/PwaInstallPrompt";
@@ -124,9 +123,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <WebVitals />
         <ProviderSwitcher>
           <PWAProvider>
-            <Suspense fallback={null}>
-              <PwaPushBootstrap />
-            </Suspense>
             <NativeInteractions />
             <ShellSwitcher><PageTransition>{children}</PageTransition></ShellSwitcher>
             <PwaInstallPrompt />
