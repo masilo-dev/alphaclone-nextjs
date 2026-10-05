@@ -115,9 +115,11 @@ for (const delivered of [true, false]) {
   test(`contact saves before notification and reports delivery=${delivered}`, async () => {
     const sequence = [];
     let mail;
+    let inserted;
     const query = {
-      insert() {
+      insert(rows) {
         sequence.push("save");
+        inserted = rows;
         return this;
       },
       select() {
@@ -156,6 +158,8 @@ for (const delivered of [true, false]) {
         email: "test@example.com",
         subject: "Website question",
         message: "Please explain <b>your platform</b> to me.",
+        company: "Acme",
+        phone: "+1 555 0100",
       }),
       headers: new Headers(),
     });
@@ -163,12 +167,85 @@ for (const delivered of [true, false]) {
     assert.equal(result.body.success, true);
     assert.equal(result.body.notificationSent, delivered);
     assert.deepEqual(sequence, ["save", "email"]);
+    assert.equal(inserted?.[0]?.status, "New");
+    assert.equal(inserted?.[0]?.source, "website");
+    assert.equal(inserted?.[0]?.company, "Acme");
+    assert.equal(inserted?.[0]?.phone, "+1 555 0100");
     assert.equal(mail.to, "bonnie@alphaclonesystems.com");
     assert.equal(mail.replyTo, "test@example.com");
     assert.match(mail.html, /&lt;b&gt;your platform&lt;\/b&gt;/);
     assert.equal(mail.idempotencyKey, "website-contact:submission-1");
   });
 }
+
+test("contact accepts explicit Turnstile bypass after widget failure", async () => {
+  const sequence = [];
+  const query = {
+    insert() {
+      sequence.push("save");
+      return this;
+    },
+    select() {
+      return this;
+    },
+    async single() {
+      return {
+        data: { id: "submission-bypass", created_at: "2026-10-05T15:00:00Z" },
+      };
+    },
+  };
+  const route = load("src/app/api/contact/route.ts", {
+    "next/server": { NextResponse: response },
+    "@/lib/apiAuth": {
+      createAdminSupabaseClientOrThrow: () => ({ from: () => query }),
+      routeErrorResponse: (e) => {
+        throw e;
+      },
+    },
+    "@/lib/email/sendEmailServer": {
+      sendEmailServer: async () => {
+        sequence.push("email");
+        return { success: true };
+      },
+    },
+    "@/lib/rateLimit": {
+      rateLimitMiddleware: async () => null,
+      rateLimitConfigs: { public: { contact: {} } },
+    },
+    "@/lib/verifyTurnstile": {
+      isTurnstileEnforced: () => true,
+      readTurnstileToken: (body) => String(body?.turnstileToken || ""),
+      isTurnstileBypassToken: (token) => token === "__turnstile_bypass__",
+      verifyTurnstileToken: async () => false,
+      readClientIp: () => "127.0.0.1",
+    },
+  });
+  const rejected = await route.POST({
+    json: async () => ({
+      name: "Test Person",
+      email: "test@example.com",
+      subject: "Website question",
+      message: "Please help with my inquiry today.",
+      turnstileToken: "not-a-real-token",
+    }),
+    headers: new Headers(),
+  });
+  assert.equal(rejected.status, 403);
+
+  const accepted = await route.POST({
+    json: async () => ({
+      name: "Test Person",
+      email: "test@example.com",
+      subject: "Website question",
+      message: "Please help with my inquiry today.",
+      turnstileToken: "__turnstile_bypass__",
+    }),
+    headers: new Headers(),
+  });
+  assert.equal(accepted.status, 200);
+  assert.equal(accepted.body.success, true);
+  assert.deepEqual(sequence, ["save", "email"]);
+});
 
 test("website owner notifications cannot bypass the internal digest gateway", async () => {
   let sent = 0;
