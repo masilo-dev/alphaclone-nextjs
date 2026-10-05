@@ -96,7 +96,7 @@ export function UnifiedActionCenter() {
               <li key={item.id}>
                 <Link
                   href={item.href}
-                  className="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 hover:border-teal-500/30 transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-lg border border-[var(--ws-border)] hover:border-teal-500/30 transition-colors"
                 >
                   <Icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
                   <div className="flex-1 min-w-0">

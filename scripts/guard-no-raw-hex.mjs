@@ -20,6 +20,7 @@ const ALLOWLIST = new Set([
   'src/lib/compliance/emailDesignSystem.ts',
   'src/lib/document-os/brandProfile.ts',
   'src/lib/document-os/fixtures/novusPower.ts',
+  'mobile/src/styles/theme.ts',
 ]);
 
 const ALLOW_PREFIX = [
@@ -29,10 +30,9 @@ const ALLOW_PREFIX = [
   'src/lib/documents/renderDocument.ts',
   'src/utils/pdfGenerator.ts',
   'src/app/api/',
-  'mobile/',
 ];
 
-const SCAN_ROOTS = ['src/components', 'src/app', 'src/hooks', 'src/contexts', 'src/config'];
+const SCAN_ROOTS = ['src/components', 'src/app', 'src/hooks', 'src/contexts', 'src/config', 'mobile/src'];
 
 function rel(p) {
   return path.relative(root, p).split(path.sep).join('/');

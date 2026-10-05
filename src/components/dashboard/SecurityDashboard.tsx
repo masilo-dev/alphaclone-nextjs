@@ -145,7 +145,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                     <ShieldCheck className="w-6 h-6 text-teal-400" />
                     Security & Activity Monitor
                 </h2>
@@ -160,7 +160,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <Activity className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.totalLogs || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.totalLogs || 0}</div>
                                 <div className="type-caption text-blue-400">Total Activity Logs</div>
                             </div>
                         </div>
@@ -172,7 +172,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <CheckCircle className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.activeSessions || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.activeSessions || 0}</div>
                                 <div className="type-caption text-green-400">Active Sessions</div>
                             </div>
                         </div>
@@ -184,7 +184,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <ShieldAlert className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.suspiciousLogs || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.suspiciousLogs || 0}</div>
                                 <div className="type-caption text-red-400">Suspicious Activity</div>
                             </div>
                         </div>
@@ -196,7 +196,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <AlertTriangle className="w-6 h-6" />
                             </div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{stats.unresolvedAlerts || 0}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.unresolvedAlerts || 0}</div>
                                 <div className="type-caption text-yellow-400">Unresolved Alerts</div>
                             </div>
                         </div>
@@ -212,7 +212,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                         onClick={() => setActiveTab(tab as any)}
                         className={`px-4 py-2 type-ui font-medium transition-colors whitespace-nowrap ${activeTab === tab
                             ? 'text-teal-400 border-b-2 border-teal-400'
-                            : 'text-[var(--ws-text-muted)] hover:text-white'
+                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                             }`}
                     >
                         {tab === 'logs' && 'Activity Logs'}
@@ -228,7 +228,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Activity Logs Tab */}
             {activeTab === 'logs' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Recent Activity</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Recent Activity</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {activityLogs.map((log) => (
                             <div
@@ -244,7 +244,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                         <span className="font-mono">{new Date(log.created_at).toLocaleString()}</span>
                                     </div>
                                     <div className="flex-1">
-                                        <div className="text-white font-medium">{log.action}</div>
+                                        <div className="text-[var(--ws-text-primary)] font-medium">{log.action}</div>
                                         {isPlatformAdminRole(user.role) && log.profiles && (
                                             <div className="type-caption text-[var(--ws-text-muted)]">{log.profiles.email}</div>
                                         )}
@@ -270,7 +270,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Login Sessions Tab */}
             {activeTab === 'sessions' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Login Sessions</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Login Sessions</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {loginSessions.map((session) => (
                             <div
@@ -281,7 +281,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                     <div className={`w-2 h-2 rounded-full ${session.is_active ? 'bg-green-500' : 'bg-slate-600'}`} />
                                     <div className="flex-1">
                                         {isPlatformAdminRole(user.role) && session.profiles && (
-                                            <div className="text-white font-medium">{session.profiles.email}</div>
+                                            <div className="text-[var(--ws-text-primary)] font-medium">{session.profiles.email}</div>
                                         )}
                                         <div className="type-caption text-[var(--ws-text-muted)]">
                                             {getDeviceIcon(session.device_info?.deviceType)} {session.device_info?.browser}
@@ -319,7 +319,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Security Alerts Tab */}
             {activeTab === 'alerts' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Security Alerts</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Security Alerts</h3>
                     <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {securityAlerts.map((alert) => (
                             <div
@@ -366,7 +366,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Failed Logins Tab */}
             {activeTab === 'failed_logins' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Failed Login Attempts</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Failed Login Attempts</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {failedLogins.map((login) => (
                             <div
@@ -375,7 +375,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                             >
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-white font-medium">{login.email}</span>
+                                        <span className="text-[var(--ws-text-primary)] font-medium">{login.email}</span>
                                         <Badge variant="error" className="type-caption">{login.failure_reason}</Badge>
                                     </div>
                                     <div className="flex items-center gap-4 type-caption text-[var(--ws-text-muted)]">
@@ -407,7 +407,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* System Errors Tab */}
             {activeTab === 'errors' && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">System Errors</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">System Errors</h3>
                     <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
                         {errorLogs.map((error) => (
                             <div
@@ -447,7 +447,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
             {/* Blocked Countries Tab (Admin Only) */}
             {activeTab === 'blocked' && isPlatformAdminRole(user.role) && (
                 <Card>
-                    <h3 className="font-bold text-white mb-4">Blocked Countries</h3>
+                    <h3 className="font-bold text-[var(--ws-text-primary)] mb-4">Blocked Countries</h3>
                     <div className="space-y-2">
                         {blockedCountries.map((country) => (
                             <div
@@ -457,7 +457,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ user }) => {
                                 <div className="flex items-center gap-4">
                                     <Globe className="w-5 h-5 text-red-500" />
                                     <div>
-                                        <div className="text-white font-medium">{country.country_name}</div>
+                                        <div className="text-[var(--ws-text-primary)] font-medium">{country.country_name}</div>
                                         <div className="type-caption text-[var(--ws-text-muted)]">{country.reason}</div>
                                     </div>
                                 </div>

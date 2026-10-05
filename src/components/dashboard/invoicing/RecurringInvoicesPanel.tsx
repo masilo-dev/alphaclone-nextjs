@@ -196,7 +196,7 @@ export default function RecurringInvoicesPanel({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-white uppercase tracking-wide flex items-center gap-2">
+          <h2 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-wide flex items-center gap-2">
             <Repeat className="w-5 h-5 text-teal-400" /> Recurring Invoices
           </h2>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Auto-generate invoices on a schedule — native billing, no Zoho required.</p>
@@ -205,14 +205,14 @@ export default function RecurringInvoicesPanel({
           <button
             type="button"
             onClick={load}
-            className="px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-muted)] hover:text-white type-caption font-bold uppercase"
+            className="px-3 py-2 rounded-xl border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-caption font-bold uppercase"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => setShowForm((v) => !v)}
-            className="px-4 py-2 rounded-xl bg-teal-600 text-white type-caption font-black uppercase tracking-widest flex items-center gap-2"
+            className="px-4 py-2 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-widest flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> New Profile
           </button>
@@ -220,12 +220,12 @@ export default function RecurringInvoicesPanel({
       </div>
 
       {showForm && (
-        <Card className="p-5 bg-[var(--ws-panel)]/60 border-white/10">
+        <Card className="p-5 bg-[var(--ws-panel)]/60 border-[var(--ws-border)]">
           <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Client</label>
               <select
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.clientId}
                 onChange={(e) => handleClientPick(e.target.value)}
               >
@@ -239,7 +239,7 @@ export default function RecurringInvoicesPanel({
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Client name</label>
               <input
                 required
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.clientName}
                 onChange={(e) => setForm((f) => ({ ...f, clientName: e.target.value }))}
               />
@@ -248,7 +248,7 @@ export default function RecurringInvoicesPanel({
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Email</label>
               <input
                 type="email"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.clientEmail}
                 onChange={(e) => setForm((f) => ({ ...f, clientEmail: e.target.value }))}
               />
@@ -260,7 +260,7 @@ export default function RecurringInvoicesPanel({
                 type="number"
                 min="0"
                 step="0.01"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.amount}
                 onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
               />
@@ -268,7 +268,7 @@ export default function RecurringInvoicesPanel({
             <div>
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Frequency</label>
               <select
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.frequency}
                 onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value as RecurringFrequency }))}
               >
@@ -281,7 +281,7 @@ export default function RecurringInvoicesPanel({
               <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Start date</label>
               <input
                 type="date"
-                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-white/10 px-3 py-2 type-ui text-white"
+                className="mt-1 w-full rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                 value={form.startDate}
                 onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
               />
@@ -299,14 +299,14 @@ export default function RecurringInvoicesPanel({
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 rounded-xl bg-teal-600 text-white type-caption font-black uppercase disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Create profile'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-5 py-2 rounded-xl border border-white/10 text-[var(--ws-text-muted)] type-caption font-bold uppercase"
+                className="px-5 py-2 rounded-xl border border-[var(--ws-border)] text-[var(--ws-text-muted)] type-caption font-bold uppercase"
               >
                 Cancel
               </button>
@@ -316,17 +316,17 @@ export default function RecurringInvoicesPanel({
       )}
 
       {profiles.length === 0 ? (
-        <Card className="p-10 text-center border-dashed border-white/10 bg-[var(--ws-panel)]/30">
+        <Card className="p-10 text-center border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)]/30">
           <Repeat className="w-10 h-10 text-slate-600 mx-auto mb-3" />
           <p className="text-[var(--ws-text-muted)] type-card-description">No recurring profiles yet. Create one for retainers or subscriptions.</p>
         </Card>
       ) : (
         <div className="space-y-3">
           {profiles.map((p) => (
-            <Card key={p.id} className="p-4 bg-[var(--ws-panel)]/40 border-white/5">
+            <Card key={p.id} className="p-4 bg-[var(--ws-panel)]/40 border-[var(--ws-border)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-bold text-white">{p.clientName}</p>
+                  <p className="font-bold text-[var(--ws-text-primary)]">{p.clientName}</p>
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-1 flex flex-wrap gap-3">
                     <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {p.frequency}</span>
                     <span>${Number(p.amount).toFixed(2)}</span>
@@ -339,22 +339,22 @@ export default function RecurringInvoicesPanel({
                   <span className={`type-caption font-black uppercase px-2 py-1 rounded-lg ${p.active ? 'bg-teal-500/15 text-teal-400' : 'bg-slate-500/15 text-[var(--ws-text-muted)]'}`}>
                     {p.active ? 'Active' : 'Paused'}
                   </span>
-                  <button type="button" onClick={() => toggleActive(p)} className="p-2 rounded-lg hover:bg-white/5 text-[var(--ws-text-muted)]" title={p.active ? 'Pause' : 'Resume'}>
+                  <button type="button" onClick={() => toggleActive(p)} className="p-2 rounded-lg hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]" title={p.active ? 'Pause' : 'Resume'}>
                     {p.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   </button>
-                  <button type="button" onClick={() => runNow(p.id)} className="p-2 rounded-lg hover:bg-white/5 text-teal-400" title="Generate now">
+                  <button type="button" onClick={() => runNow(p.id)} className="p-2 rounded-lg hover:bg-[var(--ws-hover)] text-teal-400" title="Generate now">
                     <Play className="w-4 h-4" />
                   </button>
                   <button type="button" onClick={() => remove(p.id)} className="p-2 rounded-lg hover:bg-[var(--error-500)]/10 text-red-400">
                     <Trash2 className="w-4 h-4" />
                   </button>
-                  <button type="button" onClick={() => toggleExpand(p.id)} className="p-2 rounded-lg hover:bg-white/5 text-[var(--ws-text-muted)]">
+                  <button type="button" onClick={() => toggleExpand(p.id)} className="p-2 rounded-lg hover:bg-[var(--ws-hover)] text-[var(--ws-text-muted)]">
                     {expandedId === p.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
               {expandedId === p.id && (
-                <div className="mt-4 pt-4 border-t border-white/5">
+                <div className="mt-4 pt-4 border-t border-[var(--ws-border)]">
                   <p className="type-caption font-black uppercase text-[var(--ws-text-muted)] mb-2 flex items-center gap-1">
                     <FileText className="w-3 h-3" /> Generated invoices
                   </p>

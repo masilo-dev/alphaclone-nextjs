@@ -226,12 +226,12 @@ export default function PeriodClosePage() {
   return (
     <div className="p-4 space-y-5 pb-24 max-w-lg mx-auto ac-scroll-full ac-enterprise-module">
       <div className="dashboard-panel-soft p-4">
-        <h3 className="type-ui font-bold text-white mb-1">{period.periodName}</h3>
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-1">{period.periodName}</h3>
         <p className="type-card-description text-[var(--ws-text-muted)] mb-2">
           {period.startDate} — {period.endDate} · Status:{' '}
           <span className="text-[var(--ws-text-secondary)] capitalize">{period.status}</span>
         </p>
-        <h3 className="type-ui font-bold text-white mb-2">Period close progress</h3>
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-2">Period close progress</h3>
         <div className="w-full bg-[var(--ws-surface-secondary)] h-2 rounded-full overflow-hidden">
           <div className="bg-emerald-500 h-full transition-all" style={{ width: `${progress}%` }} />
         </div>
@@ -247,14 +247,14 @@ export default function PeriodClosePage() {
             key={item.id}
             onClick={() => toggle(item.id)}
             disabled={isTerminal}
-            className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-white/5 disabled:opacity-60"
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-[var(--ws-hover)] disabled:opacity-60"
           >
             {checked[item.id] ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
             ) : (
               <Circle className="w-5 h-5 text-slate-600 flex-shrink-0" />
             )}
-            <span className="type-ui text-white">{item.label}</span>
+            <span className="type-ui text-[var(--ws-text-primary)]">{item.label}</span>
           </button>
         ))}
       </div>
@@ -262,7 +262,7 @@ export default function PeriodClosePage() {
       <button
         onClick={() => void lockPeriod()}
         disabled={locked || !allDone || closing || isTerminal}
-        className="w-full h-11 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-40 text-white font-bold flex items-center justify-center gap-2"
+        className="w-full h-11 rounded-xl bg-violet-500 hover:bg-violet-400 disabled:opacity-40 text-[var(--ws-text-primary)] font-bold flex items-center justify-center gap-2"
       >
         {closing ? (
           <Loader2 className="w-4 h-4 animate-spin" />
@@ -284,7 +284,7 @@ export default function PeriodClosePage() {
       <button
         onClick={resetChecklist}
         disabled={isTerminal}
-        className="w-full h-11 rounded-xl border border-white/10 bg-[var(--ws-panel)]/60 hover:bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] disabled:opacity-40 font-bold flex items-center justify-center gap-2"
+        className="w-full h-11 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 hover:bg-[var(--ws-panel)] text-[var(--ws-text-secondary)] disabled:opacity-40 font-bold flex items-center justify-center gap-2"
       >
         <RefreshCcw className="w-4 h-4" /> Reset checklist
       </button>

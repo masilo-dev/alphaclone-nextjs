@@ -83,7 +83,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">My Meetings</h2>
+                    <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">My Meetings</h2>
                     <p className="text-[var(--ws-text-muted)]">Scheduled video calls with your provider</p>
                 </div>
             </div>
@@ -95,7 +95,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                     <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--ws-text-muted)]">
                         <Calendar className="w-8 h-8" />
                     </div>
-                    <h3 className="text-lg font-medium text-white mb-2">No upcoming meetings</h3>
+                    <h3 className="text-lg font-medium text-[var(--ws-text-primary)] mb-2">No upcoming meetings</h3>
                     <p className="text-[var(--ws-text-muted)] max-w-sm mx-auto">
                         You don't have any video calls scheduled. Contact your service provider if you need to schedule one.
                     </p>
@@ -114,12 +114,12 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                             <div className="type-caption uppercase font-bold text-[var(--ws-text-muted)]">
                                                 {format(dateToFormat, 'MMM')}
                                             </div>
-                                            <div className="text-2xl font-bold text-white">
+                                            <div className="text-2xl font-bold text-[var(--ws-text-primary)]">
                                                 {format(dateToFormat, 'd')}
                                             </div>
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-white mb-1">{meeting.title}</h3>
+                                            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-1">{meeting.title}</h3>
                                             <div className="flex flex-wrap gap-4 type-ui text-[var(--ws-text-muted)]">
                                                 <span className="flex items-center gap-1.5">
                                                     <Clock className="w-4 h-4" />
@@ -139,7 +139,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                         {meeting.status === 'active' ? (
                                             <Button
                                                 onClick={() => joinMeeting(meeting)}
-                                                className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow-lg shadow-green-900/20"
+                                                className="bg-green-600 hover:bg-green-700 text-[var(--ws-text-primary)] gap-2 shadow-lg shadow-green-900/20"
                                             >
                                                 <Video className="w-4 h-4 animate-pulse" />
                                                 Join Now

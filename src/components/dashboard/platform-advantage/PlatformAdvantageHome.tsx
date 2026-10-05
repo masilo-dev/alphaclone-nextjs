@@ -139,7 +139,7 @@ export function PlatformAdvantageHome() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="type-caption font-bold uppercase tracking-caps text-teal-400/80">Owner intelligence</p>
-          <h2 className="text-lg font-black text-white">What needs your attention</h2>
+          <h2 className="text-lg font-black text-[var(--ws-text-primary)]">What needs your attention</h2>
           <p className="type-caption text-[var(--ws-text-muted)]">Ranked by cash impact, client risk, and time saved — every card opens the exact workspace action.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -164,7 +164,7 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4 lg:col-span-2">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-teal-400" />
-            <h3 className="type-ui font-black text-white">Owner autopilot queue</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Owner autopilot queue</h3>
           </div>
           {queue.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">No urgent actions right now. Bonnie will surface new priorities as your workspace changes.</p>
@@ -204,7 +204,7 @@ export function PlatformAdvantageHome() {
               <Clock className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Time saved (30d)</span>
             </div>
-            <p className="mt-2 text-2xl font-black text-white">{hoursSaved > 0 ? `${hoursSaved.toFixed(1)}h` : '—'}</p>
+            <p className="mt-2 text-2xl font-black text-[var(--ws-text-primary)]">{hoursSaved > 0 ? `${hoursSaved.toFixed(1)}h` : '—'}</p>
             <p className="type-card-description text-[var(--ws-text-muted)]">Estimated from automated workflows and MCP activity.</p>
           </div>
           <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3">
@@ -212,7 +212,7 @@ export function PlatformAdvantageHome() {
               <ShieldCheck className="h-4 w-4" />
               <span className="type-caption font-bold uppercase tracking-wider">Automation readiness</span>
             </div>
-            <p className="mt-2 text-2xl font-black text-white">{readinessScore > 0 ? `${Math.round(readinessScore)}%` : '—'}</p>
+            <p className="mt-2 text-2xl font-black text-[var(--ws-text-primary)]">{readinessScore > 0 ? `${Math.round(readinessScore)}%` : '—'}</p>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               {typeof readiness?.summary === 'string'
                 ? readiness.summary
@@ -226,7 +226,7 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4">
           <div className="mb-3 flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-emerald-400" />
-            <h3 className="type-ui font-black text-white">Revenue recovery</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Revenue recovery</h3>
           </div>
           {recovery.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">No overdue invoices or stale quotes detected in the current window.</p>
@@ -272,7 +272,7 @@ export function PlatformAdvantageHome() {
         <section className="ac-workspace-panel p-4">
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-400" />
-            <h3 className="type-ui font-black text-white">Client pulse</h3>
+            <h3 className="type-ui font-black text-[var(--ws-text-primary)]">Client pulse</h3>
           </div>
           {pulse.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">No clients flagged for attention right now.</p>

@@ -125,7 +125,7 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
           <button
             type="button"
             onClick={() => onPause(campaign.id)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-white/10 text-[var(--ws-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:border-[var(--ws-border-strong)] transition-colors"
           >
             <Pause className="w-3 h-3" />
             Pause

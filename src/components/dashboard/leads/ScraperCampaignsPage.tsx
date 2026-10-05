@@ -456,7 +456,7 @@ export default function ScraperCampaignsPage() {
             <aside className="space-y-4">
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
                 <h2 className="font-semibold">Search presets</h2><p className="mb-3 type-caption text-[var(--ws-text-secondary)]">Suggestions only—results always come from live public sources.</p>
-                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left type-ui hover:bg-white/5"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
+                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left type-ui hover:bg-[var(--ws-hover)]"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
               </div>
               <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
                 <div className="flex items-center gap-2"><Database size={17} className="text-teal-400"/><h2 className="font-semibold">Public-source policy</h2></div>

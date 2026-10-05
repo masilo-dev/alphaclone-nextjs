@@ -46,7 +46,7 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                 <div className="p-6 border-t border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 backdrop-blur-xl flex justify-end shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-8 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                        className="px-8 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
                     >
                         CLOSE
                     </button>

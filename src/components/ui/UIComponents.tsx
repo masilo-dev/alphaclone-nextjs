@@ -48,14 +48,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   const variants: Record<string, string> = {
     primary: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
     default: `${WORKSPACE.action.primary} border-0 active:scale-[0.98]`,
-    secondary: "bg-[var(--interactive-secondary,var(--brand-teal))] text-white hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]",
+    secondary: "bg-[var(--interactive-secondary,var(--brand-teal))] text-[var(--text-inverse)] hover:bg-[var(--interactive-secondary-hover)] active:scale-[0.98]",
     outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover,var(--ws-panel))] active:scale-[0.98]",
     ghost: "text-[var(--text-secondary)] hover:bg-[var(--surface-hover,var(--ws-panel))] hover:text-[var(--text-primary)]",
-    danger: "bg-[var(--danger,var(--error-500))] text-white hover:brightness-95 active:scale-[0.98]",
-    destructive: "bg-[var(--danger,var(--error-500))] text-white hover:brightness-95 active:scale-[0.98]",
+    danger: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
+    destructive: "bg-[var(--danger,var(--error-500))] text-[var(--text-inverse)] hover:brightness-95 active:scale-[0.98]",
     icon: "bg-transparent hover:bg-[var(--surface-hover,var(--ws-panel))] text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
     navigation: `${WORKSPACE.nav.item} justify-start`,
-    cta: "bg-gradient-to-r from-[var(--brand-blue-400)] to-[var(--brand-blue-500)] text-white shadow-lg hover:brightness-110 active:scale-[0.98]",
+    cta: "bg-gradient-to-r from-[var(--brand-blue-400)] to-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-lg hover:brightness-110 active:scale-[0.98]",
   };
 
   const sizes: Record<string, string> = {

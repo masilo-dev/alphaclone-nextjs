@@ -159,7 +159,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
             <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-2xl font-bold text-white">Studio Talent & Resource Allocation</h2>
+                        <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Studio Talent & Resource Allocation</h2>
                         <p className="text-[var(--ws-text-muted)] mt-1">Manage team assignments and workload</p>
                     </div>
                 </div>
@@ -173,7 +173,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
     if (error) {
         return (
             <div className="space-y-6 animate-fade-in">
-                <h2 className="text-2xl font-bold text-white">Studio Talent & Resource Allocation</h2>
+                <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Studio Talent & Resource Allocation</h2>
                 <Card className="p-8 text-center">
                     <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
                     <p className="text-[var(--ws-text-secondary)] mb-4">{error}</p>
@@ -188,13 +188,13 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
             <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h2 className="text-2xl font-bold text-white">Studio Talent & Resource Allocation</h2>
+                        <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Studio Talent & Resource Allocation</h2>
                         <p className="text-[var(--ws-text-muted)] mt-1">Manage team assignments and workload</p>
                     </div>
                 </div>
                 <Card className="p-12 text-center">
                     <Users className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">No Team Members Yet</h3>
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">No Team Members Yet</h3>
                     <p className="text-[var(--ws-text-muted)]">Add profiles with 'admin' or 'employee' role to get started.</p>
                 </Card>
             </div>
@@ -210,7 +210,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
             <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-start gap-3 flex-wrap">
                     <div>
-                        <h2 className="text-2xl font-bold text-white">Studio Talent & Resource Allocation</h2>
+                        <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Studio Talent & Resource Allocation</h2>
                         <p className="text-[var(--ws-text-muted)] mt-1">Manage team assignments and workload</p>
                     </div>
                     <Button onClick={fetchData} variant="outline" className="flex items-center gap-2 min-h-11">
@@ -227,7 +227,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                             </div>
                             <div>
                                 <div className="type-ui text-[var(--ws-text-muted)]">Total Team</div>
-                                <div className="text-2xl font-bold text-white">{totalMembers}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{totalMembers}</div>
                             </div>
                         </div>
                     </Card>
@@ -238,7 +238,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                             </div>
                             <div>
                                 <div className="type-ui text-[var(--ws-text-muted)]">Available</div>
-                                <div className="text-2xl font-bold text-white">{availableMembers}</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{availableMembers}</div>
                             </div>
                         </div>
                     </Card>
@@ -249,7 +249,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                             </div>
                             <div>
                                 <div className="type-ui text-[var(--ws-text-muted)]">Avg Capacity</div>
-                                <div className="text-2xl font-bold text-white">{avgCapacity}%</div>
+                                <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{avgCapacity}%</div>
                             </div>
                         </div>
                     </Card>
@@ -268,7 +268,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                         className="flex-shrink-0"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-white truncate">{member.name}</h3>
+                                        <h3 className="font-bold text-[var(--ws-text-primary)] truncate">{member.name}</h3>
                                         <p className="type-card-description text-[var(--ws-text-muted)] truncate">{member.role}</p>
                                     </div>
                                     <button
@@ -395,7 +395,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <h4 className="font-semibold text-white type-ui">{project.name}</h4>
+                                                            <h4 className="font-semibold text-[var(--ws-text-primary)] type-ui">{project.name}</h4>
                                                             {isAssigned && (
                                                                 <CheckCircle className="w-4 h-4 text-teal-400" />
                                                             )}

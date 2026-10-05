@@ -133,7 +133,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-teal-400" />
-                        <h4 className="type-caption font-bold uppercase tracking-wider text-white">{title}</h4>
+                        <h4 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-primary)]">{title}</h4>
                     </div>
                     <span className={`text-lg font-black ${scoreColor}`}>{Math.round(data.module.score)}%</span>
                 </div>
@@ -162,7 +162,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         <Zap className="w-5 h-5 text-teal-400" />
                         {title}
                     </h3>
@@ -175,7 +175,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                             {Math.round(data.module.score)}%
                         </p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl border border-white/10 bg-[var(--ws-canvas)] flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] flex items-center justify-center">
                         <Radar className={`w-6 h-6 ${scoreColor} animate-pulse`} />
                     </div>
                 </div>
@@ -230,7 +230,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                     </h4>
                     <div className="space-y-3">
                         {data.systemicRisks.length === 0 ? (
-                            <div className="p-4 rounded-2xl border border-dashed border-white/5 type-caption text-[var(--ws-text-muted)] text-center">
+                            <div className="p-4 rounded-2xl border border-dashed border-[var(--ws-border)] type-caption text-[var(--ws-text-muted)] text-center">
                                 No critical vulnerabilities detected in this vector.
                             </div>
                         ) : (
@@ -252,7 +252,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                 </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+            <div className="mt-8 pt-6 border-t border-[var(--ws-border)] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
                     <span className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-widest">Nexus Intelligence: Operational</span>

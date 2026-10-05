@@ -132,7 +132,7 @@ export function ChaseExecutionInbox() {
     <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-white">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-[var(--ws-text-primary)]">
             <BellRing className="h-7 w-7 text-teal-400" />
             Chase execution inbox
           </h1>
@@ -144,7 +144,7 @@ export function ChaseExecutionInbox() {
           type="button"
           onClick={load}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 type-ui font-medium text-white hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-hover)] px-4 py-2 type-ui font-medium text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
         >
           <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
           Refresh
@@ -165,13 +165,13 @@ export function ChaseExecutionInbox() {
           ].map(({ label, value, icon: Icon }) => (
             <div
               key={label}
-              className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/60 p-4"
+              className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4"
             >
               <div className="flex items-center gap-2 type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
               </div>
-              <div className="mt-2 text-2xl font-bold text-white">{value}</div>
+              <div className="mt-2 text-2xl font-bold text-[var(--ws-text-primary)]">{value}</div>
             </div>
           ))}
         </div>
@@ -187,7 +187,7 @@ export function ChaseExecutionInbox() {
               'rounded-full px-3 py-1 type-caption font-bold uppercase tracking-widest transition',
               filter === key
                 ? 'bg-teal-500/20 text-[var(--brand-blue-300)] ring-1 ring-teal-500/40'
-                : 'bg-white/5 text-[var(--ws-text-muted)] hover:text-white',
+                : 'bg-[var(--ws-hover)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]',
             )}
           >
             {key === 'all' ? 'All active' : key === 'approval' ? 'Needs approval' : 'Due now'}
@@ -201,7 +201,7 @@ export function ChaseExecutionInbox() {
           Loading chases…
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 py-16 text-center text-[var(--ws-text-muted)]">
+        <div className="rounded-xl border border-dashed border-[var(--ws-border)] py-16 text-center text-[var(--ws-text-muted)]">
           No active chases in this view.
         </div>
       ) : (
@@ -215,7 +215,7 @@ export function ChaseExecutionInbox() {
             return (
               <li
                 key={item.id}
-                className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/50 p-4 shadow-sm"
+                className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
@@ -235,7 +235,7 @@ export function ChaseExecutionInbox() {
                         <span className="type-caption font-bold uppercase text-rose-400">High</span>
                       )}
                     </div>
-                    <p className="mt-1 truncate text-base font-semibold text-white">{title}</p>
+                    <p className="mt-1 truncate text-base font-semibold text-[var(--ws-text-primary)]">{title}</p>
                     <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)]">
                       {item.reason_code?.replace(/_/g, ' ') || 'Follow-up required'} · attempt{' '}
                       {item.attempt_count}/{item.max_attempts}
@@ -251,7 +251,7 @@ export function ChaseExecutionInbox() {
                         type="button"
                         disabled={busy}
                         onClick={() => runAction(item.id, 'approve')}
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 type-caption font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 type-caption font-semibold text-[var(--text-inverse)] hover:bg-emerald-500 disabled:opacity-50"
                       >
                         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                         Approve
@@ -261,7 +261,7 @@ export function ChaseExecutionInbox() {
                       type="button"
                       disabled={busy}
                       onClick={() => runAction(item.id, 'execute')}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 type-caption font-semibold text-white hover:bg-white/5 disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 type-caption font-semibold text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] disabled:opacity-50"
                     >
                       <Play className="h-3.5 w-3.5" />
                       Execute
@@ -270,7 +270,7 @@ export function ChaseExecutionInbox() {
                       type="button"
                       disabled={busy}
                       onClick={() => runAction(item.id, 'snooze')}
-                      className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-white/5 disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] disabled:opacity-50"
                     >
                       <PauseCircle className="h-3.5 w-3.5" />
                       Snooze

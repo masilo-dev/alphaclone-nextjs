@@ -73,7 +73,7 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
         return (
           <div key={category} className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="type-ui font-bold text-white capitalize">{category.replace('_', ' ')}</h4>
+              <h4 className="type-ui font-bold text-[var(--ws-text-primary)] capitalize">{category.replace('_', ' ')}</h4>
               <button
                 type="button"
                 disabled={saving}
@@ -91,7 +91,7 @@ export default function NotificationCategoryPolicyPanel({ tenantId }: { tenantId
                   disabled={saving || row.disabled}
                   onClick={() => void saveCategory(category, { [channel.key]: !row[channel.key] })}
                   className={`px-2 py-1 rounded-md type-caption font-bold uppercase tracking-wide ${
-                    row[channel.key] ? 'bg-teal-600 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
+                    row[channel.key] ? 'bg-teal-600 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'
                   }`}
                 >
                   {channel.label}

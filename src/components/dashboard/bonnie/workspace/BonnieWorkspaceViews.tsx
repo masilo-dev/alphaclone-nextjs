@@ -253,7 +253,7 @@ export default function BonnieWorkspaceViews({
               onClick={() => onChangeView(id)}
               className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 type-caption font-medium transition ${
                 active
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-teal-600 text-[var(--text-inverse)]'
                   : 'text-slate-600 hover:bg-slate-100 dark:text-[var(--ws-text-secondary)] dark:hover:bg-[var(--ws-panel)]'
               }`}
             >
@@ -271,7 +271,7 @@ export default function BonnieWorkspaceViews({
               onClick={() => onChangeView(id)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 type-ui font-medium transition ${
                 active
-                  ? 'bg-[var(--ws-surface-tertiary)] text-white'
+                  ? 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)]'
                   : 'text-[var(--ws-text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--ws-panel)]'
               }`}
             >
@@ -467,7 +467,7 @@ export default function BonnieWorkspaceViews({
                         type="button"
                         disabled={acting}
                         onClick={() => void decide(a.id, 'approved')}
-                        className="rounded-lg bg-teal-600 px-2.5 py-1 type-caption text-white"
+                        className="rounded-lg bg-teal-600 px-2.5 py-1 type-caption text-[var(--text-inverse)]"
                       >
                         Approve
                       </button>
@@ -612,7 +612,7 @@ export default function BonnieWorkspaceViews({
                   type="button"
                   disabled={acting}
                   onClick={() => void launchOutcome()}
-                  className="mt-4 rounded-lg bg-teal-600 px-4 py-2 type-caption font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                  className="mt-4 rounded-lg bg-teal-600 px-4 py-2 type-caption font-semibold text-[var(--text-inverse)] hover:bg-teal-700 disabled:opacity-50"
                 >
                   {acting ? 'Starting…' : 'Request outcome'}
                 </button>

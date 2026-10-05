@@ -169,7 +169,7 @@ function McpOAuthCredentialsPanel({
   return (
     <div className="mb-6 p-5 rounded-2xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/80 space-y-4">
       <div>
-        <p className="type-card-description font-bold text-white flex items-center gap-2">
+        <p className="type-card-description font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
           <Shield className="w-4 h-4 text-teal-400" />
           {config.title}
         </p>
@@ -313,7 +313,7 @@ function McpBusinessPromptPlaybook({
       <div className="p-5 border-b border-amber-500/15">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-5 h-5 text-amber-400" />
-          <h2 className="text-lg font-bold text-white">Business prompt playbook</h2>
+          <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Business prompt playbook</h2>
         </div>
         <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">
           Copy these prompts into {agentLabel} after MCP is connected. Edit names, amounts, and dates for your business — the structure helps {agentLabel} use AlphaClone tools correctly.
@@ -335,7 +335,7 @@ function McpBusinessPromptPlaybook({
             <button
               type="button"
               onClick={() => onCopy(MCP_MASTER_INSTRUCTION, 'Master instruction')}
-              className="absolute top-3 right-3 p-2 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:text-white transition-colors"
+              className="absolute top-3 right-3 p-2 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
               aria-label="Copy master instruction"
             >
               <Copy className="w-4 h-4" />
@@ -355,7 +355,7 @@ function McpBusinessPromptPlaybook({
                 className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-[var(--ws-surface-secondary)]/30 transition-colors"
               >
                 <div>
-                  <p className="type-card-description font-semibold text-white">{group.title}</p>
+                  <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{group.title}</p>
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{group.description}</p>
                 </div>
                 <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
@@ -630,10 +630,10 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-teal-500 flex items-center justify-center shadow-lg shadow-indigo-900/30">
-            <Bot className="w-6 h-6 text-white" />
+            <Bot className="w-6 h-6 text-[var(--text-inverse)]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : setupType === 'cursor' ? 'Cursor' : 'Grok'} AI to Your Account</h1>
+            <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : setupType === 'cursor' ? 'Cursor' : 'Grok'} AI to Your Account</h1>
             <p className="text-[var(--ws-text-muted)] type-card-description mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -642,31 +642,31 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <div className="flex gap-2 mb-8 bg-[var(--ws-panel)]/50 p-1 rounded-xl w-fit border border-[var(--ws-border)]">
           <button
             onClick={() => setSetupType('claude')}
-            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'claude' ? 'bg-indigo-600 text-[var(--ws-text-primary)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
           >
             Claude Desktop
           </button>
           <button
             onClick={() => setSetupType('manus')}
-            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'manus' ? 'bg-teal-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'manus' ? 'bg-teal-600 text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
           >
             Manus AI
           </button>
           <button
             onClick={() => setSetupType('grok')}
-            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-[var(--ws-text-primary)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
           >
             Grok AI
           </button>
           <button
             onClick={() => setSetupType('chatgpt')}
-            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
           >
             ChatGPT
           </button>
           <button
             onClick={() => setSetupType('cursor')}
-            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+            className={`px-4 py-2 rounded-lg type-ui font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-[var(--ws-text-primary)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
           >
             Cursor
           </button>
@@ -720,7 +720,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-[var(--ws-text-secondary)] type-card-description leading-relaxed">
-            <span className="text-white font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
+            <span className="text-[var(--ws-text-primary)] font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
 
@@ -730,7 +730,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <div key={title} className="p-4 rounded-xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <Icon className="w-4 h-4 text-teal-400" />
-                <span className="text-white type-ui font-semibold">{title}</span>
+                <span className="text-[var(--ws-text-primary)] type-ui font-semibold">{title}</span>
               </div>
               <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">{desc}</p>
             </div>
@@ -751,7 +751,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
       {/* Step-by-step guide */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
+        <h2 className="text-lg font-bold text-[var(--ws-text-primary)] mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
           {SETUP_STEPS.filter((s) => {
             if (setupType === 'claude') return true;
@@ -827,7 +827,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                       <span className="type-caption text-[var(--ws-text-muted)] font-medium">STEP {displayNum}</span>
                       {isDone && <span className="type-caption text-teal-400 font-semibold">✓ Done</span>}
                     </div>
-                    <p className={`font-semibold type-card-description mt-0.5 ${isDone ? 'text-[var(--brand-blue-300)]' : 'text-white'}`}>{stepTitle}</p>
+                    <p className={`font-semibold type-card-description mt-0.5 ${isDone ? 'text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-primary)]'}`}>{stepTitle}</p>
                   </div>
                   <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transition-transform ${isOpen ? 'rotate-90' : ''}`} />
                 </button>
@@ -850,7 +850,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             href={actionUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white type-ui font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-[var(--ws-text-primary)] type-ui font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <Download className="w-4 h-4" />
                             {actionLabel}
@@ -884,7 +884,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                   setupType === 'cursor' ? 'Connection key' : 'Connection URL'
                                 )}
                                 disabled={!connectionToken}
-                                className="flex-shrink-0 p-2 rounded-lg bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-secondary)] hover:text-white transition-all disabled:opacity-50"
+                                className="flex-shrink-0 p-2 rounded-lg bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-all disabled:opacity-50"
                               >
                                 <Copy className="w-4 h-4" />
                               </button>
@@ -924,7 +924,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 </div>
                                 <button
                                   onClick={() => copyText(sub.path, `${sub.platform} path`)}
-                                  className="flex-shrink-0 p-1.5 rounded-lg bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-muted)] hover:text-white transition-all"
+                                  className="flex-shrink-0 p-1.5 rounded-lg bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
                                 </button>
@@ -945,7 +945,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                   <p className="text-[var(--ws-text-muted)] type-caption font-medium uppercase tracking-wider">Cursor — MCP server JSON:</p>
                                   <button
                                     onClick={() => copyText(cursorMcpConfigJson, 'Cursor MCP config')}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white type-caption font-semibold transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[var(--ws-text-primary)] type-caption font-semibold transition-all"
                                   >
                                     <Copy className="w-3.5 h-3.5" />
                                     Copy Cursor config
@@ -962,7 +962,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 <p className="text-[var(--ws-text-muted)] type-caption font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
                                 <button
                                   onClick={() => copyText(desktopConfigJson, 'Desktop config')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white type-caption font-semibold transition-all"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-caption font-semibold transition-all"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
                                   Copy Desktop
@@ -980,7 +980,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 <p className="text-[var(--ws-text-muted)] type-caption font-medium uppercase tracking-wider">Claude Code — .mcp.json or claude mcp add-json:</p>
                                 <button
                                   onClick={() => copyText(claudeCodeConfigJson, 'Claude Code config')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white type-caption font-semibold transition-all"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[var(--ws-text-primary)] type-caption font-semibold transition-all"
                                 >
                                   <Copy className="w-3.5 h-3.5" />
                                   Copy Claude Code
@@ -1029,7 +1029,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                   <button
                                     type="button"
                                     onClick={() => copyText(prompt, 'Test prompt')}
-                                    className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-white transition-colors shrink-0"
+                                    className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)]/80 hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors shrink-0"
                                     aria-label="Copy test prompt"
                                   >
                                     <Copy className="w-3.5 h-3.5" />
@@ -1047,7 +1047,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {!isDone && (
                           <button
                             onClick={() => markDone(step.number)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-white type-ui font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[var(--ws-text-primary)] type-ui font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <CheckCircle className="w-4 h-4" />
                             {step.number === SETUP_STEPS.length ? 'I\'m done!' : 'Done — next step'}
@@ -1072,7 +1072,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           className="p-6 rounded-2xl bg-gradient-to-br from-teal-500/20 to-indigo-500/20 border border-teal-500/30 text-center"
         >
           <div className="text-4xl mb-3">🎉</div>
-          <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
+          <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">You're connected!</h3>
           <p className="text-[var(--ws-text-secondary)] type-card-description leading-relaxed max-w-md mx-auto">
             {agentLabel} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
           </p>
@@ -1083,7 +1083,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       <div className="mt-8 p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)]">
         <div className="flex items-center gap-2 mb-3">
           <Info className="w-4 h-4 text-[var(--ws-text-muted)]" />
-          <span className="text-white type-ui font-semibold">Need help?</span>
+          <span className="text-[var(--ws-text-primary)] type-ui font-semibold">Need help?</span>
         </div>
         <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">
           If something isn't working, just email us at{' '}

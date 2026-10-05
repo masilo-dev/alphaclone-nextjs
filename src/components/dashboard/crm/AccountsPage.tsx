@@ -169,9 +169,9 @@ export default function AccountsPage() {
                 ['Employees', selected.employee_count?.toString() || '—'],
                 ['Revenue', selected.annual_revenue ? `$${selected.annual_revenue.toLocaleString()}` : '—'],
               ].map(([k, v]) => (
-                <div key={k} className="bg-[var(--ws-panel)] border border-white/5 rounded-xl p-3">
+                <div key={k} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3">
                   <dt className="type-caption text-[var(--ws-text-muted)]">{k}</dt>
-                  <dd className="text-white font-medium mt-0.5">{v}</dd>
+                  <dd className="text-[var(--ws-text-primary)] font-medium mt-0.5">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -182,13 +182,13 @@ export default function AccountsPage() {
                 type="datetime-local"
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-white/10 text-white type-ui"
+                className="px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] type-ui"
               />
               <button
                 type="button"
                 onClick={() => void handleScheduleFollowUp()}
                 disabled={!followUpDate}
-                className="px-3 py-2 rounded-xl bg-teal-600 text-white type-caption font-bold disabled:opacity-50"
+                className="px-3 py-2 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-caption font-bold disabled:opacity-50"
               >
                 Schedule follow-up
               </button>
@@ -281,7 +281,7 @@ export default function AccountsPage() {
             type="button"
             disabled={creating}
             onClick={() => setCreateOpen(true)}
-            className="h-10 px-3 rounded-xl bg-teal-500 text-white type-caption font-bold flex items-center gap-1 disabled:opacity-50"
+            className="h-10 px-3 rounded-xl bg-teal-500 text-[var(--text-inverse)] type-caption font-bold flex items-center gap-1 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" /> New
           </button>
@@ -300,19 +300,19 @@ export default function AccountsPage() {
           onAction={() => router.push('/dashboard/crm/workspace')}
         />
       ) : (
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           {companies.map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => openDetail(c)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[var(--ws-hover)] text-left"
             >
               <div className="w-9 h-9 rounded-xl bg-teal-500/10 flex items-center justify-center">
                 <Building2 className="w-4 h-4 text-teal-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="type-ui font-bold text-white truncate">{c.name}</div>
+                <div className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{c.name}</div>
                 <div className="type-caption text-[var(--ws-text-muted)] capitalize">{c.lifecycle_stage} · Health {c.health_score}</div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-600" />
@@ -338,11 +338,11 @@ function RelatedList({ items, labelKey, fallback }: { items: unknown[]; labelKey
     return <p className="type-card-description text-[var(--ws-text-muted)] py-8 text-center">No {fallback.toLowerCase()}s linked yet.</p>;
   }
   return (
-    <div className="divide-y divide-white/5 bg-[var(--ws-panel)] border border-white/5 rounded-xl overflow-hidden">
+    <div className="divide-y divide-white/5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl overflow-hidden">
       {items.map((item, i) => {
         const row = item as Record<string, unknown>;
         return (
-          <div key={String(row.id ?? i)} className="px-4 py-3 type-ui text-white">
+          <div key={String(row.id ?? i)} className="px-4 py-3 type-ui text-[var(--ws-text-primary)]">
             {String(row[labelKey] ?? row.name ?? fallback)}
           </div>
         );

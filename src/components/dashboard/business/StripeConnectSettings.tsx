@@ -83,7 +83,7 @@ const StripeConnectSettings: React.FC = () => {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-bold text-white">
+                                <h4 className="font-bold text-[var(--ws-text-primary)]">
                                     {isConnected ? 'Stripe Connected' : isPending ? 'Connection Pending' : 'Stripe Not Connected'}
                                 </h4>
                                 {isConnected ? (
@@ -108,7 +108,7 @@ const StripeConnectSettings: React.FC = () => {
                         <button
                             onClick={handleConnect}
                             disabled={loading}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-black type-caption uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                            className="flex items-center gap-2 px-6 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed text-[var(--ws-text-primary)] font-black type-caption uppercase tracking-widest rounded-xl transition-all active:scale-95"
                         >
                             <CreditCard className="w-4 h-4" />
                             {loading ? 'Connecting...' : 'Connect Stripe Account'}
@@ -119,7 +119,7 @@ const StripeConnectSettings: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                 <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
-                    <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-teal-400" />
                         0% Platform Fee
                     </h5>
@@ -128,7 +128,7 @@ const StripeConnectSettings: React.FC = () => {
                     </p>
                 </div>
                 <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
-                    <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-teal-400" />
                         Secure & Verified
                     </h5>

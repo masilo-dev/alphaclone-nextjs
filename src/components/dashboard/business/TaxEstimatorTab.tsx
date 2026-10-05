@@ -142,7 +142,7 @@ export default function TaxEstimatorTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Percent className="w-5 h-5 text-teal-400" />
             Quarterly Tax Estimator
           </h2>
@@ -153,7 +153,7 @@ export default function TaxEstimatorTab() {
           <button
             onClick={handleRunDeductionTriage}
             disabled={runningAi || records.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-[var(--ws-border)]"
           >
             {runningAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-teal-400" />}
             AI Deductions Triage
@@ -161,7 +161,7 @@ export default function TaxEstimatorTab() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Log Quarter
@@ -179,7 +179,7 @@ export default function TaxEstimatorTab() {
 
         <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/80 rounded-3xl p-5">
           <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Gross Income YTD</span>
-          <div className="text-2xl font-black text-white font-mono mt-1">${totalIncome.toLocaleString()}</div>
+          <div className="text-2xl font-black text-[var(--ws-text-primary)] font-mono mt-1">${totalIncome.toLocaleString()}</div>
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">Reportable revenues</span>
         </div>
 
@@ -191,7 +191,7 @@ export default function TaxEstimatorTab() {
 
         <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)]/80 rounded-3xl p-5">
           <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Net Taxable Profit</span>
-          <div className="text-2xl font-black text-white font-mono mt-1">${Math.max(0, totalIncome - totalExpenses - totalDeductions).toLocaleString()}</div>
+          <div className="text-2xl font-black text-[var(--ws-text-primary)] font-mono mt-1">${Math.max(0, totalIncome - totalExpenses - totalDeductions).toLocaleString()}</div>
           <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">User-entered effective rate basis</span>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function TaxEstimatorTab() {
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
             <div className="p-4 border-b border-[var(--ws-border)]">
-              <span className="type-caption font-bold text-white uppercase tracking-wider">Quarterly Filings Timeline</span>
+              <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">Quarterly Filings Timeline</span>
             </div>
 
             <div className="divide-y divide-slate-850">
@@ -218,12 +218,12 @@ export default function TaxEstimatorTab() {
                 records.map(rec => (
                   <div key={rec.id} className="p-4 hover:bg-[var(--ws-panel)]/10 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-850 flex flex-col items-center justify-center border border-white/5">
+                      <div className="w-10 h-10 rounded-full bg-slate-850 flex flex-col items-center justify-center border border-[var(--ws-border)]">
                         <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase">Q{rec.quarter}</span>
                         <span className="type-ui font-bold text-teal-400">{rec.tax_year}</span>
                       </div>
                       <div>
-                        <p className="type-card-description font-bold text-white">Quarter {rec.quarter} Filing</p>
+                        <p className="type-card-description font-bold text-[var(--ws-text-primary)]">Quarter {rec.quarter} Filing</p>
                         <p className="type-card-description text-[var(--ws-text-muted)]">
                           Income: ${rec.estimated_income.toLocaleString()} | Deductions: ${(rec.estimated_expenses + rec.deduction_amount).toLocaleString()}
                         </p>
@@ -259,7 +259,7 @@ export default function TaxEstimatorTab() {
         {/* AI Deductions Tips */}
         <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
-            <h4 className="type-caption font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+            <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
               AI Tax Planning Questions
             </h4>
@@ -285,7 +285,7 @@ export default function TaxEstimatorTab() {
               <button
                 onClick={handleRunDeductionTriage}
                 disabled={runningAi || records.length === 0}
-                className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-white rounded-xl type-caption font-bold"
+                className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-[var(--ws-text-primary)] rounded-xl type-caption font-bold"
               >
                 Generate Planning Questions
               </button>
@@ -299,8 +299,8 @@ export default function TaxEstimatorTab() {
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
-              <h3 className="font-bold text-white type-ui">Log Quarterly Tax Metrics</h3>
-              <button onClick={() => setShowModal(false)} className="text-[var(--ws-text-muted)] hover:text-white type-ui">Close</button>
+              <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Log Quarterly Tax Metrics</h3>
+              <button onClick={() => setShowModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui">Close</button>
             </div>
 
             <form onSubmit={handleSave} className="p-5 space-y-4">
@@ -312,7 +312,7 @@ export default function TaxEstimatorTab() {
                     required
                     value={form.tax_year}
                     onChange={e => setForm(f => ({ ...f, tax_year: parseInt(e.target.value) || 2026 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
@@ -321,7 +321,7 @@ export default function TaxEstimatorTab() {
                   <select
                     value={form.quarter}
                     onChange={e => setForm(f => ({ ...f, quarter: parseInt(e.target.value) || 1 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
                   >
                     <option value={1}>Quarter 1 (Jan - Mar)</option>
                     <option value={2}>Quarter 2 (Apr - Jun)</option>
@@ -339,7 +339,7 @@ export default function TaxEstimatorTab() {
                   placeholder="e.g. 15000"
                   value={form.estimated_income}
                   onChange={e => setForm(f => ({ ...f, estimated_income: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
                 />
               </div>
 
@@ -351,7 +351,7 @@ export default function TaxEstimatorTab() {
                     placeholder="e.g. 2400"
                     value={form.estimated_expenses}
                     onChange={e => setForm(f => ({ ...f, estimated_expenses: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
                   />
                 </div>
 
@@ -362,7 +362,7 @@ export default function TaxEstimatorTab() {
                     placeholder="e.g. 1000"
                     value={form.deduction_amount}
                     onChange={e => setForm(f => ({ ...f, deduction_amount: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
                   />
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function TaxEstimatorTab() {
                   placeholder="Use a rate supplied by your tax authority or adviser"
                   value={form.tax_rate}
                   onChange={e => setForm(f => ({ ...f, tax_rate: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 font-mono"
                 />
                 <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">AlphaClone does not infer jurisdiction-specific tax rates.</p>
               </div>
@@ -388,7 +388,7 @@ export default function TaxEstimatorTab() {
                 <select
                   value={form.status}
                   onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
                 >
                   <option value="draft">Unpaid (Draft Estimate)</option>
                   <option value="paid">Paid Estimated Tax</option>
@@ -399,7 +399,7 @@ export default function TaxEstimatorTab() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all disabled:opacity-50"
+                  className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all disabled:opacity-50"
                 >
                   {saving ? 'Saving...' : 'Log Quarter'}
                 </button>

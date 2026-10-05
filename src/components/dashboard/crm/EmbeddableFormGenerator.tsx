@@ -58,7 +58,7 @@ document.getElementById('alphaclone-form-started').value = String(Date.now());
             <Globe size={16} />
           </div>
           <div>
-            <h4 className="type-caption font-black text-white uppercase tracking-wider">Embeddable Lead Form Generator</h4>
+            <h4 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-wider">Embeddable Lead Form Generator</h4>
             <p className="type-card-description text-[var(--ws-text-muted)]">Embed this HTML snippet on any external website</p>
           </div>
         </div>
@@ -75,7 +75,7 @@ document.getElementById('alphaclone-form-started').value = String(Date.now());
       </p>
 
       <div className="relative">
-        <pre className="p-4 bg-[var(--ws-canvas)] border border-white/10 rounded-xl type-ui text-[var(--brand-blue-300)] font-mono overflow-x-auto max-h-48">
+        <pre className="p-4 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--brand-blue-300)] font-mono overflow-x-auto max-h-48">
           {embedCode}
         </pre>
       </div>

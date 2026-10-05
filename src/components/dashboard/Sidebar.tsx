@@ -172,7 +172,7 @@ const Sidebar = React.memo<SidebarProps>(({
                     <div className={`${sidebarOpen ? 'flex' : 'hidden'} items-center gap-2.5 overflow-hidden min-w-0`}>
                         <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
                             className="rounded-md object-contain flex-shrink-0" />
-                        <span className={`min-w-0 truncate font-semibold text-white type-caption tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                        <span className={`min-w-0 truncate font-semibold text-[var(--ws-text-primary)] type-caption tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             {t('Alphaclone Systems')}
                         </span>
                     </div>
@@ -266,7 +266,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     aria-current={active && !hasChildren ? 'page' : undefined}
                                     className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
                                 >
-                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-[var(--ws-text-tertiary)] group-hover:text-white'}`} />}
+                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-tertiary)] group-hover:text-[var(--ws-text-primary)]'}`} />}
 
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
@@ -279,7 +279,7 @@ const Sidebar = React.memo<SidebarProps>(({
 
                                     {/* Unread badge */}
                                     {(item.href === '/dashboard/messages' || item.href === '/dashboard/business/messages') && unreadMessageCount > 0 && (
-                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 type-caption font-bold text-white bg-[var(--error-500)] rounded-full">
+                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 type-caption font-bold text-[var(--text-inverse)] bg-[var(--error-500)] rounded-full">
                                             {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                                         </span>
                                     )}
@@ -430,12 +430,12 @@ const Sidebar = React.memo<SidebarProps>(({
                                 sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
                             }`}
                         >
-                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white type-ui flex-shrink-0">
+                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-[var(--text-inverse)] type-ui flex-shrink-0">
                                 {initials}
                             </span>
                             {sidebarOpen && (
                                 <span className="flex-1 min-w-0 text-left">
-                                    <span className="block type-ui font-semibold text-white truncate leading-tight">
+                                    <span className="block type-ui font-semibold text-[var(--ws-text-primary)] truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </span>
                                     <span className="block type-caption text-[var(--ws-text-muted)] truncate capitalize">{user.role || t('member')}</span>

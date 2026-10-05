@@ -14,7 +14,7 @@ const variants: Record<NonNullable<BadgeProps['variant']>, string> = {
   outline:
     'border-[var(--ws-border,var(--border-default))] bg-transparent text-[var(--ws-text-secondary,var(--text-secondary))]',
   destructive:
-    'border-transparent bg-[var(--error-600,var(--danger))] text-white',
+    'border-transparent bg-[var(--error-600,var(--danger))] text-[var(--text-inverse)]',
 };
 
 export function Badge({ className = '', variant = 'default', ...props }: BadgeProps) {

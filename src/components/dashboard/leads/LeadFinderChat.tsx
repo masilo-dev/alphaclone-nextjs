@@ -545,7 +545,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
           <Sparkles className="w-5 h-5 text-teal-400" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-white font-semibold type-ui">Lead search assistant</h2>
+          <h2 className="text-[var(--ws-text-primary)] font-semibold type-ui">Lead search assistant</h2>
           <p className="type-card-description text-[var(--ws-text-muted)] truncate">Natural language → directory scrape → CRM</p>
         </div>
         {runStatus && runStatus.status === 'running' && (
@@ -574,7 +574,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <div
               className={`max-w-[85%] rounded-xl px-4 py-3 type-ui whitespace-pre-wrap ${
                 msg.role === 'user'
-                  ? 'bg-teal-700/80 text-white rounded-br-sm'
+                  ? 'bg-teal-700/80 text-[var(--ws-text-primary)] rounded-br-sm'
                   : 'bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-secondary)] rounded-bl-sm border border-[var(--ws-border)]/50'
               }`}
             >
@@ -612,7 +612,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <button
               onClick={handleStartSearch}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white type-ui font-medium disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui font-medium disabled:opacity-50"
             >
               <Search className="w-4 h-4" />
               Start search
@@ -636,15 +636,15 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <div className="grid grid-cols-3 gap-2 text-center type-caption">
               <div>
                 <div className="text-[var(--ws-text-muted)]">Found</div>
-                <div className="text-white font-semibold tabular-nums">{runStatus.source_count ?? 0}</div>
+                <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">{runStatus.source_count ?? 0}</div>
               </div>
               <div>
                 <div className="text-[var(--ws-text-muted)]">Enriched</div>
-                <div className="text-white font-semibold tabular-nums">{runStatus.enriched_count ?? 0}</div>
+                <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">{runStatus.enriched_count ?? 0}</div>
               </div>
               <div>
                 <div className="text-[var(--ws-text-muted)]">CRM</div>
-                <div className="text-white font-semibold tabular-nums">{runStatus.created_count ?? 0}</div>
+                <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">{runStatus.created_count ?? 0}</div>
               </div>
             </div>
           </div>
@@ -672,7 +672,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={qualifySelected}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] type-caption text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] type-caption text-[var(--ws-text-primary)] disabled:opacity-40"
                 >
                   <CheckCircle2 className="w-3 h-3" />
                   Qualify
@@ -680,7 +680,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={saveToCrm}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 type-caption text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-600 type-caption text-[var(--ws-text-primary)] disabled:opacity-40"
                 >
                   <Save className="w-3 h-3" />
                   Save CRM
@@ -688,7 +688,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={() => openOutreachForLeads(Array.from(selectedIds))}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption text-[var(--ws-text-primary)] disabled:opacity-40"
                 >
                   <Mail className="w-3 h-3" />
                   Outreach selected
@@ -696,14 +696,14 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 <button
                   onClick={startAutoSequence}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 type-caption text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 type-caption text-[var(--ws-text-primary)] disabled:opacity-40"
                 >
                   <Zap className="w-3 h-3" />
                   Auto-sequence
                 </button>
                 <button
                   onClick={runNexusEnrich}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 type-caption text-white"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 type-caption text-[var(--ws-text-primary)]"
                 >
                   <MessageSquare className="w-3 h-3" />
                   Nexus
@@ -728,7 +728,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-white font-medium type-ui">
+                    <span className="text-[var(--ws-text-primary)] font-medium type-ui">
                       {lead.name || lead.company || 'Unknown'}
                     </span>
                     {lead.grade && (
@@ -768,7 +768,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                   type="button"
                   onClick={() => openOutreachForLeads([lead.id])}
                   disabled={loading || (!lead.email && !lead.company_website)}
-                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption font-semibold text-white disabled:opacity-40"
+                  className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 type-caption font-semibold text-[var(--ws-text-primary)] disabled:opacity-40"
                   title={!lead.email && !lead.company_website ? 'Need email or website' : 'Open outreach — auto-saves to CRM'}
                 >
                   <Mail className="w-3.5 h-3.5" />
@@ -801,13 +801,13 @@ export default function LeadFinderChat({ onActivity }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g. Find owner-operated yoga studios in Denver — SMB only, no chains"
-            className="flex-1 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-4 py-3 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-4 py-3 type-ui text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
             disabled={loading}
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40"
+            className="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-[var(--text-inverse)] disabled:opacity-40"
           >
             <Send className="w-5 h-5" />
           </button>

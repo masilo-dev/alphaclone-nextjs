@@ -135,7 +135,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
             {/* Active Meetings */}
             {active.length > 0 && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         <Video className="w-5 h-5 text-red-500 animate-pulse" />
                         Active Now
                     </h3>
@@ -144,7 +144,7 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                             <Card key={m.id} className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-l-4 border-l-red-500 bg-[var(--error-500)]/5 p-3 sm:p-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                        <h4 className="font-bold text-white text-base sm:text-lg truncate">{m.title}</h4>
+                                        <h4 className="font-bold text-[var(--ws-text-primary)] text-base sm:text-lg truncate">{m.title}</h4>
                                         <MeetingProviderBadge meeting={m} />
                                         <span className="px-2 py-0.5 rounded type-caption sm:text-xs bg-[var(--error-500)]/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
                                             LIVE

@@ -41,7 +41,7 @@ export default function PlanActivationPanel() {
                         Plan Visibility
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-white">Your plan, status, and usage are now visible here</h3>
+                        <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Your plan, status, and usage are now visible here</h3>
 
                     </div>
                 </div>
@@ -60,12 +60,12 @@ export default function PlanActivationPanel() {
             <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
                     <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Current Plan</div>
-                    <div className="text-lg font-bold text-white">{planName}</div>
+                    <div className="text-lg font-bold text-[var(--ws-text-primary)]">{planName}</div>
                     <div className="mt-1 type-ui text-[var(--ws-text-muted)]">Quotas and support scale with your plan.</div>
                 </div>
                 <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
                     <div className="mb-2 type-caption font-semibold uppercase tracking-caps text-[var(--ws-text-muted)]">Subscription Status</div>
-                    <div className="text-lg font-bold capitalize text-white">{statusName}</div>
+                    <div className="text-lg font-bold capitalize text-[var(--ws-text-primary)]">{statusName}</div>
                     <div className="mt-1 type-ui text-[var(--ws-text-muted)]">
                         {trialInfo
                             ? trialInfo.expired

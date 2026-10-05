@@ -164,7 +164,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
             {/* Bell Trigger */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-[var(--ws-text-muted)] hover:text-white transition-colors rounded-xl hover:bg-[var(--ws-surface-secondary)]"
+                className="relative p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors rounded-xl hover:bg-[var(--ws-surface-secondary)]"
                 aria-label="Open notifications"
             >
                 <Bell className="w-5 h-5" />
@@ -174,7 +174,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-white type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
+                            className="absolute -top-0.5 -right-0.5 bg-gradient-to-br from-teal-400 to-violet-500 text-[var(--text-inverse)] type-caption font-black rounded-full w-4 h-4 flex items-center justify-center shadow-lg shadow-teal-500/30"
                         >
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </motion.span>
@@ -202,7 +202,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-[var(--ws-canvas)] border border-[var(--border-default)] dark:border-white/10 rounded-2xl shadow-2xl shadow-black/50 ac-layer-menu flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-[var(--ws-canvas)] border border-[var(--border-default)] dark:border-[var(--ws-border)] rounded-2xl shadow-2xl shadow-black/50 ac-layer-menu flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">
@@ -221,21 +221,21 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                             Mark all read
                                         </button>
                                     )}
-                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-[var(--ws-text-muted)] hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                                    <button onClick={() => setIsOpen(false)} className="p-1.5 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors rounded-lg hover:bg-[var(--ws-hover)]">
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>
 
                             {/* Filter Pills */}
-                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-[var(--ws-canvas)] flex-wrap">
+                            <div className="flex gap-2 px-4 py-2 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)] flex-wrap">
                                 {(['all', 'unread'] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
                                         className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${filter === f
-                                            ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
-                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-white/5'
+                                            ? 'bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/20'
+                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-[var(--ws-hover)]'
                                             }`}
                                     >
                                         {f === 'all' ? 'All' : `Unread (${unreadCount})`}
@@ -247,7 +247,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                         onClick={() => setSeverityFilter(f)}
                                         className={`px-3 py-1 rounded-full type-caption font-black uppercase tracking-widest transition-all ${severityFilter === f
                                             ? 'bg-amber-500 text-slate-950'
-                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-white/5'
+                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] bg-[var(--ws-hover)]'
                                             }`}
                                     >
                                         {f === 'all' ? 'Any severity' : 'Urgent'}
@@ -257,18 +257,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* Enable push on this device */}
                             {showPushPrompt && (
-                                <div className="px-4 py-3 border-b border-white/5 bg-gradient-to-r from-teal-500/10 to-violet-500/10 flex items-center gap-3">
+                                <div className="px-4 py-3 border-b border-[var(--ws-border)] bg-gradient-to-r from-teal-500/10 to-violet-500/10 flex items-center gap-3">
                                     <div className="w-9 h-9 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0">
                                         <Smartphone className="w-4 h-4 text-[var(--brand-blue-300)]" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="type-card-description font-black text-white">Get alerts on this device</p>
+                                        <p className="type-card-description font-black text-[var(--ws-text-primary)]">Get alerts on this device</p>
                                         <p className="type-card-description text-[var(--ws-text-muted)] leading-snug">Receive messages &amp; updates even when the app is closed.</p>
                                     </div>
                                     <button
                                         onClick={handleEnablePush}
                                         disabled={pushBusy}
-                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-60 text-white type-caption font-black uppercase tracking-wide transition-colors flex-shrink-0"
+                                        className="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-60 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wide transition-colors flex-shrink-0"
                                     >
                                         {pushBusy ? '…' : 'Enable'}
                                     </button>
@@ -341,7 +341,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                                                     className={`group px-4 py-3 border-b border-white/[0.02] hover:bg-white/[0.02] transition-all pl-12 ${!n.read ? 'bg-teal-500/[0.02]' : ''}`}
                                                                 >
                                                                     <div className="flex items-start justify-between gap-1">
-                                                                        <p className={`type-card-description font-bold leading-snug ${n.read ? 'text-[var(--ws-text-muted)]' : 'text-white'}`}>
+                                                                        <p className={`type-card-description font-bold leading-snug ${n.read ? 'text-[var(--ws-text-muted)]' : 'text-[var(--ws-text-primary)]'}`}>
                                                                             {n.title}
                                                                         </p>
                                                                         {!n.read && (
@@ -395,7 +395,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* Footer */}
                             {notifications.length > 0 && (
-                                <div className="p-3 border-t border-white/5 bg-[var(--ws-canvas)] text-center">
+                                <div className="p-3 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] text-center">
                                     <p className="type-card-description text-slate-600 font-mono">{notifications.length} total notifications</p>
                                 </div>
                             )}

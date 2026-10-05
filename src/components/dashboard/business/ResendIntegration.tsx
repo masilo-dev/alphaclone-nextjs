@@ -182,7 +182,7 @@ export default function ResendIntegration() {
             animate={{ opacity: 1, y: 0 }}
             className="ac-workspace-panel rounded-lg overflow-hidden"
         >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-zinc-500/10 border border-zinc-500/20 flex items-center justify-center">
                         <Send className="w-6 h-6 text-zinc-400" />
@@ -190,7 +190,7 @@ export default function ResendIntegration() {
                     <div>
                         <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-white">Resend Email</h2>
+                            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Resend Email</h2>
                             {status === 'connected' && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
@@ -224,7 +224,7 @@ export default function ResendIntegration() {
                                 value={config.apiKey}
                                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                                 placeholder="re_xxxxxxxxxxxxxxxxxxx"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 pl-10 type-ui text-white outline-none focus:border-zinc-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 pl-10 type-ui text-[var(--ws-text-primary)] outline-none focus:border-zinc-500/40"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
@@ -236,7 +236,7 @@ export default function ResendIntegration() {
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="hello@yourdomain.com"
-                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-zinc-500/40"
                         />
                     </div>
                     <div className="space-y-2">
@@ -246,16 +246,16 @@ export default function ResendIntegration() {
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Company Name"
-                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-zinc-500/40"
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 pt-4 border-t border-[var(--ws-border)]">
                     <Button 
                         type="submit" 
                         disabled={isSaving}
-                        className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold px-8 shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)]"
+                        className="bg-zinc-800 hover:bg-zinc-700 text-[var(--ws-text-primary)] font-bold px-8 shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)]"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Settings' : 'Connect Resend'}
@@ -266,7 +266,7 @@ export default function ResendIntegration() {
                     </p>
                 </div>
                 {status === 'connected' && (
-                    <div className="pt-2 border-t border-white/5">
+                    <div className="pt-2 border-t border-[var(--ws-border)]">
                         <p className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-2">Send Test Email</p>
                         <div className="flex flex-col md:flex-row gap-3">
                             <input
@@ -274,13 +274,13 @@ export default function ResendIntegration() {
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-zinc-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-zinc-500/40"
                             />
                             <Button
                                 type="button"
                                 onClick={handleSendTest}
                                 disabled={isTesting}
-                                className="bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white font-bold px-6"
+                                className="bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] font-bold px-6"
                             >
                                 {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                                 Send Test

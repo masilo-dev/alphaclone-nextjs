@@ -336,7 +336,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 title={connected ? `Send with ${providerLabels[p]}` : `Connect ${providerLabels[p]} in Settings`}
                                 className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] type-caption font-semibold transition-all ${
                                     selectedProvider === p && connected
-                                    ? 'bg-[var(--brand-blue-500)] text-white shadow-sm' 
+                                    ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)] shadow-sm' 
                                     : connected
                                         ? 'text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'
                                         : 'text-[var(--ws-text-disabled)] bg-[var(--ws-surface-tertiary)] cursor-not-allowed border border-[var(--ws-border)]'
@@ -372,7 +372,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             <div className="flex-1 min-w-0">
                                 {selectedClient ? (
                                     <>
-                                        <p className="text-white font-medium type-card-description truncate">{selectedClient.name}</p>
+                                        <p className="text-[var(--ws-text-primary)] font-medium type-card-description truncate">{selectedClient.name}</p>
                                         <p className="text-[var(--ws-text-muted)] type-card-description truncate">{selectedClient.email}</p>
                                     </>
                                 ) : (
@@ -393,7 +393,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-[var(--ws-panel)] text-white type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-[var(--ws-border)] focus:border-[var(--brand-blue-500)]/50 transition-all"
+                                            className="w-full bg-[var(--ws-panel)] text-[var(--ws-text-primary)] type-caption rounded-lg pl-8 pr-3 py-2 outline-none border border-[var(--ws-border)] focus:border-[var(--brand-blue-500)]/50 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -415,7 +415,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                                 <User className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-white type-card-description font-medium truncate">{contact.name}</p>
+                                                <p className="text-[var(--ws-text-primary)] type-card-description font-medium truncate">{contact.name}</p>
                                                 <p className="text-[var(--ws-text-muted)] type-card-description truncate">{contact.email}</p>
                                             </div>
                                             <span className={`type-caption px-1.5 py-0.5 rounded-md font-medium shrink-0 ${
@@ -506,7 +506,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             onClick={handleSend}
                             disabled={isSending || loadingProvider || !selectedClient?.email || !selectedProvider}
                             icon={isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold"
+                            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] font-semibold"
                         >
                             {isSending ? 'Sending...' : 'Send message'}
                         </Button>

@@ -48,11 +48,11 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Palette className="w-5 h-5 text-teal-400" />
-            <h3 className="text-lg font-semibold text-white">Dashboard Background</h3>
+            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Dashboard Background</h3>
           </div>
           <button
             onClick={onClose}
-            className="text-[var(--ws-text-muted)] hover:text-white transition-colors p-1 rounded-lg hover:bg-[var(--ws-surface-tertiary)]"
+            className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors p-1 rounded-lg hover:bg-[var(--ws-surface-tertiary)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -92,12 +92,12 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
                 placeholder="#123ABC"
-                className="flex-1 px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="flex-1 px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-[var(--ws-text-primary)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
               <button
                 onClick={handleCustomColorSubmit}
                 disabled={!customColor.match(/^#[0-9A-F]{6}$/i)}
-                className="px-3 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                className="px-3 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-[var(--text-inverse)] rounded-lg transition-colors"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -107,13 +107,13 @@ export const BackgroundColorPicker: React.FC<BackgroundColorPickerProps> = ({ is
           <div className="flex gap-3 pt-4 border-t border-[var(--ws-border)]">
             <button
               onClick={resetToDefault}
-              className="flex-1 px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-white rounded-lg transition-colors"
+              className="flex-1 px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-primary)] rounded-lg transition-colors"
             >
               Reset to Default
             </button>
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+              className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-[var(--text-inverse)] rounded-lg transition-colors"
             >
               Done
             </button>

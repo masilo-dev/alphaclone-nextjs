@@ -76,7 +76,7 @@ const SalesForecastTab = () => {
         <div className="space-y-6 animate-fade-in min-h-0">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white">Sales Forecast & Pipeline</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-[var(--ws-text-primary)]">Sales Forecast & Pipeline</h2>
                     <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
                 </div>
             </div>
@@ -120,7 +120,7 @@ const SalesForecastTab = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Forecast Chart */}
                 <Card className="dashboard-panel p-6">
-                    <h3 className="text-lg font-bold text-white mb-6">Revenue Forecast vs Actual</h3>
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-6">Revenue Forecast vs Actual</h3>
                     <ChartContainer className="h-80 w-full" minHeight={320}>
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <LineChart data={chartData}>
@@ -141,7 +141,7 @@ const SalesForecastTab = () => {
 
                 {/* Pipeline Distribution Chart */}
                 <Card className="dashboard-panel p-6">
-                    <h3 className="text-lg font-bold text-white mb-6">Deal Pipeline Value</h3>
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-6">Deal Pipeline Value</h3>
                     <ChartContainer className="h-80 w-full" minHeight={320}>
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>

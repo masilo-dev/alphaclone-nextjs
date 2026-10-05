@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -44,13 +45,13 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <LinearGradient
-          colors={['#020D1A', '#0A1A2F']}
+          colors={[colors.background, colors.surface]}
           style={styles.gradient}
         >
           <View style={styles.content}>
             {/* Logo */}
             <View style={styles.logoContainer}>
-              <Ionicons name="rocket" size={60} color="#00D2A0" />
+              <Ionicons name="rocket" size={60} color=colors.primary />
               <Text style={styles.logoText}>AlphaClone</Text>
               <Text style={styles.subtitle}>Business OS Mobile</Text>
             </View>
@@ -61,11 +62,11 @@ export default function LoginScreen() {
               
               {!isLogin && (
                 <View style={styles.inputContainer}>
-                  <Ionicons name="person" size={20} color="#94A3B8" style={styles.inputIcon} />
+                  <Ionicons name="person" size={20} color=colors.textSecondary style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Full Name"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor=colors.textMuted
                     value={name}
                     onChangeText={setName}
                   />
@@ -73,11 +74,11 @@ export default function LoginScreen() {
               )}
 
               <View style={styles.inputContainer}>
-                <Ionicons name="mail" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <Ionicons name="mail" size={20} color=colors.textSecondary style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Email Address"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor=colors.textMuted
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -86,11 +87,11 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <Ionicons name="lock-closed" size={20} color=colors.textSecondary style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor=colors.textMuted
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -108,7 +109,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.googleButton} onPress={loginWithGoogle}>
-                <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+                <Ionicons name="logo-google" size={20} color=colors.textInverse />
                 <Text style={styles.googleButtonText}>Continue with Google</Text>
               </TouchableOpacity>
 
@@ -147,12 +148,12 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginTop: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginTop: 5,
   },
   formContainer: {
@@ -160,12 +161,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 30,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 25,
     textAlign: 'center',
   },
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
   },
   inputIcon: {
     marginLeft: 15,
@@ -185,11 +186,11 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 50,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#00D2A0',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     height: 50,
     justifyContent: 'center',
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
-    color: '#020D1A',
+    color: colors.background,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -213,16 +214,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     marginBottom: 20,
   },
   googleButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     marginLeft: 10,
   },
   switchText: {
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
   },

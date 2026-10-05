@@ -17,6 +17,8 @@
     "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
     "guard:no-raw-hex": "node scripts/guard-no-raw-hex.mjs",
     "codemod:colors": "node scripts/codemod-hardcoded-colors.mjs",
+    "codemod:light-theme": "node scripts/codemod-light-theme-tokens.mjs",
+    "codemod:mobile-colors": "node scripts/codemod-mobile-colors.mjs",
     "validate:prod-guards": "npm run guard:design-system && npm run guard:no-raw-hex && node --import tsx --test tests/unit/metrics-and-canonical-routes.test.mjs",
     "test:finance-integrity": "node tests/finance-integrity.integration.mjs",
     "test:finance-e2e": "node scripts/finance-invoice-e2e.mjs",

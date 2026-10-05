@@ -85,7 +85,7 @@ export default function EmailTemplateGalleryPage() {
               key={item.id}
               type="button"
               onClick={() => setMode(item.id)}
-              className={`rounded-md px-3 py-1.5 type-ui ${mode === item.id ? 'bg-[var(--ws-panel)] text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
+              className={`rounded-md px-3 py-1.5 type-ui ${mode === item.id ? 'bg-[var(--ws-panel)] text-[var(--ws-text-primary)]' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
             >
               {item.label}
             </button>
@@ -93,14 +93,14 @@ export default function EmailTemplateGalleryPage() {
           <button
             type="button"
             onClick={() => setViewport('desktop')}
-            className={`rounded-md px-3 py-1.5 type-ui ${viewport === 'desktop' ? 'bg-teal-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
+            className={`rounded-md px-3 py-1.5 type-ui ${viewport === 'desktop' ? 'bg-teal-700 text-[var(--ws-text-primary)]' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
           >
             Desktop width
           </button>
           <button
             type="button"
             onClick={() => setViewport('mobile')}
-            className={`rounded-md px-3 py-1.5 type-ui ${viewport === 'mobile' ? 'bg-teal-700 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
+            className={`rounded-md px-3 py-1.5 type-ui ${viewport === 'mobile' ? 'bg-teal-700 text-[var(--ws-text-primary)]' : 'bg-white text-slate-700 ring-1 ring-slate-200'}`}
           >
             Mobile width
           </button>
@@ -120,7 +120,7 @@ export default function EmailTemplateGalleryPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedId(sample.id)}
-                    className={`w-full rounded-md px-3 py-2 text-left type-ui ${selectedId === sample.id ? 'bg-[var(--ws-panel)] text-white' : 'hover:bg-slate-50'}`}
+                    className={`w-full rounded-md px-3 py-2 text-left type-ui ${selectedId === sample.id ? 'bg-[var(--ws-panel)] text-[var(--ws-text-primary)]' : 'hover:bg-slate-50'}`}
                   >
                     <div className="font-medium">{sample.label}</div>
                     <div className={`type-caption ${selectedId === sample.id ? 'text-[var(--ws-text-secondary)]' : 'text-[var(--ws-text-muted)]'}`}>

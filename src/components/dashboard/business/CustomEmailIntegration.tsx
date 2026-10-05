@@ -169,7 +169,7 @@ export default function CustomEmailIntegration() {
             animate={{ opacity: 1, y: 0 }}
             className="ac-workspace-panel rounded-lg overflow-hidden"
         >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
                         <Server className="w-6 h-6 text-teal-400" />
@@ -177,7 +177,7 @@ export default function CustomEmailIntegration() {
                     <div>
                         <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-white">Custom SMTP / IMAP</h2>
+                            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Custom SMTP / IMAP</h2>
                             {status === 'connected' && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" /> Active
@@ -212,7 +212,7 @@ export default function CustomEmailIntegration() {
                                     required
                                     value={config.fromEmail}
                                     onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                                 />
                             </div>
                             <div>
@@ -221,14 +221,14 @@ export default function CustomEmailIntegration() {
                                     type="text"
                                     value={config.fromName}
                                     onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                                 />
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-2 border-t border-[var(--ws-border)] pt-4">
-                        <h4 className="type-ui font-bold text-white mb-2 flex items-center gap-2">
+                        <h4 className="type-ui font-bold text-[var(--ws-text-primary)] mb-2 flex items-center gap-2">
                             <Mail className="w-4 h-4 text-teal-400" /> Outgoing (SMTP)
                         </h4>
                         <div>
@@ -239,7 +239,7 @@ export default function CustomEmailIntegration() {
                                 value={config.smtpHost}
                                 onChange={(e) => setConfig({ ...config, smtpHost: e.target.value })}
                                 placeholder="smtp.example.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -250,7 +250,7 @@ export default function CustomEmailIntegration() {
                                     value={config.smtpPort}
                                     onChange={(e) => setConfig({ ...config, smtpPort: e.target.value })}
                                     placeholder="465 or 587"
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                                 />
                             </div>
                         </div>
@@ -260,7 +260,7 @@ export default function CustomEmailIntegration() {
                                 type="text"
                                 value={config.smtpUser}
                                 onChange={(e) => setConfig({ ...config, smtpUser: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                         <div>
@@ -269,13 +269,13 @@ export default function CustomEmailIntegration() {
                                 type="password"
                                 value={config.smtpPass}
                                 onChange={(e) => setConfig({ ...config, smtpPass: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2 border-t border-[var(--ws-border)] pt-4">
-                        <h4 className="type-ui font-bold text-white mb-2 flex items-center gap-2">
+                        <h4 className="type-ui font-bold text-[var(--ws-text-primary)] mb-2 flex items-center gap-2">
                             <Mail className="w-4 h-4 text-[var(--ws-text-muted)]" /> Incoming (IMAP) <span className="type-caption font-normal text-[var(--ws-text-muted)] ml-2">(Optional)</span>
                         </h4>
                         <div>
@@ -285,7 +285,7 @@ export default function CustomEmailIntegration() {
                                 value={config.imapHost}
                                 onChange={(e) => setConfig({ ...config, imapHost: e.target.value })}
                                 placeholder="imap.example.com"
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -296,7 +296,7 @@ export default function CustomEmailIntegration() {
                                     value={config.imapPort}
                                     onChange={(e) => setConfig({ ...config, imapPort: e.target.value })}
                                     placeholder="993"
-                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                    className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                                 />
                             </div>
                         </div>
@@ -306,7 +306,7 @@ export default function CustomEmailIntegration() {
                                 type="text"
                                 value={config.imapUser}
                                 onChange={(e) => setConfig({ ...config, imapUser: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                         <div>
@@ -315,17 +315,17 @@ export default function CustomEmailIntegration() {
                                 type="password"
                                 value={config.imapPass}
                                 onChange={(e) => setConfig({ ...config, imapPass: e.target.value })}
-                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2 type-ui text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40"
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                <div className="flex items-center gap-3 pt-4 border-t border-[var(--ws-border)]">
                     <Button 
                         type="submit" 
                         disabled={isSaving}
-                        className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-8 shadow-lg shadow-teal-600/20"
+                        className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold px-8 shadow-lg shadow-teal-600/20"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Server Settings' : 'Connect Mail Server'}

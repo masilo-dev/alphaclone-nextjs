@@ -96,7 +96,7 @@ function TabLink({
         compact ? 'py-1' : 'py-1.5',
         isActive
           ? 'border-teal-500/40 bg-teal-500/10 text-[var(--brand-blue-300)]'
-          : 'border-transparent bg-white/[0.03] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:border-white/10'
+          : 'border-transparent bg-white/[0.03] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:border-[var(--ws-border)]'
       )}
     >
       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -165,7 +165,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
                     onClick={() => setMoreOpen(false)}
                     className={cn(
                       'flex items-center gap-2 min-h-11 rounded-md px-3 type-ui font-medium',
-                      isActive ? 'bg-teal-500/10 text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-secondary)] hover:bg-white/5'
+                      isActive ? 'bg-teal-500/10 text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]'
                     )}
                   >
                     <Icon className="w-3.5 h-3.5" aria-hidden="true" />

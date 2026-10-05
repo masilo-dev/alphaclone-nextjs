@@ -32,8 +32,8 @@ export function AccountFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--ws-panel)] p-5 space-y-4">
-        <h2 className="text-lg font-bold text-white">{title}</h2>
+      <div className="w-full max-w-md rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5 space-y-4">
+        <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{title}</h2>
         <Input
           label="Account name"
           value={name}
@@ -42,14 +42,14 @@ export function AccountFormModal({
           autoFocus
         />
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl type-ui text-[var(--ws-text-muted)] hover:text-white">
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
             Cancel
           </button>
           <button
             type="button"
             disabled={loading || !name.trim()}
             onClick={() => void onSubmit(name.trim())}
-            className="px-4 py-2 rounded-xl bg-teal-600 text-white type-ui font-semibold disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-ui font-semibold disabled:opacity-50"
           >
             {loading ? 'Saving…' : submitLabel}
           </button>

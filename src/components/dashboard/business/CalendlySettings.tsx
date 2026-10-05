@@ -194,7 +194,7 @@ const CalendlySettings: React.FC = () => {
                     </div>
                     <button
                         onClick={handleConnect}
-                        className="px-4 py-2 bg-[var(--error-500)] hover:bg-red-600 text-white type-caption font-bold rounded-lg transition-all"
+                        className="px-4 py-2 bg-[var(--error-500)] hover:bg-red-600 text-[var(--text-inverse)] type-caption font-bold rounded-lg transition-all"
                     >
                         Reconnect Now
                     </button>
@@ -209,7 +209,7 @@ const CalendlySettings: React.FC = () => {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-bold text-white">
+                                <h4 className="font-bold text-[var(--ws-text-primary)]">
                                     {isConnected ? 'Calendly Connected' : 'Calendly Not Connected'}
                                 </h4>
                                 {isConnected ? (
@@ -232,7 +232,7 @@ const CalendlySettings: React.FC = () => {
                                 <button
                                     onClick={handleSyncNow}
                                     disabled={syncing}
-                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white type-ui font-bold rounded-lg transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-[var(--ws-text-primary)] type-ui font-bold rounded-lg transition-all disabled:opacity-50"
                                 >
                                     <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                                     {syncing ? 'Syncing...' : 'Sync Events'}
@@ -240,7 +240,7 @@ const CalendlySettings: React.FC = () => {
                                 <button
                                     onClick={handleSyncContactsToCRM}
                                     disabled={syncingContacts}
-                                    className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white type-ui font-bold rounded-lg transition-all disabled:opacity-50"
+                                    className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-[var(--ws-text-primary)] type-ui font-bold rounded-lg transition-all disabled:opacity-50"
                                     title="Push your CRM clients into Calendly Contacts"
                                 >
                                     <ArrowRightLeft className={`w-4 h-4 ${syncingContacts ? 'animate-spin' : ''}`} />
@@ -297,13 +297,13 @@ const CalendlySettings: React.FC = () => {
                 {/* Event Types Display (Authorized Only) */}
                 {isConnected && !loadingEvents && eventTypes.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-[var(--ws-border)] animate-fade-in">
-                        <h5 className="type-caption font-bold text-white mb-4 uppercase tracking-wider">Your Active Event Types</h5>
+                        <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-4 uppercase tracking-wider">Your Active Event Types</h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {eventTypes.filter(et => et.active).map(et => (
                                 <div key={et.uri} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <h6 className="font-bold text-white truncate pr-2">{et.name}</h6>
+                                            <h6 className="font-bold text-[var(--ws-text-primary)] truncate pr-2">{et.name}</h6>
                                             <span className="type-caption font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
                                         </div>
                                         <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2 mb-4 break-words">
@@ -313,7 +313,7 @@ const CalendlySettings: React.FC = () => {
                                     <div className="flex items-center gap-2 mt-auto">
                                         <button
                                             onClick={() => handleCopyLink(et.scheduling_url)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-bold rounded-lg transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption font-bold rounded-lg transition-colors"
                                         >
                                             <Copy className="w-3 h-3" /> Copy Link
                                         </button>
@@ -321,7 +321,7 @@ const CalendlySettings: React.FC = () => {
                                             href={et.scheduling_url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="px-3 py-1.5 bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] hover:text-white rounded-lg transition-colors"
+                                            className="px-3 py-1.5 bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] rounded-lg transition-colors"
                                         >
                                             <ExternalLink className="w-3 h-3" />
                                         </a>
@@ -342,12 +342,12 @@ const CalendlySettings: React.FC = () => {
                                     value={manualUrl}
                                     onChange={(e) => setManualUrl(e.target.value)}
                                     placeholder="https://calendly.com/your-profile/30min"
-                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white type-ui focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-teal-500 transition-colors"
                                 />
                                 <button
                                     onClick={handleSaveManual}
                                     disabled={saving || !manualUrl}
-                                    className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-ui font-bold rounded-xl transition-all disabled:opacity-50"
+                                    className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-ui font-bold rounded-xl transition-all disabled:opacity-50"
                                 >
                                     {saving ? 'SAVING...' : 'SAVE LINK'}
                                 </button>
@@ -380,7 +380,7 @@ const CalendlySettings: React.FC = () => {
             {/* Informational Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                 <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
-                    <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Branded Experience
                     </h5>
@@ -389,7 +389,7 @@ const CalendlySettings: React.FC = () => {
                     </p>
                 </div>
                 <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
-                    <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Automated Sync
                     </h5>
@@ -398,7 +398,7 @@ const CalendlySettings: React.FC = () => {
                     </p>
                 </div>
                 <div className="p-4 bg-violet-900/20 border border-violet-800/30 rounded-xl">
-                    <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                    <h5 className="type-caption font-bold text-[var(--ws-text-primary)] mb-2 uppercase tracking-wider flex items-center gap-2">
                         <Users className="w-4 h-4 text-violet-400" />
                         Contacts API
                     </h5>

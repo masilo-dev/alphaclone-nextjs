@@ -159,7 +159,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* EMPTY QUEUE: 0 leads → tell user exactly what to press below */}
       {hasNoPipelineData && (
         <div className="rounded-xl border border-dashed border-[var(--ws-border)] bg-gradient-to-br from-teal-500/10 to-violet-500/10 p-4 space-y-2.5">
-          <p className="type-card-description font-bold text-white flex items-center gap-2">
+          <p className="type-card-description font-bold text-[var(--text-inverse)] flex items-center gap-2">
           <Zap className="w-4 h-4 text-teal-400" /> No leads in the queue yet
           </p>
           <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
@@ -212,7 +212,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
           <div className="grid grid-cols-4 gap-2">
             {(['A', 'B', 'C', 'D'] as const).map((g) => (
               <div key={g} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-2 py-1.5 text-center">
-                <div className="text-lg font-bold text-white tabular-nums">{stats.leads.byGrade[g] ?? 0}</div>
+                <div className="text-lg font-bold text-[var(--ws-text-primary)] tabular-nums">{stats.leads.byGrade[g] ?? 0}</div>
                 <div className="type-ui text-[var(--ws-text-muted)]">Grade {g}</div>
               </div>
             ))}

@@ -74,7 +74,7 @@ export default function VendorsTab() {
       header={
         <div className="px-1 pb-2 flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-white">Vendors & Suppliers</h1>
+            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Vendors & Suppliers</h1>
             <p className="type-card-description text-[var(--ws-text-muted)]">AP vendors rolled up from bills payable</p>
           </div>
           <Link
@@ -107,7 +107,7 @@ export default function VendorsTab() {
                       <Building2 className="w-4 h-4 text-teal-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="type-card-description font-semibold text-white truncate">{v.vendor_name}</p>
+                      <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{v.vendor_name}</p>
                       <p className="type-card-description text-[var(--ws-text-tertiary)]">{v.bill_count} bill{v.bill_count === 1 ? '' : 's'}</p>
                     </div>
                     <div className="text-right shrink-0">
@@ -131,7 +131,7 @@ export default function VendorsTab() {
                 <tbody>
                   {vendors.map((v) => (
                     <tr key={v.vendor_name}>
-                      <td className="font-medium text-white">{v.vendor_name}</td>
+                      <td className="font-medium text-[var(--ws-text-primary)]">{v.vendor_name}</td>
                       <td className="text-[var(--ws-text-secondary)]">{v.bill_count}</td>
                       <td className="text-right font-semibold text-[var(--warning-text,var(--warning-500))]">{format(v.open_total)}</td>
                       <td className="text-[var(--ws-text-tertiary)] type-table-cell">

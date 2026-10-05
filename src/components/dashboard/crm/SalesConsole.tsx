@@ -407,7 +407,7 @@ export default function SalesConsole() {
                 type="button"
                 key={l.id}
                 onClick={() => router.push('/dashboard/leads')}
-                className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-white/5 text-left"
+                className="w-full flex items-center justify-between px-4 py-3 border-b border-white/[0.04] last:border-0 hover:bg-[var(--ws-hover)] text-left"
               >
                 <span className="type-ui text-[var(--ws-text-primary)]">{l.name}</span>
                 <span className="type-caption text-[var(--ws-text-muted)] capitalize">{l.status}</span>

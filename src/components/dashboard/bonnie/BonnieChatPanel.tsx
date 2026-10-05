@@ -660,7 +660,7 @@ export default function BonnieChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-lg border border-white/10 bg-[var(--ws-canvas)] ${
+      className={`flex flex-col overflow-hidden rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] ${
         compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
@@ -691,7 +691,7 @@ export default function BonnieChatPanel({
             <div
               className={`max-w-[90%] rounded-xl px-3 py-2 type-caption leading-relaxed sm:text-sm ${
                 msg.role === 'user'
-                  ? 'bg-teal-600 text-white'
+                  ? 'bg-teal-600 text-[var(--text-inverse)]'
                   : msg.error
                     ? 'border border-rose-500/30 bg-rose-500/10 text-rose-200'
                     : 'border border-[var(--ws-border)]/60 bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-primary)]'
@@ -850,7 +850,7 @@ export default function BonnieChatPanel({
 
       <div className="shrink-0 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)] p-3">
         {tenantId && aiQuota && (
-          <div className="mb-2 rounded-lg border border-white/10 bg-[var(--ws-panel)] px-2.5 py-2">
+          <div className="mb-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2.5 py-2">
             <div className="mb-1.5 flex items-center justify-between gap-2 type-ui">
               <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 <Zap className="h-3 w-3 text-teal-400" />
@@ -937,8 +937,8 @@ export default function BonnieChatPanel({
             aria-label="Message Bonnie"
             className={`min-h-[40px] flex-1 resize-none rounded-md border px-3 py-2 type-caption sm:text-sm focus:outline-none focus:ring-1 disabled:opacity-50 ${
               workspaceMode
-                ? 'border-slate-200 bg-white text-slate-900 placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)] dark:text-white'
-                : 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500'
+                ? 'border-slate-200 bg-white text-slate-900 placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)] dark:text-[var(--ws-text-primary)]'
+                : 'border-[var(--ws-border)] bg-[var(--ws-panel)] text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:ring-teal-500'
             }`}
           />
           <button
@@ -960,7 +960,7 @@ export default function BonnieChatPanel({
               type="button"
               onClick={stopGeneration}
               aria-label="Stop generation"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-rose-600 text-white transition-colors hover:bg-rose-500"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-rose-600 text-[var(--text-inverse)] transition-colors hover:bg-rose-500"
             >
               <Square className="h-4 w-4" />
             </button>
@@ -970,7 +970,7 @@ export default function BonnieChatPanel({
               onClick={() => void handleSend()}
               disabled={disabled || !input.trim()}
               aria-label="Send to Bonnie"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-600 text-[var(--text-inverse)] transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Send className="h-4 w-4" />
             </button>

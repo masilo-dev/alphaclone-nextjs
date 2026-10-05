@@ -67,7 +67,7 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                     <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
                         <CalendarIcon className="w-8 h-8" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">{currentEvent.title}</h3>
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">{currentEvent.title}</h3>
                     <p className="text-[var(--ws-text-muted)]">This event was scheduled for {format(new Date(currentEvent.start_time), 'PPp')}.</p>
                     <p className="text-[var(--ws-text-secondary)] mt-2">What happened with this event?</p>
                 </div>
@@ -103,7 +103,7 @@ export const PastEventPromptModal: React.FC<Props> = ({ events, onComplete }) =>
                     <span className="type-caption text-[var(--ws-text-muted)]">
                         {currentIndex + 1} of {actualCalendarEvents.length} past events
                     </span>
-                    <Button variant="ghost" onClick={handleDismiss} disabled={isUpdating} className="text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]">
+                    <Button variant="ghost" onClick={handleDismiss} disabled={isUpdating} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]">
                         Dismiss
                     </Button>
                 </div>

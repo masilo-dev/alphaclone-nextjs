@@ -564,14 +564,14 @@ export function OutreachInbox() {
 
   return (
     <ModuleOverviewChrome moduleId="outreach" activeHref="/dashboard/outreach/inbox">
-      <div className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/60 overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
-        <div className="flex flex-col gap-2 px-3 py-3 border-b border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-col gap-2 px-3 py-3 border-b border-[var(--ws-border)] sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 border border-white/10 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 border border-[var(--ws-border)] flex items-center justify-center">
               <Inbox className="w-4 h-4 text-violet-300" />
             </div>
             <div className="min-w-0">
-              <p className="type-card-description font-bold text-white truncate">Outreach conversation hub</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">Outreach conversation hub</p>
               <p className="type-card-description text-[var(--ws-text-muted)] truncate">
                 {loading ? 'Loading outbound threads…' : `${allThreads.length} contacts · ${events.length} events · sent, opened, clicked, replied`}
               </p>
@@ -584,7 +584,7 @@ export function OutreachInbox() {
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder="Search by name or email…"
-                className="pl-8 h-8 type-caption bg-[var(--ws-canvas)]/70 border-white/10 focus:border-violet-400/40 placeholder:text-[var(--ws-text-muted)]"
+                className="pl-8 h-8 type-caption bg-[var(--ws-canvas)]/70 border-[var(--ws-border)] focus:border-violet-400/40 placeholder:text-[var(--ws-text-muted)]"
               />
             </div>
             <Button
@@ -592,7 +592,7 @@ export function OutreachInbox() {
               variant="ghost"
               onClick={() => setRefreshFlag(n => n + 1)}
               disabled={loading}
-              className="h-8 w-8 p-0 rounded-lg border border-white/10 text-[var(--ws-text-secondary)] hover:text-white"
+              className="h-8 w-8 p-0 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
               title="Refresh"
             >
               <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -600,7 +600,7 @@ export function OutreachInbox() {
             <Button
               size="sm"
               onClick={() => setComposerOpen(true)}
-              className="h-8 shrink-0 px-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-white type-caption font-bold shadow-lg shadow-violet-500/20"
+              className="h-8 shrink-0 px-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-[var(--text-inverse)] type-caption font-bold shadow-lg shadow-violet-500/20"
             >
               <Sparkles className="w-3.5 h-3.5" />
               New message
@@ -610,7 +610,7 @@ export function OutreachInbox() {
 
         <div className="grid min-h-[34rem] grid-cols-12 divide-white/5 lg:h-[min(70vh,46rem)] lg:divide-x">
           {/* PANEL 1: Lists */}
-          <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-white/5 bg-[var(--ws-canvas)]/30 p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
+          <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/30 p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
             <p className="hidden px-2 pb-1 type-caption uppercase tracking-wider text-[var(--ws-text-muted)] lg:block">Lists</p>
             {OUTREACH_LISTS.map(({ id, label, Icon, tone, description }) => {
               const active = activeList === id;
@@ -624,19 +624,19 @@ export function OutreachInbox() {
                   className={[
                     'min-w-fit group flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left lg:w-full',
                     active
-                      ? 'bg-white/10 border border-white/10'
-                      : 'hover:bg-white/5 border border-transparent',
+                      ? 'bg-[var(--ws-hover)] border border-[var(--ws-border)]'
+                      : 'hover:bg-[var(--ws-hover)] border border-transparent',
                   ].join(' ')}
                 >
                   <span className="flex items-center gap-2 min-w-0">
                     <ListIcon className={`w-3.5 h-3.5 shrink-0 ${tone}`} />
-                    <span className={`type-caption truncate ${active ? 'text-white font-semibold' : 'text-[var(--ws-text-secondary)]'}`}>
+                    <span className={`type-caption truncate ${active ? 'text-[var(--ws-text-primary)] font-semibold' : 'text-[var(--ws-text-secondary)]'}`}>
                       {label}
                     </span>
                   </span>
                   <Badge variant="outline" className={[
                     'type-ui px-1.5 py-0.5 h-4 min-w-[22px] justify-center',
-                    active ? 'border-white/20 text-white' : 'border-white/5 text-[var(--ws-text-muted)]',
+                    active ? 'border-[var(--ws-border-strong)] text-[var(--ws-text-primary)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]',
                   ].join(' ')}>
                     {c}
                   </Badge>
@@ -646,8 +646,8 @@ export function OutreachInbox() {
           </aside>
 
           {/* PANEL 2: Threads list */}
-          <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-[var(--ws-canvas)]/10 flex-col border-r border-white/5 lg:col-span-4`}>
-            <div className="px-3 py-2 type-caption uppercase tracking-wider text-[var(--ws-text-muted)] border-b border-white/5 flex items-center justify-between">
+          <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-[var(--ws-canvas)]/10 flex-col border-r border-[var(--ws-border)] lg:col-span-4`}>
+            <div className="px-3 py-2 type-caption uppercase tracking-wider text-[var(--ws-text-muted)] border-b border-[var(--ws-border)] flex items-center justify-between">
               <span>
                 {OUTREACH_LISTS.find(l => l.id === activeList)?.label}
                 {loading ? '…loading' : ` · ${filteredThreads.length}`}
@@ -661,15 +661,15 @@ export function OutreachInbox() {
               {loading ? (
                 <div className="p-4 space-y-2">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-16 rounded-lg border border-white/5 bg-[var(--ws-panel)]/40 animate-[pulse_1.6s_ease-in-out_infinite] backdrop-blur-sm saturate-50 opacity-60" />
+                    <div key={i} className="h-16 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 animate-[pulse_1.6s_ease-in-out_infinite] backdrop-blur-sm saturate-50 opacity-60" />
                   ))}
                 </div>
               ) : filteredThreads.length === 0 ? (
                 <div className="p-8 space-y-3 text-center">
-                  <div className="mx-auto h-12 w-12 rounded-2xl border border-dashed border-white/10 bg-gradient-to-br from-violet-500/10 to-sky-500/10 flex items-center justify-center">
+                  <div className="mx-auto h-12 w-12 rounded-2xl border border-dashed border-[var(--ws-border)] bg-gradient-to-br from-violet-500/10 to-sky-500/10 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-violet-400" />
                   </div>
-                  <p className="type-card-description font-semibold text-white">No threads yet in this list</p>
+                  <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">No threads yet in this list</p>
                   <p className="type-card-description text-[var(--ws-text-muted)] max-w-sm mx-auto leading-relaxed">
                     Run a campaign or send a one-off outreach message from the composer above.
                     Sent deliveries, opens, clicks, and replies will begin threading here automatically so you
@@ -692,15 +692,15 @@ export function OutreachInbox() {
                         <button
                           onClick={() => { setActiveThreadKey(t.threadKey); setMobilePane('detail'); }}
                           className={[
-                            'w-full text-left px-3 py-3 border-b border-white/5 transition-colors',
-                            active ? 'bg-white/10' : hasReply ? 'bg-emerald-500/[0.04] hover:bg-white/5' : 'hover:bg-white/5',
+                            'w-full text-left px-3 py-3 border-b border-[var(--ws-border)] transition-colors',
+                            active ? 'bg-[var(--ws-hover)]' : hasReply ? 'bg-emerald-500/[0.04] hover:bg-[var(--ws-hover)]' : 'hover:bg-[var(--ws-hover)]',
                           ].join(' ')}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} />
-                                <p className={`type-card-description font-semibold truncate ${active ? 'text-white' : 'text-[var(--ws-text-secondary)]'}`}>
+                                <p className={`type-card-description font-semibold truncate ${active ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>
                                   {t.displayName}
                                 </p>
                                 {t.needsFollowUp ? (
@@ -735,10 +735,10 @@ export function OutreachInbox() {
             {!activeThread ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="max-w-md text-center space-y-3">
-                  <div className="mx-auto h-14 w-14 rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/10 via-sky-500/10 to-violet-500/10 flex items-center justify-center">
+                  <div className="mx-auto h-14 w-14 rounded-2xl border border-[var(--ws-border)] bg-gradient-to-br from-emerald-500/10 via-sky-500/10 to-violet-500/10 flex items-center justify-center">
                     <MailCheck className="w-6 h-6 text-[var(--info-text,var(--info-500))]" />
                   </div>
-                  <p className="type-card-description font-semibold text-white">Pick a thread on the left</p>
+                  <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Pick a thread on the left</p>
                   <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                     Everything outreach — sends, opens, clicks, replies — is grouped per contact.
                     Jump into Replied or Needs next step to continue conversations like a Gmail-style inbox,
@@ -748,18 +748,18 @@ export function OutreachInbox() {
               </div>
             ) : (
               <>
-                <header className="px-3 py-3 border-b border-white/5 space-y-2 sm:px-4">
+                <header className="px-3 py-3 border-b border-[var(--ws-border)] space-y-2 sm:px-4">
                   <button
                     type="button"
                     onClick={() => setMobilePane('threads')}
-                    className="mb-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 type-caption text-[var(--ws-text-secondary)] lg:hidden"
+                    className="mb-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2.5 type-caption text-[var(--ws-text-secondary)] lg:hidden"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Threads
                   </button>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="type-card-description font-bold text-white truncate">{activeThread.displayName}</p>
+                        <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{activeThread.displayName}</p>
                         <Badge variant="outline" className={CLASS_META[activeThread.classification].badge}>
                           {CLASS_META[activeThread.classification].label}
                         </Badge>
@@ -790,37 +790,37 @@ export function OutreachInbox() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-8 px-2.5 rounded-lg border border-white/10 text-[var(--ws-text-secondary)] hover:text-white type-caption"
+                        className="h-8 px-2.5 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] type-caption"
                         onClick={() => openComposerForThread(activeThread)}
                       >
                         <Reply className="w-3.5 h-3.5" />
                         Reply
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white" title="Archive (no-op UX)">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="Archive (no-op UX)">
                         <Archive className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white" title="Star (no-op UX)">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="Star (no-op UX)">
                         <Star className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white" title="More">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]" title="More">
                         <MoreHorizontal className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 type-ui">
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-white/5 px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Sent</p>
                       <p className="text-[var(--ws-text-primary)] font-bold">{activeThread.sentCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-white/5 px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Opened</p>
                       <p className="text-[var(--info-text,var(--info-500))] font-bold">{activeThread.openedCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-white/5 px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Replied</p>
                       <p className="text-[var(--success-text,var(--success-500))] font-bold">{activeThread.repliedCount}</p>
                     </div>
-                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-white/5 px-2.5 py-1.5">
+                    <div className="rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] px-2.5 py-1.5">
                       <p className="text-[var(--ws-text-muted)]">Last activity</p>
                       <p className="text-[var(--ws-text-secondary)] font-bold" title={formatTimestamp(activeThread.lastActivityAt).absolute}>
                         {formatTimestamp(activeThread.lastActivityAt).relative}
@@ -870,7 +870,7 @@ export function OutreachInbox() {
                             'rounded-xl border px-3 py-2.5',
                             isReply
                               ? 'bg-emerald-500/[0.04] border-emerald-500/20 ml-auto max-w-[92%]'
-                              : 'bg-[var(--ws-canvas)]/50 border-white/10 max-w-[92%]',
+                              : 'bg-[var(--ws-canvas)]/50 border-[var(--ws-border)] max-w-[92%]',
                           ].join(' ')}
                         >
                           <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -897,12 +897,12 @@ export function OutreachInbox() {
                             </span>
                           </div>
                           {replyText ? (
-                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-white/5 p-2.5">
+                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-[var(--ws-border)] p-2.5">
                               {replyText.length > 2000 ? `${replyText.slice(0, 2000)}…` : replyText}
                             </p>
                           ) : null}
                           {!replyText && SENT_TYPES.has(et) && sentBody ? (
-                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-white/5 p-2.5">
+                            <p className="type-card-description text-[var(--ws-text-secondary)] whitespace-pre-wrap leading-relaxed rounded-lg bg-[var(--ws-canvas)]/70 border border-[var(--ws-border)] p-2.5">
                               {sentBody.length > 4000 ? `${sentBody.slice(0, 4000)}…` : sentBody}
                             </p>
                           ) : null}
@@ -920,14 +920,14 @@ export function OutreachInbox() {
       {/* Composer modal */}
       {composerOpen ? (
         <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)]/70 backdrop-blur-[2px] flex items-center justify-center p-4">
-          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/95 to-slate-950/95 shadow-2xl shadow-black/60 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="w-full max-w-3xl rounded-2xl border border-[var(--ws-border)] bg-gradient-to-b from-slate-900/95 to-slate-950/95 shadow-2xl shadow-black/60 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--ws-border)]">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border border-white/10 flex items-center justify-center">
+                <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-emerald-500/30 to-teal-500/30 border border-[var(--ws-border)] flex items-center justify-center">
                   <Send className="w-3.5 h-3.5 text-[var(--success-text,var(--success-500))]" />
                 </div>
                 <div>
-                  <p className="type-card-description font-bold text-white">New outreach message</p>
+                  <p className="type-card-description font-bold text-[var(--ws-text-primary)]">New outreach message</p>
                   <p className="type-card-description text-[var(--ws-text-muted)]">Sending uses the same connected delivery providers already configured.</p>
                 </div>
               </div>
@@ -935,7 +935,7 @@ export function OutreachInbox() {
                 size="sm"
                 variant="ghost"
                 onClick={() => setComposerOpen(false)}
-                className="h-8 w-8 p-0 rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
+                className="h-8 w-8 p-0 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
               >
                 <ChevronRight className="w-4 h-4 -rotate-45" />
               </Button>
@@ -944,14 +944,14 @@ export function OutreachInbox() {
               <div className="grid grid-cols-12 gap-2">
                 <div className="col-span-8 space-y-2">
                   <label className="block type-ui font-semibold text-[var(--ws-text-secondary)]">To</label>
-                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-white type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]" />
+                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-primary)] type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]" />
                 </div>
                 <div className="col-span-4 space-y-2">
                   <label className="block type-ui font-semibold text-[var(--ws-text-secondary)]">Dispatch via</label>
                   <select
                     value={composeProvider}
                     onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-2 py-2 type-caption text-white focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
+                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-2 py-2 type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
                   >
                     <option value="auto">Auto (Best deliverability)</option>
                     {(connectedProviders.length ? connectedProviders : [
@@ -968,7 +968,7 @@ export function OutreachInbox() {
               </div>
               <div className="space-y-2">
                 <label className="block type-ui font-semibold text-[var(--ws-text-secondary)]">Subject</label>
-                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-white type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]" />
+                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-primary)] type-caption h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]" />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
@@ -989,7 +989,7 @@ export function OutreachInbox() {
                   value={composeBody}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}
                   rows={9}
-                  className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-white type-caption leading-relaxed focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]"
+                  className="bg-[var(--ws-canvas)] border-[var(--ws-border)] text-[var(--ws-text-primary)] type-caption leading-relaxed focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-[var(--ws-text-muted)]"
                   placeholder="Hi [first name],…"
                 />
               </div>
@@ -998,7 +998,7 @@ export function OutreachInbox() {
                   After sending, the delivery event will appear in the contact thread above. Any incoming reply from this address threads back here automatically.
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={() => setComposerOpen(false)} className="h-9 px-3 rounded-lg border border-white/10 text-[var(--ws-text-secondary)] hover:text-white type-caption">
+                  <Button variant="ghost" onClick={() => setComposerOpen(false)} className="h-9 px-3 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] type-caption">
                     Cancel
                   </Button>
                   <Button

@@ -98,12 +98,12 @@ export function OverdueReminderPanel() {
     <div className="space-y-5 animate-in fade-in duration-300">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <h3 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
             <Bell className="text-orange-400" size={20} /> Overdue Reminders
           </h3>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Send email or WhatsApp nudges to overdue clients</p>
         </div>
-        <button onClick={load} className="type-ui text-[var(--ws-text-muted)] hover:text-white border border-white/10 px-3 py-1.5 rounded-lg">
+        <button onClick={load} className="type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)] px-3 py-1.5 rounded-lg">
           Refresh
         </button>
       </div>
@@ -122,8 +122,8 @@ export function OverdueReminderPanel() {
         </div>
       ) : (
         <div className="ac-workspace-panel rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
-            <p className="type-caption font-black uppercase tracking-widest text-white flex items-center gap-2">
+          <div className="px-5 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
+            <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)] flex items-center gap-2">
               <AlertTriangle size={14} className="text-orange-400" />
               {items.length} clients need a reminder
             </p>
@@ -133,7 +133,7 @@ export function OverdueReminderPanel() {
               <div key={item.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-white/[0.02] transition-all">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="type-card-description font-bold text-white truncate">{item.client_name}</p>
+                    <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{item.client_name}</p>
                     <span className={`type-caption font-black uppercase ${severityColor(item.daysOverdue)}`}>
                       {item.daysOverdue}d overdue
                     </span>

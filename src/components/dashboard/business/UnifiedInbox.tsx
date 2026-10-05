@@ -66,7 +66,7 @@ function UnifiedInboxContent({
           onClick={() => setTab('mailbox')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg type-caption font-bold transition-all ${
             activeTab === 'mailbox'
-              ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
+              ? 'bg-[var(--brand-blue-600)] text-[var(--text-inverse)] shadow-lg shadow-[var(--brand-blue-600)]/20'
               : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           }`}
         >
@@ -82,7 +82,7 @@ function UnifiedInboxContent({
           onClick={() => setTab('channels')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg type-caption font-bold transition-all ${
             activeTab === 'channels'
-              ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
+              ? 'bg-[var(--brand-blue-600)] text-[var(--text-inverse)] shadow-lg shadow-[var(--brand-blue-600)]/20'
               : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           }`}
         >

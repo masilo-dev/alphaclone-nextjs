@@ -107,7 +107,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
                     <div className="type-caption font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
-                    <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Video rooms & booking links</h1>
+                    <h1 className="text-xl md:text-2xl font-bold text-[var(--ws-text-primary)] mt-1">Video rooms & booking links</h1>
                     <p className="text-[var(--ws-text-muted)] type-card-description mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
                 </div>
                 <div className="flex gap-2">
@@ -138,7 +138,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
             <div className="ac-workspace-panel rounded-lg p-6">
                 <div className="mb-4">
                     <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Rooms</div>
-                    <h2 className="text-lg font-bold text-white mt-1">Active and upcoming meetings</h2>
+                    <h2 className="text-lg font-bold text-[var(--ws-text-primary)] mt-1">Active and upcoming meetings</h2>
                 </div>
                 {loading ? (
                     <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-[var(--ws-surface-secondary)]/40 rounded-xl animate-pulse" />)}</div>
@@ -162,7 +162,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                     </div>
                                     <div className="min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <p className="type-card-description font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
+                                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{m.title || 'Untitled meeting'}</p>
                                             <MeetingProviderBadge meeting={m} />
                                         </div>
                                         <p className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1 mt-0.5">

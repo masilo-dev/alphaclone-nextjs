@@ -536,7 +536,7 @@ export default function EnhancedInvoiceModal({
           <input
             type="text"
             placeholder="Search existing contacts..."
-            className="w-full px-3 py-2 pl-10 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 pl-10 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -582,7 +582,7 @@ export default function EnhancedInvoiceModal({
                         setSearchQuery('');
                         setShowContactDropdown(false);
                       }}
-                      className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
+                      className="w-full text-left p-3 rounded-lg hover:bg-[var(--ws-hover)] flex items-center gap-3 transition-colors group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
                         <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0).toUpperCase()}</span>
@@ -610,7 +610,7 @@ export default function EnhancedInvoiceModal({
             type="text"
             value={formData.clientName}
             onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="Enter client name"
           />
         </div>
@@ -620,7 +620,7 @@ export default function EnhancedInvoiceModal({
             type="email"
             value={formData.clientEmail}
             onChange={(e) => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             placeholder="client@example.com"
           />
         </div>
@@ -655,7 +655,7 @@ export default function EnhancedInvoiceModal({
         <select
           value={formData.contractId}
           onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
-          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
         >
           <option value="">No contract linked</option>
           {contracts
@@ -687,7 +687,7 @@ export default function EnhancedInvoiceModal({
             type="date"
             value={formData.dueDate}
             onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
@@ -713,7 +713,7 @@ export default function EnhancedInvoiceModal({
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           rows={3}
           placeholder="Additional notes..."
         />
@@ -731,7 +731,7 @@ export default function EnhancedInvoiceModal({
               value={item.description}
               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
               placeholder="Item description"
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
           <div className="w-20">
@@ -739,7 +739,7 @@ export default function EnhancedInvoiceModal({
               type="number"
               value={item.quantity}
               onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               min="1"
             />
           </div>
@@ -748,11 +748,11 @@ export default function EnhancedInvoiceModal({
               type="number"
               value={item.rate}
               onChange={(e) => handleItemChange(index, 'rate', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-white border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               step="0.01"
             />
           </div>
-          <div className="w-24 text-right font-medium text-white">
+          <div className="w-24 text-right font-medium text-[var(--ws-text-primary)]">
             ${item.amount.toFixed(2)}
           </div>
           <button
@@ -813,10 +813,10 @@ export default function EnhancedInvoiceModal({
           >
             <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-white font-black uppercase tracking-tight flex items-center gap-2">
+                <h3 className="text-[var(--ws-text-primary)] font-black uppercase tracking-tight flex items-center gap-2">
                   <Package className="text-teal-500 w-4 h-4" /> Services Catalog
                 </h3>
-                <button onClick={() => setShowServicePicker(false)} className="text-[var(--ws-text-muted)] hover:text-white"><X size={18} /></button>
+                <button onClick={() => setShowServicePicker(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X size={18} /></button>
               </div>
               
               <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -831,11 +831,11 @@ export default function EnhancedInvoiceModal({
                       setShowServicePicker(false);
                       toast.success(`Added ${s.name}`);
                     }}
-                    className="w-full text-left p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group"
+                    className="w-full text-left p-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] transition-all group"
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-white font-bold">{s.name}</p>
+                        <p className="text-[var(--ws-text-primary)] font-bold">{s.name}</p>
                         <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-1">{s.description}</p>
                       </div>
                       <span className="text-teal-400 font-black">${s.defaultPrice}</span>
@@ -856,13 +856,13 @@ export default function EnhancedInvoiceModal({
       <div className="mt-6 p-4 bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg">
         <div className="flex justify-between items-center mb-2">
           <span className="text-[var(--ws-text-muted)]">Subtotal:</span>
-          <span className="font-medium text-white">${formData.subtotal.toFixed(2)}</span>
+          <span className="font-medium text-[var(--ws-text-primary)]">${formData.subtotal.toFixed(2)}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
           <span className="text-[var(--ws-text-muted)]">Tax (15%):</span>
-          <span className="font-medium text-white">${formData.tax.toFixed(2)}</span>
+          <span className="font-medium text-[var(--ws-text-primary)]">${formData.tax.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between items-center text-lg font-semibold border-t border-[var(--ws-border)] pt-2 text-white">
+        <div className="flex justify-between items-center text-lg font-semibold border-t border-[var(--ws-border)] pt-2 text-[var(--ws-text-primary)]">
           <span>Total:</span>
           <span>${formData.total.toFixed(2)}</span>
         </div>
@@ -896,7 +896,7 @@ export default function EnhancedInvoiceModal({
                 className="mr-3 rounded border-slate-600 text-teal-600 focus:ring-teal-500 bg-[var(--ws-panel)]"
               />
               <span className="mr-2">{method.icon}</span>
-              <span className="font-medium text-white">{method.name}</span>
+              <span className="font-medium text-[var(--ws-text-primary)]">{method.name}</span>
             </label>
           ))}
         </div>
@@ -925,8 +925,8 @@ export default function EnhancedInvoiceModal({
               className={cn(
                 'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
                 copiedLink
-                  ? 'bg-green-600 text-white'
-                  : 'bg-teal-600 text-white hover:bg-teal-500'
+                  ? 'bg-green-600 text-[var(--ws-text-primary)]'
+                  : 'bg-teal-600 text-[var(--text-inverse)] hover:bg-teal-500'
               )}
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -934,7 +934,7 @@ export default function EnhancedInvoiceModal({
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center space-x-2 px-4 py-2 bg-[var(--ws-surface-secondary)] text-white rounded-lg hover:bg-[var(--ws-surface-tertiary)] transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] rounded-lg hover:bg-[var(--ws-surface-tertiary)] transition-colors"
             >
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
@@ -965,7 +965,7 @@ export default function EnhancedInvoiceModal({
         <div className="flex items-center justify-between p-6 border-b border-[var(--ws-border)]">
           <div className="space-y-2">
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-[var(--ws-text-primary)]">
                 {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
               </h2>
               <p className="type-card-description text-[var(--ws-text-muted)]">
@@ -991,7 +991,7 @@ export default function EnhancedInvoiceModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] rounded-lg"
+            className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1062,7 +1062,7 @@ export default function EnhancedInvoiceModal({
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2.5 text-[var(--ws-text-secondary)] hover:text-white order-last sm:order-first"
+              className="px-4 py-2.5 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] order-last sm:order-first"
             >
               Cancel
             </button>
@@ -1074,7 +1074,7 @@ export default function EnhancedInvoiceModal({
                 "flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-colors",
                 isSending || !formData.clientName
                   ? "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed border border-[var(--ws-border)]"
-                  : "bg-teal-600 text-white hover:bg-teal-500"
+                  : "bg-teal-600 text-[var(--text-inverse)] hover:bg-teal-500"
               )}
             >
               <Check className="w-4 h-4" />

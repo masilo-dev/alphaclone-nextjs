@@ -470,7 +470,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     <button
                         onClick={() => window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`}
                         title="Connect Google Calendar"
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-secondary)] hover:text-white transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
                     >
                         <Mail className="w-4 h-4" />
                         <span className="type-ui font-medium">Google Calendar</span>
@@ -880,7 +880,7 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                 if (!isToday && dayEvents.length === 0) return null;
 
                 return (
-                    <div key={day} className={`bg-[var(--ws-panel)]/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
+                    <div key={day} className={`bg-[var(--ws-panel)]/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-[var(--ws-border)]'} rounded-2xl backdrop-blur-sm`}>
                         <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-[var(--brand-blue-500)]/5' : ''}`}>
                             <div className="flex items-center gap-4">
                                 <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
@@ -909,10 +909,10 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                         <button
                                             key={event.id}
                                             onClick={() => onSelectEvent(event)}
-                                            className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
+                                            className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="type-ui font-bold text-white mb-1 truncate">{event.title}</h4>
+                                                <h4 className="type-ui font-bold text-[var(--ws-text-primary)] mb-1 truncate">{event.title}</h4>
                                                 <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                                                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                                                     <span className="uppercase tracking-wide type-caption">{cfg.label}</span>

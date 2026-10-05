@@ -20,7 +20,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose, userName }
                     <p className="type-caption font-semibold uppercase tracking-caps text-teal-400 mb-2">
                         The platform for execution
                     </p>
-                    <h3 className="text-xl font-bold text-white mb-2">Your workspace is ready</h3>
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">Your workspace is ready</h3>
                     <p className="text-[var(--ws-text-muted)] type-card-description max-w-md mx-auto">
                         Welcome, <span className="text-teal-400 font-medium">{userName}</span>.
                         Run clients, projects, billing, and operations from one secure command center.
@@ -31,14 +31,14 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose, userName }
                     <div className="flex items-start gap-3">
                         <Lock className="w-5 h-5 text-blue-400 mt-0.5" />
                         <div>
-                            <p className="text-white font-bold type-card-description">E2E Encrypted</p>
+                            <p className="text-[var(--ws-text-primary)] font-bold type-card-description">E2E Encrypted</p>
                             <p className="type-card-description text-[var(--ws-text-muted)]">All data transfers are secured</p>
                         </div>
                     </div>
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-green-400 mt-0.5" />
                         <div>
-                            <p className="text-white font-bold type-card-description">System Healthy</p>
+                            <p className="text-[var(--ws-text-primary)] font-bold type-card-description">System Healthy</p>
                             <p className="type-card-description text-[var(--ws-text-muted)]">Optimal performance active</p>
                         </div>
                     </div>

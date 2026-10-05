@@ -71,7 +71,7 @@ export function VideoMeetingsAndMcpSetup() {
       <div className="px-4 py-3 border-b border-[var(--ws-border)]/80 flex items-center gap-2">
         <Video className="w-5 h-5 text-teal-400" />
         <div>
-          <h2 className="type-ui font-semibold text-white">Video meetings and MCP</h2>
+          <h2 className="type-ui font-semibold text-[var(--ws-text-primary)]">Video meetings and MCP</h2>
           <p className="type-card-description text-[var(--ws-text-muted)]">
             Use built-in Daily.co rooms, LiveKit infrastructure, Microsoft Teams, or Zoom according to your connected provider.
           </p>

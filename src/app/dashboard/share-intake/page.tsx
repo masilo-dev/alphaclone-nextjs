@@ -43,7 +43,7 @@ function ShareIntakeContent() {
       <NativeScreenHeader title="Shared to AlphaClone" onBack={() => router.push('/dashboard')} />
       <div className="px-4 py-4 space-y-4">
         {shared.combined ? (
-          <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/60 p-4 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
+          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-4 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
             {shared.combined}
           </div>
         ) : (

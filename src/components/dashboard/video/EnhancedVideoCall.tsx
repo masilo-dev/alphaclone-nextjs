@@ -330,7 +330,7 @@ export default function EnhancedVideoCall({
           }}
         >
           {!participant.video && (
-            <div className="flex flex-col items-center justify-center text-white">
+            <div className="flex flex-col items-center justify-center text-[var(--ws-text-primary)]">
               <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mb-2">
                 <span className="text-xl font-semibold">
                   {participant.name.charAt(0).toUpperCase()}
@@ -343,7 +343,7 @@ export default function EnhancedVideoCall({
 
         {/* Participant info overlay */}
         <div className="absolute bottom-2 left-2 flex items-center space-x-2 bg-black bg-opacity-50 px-2 py-1 rounded">
-          <span className="text-white type-caption">{participant.name}</span>
+          <span className="text-[var(--ws-text-primary)] type-caption">{participant.name}</span>
           {!participant.audio && (
             <MicOff className="w-3 h-3 text-red-400" />
           )}
@@ -390,7 +390,7 @@ export default function EnhancedVideoCall({
         }}
       >
         {/* Screen share indicator */}
-        <div className="absolute top-4 left-4 flex items-center space-x-2 bg-green-600 text-white px-3 py-1 rounded-full type-ui">
+        <div className="absolute top-4 left-4 flex items-center space-x-2 bg-green-600 text-[var(--ws-text-primary)] px-3 py-1 rounded-full type-ui">
           <Monitor className="w-4 h-4" />
           <span>{screenShareParticipant.user_name || 'Someone'} is sharing their screen</span>
         </div>
@@ -403,7 +403,7 @@ export default function EnhancedVideoCall({
       <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white">Connecting to call...</p>
+          <p className="text-[var(--ws-text-primary)]">Connecting to call...</p>
         </div>
       </div>
     );
@@ -414,11 +414,11 @@ export default function EnhancedVideoCall({
       <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-white text-lg mb-2">Connection Error</h3>
+          <h3 className="text-[var(--ws-text-primary)] text-lg mb-2">Connection Error</h3>
           <p className="text-gray-400 mb-4">{errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto"
+            className="bg-blue-600 text-[var(--ws-text-primary)] px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Retry</span>
@@ -437,7 +437,7 @@ export default function EnhancedVideoCall({
       <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
         <div className="flex items-center space-x-3">
           <Video className="w-6 h-6 text-blue-500" />
-          <span className="text-white font-semibold">Video Call</span>
+          <span className="text-[var(--ws-text-primary)] font-semibold">Video Call</span>
           {isMinimized && (
             <span className="text-gray-400 type-ui">
               {participants.length + 1} participants
@@ -450,13 +450,13 @@ export default function EnhancedVideoCall({
             <>
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg"
+                className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
               >
                 <MessageSquare className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setShowParticipants(!showParticipants)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg"
+                className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
               >
                 <Users className="w-5 h-5" />
               </button>
@@ -465,7 +465,7 @@ export default function EnhancedVideoCall({
 
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg"
+            className="p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-gray-700 rounded-lg"
           >
             {isMinimized ? <Maximize2 className="w-5 h-5" /> : <Minimize2 className="w-5 h-5" />}
           </button>
@@ -507,7 +507,7 @@ export default function EnhancedVideoCall({
                     isAudioEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                   )}
                 >
-                  {isAudioEnabled ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-white" />}
+                  {isAudioEnabled ? <Mic className="w-5 h-5 text-[var(--text-inverse)]" /> : <MicOff className="w-5 h-5 text-[var(--ws-text-primary)]" />}
                 </button>
 
                 <button
@@ -517,7 +517,7 @@ export default function EnhancedVideoCall({
                     isVideoEnabled ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"
                   )}
                 >
-                  {isVideoEnabled ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-white" />}
+                  {isVideoEnabled ? <Video className="w-5 h-5 text-[var(--text-inverse)]" /> : <VideoOff className="w-5 h-5 text-[var(--ws-text-primary)]" />}
                 </button>
 
                 <button
@@ -527,14 +527,14 @@ export default function EnhancedVideoCall({
                     isScreenSharing ? "bg-green-600 hover:bg-green-700" : "bg-gray-600 hover:bg-gray-700"
                   )}
                 >
-                  {isScreenSharing ? <StopCircle className="w-5 h-5 text-white" /> : <Monitor className="w-5 h-5 text-white" />}
+                  {isScreenSharing ? <StopCircle className="w-5 h-5 text-[var(--ws-text-primary)]" /> : <Monitor className="w-5 h-5 text-[var(--ws-text-primary)]" />}
                 </button>
 
                 <button
                   onClick={onLeave}
                   className="p-3 bg-red-600 hover:bg-red-700 rounded-full transition-colors"
                 >
-                  <Phone className="w-5 h-5 text-white" />
+                  <Phone className="w-5 h-5 text-[var(--text-inverse)]" />
                 </button>
               </div>
             </div>
@@ -546,7 +546,7 @@ export default function EnhancedVideoCall({
             {showChat && (
               <div className="h-full flex flex-col">
                 <div className="p-4 border-b border-gray-700">
-                  <h3 className="text-white font-semibold">Chat</h3>
+                  <h3 className="text-[var(--ws-text-primary)] font-semibold">Chat</h3>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-2">
                   {messages.map((msg, index) => (
@@ -555,7 +555,7 @@ export default function EnhancedVideoCall({
                       msg.isOwn ? "bg-blue-600 ml-8" : "bg-gray-700 mr-8"
                     )}>
                       <div className="type-caption text-gray-300 mb-1">{msg.sender}</div>
-                      <div className="text-white type-ui">{msg.text}</div>
+                      <div className="text-[var(--ws-text-primary)] type-ui">{msg.text}</div>
                     </div>
                   ))}
                 </div>
@@ -567,11 +567,11 @@ export default function EnhancedVideoCall({
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder="Type a message..."
-                      className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 bg-gray-700 text-[var(--ws-text-primary)] px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                       onClick={sendMessage}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-[var(--ws-text-primary)] px-4 py-2 rounded-lg"
                     >
                       <Share2 className="w-4 h-4" />
                     </button>
@@ -584,11 +584,11 @@ export default function EnhancedVideoCall({
             {showParticipants && (
               <div className="h-full">
                 <div className="p-4 border-b border-gray-700">
-                  <h3 className="text-white font-semibold">Participants ({participants.length + 1})</h3>
+                  <h3 className="text-[var(--ws-text-primary)] font-semibold">Participants ({participants.length + 1})</h3>
                 </div>
                 <div className="p-4 space-y-2">
                   {localParticipant && (
-                    <div className="flex items-center space-x-3 text-white">
+                    <div className="flex items-center space-x-3 text-[var(--ws-text-primary)]">
                       <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                         <span className="type-ui">{localParticipant.name.charAt(0)}</span>
                       </div>
@@ -596,7 +596,7 @@ export default function EnhancedVideoCall({
                     </div>
                   )}
                   {participants.map((participant) => (
-                    <div key={participant.id} className="flex items-center space-x-3 text-white">
+                    <div key={participant.id} className="flex items-center space-x-3 text-[var(--ws-text-primary)]">
                       <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
                         <span className="type-ui">{participant.name.charAt(0)}</span>
                       </div>
@@ -612,7 +612,7 @@ export default function EnhancedVideoCall({
       ) : (
         /* Minimized View */
         <div className="flex items-center justify-center h-full">
-          <div className="text-center text-white">
+          <div className="text-center text-[var(--ws-text-primary)]">
             <Video className="w-8 h-8 mx-auto mb-2" />
             <p className="type-card-description">In call with {participants.length} others</p>
             <div className="flex justify-center space-x-2 mt-3">

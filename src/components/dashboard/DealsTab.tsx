@@ -117,12 +117,12 @@ const SwipeableDealRow: React.FC<{
   return (
     <div className="relative overflow-hidden">
       <motion.div style={{ opacity: leftOp }} className="absolute inset-y-0 left-0 w-24 bg-emerald-500/80 flex flex-col items-center justify-center z-0 gap-1">
-        <ArrowRight className="w-5 h-5 text-white" />
-        <span className="type-ui text-white font-bold capitalize">{nextStage?.replace('_', ' ')}</span>
+        <ArrowRight className="w-5 h-5 text-[var(--text-inverse)]" />
+        <span className="type-ui text-[var(--text-inverse)] font-bold capitalize">{nextStage?.replace('_', ' ')}</span>
       </motion.div>
       <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-24 bg-[var(--error-500)]/80 flex flex-col items-center justify-center z-0 gap-1">
-        <ArrowLeft className="w-5 h-5 text-white" />
-        <span className="type-ui text-white font-bold">Lost</span>
+        <ArrowLeft className="w-5 h-5 text-[var(--text-inverse)]" />
+        <span className="type-ui text-[var(--ws-text-primary)] font-bold">Lost</span>
       </motion.div>
 
       <motion.div
@@ -136,7 +136,7 @@ const SwipeableDealRow: React.FC<{
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="type-ui font-bold text-white truncate">{deal.name}</span>
+            <span className="type-ui font-bold text-[var(--ws-text-primary)] truncate">{deal.name}</span>
             {deal.score != null && (
               <span className={`type-ui font-bold flex-shrink-0 ${scoreColor(deal.score)}`}>●{deal.score}</span>
             )}
@@ -379,7 +379,7 @@ const DealDetail: React.FC<{
         <DealRevenueTimeline dealId={deal.id} dealStage={deal.stage} />
 
         {/* Contact */}
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           {deal.contact_name && <div className="flex items-center gap-3 p-4"><User className="w-5 h-5 text-[var(--ws-text-muted)]" /><span className="type-ui text-[var(--ws-text-secondary)]">{deal.contact_name}</span></div>}
           {deal.contact_email && (
             <div className="flex items-center justify-between gap-3 p-4">
@@ -404,13 +404,13 @@ const DealDetail: React.FC<{
         </div>
 
         {deal.description && (
-          <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4">
             <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{deal.description}</p>
           </div>
         )}
 
         {/* Line items */}
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-3">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Products / Line Items</span>
             <button onClick={() => setShowAddProduct(v => !v)} className="type-ui font-bold text-emerald-400 flex items-center gap-1">
@@ -444,12 +444,12 @@ const DealDetail: React.FC<{
           )}
 
           {showAddProduct && (
-            <div className="space-y-2 pt-2 border-t border-white/5">
+            <div className="space-y-2 pt-2 border-t border-[var(--ws-border)]">
               <input
                 value={newProduct.productName}
                 onChange={e => setNewProduct(p => ({ ...p, productName: e.target.value }))}
                 placeholder="Product / service name"
-                className="w-full bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500"
               />
               <div className="flex gap-2">
                 <input
@@ -457,77 +457,77 @@ const DealDetail: React.FC<{
                   onChange={e => setNewProduct(p => ({ ...p, quantity: e.target.value }))}
                   placeholder="Qty"
                   type="number"
-                  className="w-20 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                  className="w-20 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500"
                 />
                 <input
                   value={newProduct.unitPrice}
                   onChange={e => setNewProduct(p => ({ ...p, unitPrice: e.target.value }))}
                   placeholder="Unit price"
                   type="number"
-                  className="flex-1 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                  className="flex-1 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500"
                 />
               </div>
-              <button onClick={handleAddProduct} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg type-ui font-bold text-white">Add product</button>
+              <button onClick={handleAddProduct} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg type-ui font-bold text-[var(--text-inverse)]">Add product</button>
             </div>
           )}
         </div>
 
         {/* Log activity */}
         {logging && (
-          <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-2">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-2">
             <textarea
               value={activityNote}
               onChange={e => setActivityNote(e.target.value)}
               placeholder="Log a call, email, or note…"
-              className="w-full bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)] resize-none h-20"
+              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)] resize-none h-20"
             />
-            <button onClick={handleLogActivity} className="w-full py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg type-ui font-bold text-white">Save activity</button>
+            <button onClick={handleLogActivity} className="w-full py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg type-ui font-bold text-[var(--text-inverse)]">Save activity</button>
           </div>
         )}
       </div>
 
       {inDrawer ? (
-        <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+        <div className="flex flex-col gap-2 pt-2 border-t border-[var(--ws-border)]">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')}
-              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
             >
               Open customer
             </button>
             <button
               type="button"
               onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)}
-              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
             >
               Create quote
             </button>
             <button
               type="button"
               onClick={() => navigate('/dashboard/business/calendar')}
-              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
             >
               Schedule follow-up
             </button>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 type-ui text-[var(--ws-text-muted)] font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
+            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 type-ui text-[var(--ws-text-muted)] font-bold rounded-xl border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]">Log Activity</button>
             <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 type-ui text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
               {creatingInvoice ? 'Creating…' : 'Create Invoice'}
             </button>
           </div>
         </div>
       ) : (
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
         <div className="flex divide-x divide-white/5 overflow-x-auto">
-          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Customer</button>
-          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Quote</button>
-          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Follow-up</button>
+          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)]">Customer</button>
+          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)]">Quote</button>
+          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)]">Follow-up</button>
         </div>
         <div className="flex divide-x divide-white/5">
-          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5 transition-colors">Log Activity</button>
-          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 type-ui text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
+          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-[var(--ws-hover)] transition-colors">Log Activity</button>
+          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 type-ui text-emerald-400 font-bold hover:bg-[var(--ws-hover)] transition-colors disabled:opacity-50">
             {creatingInvoice ? 'Creating…' : 'Create Invoice'}
           </button>
         </div>
@@ -904,10 +904,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               const id = e.dataTransfer.getData('text/plain');
               if (id) void handleBoardDrop(id, stage);
             }}
-            className="flex-1 min-w-[280px] max-w-[320px] bg-[var(--ws-panel)]/25 border border-white/5 rounded-2xl flex flex-col h-full overflow-hidden"
+            className="flex-1 min-w-[280px] max-w-[320px] bg-[var(--ws-panel)]/25 border border-[var(--ws-border)] rounded-2xl flex flex-col h-full overflow-hidden"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between p-3.5 border-b border-white/5 bg-[var(--ws-panel)]/40 shrink-0">
+            <div className="flex items-center justify-between p-3.5 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/40 shrink-0">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.text} bg-current`} />
                 <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)]">{stage.replace('_', ' ')}</span>
@@ -922,7 +922,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             {/* Column Cards */}
             <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-none">
               {stageDeals.length === 0 ? (
-                <div className="h-28 border border-dashed border-white/5 rounded-xl flex items-center justify-center p-4 text-center">
+                <div className="h-28 border border-dashed border-[var(--ws-border)] rounded-xl flex items-center justify-center p-4 text-center">
                   <p className="type-card-description text-slate-650 font-medium">Drag deals here</p>
                 </div>
               ) : (
@@ -944,7 +944,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     tabIndex={0}
                     aria-label={`Open deal: ${deal.name}`}
                     className={`bg-[var(--ws-canvas)] border hover:border-[var(--ws-border)] border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
-                      selectedDealIds.has(deal.id) ? 'border-[var(--brand-blue-500)]/40' : 'border-white/5'
+                      selectedDealIds.has(deal.id) ? 'border-[var(--brand-blue-500)]/40' : 'border-[var(--ws-border)]'
                     }`}
                   >
                     <button
@@ -963,9 +963,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     </button>
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="type-ui font-bold text-white group-hover:text-[var(--brand-blue-400)] transition-colors leading-tight truncate">{deal.name}</h4>
+                        <h4 className="type-ui font-bold text-[var(--ws-text-primary)] group-hover:text-[var(--brand-blue-400)] transition-colors leading-tight truncate">{deal.name}</h4>
                         {deal.score != null && (
-                          <span className={`type-ui font-extrabold flex-shrink-0 px-1.5 py-0.5 rounded-md ${scoreColor(deal.score)} bg-white/5`}>
+                          <span className={`type-ui font-extrabold flex-shrink-0 px-1.5 py-0.5 rounded-md ${scoreColor(deal.score)} bg-[var(--ws-hover)]`}>
                             ★ {deal.score}
                           </span>
                         )}
@@ -986,7 +986,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-1 shrink-0">
+                    <div className="flex items-center justify-between border-t border-[var(--ws-border)] pt-2 mt-1 shrink-0">
                       <span className="type-ui font-extrabold text-[var(--brand-blue-400)]">${(deal.value || 0).toLocaleString()}</span>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-550" />
@@ -1012,7 +1012,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const renderList = () => (
     <div className="p-4 space-y-4">
       {/* Table Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[var(--ws-panel)]/20 border border-white/5 rounded-2xl p-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-2xl p-4">
         <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -1020,7 +1020,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             placeholder="Search deals or contacts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption text-white placeholder-slate-500 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
           />
         </div>
 
@@ -1031,7 +1031,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             <select
               value={filterStage}
               onChange={(e) => setFilterStage(e.target.value)}
-              className="bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl px-3 py-1.5 type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl px-3 py-1.5 type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
             >
               <option value="all">All Stages</option>
               {STAGES.map((s) => (
@@ -1050,7 +1050,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption shrink-0 ${
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
               sortBy === 'value' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
@@ -1068,7 +1068,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption shrink-0 ${
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-xl type-caption shrink-0 ${
               sortBy === 'created_at' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
@@ -1079,10 +1079,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       </div>
 
       {/* Table grid */}
-      <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[var(--ws-canvas)]/30">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/30">
         <table className="ac-data-table w-full border-collapse text-left min-w-[700px]">
           <thead>
-            <tr className="border-b border-white/5 bg-[var(--ws-panel)]/20">
+            <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20">
               <th className="px-3 py-3 w-10">
                 <button
                   type="button"
@@ -1091,7 +1091,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedDealIds.has(id));
                     setSelectedDealIds(allSelected ? new Set() : new Set(visibleIds));
                   }}
-                  className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                  className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                   aria-label="Select all deals"
                 >
                   {filteredDeals.length > 0 && filteredDeals.every((d) => selectedDealIds.has(d.id))
@@ -1128,7 +1128,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     tabIndex={0}
                     role="button"
                     aria-label={`Open deal: ${deal.name}`}
-                    className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-[var(--brand-blue-500)]/5' : ''}`}
+                    className={`hover:bg-[var(--ws-hover)] transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-[var(--brand-blue-500)]/5' : ''}`}
                   >
                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -1144,7 +1144,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       </button>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="type-ui font-bold text-white block">{deal.name}</span>
+                      <span className="type-ui font-bold text-[var(--ws-text-primary)] block">{deal.name}</span>
                     </td>
                     <td className="px-3 py-3">
                       <StandardStatusBadge variant={resolveStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StandardStatusBadge>
@@ -1190,7 +1190,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         return (
           <div key={stage}>
             {/* Stage header */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-white/5 sticky top-[57px] sm:top-[73px] z-10">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)] sticky top-[57px] sm:top-[73px] z-10">
               <div className="flex items-center gap-2">
                 <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">{stage.replace('_', ' ')}</span>
                 <span className={`type-ui font-bold px-1.5 py-0.5 rounded-full ${col.bg} ${col.text}`}>{stageDeals.length}</span>
@@ -1246,12 +1246,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {/* Switcher pills */}
-          <div className="flex bg-[var(--ws-panel)]/60 p-1 rounded-full border border-white/5 shadow-inner">
+          <div className="flex bg-[var(--ws-panel)]/60 p-1 rounded-full border border-[var(--ws-border)] shadow-inner">
             <button
               onClick={() => setViewMode('board')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'board'
-                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] shadow-sm'
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
@@ -1262,7 +1262,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               onClick={() => setViewMode('list')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'list'
-                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] shadow-sm'
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
@@ -1273,7 +1273,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               onClick={() => setViewMode('mobile-stage')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'mobile-stage'
-                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] shadow-sm'
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
@@ -1284,7 +1284,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-emerald-500 px-3 type-ui font-black text-white transition-all hover:bg-emerald-600 active:scale-95 shadow-md shadow-emerald-500/10 shrink-0"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-emerald-500 px-3 type-ui font-black text-[var(--text-inverse)] transition-all hover:bg-emerald-600 active:scale-95 shadow-md shadow-emerald-500/10 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Deal</span>
@@ -1293,10 +1293,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </div>
         )}
         stats={!loading && deals.length > 0 ? (
-          <div className="p-4 border-b border-white/5 bg-[var(--ws-panel)]/20 space-y-4 shrink-0">
+          <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/20 space-y-4 shrink-0">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
             <ModuleStatCards stats={dealStats} hub="deals" />
-            <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/40 p-4">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Pipeline by Stage</h3>
                 <span className="type-ui text-[var(--ws-text-muted)]">Value distribution</span>
@@ -1324,7 +1324,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             </div>
           </div>
         ) : !loading ? (
-          <div className="p-4 border-b border-white/5 shrink-0 space-y-4">
+          <div className="p-4 border-b border-[var(--ws-border)] shrink-0 space-y-4">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
           </div>
         ) : null}
@@ -1336,7 +1336,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         ) : (
           <>
             {selectedDealIds.size > 0 && (
-              <div className="p-3 bg-[var(--ws-canvas)]/60 border-b border-white/5">
+              <div className="p-3 bg-[var(--ws-canvas)]/60 border-b border-[var(--ws-border)]">
                 <ContextualBulkBar
                   selectedCount={selectedDealIds.size}
                   itemLabel={{ singular: 'deal', plural: 'deals' }}
@@ -1408,7 +1408,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     value={newDealValue}
                     onChange={(e) => setNewDealValue(e.target.value)}
                     placeholder="e.g. 15000"
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                   />
                 </div>
                 <div>
@@ -1416,7 +1416,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   <select
                     value={newDealStage}
                     onChange={(e) => setNewDealStage(e.target.value as DealStage)}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
                   >
                     {STAGES.map((s) => (
                       <option key={s} value={s}>{s.replace('_', ' ')}</option>
@@ -1432,7 +1432,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   value={newDealContactName}
                   onChange={(e) => setNewDealContactName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                 />
               </div>
 
@@ -1443,7 +1443,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   value={newDealContactEmail}
                   onChange={(e) => setNewDealContactEmail(e.target.value)}
                   placeholder="e.g. john@acme.com"
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                 />
               </div>
 
@@ -1454,14 +1454,14 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   onChange={(e) => setNewDealDescription(e.target.value)}
                   placeholder="Add brief details about the deal..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={savingNewDeal}
-                className="w-full min-h-11 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 disabled:opacity-50 text-white type-ui font-semibold rounded-xl transition-all mt-2"
+                className="w-full min-h-11 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 disabled:opacity-50 text-[var(--text-inverse)] type-ui font-semibold rounded-xl transition-all mt-2"
               >
                 {savingNewDeal ? 'Saving...' : 'Create Deal'}
               </button>

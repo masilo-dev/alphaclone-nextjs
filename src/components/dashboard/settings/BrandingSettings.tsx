@@ -87,8 +87,8 @@ const BrandingSettings = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Form Section */}
             <div className="space-y-6">
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                         <Palette className="w-5 h-5 text-teal-400" />
                         Brand Identity
                     </h3>
@@ -97,7 +97,7 @@ const BrandingSettings = () => {
                     <div className="mb-6">
                         <label className="block type-label font-medium text-[var(--ws-text-muted)] mb-2">Organization Logo</label>
                         <div className="flex items-center gap-4">
-                            <div className="w-24 h-24 rounded-2xl bg-[var(--ws-canvas)]/50 border border-white/10 flex items-center justify-center overflow-hidden relative group">
+                            <div className="w-24 h-24 rounded-2xl bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] flex items-center justify-center overflow-hidden relative group">
                                 {isUploading ? (
                                     <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                                 ) : branding.logo_url ? (
@@ -116,7 +116,7 @@ const BrandingSettings = () => {
                                         onClick={() => fileInputRef.current?.click()}
                                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                                     >
-                                        <Upload className="w-5 h-5 text-white" />
+                                        <Upload className="w-5 h-5 text-[var(--ws-text-primary)]" />
                                     </button>
                                 )}
                                 <input
@@ -148,7 +148,7 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_primary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_primary: e.target.value })}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                                 />
                             </div>
                         </div>
@@ -165,15 +165,15 @@ const BrandingSettings = () => {
                                     type="text"
                                     value={branding.brand_color_secondary}
                                     onChange={(e) => setBranding({ ...branding, brand_color_secondary: e.target.value })}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                         <Info className="w-5 h-5 text-teal-400" />
                         Legal Information
                     </h3>
@@ -184,7 +184,7 @@ const BrandingSettings = () => {
                                 type="text"
                                 value={branding.legal_name}
                                 onChange={(e) => setBranding({ ...branding, legal_name: e.target.value })}
-                                className={`w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                className={`w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none ${currentTenant?.legal_name ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 placeholder="Legal Entity Name"
                                 disabled={!!currentTenant?.legal_name}
                             />
@@ -200,7 +200,7 @@ const BrandingSettings = () => {
                                 type="text"
                                 value={branding.tax_id}
                                 onChange={(e) => setBranding({ ...branding, tax_id: e.target.value })}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none"
                                 placeholder="e.g. US-123456789"
                             />
                         </div>
@@ -209,7 +209,7 @@ const BrandingSettings = () => {
                             <textarea
                                 value={branding.business_address}
                                 onChange={(e) => setBranding({ ...branding, business_address: e.target.value })}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:border-teal-500/50 outline-none min-h-[100px]"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/50 outline-none min-h-[100px]"
                                 placeholder="Full registered address..."
                             />
                         </div>
@@ -217,7 +217,7 @@ const BrandingSettings = () => {
                 </div>
 
                 <div className="flex justify-end pt-4">
-                    <Button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-500/20">
+                    <Button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/20">
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                         Save Branding Settings
                     </Button>

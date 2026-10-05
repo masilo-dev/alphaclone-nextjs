@@ -380,7 +380,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('qualify')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)]"
           >
             <Star className="w-3.5 h-3.5" /> Qualify
           </button>
@@ -388,7 +388,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('save')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-teal-700 hover:bg-teal-600 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-teal-700 hover:bg-teal-600 text-[var(--text-inverse)]"
           >
             <Save className="w-3.5 h-3.5" /> Save to CRM
           </button>
@@ -396,7 +396,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('prepare_outreach')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-blue-800 hover:bg-blue-700 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-blue-800 hover:bg-blue-700 text-[var(--ws-text-primary)]"
           >
             <Mail className="w-3.5 h-3.5" /> Prepare email
           </button>
@@ -404,7 +404,7 @@ export default function ScraperLeadsTable({
             type="button"
             disabled={acting}
             onClick={() => void runAction('automate')}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-purple-800 hover:bg-purple-700 text-white"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md type-caption bg-purple-800 hover:bg-purple-700 text-[var(--ws-text-primary)]"
           >
             <Zap className="w-3.5 h-3.5" /> Auto-sequence
           </button>
@@ -420,7 +420,7 @@ export default function ScraperLeadsTable({
 
       <div className="p-4 md:p-5 space-y-4 flex flex-col min-h-0 flex-1">
         <div className="flex items-center justify-between flex-wrap gap-3 shrink-0">
-          <h3 className="text-white font-semibold flex items-center gap-2">
+          <h3 className="text-[var(--ws-text-primary)] font-semibold flex items-center gap-2">
             <Filter className="w-4 h-4 text-teal-400" />
             Prospects
             {total > 0 && (
@@ -469,7 +469,7 @@ export default function ScraperLeadsTable({
             <thead className="sticky top-0 bg-[var(--ws-panel)]/95 backdrop-blur-sm z-10">
               <tr className="text-[var(--ws-text-muted)] border-b border-[var(--ws-border)]">
                 <th className="py-2 px-2 w-8">
-                  <button type="button" onClick={toggleAll} className="text-[var(--ws-text-muted)] hover:text-white">
+                  <button type="button" onClick={toggleAll} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                     {allSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                   </button>
                 </th>
@@ -504,7 +504,7 @@ export default function ScraperLeadsTable({
                   <td className="py-2 px-2">
                     <button
                       type="button"
-                      className="text-left text-white hover:text-[var(--brand-blue-300)]"
+                      className="text-left text-[var(--ws-text-primary)] hover:text-[var(--brand-blue-300)]"
                       onClick={() => onFocusLead?.(lead.id)}
                     >
                       <div className="font-medium">{lead.name || '—'}</div>
@@ -534,7 +534,7 @@ export default function ScraperLeadsTable({
                   <td className="py-2 px-2 text-center text-[var(--ws-text-secondary)] tabular-nums type-table-cell hidden md:table-cell">
                     {lead.reach_km != null ? `${lead.reach_km} km` : '—'}
                   </td>
-                  <td className="py-2 px-2 text-center text-white tabular-nums">{lead.confidence_score ?? lead.score ?? '—'}</td>
+                  <td className="py-2 px-2 text-center text-[var(--ws-text-primary)] tabular-nums">{lead.confidence_score ?? lead.score ?? '—'}</td>
                   <td className="py-2 px-2 text-center">
                     {lead.grade ? (
                       <span className={`px-2 py-0.5 rounded type-caption font-medium ${GRADE_COLORS[lead.grade] || ''}`}>

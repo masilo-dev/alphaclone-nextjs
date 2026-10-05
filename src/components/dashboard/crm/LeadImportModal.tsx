@@ -113,7 +113,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                             placeholder="Search growth leads..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                         />
                     </div>
                     <Button
@@ -126,7 +126,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                     </Button>
                 </div>
 
-                <div className="max-h-96 overflow-y-auto overflow-x-auto custom-scrollbar border border-white/5 rounded-xl min-w-0">
+                <div className="max-h-96 overflow-y-auto overflow-x-auto custom-scrollbar border border-[var(--ws-border)] rounded-xl min-w-0">
                     {loading ? (
                         <div className="p-12 flex justify-center">
                             <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
@@ -137,7 +137,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                         </div>
                     ) : (
                         <table className="w-full min-w-[520px] text-left border-collapse">
-                            <thead className="sticky top-0 bg-[var(--ws-canvas)] z-10 border-b border-white/5">
+                            <thead className="sticky top-0 bg-[var(--ws-canvas)] z-10 border-b border-[var(--ws-border)]">
                                 <tr>
                                     <th className="p-4 w-10 text-center">
                                         <input
@@ -157,7 +157,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                                     <tr
                                         key={lead.id}
                                         onClick={() => toggleSelect(lead.id)}
-                                        className={`border-b border-white/5 cursor-pointer transition-colors ${selectedIds.has(lead.id) ? 'bg-teal-500/10' : 'hover:bg-white/5'}`}
+                                        className={`border-b border-[var(--ws-border)] cursor-pointer transition-colors ${selectedIds.has(lead.id) ? 'bg-teal-500/10' : 'hover:bg-[var(--ws-hover)]'}`}
                                     >
                                         <td className="p-4 text-center">
                                             <input
@@ -168,7 +168,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                                             />
                                         </td>
                                         <td className="p-4">
-                                            <div className="font-bold text-white">{lead.businessName}</div>
+                                            <div className="font-bold text-[var(--ws-text-primary)]">{lead.businessName}</div>
                                             <div className="type-caption text-[var(--ws-text-muted)]">{lead.email || 'No email'}</div>
                                         </td>
                                         <td className="p-4 type-table-cell text-[var(--ws-text-muted)]">{lead.industry || '-'}</td>

@@ -138,7 +138,7 @@ export default function AuditTrailPage() {
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-teal-400" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-[var(--ws-text-primary)]">
               {viewMode === 'business' ? 'Business Activity Log' : 'Technical System Log'}
             </h2>
           </div>
@@ -157,7 +157,7 @@ export default function AuditTrailPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 type-caption font-semibold rounded-md transition-colors ${
                 viewMode === 'business'
                   ? 'bg-teal-500/20 text-[var(--brand-blue-300)] border border-teal-500/40'
-                  : 'text-[var(--ws-text-muted)] hover:text-white'
+                  : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
               }`}
             >
               <User className="h-3.5 w-3.5" />
@@ -168,7 +168,7 @@ export default function AuditTrailPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 type-caption font-semibold rounded-md transition-colors ${
                 viewMode === 'technical'
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                  : 'text-[var(--ws-text-muted)] hover:text-white'
+                  : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
               }`}
             >
               <Terminal className="h-3.5 w-3.5" />
@@ -254,7 +254,7 @@ export default function AuditTrailPage() {
                       <td className="whitespace-nowrap px-4 py-4 type-table-cell text-[var(--ws-text-muted)]">
                         {new Date(row.created_at).toLocaleString()}
                       </td>
-                      <td className="px-4 py-4 font-semibold text-white">
+                      <td className="px-4 py-4 font-semibold text-[var(--ws-text-primary)]">
                         {eventName}
                         {meta.business_context && (
                           <div className="mt-0.5 font-normal type-caption text-[var(--ws-text-muted)] max-w-xs">

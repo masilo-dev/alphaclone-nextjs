@@ -767,13 +767,13 @@ export default function SocialCommandCenter() {
             <div className="flex gap-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-2">
                 <button
                     onClick={() => setActiveMainTab('manager')}
-                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:bg-white/5'}`}
+                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)]'}`}
                 >
                     Platform Manager
                 </button>
                 <button
                     onClick={() => setActiveMainTab('intelligence')}
-                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'intelligence' ? 'bg-teal-600 text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:bg-white/5'}`}
+                    className={`flex-1 py-3 type-caption font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'intelligence' ? 'bg-teal-600 text-[var(--text-inverse)] shadow-lg' : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)]'}`}
                 >
                     Nexus Intelligence & Tools
                 </button>
@@ -790,7 +790,7 @@ export default function SocialCommandCenter() {
                         {[
                             { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-sky-400' },
                             { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
-                            { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-white' }
+                            { id: 'x', label: 'X (Twitter)', icon: Twitter, color: 'text-[var(--ws-text-primary)]' }
                         ].map((plat) => {
                             const Icon = plat.icon;
                             const isActive = activePlatform === plat.id;
@@ -802,7 +802,7 @@ export default function SocialCommandCenter() {
                                     style={{ height: '44px' }}
                                 >
                                     <Icon className={`w-4 h-4 ${plat.color}`} />
-                                    <span className={`type-ui font-bold ${isActive ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>
+                                    <span className={`type-ui font-bold ${isActive ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}>
                                         {plat.label}
                                     </span>
                                     {isActive && (
@@ -814,7 +814,7 @@ export default function SocialCommandCenter() {
                     </div>
 
                     {/* Sub-view Filter Selectors (Queue | Published | Analytics) */}
-                    <div className="flex p-3 gap-2 bg-[var(--ws-canvas)] border-b border-white/5">
+                    <div className="flex p-3 gap-2 bg-[var(--ws-canvas)] border-b border-[var(--ws-border)]">
                         {[
                             { id: 'queue', label: 'Scheduled Queue', count: posts.filter(p => p.status === 'scheduled' && p.platforms.includes(activePlatform)).length },
                             { id: 'publishing', label: 'Publishing / Recovery', count: posts.filter(p => (p.status === 'publishing' || p.status === 'failed') && p.platforms.includes(activePlatform)).length },
@@ -840,11 +840,11 @@ export default function SocialCommandCenter() {
                     </div>
 
                     {activeSubView !== 'analytics' && (
-                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[var(--ws-canvas)]/80 border-b border-white/5">
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[var(--ws-canvas)]/80 border-b border-[var(--ws-border)]">
                             <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
                                 Content calendar
                             </p>
-                            <div className="flex bg-[var(--ws-panel)] p-0.5 rounded-lg border border-white/5">
+                            <div className="flex bg-[var(--ws-panel)] p-0.5 rounded-lg border border-[var(--ws-border)]">
                                 {([
                                     { id: 'list', label: 'List' },
                                     { id: 'week', label: 'Week' },
@@ -856,7 +856,7 @@ export default function SocialCommandCenter() {
                                         onClick={() => setQueueDisplayMode(mode.id)}
                                         className={`px-2.5 py-1 type-ui font-bold rounded-md ${
                                             queueDisplayMode === mode.id
-                                                ? 'bg-teal-600 text-white'
+                                                ? 'bg-teal-600 text-[var(--text-inverse)]'
                                                 : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                         }`}
                                     >
@@ -892,7 +892,7 @@ export default function SocialCommandCenter() {
                         ) : null}
                         {activeSubView === 'analytics' ? (
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[var(--ws-canvas)]/80 px-4 py-3">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/80 px-4 py-3">
                                     <div>
                                         <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Provider metrics</p>
                                         <p className="type-card-description text-[var(--ws-text-muted)]">
@@ -958,12 +958,12 @@ export default function SocialCommandCenter() {
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
                                                 >
                                                     {/* Swipe Left Action Reveal: Delete (Red) */}
-                                                    <div className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center gap-1.5 text-white font-bold type-caption">
+                                                    <div className="absolute inset-y-0 right-0 w-24 bg-red-600 flex items-center justify-center gap-1.5 text-[var(--text-inverse)] font-bold type-caption">
                                                         <Trash2 className="w-4 h-4" /> Delete
                                                     </div>
 
                                                     {/* Swipe Right Action Reveal: Duplicate (Green) */}
-                                                    <div className="absolute inset-y-0 left-0 w-24 bg-emerald-600 flex items-center justify-center gap-1.5 text-white font-bold type-caption">
+                                                    <div className="absolute inset-y-0 left-0 w-24 bg-emerald-600 flex items-center justify-center gap-1.5 text-[var(--text-inverse)] font-bold type-caption">
                                                         <Repeat className="w-4 h-4" /> Duplicate
                                                     </div>
 
@@ -982,15 +982,15 @@ export default function SocialCommandCenter() {
                                                                         <div className="w-full h-full rounded-full bg-[var(--ws-canvas)] flex items-center justify-center">
                                                                             {activePlatform === 'linkedin' && <Linkedin className="w-5 h-5 text-sky-400" />}
                                                                             {activePlatform === 'facebook' && <Facebook className="w-5 h-5 text-blue-500" />}
-                                                                            {activePlatform === 'x' && <Twitter className="w-5 h-5 text-white" />}
+                                                                            {activePlatform === 'x' && <Twitter className="w-5 h-5 text-[var(--ws-text-primary)]" />}
                                                                         </div>
                                                                     </div>
                                                                     <div className="min-w-0">
                                                                         <div className="flex items-center gap-2">
-                                                                            <h4 className="type-ui font-black text-white truncate">
+                                                                            <h4 className="type-ui font-black text-[var(--ws-text-primary)] truncate">
                                                                                 AlphaClone Systems
                                                                             </h4>
-                                                                            <span className="type-caption px-1.5 py-0.5 rounded-md bg-[var(--ws-canvas)] text-[var(--ws-text-muted)] border border-white/5 uppercase font-black">
+                                                                            <span className="type-caption px-1.5 py-0.5 rounded-md bg-[var(--ws-canvas)] text-[var(--ws-text-muted)] border border-[var(--ws-border)] uppercase font-black">
                                                                                 {activePlatform}
                                                                             </span>
                                                                         </div>
@@ -1026,7 +1026,7 @@ export default function SocialCommandCenter() {
                                                             </div>
 
                                                             {primaryMedia && (
-                                                                <div className="overflow-hidden rounded-2xl border border-white/10 bg-[var(--ws-canvas)]">
+                                                                <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]">
                                                                     {primaryMediaType === 'video' ? (
                                                                         <video
                                                                             src={primaryMedia}
@@ -1051,7 +1051,7 @@ export default function SocialCommandCenter() {
                                                                 </div>
                                                             )}
 
-                                                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5">
+                                                            <div className="grid grid-cols-4 gap-2 pt-2 border-t border-[var(--ws-border)]">
                                                                 {[
                                                                     { icon: Eye, label: 'Views', value: metrics.impressions },
                                                                     { icon: Heart, label: 'Likes', value: metrics.reactions },
@@ -1062,7 +1062,7 @@ export default function SocialCommandCenter() {
                                                                     return (
                                                                         <div key={metric.label} className="flex items-center justify-center gap-1.5 rounded-xl bg-[var(--ws-canvas)]/80 px-2 py-2 text-[var(--ws-text-muted)]">
                                                                             <Icon className="w-3.5 h-3.5" />
-                                                                            <span className="type-ui font-black text-white">{compactNumber(metric.value)}</span>
+                                                                            <span className="type-ui font-black text-[var(--ws-text-primary)]">{compactNumber(metric.value)}</span>
                                                                         </div>
                                                                     );
                                                                 })}
@@ -1100,7 +1100,7 @@ export default function SocialCommandCenter() {
                     {/* Floating Compose Trigger FAB */}
                     <button
                         onClick={() => setIsComposeOpen(true)}
-                        className="ac-fab-above-nav w-14 h-14 bg-teal-600 hover:bg-teal-500 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 transition-transform active:scale-95"
+                        className="ac-fab-above-nav w-14 h-14 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 transition-transform active:scale-95"
                     >
                         <Plus className="w-6 h-6" />
                     </button>
@@ -1116,7 +1116,7 @@ export default function SocialCommandCenter() {
                     <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                         <div className="flex justify-between items-center">
                             <div>
-                                <h3 className="type-ui font-bold text-white">AlphaClone Lead Intelligence</h3>
+                                <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">AlphaClone Lead Intelligence</h3>
                                 <p className="type-card-description text-[var(--ws-text-muted)]">Autonomous intelligence agents finding prospective deals.</p>
                             </div>
                             <button
@@ -1170,7 +1170,7 @@ export default function SocialCommandCenter() {
                             {bookmarks.map(bm => (
                                 <div key={bm.id} className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <div className="min-w-0 flex-1 pr-2">
-                                        <h4 className="type-card-title font-bold text-white truncate">{bm.title}</h4>
+                                        <h4 className="type-card-title font-bold text-[var(--ws-text-primary)] truncate">{bm.title}</h4>
                                         <span className="type-ui text-[var(--ws-text-muted)] truncate block">{bm.url}</span>
                                     </div>
                                     <div className="flex gap-1.5">
@@ -1200,7 +1200,7 @@ export default function SocialCommandCenter() {
                         <button
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo || !videoTopic}
-                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white type-caption font-bold rounded-lg flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-[var(--text-inverse)] type-caption font-bold rounded-lg flex items-center justify-center gap-2"
                         >
                             {isGeneratingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                             Generate script
@@ -1210,7 +1210,7 @@ export default function SocialCommandCenter() {
                             <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <div>
                                     <span className="type-caption font-bold text-rose-400 uppercase block">Hook</span>
-                                    <p className="type-card-description text-white font-bold italic">"{videoResult.hook}"</p>
+                                    <p className="type-card-description text-[var(--ws-text-primary)] font-bold italic">"{videoResult.hook}"</p>
                                 </div>
                                 <div>
                                     <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase block">Script</span>
@@ -1235,18 +1235,18 @@ export default function SocialCommandCenter() {
                         className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay flex flex-col pb-safe"
                     >
                         {/* Header bar */}
-                        <div className="h-14 border-b border-white/5 bg-[var(--ws-panel)] px-4 flex items-center justify-between">
+                        <div className="h-14 border-b border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 flex items-center justify-between">
                             <button 
                                 onClick={() => setIsComposeOpen(false)}
                                 className="type-caption font-bold text-[var(--ws-text-muted)] px-2 py-1.5"
                             >
                                 Cancel
                             </button>
-                            <span className="type-ui font-bold text-white">Compose Post</span>
+                            <span className="type-ui font-bold text-[var(--ws-text-primary)]">Compose Post</span>
                             <button 
                                 onClick={handleSavePost}
                                 disabled={isOverLimit || !composeCaption.trim()}
-                                className="px-4 py-1.5 bg-teal-600 disabled:bg-[var(--ws-surface-secondary)] disabled:text-[var(--ws-text-muted)] text-white rounded-full type-caption font-black uppercase tracking-wider"
+                                className="px-4 py-1.5 bg-teal-600 disabled:bg-[var(--ws-surface-secondary)] disabled:text-[var(--ws-text-muted)] text-[var(--text-inverse)] rounded-full type-caption font-black uppercase tracking-wider"
                             >
                                 {composeIsScheduled ? 'Schedule' : 'Share'}
                             </button>
@@ -1335,7 +1335,7 @@ export default function SocialCommandCenter() {
                                     </div>
 
                                     {composeMediaUrl && (
-                                        <div className="p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5 space-y-1.5">
+                                        <div className="p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)] space-y-1.5">
                                             <img src={composeMediaUrl} alt="Selected post media preview" className="w-full h-20 object-cover rounded-lg" />
                                             <span className="type-ui text-[var(--ws-text-muted)] font-bold block truncate">{composeMediaUrl}</span>
                                         </div>
@@ -1345,13 +1345,13 @@ export default function SocialCommandCenter() {
 
                             {composePlatforms.includes('x') && (
                                 <div className={`space-y-4 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                    <span className="type-caption font-bold text-white flex items-center gap-1.5">
+                                    <span className="type-caption font-bold text-[var(--ws-text-primary)] flex items-center gap-1.5">
                                         <Twitter className="w-4 h-4" /> X Thread stacks
                                     </span>
 
                                     {/* Thread replies list */}
                                     {xThreadPosts.map((reply, index) => (
-                                        <div key={index} className="space-y-1.5 p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5 relative">
+                                        <div key={index} className="space-y-1.5 p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)] relative">
                                             <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Reply Post #{index + 1}</span>
                                             <textarea
                                                 value={reply}
@@ -1361,12 +1361,12 @@ export default function SocialCommandCenter() {
                                                     setXThreadPosts(updated);
                                                 }}
                                                 placeholder="Thread continuation..."
-                                                className="w-full bg-transparent type-caption text-white outline-none resize-none h-14"
+                                                className="w-full bg-transparent type-caption text-[var(--ws-text-primary)] outline-none resize-none h-14"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setXThreadPosts(prev => prev.filter((_, idx) => idx !== index))}
-                                                className="absolute top-2 right-2 p-1 hover:bg-white/5 rounded text-[var(--ws-text-muted)]"
+                                                className="absolute top-2 right-2 p-1 hover:bg-[var(--ws-hover)] rounded text-[var(--ws-text-muted)]"
                                             >
                                                 <X className="w-3.5 h-3.5" />
                                             </button>
@@ -1376,7 +1376,7 @@ export default function SocialCommandCenter() {
                                     <button
                                         type="button"
                                         onClick={() => setXThreadPosts(prev => [...prev, ''])}
-                                        className="w-full py-2 bg-[var(--ws-canvas)] border border-dashed border-white/10 type-ui text-[var(--ws-text-muted)] font-bold rounded-xl hover:border-white/20 transition-all flex items-center justify-center gap-1.5"
+                                        className="w-full py-2 bg-[var(--ws-canvas)] border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)] font-bold rounded-xl hover:border-[var(--ws-border-strong)] transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <Plus className="w-3.5 h-3.5" /> Add Thread Reply
                                     </button>
@@ -1404,7 +1404,7 @@ export default function SocialCommandCenter() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Paperclip className="w-4 h-4 text-teal-400" />
-                                        <span className="type-caption font-bold text-white">Attach media URL</span>
+                                        <span className="type-caption font-bold text-[var(--ws-text-primary)]">Attach media URL</span>
                                     </div>
                                     <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase">{composeMedia.length} attached</span>
                                 </div>
@@ -1436,7 +1436,7 @@ export default function SocialCommandCenter() {
                                         {composeMedia.map((url) => {
                                             const mediaType = detectMediaType(url);
                                             return (
-                                                <div key={url} className="relative overflow-hidden rounded-xl border border-white/10 bg-[var(--ws-canvas)]">
+                                                <div key={url} className="relative overflow-hidden rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]">
                                                     {mediaType === 'video' ? (
                                                         <video src={url} className="h-32 w-full object-cover bg-black" controls playsInline preload="metadata" />
                                                     ) : (
@@ -1445,11 +1445,11 @@ export default function SocialCommandCenter() {
                                                     <button
                                                         type="button"
                                                         onClick={() => setComposeMedia(prev => prev.filter(item => item !== url))}
-                                                        className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-rose-600 text-white rounded-full"
+                                                        className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-rose-600 text-[var(--text-inverse)] rounded-full"
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                     </button>
-                                                    <span className="absolute left-2 bottom-2 px-2 py-0.5 rounded-md bg-black/70 type-caption font-black uppercase text-white">
+                                                    <span className="absolute left-2 bottom-2 px-2 py-0.5 rounded-md bg-black/70 type-caption font-black uppercase text-[var(--ws-text-primary)]">
                                                         {mediaType}
                                                     </span>
                                                 </div>
@@ -1464,7 +1464,7 @@ export default function SocialCommandCenter() {
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-teal-400" />
-                                        <span className="type-caption font-bold text-white">Schedule this post</span>
+                                        <span className="type-caption font-bold text-[var(--ws-text-primary)]">Schedule this post</span>
                                     </div>
                                     <button
                                         type="button"
@@ -1524,7 +1524,7 @@ export default function SocialCommandCenter() {
                             <button
                                 onClick={generateDraftWithAI}
                                 disabled={aiGenerating || !aiPromptText.trim()}
-                                className="w-full py-2.5 bg-teal-600 disabled:bg-[var(--ws-surface-secondary)] text-white rounded-lg type-caption font-bold flex items-center justify-center gap-1.5"
+                                className="w-full py-2.5 bg-teal-600 disabled:bg-[var(--ws-surface-secondary)] text-[var(--text-inverse)] rounded-lg type-caption font-bold flex items-center justify-center gap-1.5"
                             >
                                 {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                                 Generate Content Draft
@@ -1557,7 +1557,7 @@ export default function SocialCommandCenter() {
                             <div className="w-12 h-1.5 bg-[var(--ws-surface-tertiary)] rounded-full mx-auto my-3 flex-shrink-0" />
                             
                             {/* Header details */}
-                            <div className="px-5 pb-3 border-b border-white/5 flex items-center justify-between">
+                            <div className="px-5 pb-3 border-b border-[var(--ws-border)] flex items-center justify-between">
                                 <span className="type-caption font-black uppercase text-[var(--ws-text-muted)] tracking-wider">Post details</span>
                                 <button 
                                     onClick={() => setSelectedPost(null)}
@@ -1605,7 +1605,7 @@ export default function SocialCommandCenter() {
                                     </div>
                                     <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                         <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">Publish Status</span>
-                                        <span className="type-caption text-white font-bold uppercase mt-1">
+                                        <span className="type-caption text-[var(--ws-text-primary)] font-bold uppercase mt-1">
                                             {selectedPost.status}
                                         </span>
                                     </div>
@@ -1622,7 +1622,7 @@ export default function SocialCommandCenter() {
                                             { label: 'Clicks', val: compactNumber(selectedMetrics?.clicks) }
                                         ].map((stat, i) => (
                                             <div key={i} className={`flex flex-col justify-center p-3 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                                <span className="text-lg font-black text-white">{stat.val}</span>
+                                                <span className="text-lg font-black text-[var(--ws-text-primary)]">{stat.val}</span>
                                                 <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-tight mt-0.5">{stat.label}</span>
                                             </div>
                                         ))}

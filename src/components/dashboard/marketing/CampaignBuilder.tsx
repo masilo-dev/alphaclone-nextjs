@@ -16,7 +16,7 @@ export default function CampaignBuilder({ onClose, onCreated }: CampaignBuilderP
 
     return (
         <div className="flex h-full min-h-0 flex-col bg-[var(--ws-canvas)]">
-            <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-4 py-3">
                 <div>
                     <p className="type-caption font-black uppercase tracking-widest text-teal-400">Unified Campaign Experience</p>
                     <p className="type-card-description text-[var(--ws-text-muted)]">Legacy marketing composer now routes through the main campaign builder.</p>

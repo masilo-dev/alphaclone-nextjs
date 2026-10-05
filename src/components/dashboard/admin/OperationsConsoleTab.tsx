@@ -86,7 +86,7 @@ export default function OperationsConsoleTab() {
       <div className="flex items-center gap-3">
         <ClipboardList className="w-7 h-7 text-teal-400" />
         <div>
-          <h1 className="text-2xl font-bold text-white">Operations console</h1>
+          <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Operations console</h1>
           <p className="text-[var(--ws-text-muted)] type-card-description">Business-readable error snapshot plus structured incident intake.</p>
         </div>
         <button
@@ -101,19 +101,19 @@ export default function OperationsConsoleTab() {
       </div>
 
       <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
-        <h2 className="text-lg font-semibold text-white mb-3">Executive brief</h2>
+        <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-3">Executive brief</h2>
         <pre className="whitespace-pre-wrap type-ui text-[var(--ws-text-secondary)] font-sans leading-relaxed">{brief || (loading ? 'Loading…' : 'No data.')}</pre>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Log incident</h2>
+          <h2 className="text-lg font-semibold text-[var(--ws-text-primary)]">Log incident</h2>
           <div>
             <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-white"
+              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
               placeholder="Short headline"
             />
           </div>
@@ -122,7 +122,7 @@ export default function OperationsConsoleTab() {
             <input
               value={area}
               onChange={(e) => setArea(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-white"
+              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)]"
               placeholder="e.g. Meetings, Facebook integration, Billing"
             />
           </div>
@@ -131,7 +131,7 @@ export default function OperationsConsoleTab() {
             <textarea
               value={impact}
               onChange={(e) => setImpact(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-white min-h-[72px]"
+              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[72px]"
               placeholder="Who is blocked and how severely?"
             />
           </div>
@@ -140,7 +140,7 @@ export default function OperationsConsoleTab() {
             <textarea
               value={stepsToReproduce}
               onChange={(e) => setStepsToReproduce(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-white min-h-[88px]"
+              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[88px]"
             />
           </div>
           <div>
@@ -148,14 +148,14 @@ export default function OperationsConsoleTab() {
             <textarea
               value={expectedBehavior}
               onChange={(e) => setExpectedBehavior(e.target.value)}
-              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-white min-h-[72px]"
+              className="w-full rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] px-3 py-2 type-ui text-[var(--ws-text-primary)] min-h-[72px]"
             />
           </div>
           <button
             type="button"
             onClick={() => void submitIncident()}
             disabled={submitting}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 px-4 py-2 type-ui font-semibold text-white disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 px-4 py-2 type-ui font-semibold text-[var(--text-inverse)] disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             {submitting ? 'Saving…' : 'Submit to operations log'}
@@ -163,7 +163,7 @@ export default function OperationsConsoleTab() {
         </div>
 
         <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 p-6">
-          <h2 className="text-lg font-semibold text-white mb-3">Recent telemetry</h2>
+          <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-3">Recent telemetry</h2>
           <div className="space-y-3 max-h-[480px] overflow-y-auto custom-scrollbar type-ui">
             {recent.length === 0 ? (
               <p className="text-[var(--ws-text-muted)]">No rows returned.</p>

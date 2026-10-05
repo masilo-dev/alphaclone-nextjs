@@ -505,7 +505,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         <CalendarIcon className="w-5 h-5 md:w-6 md:h-6 text-teal-400" />
                         Calendar
                     </h2>
@@ -523,7 +523,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-calendar' });
                         }}
-                        className="bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 border-white/5"
+                        className="bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 border-[var(--ws-border)]"
                     >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Nexus Schedule
@@ -735,7 +735,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     Your new event conflicts with an existing event:
                                 </p>
                                 <div className="mt-2 p-2 bg-[var(--ws-panel)]/50 rounded">
-                                    <p className="text-white font-medium">{conflictWarning.title}</p>
+                                    <p className="text-[var(--ws-text-primary)] font-medium">{conflictWarning.title}</p>
                                     <p className="text-[var(--ws-text-muted)] type-card-description">
                                         {format(new Date(conflictWarning.start_time), 'MMM d, h:mm a')} - {format(new Date(conflictWarning.end_time), 'h:mm a')}
                                     </p>
@@ -788,7 +788,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         <div className="space-y-6">
                             {/* Event Header */}
                             <div>
-                                <h4 className="text-2xl font-bold text-white mb-3">{selectedEvent.title}</h4>
+                                <h4 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-3">{selectedEvent.title}</h4>
                                 <div className="flex items-center gap-2">
                                     <div
                                         className="px-3 py-1 rounded-full type-ui font-semibold flex items-center gap-2"
@@ -846,13 +846,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
                                     <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">Start Time</div>
-                                    <div className="text-white font-semibold">
+                                    <div className="text-[var(--ws-text-primary)] font-semibold">
                                         {format(new Date(selectedEvent.start_time), 'PPp')}
                                     </div>
                                 </div>
                                 <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
                                     <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">End Time</div>
-                                    <div className="text-white font-semibold">
+                                    <div className="text-[var(--ws-text-primary)] font-semibold">
                                         {format(new Date(selectedEvent.end_time), 'PPp')}
                                     </div>
                                 </div>
@@ -947,7 +947,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 <textarea
                                     value={newEvent.description}
                                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
                                     rows={3}
                                     placeholder="Add event description..."
                                 />
@@ -975,7 +975,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 <select
                                     value={newEvent.type}
                                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                                 >
                                     <option value="meeting">Meeting</option>
                                     <option value="call">Video Call</option>
@@ -1017,7 +1017,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                                 setNewEvent({ ...newEvent, questions: newQs } as any);
                                             }}
                                             placeholder={`Question ${idx + 1}`}
-                                            className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-ui focus:outline-none focus:border-teal-500"
+                                            className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-teal-500"
                                         />
                                         {(newEvent as any).questions.length > 1 && (
                                             <button

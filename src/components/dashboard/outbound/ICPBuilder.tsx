@@ -240,7 +240,7 @@ export default function ICPBuilder() {
         </div>
         <Button
           size="sm"
-          className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+          className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
           onClick={() => { resetForm(); setShowForm(true); }}
         >
           <Plus size={13} className="mr-1" /> New ICP
@@ -365,7 +365,7 @@ export default function ICPBuilder() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+              className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
               onClick={save}
               disabled={saving || !form.name.trim()}
             >
@@ -393,7 +393,7 @@ export default function ICPBuilder() {
           <p className="text-[var(--ws-text-muted)] text-xs mt-1">Create an ICP to enable AI lead qualification</p>
           <Button
             size="sm"
-            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => { resetForm(); setShowForm(true); }}
           >
             Create first ICP

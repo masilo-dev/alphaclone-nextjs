@@ -91,7 +91,7 @@ export default function FollowUpQueue() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Bell className="w-5 h-5 text-teal-400" />
             Follow-up queue
           </h1>
@@ -102,7 +102,7 @@ export default function FollowUpQueue() {
         <button
           type="button"
           onClick={() => void load()}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] hover:text-white type-ui"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] type-ui"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -110,17 +110,17 @@ export default function FollowUpQueue() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/80 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-4">
           <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wide">Total</p>
-          <p className="text-2xl font-bold text-white">{counts.total}</p>
+          <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{counts.total}</p>
         </div>
         <div className="rounded-2xl border border-red-500/20 bg-[var(--error-500)]/5 p-4">
           <p className="type-caption text-[var(--error-text,var(--error-500))] uppercase tracking-wide">High priority</p>
-          <p className="text-2xl font-bold text-white">{counts.high}</p>
+          <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{counts.high}</p>
         </div>
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
           <p className="type-caption text-[var(--warning-text,var(--warning-500))] uppercase tracking-wide">Stale pipeline</p>
-          <p className="text-2xl font-bold text-white">{counts.medium}</p>
+          <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{counts.medium}</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export default function FollowUpQueue() {
           Loading follow-ups…
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/50 p-10 text-center text-[var(--ws-text-muted)]">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-10 text-center text-[var(--ws-text-muted)]">
           No follow-ups due right now. Your pipeline is up to date.
         </div>
       ) : (
@@ -138,10 +138,10 @@ export default function FollowUpQueue() {
           {items.map((item) => (
             <div
               key={`${item.entityType}-${item.id}`}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[var(--ws-panel)]/80 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 px-4 py-3"
             >
               <Link href={item.href} className="min-w-0 flex-1 hover:opacity-90">
-                <p className="type-card-description font-semibold text-white truncate">{item.title}</p>
+                <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">{item.title}</p>
                 <p className="type-card-description text-[var(--ws-text-muted)]">
                   {item.reason}
                   {item.subtitle ? ` · ${item.subtitle}` : ''}
@@ -176,20 +176,20 @@ export default function FollowUpQueue() {
       )}
       {scheduleItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--ws-panel)] p-5 space-y-4">
-            <h2 className="text-lg font-bold text-white">Schedule follow-up</h2>
+          <div className="w-full max-w-md rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-5 space-y-4">
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Schedule follow-up</h2>
             <p className="type-card-description text-[var(--ws-text-muted)] truncate">{scheduleItem.title}</p>
             <input
               type="datetime-local"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-white/10 text-white type-ui"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] type-ui"
             />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setScheduleItem(null)}
-                className="px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] type-ui"
+                className="px-3 py-2 rounded-xl border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui"
               >
                 Cancel
               </button>
@@ -197,7 +197,7 @@ export default function FollowUpQueue() {
                 type="button"
                 disabled={!followUpDate || scheduling}
                 onClick={() => void submitSchedule()}
-                className="px-3 py-2 rounded-xl bg-teal-600 text-white type-ui font-bold disabled:opacity-50"
+                className="px-3 py-2 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-ui font-bold disabled:opacity-50"
               >
                 {scheduling ? 'Saving…' : 'Schedule'}
               </button>

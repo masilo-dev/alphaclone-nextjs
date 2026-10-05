@@ -547,14 +547,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6">
                     <ShieldCheck className="w-10 h-10 text-teal-400" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">{feature} is Locked</h3>
+                <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">{feature} is Locked</h3>
                 <p className="text-[var(--ws-text-muted)] max-w-md mb-8">
                     The full CRM suite, including Leads and Pipelines, is available on our Pro and Enterprise plans. Upgrade to supercharge your sales workflow.
                 </p>
                 <div className="flex gap-4">
                     <button
                         onClick={() => setActiveTab('/dashboard/business/settings')}
-                        className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                        className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         View Upgrade Options
                     </button>
@@ -1071,7 +1071,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard')}
-                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-ui font-semibold"
+                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui font-semibold"
                         >
                             {t('Back to Dashboard')}
                         </button>
@@ -1231,13 +1231,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <button
                             onClick={handleCreateWorkspace}
                             disabled={bootstrappingOrg}
-                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-[var(--text-inverse)] rounded-lg transition-colors font-medium border border-teal-400/20"
                         >
                             {bootstrappingOrg ? t('Creating workspace...') : t('Create My Workspace')}
                         </button>
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-lg transition-colors font-medium border border-[var(--ws-border)]"
+                            className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-lg transition-colors font-medium border border-[var(--ws-border)]"
                         >
                             {t('Retry Loading')}
                         </button>
@@ -1289,7 +1289,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             <span>{notification}</span>
                         </div>
                         <button
-                            className="text-[var(--brand-blue-400)] hover:text-white type-caption font-bold"
+                            className="text-[var(--brand-blue-400)] hover:text-[var(--ws-text-primary)] type-caption font-bold"
                             onClick={() => {
                                 setNotification(null);
                                 setActiveTab('/dashboard/tasks');
@@ -1329,7 +1329,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
                         {!isHubRoute(route) && (
                         <div className="ac-pwa-desktop-only hidden md:block">
-                            <h1 className="text-base md:text-lg font-bold text-white/90 tracking-tight">
+                            <h1 className="text-base md:text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">
                                 {getPageTitle()}
                             </h1>
                         </div>

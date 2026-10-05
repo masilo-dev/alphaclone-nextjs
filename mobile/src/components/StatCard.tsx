@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
     padding: 16,
     margin: 5,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
     width: '45%',
   },
   cardContent: {
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
   },

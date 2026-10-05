@@ -150,7 +150,7 @@ export default function XIntegrationTab() {
       <div className="max-w-2xl mx-auto p-6">
         <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-10 text-center`}>
           <Twitter className="w-12 h-12 text-sky-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Connect X (Twitter)</h1>
+          <h1 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Connect X (Twitter)</h1>
           <p className="text-[var(--ws-text-muted)] type-card-description mb-6 max-w-md mx-auto">
             Authorize your X account to publish posts and read public profile data from your workspace.
           </p>
@@ -162,7 +162,7 @@ export default function XIntegrationTab() {
           <button
             type="button"
             onClick={handleConnect}
-            className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold"
+            className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-sky-600 hover:bg-sky-500 text-[var(--ws-text-primary)] font-bold"
           >
             <Link2 className="w-5 h-5" />
             Connect X Account
@@ -184,7 +184,7 @@ export default function XIntegrationTab() {
               <Twitter className="w-6 h-6 text-sky-400" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl font-extrabold text-white truncate">@{integration.x_username}</h1>
+              <h1 className="text-2xl font-extrabold text-[var(--ws-text-primary)] truncate">@{integration.x_username}</h1>
               <p className="text-[var(--ws-text-muted)] type-card-description">
                 Connected {connectedAt ? `since ${connectedAt.toLocaleDateString()}` : 'to post and read your timeline'}
               </p>
@@ -204,7 +204,7 @@ export default function XIntegrationTab() {
             <button
               type="button"
               onClick={handleConnect}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-sky-600 hover:bg-sky-500 text-[var(--ws-text-primary)] font-bold"
             >
               <Link2 className="w-4 h-4" />
               Reconnect
@@ -240,7 +240,7 @@ export default function XIntegrationTab() {
 
       <form onSubmit={handlePost} className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-5 space-y-4`}>
         <div className="flex items-center justify-between">
-          <div className="type-ui font-bold text-white">Compose</div>
+          <div className="type-ui font-bold text-[var(--ws-text-primary)]">Compose</div>
           <div className={`type-caption font-semibold ${remainingChars < 20 ? 'text-[var(--warning-text,var(--warning-500))]' : 'text-[var(--ws-text-muted)]'}`}>
             {remainingChars} left
           </div>
@@ -252,7 +252,7 @@ export default function XIntegrationTab() {
           placeholder="Write a post..."
           maxLength={280}
           rows={4}
-          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 text-white type-ui resize-none focus:outline-none focus:border-sky-500"
+          className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 text-[var(--ws-text-primary)] type-ui resize-none focus:outline-none focus:border-sky-500"
         />
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 h-2 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
@@ -264,7 +264,7 @@ export default function XIntegrationTab() {
           <button
             type="submit"
             disabled={posting || !postText.trim()}
-            className="inline-flex items-center gap-2 h-10 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-extrabold type-ui shrink-0"
+            className="inline-flex items-center gap-2 h-10 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-[var(--ws-text-primary)] font-extrabold type-ui shrink-0"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Post

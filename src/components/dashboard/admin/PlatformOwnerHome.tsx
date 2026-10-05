@@ -172,7 +172,7 @@ export default function PlatformOwnerHome() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <p className="type-caption font-black uppercase tracking-caps text-teal-400/80">Platform owner</p>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Command Center</h1>
+          <h1 className="text-2xl font-black text-[var(--ws-text-primary)] tracking-tight mt-1">Command Center</h1>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-1 max-w-xl">
             Oversee tenants, production health, ops logs, missing service keys, and pre-customer review from one desk.
           </p>
@@ -191,7 +191,7 @@ export default function PlatformOwnerHome() {
       {loading && !health && tenants.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[0, 1, 2].map((key) => (
-            <div key={key} className="h-24 rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 animate-pulse" />
+            <div key={key} className="h-24 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 animate-pulse" />
           ))}
         </div>
       ) : null}
@@ -240,7 +240,7 @@ export default function PlatformOwnerHome() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <HeartPulse className="h-3.5 w-3.5" /> Health
           </div>
@@ -248,17 +248,17 @@ export default function PlatformOwnerHome() {
             {healthStatus}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <Building2 className="h-3.5 w-3.5" /> Active tenants
           </div>
-          <p className="mt-2 text-xl font-black text-white">{loading ? '—' : activeTenants || tenants.length}</p>
+          <p className="mt-2 text-xl font-black text-[var(--ws-text-primary)]">{loading ? '—' : activeTenants || tenants.length}</p>
         </div>
-        <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 p-4">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4">
           <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">
             <AlertTriangle className="h-3.5 w-3.5" /> Recent signals
           </div>
-          <p className="mt-2 text-xl font-black text-white">{recentErrors.length}</p>
+          <p className="mt-2 text-xl font-black text-[var(--ws-text-primary)]">{recentErrors.length}</p>
         </div>
       </div>
 
@@ -267,14 +267,14 @@ export default function PlatformOwnerHome() {
           <Link
             key={item.href}
             href={item.href}
-            className="group rounded-2xl border border-white/5 bg-[var(--ws-panel)]/40 p-4 hover:border-teal-500/30 hover:bg-[var(--ws-panel)]/70 transition-colors"
+            className="group rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4 hover:border-teal-500/30 hover:bg-[var(--ws-panel)]/70 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 border border-teal-500/20">
                 <item.icon className="h-5 w-5 text-[var(--brand-blue-300)]" />
               </div>
               <div>
-                <p className="type-card-description font-bold text-white group-hover:text-teal-200">{item.label}</p>
+                <p className="type-card-description font-bold text-[var(--ws-text-primary)] group-hover:text-teal-200">{item.label}</p>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{item.description}</p>
               </div>
             </div>
@@ -283,8 +283,8 @@ export default function PlatformOwnerHome() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/40 p-4">
-          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Latest tenants</h2>
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+          <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Latest tenants</h2>
           {tenants.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No tenants loaded.'}</p>
           ) : (
@@ -304,14 +304,14 @@ export default function PlatformOwnerHome() {
           </Link>
         </section>
 
-        <section className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/40 p-4">
-          <h2 className="type-caption font-black text-white uppercase tracking-widest mb-3">Ops log snapshot</h2>
+        <section className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 p-4">
+          <h2 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-widest mb-3">Ops log snapshot</h2>
           {recentErrors.length === 0 ? (
             <p className="type-card-description text-[var(--ws-text-muted)]">{loading ? 'Loading…' : 'No recent error signals.'}</p>
           ) : (
             <ul className="space-y-2">
               {recentErrors.map((row, idx) => (
-                <li key={row.id || idx} className="type-ui text-[var(--ws-text-secondary)] border-b border-white/5 pb-2 last:border-0">
+                <li key={row.id || idx} className="type-ui text-[var(--ws-text-secondary)] border-b border-[var(--ws-border)] pb-2 last:border-0">
                   <span className="type-caption font-black uppercase tracking-widest text-amber-400/80 mr-2">
                     {row.severity || 'info'}
                   </span>

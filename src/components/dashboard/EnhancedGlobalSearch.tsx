@@ -153,7 +153,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
             <button
                 onClick={() => setIsOpen(true)}
                 aria-label={t('Search anything...') || 'Search anything'}
-                className="flex h-[42px] w-10 sm:w-[304px] max-w-[304px] items-center justify-center sm:justify-start gap-2 rounded-2xl border border-white/5 bg-white/[0.04] px-0 sm:px-3.5 text-[var(--ws-text-muted)] transition-colors hover:bg-white/[0.06] group"
+                className="flex h-[42px] w-10 sm:w-[304px] max-w-[304px] items-center justify-center sm:justify-start gap-2 rounded-2xl border border-[var(--ws-border)] bg-white/[0.04] px-0 sm:px-3.5 text-[var(--ws-text-muted)] transition-colors hover:bg-white/[0.06] group"
             >
                 <div className="relative h-4 w-4 opacity-70 transition-opacity group-hover:opacity-100">
                     <Image
@@ -165,7 +165,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                     />
                 </div>
                 <span className="hidden type-ui font-medium sm:inline">{t('Search anything...')}</span>
-                <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 type-caption text-[var(--ws-text-muted)] sm:inline-block">
+                <kbd className="ml-auto hidden rounded-lg border border-[var(--ws-border)] bg-black/20 px-2 py-0.5 type-caption text-[var(--ws-text-muted)] sm:inline-block">
                     {t('Search')}
                 </kbd>
             </button>
@@ -191,14 +191,14 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             onKeyDown={handleKeyDown}
                             aria-label={t('Search contacts, contracts, documents, invoices and campaigns') || 'Search contacts, contracts, documents, invoices and campaigns'}
                             placeholder="Search contacts, contracts, documents, invoices and campaigns..."
-                            className="flex-1 bg-transparent text-white placeholder-slate-400 outline-none"
+                            className="flex-1 bg-transparent text-[var(--ws-text-primary)] placeholder-slate-400 outline-none"
                             autoFocus
                         />
                         {query && (
                             <button
                                 onClick={() => setQuery('')}
                                 aria-label="Clear search query"
-                                className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -206,7 +206,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             aria-label={showFilters ? 'Hide search filters' : 'Show search filters'}
-                            className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-teal-500/20 text-teal-400' : 'text-[var(--ws-text-muted)] hover:text-white'
+                            className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-teal-500/20 text-teal-400' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                                 }`}
                         >
                             <Filter className="w-5 h-5" />
@@ -226,7 +226,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                             const values = Array.from(e.target.selectedOptions, opt => opt.value);
                                             setFilters({ ...filters, type: values as any });
                                         }}
-                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-white type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
                                     >
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
@@ -243,7 +243,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                     <input
                                         type="text"
                                         placeholder="Filter by status..."
-                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-white type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:ring-2 focus:ring-teal-500"
                                         onChange={(e) => {
                                             const newFilters = { ...filters };
                                             if (e.target.value) {
@@ -336,7 +336,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                     {getIcon(result.type)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-white font-medium type-card-description truncate">
+                                    <p className="text-[var(--ws-text-primary)] font-medium type-card-description truncate">
                                         {result.title}
                                     </p>
                                     {result.subtitle && (

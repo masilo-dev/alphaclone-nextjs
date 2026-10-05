@@ -184,7 +184,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 <div className="absolute inset-0 flex items-center justify-center bg-[var(--ws-panel)] z-50">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
-                        <p className="text-white text-xl font-medium mb-2">Joining meeting...</p>
+                        <p className="text-[var(--ws-text-primary)] text-xl font-medium mb-2">Joining meeting...</p>
                         <p className="text-[var(--ws-text-muted)] type-card-description">Please wait while we connect you</p>
                     </div>
                 </div>

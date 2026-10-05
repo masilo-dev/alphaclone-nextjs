@@ -131,7 +131,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
             <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Meeting Title */}
                 <div>
-                    <label className="block type-label font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)] mb-2">
                         {isAdmin ? 'Meeting Title' : 'What do you need help with?'}
                     </label>
                     <input
@@ -139,14 +139,14 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder={isAdmin ? "e.g. Project Review" : "e.g. Project Discussion"}
-                        className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                        className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                         required
                     />
                 </div>
 
                 {/* Date and Time - Clearer Layout */}
                 <div className="space-y-3">
-                    <label className="block type-label font-bold text-white">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)]">
                         <Calendar className="w-4 h-4 inline mr-2" />
                         When?
                     </label>
@@ -158,7 +158,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                 value={date}
                                 onChange={(e) => setDate(e.target.value)}
                                 min={new Date().toISOString().split('T')[0]}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                                 required
                             />
                         </div>
@@ -168,7 +168,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                 type="time"
                                 value={time}
                                 onChange={(e) => setTime(e.target.value)}
-                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                                className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                                 required
                             />
                         </div>
@@ -182,7 +182,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
                 {/* Participants - Simplified */}
                 <div>
-                    <label className="block type-label font-bold text-white mb-2">
+                    <label className="block type-label font-bold text-[var(--ws-text-primary)] mb-2">
                         <UserIcon className="w-4 h-4 inline mr-2" />
                         {isAdmin ? 'Select Participants' : 'Book With'}
                     </label>
@@ -203,7 +203,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         }}
                                         className="w-4 h-4 rounded bg-[var(--ws-surface-tertiary)] border-slate-600"
                                     />
-                                    <span className="text-white type-ui">{p.name}</span>
+                                    <span className="text-[var(--ws-text-primary)] type-ui">{p.name}</span>
                                     <span className="text-[var(--ws-text-muted)] type-caption">({p.email})</span>
                                 </label>
                             ))}
@@ -212,7 +212,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                         <select
                             value={attendees[0] || ''}
                             onChange={(e) => setAttendees([e.target.value])}
-                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border-2 border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
                         >
                             <option value="">Choose an admin...</option>
                             {profiles.map(p => (
@@ -247,7 +247,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 10)}
                                         min="2"
                                         max="50"
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
                                     />
                                 </div>
 
@@ -261,7 +261,7 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                                         onChange={(e) => setCancellationPolicyHours(parseInt(e.target.value) || 3)}
                                         min="0"
                                         max="72"
-                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:ring-2 focus:ring-teal-500"
                                     />
                                     <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                         Clients can cancel up to this many hours before the meeting

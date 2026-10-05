@@ -115,7 +115,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                     </p>
                 </div>
                 <div className="text-right shrink-0">
-                    <div className="text-lg font-black text-white tabular-nums">{timeline.percent}%</div>
+                    <div className="text-lg font-black text-[var(--ws-text-primary)] tabular-nums">{timeline.percent}%</div>
                     <div className="type-ui text-[var(--ws-text-muted)] font-bold">
                         {timeline.completedCount}/10 steps
                     </div>
@@ -148,7 +148,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                         <div className="type-caption font-bold uppercase tracking-wide text-teal-400">
                             Next money move
                         </div>
-                        <div className="type-ui font-semibold text-white truncate">{timeline.nextAction.label}</div>
+                        <div className="type-ui font-semibold text-[var(--ws-text-primary)] truncate">{timeline.nextAction.label}</div>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 line-clamp-2">{timeline.nextAction.detail}</p>
                     </div>
                     <ArrowRight className="w-4 h-4 text-teal-400 shrink-0" />
@@ -199,7 +199,7 @@ export function DealRevenueTimeline({ dealId, dealStage, className = '' }: DealR
                                             item.state === 'complete'
                                                 ? 'text-[var(--ws-text-secondary)]'
                                                 : item.state === 'current'
-                                                  ? 'text-white'
+                                                  ? 'text-[var(--ws-text-primary)]'
                                                   : item.state === 'skipped'
                                                     ? 'text-slate-600 line-through'
                                                     : 'text-[var(--ws-text-muted)]'

@@ -227,7 +227,7 @@ export default function ScreenShareManager({
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-3 bg-gradient-to-b from-black/70 to-transparent">
         <div className="flex items-center space-x-2">
           <Monitor className="w-5 h-5 text-green-400" />
-          <span className="text-white type-ui font-medium">
+          <span className="text-[var(--ws-text-primary)] type-ui font-medium">
             {screenShareParticipant?.user_name || 'Someone'} is sharing their screen
           </span>
         </div>
@@ -235,7 +235,7 @@ export default function ScreenShareManager({
         <div className="flex items-center space-x-2">
           <button
             onClick={toggleFullscreen}
-            className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+            className="p-2 text-[var(--ws-text-primary)] hover:bg-white/20 rounded-lg transition-colors"
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -268,7 +268,7 @@ export default function ScreenShareManager({
                 setError('');
                 detectScreenShare();
               }}
-              className="flex items-center space-x-2 mx-auto px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              className="flex items-center space-x-2 mx-auto px-3 py-2 bg-red-600 hover:bg-red-700 text-[var(--text-inverse)] rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Retry</span>

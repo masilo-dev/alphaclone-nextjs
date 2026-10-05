@@ -103,7 +103,7 @@ export function Avatar({
             }}
           >
             <span 
-              className="text-white font-bold select-none"
+              className="text-[var(--ws-text-primary)] font-bold select-none"
               style={{ fontSize: `${fontSize}px` }}
             >
               {initials}
@@ -134,7 +134,7 @@ export function Avatar({
       }}
     >
       <span 
-        className="text-white font-bold select-none"
+        className="text-[var(--ws-text-primary)] font-bold select-none"
         style={{ fontSize: `${fontSize}px` }}
       >
         {initials}

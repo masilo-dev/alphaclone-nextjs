@@ -97,7 +97,7 @@ export default function ZohoCRMIntegration() {
                 </div>
                 <button 
                     onClick={handleConnect}
-                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors border border-gray-700"
+                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-[var(--ws-text-primary)] px-4 py-2 rounded-lg transition-colors border border-gray-700"
                 >
                     <ExternalLink size={16} /> Reconnect Zoho
                 </button>

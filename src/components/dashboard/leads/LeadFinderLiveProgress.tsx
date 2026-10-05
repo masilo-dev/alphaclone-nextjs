@@ -95,7 +95,7 @@ export default function LeadFinderLiveProgress({
     <div className="rounded-xl border border-teal-500/30 bg-[var(--ws-canvas)]/80 overflow-hidden">
       <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-[var(--ws-border)]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 type-ui font-semibold text-white">
+          <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
             {complete ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : (
@@ -139,13 +139,13 @@ export default function LeadFinderLiveProgress({
         <div className="grid grid-cols-2 gap-2 type-caption">
           <div className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2">
             <div className="text-[var(--ws-text-muted)]">Discovered</div>
-            <div className="text-white font-semibold tabular-nums">
+            <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">
               {status?.source_count ?? 0}
             </div>
           </div>
           <div className="rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] px-3 py-2">
             <div className="text-[var(--ws-text-muted)]">With contact</div>
-            <div className="text-white font-semibold tabular-nums">
+            <div className="text-[var(--ws-text-primary)] font-semibold tabular-nums">
               {status?.enriched_count ?? 0}
             </div>
           </div>

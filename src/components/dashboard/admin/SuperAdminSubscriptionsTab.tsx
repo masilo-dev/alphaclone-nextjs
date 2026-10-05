@@ -159,7 +159,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortValue: (r) => r.tenant_name,
         accessor: (r) => (
           <div className="min-w-0">
-            <span className="type-ui font-bold text-white block truncate">{r.tenant_name}</span>
+            <span className="type-ui font-bold text-[var(--ws-text-primary)] block truncate">{r.tenant_name}</span>
             <span className="type-ui text-[var(--ws-text-muted)] font-mono">{r.tenant_id.substring(0, 12)}…</span>
           </div>
         ),
@@ -267,7 +267,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         header={
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <CreditCard className="w-6 h-6 text-teal-400" />
                 Subscriptions &amp; Billing
               </h2>
@@ -294,7 +294,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               placeholder="Search tenant, plan, or status…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
             />
           </div>
         }

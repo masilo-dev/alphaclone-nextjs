@@ -50,14 +50,14 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
         <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
                 <Layout className="w-4 h-4 text-teal-400" />
-                <h4 className="type-ui font-semibold text-white">Project Lifecycle Template</h4>
+                <h4 className="type-ui font-semibold text-[var(--ws-text-primary)]">Project Lifecycle Template</h4>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
                     onClick={() => onSelect(null)}
                     className={`p-3 rounded-lg border text-left transition-all ${!selectedTemplateId
-                            ? 'bg-teal-500/10 border-teal-500 text-white'
+                            ? 'bg-teal-500/10 border-teal-500 text-[var(--text-inverse)]'
                             : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-500'
                         }`}
                 >
@@ -70,7 +70,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                         key={template.id}
                         onClick={() => onSelect(template.id)}
                         className={`p-3 rounded-lg border text-left transition-all ${selectedTemplateId === template.id
-                                ? 'bg-teal-500/10 border-teal-500 text-white'
+                                ? 'bg-teal-500/10 border-teal-500 text-[var(--text-inverse)]'
                                 : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-500'
                             }`}
                     >
@@ -97,7 +97,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                                         <CheckCircle className="w-3.5 h-3.5 text-teal-500" />
                                     </div>
                                     <div>
-                                        <div className="type-caption text-white font-medium">{phase.name}</div>
+                                        <div className="type-caption text-[var(--ws-text-primary)] font-medium">{phase.name}</div>
                                         {phase.description && <div className="type-caption text-[var(--ws-text-muted)]">{phase.description}</div>}
                                     </div>
                                 </div>

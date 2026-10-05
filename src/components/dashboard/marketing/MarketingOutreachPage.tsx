@@ -192,7 +192,7 @@ export default function MarketingOutreachPage() {
                 <div className="ac-workspace-panel overflow-hidden">
                   <table className="w-full type-ui">
                     <thead>
-                      <tr className="border-b border-white/5 text-[var(--ws-text-secondary)]">
+                      <tr className="border-b border-[var(--ws-border)] text-[var(--ws-text-secondary)]">
                         <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Company</th>
                         <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Recipient</th>
                         <th className="text-left px-4 py-2.5 font-semibold uppercase tracking-wide type-caption">Status</th>
@@ -202,7 +202,7 @@ export default function MarketingOutreachPage() {
                     </thead>
                     <tbody>
                       {data.recentOutreach.map((row) => (
-                        <tr key={row.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                        <tr key={row.id} className="border-b border-[var(--ws-border)] hover:bg-white/[0.02]">
                           <td className="px-4 py-3 text-[var(--ws-text-primary)] font-medium">{row.company}</td>
                           <td className="px-4 py-3 text-[var(--ws-text-secondary)]">{row.recipient || '—'}</td>
                           <td className="px-4 py-3">

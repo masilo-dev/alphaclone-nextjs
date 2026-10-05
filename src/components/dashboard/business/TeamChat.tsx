@@ -354,7 +354,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                             <MessageCircle className="w-5 h-5 text-indigo-400" />
                         </div>
                     <div>
-                        <h3 className="font-bold text-white">Team Stream</h3>
+                        <h3 className="font-bold text-[var(--ws-text-primary)]">Team Stream</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)]">Internal chat, task handoff, and email delivery</p>
                     </div>
                 </div>
@@ -405,7 +405,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                                     </div>
                                     <div className={`p-3 rounded-2xl type-ui ${
                                         isMe 
-                                            ? 'bg-indigo-600 text-white rounded-tr-sm' 
+                                            ? 'bg-indigo-600 text-[var(--ws-text-primary)] rounded-tr-sm' 
                                             : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-sm'
                                     }`}>
                                         {msg.content}
@@ -438,11 +438,11 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message or use @ to assign tasks..."
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-indigo-500 resize-none h-12"
                         />
                         <button
                             onClick={handleSendMessage}
-                            className="absolute right-2 top-2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-colors"
+                            className="absolute right-2 top-2 p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-[var(--ws-text-primary)] transition-colors"
                         >
                             <Send className="w-4 h-4" />
                         </button>

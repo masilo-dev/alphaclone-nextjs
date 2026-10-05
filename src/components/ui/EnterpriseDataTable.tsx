@@ -164,7 +164,7 @@ export function EnterpriseDataTable<T>({
                 {mobilePrimary.map((col) => (
                   <div key={col.id} className="flex justify-between gap-3 type-ui">
                     <span className="text-[var(--ws-text-muted)] shrink-0">{col.header}</span>
-                    <span className="text-white text-right min-w-0">{col.accessor(row)}</span>
+                    <span className="text-[var(--ws-text-primary)] text-right min-w-0">{col.accessor(row)}</span>
                   </div>
                 ))}
               </div>

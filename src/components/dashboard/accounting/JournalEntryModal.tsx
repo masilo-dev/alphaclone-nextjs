@@ -226,12 +226,12 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             }`}
                         >
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                                transactionType === 'received' ? 'bg-teal-500 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] group-hover:bg-[var(--ws-surface-tertiary)]'
+                                transactionType === 'received' ? 'bg-teal-500 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] group-hover:bg-[var(--ws-surface-tertiary)]'
                             }`}>
                                 <ArrowDownCircle className="w-6 h-6" />
                             </div>
                             <div className="text-center">
-                                <span className={`block font-bold type-ui ${transactionType === 'received' ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>Money received</span>
+                                <span className={`block font-bold type-ui ${transactionType === 'received' ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}>Money received</span>
                                 <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-medium">Income / Revenue</span>
                             </div>
                         </button>
@@ -245,12 +245,12 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             }`}
                         >
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                                transactionType === 'spent' ? 'bg-rose-500 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] group-hover:bg-[var(--ws-surface-tertiary)]'
+                                transactionType === 'spent' ? 'bg-rose-500 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] group-hover:bg-[var(--ws-surface-tertiary)]'
                             }`}>
                                 <ArrowUpCircle className="w-6 h-6" />
                             </div>
                             <div className="text-center">
-                                <span className={`block font-bold type-ui ${transactionType === 'spent' ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>Money spent</span>
+                                <span className={`block font-bold type-ui ${transactionType === 'spent' ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}>Money spent</span>
                                 <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-medium">Expense / Cost</span>
                             </div>
                         </button>
@@ -306,7 +306,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                 <input 
                                     autoFocus
                                     placeholder="Bank/Cash Account Name (e.g. Chase Business)"
-                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-2.5 py-1.5 type-caption text-white outline-none focus:border-teal-500"
+                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-2.5 py-1.5 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
                                     value={newAssetAccountName}
                                     onChange={(e) => setNewAssetAccountName(e.target.value)}
                                 />
@@ -359,7 +359,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                                             <input 
                                                 autoFocus
                                                 placeholder="Category Name"
-                                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-md px-2 py-1 type-caption text-white"
+                                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-md px-2 py-1 type-caption text-[var(--ws-text-primary)]"
                                                 value={newAccountName}
                                                 onChange={(e) => setNewAccountName(e.target.value)}
                                             />
@@ -411,7 +411,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         </div>
                         <div className="text-right">
                             <span className="type-caption block uppercase tracking-widest font-bold opacity-60">Total Value</span>
-                            <span className="text-xl font-mono font-bold text-white">${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="text-xl font-mono font-bold text-[var(--ws-text-primary)]">${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>
@@ -436,7 +436,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         onClick={handleCreate}
                         disabled={!isValid || loading}
                         isLoading={loading}
-                        className="flex-[2] bg-teal-600 hover:bg-teal-500 text-white"
+                        className="flex-[2] bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)]"
                     >
                         Save transaction
                     </Button>

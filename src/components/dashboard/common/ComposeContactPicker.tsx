@@ -51,10 +51,10 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search CRM contacts..."
-              className="flex-1 bg-transparent type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:outline-none"
+              className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-muted)] focus:outline-none"
               autoFocus
             />
-            <button type="button" onClick={() => setOpen(false)} className="text-[var(--ws-text-muted)] hover:text-white">
+            <button type="button" onClick={() => setOpen(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -75,7 +75,7 @@ export function ComposeContactPicker({ tenantId, onSelect, className = '' }: Com
                   }}
                   className="w-full text-left px-3 py-2.5 hover:bg-[var(--ws-surface-secondary)] border-b border-[var(--ws-border)]/50 last:border-0"
                 >
-                  <div className="type-ui font-medium text-white truncate">{c.name || 'Unnamed'}</div>
+                  <div className="type-ui font-medium text-[var(--ws-text-primary)] truncate">{c.name || 'Unnamed'}</div>
                   <div className="type-caption text-[var(--ws-text-muted)] truncate">{c.email}</div>
                 </button>
               ))

@@ -88,10 +88,10 @@ export default function DeletedRecordsSection() {
           {records.map((record) => (
             <div
               key={`${record.type}-${record.id}`}
-              className="flex items-center justify-between gap-3 p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5"
+              className="flex items-center justify-between gap-3 p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]"
             >
               <div className="min-w-0">
-                <p className="type-card-description font-bold text-white truncate">{record.name}</p>
+                <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{record.name}</p>
                 <p className="type-card-description text-[var(--ws-text-muted)] truncate">
                   {record.email || 'No email'} · {record.type} ·{' '}
                   {new Date(record.deletedAt).toLocaleDateString()}

@@ -183,7 +183,7 @@ export function OperationsCommandCenter() {
   return (
     <div className="space-y-6 pb-24 ac-safe-bottom" data-tour="operations-command">
       {/* Executive Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--ws-border)] pb-5">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-full type-caption font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 tracking-wide uppercase">
@@ -191,7 +191,7 @@ export function OperationsCommandCenter() {
             </span>
             <span className="type-caption text-gray-400 font-mono">Tenant: {currentTenant?.name || 'Workspace'}</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-1 flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--ws-text-primary)] tracking-tight mt-1 flex items-center gap-2">
             <Activity className="w-7 h-7 text-cyan-400" />
             Operations Command Center
           </h1>
@@ -203,14 +203,14 @@ export function OperationsCommandCenter() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => void loadData()}
-            className="px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 type-caption font-semibold flex items-center gap-1.5 transition border border-white/10"
+            className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] text-gray-300 type-caption font-semibold flex items-center gap-1.5 transition border border-[var(--ws-border)]"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />
             Refresh HUD
           </button>
           <button
             onClick={() => setShowAlamosModal(true)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white type-caption font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 transition flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-[var(--text-inverse)] type-caption font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 transition flex items-center gap-1.5"
           >
             <ShieldAlert className="w-4 h-4" />
             ALAMOS Decision Gate
@@ -220,15 +220,15 @@ export function OperationsCommandCenter() {
 
       {/* 8-Tile Executive Status Strip */}
       <section className="grid grid-cols-2 min-[576px]:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-cyan-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-cyan-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Due Today</span>
             <Clock className="w-4 h-4 text-cyan-400" />
           </div>
-          <p className="text-2xl font-black text-white mt-1">{stats.tasksDue}</p>
+          <p className="text-2xl font-black text-[var(--ws-text-primary)] mt-1">{stats.tasksDue}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-red-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-red-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Overdue Work</span>
             <AlertTriangle className="w-4 h-4 text-red-400" />
@@ -236,7 +236,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-red-400 mt-1">{stats.overdueTasks}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-amber-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-amber-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Client 24h SLA</span>
             <MessageSquare className="w-4 h-4 text-amber-400" />
@@ -244,7 +244,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-amber-400 mt-1">{stats.pendingSlas}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-purple-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-purple-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Approvals</span>
             <FileCheck className="w-4 h-4 text-purple-400" />
@@ -252,7 +252,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-purple-400 mt-1">{stats.pendingApprovals}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-orange-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-orange-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Blockers</span>
             <Lock className="w-4 h-4 text-orange-400" />
@@ -260,7 +260,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-orange-400 mt-1">{stats.activeBlockers}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-rose-500/40 transition">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-rose-500/40 transition">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Failures</span>
             <XCircle className="w-4 h-4 text-rose-400" />
@@ -268,7 +268,7 @@ export function OperationsCommandCenter() {
           <p className="text-2xl font-black text-rose-400 mt-1">{stats.recentFailures}</p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 hover:border-emerald-500/40 transition col-span-2 min-[576px]:col-span-1">
+        <div className="p-3.5 rounded-xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-emerald-500/40 transition col-span-2 min-[576px]:col-span-1">
           <div className="flex items-center justify-between type-caption text-gray-400">
             <span>Overdue A/R</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
@@ -278,14 +278,14 @@ export function OperationsCommandCenter() {
       </section>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[var(--ws-border)] pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('hud')}
           className={cn(
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'hud'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Zap className="w-4 h-4" />
@@ -298,7 +298,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'health'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Activity className="w-4 h-4" />
@@ -311,7 +311,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'alamos'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <ShieldAlert className="w-4 h-4" />
@@ -324,7 +324,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'failures'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <XCircle className="w-4 h-4" />
@@ -337,7 +337,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'ask_bonnie'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Brain className="w-4 h-4" />
@@ -350,7 +350,7 @@ export function OperationsCommandCenter() {
             'px-4 py-2 rounded-lg type-caption font-bold transition flex items-center gap-2 whitespace-nowrap',
             activeTab === 'clients_360'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           )}
         >
           <Users className="w-4 h-4" />
@@ -364,9 +364,9 @@ export function OperationsCommandCenter() {
           {/* Main Action Items Column */}
           <div className="lg:col-span-2 space-y-5">
             {/* Priority Tasks */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-4">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-400" />
                   Priority Tasks Requiring Action Today
                 </h3>
@@ -380,10 +380,10 @@ export function OperationsCommandCenter() {
                   {(hudData?.tasksDueToday || []).map((t: any) => (
                     <div
                       key={t.id}
-                      className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between hover:bg-white/[0.06] transition"
+                      className="p-3 rounded-xl bg-white/[0.03] border border-[var(--ws-border)] flex items-center justify-between hover:bg-white/[0.06] transition"
                     >
                       <div>
-                        <p className="type-card-description font-semibold text-white">{t.title}</p>
+                        <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{t.title}</p>
                         <p className="type-card-description text-gray-400 mt-0.5">
                           Status: <span className="text-cyan-400 font-medium">{t.status}</span> · Priority:{' '}
                           <span className="text-amber-400 font-medium">{t.priority || 'medium'}</span>
@@ -391,7 +391,7 @@ export function OperationsCommandCenter() {
                       </div>
                       <a
                         href="/dashboard/tasks"
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 type-caption font-semibold text-white transition"
+                        className="px-3 py-1.5 rounded-lg bg-[var(--ws-hover)] hover:bg-white/20 type-caption font-semibold text-[var(--ws-text-primary)] transition"
                       >
                         Execute
                       </a>
@@ -402,9 +402,9 @@ export function OperationsCommandCenter() {
             </div>
 
             {/* 24-Hour Communication SLAs */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-4">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-amber-400" />
                   24-Hour Client Response SLA Tracker
                 </h3>
@@ -421,7 +421,7 @@ export function OperationsCommandCenter() {
                       className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-center justify-between"
                     >
                       <div>
-                        <p className="type-card-description font-semibold text-white">{s.subject || 'Client Message'}</p>
+                        <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{s.subject || 'Client Message'}</p>
                         <p className="type-card-description text-gray-400 mt-0.5">
                           From: {s.contact_email || 'Client'} · Received:{' '}
                           {new Date(s.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -442,8 +442,8 @@ export function OperationsCommandCenter() {
           {/* Right Sidebar: Active Blockers & Approvals */}
           <div className="space-y-5">
             {/* Active Blockers */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
+              <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <Lock className="w-4 h-4 text-orange-400" />
                 Active Work Blockers
               </h3>
@@ -464,8 +464,8 @@ export function OperationsCommandCenter() {
             </div>
 
             {/* Approvals */}
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
+              <h3 className="text-base font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-purple-400" />
                 Human Approvals
               </h3>
@@ -496,7 +496,7 @@ export function OperationsCommandCenter() {
               <Zap className="w-4 h-4" />
               Automated Primary Constraint Detector
             </div>
-            <h3 className="text-xl font-black text-white">
+            <h3 className="text-xl font-black text-[var(--ws-text-primary)]">
               {healthData?.primaryBottleneck || 'Scanning operating bottlenecks...'}
             </h3>
             <p className="type-card-description text-gray-400 max-w-2xl">
@@ -505,19 +505,19 @@ export function OperationsCommandCenter() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">Active Projects</p>
-              <p className="text-3xl font-black text-white">{healthData?.activeProjectsCount || 0}</p>
+              <p className="text-3xl font-black text-[var(--ws-text-primary)]">{healthData?.activeProjectsCount || 0}</p>
               <p className="type-card-description text-red-400">{healthData?.projectsAtRiskCount || 0} projects at risk</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">24h SLA Compliance</p>
               <p className="text-3xl font-black text-cyan-400">{healthData?.slaCompliancePct || 100}%</p>
               <p className="type-card-description text-gray-400">Client response timeliness</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-2">
+            <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-2">
               <p className="type-card-description font-medium text-gray-400">Outstanding Revenue (A/R)</p>
               <p className="text-3xl font-black text-emerald-400">
                 £{(healthData?.outstandingRevenue || 0).toLocaleString()}
@@ -533,7 +533,7 @@ export function OperationsCommandCenter() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white">Decision Records & ALAMOS 01–07 Protocol</h3>
+              <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Decision Records & ALAMOS 01–07 Protocol</h3>
               <p className="type-card-description text-gray-400">
                 Structured decision records with evidence quality tags and mandatory gates for high-risk actions.
               </p>
@@ -552,7 +552,7 @@ export function OperationsCommandCenter() {
               <p className="type-card-description text-gray-500 italic col-span-2">No decision records logged yet.</p>
             ) : (
               decisions.map((d) => (
-                <div key={d.id} className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-white/10 space-y-3">
+                <div key={d.id} className="p-5 rounded-2xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-0.5 rounded type-ui font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                       {d.evidence_label}
@@ -561,10 +561,10 @@ export function OperationsCommandCenter() {
                       {new Date(d.decision_date).toLocaleDateString()}
                     </span>
                   </div>
-                  <h4 className="text-base font-bold text-white">{d.decision_title}</h4>
+                  <h4 className="text-base font-bold text-[var(--ws-text-primary)]">{d.decision_title}</h4>
                   <p className="type-card-description text-gray-300">{d.context}</p>
-                  <div className="pt-2 border-t border-white/5 flex items-center justify-between type-caption text-gray-400">
-                    <span>Reversibility: <strong className="text-white">{d.reversibility}</strong></span>
+                  <div className="pt-2 border-t border-[var(--ws-border)] flex items-center justify-between type-caption text-gray-400">
+                    <span>Reversibility: <strong className="text-[var(--ws-text-primary)]">{d.reversibility}</strong></span>
                     <span>Cost: <strong className="text-emerald-400">£{(d.cost_amount || 0).toLocaleString()}</strong></span>
                   </div>
                 </div>
@@ -577,7 +577,7 @@ export function OperationsCommandCenter() {
       {/* TAB 4: FAILURES & INCIDENT LOG */}
       {activeTab === 'failures' && (
         <div className="space-y-4">
-          <h3 className="text-lg font-bold text-white">System & Process Failure Incident Log</h3>
+          <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">System & Process Failure Incident Log</h3>
           <p className="type-card-description text-gray-400">
             Immutable log of operational, automation, API, and deliverable failures to eliminate repeat mistakes.
           </p>
@@ -596,7 +596,7 @@ export function OperationsCommandCenter() {
                       {new Date(f.failure_time).toLocaleString()}
                     </span>
                   </div>
-                  <h4 className="type-ui font-bold text-white">{f.title}</h4>
+                  <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">{f.title}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 type-caption text-gray-300 pt-1">
                     <p><strong className="text-gray-400">Expected:</strong> {f.expected_result}</p>
                     <p><strong className="text-rose-400">Actual:</strong> {f.actual_result}</p>
@@ -611,9 +611,9 @@ export function OperationsCommandCenter() {
 
       {/* TAB 5: ASK BONNIE OPERATIONS */}
       {activeTab === 'ask_bonnie' && (
-        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-6">
+        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-6">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
               <Brain className="w-5 h-5 text-cyan-400" />
               Ask Bonnie Operations Engine
             </h3>
@@ -628,7 +628,7 @@ export function OperationsCommandCenter() {
               value={bonnieQuery}
               onChange={(e) => setBonnieQuery(e.target.value)}
               placeholder="e.g. What requires my attention today? Or What is our highest bottleneck?"
-              className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 type-ui focus:outline-none focus:border-cyan-500 transition"
+              className="flex-1 px-4 py-3 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] placeholder-gray-500 type-ui focus:outline-none focus:border-cyan-500 transition"
             />
             <button
               type="submit"
@@ -648,7 +648,7 @@ export function OperationsCommandCenter() {
                 </span>
                 <span className="type-caption text-cyan-400 font-mono">Bonnie Operational Reasoning</span>
               </div>
-              <p className="type-card-description font-semibold text-white">{bonnieResponse.answer}</p>
+              <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{bonnieResponse.answer}</p>
               {bonnieResponse.recommendation && (
                 <p className="type-card-description text-[var(--success-text,var(--success-500))] font-medium">
                   <strong>Recommended Action:</strong> {bonnieResponse.recommendation}
@@ -661,10 +661,10 @@ export function OperationsCommandCenter() {
 
       {/* TAB 6: CLIENT 360 VIEW */}
       {activeTab === 'clients_360' && (
-        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-6">
+        <div className="p-6 rounded-2xl bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <Users className="w-5 h-5 text-cyan-400" />
                 Client Operations 360° Relationship Graph
               </h3>
@@ -675,7 +675,7 @@ export function OperationsCommandCenter() {
             {selectedClientId && (
               <button
                 onClick={() => setSelectedClientId(null)}
-                className="px-3.5 py-2 rounded-lg bg-white/10 text-gray-300 type-caption font-semibold hover:bg-white/20 transition"
+                className="px-3.5 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 type-caption font-semibold hover:bg-white/20 transition"
               >
                 ← Back to All Clients
               </button>
@@ -690,7 +690,7 @@ export function OperationsCommandCenter() {
             />
           ) : (
             <div className="space-y-4">
-              <h4 className="type-ui font-bold text-white">Select a Client to View 360° Relationship Graph:</h4>
+              <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">Select a Client to View 360° Relationship Graph:</h4>
               {clientsList.length === 0 ? (
                 <p className="type-card-description text-gray-500 italic">No clients found in workspace. Add clients in CRM Workspace.</p>
               ) : (
@@ -699,9 +699,9 @@ export function OperationsCommandCenter() {
                     <div
                       key={c.id}
                       onClick={() => setSelectedClientId(c.id)}
-                      className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer transition space-y-1"
+                      className="p-4 rounded-xl bg-[var(--ws-hover)] border border-[var(--ws-border)] hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer transition space-y-1"
                     >
-                      <p className="type-card-description font-bold text-white">{c.name}</p>
+                      <p className="type-card-description font-bold text-[var(--ws-text-primary)]">{c.name}</p>
                       <p className="type-card-description text-gray-400">{c.email || c.company || 'No email specified'}</p>
                       <span className="inline-block mt-2 px-2 py-0.5 rounded type-ui font-semibold bg-cyan-500/20 text-cyan-300">
                         View 360° Relationship Profile →
@@ -718,8 +718,8 @@ export function OperationsCommandCenter() {
       {/* NEW DECISION MODAL */}
       {showNewDecisionModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[var(--ws-panel)] border border-white/10 rounded-2xl p-6 space-y-4">
-            <h3 className="text-lg font-bold text-white">Log Decision Record</h3>
+          <div className="w-full max-w-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+            <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Log Decision Record</h3>
             <form onSubmit={submitNewDecision} className="space-y-3 type-caption">
               <div>
                 <label className="block text-gray-400 mb-1">Decision Title</label>
@@ -728,7 +728,7 @@ export function OperationsCommandCenter() {
                   required
                   value={newDecision.decision_title}
                   onChange={(e) => setNewDecision({ ...newDecision, decision_title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
               <div>
@@ -737,7 +737,7 @@ export function OperationsCommandCenter() {
                   required
                   value={newDecision.context}
                   onChange={(e) => setNewDecision({ ...newDecision, context: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white h-20"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] h-20"
                 />
               </div>
               <div>
@@ -747,7 +747,7 @@ export function OperationsCommandCenter() {
                   required
                   value={newDecision.objective}
                   onChange={(e) => setNewDecision({ ...newDecision, objective: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -757,7 +757,7 @@ export function OperationsCommandCenter() {
                     type="number"
                     value={newDecision.cost_amount}
                     onChange={(e) => setNewDecision({ ...newDecision, cost_amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                   />
                 </div>
                 <div>
@@ -765,7 +765,7 @@ export function OperationsCommandCenter() {
                   <select
                     value={newDecision.reversibility}
                     onChange={(e) => setNewDecision({ ...newDecision, reversibility: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-white/10 text-white"
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                   >
                     <option value="reversible">Reversible</option>
                     <option value="partially_reversible">Partially Reversible</option>
@@ -777,7 +777,7 @@ export function OperationsCommandCenter() {
                 <button
                   type="button"
                   onClick={() => setShowNewDecisionModal(false)}
-                  className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 font-semibold"
+                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 font-semibold"
                 >
                   Cancel
                 </button>
@@ -794,7 +794,7 @@ export function OperationsCommandCenter() {
       {showAlamosModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-[var(--ws-panel)] border border-cyan-500/30 rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-cyan-400" />
               ALAMOS 01–07 Protocol Gate Evaluation
             </h3>
@@ -806,7 +806,7 @@ export function OperationsCommandCenter() {
                   required
                   value={alamosForm.title}
                   onChange={(e) => setAlamosForm({ ...alamosForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -818,7 +818,7 @@ export function OperationsCommandCenter() {
                   placeholder="e.g. Increase monthly recurring revenue by 15%"
                   value={alamosForm.alamos_01_outcome_metric}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_01_outcome_metric: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -830,7 +830,7 @@ export function OperationsCommandCenter() {
                   placeholder="e.g. Single API key rate limit breach"
                   value={alamosForm.alamos_02_zero_multiplier}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_02_zero_multiplier: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -844,7 +844,7 @@ export function OperationsCommandCenter() {
                     max="1"
                     value={alamosForm.alamos_03_success_probability}
                     onChange={(e) => setAlamosForm({ ...alamosForm, alamos_03_success_probability: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                   />
                 </div>
                 <div>
@@ -852,7 +852,7 @@ export function OperationsCommandCenter() {
                   <select
                     value={alamosForm.resulting_action}
                     onChange={(e) => setAlamosForm({ ...alamosForm, resulting_action: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-white/10 text-white font-bold"
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] font-bold"
                   >
                     {['BUILD', 'FIX', 'SCALE', 'KEEP', 'SIMPLIFY', 'TEST', 'DEFER', 'AUTOMATE', 'REMOVE', 'KILL'].map((act) => (
                       <option key={act} value={act}>{act}</option>
@@ -868,7 +868,7 @@ export function OperationsCommandCenter() {
                   required
                   value={alamosForm.alamos_04_cost_and_tradeoffs}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_04_cost_and_tradeoffs: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -879,7 +879,7 @@ export function OperationsCommandCenter() {
                   required
                   value={alamosForm.alamos_05_potential_failure_modes}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_05_potential_failure_modes: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -890,7 +890,7 @@ export function OperationsCommandCenter() {
                   required
                   value={alamosForm.alamos_06_verification_method}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_06_verification_method: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
@@ -901,19 +901,19 @@ export function OperationsCommandCenter() {
                   required
                   value={alamosForm.alamos_07_post_evidence_plan}
                   onChange={(e) => setAlamosForm({ ...alamosForm, alamos_07_post_evidence_plan: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-primary)]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--ws-border)]">
                 <button
                   type="button"
                   onClick={() => setShowAlamosModal(false)}
-                  className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 font-semibold"
+                  className="px-4 py-2 rounded-lg bg-[var(--ws-hover)] text-gray-300 font-semibold"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold">
+                <button type="submit" className="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-[var(--text-inverse)] font-bold">
                   Submit ALAMOS Evaluation
                 </button>
               </div>

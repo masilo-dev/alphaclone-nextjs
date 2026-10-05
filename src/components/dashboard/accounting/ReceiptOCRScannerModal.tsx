@@ -60,21 +60,21 @@ export function ReceiptOCRScannerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--ws-canvas)]/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-xl bg-[var(--ws-panel)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[var(--ws-canvas)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
               <Scan size={16} />
             </div>
             <div>
-              <h3 className="type-caption font-black text-white uppercase tracking-wider">Smart Receipt OCR Scanner</h3>
+              <h3 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-wider">Smart Receipt OCR Scanner</h3>
               <p className="type-card-description text-[var(--ws-text-muted)]">Upload receipt image to auto-extract expense details</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
           >
             <X size={18} />
           </button>
@@ -85,7 +85,7 @@ export function ReceiptOCRScannerModal({
           {!imagePreview ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-white/20 hover:border-teal-500/50 bg-[var(--ws-canvas)] rounded-2xl p-8 text-center cursor-pointer transition-all hover:bg-teal-500/5 group"
+              className="border-2 border-dashed border-[var(--ws-border-strong)] hover:border-teal-500/50 bg-[var(--ws-canvas)] rounded-2xl p-8 text-center cursor-pointer transition-all hover:bg-teal-500/5 group"
             >
               <input
                 ref={fileInputRef}
@@ -94,16 +94,16 @@ export function ReceiptOCRScannerModal({
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="w-12 h-12 rounded-full bg-[var(--ws-panel)] border border-white/10 flex items-center justify-center mx-auto text-[var(--ws-text-muted)] group-hover:text-teal-400 group-hover:scale-110 transition-all">
+              <div className="w-12 h-12 rounded-full bg-[var(--ws-panel)] border border-[var(--ws-border)] flex items-center justify-center mx-auto text-[var(--ws-text-muted)] group-hover:text-teal-400 group-hover:scale-110 transition-all">
                 <Upload size={22} />
               </div>
-              <p className="type-card-description font-bold text-white mt-3">Click or Drag Receipt Photo Here</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)] mt-3">Click or Drag Receipt Photo Here</p>
               <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Supports PNG, JPG, JPEG up to 10MB</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Image Preview */}
-              <div className="relative rounded-xl border border-white/10 bg-[var(--ws-canvas)] overflow-hidden h-56 flex items-center justify-center">
+              <div className="relative rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] overflow-hidden h-56 flex items-center justify-center">
                 <img src={imagePreview} alt="Receipt" className="max-h-full object-contain" />
                 {scanning && (
                   <div className="absolute inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-sm flex flex-col items-center justify-center text-teal-400 space-y-2">
@@ -130,7 +130,7 @@ export function ReceiptOCRScannerModal({
                         type="text"
                         value={parsedData.vendorName}
                         onChange={(e) => setParsedData({ ...parsedData, vendorName: e.target.value })}
-                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
                       />
                     </div>
 
@@ -143,7 +143,7 @@ export function ReceiptOCRScannerModal({
                           type="number"
                           value={parsedData.totalAmount}
                           onChange={(e) => setParsedData({ ...parsedData, totalAmount: Number(e.target.value) })}
-                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
                         />
                       </div>
                       <div>
@@ -154,7 +154,7 @@ export function ReceiptOCRScannerModal({
                           type="date"
                           value={parsedData.date}
                           onChange={(e) => setParsedData({ ...parsedData, date: e.target.value })}
-                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+                          className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
                         />
                       </div>
                     </div>
@@ -166,7 +166,7 @@ export function ReceiptOCRScannerModal({
                       <select
                         value={parsedData.category}
                         onChange={(e) => setParsedData({ ...parsedData, category: e.target.value as any })}
-                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+                        className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
                       >
                         <option value="Software & Tools">Software & Tools</option>
                         <option value="Office & Supplies">Office & Supplies</option>
@@ -188,20 +188,20 @@ export function ReceiptOCRScannerModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-[var(--ws-canvas)]">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]">
           <button
             onClick={() => {
               setImagePreview(null);
               setParsedData(null);
             }}
-            className="type-caption font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors"
+            className="type-caption font-bold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
           >
             Reset Scanner
           </button>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 type-caption font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors"
+              className="px-4 py-2 type-caption font-bold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
             >
               Cancel
             </button>

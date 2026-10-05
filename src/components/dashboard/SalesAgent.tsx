@@ -1058,7 +1058,7 @@ const SalesAgent: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setActiveTab('omni')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-[var(--text-inverse)] shadow' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                     >
                         <Globe className="w-3.5 h-3.5" />
                         {t('AlphaClone System Lead')}
@@ -1066,21 +1066,21 @@ const SalesAgent: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setActiveTab('agent')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-[var(--text-inverse)] shadow' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                     >
                         {t('Agent Chat')}
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('automation')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-[var(--text-inverse)] shadow' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                     >
                         {t('Automation')}
                     </button>
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/deals')}
-                        className="px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap text-[var(--ws-text-muted)] hover:text-white"
+                        className="px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                     >
                         {t('Pipeline')}
                     </button>
@@ -1111,7 +1111,7 @@ const SalesAgent: React.FC = () => {
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 px-4 py-2 type-caption uppercase tracking-widest font-bold text-[var(--ws-text-muted)] flex items-center gap-2">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2 type-caption uppercase tracking-widest font-bold text-[var(--ws-text-muted)] flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                 {t('Finding Leads & Autonomous SDR System Active')}
             </div>
@@ -1145,7 +1145,7 @@ const SalesAgent: React.FC = () => {
                     <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl type-ui sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-none'}`}>
+                                <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl type-ui sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-[var(--text-inverse)] rounded-tr-none' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-none'}`}>
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         components={{
@@ -1166,7 +1166,7 @@ const SalesAgent: React.FC = () => {
                     <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex flex-col gap-4">
                         {pendingSearch && (
                             <div className="bg-[var(--ws-panel)] border border-teal-500/30 p-4 rounded-xl shadow-lg">
-                                <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-3 flex items-center gap-2">
                                     <Search className="w-4 h-4 text-teal-400" /> Confirm AI Lead Search
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
@@ -1210,7 +1210,7 @@ const SalesAgent: React.FC = () => {
                         <div className="flex gap-4">
                             <input
                                 type="text"
-                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
                                 placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
                                 disabled={!aiConfigured}
                                 value={inputText}
@@ -1228,16 +1228,16 @@ const SalesAgent: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl w-full max-w-2xl shadow-2xl animate-fade-in-up">
                         <div className="flex justify-between items-center p-4 border-b border-[var(--ws-border)]">
-                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
                                 <Mail className="w-5 h-5 text-teal-500" />
                                 Outreach Draft
                             </h3>
-                            <button onClick={() => setViewingMessage(null)} className="text-[var(--ws-text-muted)] hover:text-white">
+                            <button onClick={() => setViewingMessage(null)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6">
-                            <p className="type-card-description text-[var(--ws-text-muted)] mb-4">Generated for: <span className="text-white font-medium">{viewingMessage.title}</span></p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] mb-4">Generated for: <span className="text-[var(--ws-text-primary)] font-medium">{viewingMessage.title}</span></p>
                             <div className="bg-[var(--ws-canvas)] p-4 rounded-lg border border-[var(--ws-border)] type-ui text-[var(--ws-text-secondary)] font-mono whitespace-pre-wrap max-h-[400px] overflow-y-auto">
                                 {viewingMessage.body}
                             </div>

@@ -72,23 +72,23 @@ function NativeModuleWorkspace({
   return (
     <div className="native-screen ac-scroll-full pb-4" data-native-module-workspace={moduleId}>
       <div className="px-4 pb-4 pt-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">{screenTitle}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)]">{screenTitle}</h1>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-2 gap-2 px-4 pb-5" aria-label={t('Loading key numbers')}>
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-[72px] animate-pulse rounded-[14px] border border-white/5 bg-white/[0.04]" />
+            <div key={index} className="h-[72px] animate-pulse rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-hover)]" />
           ))}
         </div>
       ) : metrics.length ? (
         <section className="grid grid-cols-2 gap-2 px-4 pb-5" aria-label={t('Key numbers')}>
           {metrics.map((metric) => (
-            <div key={metric.label} className="min-w-0 rounded-[14px] border border-white/[0.06] bg-white/[0.04] px-3.5 py-3">
-              <div className="truncate type-caption font-medium uppercase tracking-wide text-white/40">
+            <div key={metric.label} className="min-w-0 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-hover)] px-3.5 py-3">
+              <div className="truncate type-caption font-medium uppercase tracking-wide text-[var(--ws-text-muted)]">
                 {t(metric.label)}
               </div>
-              <div className="mt-1 truncate text-xl font-semibold tabular-nums text-white">
+              <div className="mt-1 truncate text-xl font-semibold tabular-nums text-[var(--ws-text-primary)]">
                 {metric.value}
               </div>
             </div>
@@ -104,7 +104,7 @@ function NativeModuleWorkspace({
             title={t(label)}
             onClick={() => onNavigate(resolvedHref)}
             selected={primary}
-            trailing={<ChevronRight className="h-4 w-4 text-white/25" aria-hidden />}
+            trailing={<ChevronRight className="h-4 w-4 text-[var(--ws-text-muted)]" aria-hidden />}
           />
         ))}
       </NativeSection>
@@ -273,7 +273,7 @@ function DashboardContent({
                   featured ? 'text-[var(--brand-blue-300)]' : 'text-[var(--brand-blue-400)]'
                 )}>{t(label)}</span>
               </div>
-              <h3 className="type-ui font-semibold text-white">{t(title)}</h3>
+              <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">{t(title)}</h3>
               <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">{t(description)}</p>
               <span className={cn(
                 'mt-4 inline-flex items-center gap-1 type-ui font-bold',
@@ -357,7 +357,7 @@ function DashboardContent({
                 key={`${label}-${href}`}
                 type="button"
                 onClick={() => router.push(href)}
-                className="h-10 rounded-lg bg-[var(--ws-canvas)]/40 border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2 min-w-0 px-2"
+                className="h-10 rounded-lg bg-[var(--ws-canvas)]/40 border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex items-center justify-center gap-2 min-w-0 px-2"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-label={label}
               >

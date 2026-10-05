@@ -138,8 +138,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg type-ui font-medium transition-all ${
                                 activeTab === tab.id
-                                    ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
-                                    : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
+                                    ? 'bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/20'
+                                    : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
                             }`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -162,7 +162,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             {canManageTeam && <div className="flex justify-end">
                                 <button
                                     onClick={() => setShowInviteModal(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
+                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-[var(--text-inverse)] font-bold shadow-lg shadow-teal-500/20"
                                 >
                                     <UserPlus className="w-4 h-4" />
                                     Invite Member
@@ -191,7 +191,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                         >
                             <div className="text-center max-w-lg">
                                 <Network className="w-16 h-16 text-slate-700 mx-auto mb-6" />
-                                <h3 className="text-xl font-bold text-white mb-2">Organization Structure</h3>
+                                <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">Organization Structure</h3>
                                 <p className="text-[var(--ws-text-muted)] mb-8">
                                     Visualize your team's hierarchy and reporting lines.
                                     Owners and administrators are shown above the rest of the workspace team.
@@ -207,7 +207,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             <div key={member.user_id} className="flex flex-col items-center relative group">
                                                 <div className="absolute -top-4 left-1/2 w-px h-4 bg-[var(--ws-surface-tertiary)]"></div>
                                                 <div className="p-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
-                                                    <div className="font-bold text-white type-ui">{member.user?.name || 'Unknown'}</div>
+                                                    <div className="font-bold text-[var(--ws-text-primary)] type-ui">{member.user?.name || 'Unknown'}</div>
                                                     <div className="type-caption text-[var(--ws-text-muted)] uppercase">{member.role}</div>
                                                 </div>
                                             </div>
@@ -247,7 +247,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                                 <Inbox className="w-4 h-4 text-teal-400" />
                                             </div>
                                             <div>
-                                                <h3 className="type-ui font-semibold text-white">Connected work</h3>
+                                                <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">Connected work</h3>
                                                 <p className="type-card-description text-[var(--ws-text-muted)]">Keep chat, email, and tasks linked.</p>
                                             </div>
                                         </div>
@@ -255,15 +255,15 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         <div className="grid grid-cols-3 gap-2 mb-3">
                                             <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Members</div>
-                                                <div className="text-lg font-black text-white">{teamMembers.length}</div>
+                                                <div className="text-lg font-black text-[var(--ws-text-primary)]">{teamMembers.length}</div>
                                             </div>
                                             <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Chat</div>
-                                                <div className="text-lg font-black text-white">Live</div>
+                                                <div className="text-lg font-black text-[var(--ws-text-primary)]">Live</div>
                                             </div>
                                             <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5">
                                                 <div className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Email</div>
-                                                <div className="text-lg font-black text-white">On</div>
+                                                <div className="text-lg font-black text-[var(--ws-text-primary)]">On</div>
                                             </div>
                                         </div>
 
@@ -274,7 +274,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Mail className="w-4 h-4 text-sky-400 shrink-0" />
-                                                    <span className="type-ui font-medium text-white truncate">Open inbox</span>
+                                                    <span className="type-ui font-medium text-[var(--ws-text-primary)] truncate">Open inbox</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                                             </button>
@@ -284,7 +284,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <Inbox className="w-4 h-4 text-emerald-400 shrink-0" />
-                                                    <span className="type-ui font-medium text-white truncate">Open Zoho Mail</span>
+                                                    <span className="type-ui font-medium text-[var(--ws-text-primary)] truncate">Open Zoho Mail</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                                             </button>
@@ -294,7 +294,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                             >
                                                 <div className="flex items-center gap-2 min-w-0">
                                                     <CheckSquare className="w-4 h-4 text-orange-400 shrink-0" />
-                                                    <span className="type-ui font-medium text-white truncate">Open tasks</span>
+                                                    <span className="type-ui font-medium text-[var(--ws-text-primary)] truncate">Open tasks</span>
                                                 </div>
                                                 <ArrowRight className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                                             </button>
@@ -302,7 +302,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         <div className="mt-3 flex flex-wrap gap-2">
                                             {teamMembers.slice(0, 4).map((member) => (
                                                 <div key={member.user_id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]">
-                                                    <div className="w-5 h-5 rounded-full bg-[var(--ws-surface-secondary)] flex items-center justify-center type-ui font-black text-white">
+                                                    <div className="w-5 h-5 rounded-full bg-[var(--ws-surface-secondary)] flex items-center justify-center type-ui font-black text-[var(--ws-text-primary)]">
                                                         {member.user?.name?.charAt(0) || '?'}
                                                     </div>
                                                     <span className="type-caption text-[var(--ws-text-secondary)] max-w-[120px] truncate">{member.user?.name || member.user?.email}</span>
@@ -344,11 +344,11 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
         <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] hover:border-teal-500/30 rounded-2xl p-6 transition-all group">
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg text-white shadow-lg">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-lg text-[var(--text-inverse)] shadow-lg">
                         {member.user?.name?.charAt(0) || 'U'}
                     </div>
                     <div>
-                        <h3 className="font-bold text-white">{member.user?.name || 'Unknown'}</h3>
+                        <h3 className="font-bold text-[var(--ws-text-primary)]">{member.user?.name || 'Unknown'}</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{member.user?.email}</p>
                     </div>
                 </div>
@@ -391,8 +391,8 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white">Invite Team Member</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded-lg transition-colors text-[var(--ws-text-muted)] hover:text-white">
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Invite Team Member</h3>
+                    <button onClick={onClose} className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded-lg transition-colors text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -406,7 +406,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="colleague@example.com"
-                            className="w-full px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-teal-500 text-white placeholder-slate-600 transition-colors"
+                            className="w-full px-4 py-3 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-teal-500 text-[var(--ws-text-primary)] placeholder-slate-600 transition-colors"
                         />
                     </div>
 
@@ -420,7 +420,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                                     onClick={() => setRole(r)}
                                     className={`px-2 py-2 rounded-xl type-caption font-bold uppercase tracking-wide border transition-all ${
                                         role === r 
-                                            ? 'bg-teal-500 text-white border-teal-500' 
+                                            ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500' 
                                             : 'bg-[var(--ws-canvas)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-slate-600'
                                     }`}
                                 >
@@ -445,7 +445,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
+                            className="flex-1 px-4 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl transition-colors text-[var(--text-inverse)] font-bold shadow-lg shadow-teal-500/20"
                         >
                             Send Invitation
                         </button>

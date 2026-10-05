@@ -109,7 +109,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
             <p className="type-caption text-[var(--ws-text-secondary)]">Pick up where you started whenever you are ready.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Link href={firstGoal.href} className="inline-flex min-h-11 items-center rounded-xl bg-[var(--ac-accent)] px-4 type-ui font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ac-accent)]">{firstGoal.title}</Link>
+            <Link href={firstGoal.href} className="inline-flex min-h-11 items-center rounded-xl bg-[var(--ac-accent)] px-4 type-ui font-semibold text-[var(--ws-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ac-accent)]">{firstGoal.title}</Link>
             <button type="button" className="min-h-11 rounded-xl px-3 type-ui text-[var(--ws-text-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" onClick={() => {
               localStorage.setItem(`onboarding_goal_dismissed_${user.id}`, 'true');
               setGoalDismissed(true);

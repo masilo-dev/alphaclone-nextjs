@@ -34,7 +34,7 @@ export function ClientChurnRadarPanel() {
             <Activity size={16} />
           </div>
           <div>
-            <h4 className="type-caption font-black text-white uppercase tracking-wider">Client Churn Risk & Health Radar</h4>
+            <h4 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-wider">Client Churn Risk & Health Radar</h4>
             <p className="type-card-description text-[var(--ws-text-muted)]">Predictive retention analytics & proactive recovery plays</p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function ClientChurnRadarPanel() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-white/10 pb-3">
+      <div className="flex items-center gap-1.5 border-b border-[var(--ws-border)] pb-3">
         {[
           { id: 'all', label: 'All Accounts' },
           { id: 'high_risk', label: 'High Churn Risk' },
@@ -63,7 +63,7 @@ export function ClientChurnRadarPanel() {
             className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
               filter === t.id
                 ? 'bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] border border-amber-500/30'
-                : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
+                : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
             }`}
           >
             {t.label}
@@ -95,7 +95,7 @@ export function ClientChurnRadarPanel() {
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h5 className="type-card-title font-bold text-white">{r.company}</h5>
+                  <h5 className="type-card-title font-bold text-[var(--ws-text-primary)]">{r.company}</h5>
                   <p className="type-card-description text-[var(--ws-text-muted)]">{r.name}</p>
                 </div>
                 <span
@@ -119,7 +119,7 @@ export function ClientChurnRadarPanel() {
                     {r.healthScore} / 100
                   </span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-[var(--ws-canvas)] overflow-hidden border border-white/10">
+                <div className="w-full h-2 rounded-full bg-[var(--ws-canvas)] overflow-hidden border border-[var(--ws-border)]">
                   <div
                     className={`h-full transition-all duration-500 ${
                       isHigh ? 'bg-rose-500' : isMod ? 'bg-amber-500' : 'bg-[var(--success-500)]'
@@ -130,23 +130,23 @@ export function ClientChurnRadarPanel() {
               </div>
 
               {/* Signals */}
-              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-canvas)]/60 p-2 rounded-lg border border-white/5">
+              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-canvas)]/60 p-2 rounded-lg border border-[var(--ws-border)]">
                 <div>
-                  <span className="block font-bold text-white">{r.lastActiveDaysAgo}d ago</span>
+                  <span className="block font-bold text-[var(--ws-text-primary)]">{r.lastActiveDaysAgo}d ago</span>
                   <span>Last Active</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-white">{Math.round(r.unpaidInvoiceRatio * 100)}%</span>
+                  <span className="block font-bold text-[var(--ws-text-primary)]">{Math.round(r.unpaidInvoiceRatio * 100)}%</span>
                   <span>Unpaid Ratio</span>
                 </div>
                 <div>
-                  <span className="block font-bold text-white">{r.contractExpiringDays}d</span>
+                  <span className="block font-bold text-[var(--ws-text-primary)]">{r.contractExpiringDays}d</span>
                   <span>Contract Exp</span>
                 </div>
               </div>
 
               {/* Playbook Recommendation */}
-              <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+              <div className="mt-3 pt-3 border-t border-[var(--ws-border)] flex items-center justify-between gap-2">
                 <p className="type-card-description text-[var(--ws-text-secondary)] italic truncate max-w-[240px]">
                   "{r.recommendedAction}"
                 </p>

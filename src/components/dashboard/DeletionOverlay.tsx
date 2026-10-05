@@ -42,9 +42,9 @@ export const DeletionOverlay: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <h2 className="text-2xl font-bold text-white">Account Deletion Scheduled</h2>
+                    <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Account Deletion Scheduled</h2>
                     <p className="text-[var(--ws-text-muted)]">
-                        Your account is scheduled for deletion in <span className="text-white font-semibold">{daysRemaining} days</span>.
+                        Your account is scheduled for deletion in <span className="text-[var(--ws-text-primary)] font-semibold">{daysRemaining} days</span>.
                         During this period, access to your data is restricted.
                     </p>
                 </div>

@@ -45,3 +45,33 @@ test('brand.ts MODULE_IDENTITY no longer uses purple accents', () => {
   assert.doesNotMatch(brand, /primary: '#6D4AFF'/);
   assert.doesNotMatch(brand, /primary: '#7D56D9'/);
 });
+
+test('light theme product surface uses token canvas and color-scheme light', () => {
+  const css = read('src/app/globals.css');
+  assert.match(css, /html\.light body/);
+  assert.match(css, /color-scheme:\s*light/);
+  assert.match(css, /html\.light \.ac-dashboard-root/);
+  assert.match(css, /html\.light \.ac-business-root/);
+  // Dashboard root ambience must not use neon cyan/purple
+  const dashBlock = css.slice(css.indexOf('.ac-dashboard-root,\n.ac-business-root {'), css.indexOf('/* text-white'));
+  assert.doesNotMatch(dashBlock, /rgba\(0,\s*240,\s*255/);
+  assert.doesNotMatch(dashBlock, /rgba\(127,\s*0,\s*255/);
+});
+
+test('Untitled design-system exports page shell primitives', () => {
+  const index = read('src/components/ui/design-system/index.ts');
+  assert.match(index, /StandardPageShell/);
+  assert.match(index, /StandardPanel/);
+  const shell = read('src/components/ui/design-system/StandardPageShell.tsx');
+  assert.match(shell, /--ws-text-primary/);
+  assert.match(shell, /--ws-panel/);
+  assert.doesNotMatch(shell, /#[0-9a-fA-F]{3,8}/);
+});
+
+test('mobile theme is the only mobile hex source and uses AlphaClone brand', () => {
+  const theme = read('mobile/src/styles/theme.ts');
+  assert.match(theme, /teal:\s*'#4199A4'/i);
+  assert.match(theme, /navy:\s*'#212446'/i);
+  assert.match(theme, /coral:\s*'#FB7268'/i);
+  assert.doesNotMatch(theme, /#00D2A0|#0077FF|#020D1A/i);
+});

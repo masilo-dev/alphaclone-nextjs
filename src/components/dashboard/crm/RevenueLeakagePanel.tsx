@@ -147,7 +147,7 @@ export function RevenueLeakagePanel({
 
     if (loading) {
         return (
-            <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl border border-white/5 bg-[var(--ws-panel)]/40">
+            <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
                 <span className="type-caption text-[var(--ws-text-muted)]">Scanning revenue chain…</span>
             </div>
@@ -156,9 +156,9 @@ export function RevenueLeakagePanel({
 
     return (
         <div className="space-y-3 mb-4">
-            <div className="rounded-xl border border-white/5 bg-[var(--ws-panel)]/50 px-4 py-3">
+            <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-3">
                 <div className="mb-1">
-                    <p className="type-card-description font-bold text-white">{heading}</p>
+                    <p className="type-card-description font-bold text-[var(--ws-text-primary)]">{heading}</p>
                     {subheading && (
                         <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">{subheading}</p>
                     )}

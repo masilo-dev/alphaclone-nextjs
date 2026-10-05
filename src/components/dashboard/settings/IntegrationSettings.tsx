@@ -158,23 +158,23 @@ export function IntegrationSettings() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="type-caption font-black uppercase tracking-widest text-teal-400">Workspace Integrations</div>
-            <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Connections & provider setup</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-[var(--ws-text-primary)] mt-1">Connections & provider setup</h1>
             <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
           Configure provider API keys and sender identities for this workspace.
             </p>
           </div>
           <div className="grid grid-cols-3 gap-2 md:min-w-[320px]">
-            <div className="rounded-lg border border-white/5 bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Connected</div>
-              <div className="text-lg font-bold text-white">{connectedCount}</div>
+              <div className="text-lg font-bold text-[var(--ws-text-primary)]">{connectedCount}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Providers</div>
-              <div className="text-lg font-bold text-white">{providerCount}</div>
+              <div className="text-lg font-bold text-[var(--ws-text-primary)]">{providerCount}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-[var(--ws-canvas)]/45 px-3 py-2">
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 px-3 py-2">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Errors</div>
-              <div className="text-lg font-bold text-white">{errorCount}</div>
+              <div className="text-lg font-bold text-[var(--ws-text-primary)]">{errorCount}</div>
             </div>
           </div>
         </div>
@@ -195,7 +195,7 @@ export function IntegrationSettings() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-md type-ui font-medium whitespace-nowrap transition-all ${
-                active ? 'bg-[var(--ws-surface-secondary)] text-white border border-white/5' : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
+                active ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -220,7 +220,7 @@ export function IntegrationSettings() {
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                   <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Provider map</div>
-                  <h2 className="text-lg font-semibold text-white mt-1">Connected app framework</h2>
+                  <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mt-1">Connected app framework</h2>
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                     Core OAuth and API providers used by Bonnie, Hermes, social, scheduling, mail, and automation.
                   </p>
@@ -233,14 +233,14 @@ export function IntegrationSettings() {
                 {INTEGRATION_OVERVIEW.map(({ label, status, detail, Icon }) => {
                   const comingSoon = status === 'Coming soon';
                   return (
-                    <div key={label} className="rounded-lg border border-white/5 bg-[var(--ws-canvas)]/45 p-3">
+                    <div key={label} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/45 p-3">
                       <div className="flex items-start gap-3">
-                        <div className="rounded-md border border-white/10 bg-white/5 p-2 text-[var(--ws-text-secondary)]">
+                        <div className="rounded-md border border-[var(--ws-border)] bg-[var(--ws-hover)] p-2 text-[var(--ws-text-secondary)]">
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="truncate type-ui font-semibold text-white">{label}</h3>
+                            <h3 className="truncate type-ui font-semibold text-[var(--ws-text-primary)]">{label}</h3>
                             <span className={`shrink-0 rounded px-1.5 py-0.5 type-caption font-black uppercase tracking-wide ${
                               comingSoon
                                 ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
@@ -260,7 +260,7 @@ export function IntegrationSettings() {
 
             <div className="ac-workspace-panel rounded-lg p-4">
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Email providers</div>
-              <h2 className="text-lg font-semibold text-white mt-1">Provider credentials & sender identity</h2>
+              <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mt-1">Provider credentials & sender identity</h2>
               <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                 Use any verified sender email from your provider account. It does not need to match your login email.
               </p>
@@ -284,7 +284,7 @@ export function IntegrationSettings() {
                 </div>
                 <div>
                   <div className="type-caption font-black uppercase tracking-widest text-[var(--warning-text,var(--warning-500))]">Coming soon</div>
-                  <h2 className="mt-1 text-lg font-semibold text-white">WhatsApp dashboard connection</h2>
+                  <h2 className="mt-1 text-lg font-semibold text-[var(--ws-text-primary)]">WhatsApp dashboard connection</h2>
                   <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
                     The send/webhook engine exists, but the self-serve dashboard connection is marked coming soon until provider onboarding is finalized.
                   </p>
@@ -303,7 +303,7 @@ export function IntegrationSettings() {
           <div className="space-y-5">
             <div>
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Workspace policy</div>
-              <h2 className="text-lg font-semibold text-white mt-1">Global preferences</h2>
+              <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mt-1">Global preferences</h2>
             </div>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               Workspace-wide integration policies. Preferences are saved per workspace on this device.
@@ -312,7 +312,7 @@ export function IntegrationSettings() {
               {PREF_ROWS.map((row) => (
                 <div key={row.id} className="flex items-center justify-between">
                   <div>
-                    <p className="type-card-description font-medium text-white">{row.label}</p>
+                    <p className="type-card-description font-medium text-[var(--ws-text-primary)]">{row.label}</p>
                     <p className="type-card-description text-[var(--ws-text-muted)]">{row.sub}</p>
                   </div>
                   <input
@@ -332,12 +332,12 @@ export function IntegrationSettings() {
           <div className="space-y-5">
             <div>
               <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Monitoring</div>
-              <h2 className="text-lg font-semibold text-white mt-1">Integration health</h2>
+              <h2 className="text-lg font-semibold text-[var(--ws-text-primary)] mt-1">Integration health</h2>
             </div>
             
             <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="type-caption font-medium text-white">Sync Status</h3>
+                <h3 className="type-caption font-medium text-[var(--ws-text-primary)]">Sync Status</h3>
                 <button
                   type="button"
                   onClick={() => refresh()}
@@ -361,10 +361,10 @@ export function IntegrationSettings() {
                       : 'Not recorded';
                     
                     return (
-                      <div key={int.id} className="flex items-center justify-between p-3 bg-[var(--ws-canvas)]/45 rounded-lg border border-white/5">
+                      <div key={int.id} className="flex items-center justify-between p-3 bg-[var(--ws-canvas)]/45 rounded-lg border border-[var(--ws-border)]">
                         <div className="flex items-center gap-3">
                           <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-[var(--error-500)]'}`} />
-                          <span className="type-ui text-white">{int.name}</span>
+                          <span className="type-ui text-[var(--text-inverse)]">{int.name}</span>
                         </div>
                         <div className="flex items-center gap-4">
                           <span className={`type-caption ${isHealthy ? 'text-green-400' : 'text-red-400'}`}>
@@ -384,7 +384,7 @@ export function IntegrationSettings() {
             {/* Error Logs */}
             <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="type-ui font-medium text-white">Workspace error log</h3>
+                <h3 className="type-ui font-medium text-[var(--ws-text-primary)]">Workspace error log</h3>
                 <span className="type-caption text-[var(--ws-text-muted)]">
                   {errorLogsLoading ? 'Loading…' : `${errorLogs.length} entries`}
                 </span>

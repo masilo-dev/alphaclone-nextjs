@@ -137,7 +137,7 @@ const GlobalSettingsTab: React.FC = () => {
                 header={(
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-2">
                         <div className="min-w-0">
-                            <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
+                            <h2 className="text-xl sm:text-2xl font-bold text-[var(--ws-text-primary)]">Global Settings</h2>
                             <p className="text-[var(--ws-text-muted)] mt-1 type-caption sm:text-xs font-medium uppercase tracking-wider">
                                 Super admin
                             </p>
@@ -146,7 +146,7 @@ const GlobalSettingsTab: React.FC = () => {
                             type="button"
                             onClick={handleSave}
                             disabled={saving || loading || !!loadError}
-                            className="bg-teal-600 hover:bg-teal-500 text-white px-6 w-full sm:w-auto shrink-0"
+                            className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] px-6 w-full sm:w-auto shrink-0"
                         >
                             {saving || loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                             Save
@@ -166,7 +166,7 @@ const GlobalSettingsTab: React.FC = () => {
             {!loadError && !loading && (
                 <div
                     role="status"
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 type-caption text-[var(--ws-text-secondary)] leading-relaxed"
+                    className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-4 py-3 type-caption text-[var(--ws-text-secondary)] leading-relaxed"
                 >
                     Global settings are stored in the database and apply platform-wide. Tenant-level options remain under
                     Settings in each workspace. On small screens, pick a section below, then scroll the panel.
@@ -187,8 +187,8 @@ const GlobalSettingsTab: React.FC = () => {
                             onClick={() => setActiveSection(section.id)}
                             aria-current={activeSection === section.id ? 'true' : undefined}
                             className={`flex items-center gap-3 px-4 py-3 rounded-2xl type-caption sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
-                                ? 'bg-indigo-600 border border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
-                                : 'bg-white/5 border border-white/5 text-[var(--ws-text-muted)] hover:bg-white/10 hover:text-white'
+                                ? 'bg-indigo-600 border border-indigo-500 text-[var(--ws-text-primary)] shadow-lg shadow-indigo-600/20'
+                                : 'bg-[var(--ws-hover)] border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
                                 }`}
                         >
                             <section.icon className="w-4 h-4 shrink-0" aria-hidden />
@@ -227,7 +227,7 @@ const GlobalSettingsTab: React.FC = () => {
                                     <div className="space-y-2">
                                         <label className="type-label font-medium text-[var(--ws-text-secondary)]">Logo Assets</label>
                                         <div className="flex items-start gap-4">
-                                            <div className="w-16 h-16 shrink-0 bg-[var(--ws-panel)] rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                                            <div className="w-16 h-16 shrink-0 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)] flex items-center justify-center overflow-hidden">
                                                 {branding.logoUrl ? <img src={branding.logoUrl} alt="Platform logo preview" className="h-full w-full object-contain" /> : <Globe className="w-8 h-8 text-indigo-500" />}
                                             </div>
                                             <div className="flex-1"><Input label="Logo URL" placeholder="https://cdn.example.com/logo.svg" value={branding.logoUrl ?? ''} onChange={(e) => setBranding({ logoUrl: e.target.value })} validate={(v) => v.trim() && !/^https:\/\/.+/.test(v.trim()) ? 'Use a secure HTTPS logo URL' : undefined} /></div>
@@ -328,9 +328,9 @@ const GlobalSettingsTab: React.FC = () => {
                             <div className="space-y-6">
                                 <SectionHeader title="System Security" description="Configure platform-wide security and access policies" />
                                 <div className="space-y-4">
-                                    <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-white/5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="type-ui font-bold text-white">Global 2FA Enforcement</h4>
+                                            <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">Global 2FA Enforcement</h4>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">Require 2FA for Super Admins and Tenant Admins when enforced by policy.</p>
                                         </div>
                                         <Toggle
@@ -339,9 +339,9 @@ const GlobalSettingsTab: React.FC = () => {
                                             ariaLabel="Toggle global two-factor authentication requirement"
                                         />
                                     </div>
-                                    <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-white/5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="p-4 bg-[var(--ws-panel)] rounded-2xl border border-[var(--ws-border)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="min-w-0">
-                                            <h4 className="type-ui font-bold text-white">New User Registration</h4>
+                                            <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">New User Registration</h4>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">Allow users to sign up without an invite when your auth flow permits it.</p>
                                         </div>
                                         <Toggle
@@ -415,16 +415,16 @@ const GlobalSettingsTab: React.FC = () => {
                                     />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Card
-                                            className="p-4 bg-[var(--ws-panel)] border-white/5 hover:border-teal-500/30 transition-all cursor-pointer group"
+                                            className="p-4 bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-teal-500/30 transition-all cursor-pointer group"
                                             onClick={() => window.open(support.docsUrl?.trim() || '/docs', '_blank')}
                                         >
                                             <FileText className="w-6 h-6 text-[var(--ws-text-muted)] mb-3 group-hover:text-teal-400 transition-colors" />
-                                            <h5 className="type-ui font-bold text-white mb-1">Full Documentation</h5>
+                                            <h5 className="type-ui font-bold text-[var(--ws-text-primary)] mb-1">Full Documentation</h5>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">Open documentation in a new tab.</p>
                                         </Card>
-                                        <Card className="p-4 bg-[var(--ws-panel)] border-white/5 hover:border-blue-500/30 transition-all">
+                                        <Card className="p-4 bg-[var(--ws-panel)] border-[var(--ws-border)] hover:border-blue-500/30 transition-all">
                                             <Bell className="w-6 h-6 text-[var(--ws-text-muted)] mb-3" />
-                                            <h5 className="type-ui font-bold text-white mb-1">System Updates</h5>
+                                            <h5 className="type-ui font-bold text-[var(--ws-text-primary)] mb-1">System Updates</h5>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">View recent logs and upcoming feature releases.</p>
                                         </Card>
                                     </div>
@@ -441,7 +441,7 @@ const GlobalSettingsTab: React.FC = () => {
 
 const SectionHeader = ({ title, description }: { title: string; description: string }) => (
     <div className="mb-6">
-        <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+        <h3 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">{title}</h3>
         <p className="text-[var(--ws-text-muted)] type-card-description">{description}</p>
     </div>
 );
@@ -459,10 +459,10 @@ const IntegrationItem = ({
 }) => {
     const status = configured ? 'Connected' : 'Not configured';
     return (
-        <div className="p-4 bg-[var(--ws-panel)]/50 rounded-2xl border border-white/5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 bg-[var(--ws-panel)]/50 rounded-2xl border border-[var(--ws-border)] hover:border-[var(--ws-border)] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h4 className="type-ui font-bold text-white">{name}</h4>
+                    <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">{name}</h4>
                     <div
                         className={`px-2 py-0.5 rounded-full type-caption font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)]'
                             }`}

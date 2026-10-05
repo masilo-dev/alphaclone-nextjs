@@ -125,8 +125,8 @@ export default function DashboardClientPage() {
     if (!user || needsMfa) {
         const loginHref = needsMfa ? '/auth/login?reason=mfa_required' : '/auth/login';
         return (
-            <main className="flex min-h-screen items-center justify-center bg-[var(--ws-canvas)] px-6 text-center text-white">
-                <section className="max-w-md rounded-2xl border border-white/10 bg-[var(--ws-panel)]/70 p-7 shadow-2xl">
+            <main className="flex min-h-screen items-center justify-center bg-[var(--ws-canvas)] px-6 text-center text-[var(--ws-text-primary)]">
+                <section className="max-w-md rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-7 shadow-2xl">
                     <h1 className="text-xl font-semibold">Sign-in required</h1>
                     <p className="mt-2 type-card-description text-[var(--ws-text-secondary)]">
                         This workspace is protected. Redirecting you to sign in now; if that does not open, use the link below.

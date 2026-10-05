@@ -351,3 +351,14 @@ html.dark {
   outline: none;
   box-shadow: var(--interactive-focus-ring);
 }
+
+/* Untitled-aligned authenticated page primitives */
+.ac-untitled-page {
+  color: var(--ws-text-primary);
+}
+
+.ac-untitled-panel {
+  background: var(--ws-panel);
+  border-color: var(--ws-border);
+  color: var(--ws-text-primary);
+}

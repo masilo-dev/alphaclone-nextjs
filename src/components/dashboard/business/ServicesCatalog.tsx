@@ -72,7 +72,7 @@ export const ServicesCatalog: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2">
+                    <h2 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
                         <Package className="text-teal-500 w-5 h-5" /> Services Catalog
                     </h2>
                     <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mt-1">
@@ -82,7 +82,7 @@ export const ServicesCatalog: React.FC = () => {
                 {!isAdding && (
                     <Button 
                         onClick={() => setIsAdding(true)} 
-                        className="bg-teal-600 hover:bg-teal-500 text-white gap-2 h-10 px-6"
+                        className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] gap-2 h-10 px-6"
                     >
                         <Plus size={16} /> Add Service
                     </Button>
@@ -169,7 +169,7 @@ export const ServicesCatalog: React.FC = () => {
                             <input 
                                 type="text"
                                 placeholder="Search services..."
-                                className="w-full bg-[var(--ws-panel)]/40 border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-teal-500/50 transition-all"
+                                className="w-full bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl pl-12 pr-4 py-4 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50 transition-all"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
@@ -177,12 +177,12 @@ export const ServicesCatalog: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filteredServices.map((service) => (
-                                <Card key={service.id} className="group p-5 bg-[var(--ws-panel)]/40 border-white/5 hover:bg-white/[0.03] transition-all relative overflow-hidden">
+                                <Card key={service.id} className="group p-5 bg-[var(--ws-panel)]/40 border-[var(--ws-border)] hover:bg-white/[0.03] transition-all relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-1 h-full bg-teal-500/20 group-hover:bg-teal-500 transition-all" />
                                     
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
-                                            <h3 className="font-black text-white uppercase tracking-tight">{service.name}</h3>
+                                            <h3 className="font-black text-[var(--ws-text-primary)] uppercase tracking-tight">{service.name}</h3>
                                             <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest flex items-center gap-1 mt-1">
                                                 <Clock className="w-3 h-3" /> {service.unit}
                                             </p>
@@ -190,7 +190,7 @@ export const ServicesCatalog: React.FC = () => {
                                         <div className="flex gap-2">
                                             <button 
                                                 onClick={() => startEdit(service)}
-                                                className="p-2 bg-white/5 rounded-lg text-[var(--ws-text-muted)] hover:text-teal-400 hover:bg-[var(--brand-blue-400)]/10 transition-all"
+                                                className="p-2 bg-[var(--ws-hover)] rounded-lg text-[var(--ws-text-muted)] hover:text-teal-400 hover:bg-[var(--brand-blue-400)]/10 transition-all"
                                             >
                                                 <Edit2 size={14} />
                                             </button>
@@ -205,7 +205,7 @@ export const ServicesCatalog: React.FC = () => {
                                                         toast.error(message);
                                                     }
                                                 }}
-                                                className="p-2 bg-white/5 rounded-lg text-[var(--ws-text-muted)] hover:text-rose-400 hover:bg-[var(--error-500)]/10 transition-all"
+                                                className="p-2 bg-[var(--ws-hover)] rounded-lg text-[var(--ws-text-muted)] hover:text-rose-400 hover:bg-[var(--error-500)]/10 transition-all"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -216,7 +216,7 @@ export const ServicesCatalog: React.FC = () => {
                                         {service.description || 'No description provided.'}
                                     </p>
                                     
-                                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                                    <div className="flex justify-between items-center pt-4 border-t border-[var(--ws-border)]">
                                         <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Base Rate</span>
                                         <span className="text-lg font-black text-teal-400">${service.defaultPrice.toLocaleString()}</span>
                                     </div>

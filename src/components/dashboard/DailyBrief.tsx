@@ -86,16 +86,16 @@ export default function DailyBrief() {
       >
         <div className="bg-[var(--ws-panel)] border border-blue-500/30 rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/10">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-6 py-4 flex items-center justify-between border-b border-white/5">
+          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 px-6 py-4 flex items-center justify-between border-b border-[var(--ws-border)]">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Coffee className="w-4 h-4 text-white" />
+                <Coffee className="w-4 h-4 text-[var(--ws-text-primary)]" />
               </div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Your 5-Minute Brief</h2>
+              <h2 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">Your 5-Minute Brief</h2>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-[var(--ws-text-muted)] hover:text-white"
+              className="p-1.5 hover:bg-[var(--ws-hover)] rounded-full transition-colors text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
             >
               <X className="w-5 h-5" />
             </button>
@@ -117,7 +117,7 @@ export default function DailyBrief() {
                   <Target className="w-3 h-3" />
                   Today's Main Objective
                 </div>
-                <p className="text-lg font-bold text-white leading-snug">
+                <p className="text-lg font-bold text-[var(--ws-text-primary)] leading-snug">
                   {content.focus}
                 </p>
               </div>
@@ -151,7 +151,7 @@ export default function DailyBrief() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-white/5">
+              <div className="pt-2 border-t border-[var(--ws-border)]">
                 <p className="type-card-description italic text-[var(--ws-text-muted)] flex items-center gap-2">
                   <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                   {content.closing}
@@ -161,7 +161,7 @@ export default function DailyBrief() {
           </div>
           
           {/* Footer Action */}
-          <div className="bg-[var(--ws-panel)]/50 px-6 py-3 border-t border-white/5 flex justify-end">
+          <div className="bg-[var(--ws-panel)]/50 px-6 py-3 border-t border-[var(--ws-border)] flex justify-end">
             <button 
               onClick={() => setIsOpen(false)}
               className="type-caption font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 group"

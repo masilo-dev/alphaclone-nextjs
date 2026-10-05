@@ -317,7 +317,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`font-bold ${isSelected ? 'text-white' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
+                                                                <span className={`font-bold ${isSelected ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
                                                                 {cmd.shortcut && (
                                                                     <span className="type-caption font-black bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] px-1.5 py-0.5 rounded border border-[var(--ws-border)] uppercase tracking-tighter">
                                                                         {cmd.shortcut}
@@ -369,7 +369,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                             </div>
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className={`font-bold ${isSelected ? 'text-white' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
+                                                                    <span className={`font-bold ${isSelected ? 'text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-secondary)]'}`}>{cmd.title}</span>
                                                                     {cmd.shortcut && (
                                                                         <span className="type-caption font-black bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] px-1.5 py-0.5 rounded border border-[var(--ws-border)] uppercase tracking-tighter">
                                                                             {cmd.shortcut}

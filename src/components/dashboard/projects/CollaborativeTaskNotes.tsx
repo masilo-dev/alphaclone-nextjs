@@ -156,7 +156,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                         <Users className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="type-ui font-semibold text-white">Shared Notes</h3>
+                        <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">Shared Notes</h3>
                         <div className="flex items-center gap-2">
                             <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
                             <span className="type-caption text-[var(--ws-text-muted)]">
@@ -172,7 +172,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     </div>
                     <button
                         onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="p-2 hover:bg-white/5 rounded-xl text-[var(--ws-text-muted)] hover:text-white transition-all"
+                        className="p-2 hover:bg-[var(--ws-hover)] rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all"
                     >
                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                     </button>
@@ -200,14 +200,14 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     {cursors.map((cursor, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-[var(--ws-surface-secondary)] flex items-center justify-center type-caption font-black text-white shadow-xl"
+                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-[var(--ws-surface-secondary)] flex items-center justify-center type-caption font-black text-[var(--ws-text-primary)] shadow-xl"
                             title={cursor.userName}
                             style={{ borderColor: cursor.color }}
                         >
                             {cursor.userName.charAt(0)}
                         </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center type-caption font-black text-white shadow-xl z-10" title="You">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center type-caption font-black text-[var(--text-inverse)] shadow-xl z-10" title="You">
                         {userName.charAt(0)}
                     </div>
                 </div>

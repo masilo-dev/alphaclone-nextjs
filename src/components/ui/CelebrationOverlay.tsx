@@ -43,7 +43,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                                 <Sparkles className="w-10 h-10 text-slate-900" />
                             </div>
                             
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">
+                            <h2 className="text-3xl font-black text-[var(--ws-text-primary)] uppercase tracking-tighter mb-2">
                                 {title}
                             </h2>
                             <p className="text-teal-400 font-mono type-caption uppercase tracking-caps mb-4">
@@ -56,7 +56,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                             
                             <button 
                                 onClick={onClose}
-                                className="absolute top-4 right-4 text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                className="absolute top-4 right-4 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>

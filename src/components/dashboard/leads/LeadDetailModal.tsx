@@ -761,7 +761,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             hideHeader
         >
             <div className="flex min-h-full flex-col bg-[var(--ws-canvas)]">
-                <div className="sticky top-0 z-30 border-b border-white/5 bg-[var(--ws-canvas)]/95 px-4 py-3 pr-14 backdrop-blur-xl sm:px-6">
+                <div className="sticky top-0 z-30 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]/95 px-4 py-3 pr-14 backdrop-blur-xl sm:px-6">
                     <RecordHeader
                         moduleId="leads"
                         title={lead.businessName}
@@ -990,7 +990,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
                             className={`py-3 type-caption sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
-                                ? 'border-[var(--brand-blue-500)] text-white'
+                                ? 'border-[var(--brand-blue-500)] text-[var(--ws-text-primary)]'
                                 : 'border-transparent text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                 }`}
                         >
@@ -1004,7 +1004,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     <div className="min-w-0">
                     {showEditForm && (
                         <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
-                            <h3 className="type-ui font-semibold text-white mb-3">Edit lead details</h3>
+                            <h3 className="type-ui font-semibold text-[var(--text-inverse)] mb-3">Edit lead details</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Input
                                     label="Business name"
@@ -1082,11 +1082,11 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     <button
                                         type="button"
                                         onClick={handleNextAction}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-[var(--ws-canvas)]/60 hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 hover:bg-[var(--ws-surface-secondary)] transition-colors ${nextAction.color}`}
                                     >
                                         {nextAction.icon}
                                         <div className="text-left">
-                                            <p className="type-card-description font-semibold text-white">{nextAction.action}</p>
+                                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{nextAction.action}</p>
                                             <p className="type-card-description text-[var(--ws-text-muted)]">{nextAction.reason}</p>
                                         </div>
                                     </button>
@@ -1101,7 +1101,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="p-6 space-y-4">
-                                <h3 className="text-lg font-semibold text-white mb-4">Contact Info</h3>
+                                <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Contact Info</h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-3 text-[var(--ws-text-secondary)]">
                                         <div className="w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center">
@@ -1151,7 +1151,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             {lead.isVerified && (
                                 <Card className="p-6 border-emerald-500/20 bg-emerald-500/5">
                                     <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
                                             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                                             AI Verification
                                         </h3>
@@ -1170,7 +1170,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         </div>
 
                                         <div className="flex flex-col gap-3">
-                                            <div className="p-3 bg-[var(--ws-panel)]/50 rounded-lg border border-white/5">
+                                            <div className="p-3 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)]">
                                                 <p className="type-card-description text-[var(--ws-text-secondary)] italic leading-relaxed">
                                                     <span className="text-emerald-400 font-bold not-italic font-mono mr-2 uppercase tracking-tighter">Technical Audit:</span>
                                                     {lead.verificationNotes || "Data matches typical patterns for a legitimate business in this region."}
@@ -1198,7 +1198,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             <div className="space-y-6">
                                 <Card className="p-6 bg-indigo-900/10 border-indigo-500/20">
                                     <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
                                             <Target className="w-5 h-5 text-indigo-400" />
                                             Conversion Intelligence
                                         </h3>
@@ -1218,7 +1218,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             />
                                         </div>
                                         
-                                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5">
+                                        <div className="p-4 bg-black/40 rounded-2xl border border-[var(--ws-border)]">
                                             <span className="type-caption font-black text-indigo-400 uppercase tracking-widest block mb-2">AlphaClone Strategy Analysis</span>
                                             <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
                                                 {lead.hookAnalysis || "The Sales Agent predicts a high response rate based on industry intent and pain point alignment. Use the pattern-interrupting hook below for maximum conversion."}
@@ -1228,11 +1228,11 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </Card>
 
                                 <Card className="p-6">
-                                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                         <Bot className="w-5 h-5 text-[var(--brand-blue-400)]" />
                                         AI Deep Research
                                     </h3>
-                                    <div className="p-4 bg-[var(--ws-panel)] border border-white/5 rounded-lg">
+                                    <div className="p-4 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg">
                                         <p className="text-[var(--ws-text-secondary)] type-card-description leading-relaxed">
                                             {lead.notes || "No AI research available yet. Run research to gather market intelligence."}
                                         </p>
@@ -1241,7 +1241,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                 {lead.outreachHook && (
                                     <Card className="p-6 border-purple-500/30 bg-indigo-500/5">
-                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                             <Zap className="w-5 h-5 text-purple-400" />
                                             Strategic Hook
                                         </h3>
@@ -1262,7 +1262,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                 {( (lead.techStack && lead.techStack.length > 0) || (lead.painPoints && lead.painPoints.length > 0) || lead.valueProposition) && (
                                     <Card className="p-6 bg-[var(--ws-panel)]/40">
-                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                             <Database className="w-5 h-5 text-blue-400" />
                                             Business Intelligence
                                         </h3>
@@ -1292,7 +1292,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                     <span className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-widest block mb-2">Pain Points</span>
                                                     <div className="space-y-2">
                                                         {lead.painPoints.map((point, i) => (
-                                                            <div key={i} className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-panel)]/50 p-2 rounded border border-white/5">
+                                                            <div key={i} className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-panel)]/50 p-2 rounded border border-[var(--ws-border)]">
                                                                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
                                                                 {point}
                                                             </div>
@@ -1306,7 +1306,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                 {lead.outreachMessage && (
                                     <Card className="p-6 bg-[var(--ws-panel)]/40 border-[var(--ws-border)]">
-                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4 flex items-center gap-2">
                                             <Send className="w-5 h-5 text-[var(--brand-blue-400)]" />
                                             Outreach Draft
                                         </h3>
@@ -1337,7 +1337,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                     {activeTab === 'deals' && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-white">Related Deals</h3>
+                            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Related Deals</h3>
                             {relatedDeals.length === 0 ? (
                                 <div className="text-center py-12 text-[var(--ws-text-muted)] border border-dashed border-[var(--ws-border)] rounded-2xl">
                                     <Target className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -1348,7 +1348,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     {relatedDeals.map((deal) => (
                                         <Card key={deal.id} className="p-4 flex items-center justify-between gap-3 border-[var(--ws-border)]">
                                             <div>
-                                                <p className="font-medium text-white">{deal.name || deal.title}</p>
+                                                <p className="font-medium text-[var(--ws-text-primary)]">{deal.name || deal.title}</p>
                                                 <p className="type-caption text-[var(--ws-text-muted)] capitalize">{deal.stage || deal.status}</p>
                                             </div>
                                             <Button
@@ -1371,7 +1371,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     {activeTab === 'tasks' && (
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                                <h3 className="text-lg font-semibold text-white">Tasks</h3>
+                                <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Tasks</h3>
                                 <Button size="sm" onClick={() => setShowTaskForm(true)} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Add Task
                                 </Button>
@@ -1417,7 +1417,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                 onClick={() => handleToggleTask(task.id, task.status)}
                                                 className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.status === 'completed' ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-600 hover:border-[var(--brand-blue-500)]'}`}
                                             >
-                                                {task.status === 'completed' && <CheckSquare className="w-3 h-3 text-white" />}
+                                                {task.status === 'completed' && <CheckSquare className="w-3 h-3 text-[var(--ws-text-primary)]" />}
                                             </button>
                                             <span className={`flex-1 ${task.status === 'completed' ? 'text-[var(--ws-text-muted)] line-through' : 'text-[var(--ws-text-secondary)]'}`}>
                                                 {task.title}
@@ -1438,7 +1438,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     {activeTab === 'meetings' && (
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                                <h3 className="text-lg font-semibold text-white">Meetings</h3>
+                                <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Meetings</h3>
                                 <Button size="sm" onClick={() => setShowMeetingForm(true)} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Schedule Meeting
                                 </Button>
@@ -1486,7 +1486,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     {activeTab === 'notes' && (
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                                <h3 className="text-base sm:text-lg font-semibold text-white">Lead Intelligence & Notes</h3>
+                                <h3 className="text-base sm:text-lg font-semibold text-[var(--ws-text-primary)]">Lead Intelligence & Notes</h3>
                                 <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     Save Changes
                                 </Button>
@@ -1506,16 +1506,16 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                     {activeTab === 'history' && (
                         <div className="space-y-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Activity Timeline</h3>
+                            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Activity Timeline</h3>
                             <div className="relative border-l-2 border-[var(--ws-border)] ml-4 pl-8 space-y-8">
                                 {activities.map((activity) => (
                                     <div key={activity.id} className="relative">
                                         <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-[var(--ws-panel)] border-2 border-[var(--ws-border)] flex items-center justify-center">
                                             <div className={`w-2 h-2 rounded-full ${activity.type === 'stage_change' ? 'bg-[var(--brand-blue-500)]' : 'bg-blue-500'}`} />
                                         </div>
-                                        <div className="glass-panel p-4 rounded-2xl border border-white/5">
+                                        <div className="glass-panel p-4 rounded-2xl border border-[var(--ws-border)]">
                                             <div className="flex justify-between items-start mb-1">
-                                                <p className="font-medium text-white">{activity.description}</p>
+                                                <p className="font-medium text-[var(--ws-text-primary)]">{activity.description}</p>
                                                 <span className="type-caption text-[var(--ws-text-muted)]">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
                                             </div>
                                             {activity.metadata?.old_stage && (

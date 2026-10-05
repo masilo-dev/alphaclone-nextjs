@@ -94,7 +94,7 @@ export default function EnhancedTeamChat() {
               <MessageCircle className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
-              <h3 className="font-bold text-white">Team Chat</h3>
+              <h3 className="font-bold text-[var(--ws-text-primary)]">Team Chat</h3>
               <p className="type-caption text-[var(--ws-text-muted)]">Real-time team collaboration</p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function EnhancedTeamChat() {
               <div
                 key={m.id}
                 title={m.name}
-                className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-tertiary)] flex items-center justify-center type-caption font-bold text-white"
+                className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-tertiary)] flex items-center justify-center type-caption font-bold text-[var(--ws-text-primary)]"
               >
                 {m.name?.charAt(0)}
               </div>
@@ -145,7 +145,7 @@ export default function EnhancedTeamChat() {
 
               return (
                 <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                  <div className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex-shrink-0 flex items-center justify-center font-bold type-caption text-white">
+                  <div className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex-shrink-0 flex items-center justify-center font-bold type-caption text-[var(--ws-text-primary)]">
                     {(msg.senderName || 'U').charAt(0)}
                   </div>
                   <div className={`max-w-[70%] space-y-1 ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
@@ -154,7 +154,7 @@ export default function EnhancedTeamChat() {
                       <span>{format(new Date(msg.timestamp), 'h:mm a')}</span>
                     </div>
                     <div className={`p-3 rounded-2xl type-ui ${isMe
-                      ? 'bg-indigo-600 text-white rounded-tr-sm'
+                      ? 'bg-indigo-600 text-[var(--ws-text-primary)] rounded-tr-sm'
                       : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-sm'
                       }`}>
                       {msg.text}
@@ -175,12 +175,12 @@ export default function EnhancedTeamChat() {
               onChange={e => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
+              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-indigo-500 resize-none h-12"
             />
             <button
               onClick={sendMessage}
               disabled={!newMessage.trim()}
-              className="absolute right-2 top-2 p-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+              className="absolute right-2 top-2 p-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-[var(--ws-text-primary)] transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>

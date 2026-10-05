@@ -103,7 +103,7 @@ export function ModuleIntelligenceCard({
 
   if (loading && !data) {
     return (
-      <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/50 p-3 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-3 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
         Loading module intelligence...
       </div>
@@ -113,7 +113,7 @@ export function ModuleIntelligenceCard({
   // Explicit state instead of vanishing silently when intelligence isn't ready.
   if (!data?.module) {
     return (
-      <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/50 p-3 space-y-2">
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-3 space-y-2">
         <div className="flex items-center justify-between">
           <h4 className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">{title}</h4>
           <button
@@ -135,7 +135,7 @@ export function ModuleIntelligenceCard({
   const topAction = data.topActions?.[0];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/50 p-3 space-y-2.5">
+    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-3 space-y-2.5">
       <div className="flex items-center justify-between">
         <h4 className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">{title}</h4>
         <div className="flex items-center gap-2">

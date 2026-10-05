@@ -61,12 +61,12 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
   };
 
   return (
-    <div className="rounded-lg border border-white/10 bg-[var(--ws-panel)] overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
+    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--ws-border)]">
         <div className="flex items-center gap-2 min-w-0">
           <BookOpen className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
-            <h3 className="type-ui font-semibold text-white">Bonnie Research</h3>
+            <h3 className="type-ui font-semibold text-[var(--ws-text-primary)]">Bonnie Research</h3>
             <p className="type-card-description text-[var(--ws-text-muted)] truncate">
               Continuous OSS + architecture evaluation for the agentic OS
             </p>
@@ -76,7 +76,7 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
           type="button"
           onClick={refresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:text-white disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-[var(--ws-border)] px-2.5 py-1.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] disabled:opacity-50"
         >
           {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Rescore
@@ -109,10 +109,10 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
               {briefing.findings.map((finding) => (
                 <div
                   key={finding.targetId}
-                  className="rounded-xl border border-white/5 bg-[var(--ws-canvas)]/50 p-3 space-y-1.5"
+                  className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-3 space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="type-card-description font-semibold text-white">{finding.name}</p>
+                    <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{finding.name}</p>
                     <span
                       className={`shrink-0 rounded-full border px-2 py-0.5 type-caption font-bold uppercase tracking-wider ${recommendationStyles[finding.recommendation]}`}
                     >

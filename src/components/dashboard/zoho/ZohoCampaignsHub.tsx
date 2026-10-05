@@ -207,7 +207,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   if (!baseConnected) {
     return (
       <ModulePageLayout>
-        <div className="max-w-2xl mx-auto rounded-3xl border border-white/5 bg-[var(--ws-panel)]/70 p-6 md:p-8 overflow-hidden relative">
+        <div className="max-w-2xl mx-auto rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-6 md:p-8 overflow-hidden relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_36%)] pointer-events-none" />
           <div className="relative grid gap-6 md:grid-cols-[1.15fr_0.85fr] items-center">
             <div className="space-y-4">
@@ -215,7 +215,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
                 <Megaphone className="w-7 h-7 text-teal-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-black text-white">Connect Zoho to run campaigns</h2>
+                <h2 className="text-2xl font-black text-[var(--ws-text-primary)]">Connect Zoho to run campaigns</h2>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-2 max-w-lg">
                   Campaigns run natively through your Zoho account so lists, sends, opens, and clicks stay in sync.
                 </p>
@@ -228,7 +228,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
                 ].map((chip) => {
                   const ChipIcon = chip.icon;
                   return (
-                    <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-[var(--ws-canvas)]/60 px-3 py-1 type-ui font-bold text-[var(--ws-text-secondary)]">
+                    <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 px-3 py-1 type-ui font-bold text-[var(--ws-text-secondary)]">
                       <ChipIcon className="w-3.5 h-3.5 text-teal-400" />
                       {chip.label}
                     </span>
@@ -245,7 +245,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
               </button>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-[var(--ws-canvas)]/60 p-4 space-y-3">
+            <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Campaign flow</span>
                 <span className="type-ui font-bold text-teal-400">Ready in 2 steps</span>
@@ -260,12 +260,12 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
                     <div className={`mt-0.5 w-7 h-7 rounded-full border flex items-center justify-center type-ui font-black ${
                       step.active
                         ? 'bg-teal-500/15 border-teal-500/30 text-[var(--brand-blue-300)]'
-                        : 'bg-[var(--ws-surface-secondary)] border-white/5 text-[var(--ws-text-muted)]'
+                        : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'
                     }`}>
                       {index + 1}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="type-card-description font-bold text-white">{step.title}</p>
+                      <p className="type-card-description font-bold text-[var(--ws-text-primary)]">{step.title}</p>
                       <p className="type-card-description text-[var(--ws-text-muted)]">{step.text}</p>
                     </div>
                   </div>
@@ -283,7 +283,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
       <ModulePageLayout>
         <div className="max-w-lg mx-auto rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-white mb-2">Campaigns access needed</h2>
+          <h2 className="text-lg font-bold text-[var(--ws-text-primary)] mb-2">Campaigns access needed</h2>
           <p className="type-card-description text-[var(--ws-text-muted)] mb-5">
             Your Zoho connection is missing Campaigns permissions. Reconnect to grant list and campaign access.
           </p>
@@ -308,7 +308,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             type="button"
             onClick={refresh}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:text-white"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -322,7 +322,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         <a href="/dashboard/business/settings" className="text-teal-400 font-semibold hover:underline">Settings → Email Delivery Provider</a>.
       </div>
 
-      <div className="flex gap-2 mb-6 border-b border-white/5 pb-2">
+      <div className="flex gap-2 mb-6 border-b border-[var(--ws-border)] pb-2">
         {([
           { id: 'campaigns' as Tab, label: 'Campaigns', icon: Megaphone },
           { id: 'lists' as Tab, label: 'Mailing Lists', icon: Users },
@@ -333,7 +333,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             type="button"
             onClick={() => setTab(id)}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl type-caption font-bold uppercase tracking-wide ${
-              tab === id ? 'bg-teal-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
+              tab === id ? 'bg-teal-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
             }`}
           >
             <Icon className="w-3.5 h-3.5" />
@@ -357,9 +357,9 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             campaigns.map((c) => {
               const report = c.campaignKey ? reports[c.campaignKey] : undefined;
               return (
-                <div key={c.campaignKey || c.name} className="rounded-xl border border-white/5 bg-[var(--ws-panel)]/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div key={c.campaignKey || c.name} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-white truncate">{c.name || 'Untitled'}</p>
+                    <p className="font-semibold text-[var(--ws-text-primary)] truncate">{c.name || 'Untitled'}</p>
                     <p className="type-caption text-[var(--ws-text-muted)] capitalize">{c.status || 'unknown'} · {c.createdAt || '—'}</p>
                   </div>
                   <div className="flex items-center gap-4 shrink-0">
@@ -385,21 +385,21 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         <div className="space-y-4">
           <div className="grid gap-3">
             {lists.map((list) => (
-              <div key={list.listKey} className="rounded-xl border border-white/5 bg-[var(--ws-panel)]/50 p-4 flex justify-between items-center gap-3">
+              <div key={list.listKey} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 flex justify-between items-center gap-3">
                 <div>
-                  <p className="font-semibold text-white">{list.name}</p>
+                  <p className="font-semibold text-[var(--ws-text-primary)]">{list.name}</p>
                   <p className="type-card-description text-[var(--ws-text-muted)]">{list.contactCount} subscribers · {list.unsubscribeCount} unsubscribed</p>
                 </div>
                 <span className="type-caption uppercase font-bold text-[var(--ws-text-muted)]">{list.owner}</span>
               </div>
             ))}
           </div>
-          <div className="rounded-xl border border-white/5 bg-[var(--ws-canvas)]/50 p-4 space-y-3">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4 space-y-3">
             <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Add CRM contact to list</p>
             <select
               value={subscribeListKey}
               onChange={(e) => setSubscribeListKey(e.target.value)}
-              className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white"
+              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
             >
               <option value="">Select mailing list</option>
               {lists.map((l) => (
@@ -411,9 +411,9 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
               value={subscribeEmail}
               onChange={(e) => setSubscribeEmail(e.target.value)}
               placeholder="contact@example.com"
-              className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white"
+              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)]"
             />
-            <button type="button" onClick={handleSubscribe} className="rounded-xl bg-teal-600 px-4 py-2 type-ui font-bold text-white">
+            <button type="button" onClick={handleSubscribe} className="rounded-xl bg-teal-600 px-4 py-2 type-ui font-bold text-[var(--text-inverse)]">
               Add to list
             </button>
           </div>
@@ -424,33 +424,33 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             value={compose.campaignName}
             onChange={(e) => setCompose({ ...compose, campaignName: e.target.value })}
             placeholder="Campaign name"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 type-ui text-white"
+            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
           />
           <input
             value={compose.subject}
             onChange={(e) => setCompose({ ...compose, subject: e.target.value })}
             placeholder="Email subject"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 type-ui text-white"
+            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               value={compose.fromEmail}
               onChange={(e) => setCompose({ ...compose, fromEmail: e.target.value })}
               placeholder="From email"
-              className="h-11 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 type-ui text-white"
+              className="h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
             />
             <input
               value={compose.fromName}
               onChange={(e) => setCompose({ ...compose, fromName: e.target.value })}
               placeholder="From name (optional)"
-              className="h-11 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 type-ui text-white"
+              className="h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
             />
           </div>
           <input
             value={compose.contentUrl}
             onChange={(e) => setCompose({ ...compose, contentUrl: e.target.value })}
             placeholder="Public HTML content URL (hosted newsletter HTML)"
-            className="w-full h-11 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 type-ui text-white"
+            className="w-full h-11 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 type-ui text-[var(--ws-text-primary)]"
           />
           <div>
             <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)] mb-2">Mailing lists</p>
@@ -463,7 +463,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
                   className={`px-3 py-1.5 rounded-lg type-caption font-semibold border ${
                     compose.listKeys.includes(l.listKey)
                       ? 'bg-teal-600/20 border-teal-500/40 text-[var(--brand-blue-300)]'
-                      : 'border-white/10 text-[var(--ws-text-muted)] hover:text-white'
+                      : 'border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                   }`}
                 >
                   {l.name} ({l.contactCount})
@@ -475,7 +475,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
             type="button"
             onClick={handleCreateAndSend}
             disabled={sending}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 px-5 py-2.5 type-ui font-bold text-white"
+            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 px-5 py-2.5 type-ui font-bold text-[var(--text-inverse)]"
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             Create &amp; Send

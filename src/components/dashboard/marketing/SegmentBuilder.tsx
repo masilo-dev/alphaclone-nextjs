@@ -86,8 +86,8 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
   };
 
   return (
-    <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-3">
-      <div className="flex items-center gap-2 type-ui font-bold text-white">
+    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-primary)]">
         <Filter className="w-4 h-4 text-teal-400" />
         Audience segment
       </div>
@@ -104,7 +104,7 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
               next[i].field = e.target.value;
               setRules(next);
             }}
-            className="h-9 px-2 rounded-lg bg-[var(--ws-canvas)] border border-white/5 type-caption text-white"
+            className="h-9 px-2 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption text-[var(--ws-text-primary)]"
           >
             {FIELDS.map((f) => (
               <option key={f.id} value={f.id}>{f.label}</option>
@@ -117,7 +117,7 @@ export default function SegmentBuilder({ onCount, onApply }: SegmentBuilderProps
               next[i].value = e.target.value;
               setRules(next);
             }}
-            className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-[var(--ws-canvas)] border border-white/5 type-caption text-white"
+            className="flex-1 min-w-[120px] h-9 px-3 rounded-lg bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-caption text-[var(--ws-text-primary)]"
             placeholder="Value"
           />
           <button type="button" onClick={() => setRules(rules.filter((_, j) => j !== i))} className="type-ui text-red-400">Remove</button>

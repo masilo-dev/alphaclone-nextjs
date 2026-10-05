@@ -45,15 +45,15 @@ export const AlphaConciergeBubble: React.FC = () => {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-white/20 bg-[var(--ws-panel)]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/20"
+                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-[var(--ws-border-strong)] bg-[var(--ws-panel)]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/20"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
-                            <div className="flex items-center space-x-2 text-white">
+                            <div className="flex items-center space-x-2 text-[var(--text-inverse)]">
                                 <Bot size={20} className="animate-pulse" />
                                 <span className="font-semibold">Bonnie (Alpha Support)</span>
                             </div>
-                            <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
+                            <button onClick={() => setIsOpen(false)} className="text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]">
                                 <X size={20} />
                             </button>
                         </div>
@@ -64,8 +64,8 @@ export const AlphaConciergeBubble: React.FC = () => {
                                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                                         msg.role === 'user' 
-                                            ? 'bg-indigo-600 text-white rounded-tr-none' 
-                                            : 'bg-white/10 text-[var(--ws-text-primary)] rounded-tl-none border border-white/5'
+                                            ? 'bg-indigo-600 text-[var(--ws-text-primary)] rounded-tr-none' 
+                                            : 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)] rounded-tl-none border border-[var(--ws-border)]'
                                     }`}>
                                         <p className="type-card-description">{msg.content}</p>
                                     </div>
@@ -73,7 +73,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                             ))}
                             {isTyping && (
                                 <div className="flex justify-start">
-                                    <div className="bg-white/10 rounded-2xl px-4 py-2 rounded-tl-none animate-pulse">
+                                    <div className="bg-[var(--ws-hover)] rounded-2xl px-4 py-2 rounded-tl-none animate-pulse">
                                         <div className="flex space-x-1">
                                             <div className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
                                             <div className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
@@ -85,7 +85,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-white/10 bg-black/20">
+                        <div className="p-4 border-t border-[var(--ws-border)] bg-black/20">
                             <div className="flex space-x-2">
                                 <input
                                     type="text"
@@ -93,11 +93,11 @@ export const AlphaConciergeBubble: React.FC = () => {
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                                     placeholder="Ask me anything..."
-                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="flex-1 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                                 <button 
                                     onClick={handleSend}
-                                    className="bg-indigo-600 p-2 rounded-xl text-white hover:bg-indigo-500 transition-colors"
+                                    className="bg-indigo-600 p-2 rounded-xl text-[var(--ws-text-primary)] hover:bg-indigo-500 transition-colors"
                                 >
                                     <Send size={18} />
                                 </button>
@@ -113,7 +113,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors ${
-                    isOpen ? 'bg-[var(--ws-surface-secondary)] text-white' : 'bg-indigo-600 text-white'
+                    isOpen ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)]' : 'bg-indigo-600 text-[var(--ws-text-primary)]'
                 }`}
             >
                 {isOpen ? <X size={28} /> : <MessageSquare size={28} />}

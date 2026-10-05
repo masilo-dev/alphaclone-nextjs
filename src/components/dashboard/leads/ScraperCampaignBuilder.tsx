@@ -78,7 +78,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-6 space-y-4">
-      <div className="flex items-center gap-2 text-white font-semibold">
+      <div className="flex items-center gap-2 text-[var(--ws-text-primary)] font-semibold">
         <Target className="w-5 h-5 text-emerald-400" />
         Campaign Builder
       </div>
@@ -86,7 +86,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <div>
         <label className="block type-label text-[var(--ws-text-muted)] mb-1">Campaign name</label>
         <input
-          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="SaaS CEOs — Austin"
@@ -118,7 +118,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Industry (comma-separated)</label>
           <input
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
             value={industry}
             onChange={(e) => setIndustry(e.target.value)}
             placeholder="saas, fintech"
@@ -127,7 +127,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Location</label>
           <input
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Austin, TX"
@@ -138,7 +138,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <div>
         <label className="block type-label text-[var(--ws-text-muted)] mb-1">Title keywords (comma-separated)</label>
         <input
-          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+          className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
           value={titleKeywords}
           onChange={(e) => setTitleKeywords(e.target.value)}
           placeholder="CEO, founder, VP Sales"
@@ -150,7 +150,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Daily limit</label>
           <input
             type="number"
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
             value={dailyLimit}
             onChange={(e) => setDailyLimit(Number(e.target.value))}
             min={1}
@@ -161,7 +161,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Min score</label>
           <input
             type="number"
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
             value={minScore}
             onChange={(e) => setMinScore(Number(e.target.value))}
             min={0}
@@ -171,7 +171,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
         <div>
           <label className="block type-label text-[var(--ws-text-muted)] mb-1">Enrichment</label>
           <select
-            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-white"
+            className="w-full rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-3 py-2 text-[var(--ws-text-primary)]"
             value={enrichmentLevel}
             onChange={(e) => setEnrichmentLevel(e.target.value as 'basic' | 'full')}
           >
@@ -184,7 +184,7 @@ export default function ScraperCampaignBuilder({ onCreated, onRun }: Props) {
       <button
         type="submit"
         disabled={saving}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white type-ui font-medium disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[var(--text-inverse)] type-ui font-medium disabled:opacity-50"
       >
         <Plus className="w-4 h-4" />
         {saving ? 'Creating...' : 'Create Campaign'}

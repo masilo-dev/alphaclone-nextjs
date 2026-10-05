@@ -129,7 +129,7 @@ export default function BankingCenterPage() {
       sortValue: (a) => a.name,
       accessor: (a) => (
         <div>
-          <span className="type-ui font-bold text-white block">{a.name}</span>
+          <span className="type-ui font-bold text-[var(--ws-text-primary)] block">{a.name}</span>
           <span className="type-ui text-[var(--ws-text-muted)] capitalize">{a.account_type || 'checking'}</span>
         </div>
       ),
@@ -169,7 +169,7 @@ export default function BankingCenterPage() {
       sortable: true,
       sortValue: (s) => s.statement_start_date,
       accessor: (s) => (
-        <span className="type-ui text-white">
+        <span className="type-ui text-[var(--ws-text-primary)]">
           {s.statement_start_date} → {s.statement_end_date}
         </span>
       ),
@@ -195,7 +195,7 @@ export default function BankingCenterPage() {
       <ModulePageLayout
         header={(
           <div className="px-1 pb-2">
-            <h1 className="text-lg font-semibold text-white">Banking Workspace</h1>
+            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Banking Workspace</h1>
             <p className="type-card-description text-[var(--ws-text-muted)]">Track balances, manage accounts, and run reconciliations from one place.</p>
           </div>
         )}
@@ -292,7 +292,7 @@ export default function BankingCenterPage() {
               <select
                 value={form.accountType}
                 onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value as AccountType }))}
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
               >
                 <option value="checking">Checking</option>
                 <option value="savings">Savings</option>

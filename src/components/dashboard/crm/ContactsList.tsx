@@ -227,7 +227,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold text-white">Contacts</h2>
+                    <h2 className="text-xl font-semibold text-[var(--ws-text-primary)]">Contacts</h2>
                     <p className="type-card-description text-[var(--ws-text-secondary)]">Manage your contacts and leads</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -252,14 +252,14 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                     <button
                         onClick={handleExportCSV}
                         disabled={total === 0 || exporting}
-                        className="flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-lg transition-colors disabled:opacity-50"
                     >
                         <Download className="w-4 h-4" />
                         {exporting ? 'Exporting…' : 'Export'}
                     </button>
                     <button
                         onClick={onCreateContact}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-[var(--ws-text-primary)] rounded-lg transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         Add Contact
@@ -276,13 +276,13 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                        className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as ContactStatus | 'all')}
-                    className="px-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="all">All Status</option>
                     {Object.entries(STATUS_CONFIG).map(([status, config]) => (
@@ -292,20 +292,20 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                 <select
                     value={sortField}
                     onChange={(e) => setSortField(e.target.value as typeof sortField)}
-                    className="px-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="createdAt">Sort by Date</option>
                     <option value="name">Sort by Name</option>
                 </select>
                 <button
                     onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-white"
+                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                 >
                     {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 <button
                     onClick={loadContacts}
-                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-white"
+                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                     title="Refresh"
                 >
                     <RefreshCw className="w-4 h-4" />
@@ -335,7 +335,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                     </p>
                     <button
                         onClick={onCreateContact}
-                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-[var(--ws-text-primary)] rounded-lg transition-colors"
                     >
                         <Plus className="w-4 h-4 inline mr-2" />
                         Add Contact
@@ -353,7 +353,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                     setSelectedIds(contacts.map((c) => c.id));
                                 }
                             }}
-                            className="inline-flex items-center gap-2 type-ui text-[var(--ws-text-muted)] hover:text-white"
+                            className="inline-flex items-center gap-2 type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                         >
                             {allVisibleSelected ? <CheckCircle className="w-4 h-4 text-teal-400" /> : <div className="w-4 h-4 border border-slate-500 rounded" />}
                             {allVisibleSelected ? 'Deselect page' : `Select page (${contacts.length})`}
@@ -392,14 +392,14 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                         >
                                             {isSelected ? <CheckCircle className="w-5 h-5 text-teal-400" /> : <div className="w-5 h-5 border border-slate-500 rounded" />}
                                         </button>
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-[var(--text-inverse)] font-semibold">
                                             {contact.firstName[0]}{contact.lastName[0]}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={`/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contact.id)}`}
-                                                    className="font-semibold text-white hover:text-cyan-200 hover:underline underline-offset-2 text-left"
+                                                    className="font-semibold text-[var(--ws-text-primary)] hover:text-cyan-200 hover:underline underline-offset-2 text-left"
                                                     title="Open customer relationship workspace"
                                                 >
                                                     {contact.firstName} {contact.lastName}
@@ -503,7 +503,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                         </button>
                                         <button
                                             onClick={() => onEditContact?.(contact)}
-                                            className="p-2 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors"
+                                            className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors"
                                             title="Edit Contact"
                                         >
                                             <Edit className="w-4 h-4" />
@@ -529,7 +529,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                             <select
                                 value={String(pageSize)}
                                 onChange={(e) => setPageSize(Number(e.target.value))}
-                                className="px-3 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white type-ui focus:outline-none focus:border-emerald-500/50"
+                                className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui focus:outline-none focus:border-emerald-500/50"
                                 aria-label="Contacts per page"
                             >
                                 <option value="10">10 / page</option>
@@ -575,21 +575,21 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {showBulkDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
-                        <h3 className="text-lg font-semibold text-white mb-2">Delete {selectedIds.length} contacts?</h3>
+                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete {selectedIds.length} contacts?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             This action cannot be undone. Selected contacts will be permanently deleted.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowBulkDeleteConfirm(false)}
-                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleBulkDelete}
                                 disabled={bulkDeleting}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-[var(--text-inverse)] rounded-lg transition-colors"
                             >
                                 {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.length}`}
                             </button>
@@ -602,21 +602,21 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
-                        <h3 className="text-lg font-semibold text-white mb-2">Delete Contact?</h3>
+                        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Delete Contact?</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             This action cannot be undone. The contact will be permanently deleted.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowDeleteConfirm(null)}
-                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => handleDeleteContact(showDeleteConfirm)}
                                 disabled={actionLoading === showDeleteConfirm}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-[var(--text-inverse)] rounded-lg transition-colors"
                             >
                                 {actionLoading === showDeleteConfirm ? 'Deleting...' : 'Delete'}
                             </button>
@@ -635,16 +635,16 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {previewContact && (
                 <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
                     <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[var(--ws-canvas)] shadow-2xl">
-                        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
+                        <div className="flex items-start justify-between gap-4 border-b border-[var(--ws-border)] p-5">
                             <div>
                                 <p className="type-caption font-black uppercase tracking-caps text-cyan-300">Contact 360 preview</p>
-                                <h3 className="mt-1 text-xl font-bold text-white">{previewContact.fullName}</h3>
+                                <h3 className="mt-1 text-xl font-bold text-[var(--ws-text-primary)]">{previewContact.fullName}</h3>
                                 <p className="mt-1 type-caption text-[var(--ws-text-muted)]">{previewContact.company?.name || 'Independent contact'} · {previewContact.status}</p>
                             </div>
-                            <button type="button" onClick={() => setPreviewContact(null)} className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-white/10 hover:text-white" aria-label="Close Contact 360 preview"><X className="h-5 w-5" /></button>
+                            <button type="button" onClick={() => setPreviewContact(null)} className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]" aria-label="Close Contact 360 preview"><X className="h-5 w-5" /></button>
                         </div>
                         <div className="grid gap-4 p-5 sm:grid-cols-2">
-                            <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
+                            <div className="rounded-xl border border-[var(--ws-border)] bg-white/[.03] p-4">
                                 <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Identity and contact</p>
                                 <div className="mt-3 space-y-2 type-ui text-[var(--ws-text-secondary)]">
                                     <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-cyan-300" />{previewContact.email || 'No email recorded'}</p>
@@ -652,13 +652,13 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                     <p className="flex items-center gap-2"><Building2 className="h-4 w-4 text-cyan-300" />{previewContact.company?.name || 'No company linked'}</p>
                                 </div>
                             </div>
-                            <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
+                            <div className="rounded-xl border border-[var(--ws-border)] bg-white/[.03] p-4">
                                 <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Record context</p>
                                 <div className="mt-3 flex flex-wrap gap-2">{(previewContact.tags || []).slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 type-ui font-semibold text-violet-100">{tag}</span>)}{!(previewContact.tags || []).length ? <span className="type-ui text-[var(--ws-text-muted)]">No tags yet</span> : null}</div>
                                 <button type="button" onClick={() => { setTimelineContact(previewContact); setPreviewContact(null); }} className="mt-4 inline-flex items-center gap-2 type-ui font-bold text-[var(--brand-blue-300)] hover:text-teal-200"><Activity className="h-3.5 w-3.5" /> View activity timeline</button>
                             </div>
                         </div>
-                        <div className="border-t border-white/10 p-5">
+                        <div className="border-t border-[var(--ws-border)] p-5">
                             <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Continue the work from this record</p>
                             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {[
@@ -668,7 +668,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                     ['/dashboard/business/calendar', 'View meetings', CalendarDays],
                                     ['/dashboard/tasks', 'Create task', CheckSquare],
                                     ['/dashboard/crm/unified-contacts', 'Open unified CRM', Users],
-                                ].map(([href, label, Icon]) => <Link key={String(label)} href={`${href}?contactId=${encodeURIComponent(previewContact.id)}`} onClick={() => setPreviewContact(null)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:border-cyan-300/30 hover:bg-cyan-300/[.06] hover:text-cyan-100"><Icon className="h-3.5 w-3.5 text-cyan-300" />{String(label)}</Link>)}
+                                ].map(([href, label, Icon]) => <Link key={String(label)} href={`${href}?contactId=${encodeURIComponent(previewContact.id)}`} onClick={() => setPreviewContact(null)} className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-white/[.03] px-3 py-2.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:border-cyan-300/30 hover:bg-cyan-300/[.06] hover:text-cyan-100"><Icon className="h-3.5 w-3.5 text-cyan-300" />{String(label)}</Link>)}
                             </div>
                             <p className="mt-3 type-card-description leading-5 text-[var(--ws-text-muted)]">These shortcuts keep the contact ID attached as you move into the relevant workflow. The full client record remains the source of truth.</p>
                         </div>

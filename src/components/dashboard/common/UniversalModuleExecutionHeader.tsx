@@ -87,7 +87,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={() => setShowExecutionDetails(true)}
-            className="inline-flex h-9 shrink-0 items-center rounded-lg border border-[var(--ws-border)] px-3 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white"
+            className="inline-flex h-9 shrink-0 items-center rounded-lg border border-[var(--ws-border)] px-3 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-[var(--ws-text-primary)]"
             aria-label={`Show ${moduleName} execution details`}
           >
             Details
@@ -97,7 +97,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={onExecuteNextAction}
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-teal-600 px-3 type-caption font-semibold text-white hover:bg-teal-500"
+            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-teal-600 px-3 type-caption font-semibold text-[var(--text-inverse)] hover:bg-teal-500"
           >
             Next
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -129,7 +129,7 @@ export function UniversalModuleExecutionHeader({
                 {authority.label}
               </span>
             </div>
-            <h2 className="text-base font-bold text-white leading-snug">
+            <h2 className="text-base font-bold text-[var(--ws-text-primary)] leading-snug">
               {recordTitle || `${moduleName} Execution Loop`}
             </h2>
           </div>
@@ -142,7 +142,7 @@ export function UniversalModuleExecutionHeader({
               setShow8Questions(false);
               setShowExecutionDetails(false);
             }}
-            className="inline-flex items-center rounded-lg border border-[var(--ws-border)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white"
+            className="inline-flex items-center rounded-lg border border-[var(--ws-border)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-[var(--ws-text-primary)]"
           >
             Hide details
           </button>
@@ -150,7 +150,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={onExecuteNextAction}
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 type-caption font-bold text-white hover:bg-teal-500 transition-colors shadow-md shrink-0"
+            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 type-caption font-bold text-[var(--text-inverse)] hover:bg-teal-500 transition-colors shadow-md shrink-0"
           >
             <span>Execute Next Action</span>
             <ArrowRight className="h-4 w-4" />
@@ -224,7 +224,7 @@ export function UniversalModuleExecutionHeader({
           <button
             type="button"
             onClick={() => setShow8Questions(!show8Questions)}
-            className="inline-flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
           >
             <HelpCircle className="h-3.5 w-3.5 text-teal-400" />
             <span>8 Operational Questions Audit</span>

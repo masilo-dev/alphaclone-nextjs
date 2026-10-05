@@ -141,7 +141,7 @@ const ImprovementsPage: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Platform Improvements</h1>
+                <h1 className="text-3xl font-bold text-[var(--ws-text-primary)] mb-2">Platform Improvements</h1>
                 <p className="text-[var(--ws-text-muted)]">
                     Exit-intent feedback submissions from users
                 </p>
@@ -170,7 +170,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.status || ''}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Statuses</option>
                             <option value="new">New</option>
@@ -185,7 +185,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.severity || ''}
                             onChange={(e) => handleFilterChange('severity', e.target.value)}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Priorities</option>
                             <option value="high">High</option>
@@ -220,7 +220,7 @@ const ImprovementsPage: React.FC = () => {
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     {/* Message preview */}
-                                    <p className="text-white mb-3 line-clamp-2">
+                                    <p className="text-[var(--ws-text-primary)] mb-3 line-clamp-2">
                                         {improvement.message}
                                     </p>
 
@@ -268,7 +268,7 @@ const ImprovementsPage: React.FC = () => {
                         {/* Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
-                                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Improvement Details</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Improvement Details</h2>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-2 py-1 rounded-md border type-caption font-medium ${getSeverityColor(selectedImprovement.severity)}`}>
                                         {selectedImprovement.severity.toUpperCase()}
@@ -280,7 +280,7 @@ const ImprovementsPage: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => setDetailModalOpen(false)}
-                                className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -290,7 +290,7 @@ const ImprovementsPage: React.FC = () => {
                         <div className="mb-6">
                             <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-2">Message</h3>
                             <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
-                                <p className="text-white whitespace-pre-wrap">{selectedImprovement.message}</p>
+                                <p className="text-[var(--ws-text-primary)] whitespace-pre-wrap">{selectedImprovement.message}</p>
                             </div>
                         </div>
 
@@ -298,11 +298,11 @@ const ImprovementsPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
                                 <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">User Type</h3>
-                                <p className="text-white capitalize">{selectedImprovement.user_type}</p>
+                                <p className="text-[var(--ws-text-primary)] capitalize">{selectedImprovement.user_type}</p>
                             </div>
                             <div>
                                 <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">Source</h3>
-                                <p className="text-white">{selectedImprovement.source} / {selectedImprovement.channel}</p>
+                                <p className="text-[var(--ws-text-primary)]">{selectedImprovement.source} / {selectedImprovement.channel}</p>
                             </div>
                             <div className="col-span-2">
                                 <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">Page URL</h3>
@@ -336,7 +336,7 @@ const ImprovementsPage: React.FC = () => {
                             <select
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Improvement['status'])}
-                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                             >
                                 <option value="new">New</option>
                                 <option value="reviewed">Reviewed</option>
@@ -352,7 +352,7 @@ const ImprovementsPage: React.FC = () => {
                                 value={editNotes}
                                 onChange={(e) => setEditNotes(e.target.value)}
                                 placeholder="Add internal notes about this improvement..."
-                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
                                 rows={4}
                             />
                         </div>

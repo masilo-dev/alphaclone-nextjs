@@ -144,7 +144,7 @@ export function ClientEmailContextPicker({
                           className="mt-0.5 accent-teal-500"
                         />
                         <span className="min-w-0">
-                          <span className="block type-caption font-medium text-white truncate">{item.label}</span>
+                          <span className="block type-caption font-medium text-[var(--ws-text-primary)] truncate">{item.label}</span>
                           <span className="block type-ui text-[var(--ws-text-muted)] truncate">{item.detail}</span>
                         </span>
                       </label>

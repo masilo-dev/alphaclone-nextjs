@@ -68,17 +68,17 @@ export default function WebhooksTab() {
     <ModulePageLayout
       header={<EnterprisePageHeader moduleKey="webhooks" />}
     >
-      <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://your-app.com/webhooks/alphaclone"
-          className="flex-1 min-w-[220px] bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+          className="flex-1 min-w-[220px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
         />
         <select
           value={event}
           onChange={(e) => setEvent(e.target.value)}
-          className="bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+          className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
         >
           {EVENT_OPTIONS.map((e) => (
             <option key={e} value={e}>{e}</option>
@@ -86,12 +86,12 @@ export default function WebhooksTab() {
         </select>
         <button
           onClick={() => void handleAdd()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white type-ui font-semibold"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-[var(--text-inverse)] type-ui font-semibold"
         >
           <Plus className="w-4 h-4" /> Add webhook
         </button>
       </div>
-      {newSecret && <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="type-ui font-semibold text-[var(--warning-text,var(--warning-500))]">Copy this signing secret now. It will not be shown again.</p><code className="mt-2 block break-all type-ui text-[var(--ws-text-secondary)] select-all">{newSecret}</code><button onClick={() => setNewSecret(null)} className="mt-2 type-ui text-[var(--ws-text-muted)] hover:text-white">I saved it</button></div>}
+      {newSecret && <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="type-ui font-semibold text-[var(--warning-text,var(--warning-500))]">Copy this signing secret now. It will not be shown again.</p><code className="mt-2 block break-all type-ui text-[var(--ws-text-secondary)] select-all">{newSecret}</code><button onClick={() => setNewSecret(null)} className="mt-2 type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">I saved it</button></div>}
 
       <div className="space-y-3 ac-scroll-full pb-24">
         {loading ? (
@@ -100,10 +100,10 @@ export default function WebhooksTab() {
           <p className="type-card-description text-[var(--ws-text-muted)] p-4">No webhooks configured.</p>
         ) : (
           hooks.map((h) => (
-            <div key={h.id} className="bg-[var(--ws-panel)] border border-white/5 rounded-xl p-4 flex items-start gap-3">
+            <div key={h.id} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4 flex items-start gap-3">
               <WebhookIcon className="w-5 h-5 text-teal-400 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className="type-card-description font-medium text-white break-all">{h.url}</p>
+                <p className="type-card-description font-medium text-[var(--ws-text-primary)] break-all">{h.url}</p>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{(h.events || []).join(', ')}</p>
               </div>
               <button onClick={() => void handleDelete(h.id)} className="text-[var(--ws-text-muted)] hover:text-red-400">

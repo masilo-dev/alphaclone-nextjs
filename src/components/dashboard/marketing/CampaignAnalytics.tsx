@@ -87,10 +87,10 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-white">{campaign.name}</h2>
+                    <h2 className="text-xl font-bold text-[var(--ws-text-primary)]">{campaign.name}</h2>
                     <p className="type-card-description text-[var(--ws-text-muted)]">Subject: {campaign.subject}</p>
                 </div>
-                <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-[var(--ws-text-muted)]">
+                <button onClick={onClose} className="p-2 hover:bg-[var(--ws-hover)] rounded-xl text-[var(--ws-text-muted)]">
                     <X className="w-5 h-5" />
                 </button>
             </div>
@@ -119,13 +119,13 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
 
             {/* Recipient List */}
             <div>
-                <h3 className="type-ui font-bold text-white mb-3">Recipients ({recipients.length})</h3>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl overflow-hidden">
+                <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-3">Recipients ({recipients.length})</h3>
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                     <div className="divide-y divide-white/5 max-h-60 overflow-y-auto">
                         {recipients.map(r => (
                             <div key={r.id} className="flex items-center justify-between px-4 py-2.5 type-ui">
                                 <div>
-                                    <span className="text-white">{r.email}</span>
+                                    <span className="text-[var(--ws-text-primary)]">{r.email}</span>
                                     {r.name && <span className="text-[var(--ws-text-muted)] ml-2">({r.name})</span>}
                                 </div>
                                 <StandardStatusBadge variant={resolveStatusVariant(r.status)}>{r.status}</StandardStatusBadge>

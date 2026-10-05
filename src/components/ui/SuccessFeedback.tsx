@@ -76,7 +76,7 @@ export function SuccessFeedbackProvider({ children }: { children: React.ReactNod
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="shrink-0 p-1 rounded hover:bg-white/5 text-[var(--ws-text-tertiary)]"
+              className="shrink-0 p-1 rounded hover:bg-[var(--ws-hover)] text-[var(--ws-text-tertiary)]"
               aria-label="Dismiss"
             >
               <X className="w-4 h-4" />

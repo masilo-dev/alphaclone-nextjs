@@ -103,7 +103,7 @@ export function ModuleKpiRichSections({
             {healthItems.map((pill) => (
               <span
                 key={pill.label}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[var(--ws-canvas)]/50 px-3 py-1.5 type-ui font-semibold text-[var(--ws-text-secondary)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-3 py-1.5 type-ui font-semibold text-[var(--ws-text-secondary)]"
               >
                 <span
                   className="h-2 w-2 rounded-full shrink-0"

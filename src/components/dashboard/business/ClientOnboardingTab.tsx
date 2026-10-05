@@ -173,7 +173,7 @@ export default function ClientOnboardingTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-teal-400" />
             Client Onboarding portal
           </h2>
@@ -186,7 +186,7 @@ export default function ClientOnboardingTab() {
               setStepForm({ step_name: '', step_description: '', step_order: steps.length + 1, step_type: 'form', is_required: true });
               setShowStepModal(true);
             }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Add Step
@@ -201,7 +201,7 @@ export default function ClientOnboardingTab() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
             <div className="flex justify-between items-center border-b border-[var(--ws-border)] pb-3">
-              <span className="type-caption font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-teal-400" />
                 Active Onboarding Workflow Steps
               </span>
@@ -224,7 +224,7 @@ export default function ClientOnboardingTab() {
                         <span className="w-5 h-5 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center font-bold type-caption">
                           {step.step_order}
                         </span>
-                        <h4 className="type-card-title font-bold text-white">{step.step_name}</h4>
+                        <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">{step.step_name}</h4>
                         {step.is_required && (
                           <span className="type-ui font-bold bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20">
                             Required
@@ -251,7 +251,7 @@ export default function ClientOnboardingTab() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-violet-400 animate-pulse" />
               <div>
-                <h4 className="type-caption font-bold text-white uppercase tracking-wider">AI Workflow Architect</h4>
+                <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">AI Workflow Architect</h4>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Let AI formulate best-practice onboarding workflows instantly</p>
               </div>
             </div>
@@ -272,7 +272,7 @@ export default function ClientOnboardingTab() {
               <button
                 onClick={handleAiSeed}
                 disabled={seedingAi}
-                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all active:scale-95"
+                className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-[var(--ws-text-primary)] rounded-xl type-caption font-bold flex items-center gap-1.5 transition-all active:scale-95"
               >
                 {seedingAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                 Generate Workflow
@@ -284,7 +284,7 @@ export default function ClientOnboardingTab() {
         {/* Right Col: Submissions reviewer */}
         <div className="space-y-6">
           <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
-            <span className="type-caption font-bold text-white uppercase tracking-wider block">Recent client submissions</span>
+            <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider block">Recent client submissions</span>
 
             <div className="space-y-3">
               {loading ? (
@@ -298,7 +298,7 @@ export default function ClientOnboardingTab() {
                   <div key={sub.id} className="p-3 bg-[var(--ws-canvas)]/60 border border-slate-850 rounded-xl space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-850 pb-2">
                       <div>
-                        <p className="type-card-description font-bold text-white">
+                        <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                           {sub.contacts ? `${sub.contacts.first_name || ''} ${sub.contacts.last_name || ''}`.trim() || sub.contacts.email : 'Anonymous'}
                         </p>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
@@ -350,8 +350,8 @@ export default function ClientOnboardingTab() {
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
-              <h3 className="font-bold text-white type-ui">Add Onboarding Step</h3>
-              <button onClick={() => setShowStepModal(false)} className="text-[var(--ws-text-muted)] hover:text-white type-ui">Close</button>
+              <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Add Onboarding Step</h3>
+              <button onClick={() => setShowStepModal(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui">Close</button>
             </div>
 
             <form onSubmit={handleCreateStep} className="p-5 space-y-4">
@@ -363,7 +363,7 @@ export default function ClientOnboardingTab() {
                   placeholder="e.g. Schedule Kickoff Call"
                   value={stepForm.step_name}
                   onChange={e => setStepForm(f => ({ ...f, step_name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
                 />
               </div>
 
@@ -373,7 +373,7 @@ export default function ClientOnboardingTab() {
                   placeholder="Tell the client what they need to do for this step"
                   value={stepForm.step_description}
                   onChange={e => setStepForm(f => ({ ...f, step_description: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500 resize-none"
                   rows={3}
                 />
               </div>
@@ -387,7 +387,7 @@ export default function ClientOnboardingTab() {
                     min="1"
                     value={stepForm.step_order}
                     onChange={e => setStepForm(f => ({ ...f, step_order: parseInt(e.target.value) || 1 }))}
-                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
                   />
                 </div>
 
@@ -407,7 +407,7 @@ export default function ClientOnboardingTab() {
                 <button
                   type="submit"
                   disabled={savingStep}
-                  className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all disabled:opacity-50"
+                  className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all disabled:opacity-50"
                 >
                   {savingStep ? 'Saving...' : 'Add Step'}
                 </button>

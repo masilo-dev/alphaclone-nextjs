@@ -403,7 +403,7 @@ export default function ResearchEngineWorkspace() {
               <button
                 type="submit"
                 disabled={submitting || Boolean(isJobRunning)}
-                className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex-1 h-10 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-[var(--ws-text-primary)] shadow-sm hover:bg-blue-700 transition disabled:opacity-50"
               >
                 {submitting ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -609,7 +609,7 @@ export default function ResearchEngineWorkspace() {
                 <button
                   type="button"
                   onClick={() => handleImportToCrm()}
-                  className="h-9 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+                  className="h-9 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 text-xs font-semibold text-[var(--text-inverse)] shadow-sm hover:bg-emerald-700 transition"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add Selected to CRM
@@ -653,7 +653,7 @@ export default function ResearchEngineWorkspace() {
                 onClick={() => setResultsFilter(tab.id as any)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                   resultsFilter === tab.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-[var(--ws-text-primary)]'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
@@ -823,7 +823,7 @@ export default function ResearchEngineWorkspace() {
                             <button
                               type="button"
                               onClick={() => handleImportToCrm([lead.id])}
-                              className="h-7 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold text-white hover:bg-emerald-700 transition"
+                              className="h-7 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 text-[11px] font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
                               title="Add to CRM"
                             >
                               <Plus className="h-3 w-3" />
@@ -970,7 +970,7 @@ export default function ResearchEngineWorkspace() {
                     await handleImportToCrm([inspectingLead.id]);
                     setInspectingLead(null);
                   }}
-                  className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                  className="h-9 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-[var(--text-inverse)] hover:bg-emerald-700 transition"
                 >
                   Add to CRM
                 </button>

@@ -230,7 +230,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">Onboarding Pipelines</h2>
+                    <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Onboarding Pipelines</h2>
                     <p className="text-[var(--ws-text-muted)] mt-1">Manage leads and track conversion progress</p>
                 </div>
                 <div className="flex gap-2">
@@ -245,7 +245,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-onboarding' });
                         }}
-                        className="bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 border-white/5"
+                        className="bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 border-[var(--ws-border)]"
                     >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Nexus Flow
@@ -261,11 +261,11 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-4">
                     <div className="type-ui text-[var(--ws-text-muted)] mb-1">Total Leads</div>
-                    <div className="text-2xl font-bold text-white">{leads.length}</div>
+                    <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{leads.length}</div>
                 </Card>
                 <Card className="p-4">
                     <div className="type-ui text-[var(--ws-text-muted)] mb-1">Pipeline Value</div>
-                    <div className="text-2xl font-bold text-white">${(totalValue / 1000).toFixed(1)}k</div>
+                    <div className="text-2xl font-bold text-[var(--ws-text-primary)]">${(totalValue / 1000).toFixed(1)}k</div>
                 </Card>
                 <Card className="p-4">
                     <div className="type-ui text-[var(--ws-text-muted)] mb-1">Won Deals</div>
@@ -273,7 +273,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                 </Card>
                 <Card className="p-4">
                     <div className="type-ui text-[var(--ws-text-muted)] mb-1">Conversion Rate</div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-[var(--ws-text-primary)]">
                         {leads.length > 0 ? ((leads.filter(l => l.stage === 'won').length / leads.length) * 100).toFixed(0) : 0}%
                     </div>
                 </Card>
@@ -293,7 +293,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-3 h-3 rounded-full ${stage.color}`}></div>
-                                    <h3 className="font-semibold text-white">{stage.label}</h3>
+                                    <h3 className="font-semibold text-[var(--ws-text-primary)]">{stage.label}</h3>
                                     <span className="type-caption text-[var(--ws-text-muted)]">({stage.count})</span>
                                 </div>
                             </div>
@@ -316,7 +316,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex-1">
-                                                <h4 className="font-semibold text-white type-ui mb-1 group-hover:text-teal-400 transition-colors">
+                                                <h4 className="font-semibold text-[var(--ws-text-primary)] type-ui mb-1 group-hover:text-teal-400 transition-colors">
                                                     {lead.businessName}
                                                 </h4>
                                                 <p className="type-card-description text-[var(--ws-text-muted)]">{lead.industry}</p>
@@ -358,7 +358,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                             <div className="flex items-center justify-between pt-3 border-t border-[var(--ws-border)]">
                                                 <div className="flex items-center gap-1 type-caption text-[var(--ws-text-muted)]">
                                                     <DollarSign className="w-3 h-3" />
-                                                    <span className="font-semibold text-white">${(lead.value / 1000).toFixed(1)}k</span>
+                                                    <span className="font-semibold text-[var(--ws-text-primary)]">${(lead.value / 1000).toFixed(1)}k</span>
                                                 </div>
                                                 <div className="flex items-center gap-1 type-caption text-[var(--ws-text-muted)]">
                                                     <Calendar className="w-3 h-3" />
@@ -443,7 +443,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                 <select
                                     value={formData.stage}
                                     onChange={(e) => setFormData({ ...formData, stage: e.target.value as Lead['stage'] })}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                                 >
                                     {[
                                         { value: 'lead', label: 'Lead' },
@@ -474,7 +474,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                 placeholder="Add notes about this lead..."
                                 rows={4}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
                             />
                         </div>
 

@@ -86,12 +86,12 @@ export function SocialContentCalendar<T extends CalendarPost>({
       : anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <div className="mb-4 rounded-xl border border-white/5 bg-[var(--ws-canvas)]/60 p-3 space-y-3">
+    <div className="mb-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/60 p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => shift(-1)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
           aria-label="Previous"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -100,7 +100,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
         <button
           type="button"
           onClick={() => shift(1)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
           aria-label="Next"
         >
           <ChevronRight className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
               className={`rounded-lg border p-1.5 overflow-hidden ${
                 isToday
                   ? 'border-teal-500/40 bg-teal-500/5'
-                  : 'border-white/5 bg-[var(--ws-panel)]/40'
+                  : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40'
               } ${mode === 'month' && !inMonth ? 'opacity-40' : ''}`}
             >
               <p className="type-card-description font-bold text-[var(--ws-text-muted)] mb-1">{day.getDate()}</p>

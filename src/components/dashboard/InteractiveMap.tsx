@@ -44,7 +44,7 @@ const InteractiveMap = () => {
                             className="absolute -inset-4 bg-teal-500/20 rounded-full blur-md"
                         />
                         {/* Point */}
-                        <div className="w-2.5 h-2.5 bg-[var(--brand-blue-400)] rounded-full shadow-[0_0_10px_rgba(45,212,191,0.8)] border border-white/20" />
+                        <div className="w-2.5 h-2.5 bg-[var(--brand-blue-400)] rounded-full shadow-[0_0_10px_rgba(45,212,191,0.8)] border border-[var(--ws-border-strong)]" />
 
                         {/* Label (Visible on Hover of Group) */}
                         <motion.div
@@ -62,7 +62,7 @@ const InteractiveMap = () => {
             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
                 <div className="space-y-1">
                     <div className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold">Global Infrastructure</div>
-                    <div className="text-2xl font-bold text-white flex items-center gap-2">
+                    <div className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         20+ <span className="text-[var(--ws-text-muted)] type-ui font-normal">Countries Served</span>
                     </div>
                 </div>

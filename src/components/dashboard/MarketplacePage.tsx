@@ -431,7 +431,7 @@ const MarketplacePage: React.FC = () => {
               url.searchParams.delete('mcp');
               window.history.replaceState({}, '', url.toString());
             }}
-            className="flex items-center gap-2 text-[var(--ws-text-muted)] hover:text-white transition-colors type-ui font-medium"
+            className="flex items-center gap-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors type-ui font-medium"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -440,31 +440,31 @@ const MarketplacePage: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveMcp('claude')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'claude' ? 'bg-indigo-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'claude' ? 'bg-indigo-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Claude AI
             </button>
             <button
               onClick={() => setActiveMcp('manus')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'manus' ? 'bg-teal-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Manus AI
             </button>
             <button
               onClick={() => setActiveMcp('grok')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'grok' ? 'bg-fuchsia-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'grok' ? 'bg-fuchsia-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Grok AI
             </button>
             <button
               onClick={() => setActiveMcp('chatgpt')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               ChatGPT
             </button>
             <button
               onClick={() => setActiveMcp('cursor')}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
             >
               Cursor
             </button>
@@ -504,7 +504,7 @@ const MarketplacePage: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-bold">{item.name}</span>
+                    <span className="text-[var(--ws-text-primary)] font-bold">{item.name}</span>
                     <span className={`px-2 py-0.5 rounded-full type-caption font-black uppercase tracking-wider border ${isActive ? 'text-indigo-300 bg-indigo-500/10 border-indigo-500/30' : 'text-[var(--brand-blue-300)] bg-teal-500/10 border-teal-500/30'}`}>Featured</span>
                     <span className="px-2 py-0.5 rounded-full type-caption font-bold bg-green-500/10 border border-green-500/20 text-green-400">Free</span>
                   </div>
@@ -517,7 +517,7 @@ const MarketplacePage: React.FC = () => {
                     <span className="text-[var(--ws-text-muted)] type-caption">{item.installs.toLocaleString()} installs</span>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold transition-all flex-shrink-0 ${isActive ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-teal-600 hover:bg-teal-500 text-white'}`}>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold transition-all flex-shrink-0 ${isActive ? 'bg-indigo-600 hover:bg-indigo-500 text-[var(--text-inverse)]' : 'bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)]'}`}>
                   Connect
                   <ArrowRight className="w-3 h-3" />
                 </div>
@@ -536,7 +536,7 @@ const MarketplacePage: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search integrations, tools, templates…"
-            className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 type-ui focus:outline-none focus:border-teal-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] type-ui focus:outline-none focus:border-teal-500 transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
@@ -549,7 +549,7 @@ const MarketplacePage: React.FC = () => {
                 onClick={() => setCategory(cat.id)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl type-caption font-semibold whitespace-nowrap transition-all border ${
                   active
-                    ? 'bg-teal-600 border-teal-500 text-white'
+                    ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)]'
                     : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-[var(--ws-border)] hover:text-[var(--ws-text-secondary)]'
                 }`}
               >
@@ -595,7 +595,7 @@ const MarketplacePage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-white font-semibold type-ui leading-tight group-hover:text-[var(--brand-blue-300)] transition-colors">
+                      <h3 className="text-[var(--ws-text-primary)] font-semibold type-ui leading-tight group-hover:text-[var(--brand-blue-300)] transition-colors">
                         {item.name}
                       </h3>
                       {item.badge && (
@@ -664,7 +664,7 @@ const MarketplacePage: React.FC = () => {
           <div className="w-16 h-16 rounded-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] flex items-center justify-center mx-auto mb-4">
             <Search className="w-7 h-7 text-slate-600" />
           </div>
-          <h3 className="text-white font-semibold mb-1">No results found</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-semibold mb-1">No results found</h3>
           <p className="text-[var(--ws-text-muted)] type-card-description">Try a different search term or category.</p>
         </div>
       )}

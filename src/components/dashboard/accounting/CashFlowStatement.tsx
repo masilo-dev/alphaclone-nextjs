@@ -47,10 +47,10 @@ export function CashFlowStatement() {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-lg font-semibold text-white mb-4">Cash Flow Statement</h3>
+      <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Cash Flow Statement</h3>
       <div className="dashboard-panel-soft overflow-hidden">
         {rows.map((r) => (
-          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 type-ui gap-3">
+          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-[var(--ws-border)] last:border-0 type-ui gap-3">
             <span className="text-[var(--ws-text-secondary)]">{r.label}</span>
             {!r.tracked || r.amount == null ? (
               <span className="font-medium text-[var(--ws-text-muted)] text-right">Not tracked yet</span>

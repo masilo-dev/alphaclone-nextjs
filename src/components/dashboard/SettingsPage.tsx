@@ -436,7 +436,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         )}
                     </div>
                     <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-all cursor-pointer">
-                        <Upload className="w-5 h-5 text-white" />
+                        <Upload className="w-5 h-5 text-[var(--ws-text-primary)]" />
                         <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     </label>
                 </div>
@@ -473,13 +473,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 1. ACCOUNT GROUP */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Account Preferences')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Profile Details */}
                     <div id="settings-section-profile">
                         <div 
                             onClick={() => toggleRow('profile')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -495,18 +495,18 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                                     className="overflow-hidden bg-[var(--ws-canvas)]/40"
                                 >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                    <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-1">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Full Name')}</label>
-                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Phone Number')}</label>
-                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" placeholder="+1 (555) 000-0000" />
+                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" placeholder="+1 (555) 000-0000" />
                                             </div>
                                         </div>
-                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Profile')}</button>
+                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Profile')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -517,7 +517,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div id="settings-section-security">
                         <div 
                             onClick={() => toggleRow('security')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
@@ -533,13 +533,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                                     className="overflow-hidden bg-[var(--ws-canvas)]/40"
                                 >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                    <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
-                                            <input type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
-                                            <input type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
-                                            <input type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <input type="password" placeholder={translate('Current Password')} value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <input type="password" placeholder={translate('New Password')} value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <input type="password" placeholder={translate('Confirm New Password')} value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
                                         </div>
-                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Update Password')}</button>
+                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Update Password')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -550,7 +550,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div id="settings-section-mfa">
                         <div
                             onClick={() => toggleRow('mfa')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -586,13 +586,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 2. WORKSPACE & BUSINESS GROUP */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Workspace Settings')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Brand Info */}
                     <div id="settings-section-business_profile">
                         <div 
                             onClick={() => toggleRow('business_profile')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
@@ -608,16 +608,16 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                                     className="overflow-hidden bg-[var(--ws-canvas)]/40"
                                 >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                    <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-3">
-                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
-                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
+                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder={translate('Official legal company name')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder={translate('Short name on invoices (e.g. ACS)')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
                                             <p className="type-card-description text-[var(--ws-text-muted)]">{translate('PDF invoices use the short trading name when set — keeps layouts clean.')}</p>
-                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-ui text-white" />
-                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full bg-[var(--ws-panel)] border border-white/5 rounded-xl p-3 type-ui text-white resize-none" />
-                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full bg-[var(--ws-panel)] border border-white/5 rounded-xl p-3 type-ui text-white resize-none" />
+                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder={translate('Business Email')} className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)]" />
+                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder={translate('Business Address')} rows={2} className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-ui text-[var(--ws-text-primary)] resize-none" />
+                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder={translate('Bank transfer account details')} rows={2} className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-ui text-[var(--ws-text-primary)] resize-none" />
                                         </div>
-                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Details')}</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save Details')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -628,7 +628,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('regional')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
@@ -644,7 +644,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                                     className="overflow-hidden bg-[var(--ws-canvas)]/40"
                                 >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                    <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="space-y-1">
                                             <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black">{translate('Tax country (VAT / GST)')}</label>
                                             <select
@@ -658,7 +658,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                         taxRate: lookup.rate > 0 ? lookup.rate : businessSettings.taxRate,
                                                     });
                                                 }}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
+                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                                             >
                                                 <option value="ZW">{translate('Zimbabwe (15% VAT)')}</option>
                                                 <option value="ZA">{translate('South Africa (15% VAT)')}</option>
@@ -678,7 +678,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 step={0.5}
                                                 value={businessSettings.taxRate}
                                                 onChange={(e) => setBusinessSettings({ ...businessSettings, taxRate: parseFloat(e.target.value) || 0 })}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
+                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -686,7 +686,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                             <select 
                                                 value={businessSettings.currency} 
                                                 onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
-                                                className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
+                                                className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                                             >
                                                 <option value="USD">USD ($)</option>
                                                 <option value="EUR">EUR (€)</option>
@@ -705,7 +705,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('sectors')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
@@ -721,14 +721,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
                                     className="overflow-hidden bg-[var(--ws-canvas)]/40"
                                 >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
+                                    <div className="p-4 space-y-4 border-t border-[var(--ws-border)]">
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {UNIVERSAL_SERVICE_CATALOG.map(category => (
                                                 <label
                                                     key={category.name}
                                                     className={`flex items-start gap-2.5 p-3 rounded-xl border transition-all cursor-pointer ${businessSettings.serviceSectors.includes(category.name)
                                                         ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
-                                                        : 'bg-[var(--ws-panel)] border-white/5 text-[var(--ws-text-muted)]'
+                                                        : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)]'
                                                     }`}
                                                 >
                                                     <input
@@ -749,7 +749,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 </label>
                                             ))}
                                         </div>
-                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save sectors')}</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-[var(--text-inverse)] type-caption font-black uppercase tracking-wider rounded-xl">{translate('Save sectors')}</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -762,11 +762,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 2b. TEAM, MODULES & AI */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('People, modules & AI')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     <div id="settings-section-team">
                         <Link
                             href="/dashboard/business/team"
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all group"
                         >
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
@@ -784,7 +784,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div id="settings-section-modules">
                         <Link
                             href="/dashboard/marketplace"
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all group"
                         >
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -803,7 +803,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <div className="divide-y divide-white/5">
                             <Link
                                 href="/dashboard/business/bonnie"
-                                className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                                className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all group"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0">
@@ -818,7 +818,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             </Link>
                             <Link
                                 href="/dashboard/business/quotas"
-                                className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                                className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all group"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
@@ -839,19 +839,19 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 3. INTEGRATIONS GROUP */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('System Integrations')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Email delivery provider (transactional) */}
                     <div id="settings-section-email_provider">
                         <div
                             onClick={() => toggleRow('email_provider')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Email Delivery Provider')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['email_provider'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['email_provider'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5">
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]">
                                 <EmailProviderSettings />
                             </div>
                         )}
@@ -861,13 +861,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div id="settings-section-integ_zoho">
                         <div 
                             onClick={() => toggleRow('integ_zoho')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Zoho Mail Client')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_zoho'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_zoho'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><ZohoIntegration user={user} /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><ZohoIntegration user={user} /></div>
                         )}
                     </div>
 
@@ -875,13 +875,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('integ_m365')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Microsoft 365 / Teams Suite')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_m365'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_m365'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><Microsoft365Integration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><Microsoft365Integration /></div>
                         )}
                     </div>
 
@@ -889,13 +889,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('integ_resend')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Resend.com Email API')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_resend'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_resend'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><ResendIntegration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><ResendIntegration /></div>
                         )}
                     </div>
 
@@ -903,13 +903,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('integ_sendgrid')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('SendGrid Email Delivery')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_sendgrid'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_sendgrid'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><SendGridIntegration /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><SendGridIntegration /></div>
                         )}
                     </div>
 
@@ -917,13 +917,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('integ_stripe')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Stripe Connect (invoice payouts)')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_stripe'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_stripe'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><StripeConnectSettings /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><StripeConnectSettings /></div>
                         )}
                     </div>
 
@@ -931,13 +931,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     <div>
                         <div 
                             onClick={() => toggleRow('integ_calendly')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <span className="type-ui font-bold text-[var(--ws-text-secondary)]">{translate('Calendly Booking Schedule')}</span>
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['integ_calendly'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_calendly'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5"><CalendlySettings /></div>
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]"><CalendlySettings /></div>
                         )}
                     </div>
 
@@ -947,7 +947,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 4. NOTIFICATIONS GROUP */}
             <div id="settings-section-notifications" className="space-y-3 scroll-mt-4">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Notification alerts')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     {[
                         { key: 'emailNotifications', label: 'Email Outreach Logs', desc: 'Get updates on active campaign statuses' },
                         { key: 'projectUpdates', label: 'Project Status Sync', desc: 'Alert when client updates their requirements' },
@@ -955,7 +955,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     ].map((setting) => (
                         <div key={setting.key} className="flex items-center justify-between p-4">
                             <div>
-                                <h4 className="type-ui font-bold text-white">{setting.label}</h4>
+                                <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">{setting.label}</h4>
                                 <p className="type-card-description text-[var(--ws-text-muted)]">{setting.desc}</p>
                             </div>
                             <button
@@ -972,9 +972,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     ))}
                 </div>
                 {currentTenant?.id ? (
-                    <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl overflow-hidden">
-                        <div className="p-4 border-b border-white/5">
-                            <h4 className="type-ui font-bold text-white">Event categories</h4>
+                    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
+                        <div className="p-4 border-b border-[var(--ws-border)]">
+                            <h4 className="type-ui font-bold text-[var(--ws-text-primary)]">Event categories</h4>
                             <p className="type-card-description text-[var(--ws-text-muted)]">Control in-app, owner email, digest, and client email per business event class. Client email never fires on internal updates.</p>
                         </div>
                         <NotificationCategoryPolicyPanel tenantId={currentTenant.id} />
@@ -1024,7 +1024,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             aria-label={translate('Your language')}
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as typeof language)}
-                            className="w-full h-10 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 type-caption text-white outline-none"
+                            className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-caption text-[var(--ws-text-primary)] outline-none"
                         >
                             {LANGUAGES.map((lang) => (
                                 <option key={lang.code} value={lang.code}>{lang.label}</option>
@@ -1051,7 +1051,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                         setBusinessSettings(nextSettings);
                                         void handleSaveBusiness(nextSettings);
                                     }}
-                                    className="w-7 h-7 rounded-full border border-white/10 relative transition-transform active:scale-90"
+                                    className="w-7 h-7 rounded-full border border-[var(--ws-border)] relative transition-transform active:scale-90"
                                     style={{ backgroundColor: preset.color }}
                                 >
                                     {businessSettings.brandColor === preset.color && (
@@ -1088,13 +1088,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 6. BILLING GROUP */}
             <div id="settings-section-billing" className="space-y-3 scroll-mt-4">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Plans & billing')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Subscription tier summary */}
                     <div className="p-4 flex justify-between items-center bg-[var(--ws-canvas)]/30">
                         <div>
                             <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">{translate('Current active tier')}</span>
-                            <h4 className="type-ui font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
+                            <h4 className="type-ui font-black text-[var(--ws-text-primary)] capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
                             {currentTenant?.subscription_status === 'trial' && (
                                 <p className="type-card-description text-teal-400 mt-1">
                                     {translate('Premium trial active · full access · no daily limits')}
@@ -1112,16 +1112,16 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             const plan = PLAN_PRICING[planId];
                             const isCurrent = currentTenant?.subscription_plan === planId;
                             return (
-                                <div key={planId} className={`p-4 rounded-xl border flex flex-col justify-between ${isCurrent ? 'bg-teal-500/5 border-teal-500/30' : 'bg-[var(--ws-canvas)] border-white/5'}`}>
+                                <div key={planId} className={`p-4 rounded-xl border flex flex-col justify-between ${isCurrent ? 'bg-teal-500/5 border-teal-500/30' : 'bg-[var(--ws-canvas)] border-[var(--ws-border)]'}`}>
                                     <div>
-                                        <span className="type-caption font-black uppercase text-white tracking-wide block">{planId}</span>
-                                        <span className="text-lg font-black text-white mt-1 block">${plan.monthly} <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">/mo</span></span>
+                                        <span className="type-caption font-black uppercase text-[var(--ws-text-primary)] tracking-wide block">{planId}</span>
+                                        <span className="text-lg font-black text-[var(--ws-text-primary)] mt-1 block">${plan.monthly} <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">/mo</span></span>
                                     </div>
                                     <button 
                                         onClick={() => !isCurrent && handleUpgrade(planId)}
                                         disabled={isCurrent}
                                         className={`w-full py-1.5 rounded-lg type-caption font-black uppercase mt-4 border transition-all ${
-                                            isCurrent ? 'bg-[var(--ws-panel)] border-transparent text-[var(--ws-text-muted)]' : 'bg-teal-600 border-teal-500 text-white'
+                                            isCurrent ? 'bg-[var(--ws-panel)] border-transparent text-[var(--ws-text-muted)]' : 'bg-teal-600 border-teal-500 text-[var(--text-inverse)]'
                                         }`}
                                     >
                                         {isCurrent ? 'Active' : 'Upgrade'}
@@ -1134,10 +1134,10 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     {/* Stripe portal */}
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 className="type-caption font-bold text-white uppercase tracking-wider">{translate('Payment credentials & portals')}</h4>
+                            <h4 className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">{translate('Payment credentials & portals')}</h4>
                             <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{translate('Manage details, history, and invoices safely on Stripe')}</p>
                         </div>
-                        <button onClick={handleManageBilling} className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open portal')}</button>
+                        <button onClick={handleManageBilling} className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-wider rounded-xl border border-[var(--ws-border)]">{translate('Open portal')}</button>
                     </div>
 
                     {/* AI Quotas */}
@@ -1146,7 +1146,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <h4 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">{translate('AI usage and quotas')}</h4>
                             <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{translate('Live usage is calculated in the quota dashboard rather than shown as a simulated percentage here.')}</p>
                         </div>
-                        <Link href="/dashboard/business/quotas" className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-black uppercase tracking-wider rounded-xl border border-white/5">{translate('Open quotas')}</Link>
+                        <Link href="/dashboard/business/quotas" className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption font-black uppercase tracking-wider rounded-xl border border-[var(--ws-border)]">{translate('Open quotas')}</Link>
                     </div>
 
                 </div>
@@ -1155,11 +1155,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 7. DATA MANAGEMENT */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Data Management')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5 overflow-hidden">
                     <div>
                         <div
                             onClick={() => toggleRow('deleted_records')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                            className="flex items-center justify-between p-4 hover:bg-[var(--ws-hover)] active:bg-[var(--ws-hover)] transition-all cursor-pointer select-none"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-slate-500/10 flex items-center justify-center">
@@ -1170,7 +1170,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <ChevronRight className={`w-4 h-4 text-[var(--ws-text-muted)] transform transition-transform ${expandedRows['deleted_records'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['deleted_records'] && (
-                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-white/5">
+                            <div className="p-4 bg-[var(--ws-canvas)]/40 border-t border-[var(--ws-border)]">
                                 <p className="type-card-description text-[var(--ws-text-muted)] mb-3">
                                     {translate('Restore soft-deleted contacts and archived clients, or permanently purge contacts.')}
                                 </p>
@@ -1184,7 +1184,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* 8. DEVELOPER MCP & API KEYS */}
             <div className="space-y-3">
                 <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">{translate('Developer MCP & API')}</span>
-                <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-3">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <span className="type-caption text-[var(--ws-text-muted)] uppercase font-black block">{translate('MCP API Key')}</span>
                         {!mcpApiKey && !isLoadingApiKey && (
@@ -1198,11 +1198,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         )}
                     </div>
                     {isLoadingApiKey ? (
-                        <div className="flex items-center justify-center p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5">
+                        <div className="flex items-center justify-center p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]">
                             <Loader2 className="w-4 h-4 animate-spin text-[var(--ws-text-muted)]" />
                         </div>
                     ) : mcpApiKey ? (
-                        <div className="flex items-center justify-between p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5">
+                        <div className="flex items-center justify-between p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)]">
                             <span className="font-mono type-caption text-[var(--ws-text-muted)] select-all">
                                 {showApiKey ? mcpApiKey : `${mcpApiKey.substring(0, 12)}••••••••••••••••••••••••`}
                             </span>
@@ -1225,7 +1225,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             </div>
                         </div>
                     ) : (
-                        <div className="p-3 bg-[var(--ws-canvas)] rounded-xl border border-white/5 text-center">
+                        <div className="p-3 bg-[var(--ws-canvas)] rounded-xl border border-[var(--ws-border)] text-center">
                             <p className="type-card-description text-[var(--ws-text-muted)]">{hasMcpApiKey ? 'MCP key active' : 'No MCP API key generated yet'}</p>
                             <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{hasMcpApiKey ? 'For security, the key is shown only when generated. Rotate it to receive a new value.' : 'Click "Generate Key" to create one'}</p>
                         </div>
@@ -1260,7 +1260,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full max-w-sm bg-[var(--ws-panel)] border border-white/5 rounded-3xl p-5 space-y-4"
+                            className="w-full max-w-sm bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl p-5 space-y-4"
                         >
                             <div className="flex items-center gap-2 text-amber-500">
                                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -1273,13 +1273,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <button 
                                     onClick={handleDeleteAccount}
                                     disabled={isDeleting}
-                                    className="py-2.5 bg-rose-600 hover:bg-rose-500 text-white type-caption font-black uppercase rounded-xl flex items-center justify-center"
+                                    className="py-2.5 bg-rose-600 hover:bg-rose-500 text-[var(--text-inverse)] type-caption font-black uppercase rounded-xl flex items-center justify-center"
                                 >
                                     {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm Deletion'}
                                 </button>
                                 <button 
                                     onClick={() => setDeleteModalOpen(false)}
-                                    className="py-2.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] type-caption font-bold rounded-xl border border-white/5"
+                                    className="py-2.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] type-caption font-bold rounded-xl border border-[var(--ws-border)]"
                                 >
                                     {translate('Cancel')}
                                 </button>

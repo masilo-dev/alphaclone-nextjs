@@ -117,7 +117,7 @@ export default function ProjectModal({ isOpen, onClose, clientId, ownerId, owner
                         <select
                             value={formData.category}
                             onChange={(e: any) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                         >
                             <option value="Consulting">Consulting</option>
                             <option value="Development">Development</option>

@@ -39,7 +39,7 @@ export function WorkspaceGuide({ user }: WorkspaceGuideProps) {
           <p className="mt-1 max-w-2xl type-caption leading-relaxed text-[var(--ws-text-secondary)]">You can start with any area. Each one keeps the next step connected instead of making you jump between separate systems.</p>
         </div>
         {open ? (
-          <button type="button" onClick={closeGuide} className="min-h-10 min-w-10 rounded-lg p-2 text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]" aria-label="Hide workspace map">
+          <button type="button" onClick={closeGuide} className="min-h-10 min-w-10 rounded-lg p-2 text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)]" aria-label="Hide workspace map">
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (

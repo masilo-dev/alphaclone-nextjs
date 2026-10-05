@@ -335,7 +335,7 @@ export default function OutboundEngine() {
           </div>
           <Button
             size="sm"
-            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => router.push('/dashboard/leads/finder')}
           >
             <Plus size={13} className="mr-1" /> Add Leads
@@ -573,7 +573,7 @@ function LeadsTab({
         <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
           <RefreshCw size={12} /> Refresh
         </button>
-        <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs h-9">
+        <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs h-9">
           <Plus size={13} className="mr-1" /> Import CSV
         </Button>
       </div>
@@ -716,7 +716,7 @@ function CampaignsTab({ campaigns, loading, onRefresh }: {
           </button>
           <Button
             size="sm"
-            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => window.location.href = '/dashboard/business/campaigns'}
           >
             <ArrowUpRight size={13} className="mr-1" /> Manage
@@ -734,7 +734,7 @@ function CampaignsTab({ campaigns, loading, onRefresh }: {
           <p className="text-[var(--ws-text-muted)] text-sm">No campaigns yet</p>
           <Button
             size="sm"
-            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => window.location.href = '/dashboard/business/campaigns'}
           >
             Create first campaign
@@ -829,7 +829,7 @@ function MailboxesTab({
           <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
             <RefreshCw size={12} /> Refresh
           </button>
-          <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs" onClick={onToggleAdd}>
+          <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs" onClick={onToggleAdd}>
             <Plus size={13} className="mr-1" /> Add Mailbox
           </Button>
         </div>
@@ -876,7 +876,7 @@ function MailboxesTab({
             </div>
           )}
           <div className="flex gap-2">
-            <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs" onClick={saveMailbox} disabled={saving || !form.email_address || !form.name}>
+            <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs" onClick={saveMailbox} disabled={saving || !form.email_address || !form.name}>
               {saving ? <Loader2 size={13} className="animate-spin mr-1" /> : null} Save mailbox
             </Button>
             <Button size="sm" variant="outline" className="text-xs" onClick={onToggleAdd}>Cancel</Button>

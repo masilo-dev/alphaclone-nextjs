@@ -47,7 +47,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                     <div className="flex items-center gap-3">
                         <PhoneMissed className="w-5 h-5 text-red-400" />
                         <div>
-                            <p className="font-medium text-white">Missed Call</p>
+                            <p className="font-medium text-[var(--ws-text-primary)]">Missed Call</p>
                             <p className="type-card-description text-[var(--ws-text-muted)]">From {newMissedCall.caller_name || 'Unknown'}</p>
                         </div>
                         <Button
@@ -95,7 +95,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
             >
                 <PhoneMissed className="w-5 h-5 text-red-400" />
                 {unseenCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error-500)] text-white type-caption font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error-500)] text-[var(--text-inverse)] type-caption font-bold rounded-full flex items-center justify-center">
                         {unseenCount > 9 ? '9+' : unseenCount}
                     </span>
                 )}
@@ -135,7 +135,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                                 className="flex-shrink-0"
                                             />
                                             <div>
-                                                <p className="font-medium text-white">
+                                                <p className="font-medium text-[var(--ws-text-primary)]">
                                                     {call.caller_name || 'Unknown'}
                                                 </p>
                                                 <p className="type-card-description text-[var(--ws-text-muted)]">

@@ -146,7 +146,7 @@ export function PageHeader({
                 <Link
                   href={backHref}
                   aria-label="Go back"
-                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
+                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] -ml-1 shrink-0')}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
@@ -155,7 +155,7 @@ export function PageHeader({
                   type="button"
                   onClick={onBack}
                   aria-label="Go back"
-                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
+                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] -ml-1 shrink-0')}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -232,7 +232,7 @@ export function PageHeader({
                       <Link
                         role="menuitem"
                         href={helpHref}
-                        className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg"
+                        className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] rounded-lg"
                         onClick={() => setMoreOpen(false)}
                       >
                         {helpLabel}
@@ -244,7 +244,7 @@ export function PageHeader({
                           key={a.label}
                           role="menuitem"
                           href={a.href}
-                          className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg"
+                          className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] rounded-lg"
                           onClick={() => setMoreOpen(false)}
                         >
                           {a.label}
@@ -255,7 +255,7 @@ export function PageHeader({
                           type="button"
                           role="menuitem"
                           disabled={a.disabled}
-                          className="w-full flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg text-left disabled:opacity-50"
+                          className="w-full flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] rounded-lg text-left disabled:opacity-50"
                           onClick={() => {
                             a.onClick?.();
                             setMoreOpen(false);

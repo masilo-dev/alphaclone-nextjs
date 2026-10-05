@@ -40,7 +40,7 @@ export default function PlatformHelpTab() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search terms…"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--ws-canvas)] border border-white/10 type-ui text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--ws-canvas)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500/50"
             aria-label="Search platform guide"
           />
         </div>
@@ -66,12 +66,12 @@ export default function PlatformHelpTab() {
           filteredSections.map((section) => (
             <section key={section.id} className="space-y-3">
               <div>
-                <h2 className="text-base font-semibold text-white">{section.title}</h2>
+                <h2 className="text-base font-semibold text-[var(--ws-text-primary)]">{section.title}</h2>
                 {section.description ? (
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">{section.description}</p>
                 ) : null}
               </div>
-              <div className="divide-y divide-white/5 rounded-xl border border-white/5 bg-[var(--ws-panel)]/40 overflow-hidden">
+              <div className="divide-y divide-white/5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 overflow-hidden">
                 {section.entries.map((entry) => (
                   <div key={entry.term} className="p-4 hover:bg-white/[0.02] transition-colors">
                     <p className="type-card-description font-semibold text-[var(--brand-blue-300)]">{entry.term}</p>

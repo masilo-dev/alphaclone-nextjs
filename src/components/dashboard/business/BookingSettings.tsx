@@ -141,7 +141,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             {/* Enable Toggle */}
                             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 bg-[var(--ws-surface-secondary)] rounded-2xl border border-[var(--ws-border)]">
                                 <div>
-                                    <h3 className="font-bold text-white type-ui">Public Booking Page</h3>
+                                    <h3 className="font-bold text-[var(--ws-text-primary)] type-ui">Public Booking Page</h3>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">Allow clients to book you online.</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -167,7 +167,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <input
                                                     value={settings.slug}
                                                     onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                                    className="flex-1 bg-transparent border-none outline-none type-ui font-bold text-white placeholder-slate-600 min-w-[50px]"
+                                                    className="flex-1 bg-transparent border-none outline-none type-ui font-bold text-[var(--ws-text-primary)] placeholder-slate-600 min-w-[50px]"
                                                     placeholder="username"
                                                 />
                                             </div>
@@ -246,7 +246,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
                                     />
                                 </div>
                                 <div className="hidden sm:block pt-6">
@@ -267,7 +267,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
                                     />
                                 </div>
                             </div>
@@ -275,7 +275,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             {/* Timezone Selector */}
                             <div className="bg-[var(--ws-surface-secondary)] p-6 rounded-3xl border border-[var(--ws-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
-                                    <label className="type-label font-bold text-white">Operational Timezone</label>
+                                    <label className="type-label font-bold text-[var(--ws-text-primary)]">Operational Timezone</label>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">Your availability will be calculated based on this zone.</p>
                                 </div>
                                 <select
@@ -287,7 +287,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             timezone: e.target.value
                                         }
                                     })}
-                                    className="w-full sm:w-64 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500"
+                                    className="w-full sm:w-64 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
                                 >
                                     <option value="UTC">UTC (Universal Time)</option>
                                     <option value="America/New_York">Eastern Time (US & Canada)</option>
@@ -317,7 +317,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.bufferTime || 15}
                                                 onChange={(e) => setSettings({ ...settings, bufferTime: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={0}>None</option>
                                                 <option value={5}>5 mins</option>
@@ -338,7 +338,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.minNotice || 4}
                                                 onChange={(e) => setSettings({ ...settings, minNotice: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={0}>Instant</option>
                                                 <option value={1}>1 hour</option>
@@ -359,7 +359,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.futureLimit || 60}
                                                 onChange={(e) => setSettings({ ...settings, futureLimit: parseInt(e.target.value) })}
-                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-[var(--ws-text-primary)] outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={14}>2 weeks</option>
                                                 <option value={30}>30 days</option>
@@ -387,7 +387,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             { id: crypto.randomUUID(), name: 'New Meeting', duration: 30, price: 0 }
                                         ]
                                     })}
-                                    className="type-caption flex items-center gap-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:border-slate-600 hover:bg-[var(--ws-surface-tertiary)] px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
+                                    className="type-caption flex items-center gap-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:border-slate-600 hover:bg-[var(--ws-surface-tertiary)] px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-[var(--ws-text-primary)] active:scale-95"
                                 >
                                     <Plus className="w-3 h-3 text-teal-400" /> ADD TYPE
                                 </button>
@@ -407,7 +407,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                     newTypes[idx].name = e.target.value;
                                                     setSettings({ ...settings, meetingTypes: newTypes });
                                                 }}
-                                                className="bg-transparent text-white font-bold placeholder:text-slate-700 outline-none w-full"
+                                                className="bg-transparent text-[var(--ws-text-primary)] font-bold placeholder:text-slate-700 outline-none w-full"
                                                 placeholder="Meeting Name"
                                             />
                                         </div>
@@ -446,7 +446,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 <div className="p-4 md:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl flex gap-4 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-4 type-caption font-black tracking-widest uppercase text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] rounded-2xl transition-all"
+                        className="flex-1 py-4 type-caption font-black tracking-widest uppercase text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-2xl transition-all"
                     >
                         DISCARD
                     </button>

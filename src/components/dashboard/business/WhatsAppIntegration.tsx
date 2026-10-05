@@ -177,14 +177,14 @@ export default function WhatsAppIntegration() {
       animate={{ opacity: 1, y: 0 }}
       className="ac-workspace-panel rounded-lg overflow-hidden"
     >
-      <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-6 border-b border-[var(--ws-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <MessageCircle className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
             <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
-            <h2 className="text-lg font-bold text-white">WhatsApp Integration</h2>
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">WhatsApp Integration</h2>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               Choose Meta Cloud API or Zernio routing for your WhatsApp inbox.
             </p>
@@ -206,8 +206,8 @@ export default function WhatsAppIntegration() {
       <div className="p-6 space-y-6">
         {activeIntegration ? (
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-[var(--ws-canvas)]/45 border border-white/5 space-y-3">
-              <h3 className="type-ui font-bold text-white flex items-center gap-2">
+            <div className="p-4 rounded-lg bg-[var(--ws-canvas)]/45 border border-[var(--ws-border)] space-y-3">
+              <h3 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Active Integration: {activeIntegration.alias}
               </h3>
@@ -296,7 +296,7 @@ export default function WhatsAppIntegration() {
             <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="type-ui font-bold text-white flex items-center gap-2">
+                  <h4 className="type-ui font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     1-Click Meta Automatic Connect
                   </h4>
@@ -309,7 +309,7 @@ export default function WhatsAppIntegration() {
                     if (!currentTenant?.id) return;
                     window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}&scope_mode=advanced`;
                   }}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 type-caption flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)] font-bold px-4 py-2 type-caption flex items-center gap-2"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Log in with Meta
@@ -317,7 +317,7 @@ export default function WhatsAppIntegration() {
               </div>
             </div>
 
-            <div className="space-y-4 border-t border-white/5 pt-4">
+            <div className="space-y-4 border-t border-[var(--ws-border)] pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -328,7 +328,7 @@ export default function WhatsAppIntegration() {
                       : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2 type-ui font-bold text-white">
+                  <div className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-primary)]">
                     <Settings2 className="w-4 h-4 text-emerald-400" />
                     Meta Cloud API
                   </div>
@@ -343,7 +343,7 @@ export default function WhatsAppIntegration() {
                       : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
                   }`}
                 >
-                  <div className="flex items-center gap-2 type-ui font-bold text-white">
+                  <div className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-primary)]">
                     <Settings2 className="w-4 h-4 text-violet-400" />
                     Zernio Routing
                   </div>
@@ -360,7 +360,7 @@ export default function WhatsAppIntegration() {
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
                       placeholder="e.g. 104857285918239"
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
@@ -371,7 +371,7 @@ export default function WhatsAppIntegration() {
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
                       placeholder="e.g. 109827364528192"
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
@@ -382,7 +382,7 @@ export default function WhatsAppIntegration() {
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="EAABw..."
-                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
                     />
                   </div>
                 </>
@@ -400,14 +400,14 @@ export default function WhatsAppIntegration() {
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="e.g. Primary Support Line"
-                  className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                  className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-emerald-500/40"
                 />
               </div>
 
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 mt-2"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-[var(--text-inverse)] font-bold py-3 mt-2"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                 {provider === 'zernio' ? 'Connect Zernio WhatsApp Line' : 'Connect Meta WhatsApp Line'}

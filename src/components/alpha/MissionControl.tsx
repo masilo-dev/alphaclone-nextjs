@@ -29,9 +29,9 @@ export default function MissionControl({ missions }: { missions: MissionControlM
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center type-caption">
-          <div className="border border-cyan-400/20 bg-cyan-400/5 px-4 py-2"><div className="text-lg text-white">{running}</div>Running</div>
-          <div className="border border-emerald-400/20 bg-[var(--success-500)]/5 px-4 py-2"><div className="text-lg text-white">{completed}</div>Completed</div>
-          <div className="border border-red-400/20 bg-red-400/5 px-4 py-2"><div className="text-lg text-white">{failed}</div>Failed</div>
+          <div className="border border-cyan-400/20 bg-cyan-400/5 px-4 py-2"><div className="text-lg text-[var(--ws-text-primary)]">{running}</div>Running</div>
+          <div className="border border-emerald-400/20 bg-[var(--success-500)]/5 px-4 py-2"><div className="text-lg text-[var(--text-inverse)]">{completed}</div>Completed</div>
+          <div className="border border-red-400/20 bg-red-400/5 px-4 py-2"><div className="text-lg text-[var(--ws-text-primary)]">{failed}</div>Failed</div>
         </div>
       </div>
 
@@ -48,7 +48,7 @@ export default function MissionControl({ missions }: { missions: MissionControlM
               <article key={mission.id} className="border border-[var(--dashboard-mint)]/10 bg-[var(--brand-violet-950)] p-4">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
-                    <div className="type-caption font-bold text-white">{mission.description}</div>
+                    <div className="type-caption font-bold text-[var(--ws-text-primary)]">{mission.description}</div>
                     <div className="mt-1 type-ui opacity-40">{mission.id}</div>
                   </div>
                   <span className="flex items-center gap-1 type-caption uppercase"><StatusIcon className="h-3 w-3" />{mission.status}</span>

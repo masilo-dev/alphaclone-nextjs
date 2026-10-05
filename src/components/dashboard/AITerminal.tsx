@@ -61,7 +61,7 @@ const AITerminal = () => {
                             </div>
                             <div className="space-y-1">
                                 <div className="text-[var(--ws-text-muted)] type-caption uppercase tracking-tighter">Current Operation</div>
-                                <div className="text-white text-base leading-tight">{activeTask.text}</div>
+                                <div className="text-[var(--ws-text-primary)] text-base leading-tight">{activeTask.text}</div>
                             </div>
                         </div>
 

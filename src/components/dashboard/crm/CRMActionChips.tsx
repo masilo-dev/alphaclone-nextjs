@@ -18,7 +18,7 @@ const TONE_STYLES: Record<NonNullable<CRMActionChipItem['tone']>, string> = {
   teal: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:border-cyan-400/40 hover:bg-cyan-500/15',
   emerald: 'border-emerald-500/30 bg-emerald-500/10 text-[var(--success-text,var(--success-500))] hover:border-emerald-400/40 hover:bg-emerald-500/15',
   amber: 'border-orange-500/30 bg-orange-500/10 text-orange-200 hover:border-orange-400/40 hover:bg-orange-500/15',
-  slate: 'border-white/5 bg-[var(--ws-panel)]/70 text-[var(--ws-text-secondary)] hover:border-slate-600/40 hover:bg-[var(--ws-surface-secondary)]',
+  slate: 'border-[var(--ws-border)] bg-[var(--ws-panel)]/70 text-[var(--ws-text-secondary)] hover:border-slate-600/40 hover:bg-[var(--ws-surface-secondary)]',
 };
 
 export function CRMActionChips({ items, className }: { items: CRMActionChipItem[]; className?: string }) {

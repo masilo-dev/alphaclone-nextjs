@@ -149,7 +149,7 @@ export default function AlphaConsole() {
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="type-ui font-bold flex items-center gap-2 text-white italic">
+                                <h2 className="type-ui font-bold flex items-center gap-2 text-[var(--ws-text-primary)] italic">
                                     <Command className="w-4 h-4 text-[var(--dashboard-mint)]" />
                                     ASSISTED_EXECUTION_QUEUE
                                 </h2>
@@ -181,9 +181,9 @@ export default function AlphaConsole() {
                                     <div key={i} className="group p-3 border border-[var(--dashboard-mint)]/10 bg-[var(--brand-violet-950)] hover:border-[var(--dashboard-mint)]/40 flex items-center justify-between transition-all">
                                         <div className="flex items-center gap-3">
                                             <cap.icon className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                            <span className="type-caption font-bold group-hover:text-white">{cap.label}</span>
+                                            <span className="type-caption font-bold group-hover:text-[var(--ws-text-primary)]">{cap.label}</span>
                                         </div>
-                                        <span className={`type-caption px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[var(--dashboard-mint)] bg-[var(--dashboard-mint)]/10' : 'border-white/10 opacity-30 italic'}`}>
+                                        <span className={`type-caption px-1.5 py-0.5 border ${cap.status === 'ACTIVE' ? 'border-[var(--dashboard-mint)] bg-[var(--dashboard-mint)]/10' : 'border-[var(--ws-border)] opacity-30 italic'}`}>
                                             {cap.status}
                                         </span>
                                     </div>
@@ -218,7 +218,7 @@ export default function AlphaConsole() {
                                                 <div className="flex items-center justify-between mb-4 border-b border-[var(--dashboard-mint)]/10 pb-3">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-2 h-2 rounded-full ${mission.status === 'completed' ? 'bg-[var(--dashboard-mint)]' : 'bg-[var(--info-500)] animate-pulse'}`} />
-                                                        <span className="type-caption font-bold text-white uppercase">{mission.description}</span>
+                                                        <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase">{mission.description}</span>
                                                     </div>
                                                     <span className="type-caption font-mono opacity-40">[{mission.id.slice(0, 8)}]</span>
                                                 </div>
@@ -227,7 +227,7 @@ export default function AlphaConsole() {
                                                     {mission.logs.map((log, li) => (
                                                         <div key={li} className="flex gap-4 group/log">
                                                             <span className="opacity-20 select-none">{li.toString().padStart(3, '0')}</span>
-                                                            <span className={`flex-1 ${log.includes('ERROR') ? 'text-red-400 bg-red-400/10 px-1' : log.includes('EXECUTING') ? 'text-white font-bold underline decoration-[var(--dashboard-mint)]/40' : 'text-[var(--dashboard-mint)]/80 hover:text-white transition-colors'}`}>
+                                                            <span className={`flex-1 ${log.includes('ERROR') ? 'text-red-400 bg-red-400/10 px-1' : log.includes('EXECUTING') ? 'text-[var(--ws-text-primary)] font-bold underline decoration-[var(--dashboard-mint)]/40' : 'text-[var(--dashboard-mint)]/80 hover:text-[var(--ws-text-primary)] transition-colors'}`}>
                                                                 {log}
                                                             </span>
                                                         </div>

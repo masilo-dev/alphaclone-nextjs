@@ -95,7 +95,7 @@ export default function PlanAndUsageView({
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 sm:p-6">
-      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl text-white">
+      <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl text-[var(--ws-text-primary)]">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--ws-border)] pb-6">
           <div>
             <div className="flex items-center gap-3">
@@ -128,12 +128,12 @@ export default function PlanAndUsageView({
               <button
                 onClick={handleOpenPortal}
                 disabled={portalLoading}
-                className="px-4 py-2 type-ui font-medium bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-xl border border-[var(--ws-border)] transition-all disabled:opacity-50"
+                className="px-4 py-2 type-ui font-medium bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-xl border border-[var(--ws-border)] transition-all disabled:opacity-50"
               >
                 {portalLoading ? 'Opening Portal...' : 'Manage Billing'}
               </button>
             )}
-            <Link href="/pricing" className="px-4 py-2 type-ui font-medium bg-teal-600 hover:bg-teal-500 text-white rounded-xl shadow-lg transition-all">
+            <Link href="/pricing" className="px-4 py-2 type-ui font-medium bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-xl shadow-lg transition-all">
               Compare Plans
             </Link>
           </div>
@@ -152,7 +152,7 @@ export default function PlanAndUsageView({
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-xl font-bold text-white">Daily Usage</h3>
+            <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Daily Usage</h3>
             <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
               {unlimited ? 'Analytics only — no subscription ceiling' : 'Per action category · UTC daily window'}
             </p>
@@ -220,7 +220,7 @@ export default function PlanAndUsageView({
       </div>
 
       <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 shadow-xl">
-        <h3 className="text-xl font-bold text-white mb-6">Available Plans</h3>
+        <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-6">Available Plans</h3>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PUBLIC_PRICING_PLANS.map((plan) => {
             const isCurrent =
@@ -238,14 +238,14 @@ export default function PlanAndUsageView({
               >
                 <div>
                   <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-lg text-white">{plan.name}</h4>
+                    <h4 className="font-bold text-lg text-[var(--ws-text-primary)]">{plan.name}</h4>
                     {isCurrent && (
                       <span className="type-ui font-bold px-2 py-0.5 bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
                         CURRENT
                       </span>
                     )}
                   </div>
-                  <p className="text-2xl font-extrabold text-white mt-2">
+                  <p className="text-2xl font-extrabold text-[var(--ws-text-primary)] mt-2">
                     {plan.id === 'premium' ? (
                       <>Unlimited</>
                     ) : (
@@ -270,7 +270,7 @@ export default function PlanAndUsageView({
                     <button
                       onClick={() => handleUpgrade(plan.id)}
                       disabled={checkoutLoading === plan.id}
-                      className="w-full py-2 type-caption font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-all shadow-md disabled:opacity-50"
+                      className="w-full py-2 type-caption font-semibold bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-lg transition-all shadow-md disabled:opacity-50"
                     >
                       {checkoutLoading === plan.id ? 'Loading...' : `Upgrade to ${plan.name}`}
                     </button>

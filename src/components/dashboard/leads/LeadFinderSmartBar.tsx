@@ -84,7 +84,7 @@ export default function LeadFinderSmartBar({ onProfileLoaded, onSmartSearch, sea
           type="button"
           disabled={searching}
           onClick={() => onSmartSearch(intent)}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white type-ui font-medium"
+          className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-[var(--text-inverse)] type-ui font-medium"
         >
           {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           Find leads for me

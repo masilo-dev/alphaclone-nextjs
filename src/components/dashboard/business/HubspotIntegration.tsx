@@ -202,7 +202,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                     </div>
                     <div className="flex-1">
                         <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
-                        <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
+                        <h2 className="text-base font-bold text-[var(--ws-text-primary)]">HubSpot CRM</h2>
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-1 max-w-2xl">
                             Sync HubSpot contacts into AlphaClone and manage them from one workspace.
                         </p>
@@ -230,7 +230,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
             animate={{ opacity: 1, y: 0 }}
             className="max-w-4xl ac-workspace-panel rounded-lg overflow-hidden"
         >
-            <div className="border-b border-white/5 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="border-b border-[var(--ws-border)] p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                         <Users className="w-5 h-5 text-orange-400" />
@@ -238,7 +238,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                     <div>
                         <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
+                            <h2 className="text-base font-bold text-[var(--ws-text-primary)]">HubSpot CRM</h2>
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 type-ui text-emerald-400 border border-emerald-500/20">
                                 <CheckCircle2 className="w-3 h-3" />
                                 Connected
@@ -253,7 +253,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         variant="outline"
                         onClick={handleSync}
                         disabled={isSyncing}
-                        className="border-[var(--ws-border)] text-white hover:bg-[var(--ws-surface-secondary)]"
+                        className="border-[var(--ws-border)] text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]"
                     >
                         <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
                         Refresh Contacts
@@ -278,7 +278,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search contacts by name, email, or company..."
-                        className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 pl-10 pr-4 py-2.5 type-ui text-white outline-none focus:border-orange-500/40"
+                        className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 pl-10 pr-4 py-2.5 type-ui text-[var(--ws-text-primary)] outline-none focus:border-orange-500/40"
                     />
                 </div>
 
@@ -302,7 +302,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                                     className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
                                 >
                                     <div className="min-w-0">
-                                        <p className="font-semibold text-white truncate">{fullName}</p>
+                                        <p className="font-semibold text-[var(--ws-text-primary)] truncate">{fullName}</p>
                                         <div className="type-ui text-[var(--ws-text-muted)] flex flex-col gap-1 mt-1">
                                             <span className="truncate">{contact.properties.email || 'No email'}</span>
                                             {contact.properties.company && <span className="truncate">{contact.properties.company}</span>}

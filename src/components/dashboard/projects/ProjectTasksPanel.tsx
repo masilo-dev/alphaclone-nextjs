@@ -89,19 +89,19 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task for this project…"
-          className="flex-1 min-w-0 px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-0 px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <button
           type="submit"
           disabled={creating || !newTitle.trim()}
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white type-caption font-bold"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-[var(--text-inverse)] type-caption font-bold"
         >
           {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           Add
         </button>
       </form>
 
-      <div className="space-y-2 bg-[var(--ws-canvas)]/20 rounded-lg p-3 border border-white/5 max-h-56 overflow-y-auto custom-scrollbar">
+      <div className="space-y-2 bg-[var(--ws-canvas)]/20 rounded-lg p-3 border border-[var(--ws-border)] max-h-56 overflow-y-auto custom-scrollbar">
         {loading ? (
           [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-[var(--ws-panel)]/60 rounded animate-pulse" />)
         ) : tasks.length === 0 ? (

@@ -327,10 +327,10 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
       <div className="w-full max-w-5xl rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-5 py-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Media Studio</h3>
+            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Media Studio</h3>
             <p className="type-card-description text-[var(--ws-text-muted)]">Professional editing controls for non-technical users</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-white">
+          <button onClick={onClose} className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-[var(--ws-text-primary)]">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -362,7 +362,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
 
           <div className="space-y-4 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4">
             <div>
-              <div className="mb-2 flex items-center gap-2 type-ui font-semibold text-white">
+              <div className="mb-2 flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                 <Crop className="h-4 w-4 text-blue-400" />
                 Social Presets
               </div>
@@ -386,7 +386,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
             {isVideo ? (
               <>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                     <Scissors className="h-4 w-4 text-violet-400" />
                     Timeline Trim
                   </div>
@@ -410,7 +410,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                     <Scissors className="h-4 w-4 text-blue-400" />
                     Timeline Preview
                   </div>
@@ -479,7 +479,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 type-ui font-semibold text-white">
+                  <div className="flex items-center gap-2 type-ui font-semibold text-[var(--ws-text-primary)]">
                     <SlidersHorizontal className="h-4 w-4 text-teal-400" />
                     Color Precision
                   </div>
@@ -507,7 +507,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
               <button
                 onClick={isVideo ? applyVideoEdits : applyImageEdits}
                 disabled={saving}
-                className="w-full rounded-lg bg-blue-600 px-3 py-2 type-ui font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                className="w-full rounded-lg bg-blue-600 px-3 py-2 type-ui font-semibold text-[var(--ws-text-primary)] hover:bg-blue-500 disabled:opacity-60"
               >
                 {saving ? 'Applying...' : 'Apply In Media Studio'}
               </button>

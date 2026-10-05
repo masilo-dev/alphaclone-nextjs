@@ -59,7 +59,7 @@ export default function BillsPayablePage() {
       {aging.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {aging.slice(0, 4).map((a, i) => (
-            <div key={i} className="bg-[var(--ws-panel)] border border-white/5 rounded-xl p-3">
+            <div key={i} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3">
               <div className="type-caption text-[var(--ws-text-muted)]">{a.bucket || 'Bucket'}</div>
               <div className="text-lg font-bold text-violet-400">${Number(a.amount || 0).toLocaleString()}</div>
             </div>
@@ -102,11 +102,11 @@ export default function BillsPayablePage() {
           }
         />
       ) : (
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           {filtered.map((b) => (
             <div key={b.id} className="px-4 py-3 flex justify-between items-center">
               <div>
-                <div className="type-ui font-bold text-white">{b.vendor_name || 'Vendor'}</div>
+                <div className="type-ui font-bold text-[var(--ws-text-primary)]">{b.vendor_name || 'Vendor'}</div>
                 <div className="type-caption text-[var(--ws-text-muted)]">Due {b.due_date || '—'}</div>
               </div>
               <div className="text-right">

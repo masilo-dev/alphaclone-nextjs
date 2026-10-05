@@ -70,7 +70,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
           <button
             type="button"
             onClick={() => onOpenDraft?.(latest)}
-            className="type-caption font-bold uppercase px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white"
+            className="type-caption font-bold uppercase px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-[var(--ws-text-primary)]"
           >
             Review draft
           </button>
@@ -80,7 +80,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
               setDismissed(true);
               toast('Open Drafts folder to review AI replies anytime.');
             }}
-            className="type-ui font-semibold text-[var(--ws-text-muted)] hover:text-white"
+            className="type-ui font-semibold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
           >
             Dismiss
           </button>
@@ -89,7 +89,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="text-[var(--ws-text-muted)] hover:text-white p-1"
+        className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] p-1"
         aria-label="Dismiss AI draft notification"
       >
         <X className="w-4 h-4" />

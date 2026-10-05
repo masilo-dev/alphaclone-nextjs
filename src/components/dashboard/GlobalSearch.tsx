@@ -189,13 +189,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                     onChange={(e) => setQuery(e.target.value)}
                                     onKeyDown={handleKeyDown}
                                     placeholder="Search projects, messages, invoices..."
-                                    className="flex-1 bg-transparent text-white placeholder-slate-400 outline-none"
+                                    className="flex-1 bg-transparent text-[var(--ws-text-primary)] placeholder-slate-400 outline-none"
                                     autoFocus
                                 />
                                 {query && (
                                     <button
                                         onClick={() => setQuery('')}
-                                        className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                                        className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                                     >
                                         <X className="w-5 h-5" />
                                     </button>
@@ -210,7 +210,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                         onClick={() => setTypeFilter(filter)}
                                         className={`px-3 py-1.5 rounded-lg type-caption font-medium capitalize transition-all ${
                                             typeFilter === filter
-                                                ? 'bg-blue-600 text-white'
+                                                ? 'bg-blue-600 text-[var(--ws-text-primary)]'
                                                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
                                         }`}
                                     >
@@ -250,7 +250,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                             {getIcon(result.type)}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white font-medium type-card-description truncate">
+                                            <p className="text-[var(--ws-text-primary)] font-medium type-card-description truncate">
                                                 {result.title}
                                             </p>
                                             {result.subtitle && (

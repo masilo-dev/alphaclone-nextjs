@@ -31,7 +31,7 @@ const PLATFORM_CONFIG: Record<SocialPlatform, { icon: React.ElementType; colorCl
   facebook: { icon: Facebook, colorClass: 'text-[var(--logo-facebook)]', bgClass: 'bg-[var(--logo-facebook)]/10' },
   instagram: { icon: Instagram, colorClass: 'text-[var(--logo-instagram)]', bgClass: 'bg-[var(--logo-instagram)]/10' },
   twitter: { icon: Twitter, colorClass: 'text-[var(--logo-twitter)]', bgClass: 'bg-[var(--logo-twitter)]/10' },
-  x: { icon: Twitter, colorClass: 'text-[var(--ws-text-secondary)]', bgClass: 'bg-white/10' },
+  x: { icon: Twitter, colorClass: 'text-[var(--ws-text-secondary)]', bgClass: 'bg-[var(--ws-hover)]' },
   tiktok: { icon: Music2, colorClass: 'text-[var(--logo-tiktok, var(--error-500))]', bgClass: 'bg-[var(--logo-tiktok, var(--error-500))]/10' },
   whatsapp: { icon: MessageCircle, colorClass: 'text-[var(--logo-whatsapp)]', bgClass: 'bg-[var(--logo-whatsapp)]/10' },
   mail: { icon: Mail, colorClass: 'text-[var(--logo-google-red)]', bgClass: 'bg-[var(--logo-google-red)]/10' },
@@ -72,7 +72,7 @@ export function SocialPlatformIcon({
     return (
       <div
         className={cn(
-          'flex items-center justify-center transition-all duration-300 border border-white/5 group-hover:border-teal-500/30',
+          'flex items-center justify-center transition-all duration-300 border border-[var(--ws-border)] group-hover:border-teal-500/30',
           config.bgClass,
           wrapperSizeClasses[size],
           className

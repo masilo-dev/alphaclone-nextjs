@@ -50,10 +50,10 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
     return (
       <div className="p-6 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-center">
         <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-white">Client Profile Not Found</h3>
+        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Client Profile Not Found</h3>
         <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Could not assemble relationship graph for ID: {clientId}</p>
         {onBack && (
-          <button onClick={onBack} className="mt-4 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-lg type-ui transition">
+          <button onClick={onBack} className="mt-4 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-lg type-ui transition">
             Back to Clients
           </button>
         )}
@@ -67,12 +67,12 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       <div className="p-6 bg-[var(--ws-panel)]/80 backdrop-blur border border-[var(--ws-border)] rounded-2xl shadow-xl">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-cyan-500/20">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-[var(--text-inverse)] text-xl font-bold shadow-lg shadow-cyan-500/20">
               {profile.primary_name ? profile.primary_name.charAt(0).toUpperCase() : 'C'}
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white tracking-tight">{profile.primary_name}</h1>
+                <h1 className="text-2xl font-bold text-[var(--ws-text-primary)] tracking-tight">{profile.primary_name}</h1>
                 <span className="px-3 py-1 type-caption font-semibold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                   {profile.relationship_status}
                 </span>
@@ -114,7 +114,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
               <span>Total Revenue</span>
               <DollarSign className="w-4 h-4 text-emerald-400" />
             </div>
-            <span className="text-xl font-bold text-white">${profile.total_revenue.toLocaleString()}</span>
+            <span className="text-xl font-bold text-[var(--ws-text-primary)]">${profile.total_revenue.toLocaleString()}</span>
           </div>
 
           <div className="p-4 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)]/80 rounded-xl">
@@ -190,7 +190,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
       {/* Tab Content Panels */}
       {activeTab === 'timeline' && (
         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Unified Activity Timeline</h3>
+          <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Unified Activity Timeline</h3>
           <div className="relative pl-6 border-l-2 border-[var(--ws-border)] space-y-6">
             {profile.timeline.map((item) => (
               <div key={item.id} className="relative">
@@ -204,7 +204,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
                       {new Date(item.timestamp).toLocaleString()}
                     </span>
                   </div>
-                  <h4 className="type-ui font-medium text-white mt-2">{item.title}</h4>
+                  <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mt-2">{item.title}</h4>
                   <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{item.description}</p>
                 </div>
               </div>
@@ -215,7 +215,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
       {activeTab === 'commitments' && (
         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Promises & Commitments Audit</h3>
+          <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Promises & Commitments Audit</h3>
           <div className="grid gap-3">
             {profile.commitments.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No active commitments recorded.</p>
@@ -231,7 +231,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
                         {c.status.toUpperCase()}
                       </span>
                     </div>
-                    <p className="type-card-description text-white font-medium mt-2">{c.commitment}</p>
+                    <p className="type-card-description text-[var(--ws-text-primary)] font-medium mt-2">{c.commitment}</p>
                   </div>
                   {c.dueDate && (
                     <span className="type-caption text-[var(--ws-text-muted)]">Due: {new Date(c.dueDate).toLocaleDateString()}</span>
@@ -245,7 +245,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
       {activeTab === 'commercial' && (
         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Proposals & Quotations</h3>
+          <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Proposals & Quotations</h3>
           <div className="grid gap-3">
             {profile.proposals.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No proposal records found.</p>
@@ -253,7 +253,7 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
               profile.proposals.map((p) => (
                 <div key={p.id} className="p-4 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between">
                   <div>
-                    <h4 className="type-ui font-medium text-white">{p.title}</h4>
+                    <h4 className="type-ui font-medium text-[var(--ws-text-primary)]">{p.title}</h4>
                     <span className="type-caption text-[var(--ws-text-muted)] mt-1 block">Created: {new Date(p.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="text-right">
@@ -269,13 +269,13 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
       {activeTab === 'calendar' && (
         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Calendar & Meeting History</h3>
+          <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Calendar & Meeting History</h3>
           <div className="space-y-4">
             <div>
               <h4 className="type-caption font-semibold text-cyan-400 uppercase tracking-wider mb-2">Upcoming & Today ({profile.calendar_events.today.length + profile.calendar_events.future.length})</h4>
               {[...profile.calendar_events.today, ...profile.calendar_events.future].map((mtg) => (
                 <div key={mtg.id} className="p-3 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg flex items-center justify-between mb-2">
-                  <span className="type-ui text-white font-medium">{mtg.title}</span>
+                  <span className="type-ui text-[var(--ws-text-primary)] font-medium">{mtg.title}</span>
                   <span className="type-caption text-[var(--ws-text-muted)]">{new Date(mtg.time).toLocaleString()}</span>
                 </div>
               ))}
@@ -296,14 +296,14 @@ export const Client360ViewPage: React.FC<Client360ViewPageProps> = ({ tenantId, 
 
       {activeTab === 'decisions' && (
         <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Logged Project Decisions</h3>
+          <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Logged Project Decisions</h3>
           <div className="grid gap-3">
             {profile.decisions.length === 0 ? (
               <p className="text-[var(--ws-text-muted)] type-card-description">No formal decisions logged yet.</p>
             ) : (
               profile.decisions.map((d) => (
                 <div key={d.id} className="p-4 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded-lg">
-                  <h4 className="type-ui font-medium text-white">{d.title}</h4>
+                  <h4 className="type-ui font-medium text-[var(--ws-text-primary)]">{d.title}</h4>
                   {d.decidedAt && (
                     <span className="type-caption text-[var(--ws-text-muted)] mt-1 block">Logged: {new Date(d.decidedAt).toLocaleString()}</span>
                   )}

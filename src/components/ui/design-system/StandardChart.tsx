@@ -30,7 +30,7 @@ function ChartMount({ height, children }: { height: number; children: React.Reac
   if (!mounted) {
     return (
       <div
-        className="w-full rounded-xl bg-[var(--ws-panel)]/40 border border-white/5 animate-pulse"
+        className="w-full rounded-xl bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] animate-pulse"
         style={{ height }}
       />
     );

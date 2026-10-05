@@ -99,13 +99,13 @@ const BookingTab: React.FC = () => {
                     <div className="w-20 h-20 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mb-6">
                         <Calendar className="w-10 h-10 text-[var(--ws-text-muted)]" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">Booking Not Connected</h3>
+                    <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Booking Not Connected</h3>
                     <p className="text-[var(--ws-text-muted)] max-w-md mb-8">
                         Connect Calendly or native booking in settings. Cal.com connection is coming soon.
                     </p>
                     <button
                         onClick={() => router.push('/dashboard/business/settings')}
-                        className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                        className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         <Settings className="w-4 h-4" />
                         Go to Settings
@@ -124,7 +124,7 @@ const BookingTab: React.FC = () => {
         <div className="space-y-6 pb-20 ac-scroll-full ac-enterprise-module">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         <Calendar className="w-6 h-6 text-teal-400" />
                         Scheduling
                     </h2>
@@ -134,13 +134,13 @@ const BookingTab: React.FC = () => {
                 <div className="flex bg-[var(--ws-panel)] p-1 rounded-xl border border-[var(--ws-border)] self-stretch sm:self-auto">
                     <button
                         onClick={() => setActiveView('schedule')}
-                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-ui font-bold transition-all ${activeView === 'schedule' ? 'bg-teal-500 text-slate-950' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-ui font-bold transition-all ${activeView === 'schedule' ? 'bg-teal-500 text-slate-950' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                     >
                         My Schedule
                     </button>
                     <button
                         onClick={() => setActiveView('booking')}
-                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-ui font-bold transition-all ${activeView === 'booking' ? 'bg-teal-500 text-slate-950' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg type-ui font-bold transition-all ${activeView === 'booking' ? 'bg-teal-500 text-slate-950' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                     >
                         Booking Page
                     </button>
@@ -159,7 +159,7 @@ const BookingTab: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => window.open('https://calendly.com/app/scheduled_events/user/me', '_blank')}
-                                className="flex items-center gap-1.5 type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white transition-colors bg-[var(--ws-surface-secondary)] px-3 py-1.5 rounded-lg border border-[var(--ws-border)]"
+                                className="flex items-center gap-1.5 type-caption font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors bg-[var(--ws-surface-secondary)] px-3 py-1.5 rounded-lg border border-[var(--ws-border)]"
                             >
                                 <ExternalLink className="w-3 h-3" />
                                 Manage Availability
@@ -188,7 +188,7 @@ const BookingTab: React.FC = () => {
                                     <AlertCircle className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-white type-ui mb-1">Managing Your Availability & Payments</h4>
+                                    <h4 className="font-bold text-[var(--ws-text-primary)] type-ui mb-1">Managing Your Availability & Payments</h4>
                                     <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed mb-3">
                                         Your availability rules, event types, and <strong>payment collection (via Stripe)</strong> are configured securely within your Calendly dashboard. We sync your data here so you can view your schedule without leaving the platform.
                                     </p>
@@ -221,7 +221,7 @@ const BookingTab: React.FC = () => {
                                                             Scheduled
                                                         </span>
                                                     </div>
-                                                    <h4 className="font-bold text-white mb-1 group-hover:text-teal-400 transition-colors line-clamp-1">{event.title}</h4>
+                                                    <h4 className="font-bold text-[var(--ws-text-primary)] mb-1 group-hover:text-teal-400 transition-colors line-clamp-1">{event.title}</h4>
                                                     <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)] mb-4">
                                                         <Clock className="w-3 h-3 text-teal-500/50" />
                                                         {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -308,7 +308,7 @@ const BookingTab: React.FC = () => {
                                 <AlertCircle className="w-4 h-4" />
                             </div>
                             <p className="type-card-description text-[var(--ws-text-secondary)]">
-                                This is your <span className="text-white font-bold">Public Booking Link</span> (how clients see it). Calendly <span className="underline">does not</span> allow embedding their private admin dashboard.
+                                This is your <span className="text-[var(--ws-text-primary)] font-bold">Public Booking Link</span> (how clients see it). Calendly <span className="underline">does not</span> allow embedding their private admin dashboard.
                             </p>
                         </div>
                         <div className="flex items-center gap-2">

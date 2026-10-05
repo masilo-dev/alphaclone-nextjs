@@ -48,7 +48,7 @@ export default function RevenueMomentumCard() {
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg bg-[var(--ws-canvas)]/50 border border-white/5 ${getStatusColor(score)}`}>
+            <div className={`p-1.5 rounded-lg bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] ${getStatusColor(score)}`}>
               <Zap className="w-4 h-4" />
             </div>
             <div>
@@ -80,7 +80,7 @@ export default function RevenueMomentumCard() {
 
         <div className="space-y-3">
           {/* Nudge Box */}
-          <div className="rounded-lg bg-[var(--ws-canvas)]/45 p-3 border border-white/5">
+          <div className="rounded-lg bg-[var(--ws-canvas)]/45 p-3 border border-[var(--ws-border)]">
             <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
               {nudge}
             </p>
@@ -90,15 +90,15 @@ export default function RevenueMomentumCard() {
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center">
               <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Leads</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.leadsContacted}</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.leadsContacted}</p>
             </div>
             <div className="text-center">
               <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Deals</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.dealsAdvanced}</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.dealsAdvanced}</p>
             </div>
             <div className="text-center">
               <p className="type-card-description text-[var(--ws-text-muted)] font-medium mb-0.5">Invoices</p>
-              <p className="type-card-description font-bold text-white">+{breakdown.invoicesSent}</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-primary)]">+{breakdown.invoicesSent}</p>
             </div>
           </div>
         </div>

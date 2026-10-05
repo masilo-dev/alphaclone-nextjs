@@ -124,13 +124,13 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
                                     <FileText className="w-5 h-5 text-emerald-500" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="type-card-description font-medium text-white max-w-[200px] truncate">{file.name}</p>
+                                    <p className="type-card-description font-medium text-[var(--ws-text-primary)] max-w-[200px] truncate">{file.name}</p>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">{(file.size / 1024).toFixed(1)} KB</p>
                                 </div>
                             </div>
                             <button
                                 onClick={(e) => { e.preventDefault(); setFile(null); }}
-                                className="p-2 hover:bg-[var(--ws-surface-tertiary)] rounded-full text-[var(--ws-text-muted)] hover:text-white"
+                                className="p-2 hover:bg-[var(--ws-surface-tertiary)] rounded-full text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                             >
                                 <X className="w-4 h-4" />
                             </button>

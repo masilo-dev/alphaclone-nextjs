@@ -107,7 +107,7 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
       {!embedded && (
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white">{campaign.name}</h2>
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{campaign.name}</h2>
             <p className="type-card-description text-[var(--ws-text-muted)]">Subject: {campaign.subject}</p>
           </div>
           {onClose && (
@@ -131,7 +131,7 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
             return (
               <div key={variant} className="bg-[var(--ws-panel)] border border-violet-500/20 rounded-2xl p-4">
                 <div className="type-caption font-bold text-violet-400 mb-2">Variant {variant}</div>
-                <div className="type-ui text-white">Sent: {bucket.sent}</div>
+                <div className="type-ui text-[var(--ws-text-primary)]">Sent: {bucket.sent}</div>
                 <div className="type-ui text-[var(--ws-text-muted)]">Open rate: {openRate}% · Click rate: {clickRate}%</div>
               </div>
             );
@@ -153,8 +153,8 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
       )}
 
       <div>
-        <h3 className="type-ui font-bold text-white mb-3">Recipients ({recipients.length})</h3>
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl overflow-hidden">
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-3">Recipients ({recipients.length})</h3>
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
           <div className="divide-y divide-white/5 max-h-48 overflow-y-auto">
             {recipients.length === 0 ? (
               <div className="px-4 py-6 type-ui text-[var(--ws-text-muted)] text-center">No recipients yet</div>
@@ -163,7 +163,7 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
                 const abVariant = String((r.metadata as Record<string, unknown>)?.abVariant || '');
                 return (
                 <div key={r.id} className="flex items-center justify-between px-4 py-2.5 type-ui">
-                  <span className="text-white truncate">{r.email}</span>
+                  <span className="text-[var(--ws-text-primary)] truncate">{r.email}</span>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {abVariant ? (
                       <span className="type-ui font-bold text-violet-400">{abVariant}</span>

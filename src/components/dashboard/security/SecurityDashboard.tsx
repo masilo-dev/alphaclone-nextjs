@@ -79,7 +79,7 @@ const SecurityDashboard: React.FC = () => {
         <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Security Center</h1>
+                    <h1 className="text-3xl font-bold text-[var(--ws-text-primary)] mb-2">Security Center</h1>
                     <p className="text-[var(--ws-text-muted)]">Monitor website security, SSL status, and trust reputation.</p>
                 </div>
                 {result && (
@@ -103,7 +103,7 @@ const SecurityDashboard: React.FC = () => {
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                     placeholder="example.com"
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 placeholder-slate-600"
+                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 text-[var(--ws-text-primary)] focus:outline-none focus:ring-2 focus:ring-teal-500/50 placeholder-slate-600"
                                 />
                             </div>
                         </div>
@@ -129,7 +129,7 @@ const SecurityDashboard: React.FC = () => {
                         <div className={`text-8xl font-black mb-4 ${getGradeColor(result.grade)}`}>
                             {result.grade}
                         </div>
-                        <div className="text-2xl font-bold text-white mb-2">{result.score}/100</div>
+                        <div className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">{result.score}/100</div>
                         <p className="text-[var(--ws-text-muted)] type-caption">Valid as of {result.timestamp.toLocaleTimeString()}</p>
                     </Card>
 
@@ -167,7 +167,7 @@ const SecurityDashboard: React.FC = () => {
                     {/* Issues List */}
                     {result.issues.length > 0 && (
                         <Card className="lg:col-span-3 p-6 border-red-500/20 bg-[var(--error-500)]/5 animate-fade-in">
-                            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                            <h3 className="text-xl font-bold text-[var(--text-inverse)] mb-4 flex items-center">
                                 <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
                                 Critical Issues Found
                             </h3>
@@ -184,7 +184,7 @@ const SecurityDashboard: React.FC = () => {
 
                     {/* Scan History */}
                     <Card className="lg:col-span-3 p-6 border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/50">
-                        <h3 className="text-xl font-bold text-white mb-4">Scan History</h3>
+                        <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-4">Scan History</h3>
                         <div className="overflow-x-auto min-w-0">
                             <table className="w-full min-w-[560px] text-left">
                                 <thead>
@@ -260,10 +260,10 @@ const CheckCard: React.FC<{
                     <div className={`p-2 rounded-lg ${status === 'pass' ? 'bg-green-500/20' : 'bg-[var(--error-500)]/20'}`}>
                         <Icon className="w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-lg text-white">{title}</h4>
+                    <h4 className="font-bold text-lg text-[var(--ws-text-primary)]">{title}</h4>
                 </div>
                 <div className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider ${status === 'pass' ? 'bg-green-500 text-slate-900' :
-                    status === 'fail' ? 'bg-[var(--error-500)] text-white' :
+                    status === 'fail' ? 'bg-[var(--error-500)] text-[var(--text-inverse)]' :
                         'bg-yellow-500 text-slate-900'
                     }`}>
                     {status}

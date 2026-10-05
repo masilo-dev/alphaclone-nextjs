@@ -67,9 +67,9 @@ function VideoTileView({
                 autoPlay
                 muted={!isScreenShare}
             />
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-black/40 px-3 py-1.5 backdrop-blur-md">
                 {isScreenShare && <Monitor className="w-3.5 h-3.5 text-[var(--success-text,var(--success-500))]" />}
-                <span className="type-caption font-semibold text-white">{label}</span>
+                <span className="type-caption font-semibold text-[var(--ws-text-primary)]">{label}</span>
             </div>
         </div>
     );
@@ -340,12 +340,12 @@ export default function LiveKitStage({
     const primaryScreen = screenTiles[0];
 
     return (
-        <div className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay text-[var(--ws-text-primary)] flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-16 sm:h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-4 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--ws-panel)]/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">
+                    <div className="flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">
                         <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[var(--error-500)] shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="type-caption sm:text-xs font-black uppercase tracking-caps text-white/90">
+                        <span className="type-caption sm:text-xs font-black uppercase tracking-caps text-[var(--ws-text-primary)]">
                             {formatElapsed(secondsElapsed)}
                         </span>
                     </div>
@@ -355,9 +355,9 @@ export default function LiveKitStage({
                         <ShieldCheck className="w-4 h-4 text-[var(--success-text,var(--success-500))]" />
                         <span className="type-caption font-black uppercase text-emerald-100">Secure room</span>
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--ws-panel)]/60 px-2.5 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
+                    <div className="flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/60 px-2.5 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
                         <Wifi className="w-4 h-4 text-[var(--brand-blue-300)]" />
-                        <span className="type-ui sm:text-xs font-semibold text-white/80 capitalize hidden sm:inline">
+                        <span className="type-ui sm:text-xs font-semibold text-[var(--ws-text-secondary)] capitalize hidden sm:inline">
                             {connectionState} · {connectionQuality}
                         </span>
                     </div>
@@ -407,7 +407,7 @@ export default function LiveKitStage({
                             <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
                             <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                         </div>
-                        <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
+                        <h2 className="text-[var(--ws-text-primary)] text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
                         <p className="text-[var(--ws-text-muted)] font-medium">Securing your encrypted channel</p>
                     </div>
                 </div>
@@ -415,7 +415,7 @@ export default function LiveKitStage({
 
             <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pointer-events-none">
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
-                <div className={`relative mx-auto flex max-w-2xl items-center justify-center gap-3 border border-white/5 bg-[var(--ws-canvas)]/40 p-3 ring-1 ring-white/10 pointer-events-auto sm:gap-5 sm:p-4 ${WORKSPACE.panel.radius} backdrop-blur-2xl`}>
+                <div className={`relative mx-auto flex max-w-2xl items-center justify-center gap-3 border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 p-3 ring-1 ring-[var(--ws-border)] pointer-events-auto sm:gap-5 sm:p-4 ${WORKSPACE.panel.radius} backdrop-blur-2xl`}>
                     <ControlBtn
                         onClick={() => void toggleMic()}
                         active={!micEnabled}
@@ -476,12 +476,12 @@ function ControlBtn({
             <span
                 className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-colors ${
                     danger
-                        ? 'bg-red-600 hover:bg-[var(--error-500)] border-red-500/50 shadow-lg shadow-red-900/40 text-white'
+                        ? 'bg-red-600 hover:bg-[var(--error-500)] border-red-500/50 shadow-lg shadow-red-900/40 text-[var(--text-inverse)]'
                         : highlight
-                          ? 'bg-teal-600 border-teal-400/50 text-white'
+                          ? 'bg-teal-600 border-teal-400/50 text-[var(--text-inverse)]'
                           : active
                             ? 'bg-[var(--error-500)]/20 border-red-500/50 text-red-400'
-                            : 'bg-[var(--ws-surface-secondary)]/80 border-white/10 text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
+                            : 'bg-[var(--ws-surface-secondary)]/80 border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                 }`}
             >
                 <Icon className="w-5 h-5" />

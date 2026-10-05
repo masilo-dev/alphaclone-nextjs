@@ -126,7 +126,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
   return (
     <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-white font-semibold">
+        <div className="flex items-center gap-2 text-[var(--ws-text-primary)] font-semibold">
           <BarChart3 className="w-5 h-5 text-blue-400" />
           Campaign Runs
         </div>
@@ -143,7 +143,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
         <div className="rounded-lg bg-[var(--ws-surface-secondary)]/60 p-4 space-y-3">
           <div className="flex justify-between type-ui">
             <span className="text-[var(--ws-text-muted)]">Step</span>
-            <span className="text-white">{stepLabels[runStatus.current_step] || runStatus.current_step}</span>
+            <span className="text-[var(--ws-text-primary)]">{stepLabels[runStatus.current_step] || runStatus.current_step}</span>
           </div>
           <div className="w-full bg-[var(--ws-surface-tertiary)] rounded-full h-2">
             <div
@@ -154,15 +154,15 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
           <div className="grid grid-cols-3 gap-2 text-center type-caption">
             <div>
               <div className="text-[var(--ws-text-muted)]">Found</div>
-              <div className="text-white font-semibold">{runStatus.source_count}</div>
+              <div className="text-[var(--ws-text-primary)] font-semibold">{runStatus.source_count}</div>
             </div>
             <div>
               <div className="text-[var(--ws-text-muted)]">Enriched</div>
-              <div className="text-white font-semibold">{runStatus.enriched_count}</div>
+              <div className="text-[var(--ws-text-primary)] font-semibold">{runStatus.enriched_count}</div>
             </div>
             <div>
               <div className="text-[var(--ws-text-muted)]">CRM created</div>
-              <div className="text-white font-semibold">{runStatus.created_count}</div>
+              <div className="text-[var(--ws-text-primary)] font-semibold">{runStatus.created_count}</div>
             </div>
           </div>
           {runStatus.errors && runStatus.errors.length > 0 && (
@@ -185,7 +185,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
             }`}
           >
             <div>
-              <div className="text-white type-ui font-medium">{c.name}</div>
+              <div className="text-[var(--ws-text-primary)] type-ui font-medium">{c.name}</div>
               <div className="type-caption text-[var(--ws-text-muted)]">
                 {(c.sources || []).join(', ')} · limit {c.daily_limit}
               </div>
@@ -208,7 +208,7 @@ export default function CampaignRunDashboard({ selectedCampaignId, onSelectCampa
               <button
                 onClick={() => handleRun(c.id)}
                 disabled={running}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white type-caption disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)] type-caption disabled:opacity-50"
               >
                 <Play className="w-3 h-3" />
                 Run

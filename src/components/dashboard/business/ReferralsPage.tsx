@@ -64,7 +64,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                     <Gift className="w-6 h-6 text-teal-400" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Refer & Grow</h1>
+                    <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Refer & Grow</h1>
                     <p className="text-[var(--ws-text-muted)]">Share AlphaClone with other businesses using your personal link.</p>
                 </div>
             </div>
@@ -80,7 +80,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                     />
                     <button
                         onClick={copyLink}
-                        className="flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl type-ui font-bold text-white transition-colors"
+                        className="flex items-center justify-center gap-2 px-5 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl type-ui font-bold text-[var(--text-inverse)] transition-colors"
                     >
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         {copied ? 'Copied' : 'Copy'}
@@ -104,7 +104,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
             </div>
 
             <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl p-6">
-                <h3 className="type-ui font-bold text-white mb-3">How it works</h3>
+                <h3 className="type-ui font-bold text-[var(--ws-text-primary)] mb-3">How it works</h3>
                 <ol className="space-y-2 type-ui text-[var(--ws-text-muted)] list-decimal list-inside">
                     <li>Share your unique link with other business owners.</li>
                     <li>They sign up for AlphaClone using your link.</li>

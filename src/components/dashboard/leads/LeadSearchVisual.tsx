@@ -59,7 +59,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
             <div className="absolute top-8 left-0 w-full px-8 flex justify-between items-center z-10">
                 <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-4 py-2 border border-[var(--ws-border)]/50 rounded-full">
                     <Zap className="w-5 h-5 text-teal-400 animate-pulse" />
-                    <span className="text-white font-mono type-ui">ACTIVE SEARCH</span>
+                    <span className="text-[var(--ws-text-primary)] font-mono type-ui">ACTIVE SEARCH</span>
                 </div>
                 <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-4 py-2 border border-[var(--ws-border)]/50 rounded-full font-mono type-ui text-[var(--ws-text-secondary)]">
                     Target: <span className="text-teal-400 font-bold">{industry}</span> in <span className="text-blue-400 font-bold">{location}</span>
@@ -128,7 +128,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                                 transition={{ duration: 0.5, repeat: Infinity }}
                                 className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(20,184,166,0.8)] border-2 border-white relative z-10"
                             >
-                                <User className="w-6 h-6 text-white" />
+                                <User className="w-6 h-6 text-[var(--ws-text-primary)]" />
                             </motion.div>
 
                             {/* Search Ping emanating from worker */}
@@ -182,7 +182,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                 <div className="bg-[var(--ws-panel)]/80 backdrop-blur-md border border-[var(--ws-border)]/50 rounded-2xl p-6 shadow-2xl">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                            <h3 className="text-[var(--ws-text-primary)] font-bold text-lg flex items-center gap-2">
                                 <Search className="w-5 h-5 text-teal-400" />
                                 {statusText}
                             </h3>
@@ -206,11 +206,11 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                     <div className="grid grid-cols-3 gap-2 mt-4 text-center">
                         <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Signals Analyzed</div>
-                            <div className="text-white font-mono font-bold">{Math.floor(progress * 1342).toLocaleString()}</div>
+                            <div className="text-[var(--ws-text-primary)] font-mono font-bold">{Math.floor(progress * 1342).toLocaleString()}</div>
                         </div>
                         <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Company Matches</div>
-                            <div className="text-white font-mono font-bold animate-pulse">{Math.floor(progress * 1.5)}</div>
+                            <div className="text-[var(--ws-text-primary)] font-mono font-bold animate-pulse">{Math.floor(progress * 1.5)}</div>
                         </div>
                         <div className="bg-[var(--ws-surface-secondary)]/50 rounded-lg py-2 border border-[var(--ws-border)]/50">
                             <div className="type-caption text-[var(--ws-text-muted)] mb-1">Data Quality</div>

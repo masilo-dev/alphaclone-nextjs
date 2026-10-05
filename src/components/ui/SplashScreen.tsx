@@ -76,7 +76,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               transition={{ delay: 0.3, duration: 0.8 }}
               className="flex flex-col items-center gap-2"
             >
-              <h1 className="text-2xl sm:text-3xl font-black tracking-caps text-white">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-caps text-[var(--ws-text-primary)]">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
               <p className="type-caption uppercase tracking-caps text-teal-400/60 font-medium text-center px-4">
@@ -116,7 +116,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 4, opacity: 1 }}
               transition={{ delay: 0.2, duration: 1.2, ease: "easeInOut" }}
-              className="absolute inset-0 bg-white/5 backdrop-blur-sm rounded-full pointer-events-none"
+              className="absolute inset-0 bg-[var(--ws-hover)] backdrop-blur-sm rounded-full pointer-events-none"
             />
           )}
         </motion.div>

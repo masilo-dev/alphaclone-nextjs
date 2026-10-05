@@ -36,32 +36,32 @@ export default function ListViewToolbar({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 items-center gap-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl px-3 h-10">
+        <div className="flex flex-1 items-center gap-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 h-10">
           <Search className="w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0" />
           <input
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="flex-1 bg-transparent type-ui text-white outline-none placeholder:text-slate-600"
+            className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] outline-none placeholder:text-slate-600"
           />
           {search && (
-            <button onClick={() => onSearchChange('')} className="text-[var(--ws-text-muted)] hover:text-white">
+            <button onClick={() => onSearchChange('')} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
         {onViewModeChange && viewMode && (
-          <div className="flex rounded-lg border border-white/5 bg-[var(--ws-panel)] p-0.5">
+          <div className="flex rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-0.5">
             <button
               onClick={() => onViewModeChange('list')}
-              className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-teal-500 text-white' : 'text-[var(--ws-text-muted)]'}`}
+              className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)]'}`}
               aria-label="List view"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => onViewModeChange('board')}
-              className={`p-2 rounded-md ${viewMode === 'board' ? 'bg-teal-500 text-white' : 'text-[var(--ws-text-muted)]'}`}
+              className={`p-2 rounded-md ${viewMode === 'board' ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)]'}`}
               aria-label="Board view"
             >
               <LayoutGrid className="w-4 h-4" />
@@ -79,8 +79,8 @@ export default function ListViewToolbar({
               onClick={() => onFilterChange(f.value)}
               className={`flex-shrink-0 h-8 px-3 rounded-full type-caption font-bold border transition-all ${
                 activeFilter === f.value
-                  ? 'bg-teal-500 text-white border-teal-500'
-                  : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-white/5 hover:border-teal-500/30'
+                  ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500'
+                  : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-teal-500/30'
               }`}
             >
               {f.label}

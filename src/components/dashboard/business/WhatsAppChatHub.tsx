@@ -370,9 +370,9 @@ export default function WhatsAppChatHub() {
             <div className="lg:col-span-4 flex h-full flex-col border-r border-[var(--ws-border)] bg-[var(--ws-panel)]/10">
                 
                 {/* Search Bar */}
-                <div className="p-4 border-b border-white/5 space-y-3">
+                <div className="p-4 border-b border-[var(--ws-border)] space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-white flex items-center gap-2 type-caption tracking-wide">
+                        <h3 className="font-bold text-[var(--ws-text-primary)] flex items-center gap-2 type-caption tracking-wide">
                             <MessageCircle className="w-5 h-5 text-emerald-400" /> WhatsApp Live Chat
                         </h3>
                         {/* Auto Outreach Toggle */}
@@ -400,7 +400,7 @@ export default function WhatsAppChatHub() {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Search chats or phone..."
-                            className="w-full bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl pl-10 pr-4 py-2.5 type-caption text-white outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
+                            className="w-full bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl pl-10 pr-4 py-2.5 type-caption text-[var(--ws-text-primary)] outline-none focus:border-teal-500/40 transition-all placeholder:text-slate-600"
                         />
                     </div>
 
@@ -422,13 +422,13 @@ export default function WhatsAppChatHub() {
                                     onChange={(e) => setFbLeadQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleFacebookLeadSearch()}
                                     placeholder="Name, email, campaign..."
-                                    className="flex-1 px-3 py-1.5 type-caption bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white"
+                                    className="flex-1 px-3 py-1.5 type-caption bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)]"
                                 />
                                 <button
                                     type="button"
                                     onClick={handleFacebookLeadSearch}
                                     disabled={searchingFbLeads}
-                                    className="px-3 py-1.5 type-caption font-semibold rounded-lg bg-blue-600 text-white disabled:opacity-50"
+                                    className="px-3 py-1.5 type-caption font-semibold rounded-lg bg-blue-600 text-[var(--ws-text-primary)] disabled:opacity-50"
                                 >
                                     {searchingFbLeads ? '…' : 'Find'}
                                 </button>
@@ -440,7 +440,7 @@ export default function WhatsAppChatHub() {
                                     onClick={() => startWhatsAppFromLead(lead)}
                                     className="w-full text-left p-2 rounded-lg bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] hover:border-emerald-500/30"
                                 >
-                                    <p className="type-card-description font-semibold text-white truncate">
+                                    <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">
                                         {[lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.full_name || lead.company || 'Lead'}
                                     </p>
                                     <p className="type-card-description text-[var(--ws-text-muted)] truncate">
@@ -481,7 +481,7 @@ export default function WhatsAppChatHub() {
                                             {thread.contactName.charAt(0) === '+' ? <Phone className="w-4 h-4 text-emerald-400" /> : thread.contactName.charAt(0)}
                                         </div>
                                         <div className="min-w-0">
-                                            <h4 className="font-bold type-card-title text-white truncate">{thread.contactName}</h4>
+                                            <h4 className="font-bold type-card-title text-[var(--ws-text-primary)] truncate">{thread.contactName}</h4>
                                             <p className="type-card-description text-[var(--ws-text-muted)] truncate mt-1">{thread.lastMessage}</p>
                                         </div>
                                     </div>
@@ -490,7 +490,7 @@ export default function WhatsAppChatHub() {
                                             {new Date(thread.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         {thread.unreadCount > 0 && (
-                                            <span className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center type-ui font-black">
+                                            <span className="w-4 h-4 bg-emerald-500 text-[var(--text-inverse)] rounded-full flex items-center justify-center type-ui font-black">
                                                 {thread.unreadCount}
                                             </span>
                                         )}
@@ -513,7 +513,7 @@ export default function WhatsAppChatHub() {
                                     <MessageSquare className="w-5 h-5 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold type-caption text-white tracking-wide">{activeThread.contactName}</h4>
+                                    <h4 className="font-bold type-caption text-[var(--ws-text-primary)] tracking-wide">{activeThread.contactName}</h4>
                                     <div className="type-caption flex items-center gap-1.5 font-bold uppercase tracking-wider mt-0.5">
                                         {metaConnected ? (
                                             <>
@@ -588,12 +588,12 @@ export default function WhatsAppChatHub() {
                                     onChange={e => setReplyText(e.target.value)}
                                     placeholder={metaConnected ? 'Type a WhatsApp message...' : 'Configure WhatsApp to send messages'}
                                     disabled={!metaConnected}
-                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-white outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
+                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-4 py-3 type-caption text-[var(--ws-text-primary)] outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
                                     disabled={sending || !replyText.trim() || !metaConnected}
-                                    className="flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 p-3 text-white transition-all active:scale-95 hover:bg-emerald-500 disabled:scale-100 disabled:opacity-50"
+                                    className="flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 p-3 text-[var(--text-inverse)] transition-all active:scale-95 hover:bg-emerald-500 disabled:scale-100 disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                 </button>

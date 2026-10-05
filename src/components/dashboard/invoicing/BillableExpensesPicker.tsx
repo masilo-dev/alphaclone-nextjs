@@ -128,7 +128,7 @@ export default function BillableExpensesPicker({
           type="button"
           disabled={attaching}
           onClick={attach}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-600/80 hover:bg-amber-600 text-white type-caption font-bold uppercase disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-amber-600/80 hover:bg-amber-600 text-[var(--ws-text-primary)] type-caption font-bold uppercase disabled:opacity-50"
         >
           <Plus className="w-4 h-4" />
           {invoiceId

@@ -185,7 +185,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                                     />
                                     <button
                                         onClick={() => { setFile(null); setPreview(null); }}
-                                        className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black text-white rounded-full transition-colors"
+                                        className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black text-[var(--ws-text-primary)] rounded-full transition-colors"
                                     >
                                         <X className="w-5 h-5" />
                                     </button>
@@ -209,7 +209,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-4">
                             <Receipt className="w-6 h-6 text-emerald-400 shrink-0 mt-1" />
                             <div>
-                                <h4 className="text-white font-medium mb-1">Receipt Analyzed Successfully</h4>
+                                <h4 className="text-[var(--ws-text-primary)] font-medium mb-1">Receipt Analyzed Successfully</h4>
                                 <p className="type-card-description text-[var(--ws-text-secondary)] mb-4">Please review the extracted data before saving.</p>
 
                                 <div className="space-y-3">
@@ -262,7 +262,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
 
                                     <div className="pt-4 border-t border-[var(--ws-border)]">
                                         <div className="flex items-center justify-between mb-4">
-                                            <span className="type-ui font-bold text-white">Already Paid?</span>
+                                            <span className="type-ui font-bold text-[var(--ws-text-primary)]">Already Paid?</span>
                                             <button 
                                                 onClick={() => setIsPaid(!isPaid)}
                                                 className={`w-12 h-6 rounded-full transition-colors relative ${isPaid ? 'bg-teal-500' : 'bg-[var(--ws-surface-tertiary)]'}`}

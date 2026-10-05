@@ -121,7 +121,7 @@ export default function EmailProviderSettings() {
               className={`flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer ${
                 autoReplyMode === mode
                   ? 'border-violet-500/40 bg-violet-500/10'
-                  : 'border-white/10 hover:border-white/20'
+                  : 'border-[var(--ws-border)] hover:border-[var(--ws-border-strong)]'
               }`}
             >
               <input
@@ -155,7 +155,7 @@ export default function EmailProviderSettings() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 type-caption font-black uppercase text-white"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 type-caption font-black uppercase text-[var(--text-inverse)]"
         >
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
           Save

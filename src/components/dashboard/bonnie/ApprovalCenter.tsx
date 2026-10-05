@@ -213,7 +213,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="rounded-lg border border-white/10 bg-[var(--ws-panel)] overflow-hidden"
+      className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] overflow-hidden"
     >
       {/* Card header */}
       <div className="flex items-start gap-3 px-4 py-3">
@@ -258,7 +258,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
             </p>
           )}
 
-          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-[var(--ws-canvas)]/50 p-2.5 type-ui text-[var(--ws-text-muted)]">
+          <div className="mt-2 grid gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-2.5 type-ui text-[var(--ws-text-muted)]">
             <p>
               <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">What:</span>{' '}
               {approval.toolName
@@ -401,7 +401,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           onClick={handleReject}
           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 type-caption font-semibold transition-colors disabled:opacity-50 ${
             confirming === 'reject'
-              ? 'bg-rose-600 text-white'
+              ? 'bg-rose-600 text-[var(--text-inverse)]'
               : 'border border-rose-500/30 text-rose-400 hover:bg-rose-500/10'
           }`}
         >
@@ -418,7 +418,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           title={!canApprove ? 'Admin approval required for high-risk actions' : undefined}
           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 type-caption font-semibold transition-colors disabled:opacity-50 ${
             confirming === 'approve'
-              ? 'bg-emerald-600 text-white'
+              ? 'bg-emerald-600 text-[var(--text-inverse)]'
               : !canApprove
                 ? 'border border-[var(--ws-border)] text-slate-600 cursor-not-allowed'
                 : 'bg-emerald-500/10 border border-emerald-500/30 text-[var(--success-text,var(--success-500))] hover:bg-emerald-500/20'
@@ -497,7 +497,7 @@ export default function ApprovalCenter() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20">
               <ShieldAlert className="h-4 w-4 text-amber-400" />
             </div>
-            <h1 className="text-lg font-black text-white tracking-tight">
+            <h1 className="text-lg font-black text-[var(--ws-text-primary)] tracking-tight">
               Approval Center
             </h1>
             {pendingCount > 0 && (
@@ -515,7 +515,7 @@ export default function ApprovalCenter() {
           type="button"
           onClick={() => refresh()}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:border-slate-600 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh

@@ -183,7 +183,7 @@ export function SlackIntegration() {
             <Slack className={`w-6 h-6 ${status.isConnected ? 'text-green-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Slack Integration</h3>
+            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Slack Integration</h3>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               {status.isConnected ? `Connected to ${status.teamName}` : 'Connect your Slack workspace'}
             </p>
@@ -233,20 +233,20 @@ export function SlackIntegration() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Send Custom Message</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Send Custom Message</h4>
               <div className="space-y-2">
                 <input
                   type="text"
                   placeholder="Channel (#general)"
                   value={selectedChannel}
                   onChange={(e) => setSelectedChannel(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
                 />
                 <textarea
                   placeholder="Type your message..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] resize-none"
                   rows={2}
                 />
                 <Button
@@ -262,7 +262,7 @@ export function SlackIntegration() {
             </div>
 
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Recent Notifications</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Recent Notifications</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.slice(0, 3).map((notif) => (
@@ -294,7 +294,7 @@ export function SlackIntegration() {
         >
           <div className="space-y-6">
             <div>
-              <h4 className="text-lg font-semibold text-white mb-2">Connection Status</h4>
+              <h4 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Connection Status</h4>
               <div className="flex items-center gap-2 type-ui">
                 <CheckCircle className="w-4 h-4 text-green-400" />
                 <span className="text-green-400">Connected to {status.teamName}</span>
@@ -302,7 +302,7 @@ export function SlackIntegration() {
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold text-white mb-2">Notification Events</h4>
+              <h4 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Notification Events</h4>
               <div className="space-y-2">
                 {[
                   'Project created',

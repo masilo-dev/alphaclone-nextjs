@@ -178,7 +178,7 @@ export default function EmailDiscoveryTool() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-white flex items-center justify-center gap-3">
+        <h1 className="text-3xl font-bold text-[var(--ws-text-primary)] flex items-center justify-center gap-3">
           <Search className="w-8 h-8 text-blue-400" />
           Free Email Discovery
         </h1>
@@ -208,7 +208,7 @@ export default function EmailDiscoveryTool() {
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="company.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function EmailDiscoveryTool() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Acme Corp"
-              className="w-full px-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function EmailDiscoveryTool() {
         <button
           onClick={discoverEmails}
           disabled={loading || !domain}
-          className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-400 hover:to-purple-400 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-400 hover:to-purple-400 text-[var(--text-inverse)] font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -292,12 +292,12 @@ export default function EmailDiscoveryTool() {
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-[var(--ws-text-primary)]">
               Found {results.length} Emails
             </h2>
             <button
               onClick={exportEmails}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] hover:text-white hover:bg-[var(--ws-surface-tertiary)]"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-tertiary)]"
             >
               <Download className="w-4 h-4" />
               Export CSV
@@ -326,12 +326,12 @@ export default function EmailDiscoveryTool() {
                         <span className={`${sourceInfo.color}`}>
                           {sourceInfo.icon}
                         </span>
-                        <span className="text-lg font-mono text-white truncate">
+                        <span className="text-lg font-mono text-[var(--ws-text-primary)] truncate">
                           {email.email}
                         </span>
                         <button
                           onClick={() => copyEmail(email.email)}
-                          className="p-1 hover:bg-[var(--ws-surface-tertiary)] rounded text-[var(--ws-text-muted)] hover:text-white"
+                          className="p-1 hover:bg-[var(--ws-surface-tertiary)] rounded text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
@@ -415,7 +415,7 @@ export default function EmailDiscoveryTool() {
         >
           <div className="flex items-center gap-2">
             <Info className="w-5 h-5 text-blue-400" />
-            <span className="font-semibold text-white">How This Works (Transparency)</span>
+            <span className="font-semibold text-[var(--ws-text-primary)]">How This Works (Transparency)</span>
           </div>
           <span className="text-[var(--ws-text-muted)]">{showTransparency ? '−' : '+'}</span>
         </button>
@@ -436,7 +436,7 @@ export default function EmailDiscoveryTool() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
-                  <h4 className="font-medium text-white flex items-center gap-2 mb-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2 mb-2">
                     <Server className="w-4 h-4 text-blue-400" />
                     DNS Records
                   </h4>
@@ -447,7 +447,7 @@ export default function EmailDiscoveryTool() {
                 </div>
 
                 <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
-                  <h4 className="font-medium text-white flex items-center gap-2 mb-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2 mb-2">
                     <Shield className="w-4 h-4 text-purple-400" />
                     WHOIS/RDAP
                   </h4>
@@ -458,7 +458,7 @@ export default function EmailDiscoveryTool() {
                 </div>
 
                 <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
-                  <h4 className="font-medium text-white flex items-center gap-2 mb-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2 mb-2">
                     <Github className="w-4 h-4 text-gray-400" />
                     GitHub Public API
                   </h4>
@@ -469,7 +469,7 @@ export default function EmailDiscoveryTool() {
                 </div>
 
                 <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
-                  <h4 className="font-medium text-white flex items-center gap-2 mb-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2 mb-2">
                     <Globe className="w-4 h-4 text-green-400" />
                     Website Scraping
                   </h4>

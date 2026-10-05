@@ -37,34 +37,34 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
       <div className="p-6 border-b border-[var(--ws-border)] bg-gradient-to-r from-indigo-500/10 to-teal-500/10">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-6 h-6 text-teal-400" />
-          <h2 className="text-xl font-bold text-white">Enterprise Data Processing Agreement</h2>
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)]">Enterprise Data Processing Agreement</h2>
         </div>
         <p className="text-[var(--ws-text-muted)] type-card-description">Required for all Enterprise-tier AI integrations.</p>
       </div>
 
       <div className="p-6">
         <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4 h-64 overflow-y-auto mb-6 text-[var(--ws-text-secondary)] type-caption leading-relaxed space-y-4 custom-scrollbar">
-          <h3 className="text-white font-bold type-ui underline">1. Subject Matter and Duration</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-bold type-ui underline">1. Subject Matter and Duration</h3>
           <p>
             This Data Processing Agreement ("DPA") applies to the processing of personal data by AlphaClone (the "Processor") on behalf of the customer (the "Controller") in connection with the Model Context Protocol (MCP) and external AI Agent integrations.
           </p>
           
-          <h3 className="text-white font-bold type-ui underline">2. Nature and Purpose of Processing</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-bold type-ui underline">2. Nature and Purpose of Processing</h3>
           <p>
             The Processor will process data for the purpose of providing CRM automation, lead management, and project tracking via AI agents as requested by the Controller. This includes reading CRM records and inserting new operational data.
           </p>
 
-          <h3 className="text-white font-bold type-ui underline">3. Technical and Organizational Measures</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-bold type-ui underline">3. Technical and Organizational Measures</h3>
           <p>
             The Processor implements robust security measures, including multi-tenant isolation, encrypted storage, and restricted AI access permissions (No-Delete policy). All AI actions are audited and visible in the Controller's activity feed.
           </p>
 
-          <h3 className="text-white font-bold type-ui underline">4. AI Agent Liability</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-bold type-ui underline">4. AI Agent Liability</h3>
           <p>
             The Controller acknowledges that connecting external AI agents (e.g., Claude, Manus) involves a "User-in-the-loop" model. The Controller is responsible for the actions initiated by the AI agents configured via the Controller's unique connection keys.
           </p>
 
-          <h3 className="text-white font-bold type-ui underline">5. Data Deletion</h3>
+          <h3 className="text-[var(--ws-text-primary)] font-bold type-ui underline">5. Data Deletion</h3>
           <p>
             Upon termination of the service, the Processor shall delete all personal data processed on behalf of the Controller, unless required by law to retain such data.
           </p>
@@ -81,7 +81,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
               disabled={isAccepting}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
                 !isAccepting
-                  ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/20'
+                  ? 'bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20'
                   : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed'
               }`}
             >

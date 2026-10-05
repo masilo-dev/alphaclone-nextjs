@@ -47,7 +47,7 @@ export function OutreachSequencePanel({
     <div className="ac-workspace-panel rounded-xl p-5 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="type-caption font-black text-white uppercase tracking-wider flex items-center gap-2">
+          <h4 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-wider flex items-center gap-2">
             <Send size={15} className="text-teal-400" /> Automated Drip Sequence Engine
           </h4>
           <p className="type-caption text-[var(--ws-text-muted)]">Multi-step Brevo email & WhatsApp outreach pipeline</p>
@@ -73,7 +73,7 @@ export function OutreachSequencePanel({
               setActiveStepIndex(0);
               setRunning(false);
             }}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-teal-500/50"
           >
             {sequences.map(s => (
               <option key={s.id} value={s.id}>{s.name} - ({s.steps.length} Steps)</option>
@@ -83,7 +83,7 @@ export function OutreachSequencePanel({
         </div>
 
         <div className="relative pl-6 space-y-3 pt-2">
-          <div className="absolute left-2.5 top-3 bottom-3 w-px bg-white/10" />
+          <div className="absolute left-2.5 top-3 bottom-3 w-px bg-[var(--ws-hover)]" />
           {currentSeq.steps.map((step, idx) => {
             const isCompleted = idx < activeStepIndex;
             const isCurrent = idx === activeStepIndex;
@@ -95,13 +95,13 @@ export function OutreachSequencePanel({
                       ? 'bg-emerald-500 text-slate-950'
                       : isCurrent
                       ? 'bg-[var(--brand-blue-400)] text-slate-950 ring-4 ring-teal-400/20'
-                      : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-white/10'
+                      : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'
                   }`}
                 >
                   {isCompleted ? <CheckCircle2 size={12} /> : idx + 1}
                 </div>
                 <div className={`flex-1 rounded-xl p-3 border transition-all ${
-                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-[var(--ws-panel)]/50 border-white/5'
+                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'
                 }`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -110,9 +110,9 @@ export function OutreachSequencePanel({
                       ) : (
                         <MessageSquare size={13} className="text-emerald-400" />
                       )}
-                      <span className="type-caption font-bold text-white">{step.title}</span>
+                      <span className="type-caption font-bold text-[var(--ws-text-primary)]">{step.title}</span>
                     </div>
-                    <span className="type-ui font-bold text-[var(--ws-text-muted)] bg-white/5 px-2 py-0.5 rounded-full">
+                    <span className="type-ui font-bold text-[var(--ws-text-muted)] bg-[var(--ws-hover)] px-2 py-0.5 rounded-full">
                       Day {step.day}
                     </span>
                   </div>

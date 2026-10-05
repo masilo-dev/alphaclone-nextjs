@@ -184,7 +184,7 @@ export default function ExecutiveDashboard() {
             <button
               key={i}
               onClick={() => router.push(kpi.href)}
-              className="group relative bg-[var(--ws-panel)]/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-left hover:border-white/10 transition-all duration-200 hover:bg-[var(--ws-panel)]/80"
+              className="group relative bg-[var(--ws-panel)]/60 backdrop-blur-md border border-[var(--ws-border)] rounded-2xl p-4 text-left hover:border-[var(--ws-border)] transition-all duration-200 hover:bg-[var(--ws-panel)]/80"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
@@ -201,7 +201,7 @@ export default function ExecutiveDashboard() {
 
               <div className="mb-1">
                 <div className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-0.5">{kpi.label}</div>
-                <div className="text-xl font-black text-white">{kpi.value}</div>
+                <div className="text-xl font-black text-[var(--ws-text-primary)]">{kpi.value}</div>
                 <div className="type-ui text-[var(--ws-text-muted)] mt-0.5">{kpi.comparisonText}</div>
               </div>
 
@@ -224,9 +224,9 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="xl:col-span-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="type-ui font-bold text-white">Performance Goals Configuration</h3>
+            <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Performance Goals Configuration</h3>
             {!canEditGoals && (
               <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 View only
@@ -238,7 +238,7 @@ export default function ExecutiveDashboard() {
               <div key={key} className="space-y-1.5">
                 <div className="flex justify-between type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                   <span>Target {key}</span>
-                  <span className="text-white font-black">{goals[key].toLocaleString()}</span>
+                  <span className="text-[var(--ws-text-primary)] font-black">{goals[key].toLocaleString()}</span>
                 </div>
                 <input
                   type="range"
@@ -256,8 +256,8 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6 space-y-4">
-          <h3 className="type-ui font-bold text-white">Success Rate</h3>
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+          <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Success Rate</h3>
           <div className="flex flex-col items-center justify-center py-6 space-y-3">
              <div className="relative w-32 h-32">
                 <svg className="w-full h-full transform -rotate-90">
@@ -270,7 +270,7 @@ export default function ExecutiveDashboard() {
                    />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                   <span className="text-2xl font-black text-white">{stats.performance.onTimeDelivery}%</span>
+                   <span className="text-2xl font-black text-[var(--ws-text-primary)]">{stats.performance.onTimeDelivery}%</span>
                    <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">On-Time</span>
                 </div>
              </div>

@@ -367,13 +367,13 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             setSelectedThreadId(null);
                         }}
                         className={`group relative p-3 rounded-2xl transition-all ${activeLabel === id
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                            : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-panel)]'
+                            ? 'bg-blue-600 text-[var(--ws-text-primary)] shadow-lg shadow-blue-500/20'
+                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-panel)]'
                             }`}
                         title={label}
                     >
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                        <span className="absolute left-full ml-4 px-2 py-1 bg-[var(--ws-surface-secondary)] text-white type-caption rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
+                        <span className="absolute left-full ml-4 px-2 py-1 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] type-caption rounded opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap font-bold uppercase tracking-widest">
                             {label}
                         </span>
                     </button>
@@ -383,7 +383,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
             {/* Sidebar: Message List */}
             <div className={`w-full md:w-80 lg:w-96 border-r border-[var(--ws-border)] flex flex-col ${selectedThreadId || composing ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
-                    <h3 className="text-white font-bold flex items-center gap-2">
+                    <h3 className="text-[var(--ws-text-primary)] font-bold flex items-center gap-2">
                         {(() => {
                             const current = LABELS.find(l => l.id === activeLabel);
                             const Icon = current?.Icon || Mail;
@@ -397,7 +397,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                 setComposing(true);
                                 setSelectedThreadId(null);
                             }}
-                            className="bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center px-3 py-1.5 rounded-lg h-8 font-bold uppercase type-caption tracking-wider transition-all"
+                            className="bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)] flex items-center justify-center px-3 py-1.5 rounded-lg h-8 font-bold uppercase type-caption tracking-wider transition-all"
                         >
                             Compose
                         </button>
@@ -416,7 +416,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             placeholder="Search mail..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-4 py-1.5 type-caption text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                            className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-4 py-1.5 type-caption text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-blue-500 transition-all"
                         />
                     </div>
                 </div>
@@ -429,8 +429,8 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             onClick={() => setCategoryFilter(filter.id)}
                             className={`px-3 py-1.5 rounded-full type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                 categoryFilter === filter.id
-                                    ? `${filter.color} text-white shadow-lg`
-                                    : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] hover:text-white'
+                                    ? `${filter.color} text-[var(--ws-text-primary)] shadow-lg`
+                                    : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] hover:text-[var(--ws-text-primary)]'
                             }`}
                         >
                             {filter.label}
@@ -483,7 +483,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                                 </button>
                                             )}
                                             {category !== 'normal' && (
-                                                <span className={`px-2 py-0.5 rounded-full type-caption font-bold uppercase tracking-wider ${categoryInfo.color} text-white`}>
+                                                <span className={`px-2 py-0.5 rounded-full type-caption font-bold uppercase tracking-wider ${categoryInfo.color} text-[var(--ws-text-primary)]`}>
                                                     {categoryInfo.label}
                                                 </span>
                                             )}
@@ -492,7 +492,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                             </span>
                                         </div>
                                     </div>
-                                    <h4 className="type-ui font-bold text-white truncate mb-1">
+                                    <h4 className="type-ui font-bold text-[var(--ws-text-primary)] truncate mb-1">
                                         {msg.subject || '(No Subject)'}
                                     </h4>
                                     <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2 leading-relaxed opacity-70">
@@ -514,11 +514,11 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             <div className="flex items-center gap-3">
                                 <button 
                                     onClick={() => setComposing(false)} 
-                                    className="p-2 border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-muted)] hover:text-white transition-all"
+                                    className="p-2 border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                 </button>
-                                <h3 className="text-white font-bold">New Message</h3>
+                                <h3 className="text-[var(--ws-text-primary)] font-bold">New Message</h3>
                             </div>
                             <Badge variant="blue" className="type-caption px-1.5 py-0 uppercase">Outlook Compose</Badge>
                         </div>
@@ -538,7 +538,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                     placeholder="recipient@domain.com (comma separated for multiple)"
                                     value={composeTo}
                                     onChange={(e) => setComposeTo(e.target.value)}
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
                                 />
                             </div>
                             
@@ -549,7 +549,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                     placeholder="Enter subject line..."
                                     value={composeSubject}
                                     onChange={(e) => setComposeSubject(e.target.value)}
-                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
+                                    className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600"
                                 />
                             </div>
                             
@@ -565,7 +565,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                         placeholder="Ask AI to write: e.g. Write a professional contract proposal..."
                                         value={aiPrompt}
                                         onChange={(e) => setAiPrompt(e.target.value)}
-                                        className="flex-1 bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-white focus:outline-none focus:border-violet-500 transition-all"
+                                        className="flex-1 bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-violet-500 transition-all"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 e.preventDefault();
@@ -576,7 +576,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                     <Button
                                         onClick={handleGenerateComposeDraft}
                                         isLoading={isAiDrafting}
-                                        className="bg-violet-600 hover:bg-violet-500 text-white font-bold type-caption uppercase tracking-wider px-3 h-[34px]"
+                                        className="bg-violet-600 hover:bg-violet-500 text-[var(--ws-text-primary)] font-bold type-caption uppercase tracking-wider px-3 h-[34px]"
                                     >
                                         Draft
                                     </Button>
@@ -589,20 +589,20 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                     placeholder="Write your email content here (HTML is supported)..."
                                     value={composeBody}
                                     onChange={(e) => setComposeBody(e.target.value)}
-                                    className="w-full flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4 type-ui text-white focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 min-h-[250px] resize-y custom-scrollbar"
+                                    className="w-full flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-4 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-600 min-h-[250px] resize-y custom-scrollbar"
                                 />
                             </div>
                         </div>
                         
                         {/* Compose Actions */}
                         <div className="p-4 border-t border-[var(--ws-border)] flex justify-end gap-3 bg-[var(--ws-canvas)]/50">
-                            <Button variant="outline" onClick={() => setComposing(false)} className="border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-white">
+                            <Button variant="outline" onClick={() => setComposing(false)} className="border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleSendCompose}
                                 isLoading={isSending}
-                                className="bg-blue-600 hover:bg-blue-500 text-white px-5 font-bold uppercase tracking-wider type-caption"
+                                className="bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)] px-5 font-bold uppercase tracking-wider type-caption"
                             >
                                 <Send className="w-3.5 h-3.5 mr-2" /> Send Email
                             </Button>
@@ -616,7 +616,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                 <ArrowLeft className="w-4 h-4" />
                             </Button>
                             <div className="flex-1 min-w-0">
-                                <h3 className="text-white font-bold truncate">
+                                <h3 className="text-[var(--ws-text-primary)] font-bold truncate">
                                     {threadMessages[0]?.subject || 'Loading conversation...'}
                                 </h3>
                                 <div className="flex items-center gap-2 mt-1">
@@ -718,7 +718,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                                                 {msg.from}
                                                             </button>
                                                         ) : (
-                                                            <span className="text-base font-bold text-white tracking-wide">{msg.from}</span>
+                                                            <span className="text-base font-bold text-[var(--ws-text-primary)] tracking-wide">{msg.from}</span>
                                                         )}
                                                         <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest mt-0.5">
                                                             {msg.receivedAt ? new Date(msg.receivedAt).toLocaleString() : ''}
@@ -746,7 +746,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                         value={replyBody}
                                         onChange={(e) => setReplyBody(e.target.value)}
                                         placeholder="Type your response..."
-                                        className="w-full bg-transparent border-none focus:ring-0 text-white type-ui min-h-[100px] p-3 resize-none custom-scrollbar outline-none"
+                                        className="w-full bg-transparent border-none focus:ring-0 text-[var(--ws-text-primary)] type-ui min-h-[100px] p-3 resize-none custom-scrollbar outline-none"
                                     />
                                     <div className="flex items-center justify-between p-2 border-t border-slate-900 mt-2">
                                         <div className="flex items-center gap-2">
@@ -765,7 +765,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                                             onClick={handleSendReply}
                                             disabled={isSending || !replyBody.trim()}
                                             isLoading={isSending}
-                                            className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white"
+                                            className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-[var(--ws-text-primary)]"
                                         >
                                             <Send className="w-4 h-4 mr-2" /> Send Reply
                                         </Button>
@@ -784,7 +784,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
                             <div className="w-20 h-20 bg-blue-500/10 rounded-3xl flex items-center justify-center border border-blue-500/20 mb-6 mx-auto">
                                 <Mail className="w-10 h-10 text-blue-400" />
                             </div>
-                            <h3 className="text-xl font-bold text-white mb-2">Select an email to review</h3>
+                            <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-2">Select an email to review</h3>
                             <p className="max-w-xs type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                                 Review and compose Outlook messages directly from your AlphaClone dashboard.
                             </p>

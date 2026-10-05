@@ -27,7 +27,7 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
           <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,var(--brand-blue-300))]">
             Welcome to AlphaClone
           </p>
-          <h3 className="mt-2 text-2xl font-bold tracking-tight text-white">
+          <h3 className="mt-2 text-2xl font-bold tracking-tight text-[var(--ws-text-primary)]">
             Welcome, {firstName}
           </h3>
           <p className="mx-auto mt-3 max-w-md type-card-description leading-relaxed text-[var(--ws-text-muted)]">
@@ -36,7 +36,7 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
         </div>
 
         <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4 text-left">
-          <p className="type-card-description font-semibold text-white">Start with what matters now</p>
+          <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Start with what matters now</p>
           <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">
             For example: get more local customers, post to social media, manage enquiries, send a promotion, or create an invoice.
           </p>

@@ -72,7 +72,7 @@ function IntegrationCard({
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="font-semibold text-white type-ui">{integration.name}</h3>
+              <h3 className="font-semibold text-[var(--ws-text-primary)] type-ui">{integration.name}</h3>
               {integration.popular && (
                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full type-caption text-orange-400">
                   <Star className="w-2.5 h-2.5" /> Featured
@@ -177,7 +177,7 @@ export function IntegrationMarketplaceDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Integration Marketplace</h2>
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)]">Integration Marketplace</h2>
           <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
             Connect your tools to streamline your workflow.
             {connectedCount > 0 && (
@@ -198,7 +198,7 @@ export function IntegrationMarketplaceDashboard() {
             placeholder="Search integrations…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500"
           />
         </div>
         <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)] self-center cursor-pointer select-none">
@@ -222,10 +222,10 @@ export function IntegrationMarketplaceDashboard() {
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-medium transition-all ${
-                active ? 'bg-teal-600 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
+                active ? 'bg-teal-600 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
               }`}
             >
-              <Icon className={`w-3.5 h-3.5 ${active ? 'text-white' : cat.color}`} />
+              <Icon className={`w-3.5 h-3.5 ${active ? 'text-[var(--ws-text-primary)]' : cat.color}`} />
               {cat.label}
             </button>
           );

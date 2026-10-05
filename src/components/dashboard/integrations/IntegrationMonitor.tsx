@@ -152,12 +152,12 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Shield className="w-6 h-6 text-teal-500" />
-          <h3 className="text-xl font-semibold text-white">Integration Monitor</h3>
+          <h3 className="text-xl font-semibold text-[var(--ws-text-primary)]">Integration Monitor</h3>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-primary)] rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -193,7 +193,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{getIntegrationIcon(integration.type)}</span>
                 <div>
-                  <h4 className="font-medium text-white flex items-center gap-2">
+                  <h4 className="font-medium text-[var(--ws-text-primary)] flex items-center gap-2">
                     {integration.name}
                     {getStatusIcon(integration.status)}
                   </h4>
@@ -255,7 +255,7 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                     <button
                       key={index}
                       onClick={() => onIntegrationAction?.(integration.type, action)}
-                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded type-ui text-white transition-colors flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded type-ui text-[var(--ws-text-primary)] transition-colors flex items-center gap-2"
                     >
                       <Zap className="w-3 h-3" />
                       {action}

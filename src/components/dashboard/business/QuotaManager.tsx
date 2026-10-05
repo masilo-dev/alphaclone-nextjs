@@ -88,7 +88,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
         <div className={`bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 ${className}`}>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                         <BarChart3 className="w-5 h-5 text-teal-400" />
                         Daily Usage Limits
                     </h3>
@@ -100,7 +100,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                 </div>
                 <button
                     onClick={() => void loadQuotaData()}
-                    className="p-2 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] rounded-lg transition-colors"
+                    className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-lg transition-colors"
                     title="Refresh"
                     type="button"
                 >
@@ -122,7 +122,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Icon className={`w-4 h-4 ${meta.color}`} />
-                                    <span className="text-white font-medium">{meta.label}</span>
+                                    <span className="text-[var(--ws-text-primary)] font-medium">{meta.label}</span>
                                 </div>
                                 <span className="text-[var(--ws-text-muted)] type-ui">
                                     {formatNumber(usage)} / {formatLimit(limit)}

@@ -277,21 +277,21 @@ export default function MessengerInbox() {
                 {/* Conversation Sidebar */}
                 <div className={`
                     ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 w-72 border-r border-[var(--ws-border)] bg-gray-950' : 'hidden lg:flex'} 
-                    w-80 flex-col bg-gray-900/20 backdrop-blur-3xl shrink-0 transition-all duration-300 border-r border-white/5
+                    w-80 flex-col bg-gray-900/20 backdrop-blur-3xl shrink-0 transition-all duration-300 border-r border-[var(--ws-border)]
                 `}>
-                    <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div className="p-6 border-b border-[var(--ws-border)] flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-600/10 rounded-xl text-teal-400">
                                 <MessageSquare size={20} />
                             </div>
                             <span className="font-bold text-gray-200 tracking-tight text-lg">Messenger Suite</span>
                         </div>
-                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors">
                             <X size={20} />
                         </button>
                     </div>
 
-                    <div className="p-4 px-6 border-b border-white/5">
+                    <div className="p-4 px-6 border-b border-[var(--ws-border)]">
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-500 transition-colors pointer-events-none" size={16} />
                             <input 
@@ -299,7 +299,7 @@ export default function MessengerInbox() {
                                 placeholder="Search conversations..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/5 border border-white/5 rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 type-ui"
+                                className="w-full bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 type-ui"
                             />
                         </div>
                     </div>
@@ -308,7 +308,7 @@ export default function MessengerInbox() {
                         {loading ? (
                             <div className="space-y-2 p-2">
                                 {[1,2,3,4].map(i => (
-                                    <div key={i} className="w-full h-20 bg-white/5 rounded-lg animate-pulse" />
+                                    <div key={i} className="w-full h-20 bg-[var(--ws-hover)] rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : filteredConversations.length === 0 ? (
@@ -330,15 +330,15 @@ export default function MessengerInbox() {
                                         setSelectedConversation(conv.id);
                                         setIsMobileMenuOpen(false);
                                     }}
-                                    className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-4 text-left transition-all group ${selectedConversation === conv.id ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
+                                    className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-4 text-left transition-all group ${selectedConversation === conv.id ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-[var(--ws-hover)] border border-transparent'}`}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-slate-800 to-slate-900'} border border-white/5 font-bold text-white transition-all group-hover:border-teal-500/30`}>
+                                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-slate-800 to-slate-900'} border border-[var(--ws-border)] font-bold text-[var(--ws-text-primary)] transition-all group-hover:border-teal-500/30`}>
                                                 {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">
-                                                <h3 className={`font-bold type-ui truncate max-w-[140px] ${!conv.is_read ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                                                <h3 className={`font-bold type-ui truncate max-w-[140px] ${!conv.is_read ? 'text-[var(--ws-text-primary)]' : 'text-gray-400 group-hover:text-gray-200'}`}>
                                                     {conv.contacts?.full_name || `Customer ${conv.sender_id.substring(0, 4)}`}
                                                 </h3>
                                                 <div className="flex items-center gap-1">
@@ -368,25 +368,25 @@ export default function MessengerInbox() {
                 <div className="flex-1 flex flex-col bg-gray-950/40 relative">
                     {selectedConversation ? (
                         <>
-                            <div className="p-4 border-b border-white/5 flex items-center justify-between sticky top-0 bg-gray-950/60 backdrop-blur-3xl z-20">
+                            <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between sticky top-0 bg-gray-950/60 backdrop-blur-3xl z-20">
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={() => setIsMobileMenuOpen(true)}
-                                        className="lg:hidden p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
+                                        className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-colors"
                                         aria-label="Open conversations"
                                     >
                                         <Menu size={20} />
                                     </button>
-                                    <button onClick={() => setSelectedConversation(null)} className="lg:hidden p-2 text-gray-400 hover:text-white rounded-xl">
+                                    <button onClick={() => setSelectedConversation(null)} className="lg:hidden p-2 text-gray-400 hover:text-[var(--ws-text-primary)] rounded-xl">
                                         <ArrowLeft size={20} />
                                     </button>
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 bg-gradient-to-br ${activeConv?.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-teal-600 to-teal-800'} rounded-xl flex items-center justify-center text-white font-semibold shadow-lg`}>
+                                        <div className={`w-10 h-10 bg-gradient-to-br ${activeConv?.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-teal-600 to-teal-800'} rounded-xl flex items-center justify-center text-[var(--ws-text-primary)] font-semibold shadow-lg`}>
                                             {activeConv?.metadata?.platform === 'instagram' ? <Instagram size={20} /> : (activeConv?.contacts?.full_name?.charAt(0) || 'C')}
                                         </div>
                                         <div>
-                                            <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
+                                            <h2 className="font-bold text-[var(--ws-text-primary)] tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
                                                 <span className={`type-caption ${activeConv?.metadata?.platform === 'instagram' ? 'text-teal-400' : 'text-teal-400'} font-semibold uppercase tracking-caps`}>
                                                     {activeConv?.metadata?.platform === 'instagram' ? 'Instagram Direct' : 'Facebook Messenger'}
@@ -402,10 +402,10 @@ export default function MessengerInbox() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button className="p-2.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all" title="Link to Contact">
+                                    <button className="p-2.5 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Link to Contact">
                                         <LinkIcon size={18} />
                                     </button>
-                                    <button className="p-2.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all" title="Refresh">
+                                    <button className="p-2.5 text-gray-500 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] rounded-xl transition-all" title="Refresh">
                                         <RefreshCcw size={18} />
                                     </button>
                                 </div>
@@ -430,8 +430,8 @@ export default function MessengerInbox() {
                                                 >
                                                     <div className={`max-w-[70%] p-4 rounded-lg type-ui ${
                                                         isMe 
-                                                        ? 'bg-teal-600 text-white rounded-br-none shadow-lg shadow-teal-600/20' 
-                                                        : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
+                                                        ? 'bg-teal-600 text-[var(--text-inverse)] rounded-br-none shadow-lg shadow-teal-600/20' 
+                                                        : 'bg-[var(--ws-hover)] text-gray-200 border border-[var(--ws-border)] rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
                                                         <div className={`type-caption mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
@@ -446,13 +446,13 @@ export default function MessengerInbox() {
                                 )}
                             </div>
 
-                            <div className="p-4 border-t border-white/5 bg-gray-950/60 backdrop-blur-3xl">
+                            <div className="p-4 border-t border-[var(--ws-border)] bg-gray-950/60 backdrop-blur-3xl">
                                 <div className="max-w-4xl mx-auto space-y-4">
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={handleAiSuggest}
                                             disabled={aiGenerating || msgLoading}
-                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-semibold uppercase tracking-wide type-caption disabled:opacity-50"
+                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-[var(--ws-text-primary)] px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-semibold uppercase tracking-wide type-caption disabled:opacity-50"
                                         >
                                             {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Bot size={12} />}
                                             <span>Smart Reply</span>
@@ -465,11 +465,11 @@ export default function MessengerInbox() {
                                             placeholder="Write a message..."
                                             value={replyText}
                                             onChange={e => setReplyText(e.target.value)}
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all type-ui pr-16"
+                                            className="flex-1 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all type-ui pr-16"
                                         />
                                         <button 
                                             disabled={sending || !replyText.trim()}
-                                            className="bg-teal-600 hover:bg-teal-500 p-4 rounded-lg text-white shadow-md disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                            className="bg-teal-600 hover:bg-teal-500 p-4 rounded-lg text-[var(--text-inverse)] shadow-md disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
                                         >
                                             {sending ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
                                         </button>
@@ -482,13 +482,13 @@ export default function MessengerInbox() {
                             <button
                                 type="button"
                                 onClick={() => setIsMobileMenuOpen(true)}
-                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 type-ui font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                                className="lg:hidden mb-6 inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] px-4 py-2.5 type-ui font-semibold text-gray-300 hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
                                 aria-label="Open conversations"
                             >
                                 <Menu size={18} />
                                 Browse conversations
                             </button>
-                            <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-2xl">
+                            <div className="w-24 h-24 bg-[var(--ws-hover)] rounded-3xl flex items-center justify-center mb-6 border border-[var(--ws-border)] shadow-2xl">
                                 <MessageSquare size={40} className="text-gray-700" />
                             </div>
                             <h3 className="text-xl font-semibold text-gray-400 uppercase tracking-wide mb-2">Messenger Command</h3>

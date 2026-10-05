@@ -95,7 +95,7 @@ export default function GlobalAlpha() {
 
                         <div className="p-6 space-y-5">
                             <div className="space-y-1">
-                                <div className="type-caption text-white font-bold tracking-tight mb-1">
+                                <div className="type-caption text-[var(--ws-text-primary)] font-bold tracking-tight mb-1">
                                     GREETINGS, {(user.name || user.email || 'OPERATOR').toUpperCase()}
                                 </div>
                                 <div className="type-caption text-[var(--dashboard-mint)]/60 flex items-center gap-2">

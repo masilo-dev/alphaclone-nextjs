@@ -36,7 +36,7 @@ export const SuperAdminAuditTab: React.FC = () => {
     <div className="space-y-6 animate-fade-in ac-enterprise-module">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-teal-400" />
             Platform Audit Trail
           </h2>
@@ -55,7 +55,7 @@ export const SuperAdminAuditTab: React.FC = () => {
           </div>
           <button
             onClick={loadAuditLogs}
-            className="p-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl border border-white/5"
+            className="p-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl border border-[var(--ws-border)]"
             title="Refresh logs"
           >
             <RefreshCw className="w-4 h-4" />
@@ -69,7 +69,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             key={act}
             onClick={() => { setActionFilter(act); setPage(1); }}
             className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${actionFilter === act
-              ? 'bg-teal-500 text-white border-teal-500'
+              ? 'bg-teal-500 text-[var(--text-inverse)] border-teal-500'
               : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
             }`}
           >
@@ -118,7 +118,7 @@ export const SuperAdminAuditTab: React.FC = () => {
                       {log.user_id ? log.user_id.slice(0, 8) + '...' : 'System'}
                     </td>
                     <td className="p-3.5">
-                      <span className="font-semibold text-white">{log.resource_type}</span>
+                      <span className="font-semibold text-[var(--ws-text-primary)]">{log.resource_type}</span>
                       <span className="text-[var(--ws-text-muted)] block type-ui font-mono">{log.resource_id}</span>
                     </td>
                     <td className="p-3.5 font-mono type-ui text-[var(--ws-text-muted)] max-w-xs truncate">

@@ -86,7 +86,7 @@ export function ExecutionDecisionGuide({
                 </span>
                 {step.href ? <ChevronRight className="h-4 w-4 text-[var(--ws-text-muted)]" aria-hidden /> : null}
               </div>
-              <h3 className="mt-2 type-ui font-semibold text-white">{t(step.title)}</h3>
+              <h3 className="mt-2 type-ui font-semibold text-[var(--ws-text-primary)]">{t(step.title)}</h3>
               <p className="mt-0.5 type-card-description leading-5 text-[var(--ws-text-muted)]">{t(step.description)}</p>
             </>
           );

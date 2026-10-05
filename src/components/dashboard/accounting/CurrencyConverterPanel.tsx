@@ -38,14 +38,14 @@ export function CurrencyConverterPanel() {
             <Globe size={16} />
           </div>
           <div>
-            <h4 className="type-caption font-black text-white uppercase tracking-wider">Multi-Currency FX Engine</h4>
+            <h4 className="type-caption font-black text-[var(--ws-text-primary)] uppercase tracking-wider">Multi-Currency FX Engine</h4>
             <p className="type-caption text-[var(--ws-text-muted)]">Real-time European Central Bank rates</p>
           </div>
         </div>
         <button
           onClick={loadRates}
           disabled={loading}
-          className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/10 transition-colors"
+          className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
           title="Refresh Rates"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -63,7 +63,7 @@ export function CurrencyConverterPanel() {
               type="number"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full pl-8 pr-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+              className="w-full pl-8 pr-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
             />
           </div>
         </div>
@@ -75,7 +75,7 @@ export function CurrencyConverterPanel() {
           <select
             value={baseCurrency}
             onChange={(e) => setBaseCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
@@ -92,7 +92,7 @@ export function CurrencyConverterPanel() {
           <select
             value={targetCurrency}
             onChange={(e) => setTargetCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption font-bold outline-none focus:border-indigo-500/50"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
@@ -106,7 +106,7 @@ export function CurrencyConverterPanel() {
       <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-center justify-between">
         <div>
           <p className="type-caption uppercase font-bold text-indigo-300">Converted Value</p>
-          <p className="text-lg font-black text-white mt-0.5">
+          <p className="text-lg font-black text-[var(--ws-text-primary)] mt-0.5">
             {targetSymbol} {Number(convertedAmount).toLocaleString()} <span className="type-caption text-indigo-300 font-normal">{targetCurrency}</span>
           </p>
         </div>

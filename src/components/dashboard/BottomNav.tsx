@@ -128,15 +128,15 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 className={`native-tap relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-0.5 active:scale-[0.97] ${isCreate ? '-mt-2.5' : ''}`}
               >
                 <div className="relative">
-                  <span className={isCreate ? 'flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--ac-accent)] text-white shadow-md shadow-blue-950/30' : ''}>
+                  <span className={isCreate ? 'flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--ac-accent)] text-[var(--ws-text-primary)] shadow-md shadow-blue-950/30' : ''}>
                   <Icon
-                    className={`${isCreate ? 'h-5 w-5 text-white' : 'h-4.5 w-4.5'} ${!isCreate && isActive ? 'text-[var(--ac-accent)]' : !isCreate ? 'text-[var(--text-muted)]' : ''}`}
+                    className={`${isCreate ? 'h-5 w-5 text-[var(--ws-text-primary)]' : 'h-4.5 w-4.5'} ${!isCreate && isActive ? 'text-[var(--ac-accent)]' : !isCreate ? 'text-[var(--text-muted)]' : ''}`}
                     strokeWidth={isActive ? 2.25 : 1.75}
                     aria-hidden
                   />
                   </span>
                   {showBadge ? (
-                    <span className="absolute -right-2 -top-1 min-w-3.5 h-3.5 px-1 rounded-full bg-[var(--error-500)] text-[10px] font-bold leading-3.5 flex items-center justify-center text-white">
+                    <span className="absolute -right-2 -top-1 min-w-3.5 h-3.5 px-1 rounded-full bg-[var(--error-500)] text-[10px] font-bold leading-3.5 flex items-center justify-center text-[var(--text-inverse)]">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   ) : null}

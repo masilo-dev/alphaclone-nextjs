@@ -151,26 +151,26 @@ export function SocialAnalyticsStory({
 
     return (
         <div className="mx-auto max-w-6xl space-y-10 animate-in fade-in duration-300">
-            <header className="flex flex-col gap-5 border-b border-white/10 pb-7 sm:flex-row sm:items-end sm:justify-between">
+            <header className="flex flex-col gap-5 border-b border-[var(--ws-border)] pb-7 sm:flex-row sm:items-end sm:justify-between">
                 <div className="max-w-2xl">
                     <p className="mb-2 type-caption font-black uppercase tracking-caps text-indigo-300">
                         {platform} performance narrative
                     </p>
-                    <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                    <h2 className="text-2xl font-semibold tracking-tight text-[var(--ws-text-primary)] sm:text-3xl">
                         From content to customer intent
                     </h2>
                     <p className="mt-2 type-card-description leading-6 text-[var(--ws-text-muted)]">
                         A traceable view of what was published, what earned attention, and what people did next.
                     </p>
                 </div>
-                <div className="flex w-fit rounded-lg border border-white/10 bg-[var(--ws-canvas)] p-1">
+                <div className="flex w-fit rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-1">
                     {(['7D', '30D', '90D'] as const).map((item) => (
                         <button
                             key={item}
                             type="button"
                             onClick={() => onRangeChange(item)}
                             className={`rounded-md px-3 py-1.5 type-caption font-bold transition-colors ${
-                                range === item ? 'bg-indigo-500 text-white' : 'text-[var(--ws-text-muted)] hover:text-white'
+                                range === item ? 'bg-indigo-500 text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'
                             }`}
                         >
                             {item}
@@ -192,13 +192,13 @@ export function SocialAnalyticsStory({
 
             <section aria-labelledby="overview-heading">
                 <div className="mb-5 flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">1</span>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-[var(--ws-text-primary)]">1</span>
                     <div>
-                        <h3 id="overview-heading" className="font-semibold text-white">Overview</h3>
+                        <h3 id="overview-heading" className="font-semibold text-[var(--ws-text-primary)]">Overview</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)]">The shape of performance in this period</p>
                     </div>
                 </div>
-                <div className="grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-px overflow-hidden rounded-xl border border-[var(--ws-border)] bg-[var(--ws-hover)] sm:grid-cols-2 lg:grid-cols-4">
                     {[
                         { label: 'Impressions', value: formatNumber(totals.impressions), note: `${totals.synced} posts with synced data`, icon: Eye },
                         { label: 'Engagement rate', value: engagementRate === null ? 'Unavailable' : `${engagementRate.toFixed(2)}%`, note: 'Reactions, comments, clicks & shares', icon: Heart },
@@ -210,7 +210,7 @@ export function SocialAnalyticsStory({
                                 <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">{label}</p>
                                 <Icon className="h-4 w-4 text-indigo-300" />
                             </div>
-                            <p className="mt-4 text-2xl font-semibold tabular-nums text-white">{value}</p>
+                            <p className="mt-4 text-2xl font-semibold tabular-nums text-[var(--ws-text-primary)]">{value}</p>
                             <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{note}</p>
                         </div>
                     ))}
@@ -220,16 +220,16 @@ export function SocialAnalyticsStory({
             <section aria-labelledby="content-heading" className="grid gap-6 lg:grid-cols-[1.55fr_0.8fr]">
                 <div>
                     <div className="mb-5 flex items-center gap-3">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">2</span>
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-[var(--ws-text-primary)]">2</span>
                         <div>
-                            <h3 id="content-heading" className="font-semibold text-white">Content response</h3>
+                            <h3 id="content-heading" className="font-semibold text-[var(--ws-text-primary)]">Content response</h3>
                             <p className="type-card-description text-[var(--ws-text-muted)]">Hover for context; select a post to drill down</p>
                         </div>
                     </div>
-                    <div className="relative min-h-64 rounded-xl border border-white/10 bg-[var(--ws-canvas)] p-5">
+                    <div className="relative min-h-64 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5">
                         {scoredPosts.length ? (
                             <>
-                                <div className="flex h-44 items-end gap-2 border-b border-white/10 pt-8">
+                                <div className="flex h-44 items-end gap-2 border-b border-[var(--ws-border)] pt-8">
                                     {scoredPosts.slice(-16).map((item) => (
                                         <button
                                             key={item.post.id}
@@ -265,7 +265,7 @@ export function SocialAnalyticsStory({
                     </div>
                 </div>
 
-                <aside className="self-end rounded-xl border border-white/10 bg-[var(--ws-panel)]/50 p-5">
+                <aside className="self-end rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-5">
                     {focused || topPost ? (
                         (() => {
                             const item = focused || topPost!;
@@ -277,18 +277,18 @@ export function SocialAnalyticsStory({
                                         </span>
                                         <span className="type-ui text-[var(--ws-text-muted)]">{mediaLabel(item.post)}</span>
                                     </div>
-                                    <p className="mt-4 line-clamp-3 type-card-description font-semibold leading-6 text-white">
+                                    <p className="mt-4 line-clamp-3 type-card-description font-semibold leading-6 text-[var(--ws-text-primary)]">
                                         {item.post.title || item.post.caption || 'Untitled post'}
                                     </p>
-                                    <dl className="mt-5 space-y-2 border-t border-white/10 pt-4 type-caption">
-                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Impressions</dt><dd className="font-bold text-white">{formatNumber(item.metric.impressions)}</dd></div>
-                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Engagements</dt><dd className="font-bold text-white">{formatNumber(item.engagements)}</dd></div>
-                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Engagement rate</dt><dd className="font-bold text-white">{item.rate === null ? 'Unavailable' : `${item.rate.toFixed(2)}%`}</dd></div>
+                                    <dl className="mt-5 space-y-2 border-t border-[var(--ws-border)] pt-4 type-caption">
+                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Impressions</dt><dd className="font-bold text-[var(--ws-text-primary)]">{formatNumber(item.metric.impressions)}</dd></div>
+                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Engagements</dt><dd className="font-bold text-[var(--ws-text-primary)]">{formatNumber(item.engagements)}</dd></div>
+                                        <div className="flex justify-between"><dt className="text-[var(--ws-text-muted)]">Engagement rate</dt><dd className="font-bold text-[var(--ws-text-primary)]">{item.rate === null ? 'Unavailable' : `${item.rate.toFixed(2)}%`}</dd></div>
                                     </dl>
                                     <button
                                         type="button"
                                         onClick={() => onOpenPost(item.post)}
-                                        className="mt-5 flex w-full items-center justify-between border-t border-white/10 pt-4 type-caption font-bold text-indigo-300 hover:text-white"
+                                        className="mt-5 flex w-full items-center justify-between border-t border-[var(--ws-border)] pt-4 type-caption font-bold text-indigo-300 hover:text-[var(--ws-text-primary)]"
                                     >
                                         Open full post detail <ChevronRight className="h-4 w-4" />
                                     </button>
@@ -306,13 +306,13 @@ export function SocialAnalyticsStory({
 
             <section aria-labelledby="journey-heading">
                 <div className="mb-5 flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-white">3</span>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 type-caption font-black text-[var(--ws-text-primary)]">3</span>
                     <div>
-                        <h3 id="journey-heading" className="font-semibold text-white">Business journey</h3>
+                        <h3 id="journey-heading" className="font-semibold text-[var(--ws-text-primary)]">Business journey</h3>
                         <p className="type-card-description text-[var(--ws-text-muted)]">Known events stay separate from unavailable outcomes</p>
                     </div>
                 </div>
-                <div className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[var(--ws-canvas)] sm:flex-row sm:items-stretch">
+                <div className="flex flex-col overflow-hidden rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] sm:flex-row sm:items-stretch">
                     {[
                         { label: 'Published', value: visiblePosts.length, tone: 'text-[var(--ws-text-primary)]' },
                         { label: 'Impressions', value: totals.impressions, tone: 'text-indigo-300' },
@@ -348,15 +348,15 @@ export function SocialAnalyticsStory({
                 </div>
             </section>
 
-            <section className="grid gap-6 border-t border-white/10 pt-8 md:grid-cols-2">
+            <section className="grid gap-6 border-t border-[var(--ws-border)] pt-8 md:grid-cols-2">
                 <div>
-                    <h3 className="font-semibold text-white">Leads & revenue</h3>
+                    <h3 className="font-semibold text-[var(--ws-text-primary)]">Leads & revenue</h3>
                     <p className="mt-2 type-card-description leading-6 text-[var(--ws-text-muted)]">
                         Attribution is unavailable in the current social analytics record. Clicks remain traffic events until a verified lead, customer, conversion, or payment relationship is connected.
                     </p>
                 </div>
                 <div>
-                    <h3 className="font-semibold text-white">Recommendations</h3>
+                    <h3 className="font-semibold text-[var(--ws-text-primary)]">Recommendations</h3>
                     <p className="mt-2 type-card-description leading-6 text-[var(--ws-text-muted)]">
                         {topPost && topPost.engagements > 0
                             ? `Open “${topPost.post.title || topPost.post.caption.slice(0, 48)}” and compare its message, format, and publishing time with the next two posts.`
@@ -369,7 +369,7 @@ export function SocialAnalyticsStory({
                 <button
                     type="button"
                     onClick={() => setFocusedId(null)}
-                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-[var(--ws-panel)] px-3 py-2 type-caption text-[var(--ws-text-secondary)] shadow-xl lg:hidden"
+                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex items-center gap-2 rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption text-[var(--ws-text-secondary)] shadow-xl lg:hidden"
                 >
                     <X className="h-3.5 w-3.5" /> Clear chart selection
                 </button>

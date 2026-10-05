@@ -66,7 +66,7 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
     <aside className={`rounded-xl border border-cyan-900/30 bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] ${className}`}>
       <div className="border-b border-[var(--ws-border)] px-4 py-3">
         <p className="type-caption uppercase tracking-wide text-cyan-400">Business Context</p>
-        <h3 className="text-lg font-semibold text-white truncate">{name}</h3>
+        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)] truncate">{name}</h3>
         {data.outreach_status !== 'N/A' ? (
           <p className="type-caption text-[var(--ws-text-muted)] mt-1">Outreach: {data.outreach_status}</p>
         ) : null}
@@ -88,7 +88,7 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
         <ul className="space-y-2 max-h-64 overflow-y-auto">
           {data.timeline.slice(0, 5).map((item) => (
             <li key={item.id} className="type-ui">
-              <p className="text-white font-medium">{item.title}</p>
+              <p className="text-[var(--ws-text-primary)] font-medium">{item.title}</p>
               <p className="type-caption text-[var(--ws-text-muted)]">{item.source_label} · {new Date(item.timestamp).toLocaleString()}</p>
             </li>
           ))}

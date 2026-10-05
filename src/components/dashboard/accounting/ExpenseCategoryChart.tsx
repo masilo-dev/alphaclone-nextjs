@@ -105,8 +105,8 @@ export function ExpenseCategoryChart() {
     if (!active || !payload?.length) return null;
     const item = payload[0].payload as CategoryTotal;
     return (
-      <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)] px-3 py-2 type-caption shadow-xl">
-        <p className="font-bold text-white">{item.category}</p>
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption shadow-xl">
+        <p className="font-bold text-[var(--ws-text-primary)]">{item.category}</p>
         <p className="text-emerald-400">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         <p className="text-[var(--ws-text-muted)]">{item.percentage}% of total</p>
       </div>
@@ -117,7 +117,7 @@ export function ExpenseCategoryChart() {
     <div className="space-y-4 animate-in fade-in duration-300">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+          <h3 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
             <TrendingDown className="text-rose-400" size={20} />
             Expense Breakdown
           </h3>
@@ -130,16 +130,16 @@ export function ExpenseCategoryChart() {
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-rose-500/20 text-[var(--error-text,var(--error-500))] border border-rose-500/30' : 'text-[var(--ws-text-muted)] hover:text-white border border-white/5'}`}
+              className={`px-3 py-1.5 rounded-lg type-caption font-bold uppercase tracking-wider transition-all ${period === p ? 'bg-rose-500/20 text-[var(--error-text,var(--error-500))] border border-rose-500/30' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)]'}`}
             >
               {p === 'month' ? 'MTD' : p === 'quarter' ? 'QTD' : 'YTD'}
             </button>
           ))}
-          <div className="flex items-center gap-1 border border-white/5 rounded-lg overflow-hidden">
-            <button onClick={() => setChartType('pie')} className={`p-2 ${chartType === 'pie' ? 'bg-white/10 text-white' : 'text-[var(--ws-text-muted)]'}`}>
+          <div className="flex items-center gap-1 border border-[var(--ws-border)] rounded-lg overflow-hidden">
+            <button onClick={() => setChartType('pie')} className={`p-2 ${chartType === 'pie' ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}>
               <PieIcon size={14} />
             </button>
-            <button onClick={() => setChartType('bar')} className={`p-2 ${chartType === 'bar' ? 'bg-white/10 text-white' : 'text-[var(--ws-text-muted)]'}`}>
+            <button onClick={() => setChartType('bar')} className={`p-2 ${chartType === 'bar' ? 'bg-[var(--ws-hover)] text-[var(--ws-text-primary)]' : 'text-[var(--ws-text-muted)]'}`}>
               <BarChart3 size={14} />
             </button>
           </div>
@@ -174,13 +174,13 @@ export function ExpenseCategoryChart() {
               </div>
               <div className="space-y-2">
                 {data.map(item => (
-                  <div key={item.category} className="flex items-center justify-between gap-3 py-1.5 border-b border-white/5 last:border-0">
+                  <div key={item.category} className="flex items-center justify-between gap-3 py-1.5 border-b border-[var(--ws-border)] last:border-0">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                       <span className="type-ui text-[var(--ws-text-secondary)] truncate">{item.category}</span>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="type-ui font-bold text-white">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                      <span className="type-ui font-bold text-[var(--ws-text-primary)]">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
                       <span className="type-caption text-[var(--ws-text-muted)] ml-2">{item.percentage}%</span>
                     </div>
                   </div>

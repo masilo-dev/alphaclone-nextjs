@@ -26,7 +26,7 @@ import EmptyState from '@/components/ui/EmptyState';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
-  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border border-indigo-400">
+  <div className="px-4 py-3 shadow-xl rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-[var(--text-inverse)] min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border border-indigo-400">
     <div className="flex items-center gap-2 font-bold mb-1">
       <Zap className="w-4 h-4 text-indigo-100" />
       {data.label}
@@ -63,7 +63,7 @@ const ActionNode = ({ data }: { data: { label: string; description: string; type
   const abbr = typeAbbrev(data.type);
 
   return (
-    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-[var(--ws-panel)] text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
+    <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-[var(--ws-panel)] text-slate-900 dark:text-[var(--ws-text-primary)] min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
       <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-[var(--ws-border)] shadow-md cursor-crosshair" />
       <div className="flex items-center gap-2 font-bold type-ui mb-1 min-w-0">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 type-caption font-black text-slate-600 dark:border-slate-600 dark:bg-[var(--ws-surface-secondary)] dark:text-[var(--ws-text-secondary)]" title={data.type}>
@@ -578,8 +578,8 @@ export default function AutomationBuilder() {
                         className={`px-2.5 py-1.5 rounded-lg type-ui font-bold transition-all ${
                           active
                             ? tier === 'recommended'
-                              ? 'bg-teal-600 text-white shadow-sm'
-                              : 'bg-indigo-600 text-white shadow-sm'
+                              ? 'bg-teal-600 text-[var(--text-inverse)] shadow-sm'
+                              : 'bg-indigo-600 text-[var(--text-inverse)] shadow-sm'
                             : 'text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-[var(--ws-text-secondary)]'
                         }`}
                       >
@@ -589,12 +589,12 @@ export default function AutomationBuilder() {
                   })}
                 </div>
                 <div className="hidden md:block text-right min-w-0">
-                    <div className="type-ui font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
+                    <div className="type-ui font-bold text-slate-900 dark:text-[var(--ws-text-primary)] truncate max-w-[200px]">{workflowName}</div>
                     <div className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
                     </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold type-caption ring-2 ring-indigo-500/20 shadow-lg">
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[var(--ws-text-primary)] font-bold type-caption ring-2 ring-indigo-500/20 shadow-lg">
                     {userId ? 'A' : '?'}
                 </div>
             </div>
@@ -648,7 +648,7 @@ export default function AutomationBuilder() {
                                             onClick={() => loadWorkflow(wf)}
                                             className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-tertiary)] border-b border-slate-50 dark:border-[var(--ws-border)]/50 last:border-0 transition"
                                         >
-                                            <div className="type-ui font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
+                                            <div className="type-ui font-bold text-slate-800 dark:text-[var(--ws-text-primary)] truncate">{wf.name}</div>
                                             <div className="type-caption text-[var(--ws-text-muted)] mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
                                         </button>
                                     ))
@@ -661,7 +661,7 @@ export default function AutomationBuilder() {
                 <div className="relative">
                     <button 
                         onClick={() => setShowActionMenu(!showActionMenu)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition type-ui font-bold"
+                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-[var(--ws-text-primary)] px-4 py-2 rounded-xl shadow-lg shadow-indigo-500/30 transition type-ui font-bold"
                     >
                         <Plus className="w-4 h-4" /> Add Action
                     </button>
@@ -674,7 +674,7 @@ export default function AutomationBuilder() {
                                         onClick={() => setActiveCategory(cat.id)}
                                         className={`px-2.5 py-1 rounded-lg type-caption font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                             activeCategory === cat.id
-                                                ? 'bg-indigo-500 text-white shadow'
+                                                ? 'bg-indigo-500 text-[var(--ws-text-primary)] shadow'
                                                 : 'text-[var(--ws-text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-tertiary)]'
                                         }`}
                                     >
@@ -693,7 +693,7 @@ export default function AutomationBuilder() {
                                             {NODE_STYLES[template.type]?.icon || '⚡'}
                                         </span>
                                         <div className="min-w-0">
-                                            <div className="font-semibold type-caption text-slate-900 dark:text-white truncate">{template.label}</div>
+                                            <div className="font-semibold type-caption text-slate-900 dark:text-[var(--ws-text-primary)] truncate">{template.label}</div>
                                             <div className="type-caption text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] truncate">{template.description}</div>
                                         </div>
                                     </button>
@@ -705,7 +705,7 @@ export default function AutomationBuilder() {
                 <button 
                     onClick={handleExecute}
                     disabled={!workflowId || executing}
-                    className="flex items-center gap-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-slate-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-xl shadow-lg transition font-medium"
+                    className="flex items-center gap-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-slate-400 disabled:cursor-not-allowed text-[var(--text-inverse)] px-4 py-2 rounded-xl shadow-lg transition font-medium"
                 >
                     {executing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                     {executing ? 'Running...' : 'Test Run'}
@@ -713,7 +713,7 @@ export default function AutomationBuilder() {
                 <button 
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-amber-500 hover:bg-[var(--warning-500)] disabled:bg-slate-400 disabled:cursor-not-allowed text-white px-5 py-2 rounded-xl shadow-lg shadow-amber-500/20 transition font-medium"
+                    className="flex items-center gap-2 bg-amber-500 hover:bg-[var(--warning-500)] disabled:bg-slate-400 disabled:cursor-not-allowed text-[var(--ws-text-primary)] px-5 py-2 rounded-xl shadow-lg shadow-amber-500/20 transition font-medium"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {saving ? 'Saving...' : (workflowId ? 'Update' : 'Publish')}
@@ -765,7 +765,7 @@ export default function AutomationBuilder() {
         {activeTab === 'history' && (
             <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-[var(--ws-canvas)] p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-[var(--ws-text-primary)] flex items-center gap-3">
                         <History className="w-6 h-6 text-indigo-500" /> Audit Trail
                     </h2>
                     <p className="text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] mt-1">Detailed execution history for <b>{workflowName}</b></p>
@@ -863,7 +863,7 @@ export default function AutomationBuilder() {
         {activeTab === 'templates' && (
             <div className="w-full h-full min-w-0 bg-slate-50 dark:bg-[var(--ws-canvas)] p-4 sm:p-6 lg:p-8 flex flex-col animate-in fade-in scale-in-95 duration-500">
                 <div className="mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-[var(--ws-text-primary)] flex items-center gap-3">
                         <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates
                     </h2>
                             <p className="text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)] mt-1">Quick-start with business-ready patterns like referrals, invoicing, and lead nurture</p>
@@ -885,7 +885,7 @@ export default function AutomationBuilder() {
                                     {template.icon}
                                 </span>
                                 <div className="pr-12">
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-[var(--ws-text-primary)] mb-2">{template.name}</h3>
                                     <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 type-caption font-bold uppercase tracking-widest mb-4">
                                         {template.category}
                                     </div>

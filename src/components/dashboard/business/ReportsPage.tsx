@@ -238,7 +238,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <select
                         value={exportCategory}
                         onChange={(e) => setExportCategory(e.target.value as any)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
                     >
                         <option value="revenue">Revenue Data</option>
                         <option value="clients">Client List</option>
@@ -247,7 +247,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
                     >
                         <option value="7">Last 7 days</option>
                         <option value="30">Last 30 days</option>
@@ -256,7 +256,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     </select>
                     <button
                         onClick={() => handleExport('pdf', exportCategory)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-hover)] hover:bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg transition-colors disabled:opacity-50"
                         title="Export PDF"
                         disabled={isExporting}
                     >
@@ -265,7 +265,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => handleExport('xlsx', exportCategory)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-lg transition-colors disabled:opacity-50"
                         title="Export Excel"
                         disabled={isExporting}
                     >
@@ -319,7 +319,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <select
                         value={intelligenceModule}
                         onChange={(e) => setIntelligenceModule(e.target.value)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[var(--success-500)]"
+                        className="px-4 py-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--success-500)]"
                     >
                         <option value="overall">Overall system</option>
                         <option value="crm">CRM</option>
@@ -336,7 +336,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 bg-white/5 border border-white/5 rounded-2xl p-5">
+                <div className="lg:col-span-2 bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-5">
                         <h4 className="type-ui font-semibold text-[var(--ws-border)] mb-3">Score Trend</h4>
                         <StandardLineChart
                             data={intelligencePoints.map((point) => ({
@@ -357,7 +357,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             title="Module Snapshot"
                         />
                         {intelligenceSummary && (
-                            <div className="bg-white/5 border border-white/5 rounded-2xl p-3 space-y-3">
+                            <div className="bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-3 space-y-3">
                                 <div>
                             <div className="type-caption text-[var(--success-500)] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
@@ -386,7 +386,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
-                            <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
+                            <div className="bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Revenue & Expenses</h3>
                     <WrapChart height={300}>
                         <BarChart data={revenueData}>
@@ -406,7 +406,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Client Distribution */}
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Client Distribution</h3>
                     <StandardDonutChart
                         data={clientData.map((entry, index) => ({
@@ -419,7 +419,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Project Status */}
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Project Status</h3>
                     <WrapChart height={300}>
                         <BarChart data={projectData} layout="vertical">
@@ -437,7 +437,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Revenue Trend */}
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
+                <div className="bg-[var(--ws-hover)] border border-[var(--ws-border)] rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Revenue Trend</h3>
                     <StandardLineChart
                         data={revenueData.map((d) => ({

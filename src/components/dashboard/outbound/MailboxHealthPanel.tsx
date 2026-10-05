@@ -214,7 +214,7 @@ function AddMailboxForm({ tenantId, onCreated, onCancel }: AddMailboxFormProps) 
         <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={saving} className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white">
+        <Button type="submit" size="sm" disabled={saving} className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)]">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
           Add Mailbox
         </Button>
@@ -445,7 +445,7 @@ export default function MailboxHealthPanel() {
           </Button>
           <Button
             size="sm"
-            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)] text-xs"
             onClick={() => setShowAddForm(true)}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -503,7 +503,7 @@ export default function MailboxHealthPanel() {
           </p>
           <Button
             size="sm"
-            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-[var(--text-inverse)]"
             onClick={() => setShowAddForm(true)}
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />

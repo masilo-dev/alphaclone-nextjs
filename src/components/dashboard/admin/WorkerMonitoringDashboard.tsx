@@ -132,7 +132,7 @@ export default function WorkerMonitoringDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Users className="w-6 h-6 text-blue-400" />
             Worker Activity Monitor
           </h1>
@@ -143,7 +143,7 @@ export default function WorkerMonitoringDashboard() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
-            className="px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-white"
+            className="px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)]"
           >
             <option value="today">Today</option>
             <option value="week">This Week</option>
@@ -169,7 +169,7 @@ export default function WorkerMonitoringDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[var(--ws-text-muted)] type-card-description">Active Now</p>
-              <p className="text-2xl font-bold text-white">{stats.total_active}</p>
+              <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.total_active}</p>
             </div>
             <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
               <Activity className="w-5 h-5 text-green-400" />
@@ -190,7 +190,7 @@ export default function WorkerMonitoringDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[var(--ws-text-muted)] type-card-description">Workers Today</p>
-              <p className="text-2xl font-bold text-white">{stats.active_today}</p>
+              <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.active_today}</p>
             </div>
             <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-blue-400" />
@@ -208,7 +208,7 @@ export default function WorkerMonitoringDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[var(--ws-text-muted)] type-card-description">Avg Productivity</p>
-              <p className="text-2xl font-bold text-white">{stats.avg_productivity}%</p>
+              <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.avg_productivity}%</p>
             </div>
             <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-purple-400" />
@@ -231,7 +231,7 @@ export default function WorkerMonitoringDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[var(--ws-text-muted)] type-card-description">Total Activities</p>
-              <p className="text-2xl font-bold text-white">{stats.total_activities.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{stats.total_activities.toLocaleString()}</p>
             </div>
             <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
               <MousePointer className="w-5 h-5 text-orange-400" />
@@ -250,7 +250,7 @@ export default function WorkerMonitoringDashboard() {
             onClick={() => setFilterApp('all')}
             className={`px-3 py-1.5 rounded-lg type-ui ${
               filterApp === 'all' 
-                ? 'bg-blue-500 text-white' 
+                ? 'bg-blue-500 text-[var(--ws-text-primary)]' 
                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
             }`}
           >
@@ -262,7 +262,7 @@ export default function WorkerMonitoringDashboard() {
               onClick={() => setFilterApp(app)}
               className={`px-3 py-1.5 rounded-lg type-ui flex items-center gap-1.5 ${
                 filterApp === app 
-                  ? 'bg-blue-500 text-white' 
+                  ? 'bg-blue-500 text-[var(--ws-text-primary)]' 
                   : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
               }`}
             >
@@ -296,12 +296,12 @@ export default function WorkerMonitoringDashboard() {
                 {/* Worker Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-[var(--text-inverse)] font-semibold">
                       {worker.user_name?.charAt(0).toUpperCase() || 
                        worker.user_email?.charAt(0).toUpperCase() || '?'}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-white">
+                      <h3 className="font-semibold text-[var(--ws-text-primary)]">
                         {worker.user_name || worker.user_email?.split('@')[0] || 'Unknown'}
                       </h3>
                       <p className="type-card-description text-[var(--ws-text-muted)]">{worker.user_email}</p>
@@ -386,19 +386,19 @@ export default function WorkerMonitoringDashboard() {
                       <div className="grid grid-cols-2 gap-2 type-ui">
                         <div className="bg-[var(--ws-panel)]/50 rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Today's Activities</p>
-                          <p className="text-white font-semibold">{prod.total_activities}</p>
+                          <p className="text-[var(--ws-text-primary)] font-semibold">{prod.total_activities}</p>
                         </div>
                         <div className="bg-[var(--ws-panel)]/50 rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Active Hours</p>
-                          <p className="text-white font-semibold">{prod.active_hours}h</p>
+                          <p className="text-[var(--ws-text-primary)] font-semibold">{prod.active_hours}h</p>
                         </div>
                         <div className="bg-[var(--ws-panel)]/50 rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Apps Used</p>
-                          <p className="text-white font-semibold">{prod.unique_apps}</p>
+                          <p className="text-[var(--ws-text-primary)] font-semibold">{prod.unique_apps}</p>
                         </div>
                         <div className="bg-[var(--ws-panel)]/50 rounded p-2">
                           <p className="text-[var(--ws-text-muted)] type-card-description">Entities</p>
-                          <p className="text-white font-semibold">{prod.entities_touched}</p>
+                          <p className="text-[var(--ws-text-primary)] font-semibold">{prod.entities_touched}</p>
                         </div>
                       </div>
                       

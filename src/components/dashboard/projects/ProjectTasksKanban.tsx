@@ -182,19 +182,19 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a delivery task…"
-          className="flex-1 min-w-[140px] px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-[140px] px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <input
           type="date"
           value={newDueDate}
           onChange={(e) => setNewDueDate(e.target.value)}
           title="Due date — adds to calendar"
-          className="px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <button
           type="submit"
           disabled={creating || !newTitle.trim()}
-          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white type-caption font-bold"
+          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-[var(--text-inverse)] type-caption font-bold"
         >
           {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           Add
@@ -215,15 +215,15 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
 
       {editingTask ? (
         <div className="fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center bg-[var(--ws-canvas)]/80 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-[var(--ws-panel)] p-4 space-y-3 shadow-xl">
-            <p className="type-card-description font-bold text-white truncate">{editingTask.title}</p>
+          <div className="w-full max-w-sm rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 space-y-3 shadow-xl">
+            <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{editingTask.title}</p>
             <label className="block type-label text-[var(--ws-text-muted)]">
               Due date
               <input
                 type="date"
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
-                className="mt-1 w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-lg text-white type-ui"
+                className="mt-1 w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-ui"
               />
             </label>
             <p className="type-card-description text-[var(--ws-text-muted)]">Saving updates your dashboard calendar (and Google Calendar if connected).</p>
@@ -231,14 +231,14 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
               <button
                 type="button"
                 onClick={() => setEditingTask(null)}
-                className="px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-white"
+                className="px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => void saveEditDueDate()}
-                className="px-3 py-2 rounded-lg bg-[var(--brand-blue-600)] text-white type-caption font-bold"
+                className="px-3 py-2 rounded-lg bg-[var(--brand-blue-600)] text-[var(--text-inverse)] type-caption font-bold"
               >
                 Save
               </button>

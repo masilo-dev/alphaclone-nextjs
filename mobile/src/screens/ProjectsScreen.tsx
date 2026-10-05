@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,13 +36,13 @@ export default function ProjectsScreen({ navigation }: { navigation: any }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#00D2A0';
+        return colors.primary;
       case 'in-progress':
-        return '#0077FF';
+        return colors.info;
       case 'planning':
-        return '#FFA500';
+        return colors.warning;
       default:
-        return '#94A3B8';
+        return colors.textSecondary;
     }
   };
 
@@ -61,7 +62,7 @@ export default function ProjectsScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -69,7 +70,7 @@ export default function ProjectsScreen({ navigation }: { navigation: any }) {
           <View style={styles.header}>
             <Text style={styles.title}>Projects</Text>
             <TouchableOpacity style={styles.addButton}>
-              <Ionicons name="add" size={24} color="#FFFFFF" />
+              <Ionicons name="add" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -92,11 +93,11 @@ export default function ProjectsScreen({ navigation }: { navigation: any }) {
 
                 <View style={styles.projectDetails}>
                   <View style={styles.detailRow}>
-                    <Ionicons name="calendar" size={16} color="#94A3B8" />
+                    <Ionicons name="calendar" size={16} color=colors.textSecondary />
                     <Text style={styles.detailText}>{project.deadline}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Ionicons name="cash" size={16} color="#94A3B8" />
+                    <Ionicons name="cash" size={16} color=colors.textSecondary />
                     <Text style={styles.detailText}>${Math.round(project.budget || 0).toLocaleString()}</Text>
                   </View>
                 </View>
@@ -117,7 +118,7 @@ export default function ProjectsScreen({ navigation }: { navigation: any }) {
                 </View>
               </TouchableOpacity>
             ))}
-            {loading && <ActivityIndicator color="#00D2A0" />}
+            {loading && <ActivityIndicator color=colors.primary />}
             {!loading && projects.length === 0 && <Text style={styles.emptyText}>No projects yet.</Text>}
           </View>
         </ScrollView>
@@ -147,10 +148,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   addButton: {
-    backgroundColor: '#00D2A0',
+    backgroundColor: colors.primary,
     borderRadius: 25,
     width: 50,
     height: 50,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: colors.card,
   },
   projectHeader: {
     flexDirection: 'row',
@@ -180,12 +181,12 @@ const styles = StyleSheet.create({
   projectTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 4,
   },
   projectClient: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginLeft: 6,
   },
   progressContainer: {
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.card,
     borderRadius: 3,
     marginRight: 10,
   },
@@ -230,11 +231,11 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontSize: 14,
   },
 });

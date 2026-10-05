@@ -42,7 +42,7 @@ export function ModuleDashboardActions({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <p className={WORKSPACE.typography.sectionLabel}>{t('What to do next')}</p>
-            <h2 className="type-ui font-semibold text-white mt-0.5 truncate">{t(title)}</h2>
+            <h2 className="type-ui font-semibold text-[var(--ws-text-primary)] mt-0.5 truncate">{t(title)}</h2>
             {!expanded ? (
               <p className="type-card-description text-[var(--ws-text-tertiary)] mt-1 line-clamp-1">{t(purpose)}</p>
             ) : (
@@ -98,7 +98,7 @@ export function ModuleDashboardActions({
                 >
                   <div className="flex items-center gap-2.5">
                     <action.icon className="w-4 h-4 text-teal-400 shrink-0" />
-                    <span className="type-ui font-semibold text-white group-hover:text-[var(--brand-blue-300)] truncate">
+                    <span className="type-ui font-semibold text-[var(--ws-text-primary)] group-hover:text-[var(--brand-blue-300)] truncate">
                       {t(action.label)}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-[var(--ws-text-muted)] ml-auto shrink-0" />

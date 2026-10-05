@@ -524,7 +524,7 @@ export function AttentionFirstDashboard() {
       <nav aria-label={t('Quick actions')} className="flex flex-wrap items-start gap-2">
         <Link
           href="/dashboard/crm/workspace?quickAdd=true"
-          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--ws-radius-lg)] bg-[var(--ac-accent)] px-4 type-button text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--ws-radius-lg)] bg-[var(--ac-accent)] px-4 type-button text-[var(--ws-text-primary)] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ac-accent)] focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" aria-hidden />
           {t('Add customer')}

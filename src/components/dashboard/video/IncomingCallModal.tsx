@@ -117,7 +117,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                         <Video className="w-10 h-10 text-teal-400" />
                     </div>
 
-                    <h3 className="text-2xl font-bold text-white mb-2">Incoming Call</h3>
+                    <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Incoming Call</h3>
                     <p className="text-[var(--ws-text-muted)] mb-8 flex items-center justify-center gap-2">
                         from <span className="text-teal-400 font-semibold">{incomingCall.callerName}</span>
                     </p>
@@ -127,10 +127,10 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             onClick={handleDecline}
                             className="flex flex-col items-center gap-2 group"
                         >
-                            <div className="w-16 h-16 rounded-full bg-[var(--error-500)]/10 border border-red-500/20 flex items-center justify-center group-hover:bg-[var(--error-500)] group-hover:text-white transition-all duration-300 transform group-hover:scale-110">
-                                <PhoneOff className="w-6 h-6 text-red-500 group-hover:text-white" />
+                            <div className="w-16 h-16 rounded-full bg-[var(--error-500)]/10 border border-red-500/20 flex items-center justify-center group-hover:bg-[var(--error-500)] group-hover:text-[var(--ws-text-primary)] transition-all duration-300 transform group-hover:scale-110">
+                                <PhoneOff className="w-6 h-6 text-red-500 group-hover:text-[var(--ws-text-primary)]" />
                             </div>
-                            <span className="type-ui text-[var(--ws-text-muted)] group-hover:text-white transition-colors">Decline</span>
+                            <span className="type-ui text-[var(--ws-text-muted)] group-hover:text-[var(--ws-text-primary)] transition-colors">Decline</span>
                         </button>
 
                         <button
@@ -138,9 +138,9 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                             className="flex flex-col items-center gap-2 group"
                         >
                             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30 transition-all duration-300 transform group-hover:scale-110 animate-bounce">
-                                <Phone className="w-6 h-6 text-white fill-current" />
+                                <Phone className="w-6 h-6 text-[var(--ws-text-primary)] fill-current" />
                             </div>
-                            <span className="type-ui text-white font-medium">Answer</span>
+                            <span className="type-ui text-[var(--ws-text-primary)] font-medium">Answer</span>
                         </button>
                     </div>
                 </div>

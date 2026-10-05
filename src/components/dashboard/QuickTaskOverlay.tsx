@@ -93,7 +93,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     </div>
                                     <h2 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Quick Neural Capture</h2>
                                 </div>
-                                <button onClick={onClose} className="text-[var(--ws-text-muted)] hover:text-white transition-colors">
+                                <button onClick={onClose} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -105,7 +105,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="What needs to be done?"
-                                        className="w-full bg-transparent border-none focus:ring-0 text-xl font-bold text-white placeholder-slate-600 p-0"
+                                        className="w-full bg-transparent border-none focus:ring-0 text-xl font-bold text-[var(--ws-text-primary)] placeholder-slate-600 p-0"
                                     />
                                     <textarea
                                         value={description}
@@ -116,9 +116,9 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     />
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/5">
+                                <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-[var(--ws-border)]">
                                     {/* Priority Picker */}
-                                    <div className="flex items-center gap-1 bg-[var(--ws-canvas)]/50 p-1 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-1 bg-[var(--ws-canvas)]/50 p-1 rounded-xl border border-[var(--ws-border)]">
                                         {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
                                             <button
                                                 key={p}
@@ -136,7 +136,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     </div>
 
                                     {/* Due Date */}
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)]/50 rounded-xl border border-white/5 group hover:border-teal-500/30 transition-all">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)]/50 rounded-xl border border-[var(--ws-border)] group hover:border-teal-500/30 transition-all">
                                         <Calendar className="w-3.5 h-3.5 text-[var(--ws-text-muted)] group-hover:text-teal-400" />
                                         <input
                                             type="date"
@@ -150,11 +150,11 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                 <div className="flex items-center justify-between pt-4">
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
-                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-white/5">ESC</span>
+                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-[var(--ws-border)]">ESC</span>
                                             <span>Close</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
-                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-white/5">⌘ + ENTER</span>
+                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-[var(--ws-border)]">⌘ + ENTER</span>
                                             <span>Capture</span>
                                         </div>
                                     </div>

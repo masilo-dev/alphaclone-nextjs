@@ -443,7 +443,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-[var(--ws-border)] p-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                             <DollarSign className="w-6 h-6 text-teal-400" />
                             {currentTenant?.name || 'Business'} Invoice
                         </h2>
@@ -453,7 +453,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {step === 'success' && 'Invoice created successfully'}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="text-[var(--ws-text-muted)] hover:text-white transition-colors">
+                    <button onClick={handleClose} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -488,7 +488,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 onChange={(e) => setEnablePaymentLinks(e.target.checked)}
                                                 className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                                             />
-                                            <span className="type-ui text-white">Enable payment links</span>
+                                            <span className="type-ui text-[var(--ws-text-primary)]">Enable payment links</span>
                                         </label>
                                     </div>
                                 </div>
@@ -497,7 +497,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                             {/* Template Selector */}
                             <div className="border-b border-[var(--ws-border)] pb-6">
-                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                <h3 className="text-[var(--ws-text-primary)] font-bold mb-3 flex items-center gap-2">
                                     <Sparkles className="w-5 h-5 text-teal-400" />
                                     Choose Style
                                 </h3>
@@ -505,7 +505,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     {[
                                         { id: 1, name: 'Classic', color: 'bg-white' },
                                         { id: 2, name: 'Modern', color: 'bg-teal-50' },
-                                        { id: 3, name: 'Dark', color: 'bg-[var(--ws-panel)] border border-white/20' },
+                                        { id: 3, name: 'Dark', color: 'bg-[var(--ws-panel)] border border-[var(--ws-border-strong)]' },
                                         { id: 4, name: 'Minimal', color: 'bg-gray-50' },
                                         { id: 5, name: 'Bold', color: 'bg-slate-200' }
                                     ].map((t) => (
@@ -517,7 +517,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             <div className={`absolute inset-0 ${t.color} opacity-50`} />
                                             <div className="absolute inset-x-2 top-2 h-2 bg-current opacity-20 rounded-sm" />
                                             <div className="absolute inset-x-2 top-5 bottom-2 bg-current opacity-10 rounded-sm" />
-                                            <span className="absolute bottom-2 inset-x-2 type-caption font-medium text-white text-center bg-black/50 rounded py-1">
+                                            <span className="absolute bottom-2 inset-x-2 type-caption font-medium text-[var(--ws-text-primary)] text-center bg-black/50 rounded py-1">
                                                 {t.name}
                                             </span>
                                         </button>
@@ -543,7 +543,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
                                             placeholder="Search existing contacts..."
-                                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-white rounded-lg pl-10 pr-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 type-ui outline-none"
+                                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg pl-10 pr-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 type-ui outline-none"
                                         />
                                         {selectedClientId && (
                                             <button 
@@ -551,7 +551,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                     setSelectedClientId('');
                                                     setSearchQuery('');
                                                 }}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] hover:text-white"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                                             >
                                                 <X size={14} />
                                             </button>
@@ -584,7 +584,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                                     setShowContactDropdown(false);
                                                                     setSearchQuery('');
                                                                 }}
-                                                                className="w-full text-left p-3 rounded-lg hover:bg-white/5 flex items-center gap-3 transition-colors group"
+                                                                className="w-full text-left p-3 rounded-lg hover:bg-[var(--ws-hover)] flex items-center gap-3 transition-colors group"
                                                             >
                                                                 <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center border border-teal-500/20 group-hover:bg-teal-500/20 transition-all">
                                                                     <span className="text-teal-400 type-caption font-black">{c.name?.charAt(0).toUpperCase()}</span>
@@ -616,7 +616,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     <select
                                         value={selectedProjectId}
                                         onChange={(e) => setSelectedProjectId(e.target.value)}
-                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                     >
                                         <option value="">Select a project</option>
                                         {projects.map((project) => (
@@ -635,7 +635,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     type="date"
                                     value={dueDate}
                                     onChange={(e) => setDueDate(e.target.value)}
-                                    className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                 />
                             </div>
 
@@ -657,7 +657,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 }`}
                                         >
                                             <div className="text-2xl mb-1">{method.icon}</div>
-                                            <div className="text-white type-ui font-medium">{method.label}</div>
+                                            <div className="text-[var(--ws-text-primary)] type-ui font-medium">{method.label}</div>
                                         </button>
                                     ))}
                                 </div>
@@ -671,7 +671,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         value={bankDetails}
                                         onChange={(e) => setBankDetails(e.target.value)}
                                         placeholder="Bank Name\nAccount Number\nBranch Code\nAccount Holder Name"
-                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-primary)] rounded-lg px-3 py-2 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                         rows={4}
                                     />
                                 </div>
@@ -706,10 +706,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             {/* Line Items */}
                             <div>
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="text-white font-bold">Line Items</h3>
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold">Line Items</h3>
                                     <button
                                         onClick={addLineItem}
-                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white type-ui rounded-lg flex items-center gap-2 transition-colors"
+                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui rounded-lg flex items-center gap-2 transition-colors"
                                     >
                                         <Plus className="w-4 h-4" />
                                         Add Item
@@ -908,7 +908,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             <span>-${discountAmount.toFixed(2)}</span>
                                         </div>
                                     )}
-                                    <div className="border-t border-slate-600 pt-2 flex justify-between font-bold text-white text-lg">
+                                    <div className="border-t border-slate-600 pt-2 flex justify-between font-bold text-[var(--ws-text-primary)] text-lg">
                                         <span>Total:</span>
                                         <span>${calculateTotal().toFixed(2)}</span>
                                     </div>
@@ -917,7 +917,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                             {/* Digital Signature */}
                             <div className="border-t border-[var(--ws-border)] pt-6">
-                                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                <h3 className="text-[var(--ws-text-primary)] font-bold mb-3 flex items-center gap-2">
                                     <PenLine className="w-5 h-5 text-teal-400" />
                                     Digital Signature (Optional)
                                 </h3>
@@ -926,7 +926,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <button
                                             onClick={() => setSignatureType('draw')}
                                             className={`px-4 py-2 rounded-lg type-ui font-medium transition-colors ${signatureType === 'draw'
-                                                ? 'bg-teal-600 text-white'
+                                                ? 'bg-teal-600 text-[var(--text-inverse)]'
                                                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                                                 }`}
                                         >
@@ -935,7 +935,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         <button
                                             onClick={() => setSignatureType('type')}
                                             className={`px-4 py-2 rounded-lg type-ui font-medium transition-colors ${signatureType === 'type'
-                                                ? 'bg-teal-600 text-white'
+                                                ? 'bg-teal-600 text-[var(--text-inverse)]'
                                                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                                                 }`}
                                         >
@@ -997,7 +997,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Invoice Preview */}
-                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 text-white`}>
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 text-[var(--ws-text-primary)]`}>
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold">{currentTenant?.name || 'Business Name'}</h2>
@@ -1089,14 +1089,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 {typedSignature && (
                                     <div className="mt-6">
                                         <p className="text-[var(--ws-text-muted)] mb-2">Authorized Signature:</p>
-                                        <p className="text-2xl font-script text-white">{typedSignature}</p>
+                                        <p className="text-2xl font-script text-[var(--ws-text-primary)]">{typedSignature}</p>
                                     </div>
                                 )}
                             </div>
 
                             {/* Status Summary */}
                             <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
-                                <h4 className="text-white font-bold mb-2">Invoice Status</h4>
+                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-2">Invoice Status</h4>
                                 <div className="space-y-1 type-ui text-[var(--ws-text-secondary)]">
                                     <div className="flex justify-between">
                                         <span>Status:</span>
@@ -1122,7 +1122,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6 mx-auto">
                                 <CheckCircle className="w-10 h-10 text-green-400" />
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Invoice Created Successfully!</h3>
+                            <h3 className="text-2xl font-bold text-[var(--ws-text-primary)] mb-2">Invoice Created Successfully!</h3>
                             <p className="text-[var(--ws-text-muted)] max-w-md mx-auto mb-8">
                                 Your invoice has been saved successfully. You can download the PDF to send it manually to your client.
                             </p>
@@ -1132,7 +1132,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 <div className="w-full max-w-sm mb-6 mx-auto">
                                     <button
                                         onClick={handleCopyPaymentLink}
-                                        className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
+                                        className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold rounded-lg flex items-center justify-center gap-2 transition-all"
                                     >
                                         <Copy className="w-4 h-4" />
                                         Copy & Share Invoice Link
@@ -1153,7 +1153,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
                             {/* Next Steps */}
                             <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 text-left`}>
-                                <h4 className="text-white font-bold mb-2">Next Steps</h4>
+                                <h4 className="text-[var(--ws-text-primary)] font-bold mb-2">Next Steps</h4>
                                 <ul className="text-[var(--ws-text-secondary)] type-ui space-y-1">
                                     <li>• Download the PDF and send it to your client</li>
                                     <li>• Copy the payment link if enabled and send it manually</li>
@@ -1167,7 +1167,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 {/* Footer — always visible */}
                 <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/95 p-4 sm:p-6 backdrop-blur-sm">
                     <div className="type-ui text-[var(--ws-text-muted)]">
-                        Total: <span className="text-white font-bold">${calculateTotal().toFixed(2)}</span>
+                        Total: <span className="text-[var(--ws-text-primary)] font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex gap-3">
                         {step === 'edit' && (

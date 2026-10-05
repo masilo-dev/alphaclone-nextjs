@@ -135,7 +135,7 @@ export default function MFAEnrollment() {
                         )}
                     </div>
                     <div>
-                        <h4 className="font-bold text-white flex items-center gap-2">
+                        <h4 className="font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                             Two-Factor Authentication (2FA)
                             {isEnrolled && (
                                 <span className="type-caption px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-400 font-bold uppercase tracking-wider">
@@ -163,7 +163,7 @@ export default function MFAEnrollment() {
                         <Button
                             onClick={startEnrollment}
                             isLoading={enrolling}
-                            className="bg-teal-600 hover:bg-teal-500 text-white type-ui"
+                            className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-ui"
                         >
                             <Shield className="w-4 h-4 mr-2" />
                             Enable 2FA
@@ -175,7 +175,7 @@ export default function MFAEnrollment() {
             {qrCodeData && !isEnrolled && (
                 <div className="mt-6 pt-6 border-t border-[var(--ws-border)] animate-fade-in text-[var(--ws-text-muted)]">
                     <div className="bg-[var(--ws-panel)]/50 p-6 rounded-xl border border-[var(--ws-border)]">
-                        <h5 className="font-bold text-white mb-2 text-lg">Set up Authenticator App</h5>
+                        <h5 className="font-bold text-[var(--ws-text-primary)] mb-2 text-lg">Set up Authenticator App</h5>
                         <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             1. Open your authenticator app (e.g., Google Authenticator, Authy, or 1Password).<br />
                             2. Scan the QR code below or enter the setup key manually.
@@ -205,7 +205,7 @@ export default function MFAEnrollment() {
                                             value={verificationCode}
                                             onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                                             placeholder="123456"
-                                            className="font-mono tracking-caps text-center text-xl h-14 bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-white focus:border-teal-500"
+                                            className="font-mono tracking-caps text-center text-xl h-14 bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] focus:border-teal-500"
                                         />
                                         <Button
                                             onClick={verifyEnrollment}

@@ -297,7 +297,7 @@ export function SendGridIntegration() {
             <Send className={`w-6 h-6 ${status.isConnected ? 'text-green-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">SendGrid Integration</h3>
+            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">SendGrid Integration</h3>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               {status.isConnected ? `Connected • From: ${status.fromEmail}` : 'Connect your SendGrid account'}
             </p>
@@ -347,27 +347,27 @@ export function SendGridIntegration() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Send Test Email</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Send Test Email</h4>
               <div className="space-y-2">
                 <input
                   type="email"
                   placeholder="Recipient email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
                 />
                 <input
                   type="text"
                   placeholder="Subject"
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
                 />
                 <textarea
                   placeholder="Message"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] resize-none"
                   rows={2}
                 />
                 <Button
@@ -383,7 +383,7 @@ export function SendGridIntegration() {
             </div>
 
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Email Templates</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Email Templates</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {templates.length > 0 ? (
                   templates.slice(0, 3).map((template) => (
@@ -431,7 +431,7 @@ export function SendGridIntegration() {
                 )}
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-white mb-1">{clientError.title}</h4>
+                <h4 className="font-semibold text-[var(--ws-text-primary)] mb-1">{clientError.title}</h4>
                 <p className="type-card-description text-[var(--ws-text-secondary)] mb-2">{clientError.message}</p>
                 <p className="type-card-description text-[var(--ws-text-muted)]">{clientError.suggestion}</p>
               </div>
@@ -451,7 +451,7 @@ export function SendGridIntegration() {
             {!status.isConnected ? (
               <>
                 <div>
-                  <h4 className="text-lg font-semibold text-white mb-4">Connect SendGrid</h4>
+                  <h4 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-4">Connect SendGrid</h4>
                   <div className="space-y-4">
                     <div>
                       <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
@@ -513,7 +513,7 @@ export function SendGridIntegration() {
             ) : (
               <>
                 <div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Connection Status</h4>
+                  <h4 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">Connection Status</h4>
                   <div className="flex items-center gap-2 type-ui">
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     <span className="text-green-400">Connected to SendGrid</span>

@@ -120,7 +120,7 @@ export function FinancialReportsPage() {
                 <div className="bg-[var(--ws-surface-secondary)] rounded-lg shadow-sm p-4 md:p-6">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Trial Balance</h2>
+                            <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Trial Balance</h2>
                             <p className="text-[var(--ws-text-secondary)] mt-1">As of {new Date(tbAsOfDate).toLocaleDateString()}</p>
                         </div>
                         <div className="flex flex-wrap gap-3">
@@ -128,11 +128,11 @@ export function FinancialReportsPage() {
                                 type="date"
                                 value={tbAsOfDate}
                                 onChange={(e) => setTbAsOfDate(e.target.value)}
-                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
                             <button
                                 onClick={loadReport}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="px-4 py-2 bg-blue-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 Generate
                             </button>
@@ -145,23 +145,23 @@ export function FinancialReportsPage() {
                                 <div className="flex justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="type-card-description text-[var(--ws-text-muted)] font-mono">{account.accountCode}</p>
-                                        <p className="type-card-description font-medium text-white truncate">{account.accountName}</p>
+                                        <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">{account.accountName}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 type-ui font-mono">
                                     <div>
                                         <span className="type-caption text-[var(--ws-text-muted)] block">Debit</span>
-                                        <span className="text-white">{account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '—'}</span>
+                                        <span className="text-[var(--ws-text-primary)]">{account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '—'}</span>
                                     </div>
                                     <div className="text-right">
                                         <span className="type-caption text-[var(--ws-text-muted)] block">Credit</span>
-                                        <span className="text-white">{account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '—'}</span>
+                                        <span className="text-[var(--ws-text-primary)]">{account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '—'}</span>
                                     </div>
                                 </div>
                             </MobileDataCard>
                         ))}
                         <MobileDataCard className="border-slate-600 bg-[var(--ws-panel)]">
-                            <div className="grid grid-cols-2 gap-2 type-ui font-mono font-bold text-white">
+                            <div className="grid grid-cols-2 gap-2 type-ui font-mono font-bold text-[var(--ws-text-primary)]">
                                 <div>
                                     <span className="type-caption text-[var(--ws-text-muted)] block font-sans font-normal">Total Debits</span>
                                     ${trialBalance.totalDebits.toFixed(2)}
@@ -196,16 +196,16 @@ export function FinancialReportsPage() {
                             <tbody className="bg-[var(--ws-surface-secondary)] divide-y divide-slate-700">
                                 {trialBalance.accounts.map((account) => (
                                     <tr key={account.accountCode}>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-[var(--ws-text-primary)]">
                                             {account.accountCode}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-[var(--ws-text-secondary)]">
                                             {account.accountName}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-[var(--ws-text-primary)]">
                                             {account.debitBalance > 0 ? `$${account.debitBalance.toFixed(2)}` : '-'}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono text-[var(--ws-text-primary)]">
                                             {account.creditBalance > 0 ? `$${account.creditBalance.toFixed(2)}` : '-'}
                                         </td>
                                     </tr>
@@ -213,11 +213,11 @@ export function FinancialReportsPage() {
                             </tbody>
                             <tfoot className="bg-[var(--ws-panel)] border-t-2 border-slate-600">
                                 <tr>
-                                    <td colSpan={2} className="px-4 md:px-6 py-4 text-right font-bold text-white">TOTALS:</td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-white">
+                                    <td colSpan={2} className="px-4 md:px-6 py-4 text-right font-bold text-[var(--ws-text-primary)]">TOTALS:</td>
+                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-[var(--ws-text-primary)]">
                                         ${trialBalance.totalDebits.toFixed(2)}
                                     </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-white">
+                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right font-mono font-bold text-[var(--ws-text-primary)]">
                                         ${trialBalance.totalCredits.toFixed(2)}
                                     </td>
                                 </tr>
@@ -251,7 +251,7 @@ export function FinancialReportsPage() {
                 <div className="bg-[var(--ws-surface-secondary)] rounded-lg shadow-sm p-4 md:p-6">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Balance Sheet</h2>
+                            <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Balance Sheet</h2>
                             <p className="text-[var(--ws-text-secondary)] mt-1">As of {new Date(bsAsOfDate).toLocaleDateString()}</p>
                         </div>
                         <div className="flex flex-wrap gap-3">
@@ -259,11 +259,11 @@ export function FinancialReportsPage() {
                                 type="date"
                                 value={bsAsOfDate}
                                 onChange={(e) => setBsAsOfDate(e.target.value)}
-                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             />
                             <button
                                 onClick={loadReport}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                className="px-4 py-2 bg-blue-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 Generate
                             </button>
@@ -273,26 +273,26 @@ export function FinancialReportsPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Assets */}
                         <div>
-                            <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">ASSETS</h3>
+                            <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 border-b-2 border-slate-600 pb-2">ASSETS</h3>
                             {balanceSheet.assets.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                     <span className="type-ui text-[var(--ws-text-secondary)]">{account.accountName}</span>
-                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-3 mt-2 border-t-2 border-slate-600 font-bold">
-                                <span className="text-white">Total Assets</span>
-                                <span className="font-mono text-white">${balanceSheet.totalAssets.toFixed(2)}</span>
+                                <span className="text-[var(--ws-text-primary)]">Total Assets</span>
+                                <span className="font-mono text-[var(--ws-text-primary)]">${balanceSheet.totalAssets.toFixed(2)}</span>
                             </div>
                         </div>
 
                         {/* Liabilities & Equity */}
                         <div>
-                            <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">LIABILITIES</h3>
+                            <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 border-b-2 border-slate-600 pb-2">LIABILITIES</h3>
                             {balanceSheet.liabilities.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                     <span className="type-ui text-[var(--ws-text-secondary)]">{account.accountName}</span>
-                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-2 mt-2 font-semibold text-[var(--ws-text-secondary)]">
@@ -300,16 +300,16 @@ export function FinancialReportsPage() {
                                 <span className="font-mono">${balanceSheet.totalLiabilities.toFixed(2)}</span>
                             </div>
 
-                            <h3 className="text-lg font-bold text-white mb-4 mt-6 border-b-2 border-slate-600 pb-2">EQUITY</h3>
+                            <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 mt-6 border-b-2 border-slate-600 pb-2">EQUITY</h3>
                             {balanceSheet.equity.map((account) => (
                                 <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                     <span className="type-ui text-[var(--ws-text-secondary)]">{account.accountName}</span>
-                                    <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                    <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                                 </div>
                             ))}
                             <div className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                 <span className="type-ui text-[var(--ws-text-secondary)]">Net Income (Current Period)</span>
-                                <span className="type-ui font-mono text-white">${balanceSheet.netIncome.toFixed(2)}</span>
+                                <span className="type-ui font-mono text-[var(--ws-text-primary)]">${balanceSheet.netIncome.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between py-2 mt-2 font-semibold text-[var(--ws-text-secondary)]">
                                 <span>Total Equity</span>
@@ -317,8 +317,8 @@ export function FinancialReportsPage() {
                             </div>
 
                             <div className="flex justify-between py-3 mt-4 border-t-2 border-slate-600 font-bold">
-                                <span className="text-white">Total Liabilities & Equity</span>
-                                <span className="font-mono text-white">${totalLiabilitiesAndEquity.toFixed(2)}</span>
+                                <span className="text-[var(--ws-text-primary)]">Total Liabilities & Equity</span>
+                                <span className="font-mono text-[var(--ws-text-primary)]">${totalLiabilitiesAndEquity.toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -347,7 +347,7 @@ export function FinancialReportsPage() {
                 <div className="bg-[var(--ws-surface-secondary)] rounded-lg shadow-sm p-4 md:p-6">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-white">Profit & Loss Statement</h2>
+                            <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">Profit & Loss Statement</h2>
                             <p className="text-[var(--ws-text-secondary)] mt-1">
                                 {new Date(plStartDate).toLocaleDateString()} - {new Date(plEndDate).toLocaleDateString()}
                             </p>
@@ -359,7 +359,7 @@ export function FinancialReportsPage() {
                                     type="date"
                                     value={plStartDate}
                                     onChange={(e) => setPlStartDate(e.target.value)}
-                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
                             <div>
@@ -368,12 +368,12 @@ export function FinancialReportsPage() {
                                     type="date"
                                     value={plEndDate}
                                     onChange={(e) => setPlEndDate(e.target.value)}
-                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    className="px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 text-[var(--ws-text-primary)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 />
                             </div>
                             <button
                                 onClick={loadReport}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 self-end transition-colors"
+                                className="px-4 py-2 bg-blue-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-blue-700 self-end transition-colors"
                             >
                                 Generate
                             </button>
@@ -382,11 +382,11 @@ export function FinancialReportsPage() {
 
                     {/* Revenue */}
                     <div className="mb-6">
-                        <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">REVENUE</h3>
+                        <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 border-b-2 border-slate-600 pb-2">REVENUE</h3>
                         {profitLoss.revenue.map((account) => (
                             <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                 <span className="type-ui text-[var(--ws-text-secondary)]">{account.accountName}</span>
-                                <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                             </div>
                         ))}
                         {profitLoss.otherIncome.length > 0 && (
@@ -395,24 +395,24 @@ export function FinancialReportsPage() {
                                 {profitLoss.otherIncome.map((account) => (
                                     <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                         <span className="type-ui text-[var(--ws-text-secondary)] pl-4">{account.accountName}</span>
-                                        <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                        <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </>
                         )}
                         <div className="flex justify-between py-3 mt-2 border-t-2 border-slate-600 font-bold">
-                            <span className="text-white">Total Revenue</span>
+                            <span className="text-[var(--ws-text-primary)]">Total Revenue</span>
                             <span className="font-mono text-green-400">${profitLoss.totalRevenue.toFixed(2)}</span>
                         </div>
                     </div>
 
                     {/* Expenses */}
                     <div className="mb-6">
-                        <h3 className="text-lg font-bold text-white mb-4 border-b-2 border-slate-600 pb-2">EXPENSES</h3>
+                        <h3 className="text-lg font-bold text-[var(--ws-text-primary)] mb-4 border-b-2 border-slate-600 pb-2">EXPENSES</h3>
                         {profitLoss.expenses.map((account) => (
                             <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                 <span className="type-ui text-[var(--ws-text-secondary)]">{account.accountName}</span>
-                                <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                             </div>
                         ))}
                         {profitLoss.otherExpense.length > 0 && (
@@ -421,13 +421,13 @@ export function FinancialReportsPage() {
                                 {profitLoss.otherExpense.map((account) => (
                                     <div key={account.accountId} className="flex justify-between py-2 border-b border-[var(--ws-border)]">
                                         <span className="type-ui text-[var(--ws-text-secondary)] pl-4">{account.accountName}</span>
-                                        <span className="type-ui font-mono text-white">${account.balance.toFixed(2)}</span>
+                                        <span className="type-ui font-mono text-[var(--ws-text-primary)]">${account.balance.toFixed(2)}</span>
                                     </div>
                                 ))}
                             </>
                         )}
                         <div className="flex justify-between py-3 mt-2 border-t-2 border-slate-600 font-bold">
-                            <span className="text-white">Total Expenses</span>
+                            <span className="text-[var(--ws-text-primary)]">Total Expenses</span>
                             <span className="font-mono text-red-400">${profitLoss.totalExpenses.toFixed(2)}</span>
                         </div>
                     </div>
@@ -435,7 +435,7 @@ export function FinancialReportsPage() {
                     {/* Net Income */}
                     <div className="border-t-4 border-slate-600 pt-4">
                         <div className="flex justify-between py-3 text-xl font-bold">
-                            <span className="text-white">NET INCOME</span>
+                            <span className="text-[var(--ws-text-primary)]">NET INCOME</span>
                             <span className={`font-mono ${profitLoss.netIncome >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                 {profitLoss.netIncome >= 0 ? '+' : '-'}${Math.abs(profitLoss.netIncome).toFixed(2)}
                             </span>
@@ -454,21 +454,21 @@ export function FinancialReportsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Financial Statements</h1>
+                    <h1 className="text-2xl font-bold text-[var(--ws-text-primary)]">Financial Statements</h1>
                     <p className="text-[var(--ws-text-secondary)] mt-1">Review the core reports that explain cash, performance, and balance health.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <button
                         onClick={handleExportPDF}
                         disabled={loading || isExporting}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-[var(--ws-text-primary)] rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                         <FileDown className="w-4 h-4" />
                         Export Statement
                     </button>
                     <button
                         onClick={handleRefresh}
-                        className="px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded-lg hover:bg-slate-600 transition-colors"
+                        className="px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded-lg hover:bg-slate-600 transition-colors"
                     >
                         Refresh Figures
                     </button>
@@ -494,7 +494,7 @@ export function FinancialReportsPage() {
                     <button
                         onClick={() => setSelectedReport('trial_balance')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'trial_balance'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-[var(--ws-text-primary)]'
                             : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:bg-slate-600'
                             }`}
                     >
@@ -503,7 +503,7 @@ export function FinancialReportsPage() {
                     <button
                         onClick={() => setSelectedReport('balance_sheet')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'balance_sheet'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-[var(--ws-text-primary)]'
                             : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:bg-slate-600'
                             }`}
                     >
@@ -512,7 +512,7 @@ export function FinancialReportsPage() {
                     <button
                         onClick={() => setSelectedReport('profit_loss')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'profit_loss'
-                            ? 'bg-teal-600 text-white'
+                            ? 'bg-teal-600 text-[var(--text-inverse)]'
                             : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:bg-slate-600'
                             }`}
                     >
@@ -521,7 +521,7 @@ export function FinancialReportsPage() {
                     <button
                         onClick={() => setSelectedReport('cash_flow')}
                         className={`px-6 py-3 rounded-lg font-semibold transition-colors ${selectedReport === 'cash_flow'
-                            ? 'bg-teal-600 text-white'
+                            ? 'bg-teal-600 text-[var(--text-inverse)]'
                             : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] hover:bg-slate-600'
                             }`}
                     >

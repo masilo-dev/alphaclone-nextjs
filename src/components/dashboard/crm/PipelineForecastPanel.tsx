@@ -86,10 +86,10 @@ export function PipelineForecastPanel() {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload as StageData;
     return (
-      <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)] px-3 py-2 type-caption shadow-xl space-y-1">
-        <p className="font-black text-white">{d.label}</p>
+      <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption shadow-xl space-y-1">
+        <p className="font-black text-[var(--ws-text-primary)]">{d.label}</p>
         <p className="text-[var(--ws-text-secondary)]">{d.deals} deal{d.deals !== 1 ? 's' : ''}</p>
-        <p className="text-[var(--ws-text-muted)]">Total value: <span className="text-white font-bold">${d.totalValue.toLocaleString()}</span></p>
+        <p className="text-[var(--ws-text-muted)]">Total value: <span className="text-[var(--ws-text-primary)] font-bold">${d.totalValue.toLocaleString()}</span></p>
         <p className="text-[var(--ws-text-muted)]">Weighted: <span className="text-[var(--brand-blue-300)] font-bold">${Math.round(d.weightedValue).toLocaleString()}</span></p>
       </div>
     );
@@ -98,7 +98,7 @@ export function PipelineForecastPanel() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
-        <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+        <h3 className="text-lg font-black text-[var(--ws-text-primary)] uppercase tracking-tight flex items-center gap-2">
           <BarChart3 className="text-teal-400" size={20} /> Pipeline Revenue Forecast
         </h3>
         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Weighted by deal probability across all active stages</p>
@@ -109,7 +109,7 @@ export function PipelineForecastPanel() {
           <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] flex items-center gap-1.5">
             <DollarSign size={13} className="text-[var(--ws-text-muted)]" /> Total Pipeline
           </p>
-          <p className="text-2xl font-black text-white mt-2">${totalPipeline.toLocaleString()}</p>
+          <p className="text-2xl font-black text-[var(--ws-text-primary)] mt-2">${totalPipeline.toLocaleString()}</p>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Gross value, all active deals</p>
         </div>
         <div className="ac-workspace-panel rounded-xl p-4 border border-teal-500/20">
@@ -145,8 +145,8 @@ export function PipelineForecastPanel() {
           </div>
 
           <div className="ac-workspace-panel rounded-xl overflow-hidden">
-            <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
-              <p className="type-caption font-black uppercase tracking-widest text-white">Stage Breakdown</p>
+            <div className="px-5 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
+              <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-primary)]">Stage Breakdown</p>
             </div>
             <div className="divide-y divide-white/5">
               {stages.map(s => (
@@ -154,7 +154,7 @@ export function PipelineForecastPanel() {
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                   <span className="type-ui text-[var(--ws-text-secondary)] flex-1">{s.label}</span>
                   <span className="type-caption text-[var(--ws-text-muted)]">{s.deals} deals</span>
-                  <span className="type-ui font-bold text-white w-28 text-right">${s.totalValue.toLocaleString()}</span>
+                  <span className="type-ui font-bold text-[var(--ws-text-primary)] w-28 text-right">${s.totalValue.toLocaleString()}</span>
                   <span className="type-ui font-black text-[var(--brand-blue-300)] w-28 text-right">${Math.round(s.weightedValue).toLocaleString()}</span>
                 </div>
               ))}

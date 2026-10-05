@@ -928,7 +928,7 @@ ${parentContext}Return only the comment text.`;
                 onClick={() => setAiTone(tone.toLowerCase() as any)}
                 className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                   aiTone === tone.toLowerCase() 
-                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                    ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20' 
                     : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                 }`}
               >
@@ -945,7 +945,7 @@ ${parentContext}Return only the comment text.`;
               onClick={() => setAiContentType('linkedin_post')}
               className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                 aiContentType === 'linkedin_post' 
-                  ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                  ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20' 
                   : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
@@ -955,7 +955,7 @@ ${parentContext}Return only the comment text.`;
               onClick={() => setAiContentType('linkedin_article')}
               className={`px-3 py-2 rounded-xl type-caption font-bold transition-all border ${
                 aiContentType === 'linkedin_article' 
-                  ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20' 
+                  ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20' 
                   : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
@@ -985,7 +985,7 @@ ${parentContext}Return only the comment text.`;
           onChange={(e) => setAiTopic(e.target.value)}
           placeholder="What should this post be about? Describe it or let AI draft it..."
           rows={4}
-          className="w-full min-h-[96px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4 text-base text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-y group-hover:border-[var(--ws-border)]"
+          className="w-full min-h-[96px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4 text-base text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-y group-hover:border-[var(--ws-border)]"
         />
       </div>
 
@@ -1008,7 +1008,7 @@ ${parentContext}Return only the comment text.`;
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="type-card-description font-bold text-white">
+                  <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                     {selectedLinkedInOrganizationId
                       ? formatLinkedInCompanyPageLabel(
                           companyPages.find((p) => p.id === selectedLinkedInOrganizationId) || {
@@ -1035,7 +1035,7 @@ ${parentContext}Return only the comment text.`;
               value={composeLinkUrl}
               onChange={(e) => setComposeLinkUrl(e.target.value)}
               placeholder="Link URL (option)"
-              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500 focus:outline-none"
             />
           </div>
           <div className="relative">
@@ -1043,7 +1043,7 @@ ${parentContext}Return only the comment text.`;
               value={composeImageUrl}
               onChange={(e) => setComposeImageUrl(e.target.value)}
               placeholder="Media URL (option)"
-              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-white placeholder-slate-600 focus:border-teal-500 focus:outline-none"
+              className="w-full bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder-slate-600 focus:border-teal-500 focus:outline-none"
             />
           </div>
         </div>
@@ -1054,7 +1054,7 @@ ${parentContext}Return only the comment text.`;
               type="datetime-local"
               value={composeScheduledAt}
               onChange={(e) => setComposeScheduledAt(e.target.value)}
-              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:border-teal-500 focus:outline-none [color-scheme:dark]"
+              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 focus:outline-none [color-scheme:dark]"
             />
           </div>
           <button
@@ -1071,7 +1071,7 @@ ${parentContext}Return only the comment text.`;
           <button
             onClick={() => handleSubmitLinkedInPost(true)}
             disabled={composeSubmitting || !canComposeLinkedIn}
-            className="w-full py-4 rounded-xl type-ui font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/40 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl type-ui font-bold bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/40 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {composeSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             {composeSubmitting ? 'Publishing...' : 'Publish now'}
@@ -1114,7 +1114,7 @@ ${parentContext}Return only the comment text.`;
         <button
           onClick={() => (isMobile ? setShowComposeSheet(true) : document.getElementById('compose-section')?.scrollIntoView({ behavior: 'smooth' }))}
           disabled={!canComposeLinkedIn}
-          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white type-caption font-bold disabled:opacity-40 transition-colors"
+          className="flex items-center justify-center gap-2 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] type-caption font-bold disabled:opacity-40 transition-colors"
         >
           <Send className="w-4 h-4" /> Post Now
         </button>
@@ -1143,7 +1143,7 @@ ${parentContext}Return only the comment text.`;
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="flex-1">
             <p>{linkedInTokenExpiryWarning}</p>
-            <button onClick={handleConnectLinkedIn} className="mt-2 type-ui font-bold underline hover:text-white">
+            <button onClick={handleConnectLinkedIn} className="mt-2 type-ui font-bold underline hover:text-[var(--ws-text-primary)]">
               Reconnect LinkedIn (includes LinkedIn login + 2FA if enabled)
             </button>
           </div>
@@ -1154,14 +1154,14 @@ ${parentContext}Return only the comment text.`;
         <div className="flex items-start gap-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 type-ui text-sky-100">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[var(--info-text,var(--info-500))]" />
           <div className="flex-1 space-y-2">
-            <p className="font-semibold text-white">Profile connected, page posting still unavailable</p>
+            <p className="font-semibold text-[var(--ws-text-primary)]">Profile connected, page posting still unavailable</p>
             <p className="type-caption leading-relaxed text-sky-100/80">{linkedInOrgStatusMessage}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => void handleRefreshCompanyPages()}
                 disabled={refreshingCompanyPages || !hasOrganizationReadScope}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 type-caption font-bold text-white hover:bg-sky-500 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 type-caption font-bold text-[var(--ws-text-primary)] hover:bg-sky-500 disabled:opacity-50"
               >
                 {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refresh company pages
@@ -1182,7 +1182,7 @@ ${parentContext}Return only the comment text.`;
         <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
           <div className="flex-1 space-y-2">
-            <p className="font-semibold text-white">Company page not listed</p>
+            <p className="font-semibold text-[var(--ws-text-primary)]">Company page not listed</p>
             <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">
               AlphaClone only shows LinkedIn company pages returned by LinkedIn&apos;s API for your account.
               {!hasOrganizationReadScope
@@ -1194,7 +1194,7 @@ ${parentContext}Return only the comment text.`;
                 type="button"
                 onClick={() => void handleRefreshCompanyPages()}
                 disabled={refreshingCompanyPages}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 type-caption font-bold text-white hover:bg-teal-500 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 type-caption font-bold text-[var(--text-inverse)] hover:bg-teal-500 disabled:opacity-50"
               >
                 {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refresh company pages
@@ -1216,7 +1216,7 @@ ${parentContext}Return only the comment text.`;
         <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 type-ui text-amber-200">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
           <div className="flex-1 space-y-1.5">
-            <p className="font-semibold text-white">Lead Sync: Permission Required</p>
+            <p className="font-semibold text-[var(--ws-text-primary)]">Lead Sync: Permission Required</p>
             <p className="type-card-description leading-relaxed text-amber-200/80">
               Your connected LinkedIn account is missing <code className="bg-[var(--ws-panel)]/60 px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_ads_leadgen_automation</code> / <code className="bg-[var(--ws-panel)]/60 px-1 py-0.5 rounded text-[var(--warning-text,var(--warning-500))]">r_marketing_leadgen_automation</code>.
               LinkedIn cannot automatically push Lead Gen form responses to AlphaClone until reconnected.
@@ -1224,7 +1224,7 @@ ${parentContext}Return only the comment text.`;
             <button
               type="button"
               onClick={handleConnectLinkedIn}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 type-caption font-bold text-white hover:bg-teal-500 transition-colors shadow-sm"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 type-caption font-bold text-[var(--text-inverse)] hover:bg-teal-500 transition-colors shadow-sm"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Reconnect LinkedIn (Upgrade Permissions)
             </button>
@@ -1289,7 +1289,7 @@ ${parentContext}Return only the comment text.`;
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-teal-400" />
-            <h3 className="type-caption font-bold text-white tracking-tight">LinkedIn Customer Acquisition Pipeline & ROI</h3>
+            <h3 className="type-caption font-bold text-[var(--ws-text-primary)] tracking-tight">LinkedIn Customer Acquisition Pipeline & ROI</h3>
           </div>
           <span className="type-caption font-semibold text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
             Ad Spend → Lead → CRM → Revenue
@@ -1299,7 +1299,7 @@ ${parentContext}Return only the comment text.`;
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 pt-1">
           <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Synced Leads</p>
-            <p className="text-lg font-extrabold text-white mt-1">
+            <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.totalLeads ?? 0}
             </p>
             <span className="type-ui text-teal-400">Strict Idempotency</span>
@@ -1307,7 +1307,7 @@ ${parentContext}Return only the comment text.`;
 
           <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Ad Spend</p>
-            <p className="text-lg font-extrabold text-white mt-1">
+            <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.formatted?.adSpend || '$0'}
             </p>
             <span className="type-ui text-[var(--ws-text-muted)]">Read-Only Analytics</span>
@@ -1322,7 +1322,7 @@ ${parentContext}Return only the comment text.`;
 
           <div className="p-3 rounded-lg bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)]/60">
             <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">Customers Won</p>
-            <p className="text-lg font-extrabold text-white mt-1">
+            <p className="text-lg font-extrabold text-[var(--ws-text-primary)] mt-1">
               {pipelineMetrics?.totalCustomers ?? 0}
             </p>
             <span className="type-ui text-[var(--ws-text-muted)]">
@@ -1354,7 +1354,7 @@ ${parentContext}Return only the comment text.`;
             <Linkedin className="w-6 h-6 text-teal-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
+            <h2 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">LinkedIn manager</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-[var(--error-500)] shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
               <p className="type-card-description text-[var(--ws-text-muted)] font-medium truncate max-w-[220px] sm:max-w-none">
@@ -1388,7 +1388,7 @@ ${parentContext}Return only the comment text.`;
           {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
-              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-red-600 hover:bg-[var(--error-500)] text-white transition-colors shadow-lg shadow-red-900/20"
+              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-red-600 hover:bg-[var(--error-500)] text-[var(--text-inverse)] transition-colors shadow-lg shadow-red-900/20"
             >
               Connect
             </button>
@@ -1396,14 +1396,14 @@ ${parentContext}Return only the comment text.`;
           {selectedIntegration?.is_active && (
             <button
               onClick={handleDisconnectLinkedIn}
-              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-white hover:bg-[var(--ws-surface-tertiary)] transition-all"
+              className="px-4 py-2.5 rounded-lg type-caption font-semibold bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-tertiary)] transition-all"
             >
               Disconnect
             </button>
           )}
           <button
             onClick={loadData}
-            className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg type-caption font-semibold bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-white hover:bg-[var(--ws-surface-tertiary)] transition-all flex items-center justify-center gap-2"
+            className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg type-caption font-semibold bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-tertiary)] transition-all flex items-center justify-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             <span className="hidden sm:inline">Refresh</span>
@@ -1452,7 +1452,7 @@ ${parentContext}Return only the comment text.`;
         {/* ── Left Column: Queue ─────────────────────────────────────── */}
         <div className="space-y-4">
           <div className="px-1">
-            <h3 className="type-caption font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
+            <h3 className="type-caption font-semibold text-[var(--ws-text-primary)] uppercase tracking-wider opacity-60">Post queue</h3>
             <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
               {selectedLinkedInOrganizationId
                 ? `Posts for ${linkedInPostingAsLabel}`
@@ -1483,8 +1483,8 @@ ${parentContext}Return only the comment text.`;
                 onClick={() => setStatusFilter(status)}
                 className={`px-5 py-3 rounded-full type-caption font-bold transition-all border whitespace-nowrap min-w-fit ${
                   statusFilter === status
-                    ? 'bg-teal-600 border-teal-500 text-white shadow-lg shadow-teal-900/20'
-                    : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-tertiary)]'
+                    ? 'bg-teal-600 border-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-900/20'
+                    : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-tertiary)]'
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -1547,14 +1547,14 @@ ${parentContext}Return only the comment text.`;
                       <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity w-full sm:w-auto justify-end">
                         <button 
                           onClick={() => loadComments(post)}
-                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
                           title="View comments"
                         >
                           <MessageCircle className="w-5 h-5" />
                         </button>
                         <button 
                           onClick={() => loadEngagement(post)}
-                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
+                          className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-all bg-[var(--ws-surface-secondary)]/50 sm:bg-transparent"
                           title="Refresh stats"
                         >
                           <ThumbsUp className="w-5 h-5" />
@@ -1598,7 +1598,7 @@ ${parentContext}Return only the comment text.`;
                                   type="button"
                                   onClick={() => captureCommentLead(post, c)}
                                   disabled={capturingLead[c.commentUrn]}
-                                  className="h-9 px-3 rounded-lg bg-violet-600/80 text-white type-caption font-bold hover:bg-violet-500 disabled:opacity-50"
+                                  className="h-9 px-3 rounded-lg bg-violet-600/80 text-[var(--ws-text-primary)] type-caption font-bold hover:bg-violet-500 disabled:opacity-50"
                                 >
                                   {capturingLead[c.commentUrn] ? 'Adding…' : 'Add as Lead'}
                                 </button>
@@ -1608,11 +1608,11 @@ ${parentContext}Return only the comment text.`;
                                   value={replyByComment[c.commentUrn] || ''}
                                   onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
                                   placeholder="Type reply..." 
-                                  className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-base text-white focus:border-teal-500 focus:outline-none"
+                                  className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-base text-[var(--ws-text-primary)] focus:border-teal-500 focus:outline-none"
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}
-                                  className="h-11 px-4 rounded-xl bg-teal-600 text-white type-caption font-bold hover:bg-teal-500 transition-colors"
+                                  className="h-11 px-4 rounded-xl bg-teal-600 text-[var(--text-inverse)] type-caption font-bold hover:bg-teal-500 transition-colors"
                                 >
                                   Reply
                                 </button>
@@ -1634,7 +1634,7 @@ ${parentContext}Return only the comment text.`;
           <div id="compose-section" className="space-y-4 lg:sticky lg:top-6">
             <div className="px-1 flex items-center justify-between">
               <div>
-                <h3 className="type-caption font-semibold text-white uppercase tracking-wider opacity-60">Compose</h3>
+                <h3 className="type-caption font-semibold text-[var(--ws-text-primary)] uppercase tracking-wider opacity-60">Compose</h3>
                 <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                   Post as {selectedLinkedInOrganizationId ? 'company' : 'personal profile'}
                 </p>
@@ -1654,7 +1654,7 @@ ${parentContext}Return only the comment text.`;
       {isMobile && (
         <button
           onClick={() => setShowComposeSheet(true)}
-          className="ac-fab-above-nav w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center active:scale-90 transition-transform"
+          className="ac-fab-above-nav w-16 h-16 rounded-full bg-teal-600 text-[var(--text-inverse)] shadow-2xl flex items-center justify-center active:scale-90 transition-transform"
         >
           <Plus className="w-8 h-8" />
         </button>
@@ -1680,7 +1680,7 @@ ${parentContext}Return only the comment text.`;
             >
               <div className="sticky top-0 bg-[var(--ws-panel)] pt-4 pb-2 px-6 flex items-center justify-between border-b border-[var(--ws-border)]/50 z-10">
                 <div className="w-12 h-1.5 bg-[var(--ws-surface-secondary)] rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
-                <h2 className="text-lg font-bold text-white">Create Post</h2>
+                <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Create Post</h2>
                 <button
                   onClick={() => setShowComposeSheet(false)}
                   className="w-11 h-11 flex items-center justify-center rounded-full bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]"

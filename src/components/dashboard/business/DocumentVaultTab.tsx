@@ -560,7 +560,7 @@ export default function DocumentVaultTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
             <Key className="w-5 h-5 text-teal-400" />
             Document Vault
           </h2>
@@ -574,7 +574,7 @@ export default function DocumentVaultTab() {
           <button
             type="button"
             onClick={() => void addDocumentRequirement()}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-[var(--ws-border)]"
           >
             <ClipboardList className="w-3.5 h-3.5 text-[var(--warning-text,var(--warning-500))]" /> Missing
             docs ({requirementCount})
@@ -582,7 +582,7 @@ export default function DocumentVaultTab() {
           <button
             onClick={handleAiAutoCategorize}
             disabled={runningAi || documents.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold border border-[var(--ws-border)]"
           >
             {runningAi ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -594,7 +594,7 @@ export default function DocumentVaultTab() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all active:scale-95"
           >
             <Upload className="w-4 h-4" />
             Upload Document
@@ -610,7 +610,7 @@ export default function DocumentVaultTab() {
       <div className="bg-teal-500/5 border border-teal-500/10 rounded-3xl p-4 flex gap-3 items-center">
         <ShieldCheck className="w-6 h-6 text-teal-400 flex-shrink-0" />
         <div>
-          <h4 className="type-card-title font-bold text-white">
+          <h4 className="type-card-title font-bold text-[var(--ws-text-primary)]">
             Military-Grade Encryption Active
           </h4>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
@@ -623,7 +623,7 @@ export default function DocumentVaultTab() {
       {/* Documents Table */}
       <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
         <div className="p-4 border-b border-[var(--ws-border)]">
-          <span className="type-caption font-bold text-white uppercase tracking-wider">
+          <span className="type-caption font-bold text-[var(--ws-text-primary)] uppercase tracking-wider">
             Vault Files
           </span>
         </div>
@@ -669,7 +669,7 @@ export default function DocumentVaultTab() {
                     className="cursor-pointer hover:bg-[var(--ws-panel)]/40 focus-visible:outline-none focus-visible:bg-[var(--ws-panel)]/50 transition-colors"
                     aria-label={`Open ${doc.name}`}
                   >
-                    <td className="p-4 font-bold text-white flex items-center gap-2">
+                    <td className="p-4 font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                       <FileText className="w-4 h-4 text-teal-400 flex-shrink-0" />
                       {doc.name}
                     </td>
@@ -706,7 +706,7 @@ export default function DocumentVaultTab() {
                             event.stopPropagation();
                             setSelectedDocument(doc);
                           }}
-                          className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                          className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                           title="Open document"
                         >
                           <FileText className="w-3.5 h-3.5" />
@@ -746,7 +746,7 @@ export default function DocumentVaultTab() {
               type="file"
               accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.tif,.tiff,.webp"
               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-              className="w-full type-caption text-[var(--ws-text-secondary)] file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-teal-600 file:text-white"
+              className="w-full type-caption text-[var(--ws-text-secondary)] file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-teal-600 file:text-[var(--text-inverse)]"
             />
             {selectedFile && (
               <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
@@ -765,7 +765,7 @@ export default function DocumentVaultTab() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, category: e.target.value }))
                 }
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
               >
                 <option value="Agreement">Agreement</option>
                 <option value="Financial">Financial</option>
@@ -786,7 +786,7 @@ export default function DocumentVaultTab() {
                     security_level: e.target.value as any,
                   }))
                 }
-                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500"
               >
                 <option value="public">Public</option>
                 <option value="internal">Internal</option>
@@ -818,7 +818,7 @@ export default function DocumentVaultTab() {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all disabled:opacity-50"
+              className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-caption font-bold transition-all disabled:opacity-50"
             >
               {saving ? "Encrypting & Storing..." : "Upload & Lock"}
             </button>
@@ -841,9 +841,9 @@ export default function DocumentVaultTab() {
       >
         {selectedDocument ? (
           <div className="flex h-full min-h-[60dvh] flex-col gap-3 pt-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[var(--ws-canvas)]/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-3">
               <div>
-                <p className="type-card-description font-semibold text-white">
+                <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">
                   {selectedDocument.name}
                 </p>
                 <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)]">
@@ -911,7 +911,7 @@ export default function DocumentVaultTab() {
                     href={selectedDocument.proxiedUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-teal-600 px-3 type-caption font-bold text-white hover:bg-teal-500"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-teal-600 px-3 type-caption font-bold text-[var(--text-inverse)] hover:bg-teal-500"
                   >
                     <Download className="h-4 w-4" />
                     Open original
@@ -924,16 +924,16 @@ export default function DocumentVaultTab() {
                 <iframe
                   src={selectedDocument.proxiedUrl}
                   title={`Preview ${selectedDocument.name}`}
-                  className="min-h-[70dvh] h-full w-full rounded-xl border border-white/10 bg-white"
+                  className="min-h-[70dvh] h-full w-full rounded-xl border border-[var(--ws-border)] bg-white"
                 />
               ) : (
-                <div className="flex min-h-[40dvh] items-center justify-center rounded-xl border border-dashed border-white/10 type-ui text-[var(--ws-text-muted)]">
+                <div className="flex min-h-[40dvh] items-center justify-center rounded-xl border border-dashed border-[var(--ws-border)] type-ui text-[var(--ws-text-muted)]">
                   This record has no previewable file URL.
                 </div>
               )}
-              <aside className="min-h-0 overflow-y-auto rounded-xl border border-white/10 bg-[var(--ws-canvas)]/70 p-4">
+              <aside className="min-h-0 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="type-caption font-black uppercase tracking-wider text-white">
+                  <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-primary)]">
                     Document intelligence
                   </h3>
                   {intelligence?.document?.intelligence_status ? (
@@ -961,7 +961,7 @@ export default function DocumentVaultTab() {
                     ) : null}
                     {intelligence?.document?.folder_path ||
                     intelligence?.document?.document_type ? (
-                      <section className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                      <section className="rounded-lg border border-[var(--ws-border)] bg-white/[0.02] p-3">
                         <p className="type-caption font-black uppercase text-[var(--ws-text-muted)]">
                           Automatic organization
                         </p>
@@ -1014,10 +1014,10 @@ export default function DocumentVaultTab() {
                           {intelligence.versions.map((version) => (
                             <div
                               key={version.id}
-                              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2"
+                              className="flex items-center justify-between rounded-lg border border-[var(--ws-border)] bg-white/[0.02] px-3 py-2"
                             >
                               <div>
-                                <p className="type-card-description font-bold text-white">
+                                <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                                   Version {version.version_number}
                                 </p>
                                 <p className="type-card-description text-[var(--ws-text-muted)]">
@@ -1025,7 +1025,7 @@ export default function DocumentVaultTab() {
                                   {version.size_bytes ? ` · ${formatBytes(version.size_bytes)}` : ""}
                                 </p>
                               </div>
-                              <span className={`rounded-full border px-2 py-1 type-caption font-black uppercase ${version.is_latest ? "border-emerald-500/25 text-[var(--success-text,var(--success-500))]" : "border-white/10 text-[var(--ws-text-muted)]"}`}>
+                              <span className={`rounded-full border px-2 py-1 type-caption font-black uppercase ${version.is_latest ? "border-emerald-500/25 text-[var(--success-text,var(--success-500))]" : "border-[var(--ws-border)] text-[var(--ws-text-muted)]"}`}>
                                 {version.is_latest ? "Latest" : "Superseded"}
                               </span>
                             </div>
@@ -1042,10 +1042,10 @@ export default function DocumentVaultTab() {
                           {intelligence.findings.map((finding) => (
                             <article
                               key={finding.id}
-                              className={`rounded-lg border p-3 ${finding.requires_review ? "border-amber-500/25 bg-amber-500/5" : "border-white/10 bg-white/[0.02]"}`}
+                              className={`rounded-lg border p-3 ${finding.requires_review ? "border-amber-500/25 bg-amber-500/5" : "border-[var(--ws-border)] bg-white/[0.02]"}`}
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <p className="type-card-description font-bold text-white">
+                                <p className="type-card-description font-bold text-[var(--ws-text-primary)]">
                                   {finding.label}
                                 </p>
                                 {finding.page_number ? (

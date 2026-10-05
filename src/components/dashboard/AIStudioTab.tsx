@@ -268,7 +268,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div>
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                     <Sparkles className="w-6 h-6 text-teal-400" />
                     AI Studio
                 </h2>
@@ -286,8 +286,8 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-all whitespace-nowrap ${
                             activeTab === tab.id
-                                ? 'bg-[var(--ws-surface-secondary)] text-white border-b-2 border-teal-500'
-                                : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]/50'
+                                ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border-b-2 border-teal-500'
+                                : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]/50'
                         }`}
                     >
                         <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? tab.color : ''}`} />
@@ -357,7 +357,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         <textarea
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 resize-none"
                             rows={4}
                             placeholder={
                                 activeTab === 'logo' ? 'e.g., A modern tech startup logo with blue and green colors' :
@@ -374,7 +374,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                             <select
                                 value={style}
                                 onChange={(e) => setStyle(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                             >
                                 <option value="modern">Modern</option>
                                 <option value="minimalist">Minimalist</option>
@@ -390,7 +390,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                             <select
                                 value={imageSize}
                                 onChange={(e) => setImageSize(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                             >
                                 <option value="1024x1024">Square (1024x1024)</option>
                                 <option value="1792x1024">Landscape (1792x1024)</option>
@@ -406,7 +406,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 <select
                                     value={contentType}
                                     onChange={(e) => setContentType(e.target.value as any)}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                                 >
                                     <option value="general">General</option>
                                     <option value="blog">Blog Post</option>
@@ -419,7 +419,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 <select
                                     value={selectedModel}
                                     onChange={(e) => setSelectedModel(e.target.value)}
-                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                                 >
                                     {CLAUDE_MODELS.map(model => (
                                         <option key={model.id} value={model.id}>
@@ -494,7 +494,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
             {/* Generation History */}
             <div>
-                <h3 className="text-xl font-bold text-white mb-4">Recent Generations</h3>
+                <h3 className="text-xl font-bold text-[var(--ws-text-primary)] mb-4">Recent Generations</h3>
                 {isLoadingHistory ? (
                     <div className="flex justify-center p-12">
                         <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
@@ -532,7 +532,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             className="p-2 bg-teal-600 rounded-lg hover:bg-teal-500 transition-colors"
                                             title="Preview"
                                         >
-                                            <Eye className="w-4 h-4 text-white" />
+                                            <Eye className="w-4 h-4 text-[var(--ws-text-primary)]" />
                                         </button>
                                         {asset.url && (
                                             <button
@@ -540,7 +540,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                                 className="p-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
                                                 title="Download"
                                             >
-                                                <Download className="w-4 h-4 text-white" />
+                                                <Download className="w-4 h-4 text-[var(--ws-text-primary)]" />
                                             </button>
                                         )}
                                         <button
@@ -548,7 +548,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             className="p-2 bg-red-600 rounded-lg hover:bg-[var(--error-500)] transition-colors"
                                             title="Delete"
                                         >
-                                            <Trash2 className="w-4 h-4 text-white" />
+                                            <Trash2 className="w-4 h-4 text-[var(--ws-text-primary)]" />
                                         </button>
                                     </div>
                                 </div>

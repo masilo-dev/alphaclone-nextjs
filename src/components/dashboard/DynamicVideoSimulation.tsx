@@ -207,7 +207,7 @@ const DynamicVideoSimulation = () => {
                             </span>
                         ))}
                     </div>
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
+                    <h2 className="text-3xl md:text-5xl font-bold text-[var(--ws-text-primary)] mb-4 drop-shadow-lg">
                         {currentScene.title}
                     </h2>
                     <p className="text-lg md:text-xl text-[var(--ws-text-secondary)] leading-relaxed font-medium drop-shadow-md">
@@ -231,7 +231,7 @@ const DynamicVideoSimulation = () => {
             <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent z-20">
                 <div className="flex flex-col gap-6">
                     {/* Progress Bar */}
-                    <div className="relative w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
+                    <div className="relative w-full h-1.5 bg-[var(--ws-hover)] rounded-full overflow-hidden backdrop-blur-sm">
                         <motion.div
                             className="absolute top-0 left-0 h-full bg-teal-500 shadow-[0_0_15px_rgba(20,184,166,0.8)]"
                             style={{ width: `${progress}%` }}
@@ -255,18 +255,18 @@ const DynamicVideoSimulation = () => {
                             </button>
                             <button
                                 onClick={handleReset}
-                                className="text-white/60 hover:text-white transition-colors"
+                                className="text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
                             >
                                 <RotateCcw className="w-5 h-5" />
                             </button>
-                            <div className="text-white/40 font-mono type-caption hidden md:block">
+                            <div className="text-[var(--ws-text-muted)] font-mono type-caption hidden md:block">
                                 SCENE {currentSceneIndex + 1} / {scenes.length}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-6 text-white/60">
-                            <Volume2 className="w-5 h-5 cursor-pointer hover:text-white" />
-                            <Maximize2 className="w-5 h-5 cursor-pointer hover:text-white" />
+                        <div className="flex items-center gap-6 text-[var(--ws-text-secondary)]">
+                            <Volume2 className="w-5 h-5 cursor-pointer hover:text-[var(--ws-text-primary)]" />
+                            <Maximize2 className="w-5 h-5 cursor-pointer hover:text-[var(--ws-text-primary)]" />
                         </div>
                     </div>
                 </div>

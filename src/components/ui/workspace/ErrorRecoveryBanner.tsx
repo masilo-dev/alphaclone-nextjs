@@ -79,7 +79,7 @@ export function ErrorRecoveryBanner({
           <button
             type="button"
             onClick={onPrimaryAction}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-rose-500 hover:bg-rose-600 text-[var(--text-inverse)] text-xs font-semibold shadow-sm transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{primaryActionLabel}</span>

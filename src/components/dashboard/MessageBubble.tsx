@@ -50,10 +50,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         className={`
               relative px-4 py-2 rounded-2xl type-ui shadow-sm border
               ${isOwn
-                                ? 'bg-blue-600 text-white rounded-br-sm border-blue-500'
+                                ? 'bg-blue-600 text-[var(--ws-text-primary)] rounded-br-sm border-blue-500'
                                 : isUrgent
                                     ? 'bg-[var(--error-500)]/10 border-red-500/50 text-red-100 rounded-bl-sm backdrop-blur-md'
-                                    : 'bg-white/5 border-white/10 text-[var(--ws-text-secondary)] rounded-bl-sm backdrop-blur-md'}
+                                    : 'bg-[var(--ws-hover)] border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-bl-sm backdrop-blur-md'}
             `}
                     >
                         {/* Attachments */}
@@ -62,7 +62,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                 {message.attachments.map((att) => (
                                     <div key={att.id}>
                                         {att.type === 'image' ? (
-                                            <div className="relative group/image overflow-hidden rounded-lg border border-white/10">
+                                            <div className="relative group/image overflow-hidden rounded-lg border border-[var(--ws-border)]">
                                                 <Image
                                                     src={att.url}
                                                     alt={att.name}
@@ -75,7 +75,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                                     href={att.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center text-[var(--ws-text-primary)]"
                                                 >
                                                     <Download size={20} />
                                                 </a>
@@ -85,9 +85,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                                 href={att.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className={`flex items-center gap-3 p-3 rounded-lg border ${isOwn ? 'bg-blue-700/50 border-blue-500/30' : 'bg-white/5 border-white/10'} hover:bg-black/20 transition-colors`}
+                                                className={`flex items-center gap-3 p-3 rounded-lg border ${isOwn ? 'bg-blue-700/50 border-blue-500/30' : 'bg-[var(--ws-hover)] border-[var(--ws-border)]'} hover:bg-black/20 transition-colors`}
                                             >
-                                                <div className="p-2 bg-white/10 rounded-lg">
+                                                <div className="p-2 bg-[var(--ws-hover)] rounded-lg">
                                                     <FileIcon size={16} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">

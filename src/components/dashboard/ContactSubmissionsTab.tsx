@@ -61,7 +61,7 @@ const ContactSubmissionsTab: React.FC = () => {
             mobilePrimary: true,
             sortable: true,
             sortValue: (r) => r.name,
-            accessor: (r) => <span className="font-medium text-white">{r.name}</span>,
+            accessor: (r) => <span className="font-medium text-[var(--ws-text-primary)]">{r.name}</span>,
         },
         {
             id: 'email',
@@ -98,7 +98,7 @@ const ContactSubmissionsTab: React.FC = () => {
         <div className="space-y-6 ac-scroll-full ac-enterprise-module animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white">Contact Submissions</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-[var(--ws-text-primary)]">Contact Submissions</h2>
                     <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1">Messages from your contact form</p>
                 </div>
                 <div className="flex gap-2 overflow-x-auto ios-scroll pb-1">
@@ -108,7 +108,7 @@ const ContactSubmissionsTab: React.FC = () => {
                             type="button"
                             onClick={() => setFilter(status as typeof filter)}
                             className={`min-h-11 px-4 py-2 rounded-lg type-ui font-medium capitalize whitespace-nowrap ${
-                                filter === status ? 'bg-teal-600 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
+                                filter === status ? 'bg-teal-600 text-[var(--text-inverse)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
                             }`}
                         >
                             {status}

@@ -59,7 +59,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
                     <div className="p-3 bg-[var(--error-500)]/10 rounded-full mb-4">
                         <AlertCircle className="w-6 h-6 text-red-400" />
                     </div>
-                    <h3 className="text-white font-medium mb-2">
+                    <h3 className="text-[var(--ws-text-primary)] font-medium mb-2">
                         {this.props.title ? `${this.props.title} failed` : 'Widget failed to load'}
                     </h3>
                     <p className="type-card-description text-[var(--ws-text-muted)] text-center mb-2 max-w-md">
@@ -72,7 +72,7 @@ export class WidgetErrorBoundary extends Component<Props, State> {
                     )}
                     <button
                         onClick={this.handleRetry}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption rounded transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] type-caption rounded transition-colors"
                     >
                         <RefreshCw className="w-3 h-3" />
                         Retry

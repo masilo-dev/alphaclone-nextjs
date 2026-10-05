@@ -48,12 +48,12 @@ export default function GamificationTab() {
 
   return (
     <div className="ac-scroll-full space-y-5 p-4 pb-24">
-      <div className="rounded-2xl border border-white/10 bg-[var(--ws-canvas)]/70 p-5">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-5">
         <div className="flex items-center gap-2 type-caption font-bold uppercase tracking-caps text-purple-300">
           <Activity className="h-4 w-4" />
           Business outcomes
         </div>
-        <h1 className="mt-2 text-2xl font-bold text-white">Achievements</h1>
+        <h1 className="mt-2 text-2xl font-bold text-[var(--ws-text-primary)]">Achievements</h1>
         <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">
           Only measurable business results count here: deals won, invoices paid, leads converted, and automation completed.
         </p>
@@ -65,9 +65,9 @@ export default function GamificationTab() {
           { label: 'Scored activities', value: data.profile.events.toLocaleString(), icon: Activity },
           { label: 'Badges earned', value: `${earned}/${data.badges.length}`, icon: Shield },
         ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-2xl border border-white/10 bg-[var(--ws-panel)] p-4">
+          <div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
             <Icon className="mb-3 h-5 w-5 text-purple-400" />
-            <div className="text-xl font-bold text-white">{value}</div>
+            <div className="text-xl font-bold text-[var(--ws-text-primary)]">{value}</div>
             <div className="type-caption text-[var(--ws-text-muted)]">{label}</div>
           </div>
         ))}
@@ -82,10 +82,10 @@ export default function GamificationTab() {
           {data.badges.map((badge) => (
             <div
               key={badge.id}
-              className={`rounded-2xl border p-4 text-center ${badge.earned ? 'border-purple-500/30 bg-purple-500/10' : 'border-white/5 bg-[var(--ws-panel)] opacity-55'}`}
+              className={`rounded-2xl border p-4 text-center ${badge.earned ? 'border-purple-500/30 bg-purple-500/10' : 'border-[var(--ws-border)] bg-[var(--ws-panel)] opacity-55'}`}
             >
               <div className={`text-3xl ${badge.earned ? '' : 'grayscale'}`}>{badge.icon}</div>
-              <div className="mt-2 type-caption font-semibold text-white">{badge.name}</div>
+              <div className="mt-2 type-caption font-semibold text-[var(--ws-text-primary)]">{badge.name}</div>
               <div className="mt-1 type-caption text-[var(--ws-text-muted)]">{badge.description}</div>
             </div>
           ))}
@@ -94,10 +94,10 @@ export default function GamificationTab() {
 
       <section>
         <h2 className="mb-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-secondary)]">Recent scored activity</h2>
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[var(--ws-panel)]">
+        <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]">
           {meaningfulHistory.length ? (
             meaningfulHistory.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 border-b border-white/5 px-4 py-3 last:border-0">
+              <div key={item.id} className="flex items-center gap-3 border-b border-[var(--ws-border)] px-4 py-3 last:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="truncate type-ui text-[var(--ws-text-secondary)]">{item.action}</div>
                   <div className="type-caption text-[var(--ws-text-muted)]">{new Date(item.createdAt).toLocaleString()}</div>

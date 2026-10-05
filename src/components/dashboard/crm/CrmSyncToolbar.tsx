@@ -79,7 +79,7 @@ export function CrmSyncToolbar({ className = '' }: { className?: string }) {
         type="button"
         onClick={() => void handlePull()}
         disabled={pulling}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] disabled:opacity-50"
       >
         <Download className={`w-3.5 h-3.5 ${pulling ? 'animate-pulse' : ''}`} />
         {pulling ? 'Pulling…' : 'Pull external CRM'}
@@ -104,7 +104,7 @@ export function CrmSyncToolbar({ className = '' }: { className?: string }) {
       </button>
       <a
         href="/dashboard/crm/follow-ups"
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
       >
         <Upload className="w-3.5 h-3.5" />
         Follow-up queue
@@ -112,7 +112,7 @@ export function CrmSyncToolbar({ className = '' }: { className?: string }) {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/10 bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white"
+        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] type-caption font-bold text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
       >
         <RefreshCw className="w-3.5 h-3.5" />
         Refresh

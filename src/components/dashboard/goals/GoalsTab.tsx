@@ -159,7 +159,7 @@ export default function GoalsTab() {
       header={
         <div className="px-1 pb-2 flex items-end justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-white">Goals &amp; Targets</h1>
+            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Goals &amp; Targets</h1>
             <p className="type-card-description text-[var(--ws-text-muted)]">Revenue and quota tracking by period</p>
           </div>
         </div>
@@ -167,23 +167,23 @@ export default function GoalsTab() {
       stats={<ModuleStatCards stats={stats} />}
     >
       <div className="space-y-4 ac-scroll-full pb-6">
-        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
+        <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Goal name"
-            className="flex-1 min-w-[160px] bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+            className="flex-1 min-w-[160px] bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
           />
           <input
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             placeholder="Target"
             type="number"
-            className="w-32 bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+            className="w-32 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-3 py-2 type-ui text-[var(--ws-text-primary)]"
           />
           <button
             onClick={() => void handleCreate()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white type-ui font-semibold"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-[var(--text-inverse)] type-ui font-semibold"
           >
             <Plus className="w-4 h-4" /> Add goal
           </button>
@@ -236,7 +236,7 @@ export default function GoalsTab() {
                 : status === 'on_track' ? 'border-teal-500/30'
                 : status === 'at_risk' ? 'border-amber-500/30'
                 : status === 'off_track' ? 'border-rose-500/30'
-                : 'border-white/5';
+                : 'border-[var(--ws-border)]';
 
             return (
               <div key={g.id} className={cn(WORKSPACE.panel.base, 'rounded-xl p-4 md:p-5', statusRing)}>
@@ -245,7 +245,7 @@ export default function GoalsTab() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{g.name}</p>
                       <span className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-bold uppercase border border-white/10',
+                        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full type-caption font-bold uppercase border border-[var(--ws-border)]',
                         status === 'complete' ? 'bg-[var(--success-500)]/15 text-[var(--success-text)]'
                           : status === 'on_track' ? 'bg-teal-500/15 text-[var(--brand-blue-300)]'
                           : status === 'at_risk' ? 'bg-amber-500/15 text-[var(--warning-text,var(--warning-500))]'

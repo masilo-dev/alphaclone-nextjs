@@ -37,7 +37,7 @@ export default function LeadFinderMapPanel({
         <div className="flex items-center gap-2 min-w-0">
           <MapPin className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
-            <p className="type-card-description font-semibold text-white truncate">Reach map</p>
+            <p className="type-card-description font-semibold text-[var(--ws-text-primary)] truncate">Reach map</p>
             <p className="type-card-description text-[var(--ws-text-muted)] truncate">
               {pinned.length} pinned · aerial satellite · free geodata
             </p>

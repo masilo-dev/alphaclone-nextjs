@@ -167,7 +167,7 @@ const AnalyticsTab: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-teal-400" />
-              <span className="type-ui font-semibold text-white group-hover:text-[var(--brand-blue-300)]">{name}</span>
+              <span className="type-ui font-semibold text-[var(--ws-text-primary)] group-hover:text-[var(--brand-blue-300)]">{name}</span>
               <ChevronRight className="w-4 h-4 ml-auto text-[var(--ws-text-muted)] group-hover:text-teal-400" />
             </div>
           </button>

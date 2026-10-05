@@ -287,7 +287,7 @@ export function PlaywrightIntegration() {
           )}
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-white mb-1">{error.title}</h4>
+          <h4 className="font-semibold text-[var(--ws-text-primary)] mb-1">{error.title}</h4>
           <p className="type-card-description text-[var(--ws-text-secondary)] mb-2">{error.message}</p>
           <p className="type-card-description text-[var(--ws-text-muted)]">{error.suggestion}</p>
         </div>
@@ -306,7 +306,7 @@ export function PlaywrightIntegration() {
             <Search className={`w-6 h-6 ${status.isConnected ? 'text-orange-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Lead Discovery Tool</h3>
+            <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Lead Discovery Tool</h3>
             <p className="type-card-description text-[var(--ws-text-muted)]">
               {status.isConnected ? 
                 `Active • ${status.totalLeadsFound || 0} leads found` : 
@@ -348,14 +348,14 @@ export function PlaywrightIntegration() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Quick Lead Search</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Quick Lead Search</h4>
               <div className="space-y-2">
                 <input
                   type="url"
                   placeholder="https://example.com"
                   value={scrapingUrl}
                   onChange={(e) => setScrapingUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)]"
                 />
                 <Button
                   size="sm"
@@ -370,7 +370,7 @@ export function PlaywrightIntegration() {
             </div>
 
             <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
-              <h4 className="type-ui font-medium text-white mb-2">Recent Searches</h4>
+              <h4 className="type-ui font-medium text-[var(--ws-text-primary)] mb-2">Recent Searches</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {jobs.length > 0 ? (
                   jobs.slice(0, 3).map((job) => (
@@ -412,7 +412,7 @@ export function PlaywrightIntegration() {
         >
           <div className="space-y-6">
             <div>
-              <h4 className="text-lg font-semibold text-white mb-2">About Lead Discovery</h4>
+              <h4 className="text-lg font-semibold text-[var(--ws-text-primary)] mb-2">About Lead Discovery</h4>
               <p className="type-card-description text-[var(--ws-text-secondary)] mb-4">
                 Our intelligent tool searches websites for business leads, contact information, and company details. 
                 All errors are translated into clear, helpful messages.

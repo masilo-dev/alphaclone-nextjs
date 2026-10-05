@@ -63,13 +63,13 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         <MessageCircle className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-white type-caption font-semibold tracking-wide">Meeting Chat</h3>
+                        <h3 className="text-[var(--ws-text-primary)] type-caption font-semibold tracking-wide">Meeting Chat</h3>
                         <span className="type-ui text-[var(--ws-text-muted)]">{messages.length} {messages.length === 1 ? 'message' : 'messages'}</span>
                     </div>
                 </div>
                 <button
                     onClick={onClose}
-                    className="p-2 hover:bg-[var(--ws-surface-tertiary)]/50 rounded-lg transition-colors text-[var(--ws-text-muted)] hover:text-white"
+                    className="p-2 hover:bg-[var(--ws-surface-tertiary)]/50 rounded-lg transition-colors text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                     title="Close chat"
                 >
                     <X className="w-4 h-4" />
@@ -100,7 +100,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                             >
                                 {!msg.isLocal && (
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mr-2 border border-[var(--ws-border)] mt-0.5 shadow-sm">
-                                        <span className="text-white type-caption font-bold">
+                                        <span className="text-[var(--ws-text-primary)] type-caption font-bold">
                                             {(msg.userName?.[0] || 'G').toUpperCase()}
                                         </span>
                                     </div>
@@ -115,7 +115,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
 
                                     <div
                                         className={`px-4 py-2.5 shadow-sm ${msg.isLocal
-                                                ? 'bg-teal-600 text-white rounded-2xl rounded-tr-sm'
+                                                ? 'bg-teal-600 text-[var(--text-inverse)] rounded-2xl rounded-tr-sm'
                                                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-primary)] border border-[var(--ws-border)] rounded-2xl rounded-tl-sm'
                                             }`}
                                     >
@@ -146,14 +146,14 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Type your message..."
-                        className="flex-1 bg-transparent text-white px-3 py-2 type-ui resize-none focus:outline-none max-h-24 min-h-[40px] scrollbar-hide"
+                        className="flex-1 bg-transparent text-[var(--ws-text-primary)] px-3 py-2 type-ui resize-none focus:outline-none max-h-24 min-h-[40px] scrollbar-hide"
                         rows={1}
                     />
                     <button
                         onClick={handleSend}
                         disabled={!inputMessage.trim()}
                         className={`p-2.5 m-0.5 rounded-lg transition-all ${inputMessage.trim()
-                                ? 'bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white shadow-md'
+                                ? 'bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] shadow-md'
                                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed'
                             }`}
                         title="Send message"

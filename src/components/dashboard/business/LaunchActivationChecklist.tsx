@@ -90,7 +90,7 @@ export default function LaunchActivationChecklist() {
       </div>
       {nextRecommended && (
         <p className="mb-3 type-card-description text-[var(--ws-text-secondary)]">
-          Best next step: <span className="font-semibold text-white">{nextRecommended.label}</span>
+          Best next step: <span className="font-semibold text-[var(--ws-text-primary)]">{nextRecommended.label}</span>
         </p>
       )}
       <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--ws-surface-secondary)]">

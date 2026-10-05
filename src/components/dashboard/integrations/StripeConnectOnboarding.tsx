@@ -111,7 +111,7 @@ export const StripeConnectOnboarding: React.FC = () => {
     <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 space-y-6">
       <div className="flex items-center gap-3">
         <CreditCard className="w-6 h-6 text-teal-400" />
-        <h3 className="text-lg font-semibold text-white">Stripe Connect</h3>
+        <h3 className="text-lg font-semibold text-[var(--ws-text-primary)]">Stripe Connect</h3>
       </div>
 
       {!status ? (

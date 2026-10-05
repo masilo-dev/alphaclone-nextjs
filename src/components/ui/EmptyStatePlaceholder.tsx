@@ -37,7 +37,7 @@ export function EmptyStatePlaceholder({
   if (compact) {
     return (
       <div className={`flex flex-col items-center justify-center py-8 text-center gap-2 ${className}`}>
-        <div className="w-10 h-10 rounded-xl bg-[var(--ws-surface-secondary)]/60 border border-white/5 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] flex items-center justify-center">
           <Icon className="w-5 h-5 text-[var(--ws-text-muted)]" />
         </div>
         <p className="type-card-description font-semibold text-[var(--ws-text-muted)]">{title}</p>
@@ -64,13 +64,13 @@ export function EmptyStatePlaceholder({
       {/* Icon halo */}
       <div className="relative">
         <div className="absolute inset-0 rounded-full bg-teal-500/10 blur-xl scale-150" />
-        <div className="relative w-16 h-16 rounded-2xl bg-[var(--ws-surface-secondary)] border border-white/5 flex items-center justify-center shadow-lg">
+        <div className="relative w-16 h-16 rounded-2xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] flex items-center justify-center shadow-lg">
           <Icon className="w-7 h-7 text-teal-400/70" />
         </div>
       </div>
 
       <div className="space-y-1.5 max-w-sm">
-        <h3 className="type-ui font-bold text-white">{title}</h3>
+        <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">{title}</h3>
         <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{description}</p>
       </div>
 
@@ -81,8 +81,8 @@ export function EmptyStatePlaceholder({
               onClick={action.onClick}
               className={`px-4 py-2 rounded-xl type-ui font-bold transition-all ${
                 action.variant === 'secondary'
-                  ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] border border-white/5 hover:bg-[var(--ws-surface-tertiary)]'
-                  : 'bg-teal-500 text-white hover:bg-[var(--brand-blue-400)] shadow-md shadow-teal-500/20'
+                  ? 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-surface-tertiary)]'
+                  : 'bg-teal-500 text-[var(--text-inverse)] hover:bg-[var(--brand-blue-400)] shadow-md shadow-teal-500/20'
               }`}
             >
               {action.label}
@@ -91,7 +91,7 @@ export function EmptyStatePlaceholder({
           {secondaryAction && (
             <button
               onClick={secondaryAction.onClick}
-              className="px-4 py-2 rounded-xl type-ui font-bold text-[var(--ws-text-muted)] border border-white/5 hover:bg-[var(--ws-surface-secondary)] transition-all"
+              className="px-4 py-2 rounded-xl type-ui font-bold text-[var(--ws-text-muted)] border border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)] transition-all"
             >
               {secondaryAction.label}
             </button>

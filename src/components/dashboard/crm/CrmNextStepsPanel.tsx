@@ -27,7 +27,7 @@ export function CrmNextStepsPanel({
                     <ListChecks className="w-4 h-4 text-teal-400" aria-hidden />
                 </div>
                 <div className="min-w-0">
-                    <h2 className="type-caption font-bold text-white tracking-tight">{heading}</h2>
+                    <h2 className="type-caption font-bold text-[var(--ws-text-primary)] tracking-tight">{heading}</h2>
                     {subheading ? (
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 leading-relaxed">{subheading}</p>
                     ) : null}

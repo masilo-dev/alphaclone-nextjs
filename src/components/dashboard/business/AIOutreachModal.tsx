@@ -308,13 +308,13 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             <Sparkles className="w-7 h-7 text-teal-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">Bulk Outreach</h2>
+                            <h2 className="text-xl font-black text-[var(--ws-text-primary)] uppercase tracking-tighter">Bulk Outreach</h2>
                             <p className="type-caption text-[var(--ws-text-muted)] font-medium tracking-wide">PERSONALIZED OUTREACH</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-panel)] rounded-2xl transition-all"
+                        className="p-3 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-panel)] rounded-2xl transition-all"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -324,7 +324,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     {/* Left Side: Lead Selection */}
                     <div className="w-full md:w-1/2 min-h-[350px] border-r border-[var(--ws-border)] flex flex-col p-6 bg-[var(--ws-canvas)]/30">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-white type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
+                            <h3 className="text-[var(--ws-text-primary)] type-caption font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
@@ -337,7 +337,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </button>
                                 <button
                                     onClick={() => setSelectedLeads([])}
-                                    className="type-caption text-[var(--ws-text-muted)] hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                    className="type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] uppercase font-bold tracking-widest transition-colors"
                                 >
                                     Clear All
                                 </button>
@@ -352,7 +352,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
                                 placeholder="Search leads by name or industry..."
-                                className="w-full bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl py-3 pl-12 pr-4 type-ui text-white focus:border-teal-500/40 outline-none transition-all"
+                                className="w-full bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl py-3 pl-12 pr-4 type-ui text-[var(--ws-text-primary)] focus:border-teal-500/40 outline-none transition-all"
                             />
                         </div>
 
@@ -387,7 +387,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             {selectedLeads.includes(lead.id) && <Check className="w-4 h-4 text-slate-900" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="type-card-description font-bold text-white truncate">{lead.businessName}</p>
+                                            <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{lead.businessName}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest">{lead.industry || 'Lead'}</span>
                                                 <span className="type-caption text-slate-700">·</span>
@@ -406,7 +406,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     <div className="w-full md:w-1/2 flex flex-col p-6 overflow-y-auto bg-[var(--ws-canvas)]">
                         {results ? (
                             <div className="space-y-6">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
                                     <Zap className="w-5 h-5 text-teal-400" />
                                     Campaign Results
                                 </h3>
@@ -418,7 +418,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             : 'bg-[var(--error-500)]/10 border-red-500/20'
                                             }`}>
                                             <div className="flex justify-between items-center">
-                                                <span className="type-ui font-bold text-white">{res.name}</span>
+                                                <span className="type-ui font-bold text-[var(--ws-text-primary)]">{res.name}</span>
                                                 <Badge variant={res.status === 'success' ? 'success' : 'neutral'}>
                                                     {res.status === 'success' ? 'Sent' : 'Failed'}
                                                 </Badge>
@@ -429,7 +429,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <Button
-                                    className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white font-black uppercase type-caption"
+                                    className="w-full h-14 rounded-2xl bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] font-black uppercase type-caption"
                                     onClick={() => { setResults(null); setSelectedLeads([]); setLoadRetry(value => value + 1); }}
                                 >
                                     Start New Batch
@@ -438,7 +438,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         ) : (
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <Mail className="w-3.5 h-3.5" />
                                         Step 1: Outgoing Sender
                                     </h3>
@@ -467,7 +467,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                         </div>
                                                         <div className="text-left">
                                                             <p className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-widest">{integration.name}</p>
-                                                            <p className="text-white type-card-description font-bold truncate max-w-[200px]">
+                                                            <p className="text-[var(--ws-text-primary)] type-card-description font-bold truncate max-w-[200px]">
                                                                 {integration.config.fromEmail || integration.config.email || 'Connected Account'}
                                                             </p>
                                                         </div>
@@ -498,7 +498,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Step 2: Tone of Voice
                                     </h3>
@@ -522,7 +522,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
+                                    <h3 className="text-[var(--ws-text-primary)] font-bold mb-4 flex items-center gap-2 uppercase tracking-wide type-caption opacity-70">
                                         <Zap className="w-3.5 h-3.5" />
                                         Step 3: Custom Instructions
                                     </h3>
@@ -531,7 +531,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             value={customPrompt}
                                             onChange={e => setCustomPrompt(e.target.value)}
                                             placeholder="Example: Mention our current promotion and ask for a quick chat."
-                                            className="w-full bg-transparent border-none focus:ring-0 text-white type-ui min-h-[140px] p-2 resize-none"
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[var(--ws-text-primary)] type-ui min-h-[140px] p-2 resize-none"
                                         />
                                     </div>
                                     <p className="type-card-description text-slate-600 mt-3 px-2 italic">
@@ -543,7 +543,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                     <Button
                                         onClick={handleSend}
                                         disabled={sending || selectedLeads.length === 0}
-                                        className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
+                                        className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (
                                             <div className="flex flex-col items-center gap-1">

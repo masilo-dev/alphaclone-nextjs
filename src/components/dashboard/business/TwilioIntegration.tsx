@@ -151,20 +151,20 @@ const TwilioIntegration: React.FC = () => {
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
                         connected 
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-white/5'
+                            : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'
                     }`}>
                         <Phone className="w-6 h-6" />
                     </div>
                     <div>
                         <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2 mb-1">
-                            <h2 className="text-lg font-bold text-white tracking-tight">Twilio SMS & Voice</h2>
+                            <h2 className="text-lg font-bold text-[var(--ws-text-primary)] tracking-tight">Twilio SMS & Voice</h2>
                             {connected ? (
                                 <span className="flex items-center gap-1 px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full type-caption uppercase font-black tracking-widest text-emerald-400">
                                     <CheckCircle2 className="w-3 h-3" /> Connected
                                 </span>
                             ) : (
-                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-white/5 rounded-full type-caption uppercase font-black tracking-widest text-[var(--ws-text-muted)]">
+                                <span className="flex items-center gap-1 px-2.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full type-caption uppercase font-black tracking-widest text-[var(--ws-text-muted)]">
                                     <AlertCircle className="w-3 h-3" /> Not connected
                                 </span>
                             )}
@@ -210,7 +210,7 @@ const TwilioIntegration: React.FC = () => {
             </div>
 
             {!connected && (
-                <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-white/5">
+                <form onSubmit={handleSave} className="space-y-4 pt-4 border-t border-[var(--ws-border)]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Account SID</label>
@@ -220,7 +220,7 @@ const TwilioIntegration: React.FC = () => {
                                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                     value={accountSid}
                                     onChange={e => setAccountSid(e.target.value)}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
                             </div>
@@ -234,7 +234,7 @@ const TwilioIntegration: React.FC = () => {
                                     placeholder="Your secret auth token"
                                     value={authToken}
                                     onChange={e => setAuthToken(e.target.value)}
-                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 pr-12 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 pr-12 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <button
                                     type="button"
@@ -253,7 +253,7 @@ const TwilioIntegration: React.FC = () => {
                                 placeholder="+1234567890"
                                 value={phoneNumber}
                                 onChange={e => setPhoneNumber(e.target.value)}
-                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                className="w-full bg-[var(--ws-canvas)]/50 border border-[var(--ws-border)] rounded-lg px-4 py-3 type-ui text-[var(--ws-text-primary)] font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                             />
                             <p className="type-card-description text-[var(--ws-text-muted)] mt-1.5 ml-1">Must be an active Twilio number in E.164 format (e.g. +12125551234)</p>
                         </div>
@@ -263,7 +263,7 @@ const TwilioIntegration: React.FC = () => {
                         <Button
                             type="submit"
                             disabled={saving || !accountSid || !authToken || !phoneNumber}
-                            className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-8 shadow-[0_0_25px_-5px_rgba(20,184,166,0.3)] disabled:opacity-30"
+                            className="bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] font-bold px-8 shadow-[0_0_25px_-5px_rgba(20,184,166,0.3)] disabled:opacity-30"
                         >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                             {saving ? 'Verifying Connection...' : 'Connect Twilio'}

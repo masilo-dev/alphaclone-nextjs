@@ -95,14 +95,14 @@ const ArticleEditor: React.FC = () => {
         return (
             <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">
                         {isNew ? 'New Article' : 'Edit Article'}
                     </h2>
                     <div className="flex gap-2">
                         <button
                             onClick={handleSave}
                             disabled={isSaving || !editing.title.trim()}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-[var(--text-inverse)] rounded hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSaving ? (
                                 <>
@@ -121,7 +121,7 @@ const ArticleEditor: React.FC = () => {
                                 setEditing(null);
                                 setIsNew(false);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded hover:bg-slate-600"
+                            className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded hover:bg-slate-600"
                         >
                             <X className="w-4 h-4" />
                             Cancel
@@ -139,7 +139,7 @@ const ArticleEditor: React.FC = () => {
                             type="text"
                             value={editing.title}
                             onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="Article title"
                         />
                     </div>
@@ -153,7 +153,7 @@ const ArticleEditor: React.FC = () => {
                             type="text"
                             value={editing.slug}
                             onChange={(e) => setEditing({ ...editing, slug: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="article-url-slug"
                         />
                         <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
@@ -169,7 +169,7 @@ const ArticleEditor: React.FC = () => {
                         <textarea
                             value={editing.meta_description}
                             onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             rows={2}
                             placeholder="Brief description for search engines"
                         />
@@ -187,7 +187,7 @@ const ArticleEditor: React.FC = () => {
                             type="text"
                             value={editing.category}
                             onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="e.g., Web Development, AI, Software"
                         />
                     </div>
@@ -204,7 +204,7 @@ const ArticleEditor: React.FC = () => {
                                 ...editing,
                                 meta_keywords: e.target.value.split(',').map(k => k.trim())
                             })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="keyword1, keyword2, keyword3"
                         />
                     </div>
@@ -221,7 +221,7 @@ const ArticleEditor: React.FC = () => {
                                 ...editing,
                                 tags: e.target.value.split(',').map(t => t.trim())
                             })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="tag1, tag2, tag3"
                         />
                     </div>
@@ -234,7 +234,7 @@ const ArticleEditor: React.FC = () => {
                         <textarea
                             value={editing.content}
                             onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-primary)] rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
                             rows={20}
                             placeholder="Write your article content here... Use markdown for formatting."
                         />
@@ -265,7 +265,7 @@ const ArticleEditor: React.FC = () => {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">SEO Articles</h2>
+                    <h2 className="text-2xl font-bold text-[var(--ws-text-primary)]">SEO Articles</h2>
                     <p className="text-[var(--ws-text-muted)]">Manage your SEO content</p>
                 </div>
                 <button
@@ -273,7 +273,7 @@ const ArticleEditor: React.FC = () => {
                         setEditing(emptyArticle as Article);
                         setIsNew(true);
                     }}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-[var(--text-inverse)] rounded hover:bg-teal-600"
                 >
                     <Plus className="w-4 h-4" />
                     New Article
@@ -283,7 +283,7 @@ const ArticleEditor: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
-                    <div className="text-2xl font-bold text-white">{articles.length}</div>
+                    <div className="text-2xl font-bold text-[var(--ws-text-primary)]">{articles.length}</div>
                     <div className="type-ui text-[var(--ws-text-muted)]">Total Articles</div>
                 </div>
                 <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
@@ -305,7 +305,7 @@ const ArticleEditor: React.FC = () => {
                 {articles.map((article) => (
                     <MobileDataCard key={article.id} className="border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
                         <div className="min-w-0">
-                            <p className="text-white font-medium truncate">{article.title}</p>
+                            <p className="text-[var(--ws-text-primary)] font-medium truncate">{article.title}</p>
                             <p className="type-card-description text-[var(--ws-text-muted)] truncate">/blog/{article.slug}</p>
                         </div>
                         <div className="flex flex-wrap gap-2 type-caption">
@@ -343,7 +343,7 @@ const ArticleEditor: React.FC = () => {
                         {articles.map((article) => (
                             <tr key={article.id} className="hover:bg-[var(--ws-surface-tertiary)]/50">
                                 <td className="px-4 py-3">
-                                    <div className="text-white font-medium">{article.title}</div>
+                                    <div className="text-[var(--ws-text-primary)] font-medium">{article.title}</div>
                                     <div className="type-caption text-[var(--ws-text-muted)]">/blog/{article.slug}</div>
                                 </td>
                                 <td className="px-4 py-3">

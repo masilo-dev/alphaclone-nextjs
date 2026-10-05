@@ -76,7 +76,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-bold text-white">Project Phases</h3>
+                <h3 className="text-lg font-bold text-[var(--ws-text-primary)]">Project Phases</h3>
                 <button
                     onClick={() => setIsAdding(true)}
                     disabled={isAdding}
@@ -95,7 +95,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                             type="text"
                             value={newMilestone.name}
                             onChange={(e) => setNewMilestone({ ...newMilestone, name: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
                             placeholder="e.g. Design Approval"
                             autoFocus
                         />
@@ -106,7 +106,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                             type="text"
                             value={newMilestone.description}
                             onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
                             placeholder="Details about this phase..."
                         />
                     </div>
@@ -116,20 +116,20 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                             type="date"
                             value={newMilestone.dueDate}
                             onChange={(e) => setNewMilestone({ ...newMilestone, dueDate: e.target.value })}
-                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-white focus:border-teal-500 outline-none"
+                            className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:border-teal-500 outline-none"
                         />
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button
                             onClick={() => setIsAdding(false)}
-                            className="px-3 py-1.5 text-[var(--ws-text-muted)] hover:text-white type-ui"
+                            className="px-3 py-1.5 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] type-ui"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleCreate}
                             disabled={!newMilestone.name.trim()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg type-ui disabled:opacity-50"
+                            className="flex items-center gap-2 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-lg type-ui disabled:opacity-50"
                         >
                             <Save className="w-3 h-3" />
                             Save Phase
@@ -158,14 +158,14 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                                 <button
                                     onClick={() => toggleStatus(milestone)}
                                     className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${milestone.status === 'completed'
-                                        ? 'bg-teal-500 text-white'
+                                        ? 'bg-teal-500 text-[var(--text-inverse)]'
                                         : 'bg-[var(--ws-surface-secondary)] border border-slate-600 hover:border-teal-500'
                                         }`}
                                 >
                                     {milestone.status === 'completed' && <CheckCircle className="w-3 h-3" />}
                                 </button>
                                 <div>
-                                    <div className={`font-medium ${milestone.status === 'completed' ? 'text-[var(--ws-text-muted)] line-through' : 'text-white'}`}>
+                                    <div className={`font-medium ${milestone.status === 'completed' ? 'text-[var(--ws-text-muted)] line-through' : 'text-[var(--ws-text-primary)]'}`}>
                                         {milestone.name}
                                     </div>
                                     {(milestone.description || milestone.dueDate) && (

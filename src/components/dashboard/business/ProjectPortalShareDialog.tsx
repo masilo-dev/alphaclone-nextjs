@@ -91,13 +91,13 @@ export function ProjectPortalShareDialog({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-[var(--ws-canvas)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+      <div className="w-full max-w-md bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--ws-border)]">
           <div>
             <p className="type-caption uppercase tracking-widest text-violet-400 font-bold">Share with client</p>
-            <h3 className="text-white font-bold truncate">{projectName}</h3>
+            <h3 className="text-[var(--ws-text-primary)] font-bold truncate">{projectName}</h3>
           </div>
-          <button type="button" onClick={onClose} className="p-2 text-[var(--ws-text-muted)] hover:text-white rounded-lg">
+          <button type="button" onClick={onClose} className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] rounded-lg">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -116,7 +116,7 @@ export function ProjectPortalShareDialog({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leave blank for open link"
-              className="w-full h-10 bg-[var(--ws-panel)] border border-white/10 rounded-xl px-3 type-ui text-white outline-none focus:border-violet-400"
+              className="w-full h-10 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 type-ui text-[var(--ws-text-primary)] outline-none focus:border-violet-400"
             />
           </div>
 
@@ -133,7 +133,7 @@ export function ProjectPortalShareDialog({
                   className={`px-3 py-2 rounded-xl type-caption font-bold border transition-all ${
                     expiryDays === opt.days
                       ? 'bg-violet-600/20 border-violet-500/40 text-violet-200'
-                      : 'bg-[var(--ws-panel)] border-white/5 text-[var(--ws-text-muted)] hover:border-white/15'
+                      : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-white/15'
                   }`}
                 >
                   {opt.label}
@@ -144,7 +144,7 @@ export function ProjectPortalShareDialog({
 
           {shareUrl ? (
             <div className="space-y-3">
-              <div className="rounded-xl bg-[var(--ws-panel)] border border-white/10 p-3">
+              <div className="rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] p-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)] font-bold flex items-center gap-1">
                     <Lock className="w-3 h-3" /> Project only
@@ -164,7 +164,7 @@ export function ProjectPortalShareDialog({
               </div>
 
               {clientId && (
-                <div className="rounded-xl bg-[var(--ws-panel)] border border-white/10 p-3">
+                <div className="rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)] p-3">
                   <div className="flex items-center justify-between mb-1.5">
                     <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)] font-bold flex items-center gap-1">
                       <User className="w-3 h-3" /> Client workspace
@@ -197,15 +197,15 @@ export function ProjectPortalShareDialog({
           ) : null}
         </div>
 
-        <div className="px-5 py-4 border-t border-white/10 flex gap-2 justify-end">
-          <button type="button" onClick={onClose} className="px-4 py-2 type-ui font-bold text-[var(--ws-text-muted)] hover:text-white">
+        <div className="px-5 py-4 border-t border-[var(--ws-border)] flex gap-2 justify-end">
+          <button type="button" onClick={onClose} className="px-4 py-2 type-ui font-bold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
             Close
           </button>
           <button
             type="button"
             onClick={handleCreateLink}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl type-caption font-bold"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-[var(--ws-text-primary)] rounded-xl type-caption font-bold"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link2 className="w-3.5 h-3.5" />}
             {shareUrl ? 'Regenerate link' : 'Create & copy link'}

@@ -126,13 +126,13 @@ export function JournalEntriesPage() {
                 header={(
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
                         <div>
-                            <h1 className="text-lg font-semibold text-white">Ledger Entries</h1>
+                            <h1 className="text-lg font-semibold text-[var(--ws-text-primary)]">Ledger Entries</h1>
                             <p className="type-card-description text-[var(--ws-text-secondary)]">Review and post the manual entries shaping your books.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white type-caption font-bold hover:bg-emerald-500"
+                            className="px-3 py-2 rounded-xl bg-emerald-600 text-[var(--text-inverse)] type-caption font-bold hover:bg-emerald-500"
                         >
                             + New ledger entry
                         </button>
@@ -142,7 +142,7 @@ export function JournalEntriesPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-3 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-emerald-500/50"
+                        className="px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-emerald-500/50"
                     >
                         <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
@@ -168,7 +168,7 @@ export function JournalEntriesPage() {
                         >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="type-card-description font-semibold text-white">{entry.entryNumber}</p>
+                                    <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{entry.entryNumber}</p>
                                     <p className="type-card-description text-[var(--ws-text-muted)]">{new Date(entry.entryDate).toLocaleDateString()}</p>
                                 </div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full type-caption font-medium ${entry.status === 'posted'
@@ -187,11 +187,11 @@ export function JournalEntriesPage() {
                             <div className="grid grid-cols-2 gap-3 type-ui font-mono">
                                 <div>
                                     <span className="block type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">Debits</span>
-                                    <span className="text-white">${entry.totalDebits.toFixed(2)}</span>
+                                    <span className="text-[var(--ws-text-primary)]">${entry.totalDebits.toFixed(2)}</span>
                                 </div>
                                 <div className="text-right">
                                     <span className="block type-caption uppercase tracking-wider text-[var(--ws-text-muted)]">Credits</span>
-                                    <span className="text-white">${entry.totalCredits.toFixed(2)}</span>
+                                    <span className="text-[var(--ws-text-primary)]">${entry.totalCredits.toFixed(2)}</span>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-2 pt-1">
@@ -250,7 +250,7 @@ export function JournalEntriesPage() {
                             <tbody className="bg-[var(--ws-panel)]/60 divide-y divide-white/5">
                                 {entries.map((entry) => (
                                     <tr key={entry.id} className={entry.status === 'void' ? 'bg-[var(--ws-panel)]/50 opacity-60' : ''}>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-white">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell font-medium text-[var(--ws-text-primary)]">
                                             {entry.entryNumber}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-[var(--ws-text-secondary)]">
@@ -262,10 +262,10 @@ export function JournalEntriesPage() {
                                                 <span className="ml-2 type-caption text-[var(--ws-text-muted)]">({entry.reference})</span>
                                             )}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-[var(--ws-text-primary)] font-mono">
                                             ${entry.totalDebits.toFixed(2)}
                                         </td>
-                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-white font-mono">
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap type-table-cell text-right text-[var(--ws-text-primary)] font-mono">
                                             ${entry.totalCredits.toFixed(2)}
                                         </td>
                                         <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -319,7 +319,7 @@ export function JournalEntriesPage() {
             </div>
 
             {entries.length === 0 && (
-            <div className="text-center py-12 rounded-xl border border-white/5 bg-[var(--ws-panel)]/40">
+            <div className="text-center py-12 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
                     <p className="text-[var(--ws-text-secondary)]">No journal entries found</p>
                 </div>
             )}
@@ -343,18 +343,18 @@ export function JournalEntriesPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Date</p>
-                                <p className="font-medium text-white">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
+                                <p className="font-medium text-[var(--ws-text-primary)]">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
                             </div>
                             <div>
                                 <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Status</p>
-                                <p className="font-medium text-white capitalize">{viewingEntry.status}</p>
+                                <p className="font-medium text-[var(--ws-text-primary)] capitalize">{viewingEntry.status}</p>
                             </div>
                             <div className="col-span-1 md:col-span-2">
                                 <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Description</p>
-                                <p className="text-white">{viewingEntry.description}</p>
+                                <p className="text-[var(--ws-text-primary)]">{viewingEntry.description}</p>
                             </div>
                         </div>
-                        <div className="rounded-xl border border-white/5 overflow-x-auto">
+                        <div className="rounded-xl border border-[var(--ws-border)] overflow-x-auto">
                             <table className="min-w-[520px] w-full divide-y divide-white/5 type-ui">
                                 <thead className="bg-[var(--ws-panel)]/80">
                                     <tr>
@@ -369,16 +369,16 @@ export function JournalEntriesPage() {
                                         <tr key={line.id}>
                                             <td className="px-4 py-2 text-[var(--ws-text-secondary)]">{line.accountCode} - {line.accountName}</td>
                                             <td className="px-4 py-2 text-[var(--ws-text-secondary)]">{line.description}</td>
-                                            <td className="px-4 py-2 text-right font-mono text-white">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
-                                            <td className="px-4 py-2 text-right font-mono text-white">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-[var(--ws-text-primary)]">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-[var(--ws-text-primary)]">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                                 <tfoot className="bg-[var(--ws-panel)]/80">
                                     <tr>
-                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-white">Totals</td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalDebits.toFixed(2)}</td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalCredits.toFixed(2)}</td>
+                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-[var(--ws-text-primary)]">Totals</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-[var(--ws-text-primary)]">${viewingEntry.totalDebits.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-[var(--ws-text-primary)]">${viewingEntry.totalCredits.toFixed(2)}</td>
                                     </tr>
                                 </tfoot>
                             </table>

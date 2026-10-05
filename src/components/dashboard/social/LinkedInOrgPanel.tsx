@@ -118,7 +118,7 @@ export function LinkedInOrgPanel({
         >
           <User className="w-4 h-4 text-[var(--ws-text-secondary)] shrink-0" />
           <div className="min-w-0">
-            <p className="type-card-description font-medium text-white truncate">Personal profile</p>
+            <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">Personal profile</p>
             <p className="type-card-description text-[var(--ws-text-tertiary)]">Your member account</p>
           </div>
         </button>
@@ -141,7 +141,7 @@ export function LinkedInOrgPanel({
               <Building2 className="w-4 h-4 text-[var(--logo-linkedin)] shrink-0" />
             )}
             <div className="min-w-0">
-              <p className="type-card-description font-medium text-white truncate">
+              <p className="type-card-description font-medium text-[var(--ws-text-primary)] truncate">
                 {formatLinkedInCompanyPageLabel(page)}
               </p>
               <p className="type-card-description text-[var(--ws-text-tertiary)]">Organization</p>
@@ -177,7 +177,7 @@ export function LinkedInOrgPanel({
 
           {onLinkCompanyPage ? (
             <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 space-y-2">
-              <p className="type-card-description font-semibold text-white">Link page manually</p>
+              <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">Link page manually</p>
               <p className="type-card-description text-[var(--ws-text-tertiary)]">
                 Paste your company URL (for example linkedin.com/company/your-page) if you already manage the Page.
               </p>
@@ -186,7 +186,7 @@ export function LinkedInOrgPanel({
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
                   placeholder="linkedin.com/company/your-page"
-                  className="flex-1 h-11 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-base text-white focus:outline-none focus:border-teal-500/50"
+                  className="flex-1 h-11 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 text-base text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
                 />
                 <button
                   type="button"

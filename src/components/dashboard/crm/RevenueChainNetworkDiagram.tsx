@@ -156,10 +156,10 @@ export function RevenueChainNetworkDiagram({
             )}
 
             {activeNode ? (
-                <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/70 px-3 py-2.5">
+                <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <p className="type-card-description font-semibold text-white">{activeNode.label}</p>
+                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)]">{activeNode.label}</p>
                             <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)] tabular-nums">
                                 {activeNode.volume} in pipeline
                                 {activeNode.leakCount > 0 ? ` · ${activeNode.leakCount} issue${activeNode.leakCount === 1 ? '' : 's'}` : ''}

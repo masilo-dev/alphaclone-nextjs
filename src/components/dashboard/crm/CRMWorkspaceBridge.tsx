@@ -40,7 +40,7 @@ export function CRMWorkspaceBridge({ active, compact = false }: CRMWorkspaceBrid
                   className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 type-ui font-semibold transition-colors ${
                     isActive
                       ? 'border-teal-400/40 bg-[var(--brand-blue-400)]/15 text-teal-200'
-                      : 'border-white/10 bg-[var(--ws-canvas)]/40 text-[var(--ws-text-secondary)] hover:border-teal-400/30 hover:text-teal-200'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 text-[var(--ws-text-secondary)] hover:border-teal-400/30 hover:text-teal-200'
                   }`}
                 >
                   {isActive ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <Icon className="h-3.5 w-3.5" aria-hidden="true" />}

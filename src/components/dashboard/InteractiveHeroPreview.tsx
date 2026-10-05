@@ -69,7 +69,7 @@ const InteractiveHeroPreview = () => {
                         <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
                             <Zap className="w-5 h-5 text-slate-950" />
                         </div>
-                        <span className="font-bold text-white hidden lg:block">AlphaClone</span>
+                        <span className="font-bold text-[var(--ws-text-primary)] hidden lg:block">AlphaClone</span>
                     </div>
                     <div className="space-y-1">
                         {[
@@ -107,7 +107,7 @@ const InteractiveHeroPreview = () => {
                     {/* Dashboard Content */}
                     <div className="flex-1 p-6 space-y-6 overflow-hidden">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-bold text-white">Project Pipeline</h3>
+                            <h3 className="text-xl font-bold text-[var(--ws-text-primary)]">Project Pipeline</h3>
                             <div className="flex gap-2">
                                 <div className="h-8 w-16 bg-teal-500/20 border border-teal-500/30 rounded-lg" />
                                 <div className="h-8 w-8 bg-[var(--ws-surface-secondary)] rounded-lg" />

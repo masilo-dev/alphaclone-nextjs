@@ -15,7 +15,7 @@ export const BatchOutreachFAB: React.FC<BatchOutreachFABProps> = ({ selectedCoun
             <div className="flex items-center gap-2 p-2 bg-[var(--ws-panel)]/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl shadow-2xl shadow-teal-500/20">
                 <button
                     onClick={onOpen}
-                    className="flex items-center gap-3 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-black type-caption uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+                    className="flex items-center gap-3 px-6 py-3 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-xl font-black type-caption uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
                 >
                     <Sparkles className="w-5 h-5 animate-pulse" />
                     <span>Launch Outreach ({selectedCount})</span>
@@ -25,7 +25,7 @@ export const BatchOutreachFAB: React.FC<BatchOutreachFABProps> = ({ selectedCoun
                 
                 <button
                     onClick={onClear}
-                    className="p-3 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] rounded-xl transition-colors"
+                    className="p-3 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)] rounded-xl transition-colors"
                     title="Clear selection"
                 >
                     <X className="w-5 h-5" />

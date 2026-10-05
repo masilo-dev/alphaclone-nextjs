@@ -141,20 +141,20 @@ export default function IngestionPanel() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-white">Lead Ingestion</h2>
+                    <h2 className="text-xl font-bold text-[var(--ws-text-primary)]">Lead Ingestion</h2>
                     <p className="type-card-description text-[var(--ws-text-muted)]">Capture raw content → auto-detect intent → create leads</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-muted)] hover:text-white transition-colors">
+                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors">
                         <RefreshCw className="w-3.5 h-3.5" /> Refresh
                     </button>
                     <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl font-semibold type-ui transition-colors">
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl font-semibold type-ui transition-colors">
                         <Plus className="w-4 h-4" /> Ingest Content
                     </button>
                     {selectedLeadIds.length > 0 && (
                         <button onClick={() => setShowOutreachModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold type-ui transition-all shadow-lg shadow-teal-500/20">
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-[var(--text-inverse)] rounded-xl font-bold type-ui transition-all shadow-lg shadow-teal-500/20">
                             <Sparkles className="w-4 h-4" /> Outreach ({selectedLeadIds.length})
                         </button>
                     )}
@@ -174,7 +174,7 @@ export default function IngestionPanel() {
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                    { label: 'Total Events', value: events.length, color: 'text-white' },
+                    { label: 'Total Events', value: events.length, color: 'text-[var(--ws-text-primary)]' },
                     { label: 'High/Urgent', value: highCount, color: 'text-amber-400' },
                     { label: 'Leads Created', value: leadsCreated, color: 'text-teal-400' },
                     { label: 'Sources', value: sources.length, color: 'text-blue-400' },
@@ -190,15 +190,15 @@ export default function IngestionPanel() {
             {showForm && (
                 <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-white">Ingest Content</h3>
-                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-white"><X className="w-4 h-4" /></button>
+                        <h3 className="font-bold text-[var(--ws-text-primary)]">Ingest Content</h3>
+                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source</label>
                             <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="manual">Manual</option>
                                 <option value="facebook_group">Facebook Group</option>
                                 <option value="facebook_lead">Facebook Lead</option>
@@ -212,13 +212,13 @@ export default function IngestionPanel() {
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Author / Name</label>
                             <input value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
                                 placeholder="John Doe"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
                             <input value={form.author_contact} onChange={e => setForm(f => ({ ...f, author_contact: e.target.value }))}
                                 placeholder="john@example.com"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                     </div>
 
@@ -227,19 +227,19 @@ export default function IngestionPanel() {
                         <textarea value={form.raw_content} onChange={e => setForm(f => ({ ...f, raw_content: e.target.value }))}
                             rows={5}
                             placeholder="Paste content here — Facebook post, message, comment, ad response, etc.&#10;&#10;Example: 'Hi, I'm looking for a web developer urgently. Need a website for my restaurant. Budget $2000. DM me.'"
-                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
+                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
                     </div>
 
                     <div>
                         <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source URL (optional)</label>
                         <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
                             placeholder="https://facebook.com/groups/..."
-                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                     </div>
 
                     <div className="flex gap-3">
                         <button onClick={handleSubmit} disabled={submitting}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl font-semibold type-ui transition-colors">
                             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                             {submitting ? 'Processing...' : 'Process & Ingest'}
                         </button>
@@ -251,7 +251,7 @@ export default function IngestionPanel() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
                 <select value={intentFilter} onChange={e => setIntentFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500">
                     <option value="all">All Intents</option>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -260,7 +260,7 @@ export default function IngestionPanel() {
                     <option value="unknown">Unknown</option>
                 </select>
                 <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500">
                     <option value="all">All Sources</option>
                     {sources.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -278,7 +278,7 @@ export default function IngestionPanel() {
                     <Database className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                     <p className="text-[var(--ws-text-muted)] font-semibold">No ingestion events yet</p>
                     <p className="text-slate-600 type-card-description mt-1 mb-4">Click "Ingest Content" to manually capture a lead, or send data to <code className="text-teal-400">/api/engine/ingest</code></p>
-                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-ui font-semibold">
+                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-ui font-semibold">
                         Ingest First Content
                     </button>
                 </div>
@@ -304,7 +304,7 @@ export default function IngestionPanel() {
                                                         }}
                                                         className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${event.lead_id ? (selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-[var(--ws-border)] hover:border-slate-500') : 'border-[var(--ws-border)] hover:border-slate-500'}`}
                                                     >
-                                                        {event.lead_id && selectedLeadIds.includes(event.lead_id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                                                        {event.lead_id && selectedLeadIds.includes(event.lead_id) && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--ws-text-primary)]" />}
                                                     </div>
                                         )}
                                     </div>

@@ -859,7 +859,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
   return (
     <div
       data-tour="messages"
-      className="h-[100dvh] md:h-[calc(100dvh-140px)] flex flex-col bg-[var(--ws-canvas)] rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl relative border-0 md:border border-white/10"
+      className="h-[100dvh] md:h-[calc(100dvh-140px)] flex flex-col bg-[var(--ws-canvas)] rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl relative border-0 md:border border-[var(--ws-border)]"
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -872,7 +872,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl type-ui font-semibold transition-all ${
               adminView === "messages"
                 ? "bg-teal-500/20 text-teal-400 border border-teal-500/30"
-                : "text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]"
+                : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]"
             }`}
           >
             <MessageSquare className="w-4 h-4" /> Messages
@@ -882,7 +882,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             className={`flex items-center gap-2 px-4 py-2 rounded-xl type-ui font-semibold transition-all ${
               adminView === "campaigns"
                 ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                : "text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]"
+                : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]"
             }`}
           >
             <Mail className="w-4 h-4" /> Campaigns
@@ -907,7 +907,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             {/* Drag Overlay */}
             {isDragging && (
               <div className="absolute inset-0 z-50 bg-teal-500/20 backdrop-blur-sm border-2 border-teal-500 border-dashed m-4 rounded-xl flex items-center justify-center pointer-events-none">
-                <div className="text-white font-bold text-xl flex flex-col items-center gap-4 animate-bounce">
+                <div className="text-[var(--ws-text-primary)] font-bold text-xl flex flex-col items-center gap-4 animate-bounce">
                   <Paperclip className="w-12 h-12" />
                   Drop files to attach
                 </div>
@@ -919,11 +919,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
               <div
                 className={`${
                   isMobile ? "w-full" : desktopSidebarOpen ? "w-80" : "w-0"
-                } border-r border-white/5 bg-[var(--ws-panel)]/50 flex flex-col z-30 relative h-full transition-all duration-300`}
+                } border-r border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex flex-col z-30 relative h-full transition-all duration-300`}
               >
-                <div className="p-4 border-b border-white/5">
+                <div className="p-4 border-b border-[var(--ws-border)]">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white font-bold flex items-center gap-2">
+                    <h3 className="text-[var(--ws-text-primary)] font-bold flex items-center gap-2">
                       <MessageSquare className="w-5 h-5 text-teal-400" />{" "}
                       Messages
                     </h3>
@@ -932,22 +932,22 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     </p>
                     <button
                       onClick={() => setDesktopSidebarOpen(false)}
-                      className="hidden md:block p-1 text-[var(--ws-text-muted)] hover:text-white transition-colors"
+                      className="hidden md:block p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                       aria-label="Close sidebar"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="mt-4 flex bg-[var(--ws-surface-secondary)]/50 p-1 rounded-xl border border-white/5">
+                  <div className="mt-4 flex bg-[var(--ws-surface-secondary)]/50 p-1 rounded-xl border border-[var(--ws-border)]">
                     <button
                       onClick={() => setSidebarTab("chats")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "chats" ? "bg-teal-500 text-white shadow-lg" : "text-[var(--ws-text-muted)] hover:text-white"}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "chats" ? "bg-teal-500 text-[var(--text-inverse)] shadow-lg" : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"}`}
                     >
                       <MessageSquare className="w-3.5 h-3.5" /> Recent
                     </button>
                     <button
                       onClick={() => setSidebarTab("contacts")}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "contacts" ? "bg-teal-500 text-white shadow-lg" : "text-[var(--ws-text-muted)] hover:text-white"}`}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg type-caption font-medium transition-all ${sidebarTab === "contacts" ? "bg-teal-500 text-[var(--text-inverse)] shadow-lg" : "text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"}`}
                     >
                       <Users className="w-3.5 h-3.5" /> Contacts
                     </button>
@@ -955,7 +955,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                   <div className="relative mt-4">
                     <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-3" />
                     <input
-                      className="w-full bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-lg pl-9 pr-4 py-2 type-ui text-white focus:outline-none focus:border-teal-500"
+                      className="w-full bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-lg pl-9 pr-4 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500"
                       placeholder={
                         sidebarTab === "chats"
                           ? "Search chats..."
@@ -1010,7 +1010,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4
-                            className={`type-ui font-medium truncate ${selectedClient?.id === client.id ? "text-white" : "text-[var(--ws-text-secondary)]"}`}
+                            className={`type-ui font-medium truncate ${selectedClient?.id === client.id ? "text-[var(--ws-text-primary)]" : "text-[var(--ws-text-secondary)]"}`}
                           >
                             {client.name}
                           </h4>
@@ -1053,7 +1053,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                               }}
                               className={`p-3 md:p-4 flex items-center gap-3 cursor-pointer transition-all border-b border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]/50 ${selectedCRMContact?.id === contact.id ? "bg-teal-500/10 border-l-2 border-l-teal-500" : "border-l-2 border-l-transparent"}`}
                             >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold type-ui">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-[var(--text-inverse)] font-bold type-ui">
                                 {(contact.name || "?").charAt(0)}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -1090,16 +1090,16 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           onClick={() => {
                             setSelectedCRMContact(null);
                           }}
-                          className="p-1 text-[var(--ws-text-muted)] hover:text-white"
+                          className="p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                         >
                           <ArrowLeft className="w-5 h-5" />
                         </button>
                       )}
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-white font-bold type-ui">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-violet-600 flex items-center justify-center text-[var(--text-inverse)] font-bold type-ui">
                         {selectedCRMContact.name.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="text-white font-bold type-ui">
+                        <h3 className="text-[var(--ws-text-primary)] font-bold type-ui">
                           {selectedCRMContact.name}
                         </h3>
                         <p className="type-card-description text-[var(--ws-text-muted)]">
@@ -1122,7 +1122,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           className={`px-3 py-1.5 type-caption font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
                             activeChannel === id
                               ? "text-teal-400 border-teal-400 bg-teal-500/10"
-                              : "text-[var(--ws-text-muted)] border-transparent hover:text-white hover:bg-[var(--ws-surface-secondary)]"
+                              : "text-[var(--ws-text-muted)] border-transparent hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-surface-secondary)]"
                           }`}
                         >
                           {label}
@@ -1140,7 +1140,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     {isMobile && isAdmin && selectedClient && (
                       <button
                         onClick={() => setSelectedClient(null)}
-                        className="p-2 -ml-2 text-[var(--ws-text-secondary)] hover:text-white"
+                        className="p-2 -ml-2 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]"
                       >
                         <ArrowLeft className="w-5 h-5" />
                       </button>
@@ -1150,13 +1150,13 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                     {isAdmin && !isMobile && !desktopSidebarOpen && (
                       <button
                         onClick={() => setDesktopSidebarOpen(true)}
-                        className="p-2 text-[var(--ws-text-muted)] hover:text-white transition-colors rounded-lg hover:bg-[var(--ws-surface-secondary)]"
+                        className="p-2 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors rounded-lg hover:bg-[var(--ws-surface-secondary)]"
                       >
                         <Menu className="w-5 h-5" />
                       </button>
                     )}
 
-                    <h3 className="font-bold text-white flex items-center gap-3 text-lg overflow-hidden">
+                    <h3 className="font-bold text-[var(--ws-text-primary)] flex items-center gap-3 text-lg overflow-hidden">
                       {isAdmin ? (
                         selectedClient ? (
                           <>
@@ -1228,7 +1228,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                           id: "nexus-support",
                         });
                       }}
-                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 rounded-lg type-caption font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 rounded-lg type-caption font-bold border border-[var(--ws-border)] transition-all shadow-lg shadow-violet-900/5"
                     >
                       <Bot className="w-3.5 h-3.5" />
                       Nexus Triage
@@ -1242,8 +1242,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         onClick={() => setAutoReplyEnabled(!autoReplyEnabled)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full type-caption font-bold transition-all ${
                           autoReplyEnabled
-                            ? "bg-teal-500 text-white shadow-lg shadow-teal-500/30"
-                            : "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white border border-white/10"
+                            ? "bg-teal-500 text-[var(--text-inverse)] shadow-lg shadow-teal-500/30"
+                            : "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)]"
                         }`}
                       >
                         <Bot
@@ -1257,7 +1257,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                         disabled={isSummarizing || visibleMessages.length === 0}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full type-caption font-bold transition-all ${
                           isSummarizing
-                            ? "bg-purple-500/50 text-white"
+                            ? "bg-purple-500/50 text-[var(--ws-text-primary)]"
                             : "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
                         }`}
                       >
@@ -1300,7 +1300,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             </div>
                             <button
                               onClick={() => setConversationSummary(null)}
-                              className="text-[var(--ws-text-muted)] hover:text-white"
+                              className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -1414,14 +1414,14 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                   prev.filter((_, i) => i !== idx),
                                 )
                               }
-                              className="absolute -top-2 -right-2 bg-[var(--error-500)] text-white rounded-full p-0.5 opacity-0 group-hover/preview:opacity-100 transition-opacity"
+                              className="absolute -top-2 -right-2 bg-[var(--error-500)] text-[var(--text-inverse)] rounded-full p-0.5 opacity-0 group-hover/preview:opacity-100 transition-opacity"
                             >
                               <X size={12} />
                             </button>
                           </div>
                         ))}
                         {isUploading && (
-                          <div className="w-16 h-16 rounded-lg border border-white/10 flex items-center justify-center bg-[var(--ws-surface-secondary)]">
+                          <div className="w-16 h-16 rounded-lg border border-[var(--ws-border)] flex items-center justify-center bg-[var(--ws-surface-secondary)]">
                             <Loader2 className="animate-spin text-teal-500" />
                           </div>
                         )}
@@ -1505,7 +1505,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                       </div>
 
                       <textarea
-                        className="flex-1 min-w-0 bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 type-ui text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 focus:bg-[var(--ws-surface-tertiary)] transition-all hover:bg-[var(--ws-surface-tertiary)] resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
+                        className="flex-1 min-w-0 bg-[var(--ws-surface-secondary)] border border-slate-600 rounded-xl px-3 md:px-4 py-2 md:py-3 type-ui text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 focus:bg-[var(--ws-surface-tertiary)] transition-all hover:bg-[var(--ws-surface-tertiary)] resize-none h-[44px] md:h-[50px] min-h-[44px] md:min-h-[50px] max-h-[120px] md:max-h-[150px]"
                         placeholder="Type your message..."
                         rows={1}
                         value={newMessage}
@@ -1528,7 +1528,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                             pendingAttachments.length === 0) ||
                           isUploading
                         }
-                        className="p-2 md:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] md:h-[50px] w-[44px] md:w-[50px] flex items-center justify-center flex-shrink-0"
+                        className="p-2 md:p-3 bg-gradient-to-r from-teal-600 to-teal-500 text-[var(--text-inverse)] rounded-xl shadow-lg shadow-teal-500/20 hover:shadow-teal-500/40 hover:scale-105 disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-300 h-[44px] md:h-[50px] w-[44px] md:w-[50px] flex items-center justify-center flex-shrink-0"
                         aria-label="Send message"
                       >
                         <Send className="w-4 h-4 md:w-5 md:h-5" />

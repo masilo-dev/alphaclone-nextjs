@@ -179,16 +179,16 @@ const SwipeableRow: React.FC<{
   };
 
   return (
-    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-[var(--ws-panel)]/70 shadow-sm transition-colors hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]/90">
+    <div className="relative overflow-hidden group rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 shadow-sm transition-colors hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]/90">
       {entity.type === 'lead' && (
         <>
           {/* Left action (green) */}
           <motion.div style={{ opacity: leftOpacity }} className="absolute inset-y-0 left-0 w-20 bg-emerald-500 flex items-center justify-center z-0">
-            <UserCheck className="w-5 h-5 text-white" />
+            <UserCheck className="w-5 h-5 text-[var(--text-inverse)]" />
           </motion.div>
           {/* Right action (red) */}
           <motion.div style={{ opacity: rightOpacity }} className="absolute inset-y-0 right-0 w-20 bg-rose-500 flex items-center justify-center z-0">
-            <X className="w-5 h-5 text-white" />
+            <X className="w-5 h-5 text-[var(--text-inverse)]" />
           </motion.div>
         </>
       )}
@@ -206,7 +206,7 @@ const SwipeableRow: React.FC<{
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleSelect(entity); }}
-            className="flex-shrink-0 rounded-lg border border-white/5 bg-[var(--ws-canvas)]/70 p-1 text-[var(--ws-text-muted)] transition-colors hover:border-[var(--brand-blue-500)]/30 hover:text-[var(--brand-blue-400)]"
+            className="flex-shrink-0 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 p-1 text-[var(--ws-text-muted)] transition-colors hover:border-[var(--brand-blue-500)]/30 hover:text-[var(--brand-blue-400)]"
             aria-label={isSelected ? 'Deselect' : 'Select'}
           >
             {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
@@ -215,7 +215,7 @@ const SwipeableRow: React.FC<{
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div className={`w-11 h-11 rounded-2xl ${hashColor(entity.name)} flex items-center justify-center shadow-inner ring-1 ring-white/5`}>
-            <span className="type-caption font-black text-white">{getInitials(entity.name)}</span>
+            <span className="type-caption font-black text-[var(--ws-text-primary)]">{getInitials(entity.name)}</span>
           </div>
           <OnlineStatusBadge
             status={status}
@@ -228,7 +228,7 @@ const SwipeableRow: React.FC<{
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <span className="block type-ui font-bold text-white truncate">{entity.name}</span>
+              <span className="block type-ui font-bold text-[var(--ws-text-primary)] truncate">{entity.name}</span>
               <span className="block type-ui text-[var(--ws-text-muted)] truncate">
                 {entity.company || 'Private account'}
               </span>
@@ -405,10 +405,10 @@ const LeadDetail: React.FC<{
   };
 
   const leadActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-[var(--ws-border)]' : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
         onClick={() => onUpdate(lead.id, 'contacted')}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--ws-border)] py-2' : 'py-3.5'}`}
       >
         <Phone className="w-5 h-5 text-amber-400" />
         <span className="type-ui text-[var(--ws-text-muted)] font-bold">Mark Contacted</span>
@@ -422,7 +422,7 @@ const LeadDetail: React.FC<{
       </button>
       <button
         onClick={() => onUpdate(lead.id, 'disqualified')}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--ws-border)] py-2' : 'py-3.5'}`}
       >
         <X className="w-5 h-5 text-rose-500" />
         <span className="type-ui text-[var(--ws-text-muted)] font-bold">Disqualify</span>
@@ -433,11 +433,11 @@ const LeadDetail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
+      <div className="flex items-center gap-3 p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] transition-colors">
           <ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" />
         </button>
-        <span className="type-ui font-bold text-white">Lead Details</span>
+        <span className="type-ui font-bold text-[var(--ws-text-primary)]">Lead Details</span>
       </div>
       )}
 
@@ -467,7 +467,7 @@ const LeadDetail: React.FC<{
 
         <div className="flex flex-col items-center gap-2 py-2">
           <div className={`w-16 h-16 rounded-[14px] ${hashColor(lead.name)} flex items-center justify-center`}>
-            <span className="text-xl font-bold text-white">{getInitials(lead.name)}</span>
+            <span className="text-xl font-bold text-[var(--ws-text-primary)]">{getInitials(lead.name)}</span>
           </div>
           {lead.source ? (
             <span className="flex items-center gap-1">
@@ -509,7 +509,7 @@ const LeadDetail: React.FC<{
               type="button"
               onClick={() => void handleSaveLead()}
               disabled={saving || !name.trim()}
-              className="w-full min-h-11 rounded-[10px] bg-[var(--brand-blue-500)] text-white type-ui font-semibold disabled:opacity-50"
+              className="w-full min-h-11 rounded-[10px] bg-[var(--brand-blue-500)] text-[var(--text-inverse)] type-ui font-semibold disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>
@@ -527,7 +527,7 @@ const LeadDetail: React.FC<{
         </div>
 
         {/* Read-only metadata */}
-        <div className="bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl divide-y divide-white/5">
           <div className="flex items-center gap-3 p-4">
             <Clock className="w-5 h-5 text-[var(--ws-text-muted)] flex-shrink-0" />
             <div>
@@ -554,7 +554,7 @@ const LeadDetail: React.FC<{
             <Activity className="w-4 h-4 text-[var(--brand-blue-400)]" />
             <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Activity History</span>
           </div>
-          <div className="bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl p-4">
+          <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4">
             {loadingActivities ? (
               <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption py-4 justify-center">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading history…
@@ -747,13 +747,13 @@ const Client360Detail: React.FC<{
   };
 
   const clientActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-[var(--ws-canvas)]/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-white/5` : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-[var(--ws-canvas)]/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-[var(--ws-border)]` : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-[var(--ws-border)] divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
         onClick={() => {
           if (inDrawer) onBack();
           onNewDeal(client);
         }}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--ws-border)] py-2' : 'py-3.5'}`}
       >
         <TrendingUp className="w-5 h-5 text-emerald-400" />
         <span className="type-ui text-[var(--ws-text-muted)] font-bold">Add Deal</span>
@@ -773,7 +773,7 @@ const Client360Detail: React.FC<{
           if (inDrawer) onBack();
           router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/billing/manage' : '/dashboard/finance'}?create=1&clientId=${encodeURIComponent(client.id)}`);
         }}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--ws-border)] py-2' : 'py-3.5'}`}
       >
         <DollarSign className="w-5 h-5 text-blue-400" />
         <span className="type-ui text-[var(--ws-text-muted)] font-bold">Create Invoice</span>
@@ -784,11 +784,11 @@ const Client360Detail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
+      <div className="flex items-center gap-3 p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] transition-colors">
           <ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" />
         </button>
-        <span className="type-ui font-bold text-white">Client 360 Workspace</span>
+        <span className="type-ui font-bold text-[var(--ws-text-primary)]">Client 360 Workspace</span>
       </div>
       )}
 
@@ -817,7 +817,7 @@ const Client360Detail: React.FC<{
 
         <div className="flex flex-col items-center gap-2 py-2">
           <div className={`w-16 h-16 rounded-[14px] ${hashColor(client.name)} flex items-center justify-center relative`}>
-            <span className="text-xl font-bold text-white">{getInitials(client.name)}</span>
+            <span className="text-xl font-bold text-[var(--ws-text-primary)]">{getInitials(client.name)}</span>
             <OnlineStatusBadge
               status={status}
               size="lg"
@@ -872,7 +872,7 @@ const Client360Detail: React.FC<{
             <select
               value={salesStage}
               onChange={(e) => setSalesStage(e.target.value as BusinessClient['sales_stage'])}
-              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
             >
               {(['lead', 'prospect', 'customer', 'lost'] as const).map((stage) => (
                 <option key={stage} value={stage}>{stage}</option>
@@ -886,14 +886,14 @@ const Client360Detail: React.FC<{
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Account notes…"
-              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl type-caption text-[var(--ws-text-primary)] placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
             />
           </div>
           <button
             type="button"
             onClick={() => void handleSaveClient()}
             disabled={savingClient || !name.trim()}
-            className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] text-white type-ui font-semibold disabled:opacity-50"
+            className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] text-[var(--text-inverse)] type-ui font-semibold disabled:opacity-50"
           >
             {savingClient ? 'Saving…' : 'Save changes'}
           </button>
@@ -947,11 +947,11 @@ const Client360Detail: React.FC<{
         />
 
         {/* AI Propensity & Health Panel */}
-        <div className={`bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl ${isInstalledMobileCompanion ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}>
+        <div className={`bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl ${isInstalledMobileCompanion ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
-              <h3 className="type-ui font-bold text-white">AI Client Health Insight</h3>
+              <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">AI Client Health Insight</h3>
             </div>
             {loadingAi && <Loader2 className="w-4 h-4 text-[var(--ws-text-muted)] animate-spin" />}
           </div>
@@ -1031,11 +1031,11 @@ const Client360Detail: React.FC<{
         {/* Financial Portfolio Metrics */}
         {profile360 && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[var(--ws-panel)]/40 p-4 border border-white/5 rounded-2xl">
+            <div className="bg-[var(--ws-panel)]/40 p-4 border border-[var(--ws-border)] rounded-2xl">
               <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Lifetime Value</span>
-              <span className="text-lg font-black text-white mt-1 block">${profile360.lifetime_value.toLocaleString()}</span>
+              <span className="text-lg font-black text-[var(--ws-text-primary)] mt-1 block">${profile360.lifetime_value.toLocaleString()}</span>
             </div>
-            <div className="bg-[var(--ws-panel)]/40 p-4 border border-white/5 rounded-2xl">
+            <div className="bg-[var(--ws-panel)]/40 p-4 border border-[var(--ws-border)] rounded-2xl">
               <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Active Deals</span>
               <span className="text-lg font-black text-[var(--brand-blue-400)] mt-1 block">
                 {profile360.active_deals_count} (${profile360.active_deals_value.toLocaleString()})
@@ -1049,7 +1049,7 @@ const Client360Detail: React.FC<{
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-[var(--brand-blue-400)]" />
-              <h3 className="type-ui font-bold text-white">Customer workspace</h3>
+              <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Customer workspace</h3>
             </div>
             <button
               type="button"
@@ -1071,12 +1071,12 @@ const Client360Detail: React.FC<{
               Loading activity…
             </div>
           ) : profile360?.timeline && profile360.timeline.length > 0 ? (
-            <div className="relative border-l border-white/5 pl-4 ml-2 space-y-5 py-2">
+            <div className="relative border-l border-[var(--ws-border)] pl-4 ml-2 space-y-5 py-2">
               {profile360.timeline.map((event) => (
                 <div key={event.id} className="relative">
                   <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[var(--brand-blue-500)] ring-4 ring-slate-950" />
                   <div className="flex flex-col gap-0.5">
-                    <span className="type-caption font-bold text-white">{event.title}</span>
+                    <span className="type-caption font-bold text-[var(--ws-text-primary)]">{event.title}</span>
                     <span className="type-ui text-[var(--ws-text-muted)]">{event.description}</span>
                     <span className="type-ui text-[var(--ws-text-muted)]">
                       {new Date(event.timestamp).toLocaleDateString()} at {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1086,7 +1086,7 @@ const Client360Detail: React.FC<{
               ))}
             </div>
           ) : (
-            <div className="bg-[var(--ws-panel)]/30 p-6 rounded-2xl border border-white/5 border-dashed text-center text-[var(--ws-text-muted)] type-caption">
+            <div className="bg-[var(--ws-panel)]/30 p-6 rounded-2xl border border-[var(--ws-border)] border-dashed text-center text-[var(--ws-text-muted)] type-caption">
               {HUMAN_LABELS.needsResponse.replace('Customers', 'Start a conversation — messages and activity will appear here')}
             </div>
           )}
@@ -1136,7 +1136,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
               value={industry}
               onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. Technology, Finance, E-commerce"
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
@@ -1147,7 +1147,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
               value={value}
               onChange={e => setValue(e.target.value)}
               placeholder="Target contract value"
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
@@ -1160,7 +1160,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
             </button>
             <button
               onClick={() => onConfirm(lead.id, { industry, value: parseFloat(value) || 0 })}
-              className="flex-1 py-2.5 type-caption font-bold text-white bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
+              className="flex-1 py-2.5 type-caption font-bold text-[var(--text-inverse)] bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
             >
               Qualify Account
             </button>
@@ -1220,12 +1220,12 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
       title="Add Entity to CRM"
     >
       <div className="space-y-4 pt-2">
-        <div className="flex border border-white/5 p-1 rounded-xl bg-[var(--ws-canvas)]">
+        <div className="flex border border-[var(--ws-border)] p-1 rounded-xl bg-[var(--ws-canvas)]">
           {(['lead', 'client'] as const).map(t => (
             <button
               key={t}
               onClick={() => setType(t)}
-              className={`flex-1 py-1.5 type-caption font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)]'}`}
+              className={`flex-1 py-1.5 type-caption font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)]'}`}
             >
               {t}
             </button>
@@ -1278,7 +1278,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
             <select
               value={source}
               onChange={e => setSource(e.target.value)}
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             >
               {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
                 <option key={src} value={src}>{src}</option>
@@ -1293,7 +1293,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
                 placeholder="e.g. Real Estate"
-                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
 
@@ -1304,7 +1304,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="e.g. 5000"
-                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
           </>
@@ -1319,7 +1319,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2.5 type-caption font-bold text-white bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
+            className="flex-1 py-2.5 type-caption font-bold text-[var(--text-inverse)] bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
           >
             Save Record
           </button>
@@ -1388,10 +1388,10 @@ const KanbanCard: React.FC<{
           </button>
         )}
         <div className={`w-8 h-8 rounded-lg ${hashColor(lead.name)} flex items-center justify-center flex-shrink-0`}>
-          <span className="type-ui font-black text-white">{getInitials(lead.name)}</span>
+          <span className="type-ui font-black text-[var(--ws-text-primary)]">{getInitials(lead.name)}</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="type-card-description font-bold text-white truncate">{lead.name}</p>
+          <p className="type-card-description font-bold text-[var(--ws-text-primary)] truncate">{lead.name}</p>
           <p className="type-card-description text-[var(--ws-text-muted)] truncate">{lead.company || lead.business_name || lead.email || '—'}</p>
         </div>
       </div>
@@ -2299,7 +2299,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         stats={null}
         toolbar={(
           <>
-            <div className="flex overflow-x-auto border-b border-white/5 ios-scroll">
+            <div className="flex overflow-x-auto border-b border-[var(--ws-border)] ios-scroll">
               {([
                 { key: 'leads', label: t('Leads'), count: leads.length },
                 { key: 'clients', label: t('Customers'), count: activeClientsCount },
@@ -2330,7 +2330,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               type="button"
               onClick={handleSyncOutlookContacts}
               disabled={isSyncingContacts}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-2 type-caption font-bold text-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-3 py-2 type-caption font-bold text-[var(--ws-text-primary)] disabled:opacity-60"
             >
               {isSyncingContacts ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
               Sync from Outlook
@@ -2346,7 +2346,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-muted)]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="p-1 text-[var(--ws-text-muted)] hover:text-white">
+            <button onClick={() => setSearch('')} className="p-1 text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
@@ -2363,7 +2363,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   onClick={() => setFilter(f.value)}
                   className={`flex-shrink-0 h-8 px-3.5 rounded-full type-caption font-bold transition-all border ${
                     filter === f.value
-                      ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
+                      ? 'bg-[var(--brand-blue-600)] text-[var(--text-inverse)] border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
                       : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                   }`}
                 >
@@ -2376,7 +2376,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <button
                   key={v}
                   onClick={() => setLeadsView(v)}
-                  className={`px-2.5 h-7 rounded-md type-caption font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
+                  className={`px-2.5 h-7 rounded-md type-caption font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-[var(--brand-blue-500)] text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                 >
                   {v}
                 </button>
@@ -2407,7 +2407,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 onClick={() => setAccountFilter(f.value)}
                 className={`flex-shrink-0 h-8 px-3.5 rounded-full type-caption font-bold transition-all border ${
                   accountFilter === f.value
-                    ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
+                    ? 'bg-[var(--brand-blue-600)] text-[var(--text-inverse)] border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
                     : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                 }`}
               >
@@ -2429,7 +2429,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   setSelectedKeys(new Set(bulkSelectTargetKeys));
                 }
               }}
-              className="inline-flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
             >
               {allBulkSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
               {allBulkSelected ? 'Deselect all' : `Select all (${bulkSelectTargetKeys.length})`}
@@ -2547,7 +2547,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       )}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">{entity.name}</p>
+                      <p className="font-semibold text-[var(--ws-text-primary)]">{entity.name}</p>
                       <p className="type-card-description text-[var(--ws-text-muted)]">{entity.email || entity.phone || '-'}</p>
                     </div>
                     <span className={`type-caption px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)]' : 'bg-slate-500/20 text-[var(--ws-text-muted)]'}`}>
@@ -2584,7 +2584,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 type="button"
                 disabled={loadingMoreLeads}
                 onClick={() => void loadMoreLeadPage()}
-                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-white disabled:opacity-50 bg-[var(--ws-panel)]/40 border-t border-white/5 transition-colors"
+                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] disabled:opacity-50 bg-[var(--ws-panel)]/40 border-t border-[var(--ws-border)] transition-colors"
               >
                 {loadingMoreLeads ? t('Loading more') : `${t('Showing')} ${leads.length.toLocaleString()} / ${leadTotal.toLocaleString()} — ${t('load more')}`}
               </button>
@@ -2592,7 +2592,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               <button
                 type="button"
                 onClick={loadMoreEntities}
-                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-white bg-[var(--ws-panel)]/40 border-t border-white/5 transition-colors"
+                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] bg-[var(--ws-panel)]/40 border-t border-[var(--ws-border)] transition-colors"
               >
                 {t('Showing')} {Math.min(visibleCount, filteredEntities.length)} / {filteredEntities.length} — {t('scroll to load more')}
               </button>
@@ -2607,7 +2607,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         onClick={() => setIsCreateOpen(true)}
         className="fixed bottom-20 right-4 md:absolute md:bottom-6 md:right-6 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/20 z-40 hover:bg-[var(--brand-blue-400)] active:scale-95 transition-all"
       >
-        <UserPlus className="w-6 h-6 text-white" />
+        <UserPlus className="w-6 h-6 text-[var(--text-inverse)]" />
       </button>
 
       {/* Qualify dialog */}

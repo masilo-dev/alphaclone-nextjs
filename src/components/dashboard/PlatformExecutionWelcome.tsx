@@ -103,7 +103,7 @@ export function PlatformExecutionWelcome({
               dismiss();
               requestPlatformTour();
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--interactive-secondary,var(--brand-teal))] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--interactive-secondary-hover)]"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--interactive-secondary,var(--brand-teal))] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[var(--text-inverse)] shadow-sm transition hover:bg-[var(--interactive-secondary-hover)]"
           >
             <Compass className="h-3.5 w-3.5" />
             {t('Take tour')}

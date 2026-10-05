@@ -394,7 +394,7 @@ export default function WorkflowDashboard() {
             <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl w-fit">
                 {(['workflows', 'log'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-[var(--ws-text-muted)] hover:text-white'}`}>
+                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-[var(--text-inverse)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}>
                         {tab === 'workflows' ? `Workflows (${workflows.length})` : `Execution Log (${executions.length})`}
                     </button>
                 ))}
@@ -404,8 +404,8 @@ export default function WorkflowDashboard() {
             {showForm && (
                 <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-5">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-white">New Workflow</h3>
-                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-white"><X className="w-4 h-4" /></button>
+                        <h3 className="font-bold text-[var(--ws-text-primary)]">New Workflow</h3>
+                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"><X className="w-4 h-4" /></button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -413,12 +413,12 @@ export default function WorkflowDashboard() {
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Name *</label>
                             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. High-Intent Lead Alert"
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
                             <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Trigger *</label>
                             <select value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value as TriggerType }))}
-                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500 type-ui">
                                 {Object.entries(TRIGGER_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                             </select>
                         </div>
@@ -439,14 +439,14 @@ export default function WorkflowDashboard() {
                             <div key={i} className="flex gap-2 mb-2">
                                 <input value={c.field} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], field: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="field (e.g. intent_label)"
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500" />
                                 <select value={c.operator} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], operator: e.target.value as WorkflowCondition['operator'] }; return { ...f, conditions: conds }; })}
-                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
+                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500">
                                     {['equals','not_equals','contains','greater_than','less_than','exists'].map(op => <option key={op} value={op}>{op}</option>)}
                                 </select>
                                 <input value={String(c.value)} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], value: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="value"
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500" />
                                 <button onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
@@ -463,14 +463,14 @@ export default function WorkflowDashboard() {
                         {form.actions.map((a, i) => (
                             <div key={i} className="flex gap-2 mb-2">
                                 <select value={a.type} onChange={e => setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], type: e.target.value as ActionType }; return { ...f, actions: acts }; })}
-                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
+                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption focus:outline-none focus:border-teal-500">
                                     {Object.entries(ACTION_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                                 </select>
                                 <input
                                     value={JSON.stringify(a.config)}
                                     onChange={e => { try { const cfg = JSON.parse(e.target.value); setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], config: cfg }; return { ...f, actions: acts }; }); } catch { } }}
                                     placeholder='{"message":"{{contact_name}} signed up"}'
-                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption font-mono focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-primary)] type-caption font-mono focus:outline-none focus:border-teal-500" />
                                 <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
@@ -479,7 +479,7 @@ export default function WorkflowDashboard() {
 
                     <div className="flex gap-3">
                         <button onClick={handleSave} disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-white rounded-xl font-semibold type-ui">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-[var(--text-inverse)] rounded-xl font-semibold type-ui">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                             {saving ? 'Saving...' : 'Create Workflow'}
                         </button>
@@ -497,7 +497,7 @@ export default function WorkflowDashboard() {
                             <p className="text-[var(--ws-text-muted)] font-semibold">No workflows yet</p>
                             <p className="text-slate-600 type-card-description mt-1 mb-4">Start with our default templates or create your own.</p>
                             <button onClick={seedDefaults} disabled={seeding}
-                                className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-ui font-semibold">
+                                className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-[var(--text-inverse)] rounded-xl type-ui font-semibold">
                                 Load Default Workflows
                             </button>
                         </div>
@@ -511,7 +511,7 @@ export default function WorkflowDashboard() {
                                 </button>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <p className="font-semibold text-white type-card-description">{wf.name}</p>
+                                        <p className="font-semibold text-[var(--ws-text-primary)] type-card-description">{wf.name}</p>
                                         <span className={`type-caption px-2 py-0.5 rounded-full border ${wf.is_active ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                             {wf.is_active ? 'Active' : 'Paused'}
                                         </span>
@@ -572,7 +572,7 @@ export default function WorkflowDashboard() {
             {activeTab === 'log' && (
                 <div className="space-y-2">
                     <div className="flex justify-end">
-                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-muted)] hover:text-white">
+                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
                             <RefreshCw className="w-3 h-3" /> Refresh
                         </button>
                     </div>

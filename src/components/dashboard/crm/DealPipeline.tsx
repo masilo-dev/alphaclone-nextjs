@@ -68,11 +68,11 @@ const DealCard: React.FC<{
       className="dashboard-panel-soft p-4 space-y-3 hover:border-teal-500/30 transition-colors group"
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="type-ui font-bold text-white truncate flex-1">{deal.name}</h4>
+        <h4 className="type-ui font-bold text-[var(--ws-text-primary)] truncate flex-1">{deal.name}</h4>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(deal)}
-            className="p-1.5 rounded-lg hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
@@ -87,7 +87,7 @@ const DealCard: React.FC<{
 
       <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
         <DollarSign className="w-3.5 h-3.5 text-teal-400" />
-        <span className="font-bold text-white">${deal.value.toLocaleString()}</span>
+        <span className="font-bold text-[var(--ws-text-primary)]">${deal.value.toLocaleString()}</span>
         <span className="text-slate-600">•</span>
         <Target className="w-3.5 h-3.5 text-purple-400" />
         <span>{deal.probability}%</span>
@@ -183,11 +183,11 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="dashboard-panel w-full max-w-md overflow-hidden shadow-2xl">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="type-ui font-bold text-white">
+        <div className="p-4 border-b border-[var(--ws-border)] flex items-center justify-between">
+          <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">
             {initialDeal ? 'Edit Deal' : 'Create Deal'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white">
+          <button onClick={onClose} className="p-1 rounded bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -199,7 +199,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g. Acme Corp - Q4 Contract"
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
@@ -211,7 +211,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="25000"
-                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
               />
             </div>
             <div className="space-y-1">
@@ -223,7 +223,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
                 value={probability}
                 onChange={e => setProbability(e.target.value)}
                 placeholder="50"
-                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
             <select
               value={stage}
               onChange={e => setStage(e.target.value as Deal['stage'])}
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500/50"
             >
               {STAGES.map(s => (
                 <option key={s.key} value={s.key}>{s.label}</option>
@@ -247,7 +247,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
               type="date"
               value={expectedCloseDate}
               onChange={e => setExpectedCloseDate(e.target.value)}
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
@@ -257,7 +257,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
               value={contactName}
               onChange={e => setContactName(e.target.value)}
               placeholder="e.g. John Smith"
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
@@ -268,7 +268,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
               value={contactEmail}
               onChange={e => setContactEmail(e.target.value)}
               placeholder="john@acme.com"
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50"
             />
           </div>
 
@@ -279,12 +279,12 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
               onChange={e => setNotes(e.target.value)}
               placeholder="Any additional context..."
               rows={3}
-              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-teal-500/50 resize-none"
+              className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-ui text-[var(--ws-text-primary)] focus:outline-none focus:border-teal-500/50 resize-none"
             />
           </div>
         </div>
 
-        <div className="p-4 border-t border-white/5 bg-[var(--ws-canvas)]/40 flex gap-2">
+        <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 py-2 type-caption font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] rounded-xl hover:bg-[var(--ws-surface-tertiary)] transition-colors"
@@ -293,7 +293,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2 type-caption font-bold text-white bg-teal-500 rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors shadow-lg shadow-teal-500/10"
+            className="flex-1 py-2 type-caption font-bold text-[var(--text-inverse)] bg-teal-500 rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors shadow-lg shadow-teal-500/10"
           >
             {initialDeal ? 'Update Deal' : 'Create Deal'}
           </button>
@@ -433,7 +433,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white">Deal Pipeline</h2>
+          <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">Deal Pipeline</h2>
           <p className="type-card-description text-[var(--ws-text-muted)]">
             {filteredDeals.length} deals · ${totalPipelineValue.toLocaleString()} total value
           </p>
@@ -457,7 +457,7 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Search deals..."
-          className="w-full bg-[var(--ws-panel)] border border-white/5 rounded-xl px-4 py-2.5 type-ui text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50"
+          className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-[var(--ws-text-primary)] placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50"
         />
       </div>
 

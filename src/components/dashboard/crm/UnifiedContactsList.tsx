@@ -183,7 +183,7 @@ export default function UnifiedContactsList({
     <div className="space-y-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="type-ui font-bold text-white">Unified directory</h3>
+          <h3 className="type-ui font-bold text-[var(--ws-text-primary)]">Unified directory</h3>
           <p className="type-card-description text-[var(--ws-text-muted)]">
             CRM contacts and sales clients in one paginated directory. No browser-side 1,000-record ceiling.
           </p>
@@ -195,13 +195,13 @@ export default function UnifiedContactsList({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search name, email or phone"
-              className="w-full rounded-xl border border-white/10 bg-[var(--ws-canvas)] py-2 pl-9 pr-3 type-ui text-white"
+              className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] py-2 pl-9 pr-3 type-ui text-[var(--ws-text-primary)]"
             />
           </div>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex items-center gap-1 rounded-xl border border-white/10 px-3 py-2 type-caption font-bold text-[var(--ws-text-secondary)]"
+            className="inline-flex items-center gap-1 rounded-xl border border-[var(--ws-border)] px-3 py-2 type-caption font-bold text-[var(--ws-text-secondary)]"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -230,10 +230,10 @@ export default function UnifiedContactsList({
               key={`${row.source}-${row.id}-${row.business_client_id || 'none'}`}
               type="button"
               onClick={() => openRow(row)}
-              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-[var(--ws-canvas)]/70 px-4 py-3 text-left transition hover:border-teal-500/30"
+              className="flex w-full items-center justify-between rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)]/70 px-4 py-3 text-left transition hover:border-teal-500/30"
             >
               <div className="min-w-0">
-                <p className="truncate font-semibold text-white">{row.full_name}</p>
+                <p className="truncate font-semibold text-[var(--ws-text-primary)]">{row.full_name}</p>
                 <p className="truncate type-card-description text-[var(--ws-text-muted)]">
                   {[row.email, row.phone].filter(Boolean).join(' · ') || 'No email or phone'}
                 </p>
@@ -251,12 +251,12 @@ export default function UnifiedContactsList({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="flex items-center justify-between gap-3 border-t border-[var(--ws-border)] pt-4">
         <button
           type="button"
           disabled={!hasPrevious || loading}
           onClick={() => setPage((value) => Math.max(1, value - 1))}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" />
           Previous
@@ -266,7 +266,7 @@ export default function UnifiedContactsList({
           type="button"
           disabled={!hasNext || loading}
           onClick={() => setPage((value) => value + 1)}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-4 py-2 type-ui font-semibold text-[var(--ws-text-secondary)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Next
           <ChevronRight className="h-4 w-4" />

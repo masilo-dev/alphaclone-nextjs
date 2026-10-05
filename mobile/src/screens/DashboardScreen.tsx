@@ -1,3 +1,4 @@
+import { colors } from '../styles/theme';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -44,10 +45,10 @@ export default function DashboardScreen() {
   }, [activeTenant, user]);
 
   const stats = [
-    { title: 'Active Projects', value: String(dashboard.activeProjects), icon: 'folder', color: '#00D2A0' },
-    { title: 'Total Leads', value: String(dashboard.totalLeads), icon: 'people', color: '#0077FF' },
-    { title: 'Revenue', value: `$${Math.round(dashboard.revenue).toLocaleString()}`, icon: 'cash', color: '#FFA500' },
-    { title: 'Tasks', value: String(dashboard.tasks), icon: 'checkmark-circle', color: '#FF6B6B' },
+    { title: 'Active Projects', value: String(dashboard.activeProjects), icon: 'folder', color: colors.primary },
+    { title: 'Total Leads', value: String(dashboard.totalLeads), icon: 'people', color: colors.info },
+    { title: 'Revenue', value: `$${Math.round(dashboard.revenue).toLocaleString()}`, icon: 'cash', color: colors.warning },
+    { title: 'Tasks', value: String(dashboard.tasks), icon: 'checkmark-circle', color: colors.error },
   ];
 
   const recentActivities: MobileActivity[] = dashboard.recentActivity;
@@ -55,7 +56,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#020D1A', '#0A1A2F']}
+        colors={[colors.background, colors.surface]}
         style={styles.gradient}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -72,7 +73,7 @@ export default function DashboardScreen() {
               accessibilityLabel="Open settings"
               onPress={() => navigation.navigate('Settings' as never)}
             >
-              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
+              <Ionicons name="settings-outline" size={24} color=colors.textInverse />
             </TouchableOpacity>
           </View>
 
@@ -93,7 +94,7 @@ export default function DashboardScreen() {
                 accessibilityLabel="Open projects"
                 onPress={() => navigation.navigate('Projects' as never)}
               >
-                <Ionicons name="add-circle" size={32} color="#00D2A0" />
+                <Ionicons name="add-circle" size={32} color=colors.primary />
                 <Text style={styles.actionText}>Projects</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -102,7 +103,7 @@ export default function DashboardScreen() {
                 accessibilityLabel="Open CRM"
                 onPress={() => navigation.navigate('CRM' as never)}
               >
-                <Ionicons name="person-add" size={32} color="#0077FF" />
+                <Ionicons name="person-add" size={32} color=colors.info />
                 <Text style={styles.actionText}>CRM</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -111,7 +112,7 @@ export default function DashboardScreen() {
                 accessibilityLabel="Open finance"
                 onPress={() => navigation.navigate('Finance' as never)}
               >
-                <Ionicons name="cash-outline" size={32} color="#FFA500" />
+                <Ionicons name="cash-outline" size={32} color=colors.warning />
                 <Text style={styles.actionText}>Finance</Text>
               </TouchableOpacity>
             </View>
@@ -121,7 +122,7 @@ export default function DashboardScreen() {
           <View style={styles.recentActivity}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
             {loading ? (
-              <ActivityIndicator color="#00D2A0" />
+              <ActivityIndicator color=colors.primary />
             ) : recentActivities.length > 0 ? (
               recentActivities.map((activity) => (
                 <DashboardCard key={activity.id} activity={activity} />
@@ -159,17 +160,17 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   workspaceName: {
     fontSize: 13,
-    color: '#00D2A0',
+    color: colors.primary,
     marginTop: 4,
   },
   notificationButton: {
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginBottom: 15,
   },
   actionsRow: {
@@ -204,14 +205,14 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    color: '#CBD5E1',
+    color: colors.textSecondary,
     marginTop: 5,
   },
   recentActivity: {
     marginHorizontal: 20,
   },
   emptyText: {
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontSize: 14,
   },
 });

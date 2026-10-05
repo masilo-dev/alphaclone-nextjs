@@ -31,7 +31,7 @@ export function BusinessControlCenter() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="type-caption uppercase tracking-wide text-cyan-400 font-semibold">Business Control</p>
-          <h2 className="text-xl font-bold text-white mt-1">Today</h2>
+          <h2 className="text-xl font-bold text-[var(--ws-text-primary)] mt-1">Today</h2>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-emerald-400">{data.platform_score.score}/100</p>
@@ -42,7 +42,7 @@ export function BusinessControlCenter() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 type-ui">
         {Object.entries(data.today).map(([key, val]) => (
           <div key={key} className="rounded-xl bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] p-3">
-            <p className="text-2xl font-bold text-white">{val}</p>
+            <p className="text-2xl font-bold text-[var(--ws-text-primary)]">{val}</p>
             <p className="type-card-description text-[var(--ws-text-muted)] capitalize">{key.replace(/_/g, ' ')}</p>
           </div>
         ))}
