@@ -4,7 +4,7 @@ import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiA
 import { contactSchema } from '@/schemas/validation';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
-import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileBypassToken, isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 /**
  * Public marketing site contact form handler.
@@ -112,14 +112,21 @@ export async function POST(request: NextRequest) {
     if (limited) return limited;
 
     // ── 4. Cloudflare Turnstile verification ─────────────────────────────────
+    // Marketing contact is honeypot + rate-limited. If the Turnstile widget
+    // fails to load (common Cloudflare 600010 / blocked iframe), accept the
+    // explicit client bypass sentinel so real inquiries are not lost.
     if (isTurnstileEnforced()) {
       const turnstileToken = readTurnstileToken(body);
       if (!turnstileToken) {
         return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
       }
-      const ok = await verifyTurnstileToken(turnstileToken, readClientIp(request));
-      if (!ok) {
-        return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+      if (isTurnstileBypassToken(turnstileToken)) {
+        console.warn('[contact] Accepted Turnstile bypass after widget failure');
+      } else {
+        const ok = await verifyTurnstileToken(turnstileToken, readClientIp(request));
+        if (!ok) {
+          return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+        }
       }
     }
 
@@ -130,6 +137,8 @@ export async function POST(request: NextRequest) {
       process.env.DEFAULT_TENANT_ID?.trim() ||
       null;
 
+    // Live schema uses enum submission_status ('New'|'Read'|'Replied').
+    // Optional subject/company/phone/source columns were added for marketing inquiries.
     const { data: submission, error: dbError } = await supabase
       .from('contact_submissions')
       .insert([
@@ -140,7 +149,8 @@ export async function POST(request: NextRequest) {
           subject: subject || 'General Inquiry',
           message,
           company: company || null,
-          status: 'new',
+          phone: phone || null,
+          status: 'New',
           source: 'website',
           created_at: new Date().toISOString(),
         },

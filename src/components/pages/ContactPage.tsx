@@ -8,7 +8,7 @@ import { formatLegalAddress } from '@/lib/seo/siteEntity';
 import { contactSchema } from '../../schemas/validation';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
-import TurnstileWidget from '@/components/security/TurnstileWidget';
+import TurnstileWidget, { TURNSTILE_BYPASS_TOKEN } from '@/components/security/TurnstileWidget';
 import { PUBLIC_DEMO_BOOKING_URL, isExternalHref, withPreservedQuery } from '@/lib/marketing/cta';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -37,6 +37,7 @@ const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const [turnstileUnavailable, setTurnstileUnavailable] = useState(false);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [notificationSent, setNotificationSent] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -83,7 +84,9 @@ const ContactPage: React.FC = () => {
           company: formData.company || undefined,
           phone: formData.phone || undefined,
           website: formData.website || undefined, // Honeypot
-          turnstileToken: turnstileToken || undefined,
+          turnstileToken:
+            turnstileToken ||
+            (turnstileUnavailable ? TURNSTILE_BYPASS_TOKEN : undefined),
         }),
       });
 
@@ -94,6 +97,7 @@ const ContactPage: React.FC = () => {
         setNotificationSent(payload.notificationSent !== false);
         setFormData(EMPTY_FORM);
         setTurnstileToken('');
+        setTurnstileUnavailable(false);
         setTurnstileNonce((n) => n + 1);
       } else {
         setStatus('error');
@@ -102,6 +106,7 @@ const ContactPage: React.FC = () => {
           'Something went wrong. Please try again or email us directly at info@alphaclonesystems.com.'
         );
         setTurnstileToken('');
+        setTurnstileUnavailable(false);
         setTurnstileNonce((n) => n + 1);
       }
     } catch {
@@ -122,7 +127,14 @@ const ContactPage: React.FC = () => {
   const bookingIsExternal = isExternalHref(bookingDestination);
 
   const isSubmitting = status === 'sending';
-  const submitDisabled = isSubmitting || (turnstileEnabled && !turnstileToken);
+  // Allow send when Turnstile is healthy OR when it failed over to the
+  // explicit bypass sentinel (widget timeout / Cloudflare 600010). Never
+  // leave the marketing contact form permanently stuck disabled.
+  const turnstileReady =
+    !turnstileEnabled ||
+    Boolean(turnstileToken) ||
+    turnstileUnavailable;
+  const submitDisabled = isSubmitting || !turnstileReady;
 
   return (
     <div className="min-h-screen bg-white text-[var(--marketing-text-primary)] relative overflow-hidden">
@@ -357,14 +369,33 @@ const ContactPage: React.FC = () => {
                   <TurnstileWidget
                     key={turnstileNonce}
                     className="flex justify-center"
-                    onTokenChange={setTurnstileToken}
-                    onExpire={() => setTurnstileToken('')}
-                    onError={() => setTurnstileToken('')}
+                    bypassOnError
+                    onTokenChange={(token) => {
+                      setTurnstileToken(token);
+                      if (token === TURNSTILE_BYPASS_TOKEN) {
+                        setTurnstileUnavailable(true);
+                      } else if (token) {
+                        setTurnstileUnavailable(false);
+                      }
+                    }}
+                    onExpire={() => {
+                      setTurnstileToken('');
+                      setTurnstileUnavailable(false);
+                    }}
+                    onError={() => {
+                      setTurnstileUnavailable(true);
+                      setTurnstileToken(TURNSTILE_BYPASS_TOKEN);
+                    }}
                   />
                 )}
-                {turnstileEnabled && !turnstileToken && (
+                {turnstileEnabled && !turnstileToken && !turnstileUnavailable && (
                   <p className="type-ui text-[var(--marketing-text-on-light)]" role="status">
                     {t('Complete the security check to send your message. If it does not load, email info@alphaclonesystems.com directly.')}
+                  </p>
+                )}
+                {turnstileEnabled && turnstileUnavailable && (
+                  <p className="type-ui text-[var(--marketing-text-on-light)]" role="status">
+                    {t('Security check unavailable — you can still send your message. We also monitor submissions by rate limit and spam filters.')}
                   </p>
                 )}
 
