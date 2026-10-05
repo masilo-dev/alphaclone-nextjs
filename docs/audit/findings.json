@@ -1,0 +1,156 @@
+[
+  {
+    "verdict": "confirmed",
+    "fingerprint": "SUP-RLS-001:data_requests",
+    "title": "Public tables without Row Level Security",
+    "description": "Catalog reports two public tables with RLS disabled: data_requests and tenant_isolation_quarantine.",
+    "root_cause": "RLS not enabled on compliance/quarantine tables; server routes use service role for inserts.",
+    "intended_behavior": "Compliance submissions stored with restricted read access; quarantine table internal-only.",
+    "severity": "P1",
+    "status": "CONFIRMED",
+    "component": "Supabase Postgres",
+    "files": ["RLS_COVERAGE_REPORT.md", "src/app/api/legal/data-request/route.ts"],
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/app/api/legal/data-request/route.ts",
+        "line": 54,
+        "scope": "public POST",
+        "description": "Inserts into data_requests using service role client"
+      },
+      {
+        "kind": "sink",
+        "file": "RLS_COVERAGE_REPORT.md",
+        "line": 5,
+        "scope": "database catalog",
+        "description": "Lists data_requests among RLS disabled tables"
+      }
+    ],
+    "evidence": [
+      {
+        "type": "document",
+        "ref": "RLS_COVERAGE_REPORT.md",
+        "summary": "RLS disabled: data_requests, tenant_isolation_quarantine"
+      }
+    ],
+    "existing_protection": "Service role used server-side; not direct browser insert",
+    "why_protection_may_fail": "If PostgREST grants SELECT to anon/authenticated, table becomes readable without app layer",
+    "confidence": "high",
+    "recommended_remediation": "Deploy pending RLS migration after grant audit; verify no anon SELECT",
+    "regression_test": "Assert anon key cannot SELECT from data_requests"
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "PORTAL-SIGN-001:signing-secret-fallback",
+    "title": "Client portal JWT signing may fall back to service role material",
+    "description": "Portal session HMAC secret selection includes SUPABASE_SERVICE_ROLE_KEY as a candidate env var.",
+    "root_cause": "Shared secret candidate list couples portal cookie integrity with DB admin credential class.",
+    "intended_behavior": "Dedicated CLIENT_PORTAL_SESSION_SIGNING_SECRET only.",
+    "severity": "P2",
+    "status": "CONFIRMED",
+    "component": "Client portal auth",
+    "files": ["src/lib/auth/clientPortalAuth.ts"],
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/lib/auth/clientPortalAuth.ts",
+        "line": 38,
+        "scope": "getSessionSigningSecret",
+        "description": "Iterates SHARED_SECRET_CANDIDATE_ENVS including service role key"
+      }
+    ],
+    "evidence": [
+      {
+        "type": "code",
+        "ref": "src/lib/auth/clientPortalAuth.ts:38-43",
+        "summary": "SUPABASE_SERVICE_ROLE_KEY listed as signing secret fallback"
+      }
+    ],
+    "existing_protection": "Production throws if no 32+ byte secret from any candidate",
+    "why_protection_may_fail": "Operational mistake setting only service role env collapses secrets",
+    "confidence": "medium",
+    "recommended_remediation": "Remove service role from candidate list; require dedicated portal secret",
+    "regression_test": "Startup fails in prod without CLIENT_PORTAL_SESSION_SIGNING_SECRET"
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "RATE-001:in-memory-fallback",
+    "title": "API rate limits degrade to per-instance memory when Redis absent",
+    "description": "rateLimitMiddleware falls back to in-memory Map — limits not shared across Railway replicas.",
+    "root_cause": "Optional Upstash Redis configuration.",
+    "intended_behavior": "Distributed rate limiting for auth and API abuse prevention.",
+    "severity": "P2",
+    "status": "CONFIRMED",
+    "component": "Rate limiting",
+    "files": ["src/lib/rateLimit.ts"],
+    "trace": [
+      {
+        "kind": "sink",
+        "file": "src/lib/rateLimit.ts",
+        "line": 8,
+        "scope": "inMemoryStore",
+        "description": "Documented fallback when Redis not configured"
+      }
+    ],
+    "evidence": [
+      {
+        "type": "code",
+        "ref": "src/lib/rateLimit.ts:8-10",
+        "summary": "WARNING: will not work across multiple server instances"
+      }
+    ],
+    "existing_protection": "Cloudflare edge limits may still apply (out of repo)",
+    "why_protection_may_fail": "Attacker rotates across instances to multiply effective quota",
+    "confidence": "high",
+    "recommended_remediation": "Require Redis in production; alert if fallback active",
+    "regression_test": "Health check exposes redis backend active in prod"
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "MCP-SURFACE-001:write-tool-blast-radius",
+    "title": "Large MCP write surface with limited verification metadata",
+    "description": "Exposure report: 349 write tools, 189 external action tools, 6 with verification support.",
+    "unresolved_fact": "Whether production OAuth tokens are scoped narrowly enough to make rare tools unreachable in practice",
+    "severity": null,
+    "status": "NEEDS VALIDATION",
+    "component": "MCP",
+    "files": ["artifacts/audit/mcp-exposure-report.json"],
+    "recommended_remediation": "Tier tools; default deny high-risk writes without approval + idempotency"
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "PORTAL-IDOR-001:document-id",
+    "title": "Cross-client document access via documentId manipulation",
+    "unresolved_fact": "Whether requireClientPortalAccessDoubleGuarded enforces client_id match on document row for all finance routes",
+    "status": "NEEDS VALIDATION",
+    "component": "Client portal",
+    "files": ["src/app/api/client-finance/document/route.ts"],
+    "recommended_remediation": "Playwright test client A cannot fetch client B documentId"
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "DEP-NEXT-001:critical-cve",
+    "title": "npm critical advisory on next package",
+    "unresolved_fact": "Whether advisory applies to Linux Railway deployment on next@16.2.12",
+    "status": "NEEDS VALIDATION",
+    "component": "Dependencies",
+    "files": ["package.json"],
+    "recommended_remediation": "Upgrade Next per vendor guidance after CI validation"
+  },
+  {
+    "verdict": "rejected",
+    "fingerprint": "CRON-001:railway-header-bypass",
+    "title": "Spoof x-railway-cron to invoke cron routes in production",
+    "description": "Rejected: production requires Bearer CRON_SECRET; header alone insufficient.",
+    "status": "REJECTED",
+    "files": ["src/lib/cronAuth.ts"]
+  },
+  {
+    "verdict": "rejected",
+    "fingerprint": "AUTH-001:all-manual-review-unauthenticated",
+    "title": "78 API routes have no authentication",
+    "description": "Rejected: heuristic false positives; client-finance uses double guard.",
+    "status": "REJECTED",
+    "files": ["docs/audit/_generated/api-inventory.json"]
+  }
+]

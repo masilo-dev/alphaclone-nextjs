@@ -1,0 +1,7809 @@
+{
+  "generated_at": "2026-10-05T13:30:21.916Z",
+  "summary": {
+    "total": 629,
+    "byAuth": {
+      "manual_review": 78,
+      "platform_admin": 17,
+      "session+bearer": 401,
+      "internal_secret": 68,
+      "webhook_signature": 33,
+      "public_or_oauth": 12,
+      "client_portal_jwt": 3,
+      "public": 1,
+      "mcp_oauth": 16
+    },
+    "byRisk": {
+      "high": 220,
+      "medium": 397,
+      "low": 12
+    },
+    "manualReview": 78,
+    "highRiskManual": 78
+  },
+  "rows": [
+    {
+      "route": "/api/[...unmatched]",
+      "file": "app/api/[...unmatched]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "handler"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/account/communication-prefs",
+      "file": "app/api/account/communication-prefs/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/account/delete",
+      "file": "app/api/account/delete/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "DELETE",
+        "PUT"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/account/profile",
+      "file": "app/api/account/profile/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/account/registration-context",
+      "file": "app/api/account/registration-context/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/accounting/management",
+      "file": "app/api/accounting/management/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/accounting/pnl",
+      "file": "app/api/accounting/pnl/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/accounting/receipts",
+      "file": "app/api/accounting/receipts/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/accounting/receipts/[id]",
+      "file": "app/api/accounting/receipts/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/accounting/sales-receipts",
+      "file": "app/api/accounting/sales-receipts/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/accounting/stats",
+      "file": "app/api/accounting/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/adapters/operate",
+      "file": "app/api/adapters/operate/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/admin/audit",
+      "file": "app/api/admin/audit/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/control-center",
+      "file": "app/api/admin/control-center/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/control-center/failed-jobs",
+      "file": "app/api/admin/control-center/failed-jobs/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/dashboard",
+      "file": "app/api/admin/dashboard/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/mcp-sessions",
+      "file": "app/api/admin/mcp-sessions/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/operations-brief",
+      "file": "app/api/admin/operations-brief/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/platform-settings",
+      "file": "app/api/admin/platform-settings/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/rate-limits",
+      "file": "app/api/admin/rate-limits/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/security-logs",
+      "file": "app/api/admin/security-logs/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/tenant-billing-summary",
+      "file": "app/api/admin/tenant-billing-summary/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/tenants",
+      "file": "app/api/admin/tenants/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/tenants/[tenantId]",
+      "file": "app/api/admin/tenants/[tenantId]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/users",
+      "file": "app/api/admin/users/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/users/delete",
+      "file": "app/api/admin/users/delete/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/users/role",
+      "file": "app/api/admin/users/role/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/admin/users/transfer-ownership",
+      "file": "app/api/admin/users/transfer-ownership/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/agents/tasks",
+      "file": "app/api/agents/tasks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/agents/tasks/[taskId]",
+      "file": "app/api/agents/tasks/[taskId]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/batches",
+      "file": "app/api/ai/batches/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/chat",
+      "file": "app/api/ai/chat/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/complete",
+      "file": "app/api/ai/complete/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/deepseek",
+      "file": "app/api/ai/deepseek/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/files",
+      "file": "app/api/ai/files/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/generate",
+      "file": "app/api/ai/generate/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/image",
+      "file": "app/api/ai/image/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/leads",
+      "file": "app/api/ai/leads/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/scrape-social",
+      "file": "app/api/ai/scrape-social/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/stream",
+      "file": "app/api/ai/stream/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/video",
+      "file": "app/api/ai/video/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/ai/vision",
+      "file": "app/api/ai/vision/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/alpha",
+      "file": "app/api/alpha/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/alpha/support",
+      "file": "app/api/alpha/support/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/cal/callback",
+      "file": "app/api/auth/cal/callback/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/cal/connect",
+      "file": "app/api/auth/cal/connect/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/cal/status",
+      "file": "app/api/auth/cal/status/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/calendly/callback",
+      "file": "app/api/auth/calendly/callback/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/calendly/connect",
+      "file": "app/api/auth/calendly/connect/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/callback/x",
+      "file": "app/api/auth/callback/x/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/auth/change-password-required",
+      "file": "app/api/auth/change-password-required/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/facebook/callback",
+      "file": "app/api/auth/facebook/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/facebook/connect",
+      "file": "app/api/auth/facebook/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/facebook/data-deletion",
+      "file": "app/api/auth/facebook/data-deletion/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/google/calendar/callback",
+      "file": "app/api/auth/google/calendar/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/google/calendar/connect",
+      "file": "app/api/auth/google/calendar/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/google/gmail/callback",
+      "file": "app/api/auth/google/gmail/callback/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/google/gmail/connect",
+      "file": "app/api/auth/google/gmail/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/hubspot/callback",
+      "file": "app/api/auth/hubspot/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/hubspot/connect",
+      "file": "app/api/auth/hubspot/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/human-check",
+      "file": "app/api/auth/human-check/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/instagram/callback",
+      "file": "app/api/auth/instagram/callback/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/instagram/connect",
+      "file": "app/api/auth/instagram/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/linkedin/callback",
+      "file": "app/api/auth/linkedin/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/linkedin/connect",
+      "file": "app/api/auth/linkedin/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/linkedin/disconnect",
+      "file": "app/api/auth/linkedin/disconnect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/microsoft/access-token",
+      "file": "app/api/auth/microsoft/access-token/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/microsoft/connect",
+      "file": "app/api/auth/microsoft/connect/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/microsoft/disconnect",
+      "file": "app/api/auth/microsoft/disconnect/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/microsoft/refresh",
+      "file": "app/api/auth/microsoft/refresh/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/registration-event",
+      "file": "app/api/auth/registration-event/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/signup-eligibility",
+      "file": "app/api/auth/signup-eligibility/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/verify-token",
+      "file": "app/api/auth/verify-token/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/x",
+      "file": "app/api/auth/x/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/zoho/callback",
+      "file": "app/api/auth/zoho/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/auth/zoho/connect",
+      "file": "app/api/auth/zoho/connect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/zoho/disconnect",
+      "file": "app/api/auth/zoho/disconnect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/zoho/refresh",
+      "file": "app/api/auth/zoho/refresh/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/auth/zoho/status",
+      "file": "app/api/auth/zoho/status/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/automation/emit",
+      "file": "app/api/automation/emit/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/autonomous/approve",
+      "file": "app/api/autonomous/approve/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/autonomous/deferred/cancel",
+      "file": "app/api/autonomous/deferred/cancel/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/autonomous/dream/approve",
+      "file": "app/api/autonomous/dream/approve/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/autonomous/rules",
+      "file": "app/api/autonomous/rules/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/autonomous/trigger",
+      "file": "app/api/autonomous/trigger/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/analytics",
+      "file": "app/api/bonnie/analytics/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/approvals",
+      "file": "app/api/bonnie/approvals/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/briefing",
+      "file": "app/api/bonnie/briefing/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/conversations",
+      "file": "app/api/bonnie/conversations/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/conversations/[id]",
+      "file": "app/api/bonnie/conversations/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/dream",
+      "file": "app/api/bonnie/dream/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/execution-assurance",
+      "file": "app/api/bonnie/execution-assurance/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/goals",
+      "file": "app/api/bonnie/goals/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/goals/[id]",
+      "file": "app/api/bonnie/goals/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/instruct",
+      "file": "app/api/bonnie/instruct/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/orchestrate",
+      "file": "app/api/bonnie/orchestrate/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/os",
+      "file": "app/api/bonnie/os/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/outcomes",
+      "file": "app/api/bonnie/outcomes/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/outcomes/execute",
+      "file": "app/api/bonnie/outcomes/execute/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/outcomes/list",
+      "file": "app/api/bonnie/outcomes/list/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/quota",
+      "file": "app/api/bonnie/quota/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/research",
+      "file": "app/api/bonnie/research/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/runtime/runs",
+      "file": "app/api/bonnie/runtime/runs/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/runtime/runs/[id]",
+      "file": "app/api/bonnie/runtime/runs/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/runtime/tasks",
+      "file": "app/api/bonnie/runtime/tasks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/stream",
+      "file": "app/api/bonnie/stream/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/tool",
+      "file": "app/api/bonnie/tool/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/bonnie/voice",
+      "file": "app/api/bonnie/voice/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/booking",
+      "file": "app/api/booking/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/booking/create",
+      "file": "app/api/booking/create/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/booking/slots",
+      "file": "app/api/booking/slots/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/booking/status",
+      "file": "app/api/booking/status/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/brevo/send",
+      "file": "app/api/brevo/send/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/calendar/stats",
+      "file": "app/api/calendar/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/calendly/cancel",
+      "file": "app/api/calendly/cancel/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/calendly/contacts",
+      "file": "app/api/calendly/contacts/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/calendly/event-types",
+      "file": "app/api/calendly/event-types/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/calendly/schedule",
+      "file": "app/api/calendly/schedule/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/calendly/scheduled-events",
+      "file": "app/api/calendly/scheduled-events/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/calendly/status",
+      "file": "app/api/calendly/status/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/calendly/sync",
+      "file": "app/api/calendly/sync/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/campaigns",
+      "file": "app/api/campaigns/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/campaigns/send",
+      "file": "app/api/campaigns/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/campaigns/stats",
+      "file": "app/api/campaigns/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/chase/action",
+      "file": "app/api/chase/action/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/activity",
+      "file": "app/api/client-finance/activity/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/approvals",
+      "file": "app/api/client-finance/approvals/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/contract",
+      "file": "app/api/client-finance/contract/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/document",
+      "file": "app/api/client-finance/document/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/grant-access",
+      "file": "app/api/client-finance/grant-access/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client-finance/invite/[clientId]",
+      "file": "app/api/client-finance/invite/[clientId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client-finance/messages",
+      "file": "app/api/client-finance/messages/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/portal",
+      "file": "app/api/client-finance/portal/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-finance/portal-link/[clientId]",
+      "file": "app/api/client-finance/portal-link/[clientId]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client-portal-auth/login",
+      "file": "app/api/client-portal-auth/login/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/client-portal-auth/logout",
+      "file": "app/api/client-portal-auth/logout/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "client_portal_jwt",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client-portal-auth/me",
+      "file": "app/api/client-portal-auth/me/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "client_portal_jwt",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client-portal-auth/set-password",
+      "file": "app/api/client-portal-auth/set-password/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "client_portal_jwt",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/client/feedback",
+      "file": "app/api/client/feedback/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/communication-compliance/check",
+      "file": "app/api/communication-compliance/check/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/contact",
+      "file": "app/api/contact/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/contracts",
+      "file": "app/api/contracts/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/[id]",
+      "file": "app/api/contracts/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/[id]/generate-pdf",
+      "file": "app/api/contracts/[id]/generate-pdf/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/[id]/workspace",
+      "file": "app/api/contracts/[id]/workspace/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/clauses",
+      "file": "app/api/contracts/clauses/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/management",
+      "file": "app/api/contracts/management/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/respond",
+      "file": "app/api/contracts/respond/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/sign",
+      "file": "app/api/contracts/sign/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/signer-profile",
+      "file": "app/api/contracts/signer-profile/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/contracts/stats",
+      "file": "app/api/contracts/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/credit-notes",
+      "file": "app/api/credit-notes/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/activities",
+      "file": "app/api/crm/activities/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/bridge",
+      "file": "app/api/crm/bridge/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/contacts/enrich",
+      "file": "app/api/crm/contacts/enrich/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/follow-ups",
+      "file": "app/api/crm/follow-ups/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/follow-ups/schedule",
+      "file": "app/api/crm/follow-ups/schedule/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/import",
+      "file": "app/api/crm/import/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/leads",
+      "file": "app/api/crm/leads/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/migrate",
+      "file": "app/api/crm/migrate/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/stats",
+      "file": "app/api/crm/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/crm/sync/pull",
+      "file": "app/api/crm/sync/pull/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/crm/sync/push",
+      "file": "app/api/crm/sync/push/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/account-lifecycle",
+      "file": "app/api/cron/account-lifecycle/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/activity-digest",
+      "file": "app/api/cron/activity-digest/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/automation-heartbeat",
+      "file": "app/api/cron/automation-heartbeat/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/autonomous",
+      "file": "app/api/cron/autonomous/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/autonomous-runner",
+      "file": "app/api/cron/autonomous-runner/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/autonomous-sync",
+      "file": "app/api/cron/autonomous-sync/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-continuous",
+      "file": "app/api/cron/bonnie-continuous/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-dream",
+      "file": "app/api/cron/bonnie-dream/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-goals-chase",
+      "file": "app/api/cron/bonnie-goals-chase/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-morning-brief",
+      "file": "app/api/cron/bonnie-morning-brief/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-runtime-outbox",
+      "file": "app/api/cron/bonnie-runtime-outbox/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-runtime-reconcile",
+      "file": "app/api/cron/bonnie-runtime-reconcile/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-runtime-timers",
+      "file": "app/api/cron/bonnie-runtime-timers/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/bonnie-runtime-worker",
+      "file": "app/api/cron/bonnie-runtime-worker/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/booking-automations",
+      "file": "app/api/cron/booking-automations/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/calendly-sync",
+      "file": "app/api/cron/calendly-sync/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/chief-of-staff",
+      "file": "app/api/cron/chief-of-staff/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/contact-psychology",
+      "file": "app/api/cron/contact-psychology/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/contract-signature-reminders",
+      "file": "app/api/cron/contract-signature-reminders/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/daily",
+      "file": "app/api/cron/daily/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/daily-business-digest",
+      "file": "app/api/cron/daily-business-digest/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/daily-business-summary",
+      "file": "app/api/cron/daily-business-summary/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/deal-intelligence",
+      "file": "app/api/cron/deal-intelligence/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/entanglement-model",
+      "file": "app/api/cron/entanglement-model/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/follow-up-escalation",
+      "file": "app/api/cron/follow-up-escalation/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/integration-token-health",
+      "file": "app/api/cron/integration-token-health/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/intelligence-snapshots",
+      "file": "app/api/cron/intelligence-snapshots/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/lead-discovery-worker",
+      "file": "app/api/cron/lead-discovery-worker/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/linkedin-inbox-sync",
+      "file": "app/api/cron/linkedin-inbox-sync/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/linkedin-token-health",
+      "file": "app/api/cron/linkedin-token-health/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/meta-token-health",
+      "file": "app/api/cron/meta-token-health/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/notification-digests",
+      "file": "app/api/cron/notification-digests/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/process-campaigns",
+      "file": "app/api/cron/process-campaigns/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/process-document-intelligence",
+      "file": "app/api/cron/process-document-intelligence/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/process-events",
+      "file": "app/api/cron/process-events/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/process-invoice-overdue-reminders",
+      "file": "app/api/cron/process-invoice-overdue-reminders/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/process-mcp-event-queue",
+      "file": "app/api/cron/process-mcp-event-queue/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/process-recurring-invoices",
+      "file": "app/api/cron/process-recurring-invoices/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/process-scheduled-ai-tasks",
+      "file": "app/api/cron/process-scheduled-ai-tasks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/process-task-reminders",
+      "file": "app/api/cron/process-task-reminders/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/publish-linkedin",
+      "file": "app/api/cron/publish-linkedin/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/publish-scheduled-posts",
+      "file": "app/api/cron/publish-scheduled-posts/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/reconcile-external-actions",
+      "file": "app/api/cron/reconcile-external-actions/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/reconcile-social-posts",
+      "file": "app/api/cron/reconcile-social-posts/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/resolve-stuck-social-posts",
+      "file": "app/api/cron/resolve-stuck-social-posts/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/retry-failed",
+      "file": "app/api/cron/retry-failed/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/revenue-lifecycle-alerts",
+      "file": "app/api/cron/revenue-lifecycle-alerts/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/sequence-worker",
+      "file": "app/api/cron/sequence-worker/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/social-publish",
+      "file": "app/api/cron/social-publish/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/cron/sync-social-analytics",
+      "file": "app/api/cron/sync-social-analytics/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/sync-zoho-inbox",
+      "file": "app/api/cron/sync-zoho-inbox/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/tenant-event-inbox-digest",
+      "file": "app/api/cron/tenant-event-inbox-digest/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/tenant-schedule",
+      "file": "app/api/cron/tenant-schedule/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/webhook-deliveries",
+      "file": "app/api/cron/webhook-deliveries/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/workflows",
+      "file": "app/api/cron/workflows/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/cron/zoho-token-health",
+      "file": "app/api/cron/zoho-token-health/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/daily",
+      "file": "app/api/daily/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/daily/token",
+      "file": "app/api/daily/token/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/daily/webhook",
+      "file": "app/api/daily/webhook/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/action-queue",
+      "file": "app/api/dashboard/action-queue/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/business-control",
+      "file": "app/api/dashboard/business-control/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/chase-action",
+      "file": "app/api/dashboard/chase-action/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/chase-brief",
+      "file": "app/api/dashboard/chase-brief/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/chase-health",
+      "file": "app/api/dashboard/chase-health/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/chase-inbox",
+      "file": "app/api/dashboard/chase-inbox/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/hub-stats",
+      "file": "app/api/dashboard/hub-stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/next-actions",
+      "file": "app/api/dashboard/next-actions/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/overview",
+      "file": "app/api/dashboard/overview/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/dashboard/progress",
+      "file": "app/api/dashboard/progress/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/stats",
+      "file": "app/api/dashboard/stats/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dashboard/workspace-activity",
+      "file": "app/api/dashboard/workspace-activity/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/data-deletion",
+      "file": "app/api/data-deletion/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/data/deleted-records",
+      "file": "app/api/data/deleted-records/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/deals/[dealId]/stakeholders",
+      "file": "app/api/deals/[dealId]/stakeholders/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/deals/stats",
+      "file": "app/api/deals/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/debug-ai",
+      "file": "app/api/debug-ai/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/dev-migrate",
+      "file": "app/api/dev-migrate/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "platform_admin",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/docs",
+      "file": "app/api/docs/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/document-data-rooms",
+      "file": "app/api/document-data-rooms/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/document-requirements",
+      "file": "app/api/document-requirements/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/email/auto-reply/pending",
+      "file": "app/api/email/auto-reply/pending/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/campaigns",
+      "file": "app/api/email/campaigns/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/campaigns/diagnose",
+      "file": "app/api/email/campaigns/diagnose/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/campaigns/import-recipients",
+      "file": "app/api/email/campaigns/import-recipients/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/campaigns/send",
+      "file": "app/api/email/campaigns/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/drafts",
+      "file": "app/api/email/drafts/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/gallery",
+      "file": "app/api/email/gallery/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/platform-transactional",
+      "file": "app/api/email/platform-transactional/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/preferences",
+      "file": "app/api/email/preferences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/preview",
+      "file": "app/api/email/preview/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/providers/test",
+      "file": "app/api/email/providers/test/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/proxy-image",
+      "file": "app/api/email/proxy-image/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/send",
+      "file": "app/api/email/send/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/sender-profile",
+      "file": "app/api/email/sender-profile/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/unsubscribe",
+      "file": "app/api/email/unsubscribe/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/email/welcome",
+      "file": "app/api/email/welcome/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/engine/execute",
+      "file": "app/api/engine/execute/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/engine/ingest",
+      "file": "app/api/engine/ingest/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/accounts",
+      "file": "app/api/facebook/accounts/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/activity",
+      "file": "app/api/facebook/activity/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/capabilities",
+      "file": "app/api/facebook/capabilities/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/comment",
+      "file": "app/api/facebook/comment/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/comments",
+      "file": "app/api/facebook/comments/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/disconnect",
+      "file": "app/api/facebook/disconnect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/leads/search",
+      "file": "app/api/facebook/leads/search/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/like",
+      "file": "app/api/facebook/like/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/management",
+      "file": "app/api/facebook/management/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/messenger/conversations/[conversationId]/read",
+      "file": "app/api/facebook/messenger/conversations/[conversationId]/read/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/messenger/send",
+      "file": "app/api/facebook/messenger/send/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/facebook/oauth",
+      "file": "app/api/facebook/oauth/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/facebook/page-info",
+      "file": "app/api/facebook/page-info/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/post",
+      "file": "app/api/facebook/post/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/post-insights",
+      "file": "app/api/facebook/post-insights/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/post/delete",
+      "file": "app/api/facebook/post/delete/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/facebook/posts",
+      "file": "app/api/facebook/posts/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/facebook/upload-photo",
+      "file": "app/api/facebook/upload-photo/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/finance/attach-expenses-to-invoice",
+      "file": "app/api/finance/attach-expenses-to-invoice/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/finance/expenses",
+      "file": "app/api/finance/expenses/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/finance/unbilled-expenses",
+      "file": "app/api/finance/unbilled-expenses/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/forms",
+      "file": "app/api/forms/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/forms/public",
+      "file": "app/api/forms/public/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/forms/submit",
+      "file": "app/api/forms/submit/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/forms/webhook/tally",
+      "file": "app/api/forms/webhook/tally/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/forms/webhook/typeform",
+      "file": "app/api/forms/webhook/typeform/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/gmail/messages/send",
+      "file": "app/api/gmail/messages/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/gmail/threads",
+      "file": "app/api/gmail/threads/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/gmail/threads/[id]",
+      "file": "app/api/gmail/threads/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/gmail/threads/[id]/modify",
+      "file": "app/api/gmail/threads/[id]/modify/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/google/drive/upload",
+      "file": "app/api/google/drive/upload/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/health",
+      "file": "app/api/health/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/health/workspace",
+      "file": "app/api/health/workspace/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/hubspot/delete",
+      "file": "app/api/hubspot/delete/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/hubspot/sync",
+      "file": "app/api/hubspot/sync/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/inbox/draft-reply",
+      "file": "app/api/inbox/draft-reply/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/inbox/facebook",
+      "file": "app/api/inbox/facebook/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/inbox/instagram",
+      "file": "app/api/inbox/instagram/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/inbox/process-intelligence",
+      "file": "app/api/inbox/process-intelligence/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/inbox/whatsapp",
+      "file": "app/api/inbox/whatsapp/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/inbox/zoho",
+      "file": "app/api/inbox/zoho/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/indexnow",
+      "file": "app/api/indexnow/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/instagram/disconnect",
+      "file": "app/api/instagram/disconnect/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/instagram/post",
+      "file": "app/api/instagram/post/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/actions",
+      "file": "app/api/integrations/actions/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/email-providers",
+      "file": "app/api/integrations/email-providers/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/integrations/readiness",
+      "file": "app/api/integrations/readiness/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/status",
+      "file": "app/api/integrations/status/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/whatsapp",
+      "file": "app/api/integrations/whatsapp/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/whatsapp/send",
+      "file": "app/api/integrations/whatsapp/send/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/integrations/whatsapp/send-document",
+      "file": "app/api/integrations/whatsapp/send-document/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/integrations/whatsapp/status",
+      "file": "app/api/integrations/whatsapp/status/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/integrations/zernio/settings",
+      "file": "app/api/integrations/zernio/settings/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/intelligence/deals/recompute",
+      "file": "app/api/intelligence/deals/recompute/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/intelligence/ingest-signal",
+      "file": "app/api/intelligence/ingest-signal/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/intelligence/system",
+      "file": "app/api/intelligence/system/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/intelligence/trends",
+      "file": "app/api/intelligence/trends/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/internal/auth-health",
+      "file": "app/api/internal/auth-health/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/internal/leads/mcp-sync",
+      "file": "app/api/internal/leads/mcp-sync/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices",
+      "file": "app/api/invoices/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]",
+      "file": "app/api/invoices/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/audit-log",
+      "file": "app/api/invoices/[id]/audit-log/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/delivery-certificate",
+      "file": "app/api/invoices/[id]/delivery-certificate/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/delivery-webhook",
+      "file": "app/api/invoices/[id]/delivery-webhook/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/followup-settings",
+      "file": "app/api/invoices/[id]/followup-settings/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/payment",
+      "file": "app/api/invoices/[id]/payment/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/pdf",
+      "file": "app/api/invoices/[id]/pdf/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/public-link",
+      "file": "app/api/invoices/[id]/public-link/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/receipt",
+      "file": "app/api/invoices/[id]/receipt/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/reconcile",
+      "file": "app/api/invoices/[id]/reconcile/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/statement",
+      "file": "app/api/invoices/[id]/statement/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/view",
+      "file": "app/api/invoices/[id]/view/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/void",
+      "file": "app/api/invoices/[id]/void/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/[id]/workspace",
+      "file": "app/api/invoices/[id]/workspace/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/bulk",
+      "file": "app/api/invoices/bulk/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/confirm-payment",
+      "file": "app/api/invoices/confirm-payment/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/lifecycle",
+      "file": "app/api/invoices/lifecycle/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/public",
+      "file": "app/api/invoices/public/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/recurring",
+      "file": "app/api/invoices/recurring/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/recurring/[id]",
+      "file": "app/api/invoices/recurring/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "DELETE",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/reminder",
+      "file": "app/api/invoices/reminder/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/send",
+      "file": "app/api/invoices/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/stats",
+      "file": "app/api/invoices/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/invoices/track/[token]",
+      "file": "app/api/invoices/track/[token]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/ip-location",
+      "file": "app/api/ip-location/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/language",
+      "file": "app/api/language/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/leads/[id]",
+      "file": "app/api/leads/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/candidates/[id]/review",
+      "file": "app/api/leads/candidates/[id]/review/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/embed",
+      "file": "app/api/leads/embed/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/leads/enrich",
+      "file": "app/api/leads/enrich/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/lists",
+      "file": "app/api/leads/lists/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/lists/[id]/members",
+      "file": "app/api/leads/lists/[id]/members/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/management",
+      "file": "app/api/leads/management/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/searches",
+      "file": "app/api/leads/searches/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/searches/[id]",
+      "file": "app/api/leads/searches/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/searches/[id]/results",
+      "file": "app/api/leads/searches/[id]/results/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/searches/[id]/run",
+      "file": "app/api/leads/searches/[id]/run/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/leads/stats",
+      "file": "app/api/leads/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/legal/acceptance",
+      "file": "app/api/legal/acceptance/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/legal/consent-record",
+      "file": "app/api/legal/consent-record/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/legal/data-export",
+      "file": "app/api/legal/data-export/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/legal/data-request",
+      "file": "app/api/legal/data-request/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/legal/dpa-request",
+      "file": "app/api/legal/dpa-request/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/ads",
+      "file": "app/api/linkedin/ads/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/capture-lead",
+      "file": "app/api/linkedin/capture-lead/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/comment",
+      "file": "app/api/linkedin/comment/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/comments",
+      "file": "app/api/linkedin/comments/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/diagnostics",
+      "file": "app/api/linkedin/diagnostics/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/engagement",
+      "file": "app/api/linkedin/engagement/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/inbox",
+      "file": "app/api/linkedin/inbox/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/link-company-page",
+      "file": "app/api/linkedin/link-company-page/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/pipeline-metrics",
+      "file": "app/api/linkedin/pipeline-metrics/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/posts",
+      "file": "app/api/linkedin/posts/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/reaction",
+      "file": "app/api/linkedin/reaction/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/refresh-pages",
+      "file": "app/api/linkedin/refresh-pages/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/linkedin/webhook",
+      "file": "app/api/linkedin/webhook/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/livekit/token",
+      "file": "app/api/livekit/token/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/location/search",
+      "file": "app/api/location/search/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/location/validate",
+      "file": "app/api/location/validate/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/marketing/campaigns",
+      "file": "app/api/marketing/campaigns/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/marketing/campaigns/[campaignId]/status",
+      "file": "app/api/marketing/campaigns/[campaignId]/status/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/marketing/overview",
+      "file": "app/api/marketing/overview/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/marketing/week-insight",
+      "file": "app/api/marketing/week-insight/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/mcp",
+      "file": "app/api/mcp/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET",
+        "DELETE"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/authorize",
+      "file": "app/api/mcp/authorize/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/health",
+      "file": "app/api/mcp/health/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/keys",
+      "file": "app/api/mcp/keys/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "DELETE",
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/messages",
+      "file": "app/api/mcp/messages/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/oauth/approve",
+      "file": "app/api/mcp/oauth/approve/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/prompts",
+      "file": "app/api/mcp/prompts/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/register",
+      "file": "app/api/mcp/register/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/resources",
+      "file": "app/api/mcp/resources/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/sse",
+      "file": "app/api/mcp/sse/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/token",
+      "file": "app/api/mcp/token/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/token/introspect",
+      "file": "app/api/mcp/token/introspect/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/token/revoke",
+      "file": "app/api/mcp/token/revoke/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/tools",
+      "file": "app/api/mcp/tools/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/well-known/oauth-authorization-server",
+      "file": "app/api/mcp/well-known/oauth-authorization-server/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/mcp/well-known/oauth-protected-resource",
+      "file": "app/api/mcp/well-known/oauth-protected-resource/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "mcp_oauth",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/media/[assetId]",
+      "file": "app/api/media/[assetId]/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/[callId]/chat",
+      "file": "app/api/meetings/[callId]/chat/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/[callId]/state",
+      "file": "app/api/meetings/[callId]/state/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/by-id/[meetingId]/status",
+      "file": "app/api/meetings/by-id/[meetingId]/status/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/create",
+      "file": "app/api/meetings/create/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/hooks/join",
+      "file": "app/api/meetings/hooks/join/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/meetings/reconcile-rooms",
+      "file": "app/api/meetings/reconcile-rooms/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/meetings/resolve/[identifier]",
+      "file": "app/api/meetings/resolve/[identifier]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/notifications",
+      "file": "app/api/notifications/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/notifications/broadcast",
+      "file": "app/api/notifications/broadcast/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/notifications/dispatch",
+      "file": "app/api/notifications/dispatch/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/notifications/push",
+      "file": "app/api/notifications/push/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/notifications/test-push",
+      "file": "app/api/notifications/test-push/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/onboarding/start",
+      "file": "app/api/onboarding/start/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/operations",
+      "file": "app/api/operations/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outbound/icps",
+      "file": "app/api/outbound/icps/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/outbound/mailboxes",
+      "file": "app/api/outbound/mailboxes/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/outbound/overview",
+      "file": "app/api/outbound/overview/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/outbound/qualify",
+      "file": "app/api/outbound/qualify/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/outbound/verify-email",
+      "file": "app/api/outbound/verify-email/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach",
+      "file": "app/api/outreach/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/acknowledgement",
+      "file": "app/api/outreach/acknowledgement/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/audiences",
+      "file": "app/api/outreach/audiences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/batch-review",
+      "file": "app/api/outreach/batch-review/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/events",
+      "file": "app/api/outreach/events/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/experiments",
+      "file": "app/api/outreach/experiments/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/generate",
+      "file": "app/api/outreach/generate/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/inbox",
+      "file": "app/api/outreach/inbox/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/recipients",
+      "file": "app/api/outreach/recipients/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/send",
+      "file": "app/api/outreach/send/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/senders",
+      "file": "app/api/outreach/senders/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/sequences",
+      "file": "app/api/outreach/sequences/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/outreach/stats",
+      "file": "app/api/outreach/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/pdf/invoice/[id]",
+      "file": "app/api/pdf/invoice/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/platform-advantage/snapshot",
+      "file": "app/api/platform-advantage/snapshot/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/platform/policy",
+      "file": "app/api/platform/policy/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/playwright/jobs",
+      "file": "app/api/playwright/jobs/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/playwright/scrape",
+      "file": "app/api/playwright/scrape/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/pricing/bundles",
+      "file": "app/api/pricing/bundles/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/pricing/catalog",
+      "file": "app/api/pricing/catalog/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/privacy/preferences",
+      "file": "app/api/privacy/preferences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/privacy/requests",
+      "file": "app/api/privacy/requests/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/projects/[id]/client-notify",
+      "file": "app/api/projects/[id]/client-notify/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/projects/[id]/client-progress-notify",
+      "file": "app/api/projects/[id]/client-progress-notify/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/projects/[id]/portal-share",
+      "file": "app/api/projects/[id]/portal-share/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/projects/public/[token]/access",
+      "file": "app/api/projects/public/[token]/access/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/projects/public/[token]/comments",
+      "file": "app/api/projects/public/[token]/comments/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/projects/stats",
+      "file": "app/api/projects/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/proposals/public",
+      "file": "app/api/proposals/public/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/proposals/respond",
+      "file": "app/api/proposals/respond/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/public/document-data-rooms/[token]",
+      "file": "app/api/public/document-data-rooms/[token]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/public/shares/[id]",
+      "file": "app/api/public/shares/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/public/shares/[id]/download",
+      "file": "app/api/public/shares/[id]/download/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/push/send",
+      "file": "app/api/push/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/push/subscribe",
+      "file": "app/api/push/subscribe/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/quotes/[token]/pdf",
+      "file": "app/api/quotes/[token]/pdf/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/quotes/convert",
+      "file": "app/api/quotes/convert/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/quotes/convert-contract",
+      "file": "app/api/quotes/convert-contract/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/quotes/respond",
+      "file": "app/api/quotes/respond/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/quotes/send",
+      "file": "app/api/quotes/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/quotes/stats",
+      "file": "app/api/quotes/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/readiness",
+      "file": "app/api/readiness/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/referrals/claim",
+      "file": "app/api/referrals/claim/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/reports/export",
+      "file": "app/api/reports/export/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/research/jobs",
+      "file": "app/api/research/jobs/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/research/jobs/[id]",
+      "file": "app/api/research/jobs/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/research/jobs/[id]/import",
+      "file": "app/api/research/jobs/[id]/import/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/research/jobs/[id]/results",
+      "file": "app/api/research/jobs/[id]/results/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/research/results/[id]",
+      "file": "app/api/research/results/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/resend/domains",
+      "file": "app/api/resend/domains/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/resend/send",
+      "file": "app/api/resend/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/revenue-lifecycle",
+      "file": "app/api/revenue-lifecycle/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/scraper-campaigns",
+      "file": "app/api/scraper-campaigns/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/[id]",
+      "file": "app/api/scraper-campaigns/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/[id]/run",
+      "file": "app/api/scraper-campaigns/[id]/run/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/[id]/status",
+      "file": "app/api/scraper-campaigns/[id]/status/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/chat",
+      "file": "app/api/scraper-campaigns/chat/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/learn",
+      "file": "app/api/scraper-campaigns/learn/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-campaigns/stats",
+      "file": "app/api/scraper-campaigns/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper-leads",
+      "file": "app/api/scraper-leads/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/affordable",
+      "file": "app/api/scraper/affordable/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/campaign/poll",
+      "file": "app/api/scraper/campaign/poll/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/deep-crawl",
+      "file": "app/api/scraper/deep-crawl/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/email-context",
+      "file": "app/api/scraper/email-context/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/email-discovery",
+      "file": "app/api/scraper/email-discovery/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/jobs/[id]",
+      "file": "app/api/scraper/jobs/[id]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/jobs/[id]/step",
+      "file": "app/api/scraper/jobs/[id]/step/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/jobs/create",
+      "file": "app/api/scraper/jobs/create/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/scraper/search",
+      "file": "app/api/scraper/search/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/security/owasp-headers",
+      "file": "app/api/security/owasp-headers/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/security/scan",
+      "file": "app/api/security/scan/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/sendgrid/send",
+      "file": "app/api/sendgrid/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/seo/articles/[articleId]/view",
+      "file": "app/api/seo/articles/[articleId]/view/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/settings/email-provider",
+      "file": "app/api/settings/email-provider/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/settings/legal/policies",
+      "file": "app/api/settings/legal/policies/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/settings/legal/policies/[policyId]/publish",
+      "file": "app/api/settings/legal/policies/[policyId]/publish/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/settings/legal/policies/[policyId]/versions",
+      "file": "app/api/settings/legal/policies/[policyId]/versions/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/settings/legal/policies/[policyId]/versions/[versionId]/status",
+      "file": "app/api/settings/legal/policies/[policyId]/versions/[versionId]/status/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/commands",
+      "file": "app/api/slack/commands/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/events",
+      "file": "app/api/slack/events/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/interactive",
+      "file": "app/api/slack/interactive/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/notifications",
+      "file": "app/api/slack/notifications/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/oauth/authorize",
+      "file": "app/api/slack/oauth/authorize/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/oauth/callback",
+      "file": "app/api/slack/oauth/callback/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/slack/resend",
+      "file": "app/api/slack/resend/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/slack/send",
+      "file": "app/api/slack/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/sms/campaign",
+      "file": "app/api/sms/campaign/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/sms/campaign/[id]/run",
+      "file": "app/api/sms/campaign/[id]/run/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/sms/send",
+      "file": "app/api/sms/send/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/social-media/public/[token]",
+      "file": "app/api/social-media/public/[token]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/social/analytics/sync",
+      "file": "app/api/social/analytics/sync/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/social/command-center",
+      "file": "app/api/social/command-center/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/social/media/upload",
+      "file": "app/api/social/media/upload/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "DELETE",
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/social/schedule",
+      "file": "app/api/social/schedule/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST",
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/social/stats",
+      "file": "app/api/social/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/storage/[bucket]/[...path]",
+      "file": "app/api/storage/[bucket]/[...path]/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/connect/callback",
+      "file": "app/api/stripe/connect/callback/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/connect/login",
+      "file": "app/api/stripe/connect/login/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/connect/onboarding",
+      "file": "app/api/stripe/connect/onboarding/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/connect/status",
+      "file": "app/api/stripe/connect/status/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/create-addon-session",
+      "file": "app/api/stripe/create-addon-session/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/create-checkout",
+      "file": "app/api/stripe/create-checkout/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/create-checkout-session",
+      "file": "app/api/stripe/create-checkout-session/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/create-invoice-session",
+      "file": "app/api/stripe/create-invoice-session/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/stripe/create-legacy-invoice-session",
+      "file": "app/api/stripe/create-legacy-invoice-session/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/stripe/create-payment-intent",
+      "file": "app/api/stripe/create-payment-intent/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/stripe/create-portal-session",
+      "file": "app/api/stripe/create-portal-session/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/manage-subscription",
+      "file": "app/api/stripe/manage-subscription/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/stripe/reconcile-payment",
+      "file": "app/api/stripe/reconcile-payment/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/stripe/send-receipt",
+      "file": "app/api/stripe/send-receipt/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/stripe/webhook",
+      "file": "app/api/stripe/webhook/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/system-health",
+      "file": "app/api/system-health/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "internal_secret",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tasks/stats",
+      "file": "app/api/tasks/stats/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/tenant/[tenantId]",
+      "file": "app/api/tenant/[tenantId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/accounting/periods",
+      "file": "app/api/tenant/[tenantId]/accounting/periods/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/accounting/periods/[periodId]",
+      "file": "app/api/tenant/[tenantId]/accounting/periods/[periodId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/activity",
+      "file": "app/api/tenant/[tenantId]/activity/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/addons",
+      "file": "app/api/tenant/[tenantId]/addons/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/automation-workflows",
+      "file": "app/api/tenant/[tenantId]/automation-workflows/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/availability",
+      "file": "app/api/tenant/[tenantId]/availability/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/booking-types",
+      "file": "app/api/tenant/[tenantId]/booking-types/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/business-events",
+      "file": "app/api/tenant/[tenantId]/business-events/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/business-settings",
+      "file": "app/api/tenant/[tenantId]/business-settings/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/clients",
+      "file": "app/api/tenant/[tenantId]/clients/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/clients/[clientId]/360",
+      "file": "app/api/tenant/[tenantId]/clients/[clientId]/360/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/clients/[clientId]/messages",
+      "file": "app/api/tenant/[tenantId]/clients/[clientId]/messages/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/clients/[clientId]/timeline",
+      "file": "app/api/tenant/[tenantId]/clients/[clientId]/timeline/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/contacts",
+      "file": "app/api/tenant/[tenantId]/contacts/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/deals",
+      "file": "app/api/tenant/[tenantId]/deals/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/deals/[dealId]/activities",
+      "file": "app/api/tenant/[tenantId]/deals/[dealId]/activities/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/deals/[dealId]/products",
+      "file": "app/api/tenant/[tenantId]/deals/[dealId]/products/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/documents",
+      "file": "app/api/tenant/[tenantId]/documents/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/documents/[documentId]",
+      "file": "app/api/tenant/[tenantId]/documents/[documentId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/email-sequences",
+      "file": "app/api/tenant/[tenantId]/email-sequences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "high"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/entities/[entityType]/[entityId]/context",
+      "file": "app/api/tenant/[tenantId]/entities/[entityType]/[entityId]/context/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/files",
+      "file": "app/api/tenant/[tenantId]/files/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/financial-planning",
+      "file": "app/api/tenant/[tenantId]/financial-planning/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/gamification",
+      "file": "app/api/tenant/[tenantId]/gamification/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/generated-assets",
+      "file": "app/api/tenant/[tenantId]/generated-assets/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/google-calendar/events",
+      "file": "app/api/tenant/[tenantId]/google-calendar/events/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/inbox/messages",
+      "file": "app/api/tenant/[tenantId]/inbox/messages/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/integrations",
+      "file": "app/api/tenant/[tenantId]/integrations/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/invitations",
+      "file": "app/api/tenant/[tenantId]/invitations/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/leads",
+      "file": "app/api/tenant/[tenantId]/leads/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/marketing/listmonk/health",
+      "file": "app/api/tenant/[tenantId]/marketing/listmonk/health/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/meetings/permanent-room",
+      "file": "app/api/tenant/[tenantId]/meetings/permanent-room/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/members",
+      "file": "app/api/tenant/[tenantId]/members/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/members/resolve",
+      "file": "app/api/tenant/[tenantId]/members/resolve/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/notification-preferences",
+      "file": "app/api/tenant/[tenantId]/notification-preferences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/onboarding",
+      "file": "app/api/tenant/[tenantId]/onboarding/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/pages",
+      "file": "app/api/tenant/[tenantId]/pages/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/presentations",
+      "file": "app/api/tenant/[tenantId]/presentations/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/project-templates",
+      "file": "app/api/tenant/[tenantId]/project-templates/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects",
+      "file": "app/api/tenant/[tenantId]/projects/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/approvals",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/approvals/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/comments",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/comments/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/designs",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/designs/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/financials",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/financials/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/issues",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/issues/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/issues/[issueId]",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/issues/[issueId]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/[projectId]/summary",
+      "file": "app/api/tenant/[tenantId]/projects/[projectId]/summary/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/automation-policy",
+      "file": "app/api/tenant/[tenantId]/projects/automation-policy/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/bulk",
+      "file": "app/api/tenant/[tenantId]/projects/bulk/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/projects/execution",
+      "file": "app/api/tenant/[tenantId]/projects/execution/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/quotes",
+      "file": "app/api/tenant/[tenantId]/quotes/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/quotes/[quoteId]/items",
+      "file": "app/api/tenant/[tenantId]/quotes/[quoteId]/items/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/scheduled-ai-tasks",
+      "file": "app/api/tenant/[tenantId]/scheduled-ai-tasks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/scheduled-ai-tasks/[taskId]/run",
+      "file": "app/api/tenant/[tenantId]/scheduled-ai-tasks/[taskId]/run/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/tasks",
+      "file": "app/api/tenant/[tenantId]/tasks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/team-message-receipts",
+      "file": "app/api/tenant/[tenantId]/team-message-receipts/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/webhooks",
+      "file": "app/api/tenant/[tenantId]/webhooks/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/whatsapp-chatbot",
+      "file": "app/api/tenant/[tenantId]/whatsapp-chatbot/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/workflows",
+      "file": "app/api/tenant/[tenantId]/workflows/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST",
+        "PATCH",
+        "DELETE",
+        "PUT"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/[tenantId]/workspace-preferences",
+      "file": "app/api/tenant/[tenantId]/workspace-preferences/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/bootstrap",
+      "file": "app/api/tenant/bootstrap/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tenant/invitations/accept",
+      "file": "app/api/tenant/invitations/accept/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/test",
+      "file": "app/api/test/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/tickets",
+      "file": "app/api/tickets/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tickets/[id]",
+      "file": "app/api/tickets/[id]/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "PATCH",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/tickets/notify",
+      "file": "app/api/tickets/notify/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/track/open",
+      "file": "app/api/track/open/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "public_or_oauth",
+      "tenantScoped": false,
+      "risk": "low"
+    },
+    {
+      "route": "/api/twilio/credentials",
+      "file": "app/api/twilio/credentials/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/unsubscribe",
+      "file": "app/api/unsubscribe/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "POST",
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/webhooks/cal",
+      "file": "app/api/webhooks/cal/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/calendly",
+      "file": "app/api/webhooks/calendly/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/email",
+      "file": "app/api/webhooks/email/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/webhooks/email/[provider]",
+      "file": "app/api/webhooks/email/[provider]/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/webhooks/email/inbound/[provider]",
+      "file": "app/api/webhooks/email/inbound/[provider]/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/webhooks/facebook/leads",
+      "file": "app/api/webhooks/facebook/leads/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/facebook/messenger",
+      "file": "app/api/webhooks/facebook/messenger/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/facebook/pages",
+      "file": "app/api/webhooks/facebook/pages/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/facebook/whatsapp",
+      "file": "app/api/webhooks/facebook/whatsapp/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/leads",
+      "file": "app/api/webhooks/leads/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/linkedin/leads",
+      "file": "app/api/webhooks/linkedin/leads/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "—"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/twilio/sms",
+      "file": "app/api/webhooks/twilio/sms/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/whatsapp",
+      "file": "app/api/webhooks/whatsapp/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/zernio/whatsapp",
+      "file": "app/api/webhooks/zernio/whatsapp/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/zoho/incoming",
+      "file": "app/api/webhooks/zoho/incoming/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/zoho/process-reply",
+      "file": "app/api/webhooks/zoho/process-reply/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/webhooks/zoom",
+      "file": "app/api/webhooks/zoom/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "POST"
+      ],
+      "auth": "webhook_signature",
+      "tenantScoped": false,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/whatsapp/send",
+      "file": "app/api/whatsapp/send/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": false,
+      "risk": "high"
+    },
+    {
+      "route": "/api/x/tweets",
+      "file": "app/api/x/tweets/route.ts",
+      "sideEffects": false,
+      "external": false,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoho/books",
+      "file": "app/api/zoho/books/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoho/campaigns",
+      "file": "app/api/zoho/campaigns/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoho/crm/sync",
+      "file": "app/api/zoho/crm/sync/route.ts",
+      "sideEffects": false,
+      "external": true,
+      "methods": [
+        "POST"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoho/mail",
+      "file": "app/api/zoho/mail/route.ts",
+      "sideEffects": true,
+      "external": true,
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoom/oauth",
+      "file": "app/api/zoom/oauth/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "session+bearer",
+      "tenantScoped": true,
+      "risk": "medium"
+    },
+    {
+      "route": "/api/zoom/oauth/callback",
+      "file": "app/api/zoom/oauth/callback/route.ts",
+      "sideEffects": true,
+      "external": false,
+      "methods": [
+        "GET"
+      ],
+      "auth": "manual_review",
+      "tenantScoped": false,
+      "risk": "high"
+    }
+  ]
+}
