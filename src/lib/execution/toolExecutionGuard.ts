@@ -7,6 +7,10 @@ import { structuredErrorToMcpContent } from '@/lib/mcp/formatMcpError';
 import type { MCPToolExecutionResult } from '@/types/mcp';
 
 import { capabilityRequiresIdempotencyKey } from '@/lib/execution/domainCapabilityGuard';
+import {
+  ensureMcpIdempotencyKey,
+  mcpToolRequiresIdempotency,
+} from '@/lib/mcp/toolRiskTiers';
 
 const WRITE_TOOL_PATTERN =
   /^(create|update|delete|send|publish|upload|queue|approve|reject|schedule|run|convert|assign|complete|cancel|void|promote)_/;
@@ -17,7 +21,7 @@ export type ToolExecutionGuardOptions = {
 };
 
 export type ToolExecutionGuardResult =
-  | { allowed: true; policy: PolicyDecision | null }
+  | { allowed: true; policy: PolicyDecision | null; idempotencyKey?: string | null }
   | { allowed: false; mcpResult: MCPToolExecutionResult; policy: PolicyDecision | null };
 
 export async function guardToolExecution(params: {
@@ -93,9 +97,13 @@ export async function guardToolExecution(params: {
     }
   }
 
-  if (capabilityRequiresIdempotencyKey(toolName)) {
-    const key = typeof args.idempotency_key === 'string' ? args.idempotency_key.trim() : '';
-    if (!key) {
+  // External / high-risk writes always get a stable idempotency key.
+  // Prefer caller-supplied key; otherwise derive from tenant+tool+canonical args
+  // so retries after timeouts do not create duplicate external effects.
+  let idempotencyKey: string | null = null;
+  if (capabilityRequiresIdempotencyKey(toolName) || mcpToolRequiresIdempotency(toolName)) {
+    idempotencyKey = ensureMcpIdempotencyKey({ tenantId, toolName, args });
+    if (!idempotencyKey) {
       return {
         allowed: false,
         policy,
@@ -116,7 +124,7 @@ export async function guardToolExecution(params: {
     }
   }
 
-  return { allowed: true, policy };
+  return { allowed: true, policy, idempotencyKey };
 }
 
 export function isWriteToolName(toolName: string): boolean {

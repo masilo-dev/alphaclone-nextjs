@@ -162,9 +162,13 @@ test('readiness exposes rate_limit distributed status', () => {
 });
 
 test('MCP tool risk tiers classify external writes and require idempotency', async () => {
-  const { classifyMcpToolTier, mcpToolRequiresIdempotency, mcpToolRequiresApproval } = await import(
-    '../../src/lib/mcp/toolRiskTiers.ts'
-  );
+  const {
+    classifyMcpToolTier,
+    mcpToolRequiresIdempotency,
+    mcpToolRequiresApproval,
+    deriveStableMcpIdempotencyKey,
+    ensureMcpIdempotencyKey,
+  } = await import('../../src/lib/mcp/toolRiskTiers.ts');
   assert.equal(classifyMcpToolTier('list_leads'), 'READ');
   assert.equal(classifyMcpToolTier('create_lead'), 'INTERNAL_WRITE');
   assert.equal(classifyMcpToolTier('send_email'), 'EXTERNAL_WRITE');
@@ -173,6 +177,54 @@ test('MCP tool risk tiers classify external writes and require idempotency', asy
   assert.equal(mcpToolRequiresIdempotency('send_invoice'), true);
   assert.equal(mcpToolRequiresApproval('void_invoice'), true);
   assert.equal(mcpToolRequiresIdempotency('list_invoices'), false);
+
+  const args = { to: 'a@b.com', subject: 'Hi', body: 'x', correlation_id: 'volatile-1' };
+  const key1 = deriveStableMcpIdempotencyKey({
+    tenantId: 'tenant-a',
+    toolName: 'send_email',
+    args,
+  });
+  const key2 = deriveStableMcpIdempotencyKey({
+    tenantId: 'tenant-a',
+    toolName: 'send_email',
+    args: { ...args, correlation_id: 'volatile-2' },
+  });
+  assert.equal(key1, key2, 'volatile correlation_id must not change idempotency key');
+  const otherTenant = deriveStableMcpIdempotencyKey({
+    tenantId: 'tenant-b',
+    toolName: 'send_email',
+    args,
+  });
+  assert.notEqual(key1, otherTenant);
+
+  const mutable = { invoice_id: 'inv-1', recipients: ['a@b.com'] };
+  const ensured = ensureMcpIdempotencyKey({
+    tenantId: 'tenant-a',
+    toolName: 'send_invoice',
+    args: mutable,
+  });
+  assert.ok(ensured);
+  assert.equal(mutable.idempotency_key, ensured);
+  const again = ensureMcpIdempotencyKey({
+    tenantId: 'tenant-a',
+    toolName: 'send_invoice',
+    args: mutable,
+  });
+  assert.equal(again, ensured, 'caller-supplied/derived key must be reused');
+});
+
+test('ToolPolicyGate maps MCP tiers into risk classes', async () => {
+  const { classifyToolRisk } = await import('../../src/lib/ai/ToolPolicyGate.ts');
+  assert.equal(classifyToolRisk('send_email'), 'send');
+  assert.equal(classifyToolRisk('publish_social_post'), 'send');
+  assert.equal(classifyToolRisk('bulk_outreach'), 'bulk');
+  assert.equal(classifyToolRisk('list_leads'), 'read');
+});
+
+test('toolExecutionGuard derives idempotency keys for external writes', () => {
+  const src = readFileSync(join(root, 'src/lib/execution/toolExecutionGuard.ts'), 'utf8');
+  assert.match(src, /ensureMcpIdempotencyKey/);
+  assert.match(src, /Prefer caller-supplied key/);
 });
 
 test('domain capability guard uses MCP risk tiers for idempotency', () => {
