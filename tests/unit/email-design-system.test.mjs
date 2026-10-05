@@ -129,6 +129,22 @@ describe('renderEmail layout', () => {
     assert.match(rendered.html, /Line two/);
     assert.match(rendered.html, /font-family:Arial,Helvetica,sans-serif/);
   });
+
+  it('outbound sanitize keeps presentation table layout attributes', async () => {
+    const { OUTBOUND_EMAIL_SANITIZE_OPTIONS } = await import('../../src/lib/email/sanitizeEmailHtmlServer.ts');
+    const sanitizeHtml = (await import('sanitize-html')).default;
+    const rendered = renderEmail({
+      type: 'transactional',
+      subject: 'Sanitize pass',
+      content: 'Hello from AlphaClone.',
+    });
+    const sanitized = sanitizeHtml(rendered.html, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
+    assert.match(sanitized, /role="presentation"/);
+    assert.match(sanitized, /width="620"/);
+    assert.match(sanitized, /cellpadding="0"/);
+    assert.match(sanitized, /Hello from AlphaClone/);
+    assert.doesNotMatch(sanitized, /<script/i);
+  });
 });
 
 describe('gateway and legacy builders', () => {

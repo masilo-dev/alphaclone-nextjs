@@ -101,14 +101,19 @@ const ProductTour: React.FC<ProductTourProps> = ({
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
-        if (isOpen && run) {
+        // Arm the CSS gate as soon as the tour is requested so Joyride is not
+        // forced display:none on its first paint (run flips true a tick later).
+        if (isOpen) {
             document.documentElement.setAttribute('data-product-tour-active', 'true');
-            window.addEventListener('scroll', resetWindowScroll, { passive: true });
-            return () => {
-                cleanupTourArtifacts();
-                window.removeEventListener('scroll', resetWindowScroll);
-                resetWindowScroll();
-            };
+            if (run) {
+                window.addEventListener('scroll', resetWindowScroll, { passive: true });
+                return () => {
+                    cleanupTourArtifacts();
+                    window.removeEventListener('scroll', resetWindowScroll);
+                    resetWindowScroll();
+                };
+            }
+            return;
         }
         cleanupTourArtifacts();
     }, [isOpen, run]);

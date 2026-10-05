@@ -11,16 +11,75 @@ const ALLOWED_TAGS = [
   'table',
   'thead',
   'tbody',
+  'tfoot',
   'tr',
   'th',
   'td',
+  'colgroup',
+  'col',
+  // Full branded documents from renderEmail() must survive outbound sanitize.
+  'html',
+  'head',
+  'body',
+  'meta',
+  'title',
+  'style',
+  'center',
 ];
 
-const ALLOWED_ATTRIBUTES = {
+const TABLE_LAYOUT_ATTRS = [
+  'style',
+  'class',
+  'role',
+  'width',
+  'height',
+  'cellpadding',
+  'cellspacing',
+  'border',
+  'align',
+  'valign',
+  'bgcolor',
+  'colspan',
+  'rowspan',
+];
+
+const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions['allowedAttributes'] = {
   ...sanitizeHtml.defaults.allowedAttributes,
-  '*': ['style', 'class'],
+  '*': ['style', 'class', 'id', 'dir', 'lang'],
   a: ['href', 'name', 'target', 'rel', 'style'],
-  img: ['src', 'alt', 'width', 'height', 'style', 'border'],
+  img: ['src', 'alt', 'width', 'height', 'style', 'border', 'align'],
+  table: TABLE_LAYOUT_ATTRS,
+  thead: TABLE_LAYOUT_ATTRS,
+  tbody: TABLE_LAYOUT_ATTRS,
+  tfoot: TABLE_LAYOUT_ATTRS,
+  tr: TABLE_LAYOUT_ATTRS,
+  th: TABLE_LAYOUT_ATTRS,
+  td: TABLE_LAYOUT_ATTRS,
+  col: ['width', 'span', 'style'],
+  colgroup: ['width', 'span', 'style'],
+  meta: ['charset', 'name', 'content', 'http-equiv'],
+  html: ['lang', 'xmlns', 'xmlns:v', 'xmlns:o'],
+};
+
+/** Shared sanitize-html options for outbound branded email (Outlook-safe tables). */
+export const OUTBOUND_EMAIL_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: ALLOWED_TAGS,
+  allowedAttributes: ALLOWED_ATTRIBUTES,
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowProtocolRelative: false,
+  disallowedTagsMode: 'discard',
+  // Keep MSO conditional comments used by renderEmail for Outlook Desktop.
+  nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript'],
+  transformTags: {
+    a: (_tagName, attribs) => ({
+      tagName: 'a',
+      attribs: {
+        ...attribs,
+        rel: 'noopener noreferrer',
+        target: '_blank',
+      },
+    }),
+  },
 };
 
 /** Server-safe HTML sanitizer for outbound email body fragments. */
@@ -28,23 +87,7 @@ export function sanitizeEmailHtmlServer(rawHtml?: string): string {
   const html = String(rawHtml || '').trim();
   if (!html) return '';
 
-  return sanitizeHtml(html, {
-    allowedTags: ALLOWED_TAGS,
-    allowedAttributes: ALLOWED_ATTRIBUTES,
-    allowedSchemes: ['http', 'https', 'mailto'],
-    allowProtocolRelative: false,
-    disallowedTagsMode: 'discard',
-    transformTags: {
-      a: (_tagName, attribs) => ({
-        tagName: 'a',
-        attribs: {
-          ...attribs,
-          rel: 'noopener noreferrer',
-          target: '_blank',
-        },
-      }),
-    },
-  });
+  return sanitizeHtml(html, OUTBOUND_EMAIL_SANITIZE_OPTIONS);
 }
 
 /**

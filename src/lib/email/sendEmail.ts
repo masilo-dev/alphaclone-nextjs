@@ -7,6 +7,7 @@ import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk
 import { resolveAllConnectedEmailProviders } from '@/lib/email/providerIntegrationResolver';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
+import { OUTBOUND_EMAIL_SANITIZE_OPTIONS } from '@/lib/email/sanitizeEmailHtmlServer';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
@@ -111,10 +112,7 @@ export async function sendEmail(
     const rawHtml = String(sanitizedHtmlSource || '');
     const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
     const htmlToSanitize = isHtml ? rawHtml : rawHtml.replace(/\r?\n/g, '<br />');
-    const sanitizeOptions = {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
-      allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
-    };
+    const sanitizeOptions = OUTBOUND_EMAIL_SANITIZE_OPTIONS;
 
     let normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter ? ensureFooter(sanitizeHtml(htmlToSanitize, sanitizeOptions), { unsubscribeUrl }) : sanitizeHtml(htmlToSanitize, sanitizeOptions))
