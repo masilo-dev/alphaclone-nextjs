@@ -39,13 +39,13 @@ export function CurrencyConverterPanel() {
           </div>
           <div>
             <h4 className="type-caption font-black text-white uppercase tracking-wider">Multi-Currency FX Engine</h4>
-            <p className="type-caption text-slate-400">Real-time European Central Bank rates</p>
+            <p className="type-caption text-[var(--ws-text-muted)]">Real-time European Central Bank rates</p>
           </div>
         </div>
         <button
           onClick={loadRates}
           disabled={loading}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/10 transition-colors"
           title="Refresh Rates"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -54,28 +54,28 @@ export function CurrencyConverterPanel() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center pt-1">
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Amount
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-2.5 type-caption text-slate-500">{baseSymbol}</span>
+            <span className="absolute left-3 top-2.5 type-caption text-[var(--ws-text-muted)]">{baseSymbol}</span>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full pl-8 pr-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+              className="w-full pl-8 pr-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
             />
           </div>
         </div>
 
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             From
           </label>
           <select
             value={baseCurrency}
             onChange={(e) => setBaseCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
@@ -86,13 +86,13 @@ export function CurrencyConverterPanel() {
         </div>
 
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             To
           </label>
           <select
             value={targetCurrency}
             onChange={(e) => setTargetCurrency(e.target.value as CurrencyCode)}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-indigo-500/50"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
@@ -111,8 +111,8 @@ export function CurrencyConverterPanel() {
           </p>
         </div>
         <div className="text-right">
-          <p className="type-card-description text-slate-500">Exchange Rate</p>
-          <p className="type-card-description font-bold text-slate-300 mt-0.5">
+          <p className="type-card-description text-[var(--ws-text-muted)]">Exchange Rate</p>
+          <p className="type-card-description font-bold text-[var(--ws-text-secondary)] mt-0.5">
             1 {baseCurrency} = {rates[targetCurrency] ? rates[targetCurrency].toFixed(4) : '...'} {targetCurrency}
           </p>
         </div>

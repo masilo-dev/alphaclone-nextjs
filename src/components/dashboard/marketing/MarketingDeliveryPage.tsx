@@ -22,7 +22,7 @@ const HEALTH_LABELS: Record<ProviderStatus['health'], { label: string; className
   rate_limited: { label: 'Rate limited', className: 'text-amber-400' },
   needs_reconnect: { label: 'Needs reconnect', className: 'text-red-400' },
   config_issue: { label: 'Configuration issue', className: 'text-amber-400' },
-  unavailable: { label: 'Unavailable', className: 'text-slate-500' },
+  unavailable: { label: 'Unavailable', className: 'text-[var(--ws-text-muted)]' },
 };
 
 function HealthIcon({ health }: { health: ProviderStatus['health'] }) {
@@ -69,7 +69,7 @@ export default function MarketingDeliveryPage() {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-[var(--ws-text-muted)]" />
           </div>
         ) : (
           <>
@@ -85,7 +85,7 @@ export default function MarketingDeliveryPage() {
                     <p className="type-card-description text-[var(--ws-text-secondary)]">No email providers connected.</p>
                     <Link
                       href="/dashboard/marketplace"
-                      className="inline-block mt-3 type-ui text-teal-400 hover:text-teal-300"
+                      className="inline-block mt-3 type-ui text-teal-400 hover:text-[var(--brand-blue-300)]"
                     >
                       Connect a provider →
                     </Link>
@@ -104,7 +104,7 @@ export default function MarketingDeliveryPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <p className={`type-card-description font-semibold ${health.className}`}>{health.label}</p>
-                          <p className="type-card-description text-slate-500">{p.connected ? 'Connected' : 'Not connected'}</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)]">{p.connected ? 'Connected' : 'Not connected'}</p>
                         </div>
                       </div>
                     );

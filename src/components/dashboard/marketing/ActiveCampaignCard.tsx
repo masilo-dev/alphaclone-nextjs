@@ -61,10 +61,10 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
             className={cn(
               'inline-flex mt-1 type-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded',
               isRunning
-                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] border border-emerald-500/30'
                 : campaign.status === 'scheduled'
-                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                  : 'bg-slate-500/15 text-slate-300 border border-slate-500/30',
+                  ? 'bg-amber-500/15 text-[var(--warning-text,var(--warning-500))] border border-amber-500/30'
+                  : 'bg-slate-500/15 text-[var(--ws-text-secondary)] border border-slate-500/30',
             )}
           >
             {statusLabel}
@@ -84,7 +84,7 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
             {nextBatch && isRunning ? <span>Next batch: {nextBatch}</span> : null}
             {scheduleLabel && campaign.status === 'scheduled' ? <span>{scheduleLabel}</span> : null}
           </div>
-          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
             <div
               className="h-full bg-teal-500/80 rounded-full transition-all"
               style={{ width: `${Math.min(100, campaign.progress)}%` }}
@@ -125,7 +125,7 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
           <button
             type="button"
             onClick={() => onPause(campaign.id)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-white/10 text-slate-300 hover:text-white hover:border-white/20 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-white/10 text-[var(--ws-text-secondary)] hover:text-white hover:border-white/20 transition-colors"
           >
             <Pause className="w-3 h-3" />
             Pause
@@ -133,7 +133,7 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
         ) : null}
         <Link
           href={`/dashboard/business/campaigns?campaign=${campaign.id}`}
-          className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-colors"
+          className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-teal-500/30 text-[var(--brand-blue-300)] hover:bg-teal-500/10 transition-colors"
         >
           <Eye className="w-3 h-3" />
           View
@@ -142,7 +142,7 @@ export default function ActiveCampaignCard({ campaign, onPause, onStop, compact 
           <button
             type="button"
             onClick={() => onStop(campaign.id)}
-            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors ml-auto"
+            className="inline-flex items-center gap-1 px-2.5 py-1 type-caption font-semibold uppercase tracking-wide rounded border border-red-500/20 text-red-400 hover:bg-[var(--error-500)]/10 transition-colors ml-auto"
           >
             <Square className="w-3 h-3" />
             Stop

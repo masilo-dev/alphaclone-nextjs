@@ -40,22 +40,22 @@ export const SuperAdminAuditTab: React.FC = () => {
             <ShieldCheck className="w-6 h-6 text-teal-400" />
             Platform Audit Trail
           </h2>
-          <p className="text-slate-400 type-card-description">Immutable log of privileged system and governance actions ({total} entries)</p>
+          <p className="text-[var(--ws-text-muted)] type-card-description">Immutable log of privileged system and governance actions ({total} entries)</p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
             <Input
               placeholder="Search action or resource..."
-              className="pl-10 w-48 sm:w-64 h-10 bg-slate-900/50 border-slate-800 type-ui"
+              className="pl-10 w-48 sm:w-64 h-10 bg-[var(--ws-panel)]/50 border-[var(--ws-border)] type-ui"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <button
             onClick={loadAuditLogs}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-white/5"
+            className="p-2.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl border border-white/5"
             title="Refresh logs"
           >
             <RefreshCw className="w-4 h-4" />
@@ -70,7 +70,7 @@ export const SuperAdminAuditTab: React.FC = () => {
             onClick={() => { setActionFilter(act); setPage(1); }}
             className={`px-3 py-1 rounded-full type-caption font-bold uppercase tracking-wider transition-all border ${actionFilter === act
               ? 'bg-teal-500 text-white border-teal-500'
-              : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700'
+              : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border)]'
             }`}
           >
             {act === '' ? 'ALL ACTIONS' : act.replace(/_/g, ' ')}
@@ -83,14 +83,14 @@ export const SuperAdminAuditTab: React.FC = () => {
           <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : logs.length === 0 ? (
-        <div className="p-8 text-center bg-slate-900/40 border border-slate-800 rounded-2xl text-slate-400">
+        <div className="p-8 text-center bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl text-[var(--ws-text-muted)]">
           No audit logs found matching criteria.
         </div>
       ) : (
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden">
+        <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left type-caption">
-              <thead className="bg-slate-900/80 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
+              <thead className="bg-[var(--ws-panel)]/80 text-[var(--ws-text-muted)] font-bold uppercase tracking-wider border-b border-[var(--ws-border)]">
                 <tr>
                   <th className="p-3.5">Timestamp</th>
                   <th className="p-3.5">Action</th>
@@ -99,29 +99,29 @@ export const SuperAdminAuditTab: React.FC = () => {
                   <th className="p-3.5">Metadata Context</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-300">
+              <tbody className="divide-y divide-slate-800 text-[var(--ws-text-secondary)]">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="p-3.5 text-slate-400 font-mono whitespace-nowrap">
+                  <tr key={log.id} className="hover:bg-[var(--ws-surface-secondary)]/30 transition-colors">
+                    <td className="p-3.5 text-[var(--ws-text-muted)] font-mono whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}
                     </td>
                     <td className="p-3.5 font-bold">
                       <span className={`px-2 py-0.5 rounded uppercase type-caption font-black ${
                         log.action.includes('SUPER_ADMIN') ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                        log.action.includes('SUSPENDED') || log.action.includes('DELETED') ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                        log.action.includes('SUSPENDED') || log.action.includes('DELETED') ? 'bg-[var(--error-500)]/20 text-red-400 border border-red-500/30' :
                         'bg-teal-500/20 text-teal-400 border border-teal-500/30'
                       }`}>
                         {log.action}
                       </span>
                     </td>
-                    <td className="p-3.5 font-mono text-slate-400">
+                    <td className="p-3.5 font-mono text-[var(--ws-text-muted)]">
                       {log.user_id ? log.user_id.slice(0, 8) + '...' : 'System'}
                     </td>
                     <td className="p-3.5">
                       <span className="font-semibold text-white">{log.resource_type}</span>
-                      <span className="text-slate-500 block type-ui font-mono">{log.resource_id}</span>
+                      <span className="text-[var(--ws-text-muted)] block type-ui font-mono">{log.resource_id}</span>
                     </td>
-                    <td className="p-3.5 font-mono type-ui text-slate-400 max-w-xs truncate">
+                    <td className="p-3.5 font-mono type-ui text-[var(--ws-text-muted)] max-w-xs truncate">
                       {JSON.stringify(log.metadata || {})}
                     </td>
                   </tr>

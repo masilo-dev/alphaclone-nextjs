@@ -3,7 +3,7 @@ import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 const wrapperStyle: CSSProperties = {
   fontFamily: 'Arial, Helvetica, sans-serif',
-  color: '#94a3b8',
+  color: 'var(--ws-text-secondary)',
   fontSize: '12px',
   lineHeight: 1.6,
   textAlign: 'center',
@@ -22,24 +22,24 @@ export const emailFooterText = [
 export default function EmailFooter({ marketing = false }: { marketing?: boolean }) {
   return (
     <div style={wrapperStyle}>
-      <div style={{ borderTop: '1px solid #334155', margin: '16px 0', width: '100%' }} />
+      <div style={{ borderTop: '1px solid var(--ws-surface-tertiary)', margin: '16px 0', width: '100%' }} />
       <div>{COMPANY_LEGAL.legalName}</div>
       <div>{formatLegalAddress()}</div>
       <div>
-        <a href="https://alphaclonesystems.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="https://alphaclonesystems.com" style={{ color: 'var(--ws-text-secondary)', textDecoration: 'none' }}>
           alphaclonesystems.com
         </a>
       </div>
       <div>
-        <a href="{{{unsubscribe_url}}}" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="{{{unsubscribe_url}}}" style={{ color: 'var(--ws-text-secondary)', textDecoration: 'none' }}>
           Unsubscribe
         </a>
         {' | '}
-        <a href="https://alphaclonesystems.com/privacy-policy" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="https://alphaclonesystems.com/privacy-policy" style={{ color: 'var(--ws-text-secondary)', textDecoration: 'none' }}>
           Privacy Policy
         </a>
         {' | '}
-        <a href="https://alphaclonesystems.com/terms-of-service" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+        <a href="https://alphaclonesystems.com/terms-of-service" style={{ color: 'var(--ws-text-secondary)', textDecoration: 'none' }}>
           Terms
         </a>
       </div>

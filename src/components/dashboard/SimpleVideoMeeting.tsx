@@ -173,15 +173,15 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
     if (status === 'initializing') {
         return (
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 border-2 border-slate-700/50 flex flex-col items-center justify-center text-center h-[300px]">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 border-2 border-[var(--ws-border)]/50 flex flex-col items-center justify-center text-center h-[300px]">
                 <div className="relative">
-                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mb-4">
                         <Video className="w-8 h-8 text-teal-500 animate-pulse" />
                     </div>
                     <div className="absolute inset-0 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Initializing Video Service</h3>
-                <p className="type-card-description text-slate-400">Connecting to secure video infrastructure...</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Connecting to secure video infrastructure...</p>
             </div>
         );
     }
@@ -213,14 +213,14 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
         return (
             <div className="bg-red-900/10 rounded-xl p-8 border-2 border-red-500/30 flex flex-col items-center justify-center text-center h-[300px]">
-                <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-[var(--error-500)]/10 rounded-full flex items-center justify-center mb-4">
                     <AlertTriangle className="w-8 h-8 text-red-500" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Service Unavailable</h3>
-                <p className="type-card-description text-red-300 max-w-xs mx-auto mb-6">
+                <p className="type-card-description text-[var(--error-text,var(--error-500))] max-w-xs mx-auto mb-6">
                     {errorMsg || 'The video service is currently not configured or reachable.'}
                 </p>
-                <Button onClick={initializeVideoService} variant="outline" className="gap-2 border-red-500/30 hover:bg-red-500/10 text-red-400">
+                <Button onClick={initializeVideoService} variant="outline" className="gap-2 border-red-500/30 hover:bg-[var(--error-500)]/10 text-red-400">
                     <RefreshCw className="w-4 h-4" />
                     Retry Connection
                 </Button>
@@ -297,7 +297,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                 </Button>
                                 <Button
                                     onClick={handleRegeneratePin}
-                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-slate-700/50 hover:bg-slate-600/50 text-slate-400 border border-white/10"
+                                    className="shrink-0 h-[34px] w-[34px] p-0 bg-[var(--ws-surface-tertiary)]/50 hover:bg-slate-600/50 text-[var(--ws-text-muted)] border border-white/10"
                                     title="Regenerate Code"
                                     disabled={isRegenerating}
                                 >
@@ -320,7 +320,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     <Button
                         onClick={handleCreateNew}
                         variant="outline"
-                        className="border-white/10 hover:bg-white/5 text-slate-300 type-caption"
+                        className="border-white/10 hover:bg-white/5 text-[var(--ws-text-secondary)] type-caption"
                     >
                         New Room
                     </Button>
@@ -331,7 +331,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                 <div className="mt-6">
                     <button
                         onClick={() => setShowPastMeetings(!showPastMeetings)}
-                        className="flex items-center gap-2 type-ui font-bold text-slate-400 hover:text-white transition-colors mb-4"
+                        className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors mb-4"
                     >
                         <Clock className="w-4 h-4" />
                         Past Meetings ({pastMeetings.length})
@@ -340,11 +340,11 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {showPastMeetings && (
                         <div className="space-y-3">
                             {pastMeetings.map((meeting) => (
-                                <div key={meeting.id} className="bg-slate-900/50 border border-white/5 rounded-lg p-4 hover:bg-slate-900/70 transition-colors">
+                                <div key={meeting.id} className="bg-[var(--ws-panel)]/50 border border-white/5 rounded-lg p-4 hover:bg-[var(--ws-panel)]/70 transition-colors">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
                                             <h4 className="type-ui font-bold text-white truncate">{meeting.title}</h4>
-                                            <div className="flex items-center gap-3 mt-2 type-caption text-slate-500">
+                                            <div className="flex items-center gap-3 mt-2 type-caption text-[var(--ws-text-muted)]">
                                                 <span className="flex items-center gap-1">
                                                     <Clock className="w-3 h-3" />
                                                     {new Date(meeting.created_at).toLocaleDateString()}
@@ -368,7 +368,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                                         href={meeting.recording_url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-teal-400 hover:text-teal-300 type-caption font-medium flex items-center gap-1"
+                                                        className="text-teal-400 hover:text-[var(--brand-blue-300)] type-caption font-medium flex items-center gap-1"
                                                     >
                                                         <Play className="w-3 h-3" />
                                                         Watch
@@ -378,8 +378,8 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                         </div>
                                         <div className={`px-2 py-1 rounded type-caption font-bold uppercase ${
                                             meeting.status === 'ended' ? 'bg-green-500/10 text-green-400' :
-                                            meeting.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
-                                            'bg-slate-500/10 text-slate-400'
+                                            meeting.status === 'cancelled' ? 'bg-[var(--error-500)]/10 text-red-400' :
+                                            'bg-slate-500/10 text-[var(--ws-text-muted)]'
                                         }`}>
                                             {meeting.status}
                                         </div>

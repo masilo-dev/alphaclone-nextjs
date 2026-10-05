@@ -57,12 +57,12 @@ const probabilityAccent = (probability?: number) => {
 };
 
 const STAGE_COLORS: Record<DealStage, { bg: string; text: string; border: string }> = {
-  lead:          { bg: 'bg-slate-500/15',   text: 'text-slate-400',   border: 'border-slate-500/30' },
+  lead:          { bg: 'bg-slate-500/15',   text: 'text-[var(--ws-text-muted)]',   border: 'border-slate-500/30' },
   qualified:     { bg: 'bg-blue-500/15',    text: 'text-blue-400',    border: 'border-blue-500/30' },
   proposal:      { bg: 'bg-yellow-500/15',  text: 'text-yellow-400',  border: 'border-yellow-500/30' },
   negotiation:   { bg: 'bg-orange-500/15',  text: 'text-orange-400',  border: 'border-orange-500/30' },
   closed_won:    { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-  closed_lost:   { bg: 'bg-red-500/15',     text: 'text-red-400',     border: 'border-red-500/30' },
+  closed_lost:   { bg: 'bg-[var(--error-500)]/15',     text: 'text-red-400',     border: 'border-red-500/30' },
 };
 
 interface Deal {
@@ -120,7 +120,7 @@ const SwipeableDealRow: React.FC<{
         <ArrowRight className="w-5 h-5 text-white" />
         <span className="type-ui text-white font-bold capitalize">{nextStage?.replace('_', ' ')}</span>
       </motion.div>
-      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-24 bg-red-500/80 flex flex-col items-center justify-center z-0 gap-1">
+      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-24 bg-[var(--error-500)]/80 flex flex-col items-center justify-center z-0 gap-1">
         <ArrowLeft className="w-5 h-5 text-white" />
         <span className="type-ui text-white font-bold">Lost</span>
       </motion.div>
@@ -132,7 +132,7 @@ const SwipeableDealRow: React.FC<{
         onDragEnd={handleDragEnd}
         style={{ x }}
         onClick={() => onTap(deal)}
-        className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 py-3 cursor-pointer"
+        className="relative z-10 bg-[var(--ws-canvas)] flex items-center gap-3 px-4 py-3 cursor-pointer"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
@@ -141,19 +141,19 @@ const SwipeableDealRow: React.FC<{
               <span className={`type-ui font-bold flex-shrink-0 ${scoreColor(deal.score)}`}>●{deal.score}</span>
             )}
           </div>
-          {deal.contact_name && <span className="type-ui text-slate-500 opacity-55 block truncate">{deal.contact_name}</span>}
+          {deal.contact_name && <span className="type-ui text-[var(--ws-text-muted)] opacity-55 block truncate">{deal.contact_name}</span>}
           <div className="mt-1.5 flex items-center gap-2">
-            <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+            <div className="flex-1 h-1 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
               <div className="h-full bg-[var(--brand-blue-500)] rounded-full" style={{ width: `${progress.percent}%` }} />
             </div>
-            <span className="type-ui font-bold text-slate-500 tabular-nums shrink-0">
+            <span className="type-ui font-bold text-[var(--ws-text-muted)] tabular-nums shrink-0">
               {progress.step}/{progress.total} · {progress.percent}%
             </span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="type-ui font-bold text-[var(--brand-blue-400)]">${(deal.value || 0).toLocaleString()}</span>
-          <span className="type-ui text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded-full">{daysInStage(deal.updated_at)}d</span>
+          <span className="type-ui text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] px-1.5 py-0.5 rounded-full">{daysInStage(deal.updated_at)}d</span>
         </div>
       </motion.div>
     </div>
@@ -344,7 +344,7 @@ const DealDetail: React.FC<{
               <span>{progress.percent}%</span>
             </div>
             <div className="h-2 rounded-full bg-[var(--ws-surface-tertiary)] overflow-hidden">
-              <div className="h-full bg-[#E69222] rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
+              <div className="h-full bg-[var(--warning-500)] rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
             </div>
           </div>
           <button
@@ -379,13 +379,13 @@ const DealDetail: React.FC<{
         <DealRevenueTimeline dealId={deal.id} dealStage={deal.stage} />
 
         {/* Contact */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
-          {deal.contact_name && <div className="flex items-center gap-3 p-4"><User className="w-5 h-5 text-slate-500" /><span className="type-ui text-slate-300">{deal.contact_name}</span></div>}
+        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5">
+          {deal.contact_name && <div className="flex items-center gap-3 p-4"><User className="w-5 h-5 text-[var(--ws-text-muted)]" /><span className="type-ui text-[var(--ws-text-secondary)]">{deal.contact_name}</span></div>}
           {deal.contact_email && (
             <div className="flex items-center justify-between gap-3 p-4">
               <div className="flex items-center gap-3 min-w-0">
-                <Mail className="w-5 h-5 text-slate-500 shrink-0" />
-                <span className="type-ui text-slate-300 truncate">{deal.contact_email}</span>
+                <Mail className="w-5 h-5 text-[var(--ws-text-muted)] shrink-0" />
+                <span className="type-ui text-[var(--ws-text-secondary)] truncate">{deal.contact_email}</span>
               </div>
               {onComposeEmail && (
                 <button
@@ -404,31 +404,31 @@ const DealDetail: React.FC<{
         </div>
 
         {deal.description && (
-          <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-            <p className="type-card-description text-slate-300 leading-relaxed">{deal.description}</p>
+          <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4">
+            <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{deal.description}</p>
           </div>
         )}
 
         {/* Line items */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
+        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="type-ui font-black uppercase tracking-wider text-slate-400">Products / Line Items</span>
+            <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Products / Line Items</span>
             <button onClick={() => setShowAddProduct(v => !v)} className="type-ui font-bold text-emerald-400 flex items-center gap-1">
               <Plus className="w-3.5 h-3.5" /> Add
             </button>
           </div>
 
           {productsLoading ? (
-            <div className="space-y-2">{[...Array(2)].map((_, i) => <div key={i} className="h-9 bg-slate-800/50 rounded animate-pulse" />)}</div>
+            <div className="space-y-2">{[...Array(2)].map((_, i) => <div key={i} className="h-9 bg-[var(--ws-surface-secondary)]/50 rounded animate-pulse" />)}</div>
           ) : products.length === 0 ? (
-            <p className="type-card-description text-slate-500">No products added yet.</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">No products added yet.</p>
           ) : (
             <div className="divide-y divide-white/5">
               {products.map(p => (
                 <div key={p.id} className="flex items-center justify-between py-2.5 gap-3">
                   <div className="min-w-0">
-                    <p className="type-card-description text-slate-200 font-medium truncate">{p.productName}</p>
-                    <p className="type-card-description text-slate-500">{p.quantity} × ${p.unitPrice.toLocaleString()}</p>
+                    <p className="type-card-description text-[var(--ws-text-secondary)] font-medium truncate">{p.productName}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">{p.quantity} × ${p.unitPrice.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="type-ui font-bold text-[var(--brand-blue-400)]">${(p.total || 0).toLocaleString()}</span>
@@ -437,7 +437,7 @@ const DealDetail: React.FC<{
                 </div>
               ))}
               <div className="flex items-center justify-between pt-2.5">
-                <span className="type-ui font-bold text-slate-300">Total</span>
+                <span className="type-ui font-bold text-[var(--ws-text-secondary)]">Total</span>
                 <span className="type-ui font-black text-[var(--brand-blue-400)]">${productsTotal.toLocaleString()}</span>
               </div>
             </div>
@@ -449,7 +449,7 @@ const DealDetail: React.FC<{
                 value={newProduct.productName}
                 onChange={e => setNewProduct(p => ({ ...p, productName: e.target.value }))}
                 placeholder="Product / service name"
-                className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
               />
               <div className="flex gap-2">
                 <input
@@ -457,14 +457,14 @@ const DealDetail: React.FC<{
                   onChange={e => setNewProduct(p => ({ ...p, quantity: e.target.value }))}
                   placeholder="Qty"
                   type="number"
-                  className="w-20 bg-slate-800 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                  className="w-20 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
                 />
                 <input
                   value={newProduct.unitPrice}
                   onChange={e => setNewProduct(p => ({ ...p, unitPrice: e.target.value }))}
                   placeholder="Unit price"
                   type="number"
-                  className="flex-1 bg-slate-800 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
+                  className="flex-1 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <button onClick={handleAddProduct} className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg type-ui font-bold text-white">Add product</button>
@@ -474,12 +474,12 @@ const DealDetail: React.FC<{
 
         {/* Log activity */}
         {logging && (
-          <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-2">
+          <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-2">
             <textarea
               value={activityNote}
               onChange={e => setActivityNote(e.target.value)}
               placeholder="Log a call, email, or note…"
-              className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)] resize-none h-20"
+              className="w-full bg-[var(--ws-surface-secondary)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)] resize-none h-20"
             />
             <button onClick={handleLogActivity} className="w-full py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg type-ui font-bold text-white">Save activity</button>
           </div>
@@ -492,41 +492,41 @@ const DealDetail: React.FC<{
             <button
               type="button"
               onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')}
-              className="min-h-11 px-3 type-ui text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
             >
               Open customer
             </button>
             <button
               type="button"
               onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)}
-              className="min-h-11 px-3 type-ui text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
             >
               Create quote
             </button>
             <button
               type="button"
               onClick={() => navigate('/dashboard/business/calendar')}
-              className="min-h-11 px-3 type-ui text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+              className="min-h-11 px-3 type-ui text-[var(--ws-text-secondary)] font-bold rounded-xl border border-white/10 hover:bg-white/5"
             >
               Schedule follow-up
             </button>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 type-ui text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
+            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 type-ui text-[var(--ws-text-muted)] font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
             <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 type-ui text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
               {creatingInvoice ? 'Creating…' : 'Create Invoice'}
             </button>
           </div>
         </div>
       ) : (
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--ws-canvas)]/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
         <div className="flex divide-x divide-white/5 overflow-x-auto">
-          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Customer</button>
-          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Quote</button>
-          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-slate-400 font-bold hover:bg-white/5">Follow-up</button>
+          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/contacts?directory=unified&contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/contacts?directory=unified')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Customer</button>
+          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Quote</button>
+          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5">Follow-up</button>
         </div>
         <div className="flex divide-x divide-white/5">
-          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 type-ui text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
+          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 type-ui text-[var(--ws-text-muted)] font-bold hover:bg-white/5 transition-colors">Log Activity</button>
           <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 type-ui text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
             {creatingInvoice ? 'Creating…' : 'Create Invoice'}
           </button>
@@ -904,19 +904,19 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               const id = e.dataTransfer.getData('text/plain');
               if (id) void handleBoardDrop(id, stage);
             }}
-            className="flex-1 min-w-[280px] max-w-[320px] bg-slate-900/25 border border-white/5 rounded-2xl flex flex-col h-full overflow-hidden"
+            className="flex-1 min-w-[280px] max-w-[320px] bg-[var(--ws-panel)]/25 border border-white/5 rounded-2xl flex flex-col h-full overflow-hidden"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between p-3.5 border-b border-white/5 bg-slate-900/40 shrink-0">
+            <div className="flex items-center justify-between p-3.5 border-b border-white/5 bg-[var(--ws-panel)]/40 shrink-0">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${col.text} bg-current`} />
-                <span className="type-caption font-black uppercase tracking-wider text-slate-300">{stage.replace('_', ' ')}</span>
+                <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)]">{stage.replace('_', ' ')}</span>
                 <span className={`type-ui font-bold px-1.5 py-0.5 rounded-full ${col.bg} ${col.text}`}>{stageDeals.length}</span>
                 {stageDeals.length > COLUMN_WIP_LIMIT && (
                   <span className="type-ui font-bold text-amber-400" title="WIP limit exceeded">WIP!</span>
                 )}
               </div>
-              <span className="type-ui font-bold text-slate-500 opacity-60">${totalVal.toLocaleString()}</span>
+              <span className="type-ui font-bold text-[var(--ws-text-muted)] opacity-60">${totalVal.toLocaleString()}</span>
             </div>
 
             {/* Column Cards */}
@@ -943,7 +943,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     role="button"
                     tabIndex={0}
                     aria-label={`Open deal: ${deal.name}`}
-                    className={`bg-slate-950 border hover:border-slate-800 border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
+                    className={`bg-[var(--ws-canvas)] border hover:border-[var(--ws-border)] border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
                       selectedDealIds.has(deal.id) ? 'border-[var(--brand-blue-500)]/40' : 'border-white/5'
                     }`}
                   >
@@ -953,7 +953,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         e.stopPropagation();
                         toggleDealSelection(deal.id);
                       }}
-                      className="absolute top-3 right-3 z-10 text-slate-500 hover:text-[var(--brand-blue-400)]"
+                      className="absolute top-3 right-3 z-10 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)]"
                       aria-label={`Select ${deal.name} for bulk actions`}
                       title="Select for bulk actions"
                     >
@@ -971,16 +971,16 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         )}
                       </div>
                       {deal.contact_name && (
-                        <span className="type-ui text-slate-500 mt-1 block truncate">{deal.contact_name}</span>
+                        <span className="type-ui text-[var(--ws-text-muted)] mt-1 block truncate">{deal.contact_name}</span>
                       )}
                       <div className="mt-2 flex items-center gap-2">
-                        <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+                        <div className="flex-1 h-1 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
                           <div
                             className="h-full bg-[var(--brand-blue-500)]/80 rounded-full"
                             style={{ width: `${getDealStageProgress(deal.stage).percent}%` }}
                           />
                         </div>
-                        <span className="type-ui font-bold text-slate-500 tabular-nums">
+                        <span className="type-ui font-bold text-[var(--ws-text-muted)] tabular-nums">
                           {getDealStageProgress(deal.stage).percent}%
                         </span>
                       </div>
@@ -1012,26 +1012,26 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const renderList = () => (
     <div className="p-4 space-y-4">
       {/* Table Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900/20 border border-white/5 rounded-2xl p-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[var(--ws-panel)]/20 border border-white/5 rounded-2xl p-4">
         <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search deals or contacts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950/60 border border-white/5 rounded-xl type-caption text-white placeholder-slate-500 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption text-white placeholder-slate-500 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
           />
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           {/* Stage filter */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <Filter className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
             <select
               value={filterStage}
               onChange={(e) => setFilterStage(e.target.value)}
-              className="bg-slate-950/60 border border-white/5 rounded-xl px-3 py-1.5 type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl px-3 py-1.5 type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
             >
               <option value="all">All Stages</option>
               {STAGES.map((s) => (
@@ -1050,8 +1050,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-xl type-caption shrink-0 ${
-              sortBy === 'value' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-slate-400'
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption shrink-0 ${
+              sortBy === 'value' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
             <ArrowUpDown className="w-3 h-3" />
@@ -1068,8 +1068,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 setSortOrder('desc');
               }
             }}
-            className={`flex items-center gap-1 px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-xl type-caption shrink-0 ${
-              sortBy === 'created_at' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-slate-400'
+            className={`flex items-center gap-1 px-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-white/5 rounded-xl type-caption shrink-0 ${
+              sortBy === 'created_at' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)]'
             }`}
           >
             <Clock className="w-3 h-3" />
@@ -1079,10 +1079,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       </div>
 
       {/* Table grid */}
-      <div className="overflow-x-auto rounded-2xl border border-white/5 bg-slate-950/30">
+      <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[var(--ws-canvas)]/30">
         <table className="ac-data-table w-full border-collapse text-left min-w-[700px]">
           <thead>
-            <tr className="border-b border-white/5 bg-slate-900/20">
+            <tr className="border-b border-white/5 bg-[var(--ws-panel)]/20">
               <th className="px-3 py-3 w-10">
                 <button
                   type="button"
@@ -1091,7 +1091,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedDealIds.has(id));
                     setSelectedDealIds(allSelected ? new Set() : new Set(visibleIds));
                   }}
-                  className="text-slate-500 hover:text-white transition-colors"
+                  className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                   aria-label="Select all deals"
                 >
                   {filteredDeals.length > 0 && filteredDeals.every((d) => selectedDealIds.has(d.id))
@@ -1099,18 +1099,18 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     : <Square className="w-3.5 h-3.5" />}
                 </button>
               </th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps">Deal Name</th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps">Stage</th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps">Value</th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps">Contact</th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps">Score</th>
-              <th className="px-3 py-3 type-caption font-black text-slate-400 uppercase tracking-caps text-right">Age</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Deal Name</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Stage</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Value</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Contact</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Score</th>
+              <th className="px-3 py-3 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps text-right">Age</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {filteredDeals.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-slate-500 type-ui">
+                <td colSpan={7} className="p-6 text-center text-[var(--ws-text-muted)] type-ui">
                   No deals found matching search criteria.
                 </td>
               </tr>
@@ -1134,7 +1134,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <button
                         type="button"
                         onClick={() => toggleDealSelection(deal.id)}
-                        className="text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
+                        className="text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] transition-colors"
                         aria-label={`Select ${deal.name} for bulk actions`}
                         title="Select for bulk actions"
                       >
@@ -1154,8 +1154,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-col gap-0.5">
-                        <span className="type-ui text-slate-300 font-semibold">{deal.contact_name || '-'}</span>
-                        {deal.contact_email && <span className="type-ui text-slate-500">{deal.contact_email}</span>}
+                        <span className="type-ui text-[var(--ws-text-secondary)] font-semibold">{deal.contact_name || '-'}</span>
+                        {deal.contact_email && <span className="type-ui text-[var(--ws-text-muted)]">{deal.contact_email}</span>}
                       </div>
                     </td>
                     <td className="px-3 py-3">
@@ -1168,7 +1168,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       )}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <span className="type-caption text-slate-500 font-semibold font-mono">{daysInStage(deal.updated_at)} days</span>
+                      <span className="type-caption text-[var(--ws-text-muted)] font-semibold font-mono">{daysInStage(deal.updated_at)} days</span>
                     </td>
                   </tr>
                 ))
@@ -1190,12 +1190,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         return (
           <div key={stage}>
             {/* Stage header */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/60 border-b border-white/5 sticky top-[57px] sm:top-[73px] z-10">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-white/5 sticky top-[57px] sm:top-[73px] z-10">
               <div className="flex items-center gap-2">
-                <span className="type-ui font-black uppercase tracking-wider text-slate-400">{stage.replace('_', ' ')}</span>
+                <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">{stage.replace('_', ' ')}</span>
                 <span className={`type-ui font-bold px-1.5 py-0.5 rounded-full ${col.bg} ${col.text}`}>{stageDeals.length}</span>
               </div>
-              <span className="type-ui text-slate-500 opacity-55">${total.toLocaleString()}</span>
+              <span className="type-ui text-[var(--ws-text-muted)] opacity-55">${total.toLocaleString()}</span>
             </div>
             {/* Deals */}
             <div className="divide-y divide-white/5">
@@ -1217,7 +1217,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   if (!loading && deals.length === 0) {
     return (
-      <div className="relative flex flex-col h-full bg-slate-950 p-6">
+      <div className="relative flex flex-col h-full bg-[var(--ws-canvas)] p-6">
         <EmptyStateFromPreset
           moduleId="deals"
           onAction={() => setShowCreateModal(true)}
@@ -1237,7 +1237,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <div>
           <h2 className="type-ui font-semibold text-[var(--ws-text-primary)]">Sales pipeline</h2>
           <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 font-medium">
-            Open pipeline: <span className="text-[var(--module-pipeline-primary,#E69222)] font-semibold tabular-nums">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
+            Open pipeline: <span className="text-[var(--module-pipeline-primary,var(--warning-500))] font-semibold tabular-nums">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
             {pipelineHealth != null && (
               <> • Avg progress <span className="text-[var(--brand-blue-500)] font-semibold tabular-nums">{pipelineHealth}%</span></>
             )}
@@ -1246,13 +1246,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {/* Switcher pills */}
-          <div className="flex bg-slate-900/60 p-1 rounded-full border border-white/5 shadow-inner">
+          <div className="flex bg-[var(--ws-panel)]/60 p-1 rounded-full border border-white/5 shadow-inner">
             <button
               onClick={() => setViewMode('board')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'board'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -1262,8 +1262,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               onClick={() => setViewMode('list')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'list'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -1273,8 +1273,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               onClick={() => setViewMode('mobile-stage')}
               className={`flex h-8 items-center gap-1.5 rounded-full px-3 type-ui font-bold transition-all ${
                 viewMode === 'mobile-stage'
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'bg-[var(--ws-surface-secondary)] text-white shadow-sm'
+                  : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -1293,13 +1293,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </div>
         )}
         stats={!loading && deals.length > 0 ? (
-          <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
+          <div className="p-4 border-b border-white/5 bg-[var(--ws-panel)]/20 space-y-4 shrink-0">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
             <ModuleStatCards stats={dealStats} hub="deals" />
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
+            <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/40 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="type-caption font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>
-                <span className="type-ui text-slate-500">Value distribution</span>
+                <h3 className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-muted)]">Pipeline by Stage</h3>
+                <span className="type-ui text-[var(--ws-text-muted)]">Value distribution</span>
               </div>
               <div className="space-y-2">
                 {stageBreakdown.map(({ stage, count, value, pct }) => (
@@ -1307,7 +1307,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     <span className={`w-24 shrink-0 type-ui font-bold capitalize ${STAGE_COLORS[stage].text}`}>
                       {stage.replace('_', ' ')}
                     </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
+                    <div className="flex-1 h-2.5 rounded-full bg-[var(--ws-surface-secondary)]/80 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${pct}%` }}
@@ -1315,7 +1315,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         className={`h-full rounded-full ${STAGE_COLORS[stage].bg.replace('/15', '/60')}`}
                       />
                     </div>
-                    <span className="w-28 shrink-0 text-right type-ui tabular-nums text-slate-300">
+                    <span className="w-28 shrink-0 text-right type-ui tabular-nums text-[var(--ws-text-secondary)]">
                       ${value.toLocaleString()} <span className="text-slate-600">({count})</span>
                     </span>
                   </div>
@@ -1332,11 +1332,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       {/* Main View Area */}
       <div ref={listRef} className="flex-1 ac-scroll-full">
         {loading ? (
-          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
         ) : (
           <>
             {selectedDealIds.size > 0 && (
-              <div className="p-3 bg-slate-950/60 border-b border-white/5">
+              <div className="p-3 bg-[var(--ws-canvas)]/60 border-b border-white/5">
                 <ContextualBulkBar
                   selectedCount={selectedDealIds.size}
                   itemLabel={{ singular: 'deal', plural: 'deals' }}
@@ -1363,7 +1363,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         type="button"
                         disabled={bulkDeleting}
                         onClick={handleBulkDeleteDeals}
-                        className="h-7 px-2.5 rounded-lg text-xs font-semibold text-rose-300 border border-rose-500/30 hover:bg-rose-500/10 flex items-center gap-1 disabled:opacity-50"
+                        className="h-7 px-2.5 rounded-lg text-xs font-semibold text-[var(--error-text,var(--error-500))] border border-rose-500/30 hover:bg-rose-500/10 flex items-center gap-1 disabled:opacity-50"
                       >
                         {bulkDeleting ? 'Deleting…' : 'Delete'}
                       </button>
@@ -1401,22 +1401,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Value ($) *</label>
+                  <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Value ($) *</label>
                   <input
                     type="number"
                     required
                     value={newDealValue}
                     onChange={(e) => setNewDealValue(e.target.value)}
                     placeholder="e.g. 15000"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                   />
                 </div>
                 <div>
-                  <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Stage *</label>
+                  <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Stage *</label>
                   <select
                     value={newDealStage}
                     onChange={(e) => setNewDealStage(e.target.value as DealStage)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
                   >
                     {STAGES.map((s) => (
                       <option key={s} value={s}>{s.replace('_', ' ')}</option>
@@ -1426,35 +1426,35 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               </div>
 
               <div>
-                <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Contact Name</label>
+                <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Contact Name</label>
                 <input
                   type="text"
                   value={newDealContactName}
                   onChange={(e) => setNewDealContactName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                 />
               </div>
 
               <div>
-                <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Contact Email</label>
+                <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Contact Email</label>
                 <input
                   type="email"
                   value={newDealContactEmail}
                   onChange={(e) => setNewDealContactEmail(e.target.value)}
                   placeholder="e.g. john@acme.com"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
                 />
               </div>
 
               <div>
-                <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Description</label>
+                <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Description</label>
                 <textarea
                   value={newDealDescription}
                   onChange={(e) => setNewDealDescription(e.target.value)}
                   placeholder="Add brief details about the deal..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
                 />
               </div>
 

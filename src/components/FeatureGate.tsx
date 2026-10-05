@@ -34,7 +34,7 @@ export const QuotaGate: React.FC<QuotaGateProps> = ({ resource, currentUsage, la
                 <p className="text-white font-semibold mb-1">
                     {label || String(resource)} limit reached
                 </p>
-                <p className="text-slate-400 type-card-description mb-4">
+                <p className="text-[var(--ws-text-muted)] type-card-description mb-4">
                     Your {plan} plan includes {formatLimit(limit)}. Upgrade to increase your limit.
                 </p>
                 <Button
@@ -56,7 +56,7 @@ export const QuotaGate: React.FC<QuotaGateProps> = ({ resource, currentUsage, la
                         {currentUsage} / {formatLimit(limit)} {label || String(resource)} used.{' '}
                         <button
                             onClick={() => router.push('/dashboard/settings?tab=billing')}
-                            className="underline hover:text-amber-300"
+                            className="underline hover:text-[var(--warning-text,var(--warning-500))]"
                         >
                             Upgrade for more.
                         </button>

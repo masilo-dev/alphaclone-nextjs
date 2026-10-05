@@ -163,31 +163,31 @@ export default function BookingPage() {
         end: endOfWeek(endOfMonth(currentMonth))
     }), [currentMonth]);
 
-    if (loading) return <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div></div>;
+    if (loading) return <div className="min-h-screen bg-white dark:bg-[var(--ws-canvas)] flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-900 dark:border-white border-t-transparent rounded-full animate-spin"></div></div>;
     if (error || !tenant || !service) return <div className="min-h-screen flex items-center justify-center text-red-500">{error || 'Not found'}</div>;
 
     // Success View
     if (step === 'success' && bookingSuccess) {
         return (
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
-                <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center shadow-xl animate-in zoom-in-95 duration-300">
+            <div className="min-h-screen bg-slate-50 dark:bg-[var(--ws-canvas)] flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white dark:bg-[var(--ws-panel)] border border-slate-200 dark:border-[var(--ws-border)] rounded-2xl p-8 text-center shadow-xl animate-in zoom-in-95 duration-300">
                     <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Booking Confirmed</h1>
-                    <p className="text-slate-500 mb-8">We've sent a calendar invite to {formData.email}</p>
+                    <p className="text-[var(--ws-text-muted)] mb-8">We've sent a calendar invite to {formData.email}</p>
 
-                    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-6 mb-6 text-left border border-slate-100 dark:border-slate-800 space-y-4">
+                    <div className="bg-slate-50 dark:bg-[var(--ws-canvas)] rounded-xl p-6 mb-6 text-left border border-slate-100 dark:border-[var(--ws-border)] space-y-4">
                         <div className="flex justify-between">
-                            <span className="type-ui font-medium text-slate-500">Service</span>
+                            <span className="type-ui font-medium text-[var(--ws-text-muted)]">Service</span>
                             <span className="type-ui font-bold text-slate-900 dark:text-white">{service.name}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="type-ui font-medium text-slate-500">Date</span>
+                            <span className="type-ui font-medium text-[var(--ws-text-muted)]">Date</span>
                             <span className="type-ui font-bold text-slate-900 dark:text-white">{format(bookingSuccess.date, 'MMM do, yyyy')}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="type-caption font-medium text-slate-500">Time</span>
+                            <span className="type-caption font-medium text-[var(--ws-text-muted)]">Time</span>
                             <span className="type-caption font-bold text-slate-900 dark:text-white">{bookingSuccess.time}</span>
                         </div>
                     </div>
@@ -197,12 +197,12 @@ export default function BookingPage() {
                             href={bookingSuccess.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl mb-3 hover:opacity-90 transition-opacity text-center"
+                            className="block w-full py-3 bg-[var(--ws-panel)] dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl mb-3 hover:opacity-90 transition-opacity text-center"
                         >
                             Join Meeting
                         </a>
                     ) : null}
-                    <button onClick={() => window.location.reload()} className="type-ui font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                    <button onClick={() => window.location.reload()} className="type-ui font-semibold text-[var(--ws-text-muted)] hover:text-slate-900 dark:text-[var(--ws-text-muted)] dark:hover:text-white">
                         Book Another
                     </button>
                 </div>
@@ -211,7 +211,7 @@ export default function BookingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 font-sans selection:bg-teal-500/30">
+        <div className="min-h-screen bg-slate-50 dark:bg-[var(--ws-canvas)] text-slate-900 dark:text-[var(--ws-text-secondary)] font-sans selection:bg-teal-500/30">
             {/* Header / Nav */}
             <div className="max-w-6xl mx-auto p-4 md:p-8">
                 <button
@@ -219,7 +219,7 @@ export default function BookingPage() {
                         if (step === 'form') setStep('date');
                         else router.back();
                     }}
-                    className="flex items-center gap-2 type-ui font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
+                    className="flex items-center gap-2 type-ui font-bold text-[var(--ws-text-muted)] hover:text-slate-900 dark:hover:text-white transition-colors mb-8"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     {step === 'form' ? 'Back to Calendar' : 'Back'}
@@ -240,23 +240,23 @@ export default function BookingPage() {
                                     />
                                 </div>
                             ) : (
-                                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xl font-bold text-slate-400">
+                                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[var(--ws-panel)] border border-slate-200 dark:border-[var(--ws-border)] flex items-center justify-center text-xl font-bold text-[var(--ws-text-muted)]">
                                     {tenant.name[0]}
                                 </div>
                             )}
                             <div>
-                                <p className="type-card-description font-medium text-slate-500">{tenant.name}</p>
+                                <p className="type-card-description font-medium text-[var(--ws-text-muted)]">{tenant.name}</p>
                                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">{service.name}</h1>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-slate-400">
+                            <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-[var(--ws-text-muted)]">
                                 <Clock className="w-5 h-5 text-slate-900 dark:text-white" />
                                 {service.duration} min
                             </div>
                             {service.price > 0 && (
-                                <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-3 type-ui font-medium text-slate-600 dark:text-[var(--ws-text-muted)]">
                                     <div className="w-5 h-5 flex items-center justify-center font-bold text-slate-900 dark:text-white">$</div>
                                     {service.currency} {service.price}
                                 </div>
@@ -264,7 +264,7 @@ export default function BookingPage() {
                         </div>
 
                         {service.description && (
-                            <p className="type-card-description leading-relaxed text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 pt-6">
+                            <p className="type-card-description leading-relaxed text-slate-600 dark:text-[var(--ws-text-muted)] border-t border-slate-200 dark:border-[var(--ws-border)] pt-6">
                                 {service.description}
                             </p>
                         )}
@@ -284,13 +284,13 @@ export default function BookingPage() {
 
                     {/* RIGHT PANEL: Interaction Area */}
                     <div className="lg:col-span-8">
-                        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
+                        <div className="bg-white dark:bg-[var(--ws-panel)] border border-slate-200 dark:border-[var(--ws-border)] rounded-3xl p-6 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[500px]">
                             {(tenant.settings as any)?.calendly?.enabled && (tenant.settings as any)?.calendly?.eventUrl ? (
                                 <CalendlyEmbed
                                     url={(tenant.settings as any).calendly.eventUrl}
                                     branding={{
                                         primaryColor: tenant.settings.branding?.primaryColor,
-                                        backgroundColor: '#0f172a'
+                                        backgroundColor: 'var(--ws-canvas)'
                                     }}
                                 />
                             ) : (
@@ -305,13 +305,13 @@ export default function BookingPage() {
                                                         {format(currentMonth, 'MMMM yyyy')}
                                                     </h2>
                                                     <div className="flex gap-1">
-                                                        <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronLeft className="w-5 h-5" /></button>
-                                                        <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 transition-colors"><ChevronRight className="w-5 h-5" /></button>
+                                                        <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)] rounded-lg text-[var(--ws-text-muted)] transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+                                                        <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)] rounded-lg text-[var(--ws-text-muted)] transition-colors"><ChevronRight className="w-5 h-5" /></button>
                                                     </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-7 gap-y-2 text-center mb-2">
-                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="type-caption font-bold text-slate-400 uppercase">{d}</div>)}
+                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d} className="type-caption font-bold text-[var(--ws-text-muted)] uppercase">{d}</div>)}
                                                 </div>
                                                 <div className="grid grid-cols-7 gap-y-2">
                                                     {calendarDays.map((day, i) => {
@@ -326,10 +326,10 @@ export default function BookingPage() {
                                                                 className={`
                                                             h-10 w-10 mx-auto rounded-full flex items-center justify-center type-ui font-medium transition-all
                                                             ${!isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
-                                                            ${isPast ? 'text-slate-300 dark:text-slate-700 line-through decoration-slate-300' : ''}
+                                                            ${isPast ? 'text-[var(--ws-text-secondary)] dark:text-slate-700 line-through decoration-slate-300' : ''}
                                                             ${isSelected
-                                                                        ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold scale-110'
-                                                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}
+                                                                        ? 'bg-[var(--ws-panel)] dark:bg-white text-white dark:text-slate-900 font-bold scale-110'
+                                                                        : 'text-slate-700 dark:text-[var(--ws-text-secondary)] hover:bg-slate-100 dark:hover:bg-[var(--ws-surface-secondary)]'}
                                                         `}
                                                             >
                                                                 {format(day, 'd')}
@@ -337,24 +337,24 @@ export default function BookingPage() {
                                                         );
                                                     })}
                                                 </div>
-                                                <div className="mt-8 flex items-center justify-center gap-2 type-caption font-medium text-slate-500 bg-slate-50 dark:bg-slate-950/50 py-2 rounded-lg">
+                                                <div className="mt-8 flex items-center justify-center gap-2 type-caption font-medium text-[var(--ws-text-muted)] bg-slate-50 dark:bg-[var(--ws-canvas)]/50 py-2 rounded-lg">
                                                     <Globe className="w-3.5 h-3.5" />
                                                     {Intl.DateTimeFormat().resolvedOptions().timeZone}
                                                 </div>
                                             </div>
 
                                             {/* Slots Column (Desktop: Side / Mobile: Below) */}
-                                            <div className={`md:w-64 md:border-l border-slate-200 dark:border-slate-800 md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                            <div className={`md:w-64 md:border-l border-slate-200 dark:border-[var(--ws-border)] md:pl-8 ${!selectedDate ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                                                 <h3 className="type-caption font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">
                                                     {selectedDate ? format(selectedDate, 'EEEE, MMM d') : 'Select date'}
                                                 </h3>
 
                                                 {loadingSlots ? (
                                                     <div className="space-y-3">
-                                                        {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />)}
+                                                        {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-[var(--ws-surface-secondary)] rounded-lg animate-pulse" />)}
                                                     </div>
                                                 ) : slots.length === 0 ? (
-                                                    <div className="type-ui text-slate-500 py-4">No availability for this day.</div>
+                                                    <div className="type-ui text-[var(--ws-text-muted)] py-4">No availability for this day.</div>
                                                 ) : (
                                                     <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                                         {slots.map((slot, idx) => (
@@ -373,7 +373,7 @@ export default function BookingPage() {
                                                                     }
                                                                     handleDesktopClick();
                                                                 }}
-                                                                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all type-ui font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex justify-between group"
+                                                                className="w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-[var(--ws-border)] hover:border-slate-900 dark:hover:border-white hover:bg-slate-50 dark:hover:bg-[var(--ws-surface-secondary)] transition-all type-ui font-bold text-slate-700 dark:text-[var(--ws-text-secondary)] hover:text-slate-900 dark:hover:text-white flex justify-between group"
                                                             >
                                                                 {format(parseISO(slot.start), 'h:mm a')}
                                                                 <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
@@ -390,7 +390,7 @@ export default function BookingPage() {
                                         <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-300">
                                             <div>
                                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Final Details</h2>
-                                                <p className="text-slate-500 type-card-description">Please fill in your information to complete the booking.</p>
+                                                <p className="text-[var(--ws-text-muted)] type-card-description">Please fill in your information to complete the booking.</p>
                                             </div>
 
                                             <form onSubmit={handleBook} className="space-y-5">
@@ -398,12 +398,12 @@ export default function BookingPage() {
                                                     <div className="space-y-1.5">
                                                         <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Full Name</label>
                                                         <div className="relative">
-                                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                                                             <input
                                                                 required
                                                                 value={formData.name}
                                                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[var(--ws-canvas)] border border-slate-200 dark:border-[var(--ws-border)] rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="John Doe"
                                                             />
                                                         </div>
@@ -412,13 +412,13 @@ export default function BookingPage() {
                                                     <div className="space-y-1.5">
                                                         <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Email Address</label>
                                                         <div className="relative">
-                                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                                                             <input
                                                                 required
                                                                 type="email"
                                                                 value={formData.email}
                                                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[var(--ws-canvas)] border border-slate-200 dark:border-[var(--ws-border)] rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="john@example.com"
                                                             />
                                                         </div>
@@ -427,12 +427,12 @@ export default function BookingPage() {
                                                     <div className="space-y-1.5">
                                                         <label className="type-caption font-bold text-slate-900 dark:text-white uppercase tracking-wider">Phone (Optional)</label>
                                                         <div className="relative">
-                                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                                                             <input
                                                                 type="tel"
                                                                 value={formData.phone}
                                                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                                                className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-[var(--ws-canvas)] border border-slate-200 dark:border-[var(--ws-border)] rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                                                 placeholder="+1 (555) 000-0000"
                                                             />
                                                         </div>
@@ -444,7 +444,7 @@ export default function BookingPage() {
                                                             rows={3}
                                                             value={formData.notes}
                                                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
+                                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-[var(--ws-canvas)] border border-slate-200 dark:border-[var(--ws-border)] rounded-xl type-ui font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none"
                                                             placeholder="Anything we should know?"
                                                         />
                                                     </div>
@@ -460,7 +460,7 @@ export default function BookingPage() {
                                                     />
                                                 )}
                                                 {turnstileEnabled && !turnstileToken && (
-                                                    <p className="type-card-description text-slate-500 dark:text-slate-400">
+                                                    <p className="type-card-description text-[var(--ws-text-muted)] dark:text-[var(--ws-text-muted)]">
                                                         Please complete the security check before confirming.
                                                     </p>
                                                 )}
@@ -469,7 +469,7 @@ export default function BookingPage() {
                                                 <button
                                                     type="submit"
                                                     disabled={submitting || (turnstileEnabled && !turnstileToken)}
-                                                    className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                                                    className="w-full py-4 bg-[var(--ws-panel)] dark:bg-white hover:bg-[var(--ws-surface-secondary)] dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                                                 >
                                                     {submitting ? 'Confirming...' : 'Confirm Booking'}
                                                 </button>

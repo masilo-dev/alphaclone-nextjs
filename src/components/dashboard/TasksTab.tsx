@@ -65,7 +65,7 @@ interface Task {
 interface TasksTabProps { user: UserType; }
 
 const PRIORITY_DOT: Record<Priority, string> = {
-  high:   'bg-red-500',
+  high:   'bg-[var(--error-500)]',
   medium: 'bg-yellow-500',
   low:    'bg-slate-600',
 };
@@ -139,7 +139,7 @@ const SwipeableTaskRow: React.FC<{
           <div className="w-2.5 h-2.5 rounded-full bg-white" />
         </motion.div>
       </motion.div>
-      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center z-0">
+      <motion.div style={{ opacity: rightOp }} className="absolute inset-y-0 right-0 w-20 bg-[var(--error-500)] flex items-center justify-center z-0">
         <Trash2 className="w-5 h-5 text-white" />
       </motion.div>
 
@@ -149,7 +149,7 @@ const SwipeableTaskRow: React.FC<{
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className="relative z-10 bg-slate-950 flex items-center gap-0 min-h-[44px]"
+        className="relative z-10 bg-[var(--ws-canvas)] flex items-center gap-0 min-h-[44px]"
       >
         {bulkMode ? (
           <button
@@ -174,12 +174,12 @@ const SwipeableTaskRow: React.FC<{
 
         <div className="flex-1 min-w-0 py-2 cursor-pointer" onClick={() => onTap(task)}>
           <div className="flex items-center gap-2 pr-4">
-            <span className={`type-ui flex-1 truncate ${done ? 'line-through text-slate-500 opacity-40' : 'text-white'}`}>{task.title}</span>
+            <span className={`type-ui flex-1 truncate ${done ? 'line-through text-[var(--ws-text-muted)] opacity-40' : 'text-white'}`}>{task.title}</span>
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
           </div>
           <div className="flex items-center gap-2 mt-0.5 pr-4 flex-wrap">
             {task.project_name && (
-              <span className="type-ui px-1.5 py-0.5 bg-slate-800 rounded-full text-slate-400 truncate">{task.project_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded-full text-[var(--ws-text-muted)] truncate">{task.project_name}</span>
             )}
             {task.deal_name && (
               <span className="type-ui px-1.5 py-0.5 bg-purple-500/10 rounded-full text-purple-300 truncate">{task.deal_name}</span>
@@ -188,10 +188,10 @@ const SwipeableTaskRow: React.FC<{
               <span className="type-ui px-1.5 py-0.5 bg-blue-500/10 rounded-full text-blue-300 truncate">{task.contact_name}</span>
             )}
             {task.lead_name && (
-              <span className="type-ui px-1.5 py-0.5 bg-amber-500/10 rounded-full text-amber-300 truncate">{task.lead_name}</span>
+              <span className="type-ui px-1.5 py-0.5 bg-amber-500/10 rounded-full text-[var(--warning-text,var(--warning-500))] truncate">{task.lead_name}</span>
             )}
             {task.due_date && (
-              <span className={`type-ui opacity-55 ${done ? 'text-slate-500' : 'text-slate-400'}`}>
+              <span className={`type-ui opacity-55 ${done ? 'text-[var(--ws-text-muted)]' : 'text-[var(--ws-text-muted)]'}`}>
                 {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
             )}
@@ -248,51 +248,51 @@ const TaskDetailContent: React.FC<{
         validate={(v) => !v.trim() ? 'Task title is required' : undefined}
       />
       <div>
-        <label className="type-label font-medium text-slate-400 block mb-2">Priority</label>
+        <label className="type-label font-medium text-[var(--ws-text-muted)] block mb-2">Priority</label>
         <div className="flex gap-2">
           {(['low', 'medium', 'high'] as Priority[]).map(p => (
-            <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 min-h-11 py-2 rounded-xl type-ui font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-slate-700 text-slate-300 border-slate-600') : 'bg-slate-900 text-slate-500 border-white/5'}`}>
+            <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 min-h-11 py-2 rounded-xl type-ui font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-[var(--error-500)]/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] border-slate-600') : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-white/5'}`}>
               {p}
             </button>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
-        <Calendar className="w-5 h-5 text-slate-500" />
-        <span className="type-ui text-slate-300">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
+      <div className="flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl">
+        <Calendar className="w-5 h-5 text-[var(--ws-text-muted)]" />
+        <span className="type-ui text-[var(--ws-text-secondary)]">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
       </div>
       {task.project_name && (
-        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
-          <Briefcase className="w-5 h-5 text-slate-500" />
-          <span className="type-ui text-slate-300">{task.project_name}</span>
+        <div className="flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl">
+          <Briefcase className="w-5 h-5 text-[var(--ws-text-muted)]" />
+          <span className="type-ui text-[var(--ws-text-secondary)]">{task.project_name}</span>
         </div>
       )}
       {task.deal_name && (
-        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl">
           <Target className="w-5 h-5 text-purple-400" />
-          <span className="type-ui text-slate-300">{task.deal_name}</span>
+          <span className="type-ui text-[var(--ws-text-secondary)]">{task.deal_name}</span>
         </div>
       )}
       {task.contact_name && (
-        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl">
           <User className="w-5 h-5 text-blue-400" />
-          <span className="type-ui text-slate-300">{task.contact_name}</span>
+          <span className="type-ui text-[var(--ws-text-secondary)]">{task.contact_name}</span>
         </div>
       )}
       {task.lead_name && (
-        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+        <div className="flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] rounded-xl">
           <TrendingUp className="w-5 h-5 text-amber-400" />
-          <span className="type-ui text-slate-300">{task.lead_name}</span>
+          <span className="type-ui text-[var(--ws-text-secondary)]">{task.lead_name}</span>
         </div>
       )}
       <div>
-        <label className="type-label font-medium text-slate-400 block mb-2">Notes</label>
+        <label className="type-label font-medium text-[var(--ws-text-muted)] block mb-2">Notes</label>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
           placeholder="Add notes..."
           rows={4}
-          className="w-full type-ui text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
+          className="w-full type-ui text-[var(--ws-text-secondary)] bg-[var(--ws-surface-secondary)] rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
         />
       </div>
       <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl type-ui">Save Changes</button>
@@ -323,12 +323,12 @@ const TaskSection: React.FC<{
   if (tasks.length === 0) return null;
   return (
     <div>
-      <button onClick={() => setCollapsed(c => !c)} className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-900/60 border-b border-white/5">
+      <button onClick={() => setCollapsed(c => !c)} className="w-full flex items-center justify-between px-4 py-2.5 bg-[var(--ws-panel)]/60 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <span className="type-ui font-black uppercase tracking-wider text-slate-400">{label}</span>
-          <span className="type-ui font-bold px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded-full">{tasks.length}</span>
+          <span className="type-ui font-black uppercase tracking-wider text-[var(--ws-text-muted)]">{label}</span>
+          <span className="type-ui font-bold px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-full">{tasks.length}</span>
         </div>
-        {collapsed ? <ChevronRight className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
+        {collapsed ? <ChevronRight className="w-4 h-4 text-[var(--ws-text-muted)]" /> : <ChevronDown className="w-4 h-4 text-[var(--ws-text-muted)]" />}
       </button>
       <AnimatePresence>
         {!collapsed && (
@@ -429,14 +429,14 @@ const TaskCreateContent: React.FC<{
         autoFocus
       />
       <div>
-        <label className="type-label font-medium text-slate-400 block mb-2">Priority</label>
+        <label className="type-label font-medium text-[var(--ws-text-muted)] block mb-2">Priority</label>
         <div className="flex gap-2">
           {(['low', 'medium', 'high'] as Priority[]).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`flex-1 min-h-11 py-2 rounded-xl type-caption font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+              className={`flex-1 min-h-11 py-2 rounded-xl type-caption font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-white/5'}`}
             >
               {p}
             </button>
@@ -447,26 +447,26 @@ const TaskCreateContent: React.FC<{
         type="date"
         value={dueDate}
         onChange={(e) => setDueDate(e.target.value)}
-        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui outline-none"
+        className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-xl text-white type-ui outline-none"
       />
       <div className="grid grid-cols-1 gap-2">
-        <label className="type-label font-medium text-slate-400">Link to project (optional)</label>
-        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
+        <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to project (optional)</label>
+        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <label className="type-label font-medium text-slate-400">Link to deal (optional)</label>
-        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
+        <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to deal (optional)</label>
+        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
-        <label className="type-label font-medium text-slate-400">Link to contact (optional)</label>
-        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
+        <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to contact (optional)</label>
+        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <label className="type-label font-medium text-slate-400">Link to lead (optional)</label>
-        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white type-ui">
+        <label className="type-label font-medium text-[var(--ws-text-muted)]">Link to lead (optional)</label>
+        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-[var(--ws-surface-secondary)] border border-white/10 rounded-xl text-white type-ui">
           <option value="">None</option>
           {leads.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
@@ -943,13 +943,13 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </button>
           {bulkMode && (
             <>
-              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg type-ui font-bold text-slate-300 border border-white/10">
+              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg type-ui font-bold text-[var(--ws-text-secondary)] border border-white/10">
                 All
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-emerald-300 border border-emerald-500/30 disabled:opacity-40">
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-[var(--success-text,var(--success-500))] border border-emerald-500/30 disabled:opacity-40">
                 Complete ({selectedIds.size})
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-rose-300 border border-rose-500/30 disabled:opacity-40">
+              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg type-ui font-bold text-[var(--error-text,var(--error-500))] border border-rose-500/30 disabled:opacity-40">
                 Delete ({selectedIds.size})
               </button>
             </>
@@ -974,14 +974,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </div>
         )}
         stats={!loading ? (
-          <div className="p-4 border-b border-white/5 bg-slate-900/20">
+          <div className="p-4 border-b border-white/5 bg-[var(--ws-panel)]/20">
             <ModuleStatCards stats={taskStats} hub="tasks" />
           </div>
         ) : null}
       >
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-20" data-testid="tasks-scroll-list">
         {!loading && tasks.length > 0 ? (
-          <div className="p-4 space-y-4 border-b border-white/5 bg-slate-900/20">
+          <div className="p-4 space-y-4 border-b border-white/5 bg-[var(--ws-panel)]/20">
             {(taskDecision.overdueHigh > 0 || taskDecision.overdue > 0 && taskDecision.highPriority > 0) ? (
               <div className={cn(
                 'rounded-lg border p-3 md:p-4',
@@ -1019,39 +1019,39 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         ) : null}
         {microsoftConnected && (
-          <div className="p-4 border-b border-white/5 bg-slate-900/40">
+          <div className="p-4 border-b border-white/5 bg-[var(--ws-panel)]/40">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="type-ui font-bold text-white">Microsoft To Do</h3>
-                <p className="type-card-description text-slate-400">Connected task lists appear alongside native Alphaclone tasks.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Connected task lists appear alongside native Alphaclone tasks.</p>
               </div>
               <button
                 type="button"
                 onClick={() => refreshMicrosoftTasks()}
-                className="rounded-lg border border-white/5 bg-slate-950/50 p-2 text-slate-300 hover:text-white"
+                className="rounded-lg border border-white/5 bg-[var(--ws-canvas)]/50 p-2 text-[var(--ws-text-secondary)] hover:text-white"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
             {microsoftLoading ? (
-              <div className="type-caption text-slate-500">Loading Microsoft To Do lists...</div>
+              <div className="type-caption text-[var(--ws-text-muted)]">Loading Microsoft To Do lists...</div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {microsoftLists.map((list) => (
-                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-slate-950/50 p-3">
+                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-[var(--ws-canvas)]/50 p-3">
                     <p className="type-card-description font-semibold text-white truncate">{list.displayName}</p>
                     <p className="type-card-description text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
                     <div className="mt-3 space-y-2">
                       {list.tasks.slice(0, 3).map((task: any) => (
-                        <div key={task.id} className="rounded-lg bg-slate-900/70 px-2.5 py-2">
-                          <p className="type-card-description font-medium text-slate-200 truncate">{task.title}</p>
-                          <p className="type-card-description text-slate-500">
+                        <div key={task.id} className="rounded-lg bg-[var(--ws-panel)]/70 px-2.5 py-2">
+                          <p className="type-card-description font-medium text-[var(--ws-text-secondary)] truncate">{task.title}</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)]">
                             {task.status === 'completed' ? 'Completed' : 'Open in Microsoft To Do'}
                           </p>
                         </div>
                       ))}
                       {list.tasks.length === 0 && (
-                        <p className="type-card-description text-slate-500">No Microsoft tasks in this list.</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">No Microsoft tasks in this list.</p>
                       )}
                     </div>
                   </div>
@@ -1062,7 +1062,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         )}
         {loading ? (
-          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
+          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
         ) : tasks.length === 0 ? (
           <div className="p-6">
             <EmptyStateFromPreset moduleId="tasks" />
@@ -1081,7 +1081,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         ) : (
           <div>
             {isTruncated && (
-              <div className="px-4 py-3 type-ui text-slate-400 bg-slate-900/60 border-b border-white/5">
+              <div className="px-4 py-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-panel)]/60 border-b border-white/5">
                 Showing {tasks.length.toLocaleString()} of {totalCount?.toLocaleString()} tasks
               </div>
             )}
@@ -1100,7 +1100,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               />
             ))}
             {hasMore && (
-              <div className="p-4 text-center type-caption text-slate-500 ac-skeleton-pulse">
+              <div className="p-4 text-center type-caption text-[var(--ws-text-muted)] ac-skeleton-pulse">
                 Loading more…
               </div>
             )}

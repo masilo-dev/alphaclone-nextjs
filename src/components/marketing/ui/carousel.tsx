@@ -105,7 +105,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAtt
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         className={cn(
-          'absolute left-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-teal-500/40 hover:text-teal-300 disabled:opacity-30',
+          'absolute left-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/90 text-[var(--ws-text-secondary)] transition-colors hover:border-teal-500/40 hover:text-[var(--brand-blue-300)] disabled:opacity-30',
           className
         )}
         aria-label="Previous slide"
@@ -128,7 +128,7 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttribu
         onClick={scrollNext}
         disabled={!canScrollNext}
         className={cn(
-          'absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-teal-500/40 hover:text-teal-300 disabled:opacity-30',
+          'absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/90 text-[var(--ws-text-secondary)] transition-colors hover:border-teal-500/40 hover:text-[var(--brand-blue-300)] disabled:opacity-30',
           className
         )}
         aria-label="Next slide"
@@ -168,11 +168,11 @@ export function MarketingTestimonialsCarousel({
         <CarouselContent>
           {items.map((item) => (
             <CarouselItem key={item.quote.slice(0, 48)}>
-              <article className="rounded-2xl border border-slate-800/80 bg-slate-950/50 px-6 py-8 sm:px-10 sm:py-10 text-center marketing-shadow-md">
-                <p className="mb-4 type-caption font-bold uppercase tracking-caps text-slate-500">
+              <article className="rounded-2xl border border-[var(--ws-border)]/80 bg-[var(--ws-canvas)]/50 px-6 py-8 sm:px-10 sm:py-10 text-center marketing-shadow-md">
+                <p className="mb-4 type-caption font-bold uppercase tracking-caps text-[var(--ws-text-muted)]">
                   Typical outcome · {item.outcome}
                 </p>
-                <blockquote className="text-lg sm:text-xl text-slate-200 leading-relaxed">
+                <blockquote className="text-lg sm:text-xl text-[var(--ws-text-secondary)] leading-relaxed">
                   &ldquo;{item.quote}&rdquo;
                 </blockquote>
                 <cite className="mt-6 block type-ui font-semibold not-italic text-teal-400">{item.persona}</cite>
@@ -183,7 +183,7 @@ export function MarketingTestimonialsCarousel({
         <CarouselPrevious className="-left-1 sm:left-0" />
         <CarouselNext className="-right-1 sm:right-0" />
       </Carousel>
-      <p className="text-center type-card-description text-slate-500 max-w-2xl mx-auto leading-relaxed">{disclaimer}</p>
+      <p className="text-center type-card-description text-[var(--ws-text-muted)] max-w-2xl mx-auto leading-relaxed">{disclaimer}</p>
     </div>
   );
 }

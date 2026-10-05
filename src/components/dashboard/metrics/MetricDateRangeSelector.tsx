@@ -44,7 +44,7 @@ export function MetricDateRangeSelector({
             className={cn(
               'h-8 px-3 rounded-md type-ui font-medium border transition-colors',
               active
-                ? 'bg-[color-mix(in_srgb,var(--brand-green-500,#22c55e)_14%,transparent)] text-[var(--ws-text-primary)] border-[color-mix(in_srgb,var(--brand-green-500,#22c55e)_35%,transparent)]'
+                ? 'bg-[color-mix(in_srgb,var(--brand-green-500,var(--success-500))_14%,transparent)] text-[var(--ws-text-primary)] border-[color-mix(in_srgb,var(--brand-green-500,var(--success-500))_35%,transparent)]'
                 : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] border-[var(--ws-border)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',
             )}
             aria-pressed={active}

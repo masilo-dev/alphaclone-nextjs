@@ -88,7 +88,7 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
                     {meetingUrl.trim() && (
                         <button
                             onClick={handleCopy}
-                            className="px-4 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white rounded-xl transition-all active:scale-95"
+                            className="px-4 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-xl transition-all active:scale-95"
                         >
                             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                         </button>
@@ -97,8 +97,8 @@ const ManualMeetingLink: React.FC<ManualMeetingLinkProps> = ({ user, onJoinRoom 
             </div>
 
             <div className="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                <p className="type-caption text-slate-400 font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
-                <p className="type-card-description text-slate-300 leading-relaxed">
+                <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest mb-2">Protocol Instructions</p>
+                <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">
                     Enter the full URL provided by your business host. Ensure the meeting link follows the <strong className="text-white">alphaclonesystems.com/meet/</strong> format for optimal security and video performance.
                 </p>
             </div>

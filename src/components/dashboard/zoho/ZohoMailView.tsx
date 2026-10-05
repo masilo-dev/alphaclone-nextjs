@@ -437,7 +437,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
     if (!isConnected) {
         return (
-            <div className="flex flex-col items-center justify-center text-center p-8 bg-[#0f0f0f] min-h-[400px] flex-1">
+            <div className="flex flex-col items-center justify-center text-center p-8 bg-[var(--ws-canvas)] min-h-[400px] flex-1">
                 <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mb-6">
                     <Mail size={48} className="text-gray-400" />
                 </div>
@@ -467,7 +467,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             <div className="p-6">
                 <button 
                     onClick={() => { openCompose(); setSelectedMessage(null); }}
-                    className="w-full flex items-center justify-center gap-3 bg-teal-500 hover:bg-teal-400 text-white py-4 px-4 rounded-2xl transition-all shadow-xl active:scale-95 group font-black uppercase type-caption"
+                    className="w-full flex items-center justify-center gap-3 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white py-4 px-4 rounded-2xl transition-all shadow-xl active:scale-95 group font-black uppercase type-caption"
                 >
                     <Plus size={20} /> 
                     Compose
@@ -502,7 +502,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     );
 
     return (
-        <div className={`flex flex-col bg-[#0f0f0f] rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative h-[calc(100dvh-140px)]`}>
+        <div className={`flex flex-col bg-[var(--ws-canvas)] rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative h-[calc(100dvh-140px)]`}>
             
             {/* Expired Token Inline Banner (non-blocking, below header) */}
             {needsReconnect && (
@@ -514,7 +514,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     <div className="flex items-center gap-3">
                         <a 
                             href={reconnectUrl}
-                            className="bg-slate-900 text-yellow-500 px-3 py-1 rounded-lg type-caption font-black uppercase tracking-wider"
+                            className="bg-[var(--ws-panel)] text-yellow-500 px-3 py-1 rounded-lg type-caption font-black uppercase tracking-wider"
                         >
                             Reconnect
                         </a>
@@ -530,7 +530,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Desktop Sidebar */}
-                <div className="hidden md:flex w-72 flex-col bg-[#0a0a0a] border-r border-white/5 shrink-0">
+                <div className="hidden md:flex w-72 flex-col bg-[var(--ws-canvas)] border-r border-white/5 shrink-0">
                     <SidebarContent />
                 </div>
 
@@ -539,7 +539,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     {isMobileMenuOpen && (
                         <>
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileMenuOpen(false)} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-                            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="fixed inset-y-0 left-0 w-4/5 bg-[#0a0a0a] z-[101] shadow-2xl">
+                            <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="fixed inset-y-0 left-0 w-4/5 bg-[var(--ws-canvas)] z-[101] shadow-2xl">
                                 <SidebarContent />
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-6 right-6 p-2 text-gray-500"><X size={24} /></button>
                             </motion.div>
@@ -548,10 +548,10 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </AnimatePresence>
 
                 {/* Message List Panel */}
-                <div className={`flex flex-col bg-[#0f0f0f] border-r border-white/5 shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex flex-col bg-[var(--ws-canvas)] border-r border-white/5 shrink-0 transition-all duration-300 w-full md:w-96 ${selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     
                     {/* Header Bar */}
-                    <div className="h-20 border-b border-white/5 px-6 flex items-center gap-4 sticky top-0 z-10 bg-[#0f0f0f]/80 backdrop-blur-md shrink-0">
+                    <div className="h-20 border-b border-white/5 px-6 flex items-center gap-4 sticky top-0 z-10 bg-[var(--ws-canvas)]/80 backdrop-blur-md shrink-0">
                         <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-gray-400 md:hidden"><Menu size={24} /></button>
                         <div className="relative flex-1">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
@@ -563,7 +563,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     </div>
 
                     {/* Folder Tabs - Mobile only (Sticky below header bar) */}
-                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 px-4 bg-[#0f0f0f] border-b border-white/5 sticky top-20 z-20 md:hidden h-[50px] shrink-0">
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 px-4 bg-[var(--ws-canvas)] border-b border-white/5 sticky top-20 z-20 md:hidden h-[50px] shrink-0">
                         {displayFolders.map(folder => (
                             <button
                                 key={folder.folderId}
@@ -635,7 +635,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                 }
                                             }}
                                             onClick={() => fetchMessageContent(msg.messageId)}
-                                            className={`relative z-10 flex items-center gap-3 py-3 px-4 cursor-pointer select-none transition-colors ${msg.status === 'unread' ? 'bg-slate-900/30' : 'bg-[#0f0f0f]'}`}
+                                            className={`relative z-10 flex items-center gap-3 py-3 px-4 cursor-pointer select-none transition-colors ${msg.status === 'unread' ? 'bg-[var(--ws-panel)]/30' : 'bg-[var(--ws-canvas)]'}`}
                                         >
                                             {/* Avatar/Initial Circle */}
                                             <div className="w-9 h-9 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold type-ui shrink-0">
@@ -670,7 +670,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                     {/* Mobile Compose FAB */}
                     <button 
                         onClick={() => { openCompose(); setSelectedMessage(null); }}
-                        className="fixed bottom-[calc(49px+env(safe-area-inset-bottom)+16px)] right-4 w-[52px] h-[52px] rounded-full bg-teal-500 hover:bg-teal-400 text-white flex items-center justify-center shadow-2xl active:scale-95 transition-all z-30 md:hidden"
+                        className="fixed bottom-[calc(49px+env(safe-area-inset-bottom)+16px)] right-4 w-[52px] h-[52px] rounded-full bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white flex items-center justify-center shadow-2xl active:scale-95 transition-all z-30 md:hidden"
                         title="Compose email"
                     >
                         <PenSquare className="w-6 h-6" />
@@ -678,17 +678,17 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                 </div>
 
                 {/* Message Content Area */}
-                <div className={`flex-1 flex flex-col bg-[#141414] relative ${!selectedMessage ? 'hidden md:flex' : 'flex'}`}>
+                <div className={`flex-1 flex flex-col bg-[var(--ws-canvas)] relative ${!selectedMessage ? 'hidden md:flex' : 'flex'}`}>
                     <AnimatePresence mode="wait">
                         {selectedMessage && messageContent ? (
                             <motion.div 
                                 key="content" 
                                 initial={{ opacity: 0 }} 
                                 animate={{ opacity: 1 }} 
-                                className="fixed inset-0 z-[110] bg-[#0f0f0f] flex flex-col md:relative md:inset-auto md:z-auto md:bg-transparent md:flex-1 h-full overflow-hidden"
+                                className="fixed inset-0 z-[110] bg-[var(--ws-canvas)] flex flex-col md:relative md:inset-auto md:z-auto md:bg-transparent md:flex-1 h-full overflow-hidden"
                             >
                                 {/* Header Bar */}
-                                <div className="h-14 px-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#0f0f0f] md:bg-transparent md:h-20 md:px-8">
+                                <div className="h-14 px-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[var(--ws-canvas)] md:bg-transparent md:h-20 md:px-8">
                                     <button onClick={() => setSelectedMessage(null)} className="w-11 h-11 flex items-center justify-center rounded-xl text-gray-400 hover:text-white"><ArrowLeft size={20} /></button>
                                     <h2 className="text-lg font-semibold text-white">Inbox</h2>
                                     <div className="flex items-center gap-2">
@@ -731,7 +731,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                     {isSummarizing ? 'Summarizing…' : 'Summary'}
                                                 </div>
                                                 {threadSummary && (
-                                                    <p className="type-card-description text-slate-300 leading-relaxed">{threadSummary}</p>
+                                                    <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{threadSummary}</p>
                                                 )}
                                             </div>
                                         )}
@@ -769,7 +769,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                 </div>
                                 
                                 {/* Quick Reply and Smart Reply Bar */}
-                                <div className="p-4 sm:p-6 bg-[#0a0a0a]/50 border-t border-white/5 flex flex-col gap-4">
+                                <div className="p-4 sm:p-6 bg-[var(--ws-canvas)]/50 border-t border-white/5 flex flex-col gap-4">
                                     <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                                         {smartReplies.map((reply, i) => (
                                             <button 
@@ -802,7 +802,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                 </div>
                             </motion.div>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[#141414]">
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[var(--ws-canvas)]">
                                 <div className="w-24 h-24 bg-white/5 rounded-[40px] flex items-center justify-center mb-6">
                                     <Mail size={48} className="text-gray-700" />
                                 </div>

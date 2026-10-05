@@ -55,9 +55,9 @@ const variants: Record<ButtonVariant, string> = {
     'bg-transparent text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',
   // Danger / destructive
   danger:
-    'bg-[var(--error-500,#D64545)] text-white hover:bg-[var(--error-600,#B93636)] active:scale-[0.98]',
+    'bg-[var(--error-500)] text-white hover:bg-[var(--error-600)] active:scale-[0.98]',
   destructive:
-    'bg-[var(--error-500,#D64545)] text-white hover:bg-[var(--error-600,#B93636)] active:scale-[0.98]',
+    'bg-[var(--error-500)] text-white hover:bg-[var(--error-600)] active:scale-[0.98]',
   // Icon-only button (square)
   icon:
     'bg-transparent text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]',

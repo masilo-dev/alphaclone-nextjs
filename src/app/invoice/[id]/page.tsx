@@ -138,10 +138,10 @@ function PublicInvoiceContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-400 font-mono type-caption tracking-widest uppercase">Initializing Secure Payment Gateway</p>
+                    <p className="text-[var(--ws-text-muted)] font-mono type-caption tracking-widest uppercase">Initializing Secure Payment Gateway</p>
                 </div>
             </div>
         );
@@ -149,10 +149,10 @@ function PublicInvoiceContent() {
 
     if (error || !invoice) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-                <div className="text-center max-w-md bg-slate-950 border border-slate-800 p-8 rounded-2xl">
+            <div className="min-h-screen bg-[var(--ws-panel)] flex items-center justify-center p-6">
+                <div className="text-center max-w-md bg-[var(--ws-canvas)] border border-[var(--ws-border)] p-8 rounded-2xl">
                     <h1 className="text-2xl font-bold text-red-500 mb-4">Invoice Not Found</h1>
-                    <p className="text-slate-400 mb-8">This invoice payment link is no longer valid or has been disabled by the system.</p>
+                    <p className="text-[var(--ws-text-muted)] mb-8">This invoice payment link is no longer valid or has been disabled by the system.</p>
                     <Button variant="outline" onClick={() => window.location.href = '/'}>Return Home</Button>
                 </div>
             </div>
@@ -182,7 +182,7 @@ function PublicInvoiceContent() {
     const hasManualPaymentDetails = Boolean(bankDetails || mobilePaymentDetails);
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-slate-950 text-white p-3 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
+        <div className="min-h-screen overflow-x-hidden bg-[var(--ws-canvas)] text-white p-3 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none opacity-20">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/20 blur-[150px] rounded-full"></div>
@@ -202,13 +202,13 @@ function PublicInvoiceContent() {
                         )}
                         <div className="min-w-0">
                             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">{branding.name}</h1>
-                            <p className="text-slate-500 type-card-description sm:text-sm font-mono">INVOICE & PAYMENT</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm font-mono">INVOICE & PAYMENT</p>
                         </div>
                     </div>
 
                     {/* Status Pipeline */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-                        <p className="type-caption font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Status</p>
+                    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-5">
+                        <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)] mb-4">Invoice Status</p>
                         <InvoiceStatusPipeline
                             status={(invoice.status || 'draft') as InvoiceStatus}
                             timestamps={{
@@ -221,34 +221,34 @@ function PublicInvoiceContent() {
                         />
                     </div>
 
-                    <Card className="p-4 sm:p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+                    <Card className="p-4 sm:p-8 border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl">
                         <div className="flex flex-wrap justify-between items-start gap-3 mb-8 sm:mb-12">
                             <div className="min-w-0">
-                                <p className="text-slate-500 type-caption uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
+                                <p className="text-[var(--ws-text-muted)] type-caption uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
                                 <h2 className="text-2xl sm:text-3xl font-mono font-bold text-white break-all">{invoice.invoiceNumber}</h2>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 mb-8 sm:mb-12">
                             <div>
-                                <p className="text-slate-500 type-caption uppercase font-bold mb-2">Issue Date</p>
+                                <p className="text-[var(--ws-text-muted)] type-caption uppercase font-bold mb-2">Issue Date</p>
                                 <p className="text-lg font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
                             </div>
                             <div>
-                                <p className="text-slate-500 type-caption uppercase font-bold mb-2">Due Date</p>
+                                <p className="text-[var(--ws-text-muted)] type-caption uppercase font-bold mb-2">Due Date</p>
                                 <p className="text-lg font-medium text-teal-400">{new Date(invoice.dueDate).toLocaleDateString()}</p>
                             </div>
                         </div>
 
                         {/* Line Items */}
                         <div className="space-y-4 border-t border-white/5 pt-8">
-                            <p className="text-slate-500 type-caption uppercase font-bold mb-4">Billing Summary</p>
+                            <p className="text-[var(--ws-text-muted)] type-caption uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
                                 {normalizedItems.map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-center gap-3 bg-slate-950/30 p-4 rounded-xl border border-white/5">
+                                    <div key={idx} className="flex justify-between items-center gap-3 bg-[var(--ws-canvas)]/30 p-4 rounded-xl border border-white/5">
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-slate-200 break-words">{item.description}</p>
-                                            <p className="type-card-description text-slate-500">Qty: {item.quantity} &times; ${item.rate.toFixed(2)}</p>
+                                            <p className="font-semibold text-[var(--ws-text-secondary)] break-words">{item.description}</p>
+                                            <p className="type-card-description text-[var(--ws-text-muted)]">Qty: {item.quantity} &times; ${item.rate.toFixed(2)}</p>
                                         </div>
                                         <p className="font-mono font-bold text-teal-400 shrink-0">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                     </div>
@@ -258,16 +258,16 @@ function PublicInvoiceContent() {
 
                         {/* Totals */}
                         <div className="mt-8 pt-8 border-t border-white/5 space-y-3">
-                            <div className="flex justify-between text-slate-400">
+                            <div className="flex justify-between text-[var(--ws-text-muted)]">
                                 <span>Subtotal</span>
                                 <span className="font-mono">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between text-slate-400">
+                            <div className="flex justify-between text-[var(--ws-text-muted)]">
                                 <span>Tax ({taxRate}%)</span>
                                 <span className="font-mono">${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                             {discount > 0 && (
-                                <div className="flex justify-between text-slate-400">
+                                <div className="flex justify-between text-[var(--ws-text-muted)]">
                                     <span>Discount</span>
                                     <span className="font-mono">-${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
@@ -280,7 +280,7 @@ function PublicInvoiceContent() {
                     </Card>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <Button variant="outline" className="flex-1 gap-2 border-slate-800 bg-slate-900/50" onClick={handleDownloadPDF}>
+                        <Button variant="outline" className="flex-1 gap-2 border-[var(--ws-border)] bg-[var(--ws-panel)]/50" onClick={handleDownloadPDF}>
                             <Download className="w-4 h-4" /> Download PDF
                         </Button>
                     </div>
@@ -295,7 +295,7 @@ function PublicInvoiceContent() {
                                     <CheckCircle2 className="w-12 h-12 text-white" />
                                 </div>
                                 <h3 className="text-2xl font-bold">Payment Confirmed</h3>
-                                <p className="text-slate-400 type-card-description leading-relaxed">
+                                <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">
                                     Thank you for your business. Your payment for {invoice.invoiceNumber} has been successfully processed and verified.
                                 </p>
                                 <div className="pt-4 mt-4 border-t border-teal-500/20">
@@ -306,27 +306,27 @@ function PublicInvoiceContent() {
                             <Card className="p-6 sm:p-8 border-amber-500/30 bg-amber-500/10 text-center space-y-4">
                                 <Building2 className="w-10 h-10 text-amber-400 mx-auto" />
                                 <h3 className="text-xl font-bold">Payment submitted</h3>
-                                <p className="text-slate-400 type-card-description">Your bank transfer confirmation was sent. The team will verify and mark this invoice paid.</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description">Your bank transfer confirmation was sent. The team will verify and mark this invoice paid.</p>
                             </Card>
                         ) : (
                             <div className="space-y-6">
-                                <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-7">
+                                <Card className="p-5 sm:p-8 border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl space-y-7">
                                     <div className="text-center">
                                         <h3 className="text-xl font-bold mb-2">Checkout Securely</h3>
-                                        <p className="text-slate-500 type-caption uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <p className="text-[var(--ws-text-muted)] type-caption uppercase tracking-widest flex items-center justify-center gap-2">
                                             <ShieldCheck className="w-4 h-4 text-teal-500" /> AES-256 Encrypted
                                         </p>
                                     </div>
 
                                     <div className="space-y-4">
-                                        <div className="p-4 bg-slate-800 rounded-xl border border-slate-700 hover:border-teal-500/50 transition-colors group cursor-pointer">
+                                        <div className="p-4 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] hover:border-teal-500/50 transition-colors group cursor-pointer">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-slate-950 rounded-lg flex items-center justify-center">
-                                                    <CreditCard className="w-6 h-6 text-slate-400 group-hover:text-teal-400 transition-colors" />
+                                                <div className="w-10 h-10 bg-[var(--ws-canvas)] rounded-lg flex items-center justify-center">
+                                                    <CreditCard className="w-6 h-6 text-[var(--ws-text-muted)] group-hover:text-teal-400 transition-colors" />
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className="font-bold">Pay with Stripe</p>
-                                                    <p className="type-card-description text-slate-500">Credit, Debit, or Digital Wallets</p>
+                                                    <p className="type-card-description text-[var(--ws-text-muted)]">Credit, Debit, or Digital Wallets</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -334,7 +334,7 @@ function PublicInvoiceContent() {
                                         <button
                                             onClick={handlePayment}
                                             disabled={processing}
-                                            className="w-full py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-teal-900 disabled:text-teal-500 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1"
+                                            className="w-full py-4 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-teal-900 disabled:text-teal-500 text-black font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_10px_30px_rgba(20,184,166,0.3)] hover:-translate-y-1"
                                         >
                                             {processing ? (
                                                 <span className="flex items-center justify-center gap-2">
@@ -346,22 +346,22 @@ function PublicInvoiceContent() {
                                     </div>
 
                                     {hasManualPaymentDetails && (
-                                        <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-4">
-                                            <p className="type-card-description font-bold text-slate-300 flex items-center gap-2">
+                                        <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 space-y-4">
+                                            <p className="type-card-description font-bold text-[var(--ws-text-secondary)] flex items-center gap-2">
                                                 <Building2 className="w-4 h-4" /> Alternative payment details
                                             </p>
                                             {bankDetails && (
                                                 <div className="space-y-1">
-                                                    <p className="type-caption uppercase tracking-widest text-slate-500">Bank transfer</p>
-                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 type-ui text-slate-200 whitespace-pre-wrap break-words">
+                                                    <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Bank transfer</p>
+                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
                                                         {bankDetails}
                                                     </div>
                                                 </div>
                                             )}
                                             {mobilePaymentDetails && (
                                                 <div className="space-y-1">
-                                                    <p className="type-caption uppercase tracking-widest text-slate-500">Mobile payment</p>
-                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 type-ui text-slate-200 whitespace-pre-wrap break-words">
+                                                    <p className="type-caption uppercase tracking-widest text-[var(--ws-text-muted)]">Mobile payment</p>
+                                                    <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
                                                         {mobilePaymentDetails}
                                                     </div>
                                                 </div>
@@ -369,15 +369,15 @@ function PublicInvoiceContent() {
                                         </Card>
                                     )}
 
-                                    <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-3">
-                                        <p className="type-card-description font-bold text-slate-300 flex items-center gap-2">
+                                    <Card className="p-5 border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 space-y-3">
+                                        <p className="type-card-description font-bold text-[var(--ws-text-secondary)] flex items-center gap-2">
                                             <Building2 className="w-4 h-4" /> Paid by bank transfer?
                                         </p>
                                         <form onSubmit={handleBankConfirm} className="space-y-2">
-                                            <input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Your name" className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 type-ui text-white" />
-                                            <input value={bankReference} onChange={(e) => setBankReference(e.target.value)} placeholder="Payment reference / transaction ID" required className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 type-ui text-white" />
-                                            <textarea value={bankNote} onChange={(e) => setBankNote(e.target.value)} placeholder="Optional note" rows={2} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 type-ui text-white resize-none" />
-                                            <button type="submit" disabled={confirmingBank} className="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 type-ui font-bold text-white disabled:opacity-50">
+                                            <input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Your name" className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui text-white" />
+                                            <input value={bankReference} onChange={(e) => setBankReference(e.target.value)} placeholder="Payment reference / transaction ID" required className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui text-white" />
+                                            <textarea value={bankNote} onChange={(e) => setBankNote(e.target.value)} placeholder="Optional note" rows={2} className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-ui text-white resize-none" />
+                                            <button type="submit" disabled={confirmingBank} className="w-full py-2.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] type-ui font-bold text-white disabled:opacity-50">
                                                 {confirmingBank ? 'Submitting…' : 'Confirm payment sent'}
                                             </button>
                                         </form>
@@ -391,8 +391,8 @@ function PublicInvoiceContent() {
                                     </div>
                                 </Card>
 
-                                <div className="p-6 bg-slate-900/30 border border-slate-900 rounded-2xl">
-                                    <p className="text-slate-500 type-card-description italic text-center">
+                                <div className="p-6 bg-[var(--ws-panel)]/30 border border-slate-900 rounded-2xl">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description italic text-center">
                                         By paying, you agree to {branding.name}&apos;s terms of service.
                                     </p>
                                 </div>
@@ -406,9 +406,9 @@ function PublicInvoiceContent() {
             <div className="max-w-5xl mx-auto mt-12 sm:mt-24 pt-12 border-t border-slate-900 flex flex-col items-center gap-8 text-slate-600">
                 <div className="flex flex-wrap justify-center text-center items-center gap-3 sm:gap-4 font-mono type-caption uppercase tracking-widest">
                     <span>AlphaClone Core</span>
-                    <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
+                    <span className="w-1 h-1 bg-[var(--ws-surface-secondary)] rounded-full"></span>
                     <span>Finance Engine v3.0</span>
-                    <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
+                    <span className="w-1 h-1 bg-[var(--ws-surface-secondary)] rounded-full"></span>
                     <span>GDPR Compliant</span>
                 </div>
                 <p className="type-card-description">&copy; {new Date().getFullYear()} {branding.name}</p>
@@ -419,7 +419,7 @@ function PublicInvoiceContent() {
 
 export default function PublicInvoicePage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading invoice…</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center text-[var(--ws-text-muted)]">Loading invoice…</div>}>
             <PublicInvoiceContent />
         </Suspense>
     );

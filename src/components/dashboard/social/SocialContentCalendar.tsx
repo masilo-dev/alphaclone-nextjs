@@ -86,28 +86,28 @@ export function SocialContentCalendar<T extends CalendarPost>({
       : anchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   return (
-    <div className="mb-4 rounded-xl border border-white/5 bg-slate-950/60 p-3 space-y-3">
+    <div className="mb-4 rounded-xl border border-white/5 bg-[var(--ws-canvas)]/60 p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => shift(-1)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
           aria-label="Previous"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="type-card-description font-bold text-slate-200">{title}</p>
+        <p className="type-card-description font-bold text-[var(--ws-text-secondary)]">{title}</p>
         <button
           type="button"
           onClick={() => shift(1)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-slate-400 hover:text-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
           aria-label="Next"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 type-caption font-bold uppercase tracking-wider text-slate-500">
+      <div className="grid grid-cols-7 gap-1 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
           <div key={d} className="text-center py-1">
             {d}
@@ -127,10 +127,10 @@ export function SocialContentCalendar<T extends CalendarPost>({
               className={`rounded-lg border p-1.5 overflow-hidden ${
                 isToday
                   ? 'border-teal-500/40 bg-teal-500/5'
-                  : 'border-white/5 bg-slate-900/40'
+                  : 'border-white/5 bg-[var(--ws-panel)]/40'
               } ${mode === 'month' && !inMonth ? 'opacity-40' : ''}`}
             >
-              <p className="type-card-description font-bold text-slate-400 mb-1">{day.getDate()}</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-muted)] mb-1">{day.getDate()}</p>
               <div className="space-y-0.5">
                 {dayPosts.slice(0, mode === 'week' ? 4 : 2).map((post) => (
                   <button
@@ -144,7 +144,7 @@ export function SocialContentCalendar<T extends CalendarPost>({
                   </button>
                 ))}
                 {dayPosts.length > (mode === 'week' ? 4 : 2) ? (
-                  <p className="type-card-description text-slate-500">+{dayPosts.length - (mode === 'week' ? 4 : 2)} more</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">+{dayPosts.length - (mode === 'week' ? 4 : 2)} more</p>
                 ) : null}
               </div>
             </div>

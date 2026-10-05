@@ -97,7 +97,7 @@ export async function enqueueBookingAutomationJobs(
     timeStyle: 'short',
   });
   const meetingLinkHtml = context.meetingUrl
-    ? `<p><a href="${escapeHtml(context.meetingUrl)}" style="display:inline-block;padding:12px 18px;background:#0d9488;color:#fff;text-decoration:none;border-radius:8px;">Open meeting</a></p>`
+    ? `<p><a href="${escapeHtml(context.meetingUrl)}" style="display:inline-block;padding:12px 18px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:8px;">Open meeting</a></p>`
     : '';
 
   let queued = 0;

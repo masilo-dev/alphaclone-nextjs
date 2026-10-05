@@ -48,7 +48,7 @@ export function DocumentTotals({
   amountPaid,
   balanceDue,
   currency = 'USD',
-  brandColor = '#0f172a',
+  brandColor = 'var(--ws-canvas)',
   className = '',
   notes,
 }: DocumentTotalsProps) {
@@ -76,10 +76,10 @@ export function DocumentTotals({
   return (
     <div className={`doc-totals doc-avoid-break my-6 flex flex-col sm:flex-row justify-between items-start gap-8 ${className}`}>
       {/* Left side: Notes or Terms if present */}
-      <div className="flex-1 text-xs text-slate-500 max-w-sm">
+      <div className="flex-1 text-xs text-[var(--ws-text-muted)] max-w-sm">
         {notes && (
           <div className="space-y-1">
-            <span className="font-bold uppercase tracking-wider text-slate-400">Notes / Remarks</span>
+            <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Notes / Remarks</span>
             <p className="whitespace-pre-line leading-relaxed text-slate-600">{notes}</p>
           </div>
         )}
@@ -89,7 +89,7 @@ export function DocumentTotals({
       <div className="w-full sm:w-80 space-y-2 text-sm text-slate-700">
         {subtotal != null && (
           <div className="flex justify-between py-1 border-b border-slate-100">
-            <span className="text-slate-500">Subtotal</span>
+            <span className="text-[var(--ws-text-muted)]">Subtotal</span>
             <span className="font-mono text-slate-900 font-medium">{formatMoney(subtotal, currency)}</span>
           </div>
         )}
@@ -123,7 +123,7 @@ export function DocumentTotals({
           <span className="text-base font-extrabold uppercase tracking-tight text-slate-900">Total</span>
           <span
             className="text-xl sm:text-2xl font-black font-mono tracking-tight"
-            style={{ color: brandColor !== '#ffffff' ? brandColor : '#0f172a' }}
+            style={{ color: brandColor !== 'var(--color-white)' ? brandColor : 'var(--ws-canvas)' }}
           >
             {formatMoney(total, currency)}
           </span>

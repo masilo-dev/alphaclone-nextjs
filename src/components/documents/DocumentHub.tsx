@@ -94,7 +94,7 @@ function getFileIcon(fileType: string) {
     if (fileType.includes('word') || fileType.includes('msword')) return <FileText className="w-5 h-5 text-blue-400" />;
     if (fileType.includes('image')) return <FileIcon className="w-5 h-5 text-green-400" />;
     if (fileType.includes('quote') || fileType.includes('quotation')) return <Quote className="w-5 h-5 text-purple-400" />;
-    return <FileQuestion className="w-5 h-5 text-slate-400" />;
+    return <FileQuestion className="w-5 h-5 text-[var(--ws-text-muted)]" />;
 }
 
 function matchesDocumentBucket(file: HubFile, filter: string): boolean {
@@ -199,7 +199,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const toastId = toast.loading('Sending document...');
         try {
             const safeMessage = emailMessage.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#0f172a;line-height:1.6;white-space:pre-wrap;">${safeMessage}</div>`;
+            const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ws-canvas);line-height:1.6;white-space:pre-wrap;">${safeMessage}</div>`;
             const response = await fetch('/api/email/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -335,21 +335,21 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const handleCreateQuote = () => {
         setEditorContent(`
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px;">
-                <h1 style="text-align: center; color: #333; margin-bottom: 30px;">Price Quote</h1>
+                <h1 style="text-align: center; color: var(--text-primary); margin-bottom: 30px;">Price Quote</h1>
                 <div style="margin-bottom: 30px;">
                     <p><strong>Quote #:</strong> ${format(new Date(), 'yyyy-MM-dd')}-001</p>
                     <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
                     <p><strong>Valid Until:</strong> ${format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')}</p>
                 </div>
-                <h2 style="color: #333; margin-bottom: 20px;">Items & Services</h2>
+                <h2 style="color: var(--text-primary); margin-bottom: 20px;">Items & Services</h2>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                    <tr style="border-bottom: 2px solid #333;">
+                    <tr style="border-bottom: 2px solid var(--text-primary);">
                         <th style="padding: 10px; text-align: left;">Description</th>
                         <th style="padding: 10px; text-align: right;">Quantity</th>
                         <th style="padding: 10px; text-align: right;">Unit Price</th>
                         <th style="padding: 10px; text-align: right;">Total</th>
                     </tr>
-                    <tr style="border-bottom: 1px solid #ccc;">
+                    <tr style="border-bottom: 1px solid var(--border-default);">
                         <td style="padding: 10px;">Service Description</td>
                         <td style="padding: 10px; text-align: right;">1</td>
                         <td style="padding: 10px; text-align: right;">$0.00</td>
@@ -691,7 +691,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             Format your response as valid HTML content that can be placed inside a <div>.
                             IMPORTANT: Use inline styles for all elements to ensure they render correctly in PDF.
                             Include a sophisticated header, organized content, and a professional footer.
-                            Use colors like Teal (#14b8a6), Slate (#0f172a), and Violet (#7c3aed) for a premium look.
+                            Use colors like Teal (var(--brand-blue-500)), Slate (var(--ws-canvas)), and Violet (var(--brand-violet-500)) for a premium look.
                             Make sure the background is colorful and professional, not just white.`
                 })
             });
@@ -745,7 +745,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             // Create a clone for PDF generation to inject better styles
             const printElement = element.cloneNode(true) as HTMLElement;
             printElement.style.padding = '40px';
-            printElement.style.color = '#ffffff';
+            printElement.style.color = 'var(--color-white)';
             printElement.style.fontFamily = 'Inter, system-ui, sans-serif';
 
             const opt: any = {
@@ -757,7 +757,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     useCORS: true,
                     logging: false,
                     letterRendering: true,
-                    backgroundColor: currentTenant?.brand_color_primary || '#0f172a'
+                    backgroundColor: currentTenant?.brand_color_primary || 'var(--ws-canvas)'
                 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
@@ -1034,8 +1034,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     ]}
                 />
                 {selectedFile ? (
-                    <div className="px-4 py-2 border-b border-white/5 bg-slate-950/80">
-                        <p className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    <div className="px-4 py-2 border-b border-white/5 bg-[var(--ws-canvas)]/80">
+                        <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1.5">
                             Related versions
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -1055,7 +1055,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         key={f.id}
                                         type="button"
                                         onClick={() => setSelectedFile(f)}
-                                        className="type-ui px-2 py-1 rounded-lg border border-white/10 text-slate-300 hover:border-teal-500/40 hover:text-teal-300"
+                                        className="type-ui px-2 py-1 rounded-lg border border-white/10 text-[var(--ws-text-secondary)] hover:border-teal-500/40 hover:text-[var(--brand-blue-300)]"
                                     >
                                         {f.original_filename} ·{' '}
                                         {new Date(f.created_at).toLocaleDateString()}
@@ -1069,7 +1069,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     f.id !== selectedFile.id
                                 );
                             }).length === 0 ? (
-                                <span className="type-ui text-slate-500">
+                                <span className="type-ui text-[var(--ws-text-muted)]">
                                     Save edits to create another version of this file.
                                 </span>
                             ) : null}
@@ -1080,7 +1080,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 {renderActivityModal()}
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-hidden bg-slate-950">
+                <div className="flex-1 overflow-hidden bg-[var(--ws-canvas)]">
                     {isPdf && fileUrl ? (
                         <div className="h-full document-viewer-container">
                             <DocumentViewer
@@ -1092,7 +1092,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             />
                         </div>
                     ) : viewMode === 'image' && fileUrl ? (
-                        <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-slate-900/50 transition-colors">
+                        <div className="h-full flex items-center justify-center p-6 sm:p-12 hover:bg-[var(--ws-panel)]/50 transition-colors">
                                 <Image
                                     src={fileUrl}
                                     alt={selectedFile.original_filename}
@@ -1102,10 +1102,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 />
                         </div>
                     ) : viewMode === 'editor' ? (
-                        <div className="h-full overflow-auto flex flex-col items-center bg-slate-900/50 py-12 px-6">
+                        <div className="h-full overflow-auto flex flex-col items-center bg-[var(--ws-panel)]/50 py-12 px-6">
                             <div className="w-full max-w-4xl bg-white text-slate-900 shadow-2xl rounded-sm min-h-screen mb-12 animate-in slide-in-from-bottom-4 duration-500">
                                 {/* Editor wrapper gets custom quill styling */}
-                                <div className="h-full min-h-[800px] flex flex-col [&_.ql-toolbar]:rounded-t-sm [&_.ql-container]:rounded-b-sm [&_.ql-container]:flex-1 [&_.ql-editor]:min-h-[800px] [&_.ql-editor]:text-base [&_.ql-editor]:bg-white [&_.ql-editor]:text-black [&_.ql-editor]:!text-[#000000] [&_.ql-editor]:shadow-inner [&_.ql-toolbar]:border-slate-300 [&_.ql-container]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
+                                <div className="h-full min-h-[800px] flex flex-col [&_.ql-toolbar]:rounded-t-sm [&_.ql-container]:rounded-b-sm [&_.ql-container]:flex-1 [&_.ql-editor]:min-h-[800px] [&_.ql-editor]:text-base [&_.ql-editor]:bg-white [&_.ql-editor]:text-black [&_.ql-editor]:!text-[var(--color-black)] [&_.ql-editor]:shadow-inner [&_.ql-toolbar]:border-slate-300 [&_.ql-container]:border-slate-300 [&_.ql-toolbar]:bg-slate-50">
                                     <ReactQuill
                                         theme="snow"
                                         value={editorContent}
@@ -1119,7 +1119,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     <div
                                         id="editor-pdf-content"
                                         className="p-10 max-w-none min-h-[1056px] [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-3 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_strong]:font-bold [&_em]:italic"
-                                        style={{ color: '#000000', backgroundColor: '#ffffff', fontFamily: "'Segoe UI', Arial, sans-serif" }}
+                                        style={{ color: 'var(--color-black)', backgroundColor: 'var(--color-white)', fontFamily: "'Segoe UI', Arial, sans-serif" }}
                                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editorContent) }}
                                     />
                                 </div>
@@ -1127,19 +1127,19 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         </div>
                     ) : fileUrl ? (
                         <div className="flex items-center justify-center h-full">
-                            <div className="bg-slate-900 border border-white/5 p-12 rounded-3xl text-center max-w-sm">
+                            <div className="bg-[var(--ws-panel)] border border-white/5 p-12 rounded-3xl text-center max-w-sm">
                                 <FileIcon className="w-16 h-16 text-slate-700 mx-auto mb-6" />
                                 <h3 className="text-white font-bold text-lg mb-2">No Preview Available</h3>
-                                <p className="text-slate-400 type-card-description mb-8">This file type cannot be viewed inside the platform yet.</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description mb-8">This file type cannot be viewed inside the platform yet.</p>
                                 <button
                                     onClick={() => handleDownload(selectedFile)}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white type-ui font-bold transition-all mb-2"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-ui font-bold transition-all mb-2"
                                 >
                                     <Download className="w-4 h-4" /> Download File
                                 </button>
                                 <button
                                     onClick={() => handlePrint(fileUrl || '')}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white type-ui font-bold transition-all mb-2"
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-ui font-bold transition-all mb-2"
                                 >
                                     <Printer className="w-4 h-4" /> Print
                                 </button>
@@ -1253,7 +1253,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         WORKSPACE.action.secondary,
                                         ENTERPRISE.touchTarget,
                                         'inline-flex items-center gap-2 px-3',
-                                        viewTrash && 'border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                        viewTrash && 'border-red-500/40 text-[var(--error-text,var(--error-500))] hover:bg-[var(--error-500)]/10',
                                     )}
                                 >
                                     <Trash2 className="w-4 h-4" aria-hidden="true" />
@@ -1265,7 +1265,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         type="button"
                                         onClick={handleEmptyTrash}
                                         className={cn(
-                                            'ac-workspace-action-btn border border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                            'ac-workspace-action-btn border border-red-500/40 text-[var(--error-text,var(--error-500))] hover:bg-[var(--error-500)]/10',
                                             ENTERPRISE.touchTarget,
                                             'inline-flex items-center gap-2 px-3',
                                         )}
@@ -1610,7 +1610,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                                                 type="button"
                                                                 onClick={() => handleSoftDelete(file.id)}
                                                                 className={cn(
-                                                                    'ac-workspace-action-btn border border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                                                    'ac-workspace-action-btn border border-red-500/40 text-[var(--error-text,var(--error-500))] hover:bg-[var(--error-500)]/10',
                                                                     ENTERPRISE.touchTarget,
                                                                     'inline-flex items-center justify-center px-3',
                                                                 )}
@@ -1671,8 +1671,8 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         
         {/* AI Designer Interface */}
         {viewMode === 'designer' && (
-            <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-                <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="fixed inset-0 ac-layer-overlay flex items-center justify-center bg-[var(--ws-canvas)]/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+                <div className="w-full max-w-3xl bg-[var(--ws-panel)] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                     <div className="p-8 border-b border-white/5 bg-gradient-to-br from-violet-600/20 to-transparent">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-4">
@@ -1681,12 +1681,12 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase">AI Document Designer</h3>
-                                    <p className="text-slate-400 type-card-description font-medium">Transform descriptions into professional documents</p>
+                                    <p className="text-[var(--ws-text-muted)] type-card-description font-medium">Transform descriptions into professional documents</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                                className="p-2 rounded-xl bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:text-white transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -1694,12 +1694,12 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
                         <div className="space-y-6">
                             <div className="space-y-2">
-                                <label className="type-caption font-bold text-slate-500 uppercase tracking-widest ml-1">Creation Intent</label>
+                                <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest ml-1">Creation Intent</label>
                                 <textarea
                                     value={aiPrompt}
                                     onChange={(e) => setAiPrompt(e.target.value)}
                                     placeholder="Describe the document you want... e.g., 'A professional project proposal for a tech company with a clear timeline and budget section, using a teal and slate color palette.'"
-                                    className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all type-ui leading-relaxed"
+                                    className="w-full bg-[var(--ws-canvas)]/50 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/50 min-h-[160px] resize-none transition-all type-ui leading-relaxed"
                                 />
                             </div>
 
@@ -1723,7 +1723,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className="px-8 py-4 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors"
+                                    className="px-8 py-4 rounded-2xl bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] font-bold hover:bg-[var(--ws-surface-tertiary)] transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -1731,16 +1731,16 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         </div>
                     </div>
                     
-                    <div className="p-6 bg-slate-950/50 border-t border-white/5">
+                    <div className="p-6 bg-[var(--ws-canvas)]/50 border-t border-white/5">
                         <div className="flex items-center gap-4">
                             <div className="flex -space-x-2">
                                 {[1, 2, 3].map(i => (
-                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 overflow-hidden">
+                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-secondary)] overflow-hidden">
                                         <div className={`w-full h-full bg-gradient-to-br ${i === 1 ? 'from-teal-500 to-blue-500' : i === 2 ? 'from-violet-500 to-purple-500' : 'from-orange-500 to-red-500'}`} />
                                     </div>
                                 ))}
                             </div>
-                            <p className="type-caption text-slate-500 font-bold uppercase tracking-widest">
+                            <p className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest">
                                 Utilizing advanced AI for professional document generation
                             </p>
                         </div>

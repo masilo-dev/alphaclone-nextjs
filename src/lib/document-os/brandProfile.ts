@@ -4,9 +4,9 @@
 
 import type { DocumentBrandProfile, LogoPlacement, PageSize } from './types';
 
-const DEFAULT_PRIMARY = '#0f172a';
-const DEFAULT_SECONDARY = '#334155';
-const DEFAULT_ACCENT = '#0f766e';
+const DEFAULT_PRIMARY = 'var(--ws-canvas)';
+const DEFAULT_SECONDARY = 'var(--ws-surface-tertiary)';
+const DEFAULT_ACCENT = 'var(--brand-blue-700)';
 const DEFAULT_HEADING = '"Source Serif 4", "Liberation Serif", Georgia, serif';
 const DEFAULT_BODY = '"IBM Plex Sans", "Liberation Sans", "Helvetica Neue", Arial, sans-serif';
 

@@ -126,10 +126,10 @@ export default async function BlogPost({ params }: PageProps) {
                         </div>
                     )}
 
-                    <div className="mt-16 bg-slate-950 rounded-2xl p-8 border border-slate-800 text-center relative overflow-hidden">
+                    <div className="mt-16 bg-[var(--ws-canvas)] rounded-2xl p-8 border border-[var(--ws-border)] text-center relative overflow-hidden">
                         <div className="relative z-10">
                             <h3 className="text-2xl font-bold text-white mb-4">See AlphaClone on a real workflow.</h3>
-                            <p className="text-slate-300 mb-8 max-w-xl mx-auto">
+                            <p className="text-[var(--ws-text-secondary)] mb-8 max-w-xl mx-auto">
                                 Book a free walkthrough tailored to your business. No commitment.
                             </p>
                             <Link href="/book-demo" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">

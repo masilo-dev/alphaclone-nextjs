@@ -105,14 +105,14 @@ export function normalizeRpcHubStats(raw: unknown): SlimHubStats | null {
       ? items.map((item: Record<string, unknown>) => ({
           label: String(item.label ?? ''),
           value: Number(item.value ?? 0),
-          color: String(item.color ?? '#94a3b8'),
+          color: String(item.color ?? 'var(--ws-text-secondary)'),
         }))
       : [];
 
   const mapFeed = (items: unknown) =>
     Array.isArray(items)
       ? items.map((item: Record<string, unknown>) => ({
-          dot: String(item.dot ?? '#94a3b8'),
+          dot: String(item.dot ?? 'var(--ws-text-secondary)'),
           text: String(item.text ?? ''),
           time: String(item.time ?? ''),
         }))

@@ -178,13 +178,13 @@ const CalendlySettings: React.FC = () => {
         <div className="space-y-6">
             <div>
                 <h3 className="text-xl font-bold mb-4">Calendly Integration</h3>
-                <p className="text-slate-400 mb-6">
+                <p className="text-[var(--ws-text-muted)] mb-6">
                     Connect your Calendly account to enable the automated booking system, sync events to your dashboard, and manage your meetings.
                 </p>
             </div>
 
             {reconnectRequired && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between animate-pulse">
+                <div className="p-4 bg-[var(--error-500)]/10 border border-red-500/20 rounded-2xl flex items-center justify-between animate-pulse">
                     <div className="flex items-center gap-3">
                         <AlertCircle className="w-5 h-5 text-red-500" />
                         <div>
@@ -194,17 +194,17 @@ const CalendlySettings: React.FC = () => {
                     </div>
                     <button
                         onClick={handleConnect}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white type-caption font-bold rounded-lg transition-all"
+                        className="px-4 py-2 bg-[var(--error-500)] hover:bg-red-600 text-white type-caption font-bold rounded-lg transition-all"
                     >
                         Reconnect Now
                     </button>
                 </div>
             )}
 
-            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-slate-900/50 border-slate-800'}`}>
+            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-800 text-slate-500'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                             <Calendar className="w-6 h-6" />
                         </div>
                         <div>
@@ -215,10 +215,10 @@ const CalendlySettings: React.FC = () => {
                                 {isConnected ? (
                                     <CheckCircle2 className="w-4 h-4 text-teal-400" />
                                 ) : (
-                                    <AlertCircle className="w-4 h-4 text-slate-500" />
+                                    <AlertCircle className="w-4 h-4 text-[var(--ws-text-muted)]" />
                                 )}
                             </div>
-                            <p className="type-card-description text-slate-400 max-w-md">
+                            <p className="type-card-description text-[var(--ws-text-muted)] max-w-md">
                                 {isConnected
                                     ? `Successfully linked to your Calendly account. Your booking page is now active using your Calendly events.`
                                     : 'Connect your account to allow clients to book meetings directly through AlphaClone.'}
@@ -247,7 +247,7 @@ const CalendlySettings: React.FC = () => {
                                     {syncingContacts ? 'Syncing...' : 'Sync CRM → Calendly'}
                                 </button>
                                 {contactCount !== null && (
-                                    <span className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-slate-300 type-caption font-bold rounded-lg border border-slate-700">
+                                    <span className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] type-caption font-bold rounded-lg border border-[var(--ws-border)]">
                                         <Users className="w-3.5 h-3.5 text-violet-400" />
                                         {contactCount} Calendly Contacts
                                     </span>
@@ -263,7 +263,7 @@ const CalendlySettings: React.FC = () => {
                                 </a>
                                 <button
                                     onClick={handleDisconnect}
-                                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 type-ui font-bold rounded-lg transition-all"
+                                    className="flex items-center gap-2 px-4 py-2 bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 text-red-400 type-ui font-bold rounded-lg transition-all"
                                 >
                                     <XCircle className="w-4 h-4" />
                                     Disconnect
@@ -285,7 +285,7 @@ const CalendlySettings: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={() => setShowManual(!showManual)}
-                                    className="type-caption text-slate-500 hover:text-teal-400 font-medium underline underline-offset-4"
+                                    className="type-caption text-[var(--ws-text-muted)] hover:text-teal-400 font-medium underline underline-offset-4"
                                 >
                                     {showManual ? 'Cancel manual entry' : 'Or connect manually with link'}
                                 </button>
@@ -296,24 +296,24 @@ const CalendlySettings: React.FC = () => {
 
                 {/* Event Types Display (Authorized Only) */}
                 {isConnected && !loadingEvents && eventTypes.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-slate-800 animate-fade-in">
+                    <div className="mt-8 pt-6 border-t border-[var(--ws-border)] animate-fade-in">
                         <h5 className="type-caption font-bold text-white mb-4 uppercase tracking-wider">Your Active Event Types</h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {eventTypes.filter(et => et.active).map(et => (
-                                <div key={et.uri} className="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
+                                <div key={et.uri} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]/50 rounded-xl p-4 flex flex-col justify-between hover:border-teal-500/30 transition-colors">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
                                             <h6 className="font-bold text-white truncate pr-2">{et.name}</h6>
                                             <span className="type-caption font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
                                         </div>
-                                        <p className="type-card-description text-slate-400 line-clamp-2 mb-4 break-words">
+                                        <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2 mb-4 break-words">
                                             {et.description_plain || 'No description provided.'}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 mt-auto">
                                         <button
                                             onClick={() => handleCopyLink(et.scheduling_url)}
-                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white type-caption font-bold rounded-lg transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-bold rounded-lg transition-colors"
                                         >
                                             <Copy className="w-3 h-3" /> Copy Link
                                         </button>
@@ -321,7 +321,7 @@ const CalendlySettings: React.FC = () => {
                                             href={et.scheduling_url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="px-3 py-1.5 bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white rounded-lg transition-colors"
+                                            className="px-3 py-1.5 bg-[var(--ws-surface-secondary)]/50 hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] hover:text-white rounded-lg transition-colors"
                                         >
                                             <ExternalLink className="w-3 h-3" />
                                         </a>
@@ -333,26 +333,26 @@ const CalendlySettings: React.FC = () => {
                 )}
 
                 {showManual && !isConnected && (
-                    <div className="mt-6 pt-6 border-t border-slate-800 space-y-4 animate-fade-in">
+                    <div className="mt-6 pt-6 border-t border-[var(--ws-border)] space-y-4 animate-fade-in">
                         <div className="flex flex-col gap-2">
-                            <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Paste your Calendly Link</label>
+                            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Paste your Calendly Link</label>
                             <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={manualUrl}
                                     onChange={(e) => setManualUrl(e.target.value)}
                                     placeholder="https://calendly.com/your-profile/30min"
-                                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-white type-ui focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white type-ui focus:outline-none focus:border-teal-500 transition-colors"
                                 />
                                 <button
                                     onClick={handleSaveManual}
                                     disabled={saving || !manualUrl}
-                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white type-ui font-bold rounded-xl transition-all disabled:opacity-50"
+                                    className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-ui font-bold rounded-xl transition-all disabled:opacity-50"
                                 >
                                     {saving ? 'SAVING...' : 'SAVE LINK'}
                                 </button>
                             </div>
-                            <p className="type-card-description text-slate-500 italic">
+                            <p className="type-card-description text-[var(--ws-text-muted)] italic">
                                 Note: Manual links enable the booking page but do not sync dashboard meetings automatically.
                             </p>
                         </div>
@@ -360,9 +360,9 @@ const CalendlySettings: React.FC = () => {
                 )}
 
                 {isConnected && calendlyConfig.eventUrl && (
-                    <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
+                    <div className="mt-6 pt-6 border-t border-[var(--ws-border)] flex items-center justify-between">
                         <div className="flex items-center gap-2 type-ui">
-                            <span className="text-slate-500 font-medium">Your Default Scheduling URL:</span>
+                            <span className="text-[var(--ws-text-muted)] font-medium">Your Default Scheduling URL:</span>
                             <a
                                 href={calendlyConfig.eventUrl}
                                 target="_blank"
@@ -379,21 +379,21 @@ const CalendlySettings: React.FC = () => {
 
             {/* Informational Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Branded Experience
                     </h5>
-                    <p className="type-card-description text-slate-500 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         AlphaClone automatically skins your Calendly booking page with your brand colors for a seamless client experience.
                     </p>
                 </div>
-                <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
                         Automated Sync
                     </h5>
-                    <p className="type-card-description text-slate-500 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         Bookings are automatically synced to your AlphaClone dashboard and notifications are sent to your team.
                     </p>
                 </div>
@@ -402,7 +402,7 @@ const CalendlySettings: React.FC = () => {
                         <Users className="w-4 h-4 text-violet-400" />
                         Contacts API
                     </h5>
-                    <p className="type-card-description text-slate-500 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         Sync your CRM clients into Calendly Contacts. Routing form submissions automatically flow in as new leads. <span className="text-violet-400 font-semibold">New May 2026.</span>
                     </p>
                 </div>

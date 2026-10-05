@@ -28,7 +28,7 @@ export default function TenantSettings() {
   if (!currentTenant) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-slate-400">No active business selected</p>
+        <p className="text-[var(--ws-text-muted)]">No active business selected</p>
       </div>
     );
   }
@@ -45,24 +45,24 @@ export default function TenantSettings() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Business Settings</h1>
-        <p className="text-slate-400">Manage your business profile, team, and preferences</p>
+        <p className="text-[var(--ws-text-muted)]">Manage your business profile, team, and preferences</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-8 border-b border-slate-700">
+      <div className="flex gap-2 mb-8 border-b border-[var(--ws-border)]">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors relative ${activeTab === tab.id
               ? 'text-teal-400'
-              : 'text-slate-400 hover:text-slate-300'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               }`}
           >
             <tab.icon className="w-4 h-4" />
             {tab.label}
             {activeTab === tab.id && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-400" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--brand-blue-400)]" />
             )}
           </button>
         ))}
@@ -110,12 +110,12 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">Business Information</h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Business Name
             </label>
             {isEditing && isAdmin ? (
@@ -123,7 +123,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
               />
             ) : (
               <p className="text-white">{tenant.name}</p>
@@ -131,21 +131,21 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
           </div>
 
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Business URL
             </label>
             <div className="flex items-center gap-2">
-              <code className="px-3 py-2 bg-slate-900/50 border border-slate-600 rounded text-slate-300">
+              <code className="px-3 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded text-[var(--ws-text-secondary)]">
                 {tenant.slug}.alphaclone.com
               </code>
             </div>
-            <p className="type-card-description text-slate-500 mt-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
               URL cannot be changed after creation
             </p>
           </div>
 
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Billing Email
             </label>
             {isEditing && isAdmin ? (
@@ -154,18 +154,18 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                 value={billingEmail}
                 onChange={(e) => setBillingEmail(e.target.value)}
                 placeholder="invoices@example.com"
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
               />
             ) : (
               <p className="text-white">{billingEmail || 'Same as admin email'}</p>
             )}
-            <p className="type-card-description text-slate-500 mt-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
               Invoices and payment receipts will be sent here
             </p>
           </div>
 
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Description
             </label>
             {isEditing && isAdmin ? (
@@ -173,11 +173,11 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                className="w-full px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
                 placeholder="Tell us about your business..."
               />
             ) : (
-              <p className="text-slate-400">{description || 'No description yet'}</p>
+              <p className="text-[var(--ws-text-muted)]">{description || 'No description yet'}</p>
             )}
           </div>
         </div>
@@ -211,7 +211,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
                     setBillingEmail(tenant.settings?.billing_email || '');
                   }}
                   disabled={isSaving}
-                  className="px-4 py-2 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -219,7 +219,7 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                className="px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-white rounded-lg transition-colors"
               >
                 Edit Information
               </button>
@@ -306,7 +306,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
     <div className="space-y-6">
       {/* Invite Section */}
       {isAdmin && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+        <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-teal-400" />
             Invite Team Members
@@ -318,13 +318,13 @@ function TeamSettings({ tenant, isAdmin }: any) {
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="flex-1 px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+              className="flex-1 px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             />
 
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as any)}
-              className="px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+              className="px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             >
               <option value="admin">Admin</option>
               <option value="member">Member</option>
@@ -350,28 +350,28 @@ function TeamSettings({ tenant, isAdmin }: any) {
             </button>
           </div>
 
-          <p className="type-card-description text-slate-500 mt-2">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
             They'll receive an email invitation to join your business
           </p>
         </div>
       )}
 
       {/* Team Members List */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">Team Members ({teamMembers.length})</h2>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-[var(--ws-text-muted)] animate-spin" />
           </div>
         ) : teamMembers.length === 0 ? (
-          <p className="text-slate-400 text-center py-8">No team members yet. Invite your first teammate to share this workspace.</p>
+          <p className="text-[var(--ws-text-muted)] text-center py-8">No team members yet. Invite your first teammate to share this workspace.</p>
         ) : (
           <div className="space-y-3">
             {teamMembers.map((member: any) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg"
+                className="flex items-center justify-between p-4 bg-[var(--ws-panel)]/50 rounded-lg"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold">
@@ -379,7 +379,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
                   </div>
                   <div>
                     <div className="text-white font-medium">{member.user?.name || 'Unknown'}</div>
-                    <div className="type-ui text-slate-400">{member.user?.email}</div>
+                    <div className="type-ui text-[var(--ws-text-muted)]">{member.user?.email}</div>
                   </div>
                 </div>
 
@@ -388,7 +388,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
                     ? 'bg-purple-500/20 text-purple-300'
                     : member.role === 'member'
                       ? 'bg-blue-500/20 text-blue-300'
-                      : 'bg-slate-600 text-slate-300'
+                      : 'bg-slate-600 text-[var(--ws-text-secondary)]'
                     }`}>
                     {member.role}
                   </span>
@@ -404,7 +404,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
                     return (
                       <button
                         onClick={() => handleRemove(member.user_id, member.role)}
-                        className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                        className="p-2 text-[var(--ws-text-muted)] hover:text-red-400 transition-colors"
                         aria-label="Remove team member"
                         title="Remove from workspace"
                       >
@@ -473,7 +473,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">Current Plan</h2>
 
         <div className="flex items-center justify-between mb-6">
@@ -486,7 +486,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
                 </span>
               )}
             </div>
-            <div className="text-slate-400">
+            <div className="text-[var(--ws-text-muted)]">
               {currentPlan === 'free' ? 'Free forever' : `$${PLAN_PRICING[currentPlan as SubscriptionPlan]?.monthly ?? '—'}/month`}
             </div>
           </div>
@@ -507,7 +507,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
                   <button
                     onClick={() => handleSubscriptionAction('cancel_at_period_end')}
                     disabled={!!loadingAction}
-                    className="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                    className="px-4 py-2 text-red-400 hover:text-[var(--error-text,var(--error-500))] hover:bg-[var(--error-500)]/10 rounded-lg transition-colors flex items-center gap-2"
                   >
                     {loadingAction === 'cancel_at_period_end' && <Loader2 className="w-4 h-4 animate-spin" />}
                     Cancel Subscription
@@ -521,14 +521,14 @@ function BillingSettings({ tenant, isAdmin }: any) {
           )}
         </div>
 
-        <div className="type-ui text-slate-400 border-t border-slate-700 pt-4 mt-4">
+        <div className="type-ui text-[var(--ws-text-muted)] border-t border-[var(--ws-border)] pt-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-slate-500 mb-1">Billing Status</p>
+              <p className="text-[var(--ws-text-muted)] mb-1">Billing Status</p>
               <p className="text-white font-medium capitalize">{tenant.subscription_status || 'Active'}</p>
             </div>
             <div>
-              <p className="text-slate-500 mb-1">Current Period Ends</p>
+              <p className="text-[var(--ws-text-muted)] mb-1">Current Period Ends</p>
               <p className="text-white font-medium">
                 {tenant.current_period_end
                   ? new Date(tenant.current_period_end).toLocaleDateString()
@@ -540,19 +540,19 @@ function BillingSettings({ tenant, isAdmin }: any) {
       </div>
 
       {isAdmin && (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+        <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Payment Method</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-700 rounded">
-                <CreditCard className="w-6 h-6 text-slate-300" />
+              <div className="p-2 bg-[var(--ws-surface-tertiary)] rounded">
+                <CreditCard className="w-6 h-6 text-[var(--ws-text-secondary)]" />
               </div>
               <div>
                 <p className="text-white font-medium">Stripe Secure Payment</p>
-                <p className="type-card-description text-slate-400">Managed via Stripe</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Managed via Stripe</p>
               </div>
             </div>
-            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors type-ui disabled:opacity-50">
+            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-white rounded-lg transition-colors type-ui disabled:opacity-50">
               {loadingAction === 'portal' ? 'Opening…' : 'Update Card'}
             </button>
           </div>
@@ -564,7 +564,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
 
 function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
   const [logoUrl, setLogoUrl] = useState(tenant.logo_url || '');
-  const [brandColor, setBrandColor] = useState(tenant.settings?.brand_color || '#14b8a6');
+  const [brandColor, setBrandColor] = useState(tenant.settings?.brand_color || 'var(--brand-blue-500)');
   const [saving, setSaving] = useState(false);
 
   const saveBranding = async () => {
@@ -585,12 +585,12 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-6">
         <h2 className="text-xl font-semibold text-white mb-4">Brand Customization</h2>
 
         <div className="space-y-6">
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Logo URL
             </label>
             <input
@@ -599,12 +599,12 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
               onChange={(e) => setLogoUrl(e.target.value)}
               disabled={!isAdmin}
               placeholder="https://example.com/logo.png"
-              className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 disabled:opacity-50"
+              className="w-full px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 disabled:opacity-50"
             />
           </div>
 
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
               Brand Color
             </label>
             <div className="flex items-center gap-3">
@@ -620,7 +620,7 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
                 value={brandColor}
                 onChange={(e) => setBrandColor(e.target.value)}
                 disabled={!isAdmin}
-                className="flex-1 px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 disabled:opacity-50"
               />
             </div>
           </div>

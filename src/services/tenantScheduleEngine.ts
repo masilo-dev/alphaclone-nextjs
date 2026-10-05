@@ -74,17 +74,17 @@ export class TenantScheduleEngine {
           `Primary Focus Today: Review high-priority tasks and execute customer response SLAs immediately.\n\n` +
           `AlphaClone Operating System`;
         bodyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
-            <h2 style="color: #14b8a6; margin-top: 0;">🌅 09:00 AM Morning Action Plan</h2>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: var(--ws-canvas); color: var(--ws-surface-secondary); padding: 24px; border-radius: 12px;">
+            <h2 style="color: var(--brand-blue-500); margin-top: 0;">🌅 09:00 AM Morning Action Plan</h2>
             <p>Good morning <strong>${ownerName}</strong>,</p>
-            <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #14b8a6;">
+            <div style="background: var(--ws-panel); padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--brand-blue-500);">
               <p style="margin: 4px 0;">🎯 <strong>High Priority Tasks (13,000+):</strong> ${highPriorityTasks.length} actionable items</p>
               <p style="margin: 4px 0;">⚡ <strong>Open Response SLAs:</strong> ${slasList.length} active responses</p>
               <p style="margin: 4px 0;">💰 <strong>Pending Invoices:</strong> $${pendingInvoiceTotal.toLocaleString()}</p>
             </div>
             <p><strong>Primary Recommendation:</strong> Focus first on high-priority execution objects and clear open customer SLAs.</p>
-            <hr style="border-color: #334155; margin: 20px 0;"/>
-            <p style="font-size: 11px; color: #94a3b8;">AlphaClone Systems Autonomous Daily Operating Engine</p>
+            <hr style="border-color: var(--ws-surface-tertiary); margin: 20px 0;"/>
+            <p style="font-size: 11px; color: var(--ws-text-secondary);">AlphaClone Systems Autonomous Daily Operating Engine</p>
           </div>
         `;
         break;
@@ -99,17 +99,17 @@ export class TenantScheduleEngine {
           `Action Needed: Address blocked execution items and clear client review dependencies.\n\n` +
           `AlphaClone Operating System`;
         bodyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
-            <h2 style="color: #f59e0b; margin-top: 0;">⚠️ 13:00 PM Mid-Day Bottlenecks & Lacking Assets</h2>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: var(--ws-canvas); color: var(--ws-surface-secondary); padding: 24px; border-radius: 12px;">
+            <h2 style="color: var(--warning-500); margin-top: 0;">⚠️ 13:00 PM Mid-Day Bottlenecks & Lacking Assets</h2>
             <p>Hello <strong>${ownerName}</strong>,</p>
-            <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #f59e0b;">
+            <div style="background: var(--ws-panel); padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--warning-500);">
               <p style="margin: 4px 0;">🛑 <strong>Active Blockers:</strong> ${blockersList.length} items missing assets/inputs</p>
               <p style="margin: 4px 0;">⏳ <strong>Pending Communication SLAs:</strong> ${slasList.length}</p>
               <p style="margin: 4px 0;">📋 <strong>Uncompleted Tasks:</strong> ${tasksList.filter((t) => t.status !== 'completed').length}</p>
             </div>
             <p><strong>Action Needed:</strong> Resolve active blockers and provide missing deliverable inputs to maintain velocity.</p>
-            <hr style="border-color: #334155; margin: 20px 0;"/>
-            <p style="font-size: 11px; color: #94a3b8;">AlphaClone Systems Autonomous Daily Operating Engine</p>
+            <hr style="border-color: var(--ws-surface-tertiary); margin: 20px 0;"/>
+            <p style="font-size: 11px; color: var(--ws-text-secondary);">AlphaClone Systems Autonomous Daily Operating Engine</p>
           </div>
         `;
         break;
@@ -124,17 +124,17 @@ export class TenantScheduleEngine {
           `Push to finish: Close out pending invoices, confirm proposal approvals, and push high-value deliverables across the finish line.\n\n` +
           `AlphaClone Operating System`;
         bodyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
-            <h2 style="color: #ec4899; margin-top: 0;">🚀 15:00 PM Operational Velocity Push</h2>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: var(--ws-canvas); color: var(--ws-surface-secondary); padding: 24px; border-radius: 12px;">
+            <h2 style="color: var(--error-500); margin-top: 0;">🚀 15:00 PM Operational Velocity Push</h2>
             <p>Attention <strong>${ownerName}</strong>,</p>
-            <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #ec4899;">
+            <div style="background: var(--ws-panel); padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--error-500);">
               <p style="margin: 4px 0;">💳 <strong>Pending Revenue:</strong> $${pendingInvoiceTotal.toLocaleString()}</p>
               <p style="margin: 4px 0;">💼 <strong>Active Pipeline Deals:</strong> ${dealsList.length}</p>
               <p style="margin: 4px 0;">⚡ <strong>High-Value Open Deliverables:</strong> ${highPriorityTasks.length}</p>
             </div>
             <p><strong>Execution Call-to-Action:</strong> Push team/agents to resolve open quotes, collect outstanding invoices, and complete pending work records.</p>
-            <hr style="border-color: #334155; margin: 20px 0;"/>
-            <p style="font-size: 11px; color: #94a3b8;">AlphaClone Systems Autonomous Daily Operating Engine</p>
+            <hr style="border-color: var(--ws-surface-tertiary); margin: 20px 0;"/>
+            <p style="font-size: 11px; color: var(--ws-text-secondary);">AlphaClone Systems Autonomous Daily Operating Engine</p>
           </div>
         `;
         break;
@@ -150,18 +150,18 @@ export class TenantScheduleEngine {
           `Great work today! All state changes have been logged and verified in the audit trail.\n\n` +
           `AlphaClone Operating System`;
         bodyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
-            <h2 style="color: #3b82f6; margin-top: 0;">📊 18:00 PM End-of-Day Operations Summary</h2>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: var(--ws-canvas); color: var(--ws-surface-secondary); padding: 24px; border-radius: 12px;">
+            <h2 style="color: var(--info-500); margin-top: 0;">📊 18:00 PM End-of-Day Operations Summary</h2>
             <p>Good evening <strong>${ownerName}</strong>,</p>
-            <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #3b82f6;">
+            <div style="background: var(--ws-panel); padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--info-500);">
               <p style="margin: 4px 0;">✅ <strong>Completed Tasks Today:</strong> ${tasksList.filter((t) => t.status === 'completed').length}</p>
               <p style="margin: 4px 0;">📋 <strong>Remaining Active Tasks:</strong> ${tasksList.filter((t) => t.status !== 'completed').length}</p>
               <p style="margin: 4px 0;">🛑 <strong>Active Blockers:</strong> ${blockersList.length}</p>
               <p style="margin: 4px 0;">💰 <strong>Pending Invoices:</strong> $${pendingInvoiceTotal.toLocaleString()}</p>
             </div>
             <p>All operations and outcome receipts are recorded in the Universal Business Audit Log.</p>
-            <hr style="border-color: #334155; margin: 20px 0;"/>
-            <p style="font-size: 11px; color: #94a3b8;">AlphaClone Systems Autonomous Daily Operating Engine</p>
+            <hr style="border-color: var(--ws-surface-tertiary); margin: 20px 0;"/>
+            <p style="font-size: 11px; color: var(--ws-text-secondary);">AlphaClone Systems Autonomous Daily Operating Engine</p>
           </div>
         `;
         break;
@@ -176,17 +176,17 @@ export class TenantScheduleEngine {
           `Strategy Recommendation: AI sequence automation is scheduled to run tomorrow morning to maximize client engagement and deal velocity.\n\n` +
           `AlphaClone Operating System`;
         bodyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #f8fafc; padding: 24px; border-radius: 12px;">
-            <h2 style="color: #a855f7; margin-top: 0;">🤖 20:00 PM AI Strategic Outreach Forecast</h2>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: var(--ws-canvas); color: var(--ws-surface-secondary); padding: 24px; border-radius: 12px;">
+            <h2 style="color: var(--brand-violet-400); margin-top: 0;">🤖 20:00 PM AI Strategic Outreach Forecast</h2>
             <p>Evening <strong>${ownerName}</strong>,</p>
-            <div style="background: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #a855f7;">
+            <div style="background: var(--ws-panel); padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 4px solid var(--brand-violet-400);">
               <p style="margin: 4px 0;">🎯 <strong>Target Contacts / Deals:</strong> ${dealsList.length + slasList.length} queued touchpoints</p>
               <p style="margin: 4px 0;">📡 <strong>AI Sequence Automations:</strong> Active & Scheduled</p>
               <p style="margin: 4px 0;">💼 <strong>Revenue Expansion Prospects:</strong> ${dealsList.length} deals in campaign path</p>
             </div>
             <p><strong>Strategic Outlook:</strong> Automated AI sequences will run scheduled outreach to advance prospect pipelines tomorrow morning.</p>
-            <hr style="border-color: #334155; margin: 20px 0;"/>
-            <p style="font-size: 11px; color: #94a3b8;">AlphaClone Systems Autonomous Daily Operating Engine</p>
+            <hr style="border-color: var(--ws-surface-tertiary); margin: 20px 0;"/>
+            <p style="font-size: 11px; color: var(--ws-text-secondary);">AlphaClone Systems Autonomous Daily Operating Engine</p>
           </div>
         `;
         break;

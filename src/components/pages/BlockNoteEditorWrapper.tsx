@@ -25,11 +25,11 @@ export default function BlockNoteEditorWrapper({
             <style>{`
                 .blocknote-pages-wrapper .bn-container {
                     background: transparent !important;
-                    color: #e2e8f0 !important;
+                    color: var(--ws-border) !important;
                 }
                 .blocknote-pages-wrapper .bn-editor {
                     background: transparent !important;
-                    color: #e2e8f0 !important;
+                    color: var(--ws-border) !important;
                     font-size: var(--type-body-size);
                     line-height: 1.7;
                     max-width: 720px;
@@ -37,52 +37,52 @@ export default function BlockNoteEditorWrapper({
                     padding: 0 1rem;
                 }
                 .blocknote-pages-wrapper [data-node-type="blockContainer"] {
-                    color: #e2e8f0 !important;
+                    color: var(--ws-border) !important;
                 }
                 .blocknote-pages-wrapper .bn-block-content p,
                 .blocknote-pages-wrapper .bn-block-content h1,
                 .blocknote-pages-wrapper .bn-block-content h2,
                 .blocknote-pages-wrapper .bn-block-content h3,
                 .blocknote-pages-wrapper .bn-block-content li {
-                    color: #e2e8f0 !important;
+                    color: var(--ws-border) !important;
                 }
                 .blocknote-pages-wrapper .bn-block-content h1 { font-size: var(--text-3xl); font-weight: var(--weight-bold); }
                 .blocknote-pages-wrapper .bn-block-content h2 { font-size: var(--text-2xl); font-weight: var(--weight-semibold); }
                 .blocknote-pages-wrapper .bn-block-content h3 { font-size: var(--text-lg); font-weight: var(--weight-semibold); }
                 .blocknote-pages-wrapper [contenteditable]::before {
-                    color: #475569 !important;
+                    color: var(--ws-text-muted) !important;
                 }
                 .blocknote-pages-wrapper .bn-slash-menu,
                 .blocknote-pages-wrapper .bn-suggestion-menu {
-                    background: #1e293b !important;
-                    border: 1px solid #334155 !important;
+                    background: var(--ws-panel) !important;
+                    border: 1px solid var(--ws-surface-tertiary) !important;
                     border-radius: 12px !important;
                     box-shadow: 0 20px 40px rgba(0,0,0,0.6) !important;
-                    color: #e2e8f0 !important;
+                    color: var(--ws-border) !important;
                 }
                 .blocknote-pages-wrapper .bn-slash-menu-item:hover,
                 .blocknote-pages-wrapper .bn-suggestion-menu-item:hover,
                 .blocknote-pages-wrapper .bn-slash-menu-item[aria-selected="true"],
                 .blocknote-pages-wrapper .bn-suggestion-menu-item[aria-selected="true"] {
-                    background: #0f766e33 !important;
-                    color: #5eead4 !important;
+                    background: var(--brand-blue-700)33 !important;
+                    color: var(--brand-blue-300) !important;
                 }
                 .blocknote-pages-wrapper .bn-toolbar {
-                    background: #1e293b !important;
-                    border: 1px solid #334155 !important;
+                    background: var(--ws-panel) !important;
+                    border: 1px solid var(--ws-surface-tertiary) !important;
                     border-radius: 8px !important;
                     box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
                 }
                 .blocknote-pages-wrapper .bn-toolbar button {
-                    color: #94a3b8 !important;
+                    color: var(--ws-text-secondary) !important;
                 }
                 .blocknote-pages-wrapper .bn-toolbar button:hover {
-                    background: #334155 !important;
-                    color: #e2e8f0 !important;
+                    background: var(--ws-surface-tertiary) !important;
+                    color: var(--ws-border) !important;
                 }
                 .blocknote-pages-wrapper .mantine-Select-dropdown {
-                    background: #1e293b !important;
-                    border: 1px solid #334155 !important;
+                    background: var(--ws-panel) !important;
+                    border: 1px solid var(--ws-surface-tertiary) !important;
                     border-radius: 8px !important;
                 }
             `}</style>

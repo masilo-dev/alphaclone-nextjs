@@ -391,10 +391,10 @@ export default function WorkflowDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit">
+            <div className="flex gap-1 p-1 bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl w-fit">
                 {(['workflows', 'log'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
+                        className={`px-4 py-2 rounded-lg type-ui font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-[var(--ws-text-muted)] hover:text-white'}`}>
                         {tab === 'workflows' ? `Workflows (${workflows.length})` : `Execution Log (${executions.length})`}
                     </button>
                 ))}
@@ -402,23 +402,23 @@ export default function WorkflowDashboard() {
 
             {/* Create Form */}
             {showForm && (
-                <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 space-y-5">
+                <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-5">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-white">New Workflow</h3>
-                        <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
+                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Name *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Name *</label>
                             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 placeholder="e.g. High-Intent Lead Alert"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Trigger *</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Trigger *</label>
                             <select value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value as TriggerType }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
                                 {Object.entries(TRIGGER_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                             </select>
                         </div>
@@ -427,8 +427,8 @@ export default function WorkflowDashboard() {
                     {/* Conditions */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Conditions (ALL must match)</label>
-                            <button onClick={addCondition} className="type-ui text-teal-400 hover:text-teal-300 flex items-center gap-1">
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Conditions (ALL must match)</label>
+                            <button onClick={addCondition} className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1">
                                 <Plus className="w-3 h-3" /> Add Condition
                             </button>
                         </div>
@@ -439,15 +439,15 @@ export default function WorkflowDashboard() {
                             <div key={i} className="flex gap-2 mb-2">
                                 <input value={c.field} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], field: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="field (e.g. intent_label)"
-                                    className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
                                 <select value={c.operator} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], operator: e.target.value as WorkflowCondition['operator'] }; return { ...f, conditions: conds }; })}
-                                    className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
+                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
                                     {['equals','not_equals','contains','greater_than','less_than','exists'].map(op => <option key={op} value={op}>{op}</option>)}
                                 </select>
                                 <input value={String(c.value)} onChange={e => setForm(f => { const conds = [...f.conditions]; conds[i] = { ...conds[i], value: e.target.value }; return { ...f, conditions: conds }; })}
                                     placeholder="value"
-                                    className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
-                                <button onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-300"><X className="w-3.5 h-3.5" /></button>
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500" />
+                                <button onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
                     </div>
@@ -455,23 +455,23 @@ export default function WorkflowDashboard() {
                     {/* Actions */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider">Actions *</label>
-                            <button onClick={addAction} className="type-ui text-teal-400 hover:text-teal-300 flex items-center gap-1">
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">Actions *</label>
+                            <button onClick={addAction} className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1">
                                 <Plus className="w-3 h-3" /> Add Action
                             </button>
                         </div>
                         {form.actions.map((a, i) => (
                             <div key={i} className="flex gap-2 mb-2">
                                 <select value={a.type} onChange={e => setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], type: e.target.value as ActionType }; return { ...f, actions: acts }; })}
-                                    className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
+                                    className="px-2 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption focus:outline-none focus:border-teal-500">
                                     {Object.entries(ACTION_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                                 </select>
                                 <input
                                     value={JSON.stringify(a.config)}
                                     onChange={e => { try { const cfg = JSON.parse(e.target.value); setForm(f => { const acts = [...f.actions]; acts[i] = { ...acts[i], config: cfg }; return { ...f, actions: acts }; }); } catch { } }}
                                     placeholder='{"message":"{{contact_name}} signed up"}'
-                                    className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white type-caption font-mono focus:outline-none focus:border-teal-500" />
-                                <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-300"><X className="w-3.5 h-3.5" /></button>
+                                    className="flex-1 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-caption font-mono focus:outline-none focus:border-teal-500" />
+                                <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         ))}
                         <p className="type-card-description text-slate-600 mt-1">Use <code className="text-teal-400">{'{{field_name}}'}</code> to insert event data into messages</p>
@@ -479,11 +479,11 @@ export default function WorkflowDashboard() {
 
                     <div className="flex gap-3">
                         <button onClick={handleSave} disabled={saving}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-white rounded-xl font-semibold type-ui">
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                             {saving ? 'Saving...' : 'Create Workflow'}
                         </button>
-                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl type-ui">Cancel</button>
+                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-xl type-ui">Cancel</button>
                     </div>
                 </div>
             )}
@@ -492,17 +492,17 @@ export default function WorkflowDashboard() {
             {activeTab === 'workflows' && (
                 <div className="space-y-3">
                     {workflows.length === 0 ? (
-                        <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
+                        <div className="text-center py-16 border border-dashed border-[var(--ws-border)] rounded-2xl">
                             <Zap className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                            <p className="text-slate-400 font-semibold">No workflows yet</p>
+                            <p className="text-[var(--ws-text-muted)] font-semibold">No workflows yet</p>
                             <p className="text-slate-600 type-card-description mt-1 mb-4">Start with our default templates or create your own.</p>
                             <button onClick={seedDefaults} disabled={seeding}
-                                className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-ui font-semibold">
+                                className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-ui font-semibold">
                                 Load Default Workflows
                             </button>
                         </div>
                     ) : workflows.map(wf => (
-                        <div key={wf.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+                        <div key={wf.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                             <div className="flex items-center gap-3 p-4">
                                 <button onClick={() => handleToggle(wf)} className="flex-shrink-0">
                                     {wf.is_active
@@ -512,51 +512,51 @@ export default function WorkflowDashboard() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="font-semibold text-white type-card-description">{wf.name}</p>
-                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${wf.is_active ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'bg-slate-700/50 text-slate-500 border-slate-700'}`}>
+                                        <span className={`type-caption px-2 py-0.5 rounded-full border ${wf.is_active ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                             {wf.is_active ? 'Active' : 'Paused'}
                                         </span>
                                     </div>
                                     <div className="flex gap-3 mt-1">
-                                        <span className="type-caption text-slate-500">Trigger: <span className="text-slate-400">{TRIGGER_LABELS[wf.trigger_type]}</span></span>
-                                        <span className="type-caption text-slate-500">Runs: <span className="text-slate-400">{wf.run_count}</span></span>
+                                        <span className="type-caption text-[var(--ws-text-muted)]">Trigger: <span className="text-[var(--ws-text-muted)]">{TRIGGER_LABELS[wf.trigger_type]}</span></span>
+                                        <span className="type-caption text-[var(--ws-text-muted)]">Runs: <span className="text-[var(--ws-text-muted)]">{wf.run_count}</span></span>
                                         {wf.last_run_at && <span className="type-caption text-slate-600">Last: {new Date(wf.last_run_at).toLocaleDateString()}</span>}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <button onClick={() => handleTestRun(wf)} title="Test Run"
-                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-blue-500/20 text-slate-400 hover:text-blue-400 transition-colors">
+                                        className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-blue-500/20 text-[var(--ws-text-muted)] hover:text-blue-400 transition-colors">
                                         <Play className="w-3.5 h-3.5" />
                                     </button>
                                     <button onClick={() => setExpandedId(expandedId === wf.id ? null : wf.id)}
-                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 transition-colors">
+                                        className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] transition-colors">
                                         {expandedId === wf.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                                     </button>
                                     <button onClick={() => handleDelete(wf.id)}
-                                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+                                        className="p-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--error-500)]/20 text-[var(--ws-text-muted)] hover:text-red-400 transition-colors">
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
                             {expandedId === wf.id && (
-                                <div className="border-t border-slate-800 p-4 bg-slate-950/40 space-y-3">
-                                    {wf.description && <p className="type-card-description text-slate-400">{wf.description}</p>}
+                                <div className="border-t border-[var(--ws-border)] p-4 bg-[var(--ws-canvas)]/40 space-y-3">
+                                    {wf.description && <p className="type-card-description text-[var(--ws-text-muted)]">{wf.description}</p>}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <p className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-2">Conditions</p>
+                                            <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2">Conditions</p>
                                             {wf.conditions.length === 0
                                                 ? <p className="type-card-description text-slate-600 italic">Always runs</p>
                                                 : wf.conditions.map((c, i) => (
-                                                    <div key={i} className="type-caption text-slate-300 font-mono bg-slate-800/50 px-3 py-1.5 rounded-lg mb-1">
-                                                        {c.field} <span className="text-slate-500">{c.operator}</span> <span className="text-teal-400">"{String(c.value)}"</span>
+                                                    <div key={i} className="type-caption text-[var(--ws-text-secondary)] font-mono bg-[var(--ws-surface-secondary)]/50 px-3 py-1.5 rounded-lg mb-1">
+                                                        {c.field} <span className="text-[var(--ws-text-muted)]">{c.operator}</span> <span className="text-teal-400">"{String(c.value)}"</span>
                                                     </div>
                                                 ))}
                                         </div>
                                         <div>
-                                            <p className="type-caption font-semibold text-slate-500 uppercase tracking-wider mb-2">Actions</p>
+                                            <p className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-2">Actions</p>
                                             {wf.actions.map((a, i) => (
-                                                <div key={i} className="type-caption bg-slate-800/50 px-3 py-1.5 rounded-lg mb-1">
+                                                <div key={i} className="type-caption bg-[var(--ws-surface-secondary)]/50 px-3 py-1.5 rounded-lg mb-1">
                                                     <span className="text-amber-400 font-semibold">{ACTION_LABELS[a.type] || a.type}</span>
-                                                    <span className="text-slate-500 ml-2">{JSON.stringify(a.config).slice(0, 80)}</span>
+                                                    <span className="text-[var(--ws-text-muted)] ml-2">{JSON.stringify(a.config).slice(0, 80)}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -572,40 +572,40 @@ export default function WorkflowDashboard() {
             {activeTab === 'log' && (
                 <div className="space-y-2">
                     <div className="flex justify-end">
-                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-slate-400 hover:text-white">
+                        <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-muted)] hover:text-white">
                             <RefreshCw className="w-3 h-3" /> Refresh
                         </button>
                     </div>
                     {executions.length === 0 ? (
-                        <div className="text-center py-12 border border-dashed border-slate-700 rounded-2xl">
+                        <div className="text-center py-12 border border-dashed border-[var(--ws-border)] rounded-2xl">
                             <Activity className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                            <p className="text-slate-500 type-card-description">No executions yet. Activate a workflow and trigger an event.</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description">No executions yet. Activate a workflow and trigger an event.</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                        <div className="overflow-x-auto rounded-2xl border border-[var(--ws-border)] min-w-0">
                             <table className="w-full min-w-[560px] type-ui">
                                 <thead>
-                                    <tr className="border-b border-slate-800 bg-slate-900/50">
+                                    <tr className="border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
                                         {['Workflow', 'Status', 'Actions', 'Duration', 'Time'].map(h => (
-                                            <th key={h} className="text-left px-4 py-3 type-caption font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                                            <th key={h} className="text-left px-4 py-3 type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-800">
                                     {executions.map(ex => (
-                                        <tr key={ex.id} className="hover:bg-slate-800/30">
-                                            <td className="px-4 py-3 text-slate-300 type-table-cell font-medium">{ex.workflow_definitions?.name || '—'}</td>
+                                        <tr key={ex.id} className="hover:bg-[var(--ws-surface-secondary)]/30">
+                                            <td className="px-4 py-3 text-[var(--ws-text-secondary)] type-table-cell font-medium">{ex.workflow_definitions?.name || '—'}</td>
                                             <td className="px-4 py-3">
                                                 <span className={`type-caption px-2 py-0.5 rounded-full border ${
                                                     ex.status === 'success' ? 'bg-green-500/15 text-green-400 border-green-500/30'
-                                                    : ex.status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                                                    : ex.status === 'skipped' ? 'bg-slate-700/50 text-slate-500 border-slate-700'
+                                                    : ex.status === 'failed' ? 'bg-[var(--error-500)]/15 text-red-400 border-red-500/30'
+                                                    : ex.status === 'skipped' ? 'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]'
                                                     : 'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>
                                                     {ex.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 type-table-cell text-slate-400">{(ex.actions_taken as { type: string }[])?.map(a => a.type).join(', ') || '—'}</td>
-                                            <td className="px-4 py-3 type-table-cell text-slate-500">{ex.duration_ms != null ? `${ex.duration_ms}ms` : '—'}</td>
+                                            <td className="px-4 py-3 type-table-cell text-[var(--ws-text-muted)]">{(ex.actions_taken as { type: string }[])?.map(a => a.type).join(', ') || '—'}</td>
+                                            <td className="px-4 py-3 type-table-cell text-[var(--ws-text-muted)]">{ex.duration_ms != null ? `${ex.duration_ms}ms` : '—'}</td>
                                             <td className="px-4 py-3 type-table-cell text-slate-600">{new Date(ex.created_at).toLocaleString()}</td>
                                         </tr>
                                     ))}

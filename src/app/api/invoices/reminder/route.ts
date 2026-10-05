@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       to: resolvedRecipient,
       subject: subject || `Payment reminder: Invoice ${invoice.invoice_number}`,
-      html: `<div style="font-family:sans-serif;padding:24px;color:#333;max-width:560px;"><p>${bodyText}</p></div>`,
+      html: `<div style="font-family:sans-serif;padding:24px;color:var(--text-primary);max-width:560px;"><p>${bodyText}</p></div>`,
       message: bodyText,
       isPlatformNotification: true,
       templateName: 'invoiceReminder',

@@ -79,29 +79,29 @@ const STATUS_CONFIG: Record<
   { icon: React.ReactNode; dotClass: string; labelClass: string }
 > = {
   pending: {
-    icon: <Clock className="h-3.5 w-3.5 text-slate-500" />,
+    icon: <Clock className="h-3.5 w-3.5 text-[var(--ws-text-muted)]" />,
     dotClass: 'bg-slate-600',
-    labelClass: 'text-slate-500',
+    labelClass: 'text-[var(--ws-text-muted)]',
   },
   running: {
     icon: <Loader2 className="h-3.5 w-3.5 animate-spin text-teal-400" />,
-    dotClass: 'bg-teal-400 animate-pulse',
-    labelClass: 'text-teal-300',
+    dotClass: 'bg-[var(--brand-blue-400)] animate-pulse',
+    labelClass: 'text-[var(--brand-blue-300)]',
   },
   done: {
     icon: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />,
     dotClass: 'bg-emerald-500',
-    labelClass: 'text-slate-300',
+    labelClass: 'text-[var(--ws-text-secondary)]',
   },
   failed: {
     icon: <XCircle className="h-3.5 w-3.5 text-rose-400" />,
     dotClass: 'bg-rose-500',
-    labelClass: 'text-rose-300',
+    labelClass: 'text-[var(--error-text,var(--error-500))]',
   },
   approval_required: {
     icon: <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />,
-    dotClass: 'bg-amber-400 animate-pulse',
-    labelClass: 'text-amber-300',
+    dotClass: 'bg-[var(--warning-500)] animate-pulse',
+    labelClass: 'text-[var(--warning-text,var(--warning-500))]',
   },
 };
 
@@ -110,7 +110,7 @@ const KIND_COLOR: Record<TimelineEventKind, string> = {
   planning: 'text-teal-400 bg-teal-500/10',
   synthesis: 'text-sky-400 bg-sky-500/10',
   approval: 'text-amber-400 bg-amber-500/10',
-  phase: 'text-slate-400 bg-slate-500/10',
+  phase: 'text-[var(--ws-text-muted)] bg-slate-500/10',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -156,7 +156,7 @@ export default function ExecutionTimelineEvent({
 
           {/* Tool badge */}
           {tool && (
-            <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono type-ui text-slate-300 border border-slate-700/60">
+            <span className="rounded bg-[var(--ws-surface-secondary)] px-1.5 py-0.5 font-mono type-ui text-[var(--ws-text-secondary)] border border-[var(--ws-border)]/60">
               {tool}
             </span>
           )}
@@ -176,7 +176,7 @@ export default function ExecutionTimelineEvent({
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
-              className="ml-auto shrink-0 text-slate-600 hover:text-slate-300 transition-colors"
+              className="ml-auto shrink-0 text-slate-600 hover:text-[var(--ws-text-secondary)] transition-colors"
               title="Show payload"
             >
               {expanded ? (
@@ -195,7 +195,7 @@ export default function ExecutionTimelineEvent({
 
         {/* Summary */}
         {summary && (
-          <p className="mt-0.5 type-card-description text-slate-500 leading-snug">
+          <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)] leading-snug">
             {summary}
           </p>
         )}
@@ -217,7 +217,7 @@ export default function ExecutionTimelineEvent({
               transition={{ duration: 0.18 }}
               className="overflow-hidden"
             >
-              <pre className="mt-1.5 max-h-40 overflow-auto rounded-lg border border-slate-700/60 bg-slate-950 p-2 type-ui text-slate-400 custom-scrollbar">
+              <pre className="mt-1.5 max-h-40 overflow-auto rounded-lg border border-[var(--ws-border)]/60 bg-[var(--ws-canvas)] p-2 type-ui text-[var(--ws-text-muted)] custom-scrollbar">
                 {JSON.stringify(payload, null, 2)}
               </pre>
             </motion.div>

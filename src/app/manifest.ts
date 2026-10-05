@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { DARK_NEUTRALS } from '@/constants/brand';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -10,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     display_override: ['window-controls-overlay', 'standalone', 'minimal-ui'],
-    background_color: '#020D1A',
-    theme_color: '#020D1A',
+    background_color: DARK_NEUTRALS.appBackground,
+    theme_color: DARK_NEUTRALS.appBackground,
     orientation: 'any',
     icons: [
       { src: '/favicon-48x48.png', sizes: '48x48', type: 'image/png', purpose: 'any' },

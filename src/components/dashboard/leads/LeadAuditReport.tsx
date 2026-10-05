@@ -23,7 +23,7 @@ export const LeadAuditReport: React.FC<LeadAuditReportProps> = ({ audit, onClose
             animate={{ opacity: 1, scale: 1 }}
             className="fixed inset-0 ac-layer-overlay flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div className="bg-[var(--ws-canvas)] border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
                 {/* Header */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-purple-500/10">
                     <div className="flex items-center gap-3">

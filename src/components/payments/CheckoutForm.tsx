@@ -54,9 +54,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ amount, currency, on
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-slate-800 p-4 rounded-lg mb-4">
+            <div className="bg-[var(--ws-surface-secondary)] p-4 rounded-lg mb-4">
                 <div className="flex justify-between items-center text-white mb-2">
-                    <span className="text-slate-400">Total to pay</span>
+                    <span className="text-[var(--ws-text-muted)]">Total to pay</span>
                     <span className="text-2xl font-bold">
                         {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(amount)}
                     </span>
@@ -68,7 +68,7 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ amount, currency, on
             }} />
 
             {errorMessage && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg flex items-center gap-2">
+                <div className="bg-[var(--error-500)]/10 border border-red-500/20 text-red-500 p-3 rounded-lg flex items-center gap-2">
                     <AlertCircle className="w-5 h-5" />
                     <span className="type-ui">{errorMessage}</span>
                 </div>

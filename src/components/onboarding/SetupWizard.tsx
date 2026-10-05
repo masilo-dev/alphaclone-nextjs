@@ -58,48 +58,48 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
       <div className="text-center mb-6">
         <Users className="w-12 h-12 text-teal-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Complete Your Profile</h4>
-        <p className="text-slate-400 type-card-description">Add your business information to personalize your experience</p>
+        <p className="text-[var(--ws-text-muted)] type-card-description">Add your business information to personalize your experience</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Full Name</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Full Name</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             required
           />
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Company Name</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Company Name</label>
           <input
             type="text"
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             required
           />
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Phone Number</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Phone Number</label>
           <input
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
           />
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Timezone</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Timezone</label>
           <select
             value={formData.timezone}
             onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
           >
             <option value="UTC">UTC</option>
             <option value="America/New_York">Eastern Time</option>
@@ -114,7 +114,7 @@ const ProfileSetup: React.FC<SetupComponentProps> = ({ tenant, user, onComplete 
 
         <button
           type="submit"
-          className="w-full px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black font-semibold rounded-lg"
+          className="w-full px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-black font-semibold rounded-lg"
         >
           Complete Profile
         </button>
@@ -176,7 +176,7 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
       <div className="text-center py-8">
         <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Stripe Connected</h4>
-        <p className="text-slate-400 mb-6">Your payment system is ready to receive payments</p>
+        <p className="text-[var(--ws-text-muted)] mb-6">Your payment system is ready to receive payments</p>
         <button
           onClick={onComplete}
           className="px-6 py-2 bg-green-500 hover:bg-green-400 text-white font-semibold rounded-lg"
@@ -194,13 +194,13 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
       </div>
       
       <h4 className="text-lg font-semibold text-white mb-2">Connect Your Stripe Account</h4>
-      <p className="text-slate-400 mb-6">
+      <p className="text-[var(--ws-text-muted)] mb-6">
         Receive payments directly to your bank account. AlphaClone never touches your money.
       </p>
 
-      <div className="bg-slate-800 rounded-lg p-4 mb-6 text-left">
+      <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4 mb-6 text-left">
         <h5 className="font-medium text-white mb-2">Benefits of Stripe Connect:</h5>
-        <ul className="space-y-2 type-ui text-slate-300">
+        <ul className="space-y-2 type-ui text-[var(--ws-text-secondary)]">
           <li className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
             Direct payments to your bank account
@@ -271,16 +271,16 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
       <div className="text-center mb-6">
         <Mail className="w-12 h-12 text-teal-500 mx-auto mb-4" />
         <h4 className="text-lg font-semibold text-white mb-2">Configure Email Service</h4>
-        <p className="text-slate-400 type-card-description">Set up SendGrid to send professional emails to clients</p>
+        <p className="text-[var(--ws-text-muted)] type-card-description">Set up SendGrid to send professional emails to clients</p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">Email Provider</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Email Provider</label>
           <select
             value={formData.provider}
             onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
           >
             <option value="sendgrid">SendGrid</option>
             <option value="resend">Resend</option>
@@ -288,37 +288,37 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">API Key</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">API Key</label>
           <input
             type="password"
             value={formData.apiKey}
             onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
             placeholder="Enter your API key"
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             required
           />
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">From Email</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">From Email</label>
           <input
             type="email"
             value={formData.fromEmail}
             onChange={(e) => setFormData({ ...formData, fromEmail: e.target.value })}
             placeholder="noreply@yourcompany.com"
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             required
           />
         </div>
 
         <div>
-          <label className="block type-label font-medium text-slate-300 mb-1">From Name</label>
+          <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">From Name</label>
           <input
             type="text"
             value={formData.fromName}
             onChange={(e) => setFormData({ ...formData, fromName: e.target.value })}
             placeholder="Your Company Name"
-            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
+            className="w-full px-3 py-2 bg-[var(--ws-surface-tertiary)] border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500"
             required
           />
         </div>
@@ -326,7 +326,7 @@ const EmailServiceSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }
         <button
           onClick={handleTest}
           disabled={isTesting || !formData.apiKey || !formData.fromEmail}
-          className="w-full px-4 py-2 bg-teal-500 hover:bg-teal-400 text-black font-semibold rounded-lg disabled:opacity-50"
+          className="w-full px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-black font-semibold rounded-lg disabled:opacity-50"
         >
           {isTesting ? 'Testing...' : 'Test Email Service'}
         </button>
@@ -371,13 +371,13 @@ const HubSpotSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete }) => 
       </div>
       
       <h4 className="text-lg font-semibold text-white mb-2">Connect HubSpot CRM</h4>
-      <p className="text-slate-400 mb-6">
+      <p className="text-[var(--ws-text-muted)] mb-6">
         Sync contacts and deals with HubSpot for seamless workflow management
       </p>
 
-      <div className="bg-slate-800 rounded-lg p-4 mb-6 text-left">
+      <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4 mb-6 text-left">
         <h5 className="font-medium text-white mb-2">HubSpot Integration Features:</h5>
-        <ul className="space-y-2 type-ui text-slate-300">
+        <ul className="space-y-2 type-ui text-[var(--ws-text-secondary)]">
           <li className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
             Two-way contact synchronization
@@ -501,16 +501,16 @@ const SetupWizard: React.FC = () => {
   const StepIcon = currentStepData.icon;
 
   return (
-    <div className="setup-wizard min-h-screen bg-slate-900">
+    <div className="setup-wizard min-h-screen bg-[var(--ws-panel)]">
       {/* Progress Indicator */}
-      <div className="wizard-progress p-6 border-b border-slate-800">
+      <div className="wizard-progress p-6 border-b border-[var(--ws-border)]">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Sparkles className="w-6 h-6 text-teal-500" />
               <h2 className="text-2xl font-bold text-white">Setup Your Business</h2>
             </div>
-            <div className="type-ui text-slate-400">
+            <div className="type-ui text-[var(--ws-text-muted)]">
               Step {currentStep + 1} of {steps.length}
             </div>
           </div>
@@ -524,7 +524,7 @@ const SetupWizard: React.FC = () => {
                     w-8 h-8 rounded-full flex items-center justify-center type-ui font-medium
                     ${completedSteps.has(step.id) ? 'bg-green-500 text-white' :
                       index === currentStep ? 'bg-teal-500 text-white' :
-                      'bg-slate-700 text-slate-400'}
+                      'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)]'}
                   `}>
                     {completedSteps.has(step.id) ? (
                       <CheckCircle className="w-4 h-4" />
@@ -537,7 +537,7 @@ const SetupWizard: React.FC = () => {
                   {index < steps.length - 1 && (
                     <div className={`
                       w-16 h-1 mx-2
-                      ${index < currentStep ? 'bg-green-500' : 'bg-slate-700'}
+                      ${index < currentStep ? 'bg-green-500' : 'bg-[var(--ws-surface-tertiary)]'}
                     `} />
                   )}
                 </div>
@@ -555,12 +555,12 @@ const SetupWizard: React.FC = () => {
               <StepIcon className="w-5 h-5" />
               {currentStepData.title}
             </h3>
-            <p className="text-slate-400">
+            <p className="text-[var(--ws-text-muted)]">
               {currentStepData.description}
             </p>
           </div>
 
-          <div className="bg-slate-800 rounded-xl p-6">
+          <div className="bg-[var(--ws-surface-secondary)] rounded-xl p-6">
             <CurrentStepComponent
               tenant={currentTenant}
               user={user}
@@ -575,7 +575,7 @@ const SetupWizard: React.FC = () => {
             <button
               onClick={handlePrevious}
               disabled={currentStep === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -585,7 +585,7 @@ const SetupWizard: React.FC = () => {
               {!currentStepData.isRequired && (
                 <button
                   onClick={handleSkip}
-                  className="px-4 py-2 text-slate-400 hover:text-white"
+                  className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white"
                 >
                   Skip for now
                 </button>
@@ -603,7 +603,7 @@ const SetupWizard: React.FC = () => {
                 <button
                   onClick={handleNext}
                   disabled={currentStepData.isRequired && !currentStepData.isCompleted}
-                  className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-black font-semibold rounded-lg hover:bg-teal-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-2 bg-teal-500 text-black font-semibold rounded-lg hover:bg-[var(--brand-blue-400)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />

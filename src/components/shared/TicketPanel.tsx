@@ -15,7 +15,7 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
     low: 'bg-gray-500',
     medium: 'bg-yellow-500',
     high: 'bg-orange-500',
-    urgent: 'bg-red-500',
+    urgent: 'bg-[var(--error-500)]',
 };
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
     in_progress: 'bg-yellow-500',
     waiting_on_customer: 'bg-amber-500',
     waiting_on_business: 'bg-orange-500',
-    escalated: 'bg-red-500',
+    escalated: 'bg-[var(--error-500)]',
     resolved: 'bg-green-500',
     closed: 'bg-gray-500',
     reopened: 'bg-purple-500',
@@ -146,26 +146,26 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             </div>
 
             {showCreateForm && (
-                <div className="bg-slate-800 rounded-lg p-4 space-y-3 border border-slate-700">
+                <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4 space-y-3 border border-[var(--ws-border)]">
                     <input
                         type="text"
                         placeholder="Ticket title"
                         value={newTicketTitle}
                         onChange={(e) => setNewTicketTitle(e.target.value)}
-                        className="w-full px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                        className="w-full px-3 py-2 type-ui bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     />
                     <textarea
                         placeholder="Describe the issue..."
                         value={newTicketDescription}
                         onChange={(e) => setNewTicketDescription(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
+                        className="w-full px-3 py-2 type-ui bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 resize-none"
                     />
                     <div className="flex items-center gap-3">
                         <select
                             value={newTicketPriority}
                             onChange={(e) => setNewTicketPriority(e.target.value as TicketPriority)}
-                            className="px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                            className="px-3 py-2 type-ui bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-blue-500"
                         >
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
@@ -184,7 +184,7 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             )}
 
             {tickets.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-[var(--ws-text-muted)]">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="type-card-description">No tickets yet</p>
                 </div>
@@ -196,8 +196,8 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             onClick={() => handleSelectTicket(ticket)}
                             className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                                 selectedTicket?.id === ticket.id
-                                    ? 'bg-slate-700 border-blue-500'
-                                    : 'bg-slate-800 border-slate-700 hover:bg-slate-700'
+                                    ? 'bg-[var(--ws-surface-tertiary)] border-blue-500'
+                                    : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] hover:bg-[var(--ws-surface-tertiary)]'
                             }`}
                         >
                             <div className="flex items-center justify-between mb-1">
@@ -211,7 +211,7 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3 type-ui text-slate-500">
+                            <div className="flex items-center gap-3 type-ui text-[var(--ws-text-muted)]">
                                 <span className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
                                     {new Date(ticket.created_at).toLocaleDateString()}
@@ -226,14 +226,14 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
             )}
 
             {selectedTicket && (
-                <div className="bg-slate-800 rounded-lg border border-slate-700 p-4 space-y-3">
+                <div className="bg-[var(--ws-surface-secondary)] rounded-lg border border-[var(--ws-border)] p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <h4 className="type-ui font-semibold text-white">{selectedTicket.title}</h4>
                         <div className="flex items-center gap-2">
                             <select
                                 value={selectedTicket.status}
                                 onChange={(e) => handleStatusChange(selectedTicket.id, e.target.value as TicketStatus)}
-                                className="type-caption px-2 py-1 bg-slate-900 border border-slate-700 rounded text-white"
+                                className="type-caption px-2 py-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded text-white"
                             >
                                 <option value="open">Open</option>
                                 <option value="in_progress">In Progress</option>
@@ -243,13 +243,13 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             </select>
                         </div>
                     </div>
-                    <p className="type-card-description text-slate-400">{selectedTicket.description}</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">{selectedTicket.description}</p>
 
                     <div className="space-y-2 mt-3">
                         {comments.map(comment => (
-                            <div key={comment.id} className="bg-slate-900 rounded p-2">
-                                <p className="type-card-description text-slate-300">{comment.content}</p>
-                                <span className="type-ui text-slate-500 mt-1 block">
+                            <div key={comment.id} className="bg-[var(--ws-panel)] rounded p-2">
+                                <p className="type-card-description text-[var(--ws-text-secondary)]">{comment.content}</p>
+                                <span className="type-ui text-[var(--ws-text-muted)] mt-1 block">
                                     {new Date(comment.created_at).toLocaleString()}
                                 </span>
                             </div>
@@ -262,7 +262,7 @@ export default function TicketPanel({ source, sourceId, sourceName, onTicketCrea
                             placeholder="Add a comment..."
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            className="flex-1 px-3 py-2 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                            className="flex-1 px-3 py-2 type-ui bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                         />
                         <button
                             onClick={handleAddComment}

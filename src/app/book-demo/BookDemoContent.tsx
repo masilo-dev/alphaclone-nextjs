@@ -89,12 +89,12 @@ export default function BookDemoContent() {
                       className="p-3.5 bg-white border border-slate-200 rounded-xl text-center shadow-sm"
                     >
                       <p className="text-lg font-bold text-slate-950">{value}</p>
-                      <p className="type-card-description text-slate-500 mt-0.5">{label}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{label}</p>
                     </div>
                   ))}
                 </div>
 
-                <p className="type-card-description text-slate-500">
+                <p className="type-card-description text-[var(--ws-text-muted)]">
                   {copy.exploreFirst}{' '}
                   <Link href={TRIAL_HREF} className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
                     {copy.startTrial} →
@@ -116,7 +116,7 @@ export default function BookDemoContent() {
                     href={bookingUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 type-caption text-slate-500 hover:text-blue-600 transition-colors font-medium"
+                    className="inline-flex items-center gap-1 type-caption text-[var(--ws-text-muted)] hover:text-blue-600 transition-colors font-medium"
                   >
                     {copy.newTab}
                     <ExternalLink className="w-3 h-3" />
@@ -127,7 +127,7 @@ export default function BookDemoContent() {
                   <CalComEmbed bookingUrl={bookingUrl} variant="page" />
                 </div>
 
-                <p className="text-center type-card-description text-slate-500 mt-3">
+                <p className="text-center type-card-description text-[var(--ws-text-muted)] mt-3">
                   {copy.timezone}
                 </p>
               </div>

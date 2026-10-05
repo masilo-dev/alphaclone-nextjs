@@ -119,7 +119,7 @@ export default function CreateBusinessOnboarding() {
             <Building2 className="w-12 h-12 text-teal-400" />
             <h1 className="text-4xl font-bold text-white tracking-tighter">Set up your AlphaClone workspace</h1>
           </div>
-          <p className="text-slate-400 text-lg">
+          <p className="text-[var(--ws-text-muted)] text-lg">
             Add the basics, choose your plan, and start from the dashboard.
           </p>
         </div>
@@ -127,18 +127,18 @@ export default function CreateBusinessOnboarding() {
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-12">
           <StepIndicator number={1} label="Business Info" active={step === 1} completed={step > 1} />
-          <div className="w-16 h-0.5 bg-slate-700" />
+          <div className="w-16 h-0.5 bg-[var(--ws-surface-tertiary)]" />
           <StepIndicator number={2} label="Choose Plan" active={step === 2} completed={step > 2} />
         </div>
 
         {/* Content */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 backdrop-blur-sm">
+        <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-2xl p-8 backdrop-blur-sm">
           {step === 1 && (
             <div className="max-w-2xl mx-auto">
               <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">Add your business details</h2>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
+                <div className="mb-6 p-4 bg-[var(--error-500)]/10 border border-red-500/50 rounded-lg text-red-400">
                   {error}
                 </div>
               )}
@@ -146,7 +146,7 @@ export default function CreateBusinessOnboarding() {
               <div className="space-y-6">
                 {/* Business Name */}
                 <div>
-                  <label htmlFor="workspace-business-name" className="block type-label font-medium text-slate-300 mb-2">
+                  <label htmlFor="workspace-business-name" className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                     Business Name
                   </label>
                   <input
@@ -155,14 +155,14 @@ export default function CreateBusinessOnboarding() {
                     value={businessName}
                     onChange={(e) => handleBusinessNameChange(e.target.value)}
                     placeholder="e.g., Acme Design Studio"
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                    className="w-full px-4 py-3 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                     autoFocus
                   />
                 </div>
 
                 {/* Business Slug */}
                 <div>
-                  <label htmlFor="workspace-business-slug" className="block type-label font-medium text-slate-300 mb-2">
+                  <label htmlFor="workspace-business-slug" className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                     Business URL
                   </label>
                   <div className="flex items-center gap-2">
@@ -172,11 +172,11 @@ export default function CreateBusinessOnboarding() {
                       value={businessSlug}
                       onChange={(e) => setBusinessSlug(e.target.value.toLowerCase())}
                       placeholder="acme-design"
-                      className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
+                      className="flex-1 px-4 py-3 bg-[var(--ws-panel)]/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 transition-colors"
                     />
-                    <span className="text-slate-400 type-ui">.alphaclone.com</span>
+                    <span className="text-[var(--ws-text-muted)] type-ui">.alphaclone.com</span>
                   </div>
-                  <p className="type-card-description text-slate-500 mt-2">
+                  <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
                     This will be your unique business URL. Only lowercase letters, numbers, and hyphens allowed.
                   </p>
                 </div>
@@ -197,12 +197,12 @@ export default function CreateBusinessOnboarding() {
           {step === 2 && (
             <div>
               <h2 className="text-2xl font-bold text-white mb-2 text-center">Choose Your Plan</h2>
-              <p className="text-slate-400 text-center mb-8">
+              <p className="text-[var(--ws-text-muted)] text-center mb-8">
                 Start with a 14-day free trial on any plan. No card is required to create the workspace.
               </p>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 max-w-2xl mx-auto">
+                <div className="mb-6 p-4 bg-[var(--error-500)]/10 border border-red-500/50 rounded-lg text-red-400 max-w-2xl mx-auto">
                   {error}
                 </div>
               )}
@@ -214,7 +214,7 @@ export default function CreateBusinessOnboarding() {
                     onClick={() => setSelectedPlan(plan.id)}
                     className={`relative p-6 rounded-xl border-2 transition-all text-left ${selectedPlan === plan.id
                       ? 'border-teal-500 bg-teal-500/10 scale-105'
-                      : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/50 hover:border-slate-600'
                       }`}
                   >
                     {plan.label && (
@@ -237,9 +237,9 @@ export default function CreateBusinessOnboarding() {
                         <span className="text-3xl font-bold text-white">
                           ${plan.price}
                         </span>
-                        <span className="text-slate-400 type-ui">/{plan.period}</span>
+                        <span className="text-[var(--ws-text-muted)] type-ui">/{plan.period}</span>
                       </div>
-                      <p className="type-card-description text-slate-500 mt-2 min-h-[40px]">
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-2 min-h-[40px]">
                         {PLAN_PRICING[plan.id]?.description}
                       </p>
                       {PLAN_PRICING[plan.id]?.isDiscountable && (
@@ -251,7 +251,7 @@ export default function CreateBusinessOnboarding() {
 
                     <ul className="space-y-2">
                       {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2 type-ui text-slate-300">
+                        <li key={index} className="flex items-start gap-2 type-ui text-[var(--ws-text-secondary)]">
                           <Check className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
                           <span>{feature}</span>
                         </li>
@@ -283,7 +283,7 @@ export default function CreateBusinessOnboarding() {
                 <button
                   onClick={() => setStep(1)}
                   disabled={isCreating}
-                  className="w-full px-6 py-3 text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                  className="w-full px-6 py-3 text-[var(--ws-text-muted)] hover:text-white transition-colors disabled:opacity-50"
                 >
                   ← Back to Business Info
                 </button>
@@ -293,7 +293,7 @@ export default function CreateBusinessOnboarding() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-slate-500 type-ui">
+        <div className="text-center mt-8 text-[var(--ws-text-muted)] type-ui">
           By creating a business, you agree to our Terms of Service and Privacy Policy
         </div>
       </div>
@@ -308,11 +308,11 @@ function StepIndicator({ number, label, active, completed }: { number: number; l
         ? 'bg-teal-500 text-white'
         : active
           ? 'bg-teal-500 text-white'
-          : 'bg-slate-700 text-slate-400'
+          : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)]'
         }`}>
         {completed ? <Check className="w-5 h-5" /> : number}
       </div>
-      <span className={`type-ui font-medium ${active ? 'text-white' : 'text-slate-500'}`}>
+      <span className={`type-ui font-medium ${active ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>
         {label}
       </span>
     </div>

@@ -315,10 +315,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                     <h3 className="text-base font-black text-white tracking-tight mb-1">
                                         Project created! Want to create an invoice for this project?
                                     </h3>
-                                    <p className="type-card-description text-slate-400 font-medium">
+                                    <p className="type-card-description text-[var(--ws-text-muted)] font-medium">
                                         <span className="text-[var(--brand-blue-300)] font-bold">{lastCreatedProject.name}</span>
                                         {lastCreatedProject.clientId && clients.find(c => c.id === lastCreatedProject.clientId)?.name && (
-                                            <> · Client: <span className="text-slate-200 font-semibold">{clients.find(c => c.id === lastCreatedProject.clientId)?.name}</span></>
+                                            <> · Client: <span className="text-[var(--ws-text-secondary)] font-semibold">{clients.find(c => c.id === lastCreatedProject.clientId)?.name}</span></>
                                         )}
                                     </p>
                                 </div>
@@ -326,7 +326,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             <div className="flex items-center gap-3 shrink-0">
                                 <button
                                     onClick={() => setLastCreatedProject(null)}
-                                    className="px-4 py-2.5 type-ui font-bold text-slate-400 hover:text-white transition-colors"
+                                    className="px-4 py-2.5 type-ui font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors"
                                 >
                                     Not now
                                 </button>
@@ -365,33 +365,33 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
                     <label className="relative flex-1 lg:w-52">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ws-text-muted)]" />
                         <input
                             value={searchQuery}
                             onChange={(event) => setSearchQuery(event.target.value)}
                             placeholder="Search projects…"
                             aria-label="Search projects"
-                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 text-xs sm:text-sm text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
+                            className="h-8 w-full rounded-full border border-white/10 bg-[var(--ws-panel)] pl-9 pr-3 text-xs sm:text-sm text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </label>
-                    <div className="flex p-0.5 sm:p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
+                    <div className="flex p-0.5 sm:p-1 bg-[var(--ws-panel)] shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <LayoutList className="w-3.5 h-3.5" />
                             <span>List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-7 sm:h-8 px-2.5 sm:px-3 rounded-full transition-all flex items-center gap-1 sm:gap-1.5 text-xs font-semibold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}
                         >
                             <Activity className="w-3.5 h-3.5" />
                             <span>Health</span>
@@ -401,7 +401,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => exportToCSV(projects, 'Projects')}
-                            className="flex-1 sm:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 text-xs font-semibold text-white transition-all hover:bg-slate-800"
+                            className="flex-1 sm:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-[var(--ws-panel)] px-3 text-xs font-semibold text-white transition-all hover:bg-[var(--ws-surface-secondary)]"
                         >
                             <Download className="w-3.5 h-3.5" />
                             <span>Export</span>
@@ -423,7 +423,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-lg type-caption font-semibold uppercase tracking-wide text-slate-500">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-[var(--ws-panel)]/40 border border-white/5 rounded-lg type-caption font-semibold uppercase tracking-wide text-[var(--ws-text-muted)]">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -440,9 +440,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                     />
                                 </div>
                             ) : filteredProjects.length === 0 ? (
-                                <div className="py-16 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
+                                <div className="py-16 flex flex-col items-center justify-center text-[var(--ws-text-muted)] bg-[var(--ws-panel)]/20 rounded-3xl border border-dashed border-white/5">
                                     <Target className="w-12 h-12 mb-3 opacity-20" />
-                                    <p className="type-card-description text-slate-500">No projects found</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">No projects found</p>
                                 </div>
                             ) : (
                                 filteredProjects.map((project) => (
@@ -547,25 +547,25 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-center px-3.5 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-center px-3.5 py-3 sm:px-5 sm:py-3.5 lg:px-6 lg:py-4 bg-[var(--ws-panel)]/40 hover:bg-[var(--ws-surface-secondary)]/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-xl transition-all duration-300 relative overflow-hidden cursor-pointer"
         >
             {/* Status Indicator Line */}
-            <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-[var(--error-500)] animate-pulse' :
                 project.health === 'Delayed' ? 'bg-amber-500' :
                     'bg-emerald-500'
                 }`} />
 
             {/* Objective Detail */}
             <div className="col-span-1 lg:col-span-5 flex items-center gap-3 sm:gap-4">
-                <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-950 border border-white/5 shadow-inner shrink-0`}>
-                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
+                <div className={`p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[var(--ws-canvas)] border border-white/5 shadow-inner shrink-0`}>
+                    <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--ws-text-muted)]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base font-semibold text-slate-200 group-hover:text-white transition-colors truncate">
+                    <h4 className="text-sm sm:text-base font-semibold text-[var(--ws-text-secondary)] group-hover:text-white transition-colors truncate">
                         {project.name}
                     </h4>
                     <div className="flex items-center gap-3 mt-1">
-                        <span className="type-caption text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">
+                        <span className="type-caption text-[var(--ws-text-muted)] bg-white/5 px-1.5 py-0.5 rounded">
                             {project.category || 'General'}
                         </span>
                         {project.budget && (
@@ -574,13 +574,13 @@ const ProjectListRow = ({
                                 {project.budget.toLocaleString()}
                             </span>
                         )}
-                        <div className="w-24 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                        <div className="w-24 h-1 bg-[var(--ws-canvas)] rounded-full overflow-hidden border border-white/5">
                             <div
                                 className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-500)] rounded-full transition-all duration-1000"
                                 style={{ width: `${project.progress}%` }}
                             />
                         </div>
-                        <span className="type-caption font-bold text-slate-500">{project.progress}%</span>
+                        <span className="type-caption font-bold text-[var(--ws-text-muted)]">{project.progress}%</span>
                     </div>
                     {/* Stage Visualizer */}
                     <div className="mt-3">
@@ -593,13 +593,13 @@ const ProjectListRow = ({
                                 return (
                                     <div
                                         key={stage}
-                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-[var(--brand-blue-500)]' : 'bg-slate-700/50'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
+                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-[var(--brand-blue-500)]' : 'bg-[var(--ws-surface-tertiary)]/50'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
                                         title={stage}
                                     />
                                 );
                             })}
                         </div>
-                        <div className="flex justify-between items-center type-caption text-slate-500">
+                        <div className="flex justify-between items-center type-caption text-[var(--ws-text-muted)]">
                             <select
                                 value={getNormalizedStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
@@ -609,7 +609,7 @@ const ProjectListRow = ({
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
                                     const currentIdx = PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(project.currentStage));
                                     return (
-                                        <option key={stage} value={stage} disabled={idx < currentIdx} className="bg-slate-900 text-slate-300">
+                                        <option key={stage} value={stage} disabled={idx < currentIdx} className="bg-[var(--ws-panel)] text-[var(--ws-text-secondary)]">
                                             {stage}
                                         </option>
                                     );
@@ -624,17 +624,17 @@ const ProjectListRow = ({
             {/* Mobile metadata */}
             <div className="lg:hidden grid grid-cols-2 gap-3 pt-3 mt-1 border-t border-white/5">
                 <div>
-                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
+                    <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1">Status</span>
                     <span className={`inline-block px-2 py-1 rounded-lg type-caption font-medium border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                         project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
-                            'bg-slate-800 text-slate-400 border-white/5'
+                            'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-white/5'
                         }`}>
                         {statusLabel}
                     </span>
                 </div>
                 <div>
-                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Health</span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg type-caption border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                    <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1">Health</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg type-caption border ${project.health === 'At Risk' ? 'bg-[var(--error-500)]/10 border-red-500/20 text-red-500' :
                         project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                             'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                         }`}>
@@ -642,7 +642,7 @@ const ProjectListRow = ({
                     </span>
                 </div>
                 <div>
-                    <span className="type-caption font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
+                    <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] block mb-1">Due</span>
                     {finished ? (
                         <span className="type-caption font-semibold text-emerald-400">Finished</span>
                     ) : project.dueDate ? (
@@ -663,21 +663,21 @@ const ProjectListRow = ({
                     )}
                     <button
                         onClick={(e) => { e.stopPropagation(); onShare(project); }}
-                        className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-full transition-all"
+                        className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-[var(--ws-text-muted)] hover:text-violet-300 rounded-full transition-all"
                         title="Share client portal link"
                     >
                         <Share2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                        className="h-8 w-8 p-0.5 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-full transition-all"
+                        className="h-8 w-8 p-0.5 hover:bg-[var(--brand-blue-500)]/10 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] rounded-full transition-all"
                         title="Edit project"
                     >
                         <Activity className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                        className="h-8 w-8 p-0.5 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-full transition-all"
+                        className="h-8 w-8 p-0.5 hover:bg-[var(--error-500)]/10 text-[var(--ws-text-muted)] hover:text-red-400 rounded-full transition-all"
                         title="Delete project"
                     >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -689,7 +689,7 @@ const ProjectListRow = ({
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 <span className={`px-2.5 py-1 rounded-full type-ui font-bold border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
-                        'bg-slate-800 text-slate-400 border-white/5'
+                        'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-white/5'
                     }`}>
                     {statusLabel}
                 </span>
@@ -697,7 +697,7 @@ const ProjectListRow = ({
 
             {/* Health & Risk */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center gap-2">
-                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border type-ui font-bold ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border type-ui font-bold ${project.health === 'At Risk' ? 'bg-[var(--error-500)]/10 border-red-500/20 text-red-500' :
                     project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                         'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                     }`}>
@@ -711,7 +711,7 @@ const ProjectListRow = ({
                 {finished ? (
                     <span className="type-caption font-semibold text-emerald-400">Finished</span>
                 ) : project.dueDate ? (
-                    <div className="scale-90 origin-center bg-slate-950/50 px-2.5 py-1 rounded-full border border-white/5">
+                    <div className="scale-90 origin-center bg-[var(--ws-canvas)]/50 px-2.5 py-1 rounded-full border border-white/5">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     </div>
                 ) : (
@@ -732,21 +732,21 @@ const ProjectListRow = ({
                 )}
                 <button
                     onClick={(e) => { e.stopPropagation(); onShare(project); }}
-                    className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-lg transition-all"
+                    className="p-2 hover:bg-violet-500/10 text-[var(--ws-text-muted)] hover:text-violet-300 rounded-lg transition-all"
                     title="Share client portal link"
                 >
                     <Share2 className="w-4 h-4" />
                 </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                    className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
+                    className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
                     title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
                 </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                    className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-all"
+                    className="p-2 hover:bg-[var(--error-500)]/10 text-[var(--ws-text-muted)] hover:text-red-400 rounded-lg transition-all"
                     title="Delete project"
                 >
                     <Trash2 className="w-4 h-4" />
@@ -789,7 +789,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                     value={stats.atRiskCount}
                     icon={AlertCircle}
                     color="text-red-400"
-                    bg="bg-red-500/10"
+                    bg="bg-[var(--error-500)]/10"
                     warning={stats.atRiskCount > 0}
                 />
                 <HealthStatCard
@@ -804,21 +804,21 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Health Distribution Panel could go here */}
-                <div className="p-6 bg-slate-900/40 border border-white/5 rounded-3xl">
-                    <h3 className="type-ui font-semibold text-slate-400 mb-6 flex items-center gap-2">
+                <div className="p-6 bg-[var(--ws-panel)]/40 border border-white/5 rounded-3xl">
+                    <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-6 flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Project Health
                     </h3>
                     <div className="space-y-4">
                         {['On Track', 'At Risk', 'Delayed'].map(status => {
                             const count = projects.filter(p => p.health === status).length;
-                            const color = status === 'On Track' ? 'bg-emerald-500' : status === 'At Risk' ? 'bg-red-500' : 'bg-amber-500';
+                            const color = status === 'On Track' ? 'bg-emerald-500' : status === 'At Risk' ? 'bg-[var(--error-500)]' : 'bg-amber-500';
                             return (
                                 <div key={status} className="flex items-center gap-4">
                                     <span className="type-caption font-bold text-white w-20">{status}</span>
-                                    <div className="flex-1 h-2 bg-slate-950 rounded-full overflow-hidden">
+                                    <div className="flex-1 h-2 bg-[var(--ws-canvas)] rounded-full overflow-hidden">
                                         <div className={`h-full ${color} rounded-full transition-all duration-1000`} style={{ width: `${(count / projects.length) * 100}%` }} />
                                     </div>
-                                    <span className="type-caption text-slate-500">{count}</span>
+                                    <span className="type-caption text-[var(--ws-text-muted)]">{count}</span>
                                 </div>
                             )
                         })}
@@ -830,16 +830,16 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
 };
 
 const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) => (
-    <div className={`p-6 rounded-3xl border transition-all duration-500 group hover:scale-[1.02] ${warning ? 'bg-red-500/5 border-red-500/20' : 'bg-slate-900/40 border-white/5 hover:border-white/10'}`}>
+    <div className={`p-6 rounded-3xl border transition-all duration-500 group hover:scale-[1.02] ${warning ? 'bg-[var(--error-500)]/5 border-red-500/20' : 'bg-[var(--ws-panel)]/40 border-white/5 hover:border-white/10'}`}>
         <div className="flex items-start justify-between mb-4">
             <div className={`p-3 rounded-lg ${bg} ${warning ? 'animate-pulse' : ''}`}>
                 <Icon className={`w-5 h-5 ${color}`} />
             </div>
-            {warning && <span className="flex h-2 w-2 rounded-full bg-red-500" />}
+            {warning && <span className="flex h-2 w-2 rounded-full bg-[var(--error-500)]" />}
         </div>
         <div>
             <div className="text-2xl font-bold text-white mb-1">{value}</div>
-            <div className="type-caption font-medium text-slate-500">{label}</div>
+            <div className="type-caption font-medium text-[var(--ws-text-muted)]">{label}</div>
         </div>
     </div>
 );
@@ -1016,13 +1016,13 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
     };
 
     return (
-        <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-slate-950/20">
-            <div className="flex border-b border-white/10 bg-slate-900/40 sticky top-0 z-20">
-                <div className="w-64 min-w-[16rem] p-4 type-caption font-medium text-slate-400 border-r border-white/5">Project Timeline</div>
+        <div className="glass-panel overflow-hidden rounded-3xl border border-white/5 flex flex-col h-full min-h-[500px] backdrop-blur-xl bg-[var(--ws-canvas)]/20">
+            <div className="flex border-b border-white/10 bg-[var(--ws-panel)]/40 sticky top-0 z-20">
+                <div className="w-64 min-w-[16rem] p-4 type-caption font-medium text-[var(--ws-text-muted)] border-r border-white/5">Project Timeline</div>
                 <div className="flex-1 relative h-12 flex">
                     {months.map((m, i) => (
                         <div key={i} className="flex-1 border-r border-white/5 last:border-0 p-3 text-center flex flex-col justify-center">
-                            <span className="type-caption text-slate-400">{m.toLocaleDateString('default', { month: 'short' })}</span>
+                            <span className="type-caption text-[var(--ws-text-muted)]">{m.toLocaleDateString('default', { month: 'short' })}</span>
                         </div>
                     ))}
                 </div>
@@ -1031,7 +1031,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 opacity-30">
                         <BarChart3 className="w-12 h-12 mb-4" />
-                        <p className="type-card-description text-slate-500">No active timelines</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">No active timelines</p>
                     </div>
                 ) : sorted.map(proj => {
                     const startPos = getPosition(proj.startDate || proj.createdAt, new Date());
@@ -1040,8 +1040,8 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
 
                     return (
                         <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-[var(--brand-blue-500)]/30">
-                            <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-slate-900/20 backdrop-blur-sm">
-                                <h4 className="type-card-title font-bold text-slate-200 group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
+                            <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-[var(--ws-panel)]/20 backdrop-blur-sm">
+                                <h4 className="type-card-title font-bold text-[var(--ws-text-secondary)] group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">
                                 <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">

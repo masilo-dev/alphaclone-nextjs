@@ -162,9 +162,9 @@ export const AIWorkerGraphic = () => {
 
                 <defs>
                     <radialGradient id="hubGradient" cx="120" cy="120" r="15" gradientUnits="userSpaceOnUse">
-                        <stop offset="0" stopColor="#5eead4" />
-                        <stop offset="0.6" stopColor="#0d9488" />
-                        <stop offset="1" stopColor="#042f2e" />
+                        <stop offset="0" stopColor="var(--brand-blue-300)" />
+                        <stop offset="0.6" stopColor="var(--brand-blue-600)" />
+                        <stop offset="1" stopColor="var(--success-700)" />
                     </radialGradient>
                 </defs>
             </svg>

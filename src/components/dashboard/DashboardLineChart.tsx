@@ -77,13 +77,13 @@ export function DashboardLineChart({
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
+                tick={{ fill: 'var(--ws-text-secondary)', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 'var(--type-caption-size)' }}
+                tick={{ fill: 'var(--ws-text-secondary)', fontSize: 'var(--type-caption-size)' }}
                 axisLine={false}
                 tickLine={false}
                 width={48}
@@ -106,8 +106,8 @@ export function DashboardLineChart({
                 stroke={accent}
                 strokeWidth={3}
                 filter={`url(#line-glow-${gradientId})`}
-                dot={{ r: 3, fill: '#0f172a', stroke: accent, strokeWidth: 2 }}
-                activeDot={{ r: 6, fill: accent, stroke: '#0f172a', strokeWidth: 2 }}
+                dot={{ r: 3, fill: 'var(--ws-canvas)', stroke: accent, strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: accent, stroke: 'var(--ws-canvas)', strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>

@@ -59,7 +59,7 @@ function WelcomeGateContent() {
     }, [token, router]);
 
     return (
-        <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-[var(--brand-violet-950)] flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Ambient Background Glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-teal-500/10 blur-[120px] rounded-full pointer-events-none" />
             
@@ -71,10 +71,10 @@ function WelcomeGateContent() {
                 <div className="text-center mb-12">
                     <Image src={LOGO_URL} alt="AlphaClone" width={64} height={64} className="mx-auto mb-6" priority />
                     <h1 className="text-2xl font-black text-white tracking-tight">SECURITY HANDSHAKE</h1>
-                    <p className="text-slate-500 type-caption mt-2 uppercase tracking-widest font-semibold">AlphaClone Infrastructure Gate</p>
+                    <p className="text-[var(--ws-text-muted)] type-caption mt-2 uppercase tracking-widest font-semibold">AlphaClone Infrastructure Gate</p>
                 </div>
 
-                <div className="bg-slate-900/50 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                <div className="bg-[var(--ws-panel)]/50 backdrop-blur-2xl border border-[var(--ws-border)] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                     <AnimatePresence mode="wait">
                         {status === 'verifying' && (
                             <motion.div 
@@ -86,15 +86,15 @@ function WelcomeGateContent() {
                             >
                                 <div className="relative mb-8">
                                     <div className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full animate-pulse" />
-                                    <div className="relative w-20 h-20 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700 shadow-inner">
+                                    <div className="relative w-20 h-20 bg-[var(--ws-surface-secondary)] rounded-2xl flex items-center justify-center border border-[var(--ws-border)] shadow-inner">
                                         <Lock className="w-10 h-10 text-teal-400" />
                                     </div>
                                 </div>
                                 
                                 <h2 className="text-xl font-bold text-white mb-2 text-center">Verifying Credentials</h2>
-                                <p className="text-slate-400 type-card-description text-center mb-8">Establishing an encrypted session with the Command Center...</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description text-center mb-8">Establishing an encrypted session with the Command Center...</p>
 
-                                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                                <div className="w-full h-1.5 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden mb-2">
                                     <motion.div 
                                         className="h-full bg-teal-500"
                                         initial={{ width: "0%" }}
@@ -120,7 +120,7 @@ function WelcomeGateContent() {
                                     <CheckCircle className="w-10 h-10 text-teal-400" />
                                 </div>
                                 <h2 className="text-2xl font-bold text-white mb-2">Access Granted</h2>
-                                <p className="text-slate-400 text-center type-card-description mb-6">Security protocols passed. Provisioning your dashboard environment...</p>
+                                <p className="text-[var(--ws-text-muted)] text-center type-card-description mb-6">Security protocols passed. Provisioning your dashboard environment...</p>
                                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                             </motion.div>
                         )}
@@ -140,7 +140,7 @@ function WelcomeGateContent() {
                                 
                                 <Button 
                                     onClick={() => router.push('/auth/login')}
-                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-2xl flex items-center justify-center gap-2"
+                                    className="w-full bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white py-4 rounded-2xl flex items-center justify-center gap-2"
                                 >
                                     Return to Login <ArrowRight className="w-4 h-4" />
                                 </Button>
@@ -160,7 +160,7 @@ function WelcomeGateContent() {
 export default function WelcomeGatePage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--brand-violet-950)] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
             </div>
         }>

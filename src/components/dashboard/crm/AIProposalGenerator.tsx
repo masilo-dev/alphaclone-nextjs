@@ -98,7 +98,7 @@ This proposal remains valid for 30 days. Upon acceptance, an official contract w
           <h4 className="type-caption font-black text-white uppercase tracking-wider flex items-center gap-2">
             <Sparkles size={15} className="text-purple-400" /> AI Proposal & Pitch Deck Generator
           </h4>
-          <p className="type-card-description text-slate-400">Instantly generate structured proposals & scope of work</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">Instantly generate structured proposals & scope of work</p>
         </div>
         <button
           onClick={handleGenerate}
@@ -111,25 +111,25 @@ This proposal remains valid for 30 days. Upon acceptance, an official contract w
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Client Name
           </label>
           <input
             type="text"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-purple-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-purple-500/50"
           />
         </div>
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Project Title
           </label>
           <input
             type="text"
             value={projectTitle}
             onChange={(e) => setProjectTitle(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-purple-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-purple-500/50"
           />
         </div>
       </div>
@@ -143,19 +143,19 @@ This proposal remains valid for 30 days. Upon acceptance, an official contract w
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopy}
-                className="inline-flex items-center gap-1 type-ui font-bold text-slate-400 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 type-ui font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors"
               >
                 <Copy size={12} /> Copy
               </button>
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center gap-1 type-ui font-bold text-slate-400 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 type-ui font-bold text-[var(--ws-text-muted)] hover:text-white transition-colors"
               >
                 <Printer size={12} /> Print PDF
               </button>
             </div>
           </div>
-          <pre className="p-4 bg-slate-950 border border-white/10 rounded-xl type-caption text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
+          <pre className="p-4 bg-[var(--ws-canvas)] border border-white/10 rounded-xl type-caption text-[var(--ws-text-secondary)] whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
             {proposalMarkdown}
           </pre>
         </div>

@@ -169,8 +169,8 @@ export default function AccountsPage() {
                 ['Employees', selected.employee_count?.toString() || '—'],
                 ['Revenue', selected.annual_revenue ? `$${selected.annual_revenue.toLocaleString()}` : '—'],
               ].map(([k, v]) => (
-                <div key={k} className="bg-slate-900 border border-white/5 rounded-xl p-3">
-                  <dt className="type-caption text-slate-500">{k}</dt>
+                <div key={k} className="bg-[var(--ws-panel)] border border-white/5 rounded-xl p-3">
+                  <dt className="type-caption text-[var(--ws-text-muted)]">{k}</dt>
                   <dd className="text-white font-medium mt-0.5">{v}</dd>
                 </div>
               ))}
@@ -182,7 +182,7 @@ export default function AccountsPage() {
                 type="datetime-local"
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white type-ui"
+                className="px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-white/10 text-white type-ui"
               />
               <button
                 type="button"
@@ -200,11 +200,11 @@ export default function AccountsPage() {
           {detailTab === 'deals' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="type-card-description text-slate-400">Unified opportunities stay in sync with the deals pipeline.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Unified opportunities stay in sync with the deals pipeline.</p>
                 <button
                   type="button"
                   onClick={() => router.push('/dashboard/deals')}
-                  className="type-caption font-bold text-teal-400 hover:text-teal-300"
+                  className="type-caption font-bold text-teal-400 hover:text-[var(--brand-blue-300)]"
                 >
                   Open pipeline →
                 </button>
@@ -247,7 +247,7 @@ export default function AccountsPage() {
           <button
             type="button"
             onClick={() => setSelected(null)}
-            className="type-ui text-teal-400 font-bold hover:text-teal-300"
+            className="type-ui text-teal-400 font-bold hover:text-[var(--brand-blue-300)]"
           >
             ← Back to accounts
           </button>
@@ -300,7 +300,7 @@ export default function AccountsPage() {
           onAction={() => router.push('/dashboard/crm/workspace')}
         />
       ) : (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl divide-y divide-white/5">
           {companies.map((c) => (
             <button
               key={c.id}
@@ -313,7 +313,7 @@ export default function AccountsPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="type-ui font-bold text-white truncate">{c.name}</div>
-                <div className="type-caption text-slate-500 capitalize">{c.lifecycle_stage} · Health {c.health_score}</div>
+                <div className="type-caption text-[var(--ws-text-muted)] capitalize">{c.lifecycle_stage} · Health {c.health_score}</div>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-600" />
             </button>
@@ -335,10 +335,10 @@ export default function AccountsPage() {
 
 function RelatedList({ items, labelKey, fallback }: { items: unknown[]; labelKey: string; fallback: string }) {
   if (!items.length) {
-    return <p className="type-card-description text-slate-500 py-8 text-center">No {fallback.toLowerCase()}s linked yet.</p>;
+    return <p className="type-card-description text-[var(--ws-text-muted)] py-8 text-center">No {fallback.toLowerCase()}s linked yet.</p>;
   }
   return (
-    <div className="divide-y divide-white/5 bg-slate-900 border border-white/5 rounded-xl overflow-hidden">
+    <div className="divide-y divide-white/5 bg-[var(--ws-panel)] border border-white/5 rounded-xl overflow-hidden">
       {items.map((item, i) => {
         const row = item as Record<string, unknown>;
         return (

@@ -100,14 +100,14 @@ export default function MeetPage() {
 
     if (loading || authLoading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-white p-4">
                 <div className="flex flex-col items-center space-y-4">
                     <div className="relative">
                         <div className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full"></div>
                         <Loader2 className="w-16 h-16 text-teal-500 animate-spin relative z-10" />
                     </div>
                     <h2 className="text-xl font-medium tracking-wide">Securing Connection...</h2>
-                    <p className="text-slate-500 type-card-description flex items-center gap-2">
+                    <p className="text-[var(--ws-text-muted)] type-card-description flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4" />
                         Verifying meeting status
                     </p>
@@ -118,18 +118,18 @@ export default function MeetPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
-                <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-md text-center shadow-2xl">
-                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-white p-4">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] p-8 rounded-2xl max-w-md text-center shadow-2xl">
+                    <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mx-auto mb-6">
                         <AlertCircle className="w-8 h-8 text-red-500" />
                     </div>
 
                     <h2 className="text-2xl font-bold mb-2">Unable to Join</h2>
-                    <p className="text-slate-400 mb-8 leading-relaxed">{error}</p>
+                    <p className="text-[var(--ws-text-muted)] mb-8 leading-relaxed">{error}</p>
 
                     <button
                         onClick={() => router.push(user ? '/dashboard' : '/')}
-                        className="w-full py-3 px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all border border-slate-700 font-medium"
+                        className="w-full py-3 px-6 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white rounded-xl transition-all border border-[var(--ws-border)] font-medium"
                     >
                         Return to Homepage
                     </button>
@@ -141,8 +141,8 @@ export default function MeetPage() {
     // Require PIN validation if expectedPin exists and hasn't been validated yet
     if ((!user && !guestIdentityConfirmed) || (requiresPin && !isPinValidated)) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
-                <form onSubmit={handlePinSubmit} className="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex flex-col items-center justify-center text-white p-4">
+                <form onSubmit={handlePinSubmit} className="bg-[var(--ws-panel)] border border-[var(--ws-border)] p-8 rounded-2xl w-full max-w-md shadow-2xl">
                     <div className="text-center mb-6">
                         <div className="w-16 h-16 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-teal-500/20">
                             <ShieldCheck className="w-8 h-8 text-teal-500" />
@@ -150,19 +150,19 @@ export default function MeetPage() {
                         <h2 className="text-2xl font-bold text-white mb-2">
                             {meetingIdOrSlug.length < 20 ? `${meetingIdOrSlug}'s Office` : 'Join Secure Meeting'}
                         </h2>
-                        <p className="text-slate-400 type-card-description">
+                        <p className="text-[var(--ws-text-muted)] type-card-description">
                             {requiresPin ? 'Enter your name and the meeting code provided by the host.' : 'Enter your name before joining the secure meeting.'}
                         </p>
                     </div>
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-1">Your Name</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Your Name</label>
                             <input
                                 type="text"
                                 value={guestName}
                                 onChange={(e) => setGuestName(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                                 placeholder="What should we call you?"
                                 required
                             />
@@ -170,12 +170,12 @@ export default function MeetPage() {
 
                         {requiresPin && (
                             <div>
-                                <label className="block type-label font-medium text-slate-300 mb-1">Meeting Code</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-1">Meeting Code</label>
                                 <input
                                     type="text"
                                     value={inputPin}
                                     onChange={(e) => setInputPin(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                    className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-white font-mono text-center tracking-widest text-lg focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                                     placeholder="------"
                                     maxLength={6}
                                     required
@@ -184,7 +184,7 @@ export default function MeetPage() {
                         )}
 
                         {pinError && (
-                            <div className="p-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 type-ui">
+                            <div className="p-3 rounded bg-[var(--error-500)]/10 border border-red-500/20 text-red-400 type-ui">
                                 {pinError}
                             </div>
                         )}
@@ -203,7 +203,7 @@ export default function MeetPage() {
 
 
     return (
-        <div className="h-screen w-screen bg-slate-950 overflow-hidden relative">
+        <div className="h-screen w-screen bg-[var(--ws-canvas)] overflow-hidden relative">
             {callId && meetingProvider === 'livekit' && (
                 <CustomVideoRoom
                     user={user || guestUser}

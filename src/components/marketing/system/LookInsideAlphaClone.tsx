@@ -194,14 +194,14 @@ export default function LookInsideAlphaClone() {
     <div className="mx-auto max-w-6xl px-2 sm:px-4">
       {/* Section Header */}
       <div className="mx-auto max-w-3xl text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1 type-caption font-bold text-emerald-300 shadow-sm shadow-emerald-950/40 backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-[var(--success-500)]/10 px-3.5 py-1 type-caption font-bold text-[var(--success-text,var(--success-500))] shadow-sm shadow-emerald-950/40 backdrop-blur-md">
           <ListChecks className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
           <span>Interactive Feature Tour</span>
         </div>
         <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">
           Look inside <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">AlphaClone</span>
         </h2>
-        <p className="mt-3 type-card-description leading-6 text-slate-300 sm:text-base">
+        <p className="mt-3 type-card-description leading-6 text-[var(--ws-text-secondary)] sm:text-base">
           Explore how Bonnie coordinates tasks, manages customer records, publishes content, and secures payments in one unified AI operating system.
         </p>
       </div>
@@ -222,13 +222,13 @@ export default function LookInsideAlphaClone() {
               className={`group flex items-center gap-2 rounded-xl px-4 py-2.5 type-caption font-bold transition-all duration-200 ${
                 isActive
                   ? "border border-emerald-400/40 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-white shadow-lg shadow-emerald-950/30"
-                  : "border border-white/10 bg-slate-900/60 text-slate-400 hover:border-white/20 hover:bg-slate-900/90 hover:text-slate-200"
+                  : "border border-white/10 bg-[var(--ws-panel)]/60 text-[var(--ws-text-muted)] hover:border-white/20 hover:bg-[var(--ws-panel)]/90 hover:text-[var(--ws-text-secondary)]"
               }`}
             >
-              <Icon className={`h-4 w-4 transition-transform duration-200 ${isActive ? "text-emerald-300 scale-110" : "text-slate-400 group-hover:scale-110"}`} />
+              <Icon className={`h-4 w-4 transition-transform duration-200 ${isActive ? "text-[var(--success-text,var(--success-500))] scale-110" : "text-[var(--ws-text-muted)] group-hover:scale-110"}`} />
               <span>{tab.label}</span>
               <span className={`ml-1 rounded-full px-2 py-0.5 type-caption uppercase tracking-wider font-extrabold ${
-                isActive ? "bg-emerald-400/20 text-emerald-300 border border-emerald-400/40" : "bg-slate-800 text-slate-500"
+                isActive ? "bg-[var(--success-500)]/20 text-[var(--success-text,var(--success-500))] border border-emerald-400/40" : "bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]"
               }`}>
                 {tab.badge}
               </span>
@@ -244,7 +244,7 @@ export default function LookInsideAlphaClone() {
           {/* Glass Glow Backdrop */}
           <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-xl opacity-70 group-hover:opacity-100 transition duration-500 pointer-events-none" aria-hidden="true" />
           
-          <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#030a16]/95 p-2 sm:p-3 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl transition-all duration-300 group-hover:border-emerald-400/40">
+          <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[var(--brand-violet-950)]/95 p-2 sm:p-3 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl transition-all duration-300 group-hover:border-emerald-400/40">
             {/* Browser Bar */}
             <div className="mb-2 flex items-center justify-between border-b border-white/10 px-3 pb-2 pt-1">
               <div className="flex items-center gap-1.5">
@@ -252,18 +252,18 @@ export default function LookInsideAlphaClone() {
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-3 py-0.5 type-ui font-medium text-slate-300">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[var(--ws-panel)]/80 px-3 py-0.5 type-ui font-medium text-[var(--ws-text-secondary)]">
                 <LockKeyhole className="h-2.5 w-2.5 text-emerald-400" />
                 <span>{activeTab.urlPath}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Activity className="h-3 w-3 text-emerald-400 animate-pulse" />
-                <span className="type-caption font-bold text-emerald-300 uppercase">Live</span>
+                <span className="type-caption font-bold text-[var(--success-text,var(--success-500))] uppercase">Live</span>
               </div>
             </div>
 
             {/* Seamless Image Container */}
-            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-950 select-none">
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[var(--ws-canvas)] select-none">
               <Image
                 src={activeTab.imageSrc}
                 alt={activeTab.imageAlt}
@@ -276,14 +276,14 @@ export default function LookInsideAlphaClone() {
               />
               
               {/* Bottom Subtle Overlay Gradient */}
-              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#020815] to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--brand-violet-950)] to-transparent pointer-events-none" />
             </div>
 
             {/* Metrics Ribbon underneath image */}
             <div className="mt-3 grid grid-cols-3 gap-2 border-t border-white/10 pt-3">
               {activeTab.metrics.map((m) => (
-                <div key={m.label} className="rounded-xl border border-white/[.08] bg-slate-900/70 p-2 text-center">
-                  <p className="type-caption font-bold uppercase tracking-wider text-slate-400">{m.label}</p>
+                <div key={m.label} className="rounded-xl border border-white/[.08] bg-[var(--ws-panel)]/70 p-2 text-center">
+                  <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">{m.label}</p>
                   <p className="mt-0.5 type-card-description font-black text-white sm:text-sm">{m.value}</p>
                   <p className="type-card-description font-bold text-emerald-400">{m.change}</p>
                 </div>
@@ -294,16 +294,16 @@ export default function LookInsideAlphaClone() {
 
         {/* Right Side: Interactive Disclosures & Details */}
         <div className="space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-[#030c1b]/90 p-5 shadow-xl backdrop-blur-xl">
+          <div className="rounded-2xl border border-white/10 bg-[var(--brand-violet-950)]/90 p-5 shadow-xl backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <h3 className="text-base font-extrabold text-white">{activeTab.heading}</h3>
             </div>
-            <p className="mt-3 type-card-description leading-5 text-slate-300 sm:text-sm">{activeTab.description}</p>
+            <p className="mt-3 type-card-description leading-5 text-[var(--ws-text-secondary)] sm:text-sm">{activeTab.description}</p>
           </div>
 
           {/* Expandable Disclosure Accordion */}
           <div className="space-y-2.5">
-            <p className="type-caption font-black uppercase tracking-caps text-emerald-300 px-1">
+            <p className="type-caption font-black uppercase tracking-caps text-[var(--success-text,var(--success-500))] px-1">
               Capabilities & Live Workflows
             </p>
             {activeTab.disclosures.map((item, idx) => {
@@ -313,8 +313,8 @@ export default function LookInsideAlphaClone() {
                   key={item.title}
                   className={`overflow-hidden rounded-xl border transition-all duration-200 ${
                     isExpanded
-                      ? "border-emerald-400/40 bg-slate-900/90 shadow-md shadow-emerald-950/20"
-                      : "border-white/10 bg-slate-950/60 hover:border-white/20 hover:bg-slate-900/60"
+                      ? "border-emerald-400/40 bg-[var(--ws-panel)]/90 shadow-md shadow-emerald-950/20"
+                      : "border-white/10 bg-[var(--ws-canvas)]/60 hover:border-white/20 hover:bg-[var(--ws-panel)]/60"
                   }`}
                 >
                   <button
@@ -326,10 +326,10 @@ export default function LookInsideAlphaClone() {
                       <span
                         className={`grid h-6 w-6 place-items-center rounded-full type-caption font-bold ${
                           item.status === "completed"
-                            ? "bg-emerald-400/10 text-emerald-300 border border-emerald-400/30"
+                            ? "bg-[var(--success-500)]/10 text-[var(--success-text,var(--success-500))] border border-emerald-400/30"
                             : item.status === "active"
                             ? "bg-cyan-400/10 text-cyan-300 border border-cyan-400/30"
-                            : "bg-amber-400/10 text-amber-300 border border-amber-400/30"
+                            : "bg-[var(--warning-500)]/10 text-[var(--warning-text,var(--warning-500))] border border-amber-400/30"
                         }`}
                       >
                         {item.status === "completed" ? (
@@ -339,18 +339,18 @@ export default function LookInsideAlphaClone() {
                         )}
                       </span>
                       <div>
-                        <p className="type-card-description font-bold text-white group-hover:text-emerald-200">
+                        <p className="type-card-description font-bold text-white group-hover:text-[var(--success-text,var(--success-500))]">
                           {item.title}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 type-ui font-bold text-emerald-300">
+                      <span className="rounded-full border border-emerald-400/20 bg-[var(--success-500)]/10 px-2 py-0.5 type-ui font-bold text-[var(--success-text,var(--success-500))]">
                         {item.tag}
                       </span>
                       <ChevronDown
-                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+                        className={`h-4 w-4 text-[var(--ws-text-muted)] transition-transform duration-200 ${
                           isExpanded ? "rotate-180 text-emerald-400" : ""
                         }`}
                       />
@@ -358,7 +358,7 @@ export default function LookInsideAlphaClone() {
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-white/[.06] bg-slate-900/40 p-3.5 type-caption leading-5 text-slate-300">
+                    <div className="border-t border-white/[.06] bg-[var(--ws-panel)]/40 p-3.5 type-caption leading-5 text-[var(--ws-text-secondary)]">
                       <p>{item.detail}</p>
                       <div className="mt-2 flex items-center gap-2 type-ui font-bold text-emerald-400">
                         <ShieldCheck className="h-3 w-3" />

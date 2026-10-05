@@ -56,7 +56,7 @@ const SalesForecastTab = () => {
     if (loading) {
         return (
             <div className="ac-scroll-full ac-enterprise-module min-h-0 flex items-center justify-center py-12">
-                <div className="text-center text-slate-400">Loading forecast data...</div>
+                <div className="text-center text-[var(--ws-text-muted)]">Loading forecast data...</div>
             </div>
         );
     }
@@ -77,7 +77,7 @@ const SalesForecastTab = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-white">Sales Forecast & Pipeline</h2>
-                    <p className="text-slate-400 type-card-description sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
+                    <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-1">Projected revenue and deal flow analysis.</p>
                 </div>
             </div>
 

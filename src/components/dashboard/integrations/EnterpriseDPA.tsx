@@ -33,17 +33,17 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden max-w-2xl mx-auto shadow-2xl">
-      <div className="p-6 border-b border-slate-800 bg-gradient-to-r from-indigo-500/10 to-teal-500/10">
+    <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl overflow-hidden max-w-2xl mx-auto shadow-2xl">
+      <div className="p-6 border-b border-[var(--ws-border)] bg-gradient-to-r from-indigo-500/10 to-teal-500/10">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-6 h-6 text-teal-400" />
           <h2 className="text-xl font-bold text-white">Enterprise Data Processing Agreement</h2>
         </div>
-        <p className="text-slate-400 type-card-description">Required for all Enterprise-tier AI integrations.</p>
+        <p className="text-[var(--ws-text-muted)] type-card-description">Required for all Enterprise-tier AI integrations.</p>
       </div>
 
       <div className="p-6">
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 h-64 overflow-y-auto mb-6 text-slate-300 type-caption leading-relaxed space-y-4 custom-scrollbar">
+        <div className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl p-4 h-64 overflow-y-auto mb-6 text-[var(--ws-text-secondary)] type-caption leading-relaxed space-y-4 custom-scrollbar">
           <h3 className="text-white font-bold type-ui underline">1. Subject Matter and Duration</h3>
           <p>
             This Data Processing Agreement ("DPA") applies to the processing of personal data by AlphaClone (the "Processor") on behalf of the customer (the "Controller") in connection with the Model Context Protocol (MCP) and external AI Agent integrations.
@@ -71,7 +71,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
         </div>
 
         <div className="space-y-4">
-          <p className="text-slate-400 type-caption leading-relaxed">
+          <p className="text-[var(--ws-text-muted)] type-caption leading-relaxed">
             By clicking &ldquo;Accept &amp; Activate Integration&rdquo;, you represent that you have the authority to bind the organization and agree to the terms of the Enterprise Data Processing Agreement (DPA v1.0).
           </p>
 
@@ -82,7 +82,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
                 !isAccepting
                   ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-900/20'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] cursor-not-allowed'
               }`}
             >
               {isAccepting ? (
@@ -98,9 +98,9 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-slate-950/50 border-t border-slate-800 flex items-center gap-2">
+      <div className="px-6 py-4 bg-[var(--ws-canvas)]/50 border-t border-[var(--ws-border)] flex items-center gap-2">
         <AlertCircle className="w-4 h-4 text-amber-400" />
-        <p className="type-caption text-slate-500 uppercase tracking-widest font-semibold">
+        <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-semibold">
           Acceptance will be cryptographically logged for compliance.
         </p>
       </div>

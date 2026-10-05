@@ -32,17 +32,17 @@ export default function PublicReceiptPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-400">Loading receipt…</p>
+      <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
+        <p className="text-[var(--ws-text-muted)]">Loading receipt…</p>
       </div>
     );
   }
 
   if (error || !receipt) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center p-6">
         <Card className="p-8 text-center max-w-md">
-          <p className="text-slate-300">{error || 'Receipt not found'}</p>
+          <p className="text-[var(--ws-text-secondary)]">{error || 'Receipt not found'}</p>
         </Card>
       </div>
     );
@@ -64,21 +64,21 @@ export default function PublicReceiptPage() {
           </div>
           <div className="p-6 space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 type-ui">Receipt</span>
-              <span className="font-mono type-ui text-slate-300">#{receiptNumber}</span>
+              <span className="text-[var(--ws-text-muted)] type-ui">Receipt</span>
+              <span className="font-mono type-ui text-[var(--ws-text-secondary)]">#{receiptNumber}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 type-ui">From</span>
+              <span className="text-[var(--ws-text-muted)] type-ui">From</span>
               <span className="text-white font-medium">{clientName}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 type-ui">Date</span>
+              <span className="text-[var(--ws-text-muted)] type-ui">Date</span>
               <span className="text-white">
                 {paidAt ? new Date(String(paidAt)).toLocaleDateString() : '—'}
               </span>
             </div>
             <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-              <span className="text-slate-400">Amount paid</span>
+              <span className="text-[var(--ws-text-muted)]">Amount paid</span>
               <span className="text-3xl font-bold text-teal-400">${amount.toFixed(2)}</span>
             </div>
             <Button className="w-full mt-4 flex items-center justify-center gap-2">
@@ -87,7 +87,7 @@ export default function PublicReceiptPage() {
             </Button>
           </div>
         </Card>
-        <p className="text-center text-slate-500 type-card-description mt-6 flex items-center justify-center gap-1">
+        <p className="text-center text-[var(--ws-text-muted)] type-card-description mt-6 flex items-center justify-center gap-1">
           <Receipt className="w-3 h-3" aria-hidden="true" />
           Secure receipt from {branding.name}
         </p>

@@ -100,12 +100,12 @@ export async function POST(req: NextRequest) {
           to: profile.email,
           subject: title,
           html: `
-            <div style="font-family: sans-serif; padding: 20px; color: #333;">
-              <h2 style="color: #0d9488;">${title}</h2>
+            <div style="font-family: sans-serif; padding: 20px; color: var(--text-primary);">
+              <h2 style="color: var(--brand-blue-600);">${title}</h2>
               ${message ? `<p>${message}</p>` : ''}
-              ${link ? `<a href="${baseUrl}${link}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Open AlphaClone</a>` : ''}
-              <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
-              <small style="color:#666;">Platform announcement from your AlphaClone workspace.</small>
+              ${link ? `<a href="${baseUrl}${link}" style="display:inline-block;padding:10px 20px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:6px;">Open AlphaClone</a>` : ''}
+              <hr style="border:none;border-top:1px solid var(--surface-secondary);margin:20px 0;" />
+              <small style="color:var(--text-muted);">Platform announcement from your AlphaClone workspace.</small>
             </div>
           `,
           isPlatformNotification: true,

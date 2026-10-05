@@ -39,7 +39,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center p-8 text-slate-500">
+            <div className="flex items-center justify-center p-8 text-[var(--ws-text-muted)]">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
                 <span>Loading templates...</span>
             </div>
@@ -58,7 +58,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                     onClick={() => onSelect(null)}
                     className={`p-3 rounded-lg border text-left transition-all ${!selectedTemplateId
                             ? 'bg-teal-500/10 border-teal-500 text-white'
-                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                            : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-500'
                         }`}
                 >
                     <div className="font-medium type-ui">Blank Project</div>
@@ -71,7 +71,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                         onClick={() => onSelect(template.id)}
                         className={`p-3 rounded-lg border text-left transition-all ${selectedTemplateId === template.id
                                 ? 'bg-teal-500/10 border-teal-500 text-white'
-                                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                                : 'bg-[var(--ws-panel)] border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-500'
                             }`}
                     >
                         <div className="font-medium type-ui">{template.name}</div>
@@ -81,9 +81,9 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
             </div>
 
             {selectedTemplateId && (
-                <div className="bg-slate-950/50 rounded-lg p-4 border border-slate-800 animate-fade-in">
+                <div className="bg-[var(--ws-canvas)]/50 rounded-lg p-4 border border-[var(--ws-border)] animate-fade-in">
                     <div className="flex items-center justify-between mb-3">
-                        <span className="type-caption font-medium text-slate-500">Template Phases</span>
+                        <span className="type-caption font-medium text-[var(--ws-text-muted)]">Template Phases</span>
                         {isLoadingPhases && <Loader2 className="w-3 h-3 animate-spin" />}
                     </div>
 
@@ -98,7 +98,7 @@ export default function TemplateSelector({ onSelect, selectedTemplateId }: Templ
                                     </div>
                                     <div>
                                         <div className="type-caption text-white font-medium">{phase.name}</div>
-                                        {phase.description && <div className="type-caption text-slate-500">{phase.description}</div>}
+                                        {phase.description && <div className="type-caption text-[var(--ws-text-muted)]">{phase.description}</div>}
                                     </div>
                                 </div>
                             ))}

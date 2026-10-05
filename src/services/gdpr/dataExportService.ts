@@ -165,14 +165,14 @@ export const dataExportService = {
     <title>Personal Data Export - AlphaClone</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
-        h1 { color: #1e40af; }
-        h2 { color: #3b82f6; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-top: 30px; }
+        h1 { color: var(--info-700); }
+        h2 { color: var(--info-500); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-top: 30px; }
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #f3f4f6; font-weight: 600; }
         .section { margin-bottom: 40px; }
-        .meta { color: #666; font-size: 14px; }
-        .count { color: #10b981; font-weight: bold; }
+        .meta { color: var(--text-muted); font-size: 14px; }
+        .count { color: var(--success-500); font-weight: bold; }
     </style>
 </head>
 <body>

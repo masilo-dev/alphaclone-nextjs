@@ -21,25 +21,25 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose, userName }
                         The platform for execution
                     </p>
                     <h3 className="text-xl font-bold text-white mb-2">Your workspace is ready</h3>
-                    <p className="text-slate-400 type-card-description max-w-md mx-auto">
+                    <p className="text-[var(--ws-text-muted)] type-card-description max-w-md mx-auto">
                         Welcome, <span className="text-teal-400 font-medium">{userName}</span>.
                         Run clients, projects, billing, and operations from one secure command center.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-left bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                <div className="grid grid-cols-2 gap-4 text-left bg-[var(--ws-panel)]/50 p-4 rounded-xl border border-[var(--ws-border)]">
                     <div className="flex items-start gap-3">
                         <Lock className="w-5 h-5 text-blue-400 mt-0.5" />
                         <div>
                             <p className="text-white font-bold type-card-description">E2E Encrypted</p>
-                            <p className="type-card-description text-slate-500">All data transfers are secured</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">All data transfers are secured</p>
                         </div>
                     </div>
                     <div className="flex items-start gap-3">
                         <Activity className="w-5 h-5 text-green-400 mt-0.5" />
                         <div>
                             <p className="text-white font-bold type-card-description">System Healthy</p>
-                            <p className="type-card-description text-slate-500">Optimal performance active</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">Optimal performance active</p>
                         </div>
                     </div>
                 </div>

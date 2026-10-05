@@ -150,18 +150,18 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
             isOpen={true}
             onClose={handleExploreWorkspace}
             title=""
-            className="max-w-4xl overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40"
+            className="max-w-4xl overflow-hidden rounded-3xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl shadow-black/40"
         >
             <div className="relative p-5 sm:p-9">
                 <div className="mb-8 space-y-3 text-center">
-                    <div className="mx-auto inline-flex items-center justify-center rounded-2xl bg-[var(--brand-blue-500,#356AF4)]/15 p-3 text-[var(--brand-blue-400,#91B5FF)]">
+                    <div className="mx-auto inline-flex items-center justify-center rounded-2xl bg-[var(--brand-blue-500,var(--brand-blue-500))]/15 p-3 text-[var(--brand-blue-400,var(--brand-blue-300))]">
                         <Sparkles className="w-5 h-5" aria-hidden="true" />
                     </div>
-                    <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,#91B5FF)]">Account created · Choose your first direction</p>
+                    <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,var(--brand-blue-300))]">Account created · Choose your first direction</p>
                     <h2 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
                         What do you want AlphaClone to do for your business?
                     </h2>
-                    <p className="text-slate-400 type-card-description sm:text-base max-w-2xl mx-auto">
+                    <p className="text-[var(--ws-text-muted)] type-card-description sm:text-base max-w-2xl mx-auto">
                         Start with one useful outcome. You can use every tool in your workspace whenever you need it.
                     </p>
                 </div>
@@ -184,19 +184,19 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                 disabled={isSaving}
                                 aria-describedby={`${goal.id}-next-step`}
                                 onClick={() => handleGoalSelect(goal)}
-                                className={`group flex min-h-[142px] items-start gap-3 rounded-2xl border bg-slate-950/40 p-4 text-left transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] disabled:cursor-wait disabled:opacity-70 ${
+                                className={`group flex min-h-[142px] items-start gap-3 rounded-2xl border bg-[var(--ws-canvas)]/40 p-4 text-left transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,var(--brand-blue-300))] disabled:cursor-wait disabled:opacity-70 ${
                                     isSelected
-                                        ? 'border-[var(--brand-blue-500,#356AF4)] bg-[var(--brand-blue-500,#356AF4)]/10'
-                                        : 'border-slate-800 hover:border-[var(--brand-blue-500,#356AF4)]/60 hover:bg-slate-800/70'
+                                        ? 'border-[var(--brand-blue-500,var(--brand-blue-500))] bg-[var(--brand-blue-500,var(--brand-blue-500))]/10'
+                                        : 'border-[var(--ws-border)] hover:border-[var(--brand-blue-500,var(--brand-blue-500))]/60 hover:bg-[var(--ws-surface-secondary)]/70'
                                 }`}
                             >
-                                <span className="flex-shrink-0 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[var(--brand-blue-400,#91B5FF)] group-hover:text-white transition-colors">
+                                <span className="flex-shrink-0 p-2.5 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] text-[var(--brand-blue-400,var(--brand-blue-300))] group-hover:text-white transition-colors">
                                     <Icon className="w-5 h-5" aria-hidden="true" />
                                 </span>
                                 <span className="min-w-0 space-y-1">
                                     <span className="block text-base font-semibold text-white">{goal.title}</span>
-                                    <span className="block text-slate-400 type-ui leading-relaxed">{goal.description}</span>
-                                    <span id={`${goal.id}-next-step`} className="block pt-1 type-caption font-medium text-[var(--brand-blue-400,#91B5FF)]">
+                                    <span className="block text-[var(--ws-text-muted)] type-ui leading-relaxed">{goal.description}</span>
+                                    <span id={`${goal.id}-next-step`} className="block pt-1 type-caption font-medium text-[var(--brand-blue-400,var(--brand-blue-300))]">
                                         Next: {goal.nextStep}
                                     </span>
                                 </span>
@@ -206,18 +206,18 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                 </div>
 
                 {!showAllGoals && (
-                    <button type="button" onClick={() => setShowAllGoals(true)} className="mt-3 min-h-11 rounded-lg px-3 type-ui font-semibold text-[var(--brand-blue-400,#91B5FF)] hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-blue-400,#91B5FF)]">
+                    <button type="button" onClick={() => setShowAllGoals(true)} className="mt-3 min-h-11 rounded-lg px-3 type-ui font-semibold text-[var(--brand-blue-400,var(--brand-blue-300))] hover:bg-[var(--ws-surface-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-blue-400,var(--brand-blue-300))]">
                         See all seven starting points
                     </button>
                 )}
 
-                <div className="mt-7 flex flex-col gap-3 border-t border-slate-800/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="type-card-description text-slate-500">You can change direction later. Your existing workspace and permissions stay the same.</p>
+                <div className="mt-7 flex flex-col gap-3 border-t border-[var(--ws-border)]/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="type-card-description text-[var(--ws-text-muted)]">You can change direction later. Your existing workspace and permissions stay the same.</p>
                     <button
                         type="button"
                         disabled={isSaving}
                         onClick={handleExploreWorkspace}
-                        className="shrink-0 type-ui font-medium text-slate-300 hover:text-white underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] rounded disabled:opacity-50"
+                        className="shrink-0 type-ui font-medium text-[var(--ws-text-secondary)] hover:text-white underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,var(--brand-blue-300))] rounded disabled:opacity-50"
                     >
                         Explore the full workspace instead
                     </button>

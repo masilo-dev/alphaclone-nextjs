@@ -49,7 +49,7 @@ export default function LeadFinderSmartBar({ onProfileLoaded, onSmartSearch, sea
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 type-ui text-slate-500 flex items-center gap-2">
+      <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-4 py-3 type-ui text-[var(--ws-text-muted)] flex items-center gap-2">
         <Loader2 className="w-4 h-4 animate-spin" />
         Loading your prospecting profile…
       </div>
@@ -67,12 +67,12 @@ export default function LeadFinderSmartBar({ onProfileLoaded, onSmartSearch, sea
           <Brain className="w-4 h-4 text-teal-400" />
         </div>
         <div className="min-w-0">
-          <p className="type-card-description text-slate-200 font-medium">Smart prospecting</p>
-          <p className="type-card-description text-slate-400 mt-0.5 line-clamp-2">
+          <p className="type-card-description text-[var(--ws-text-secondary)] font-medium">Smart prospecting</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 line-clamp-2">
             {profile.learnedMessage.replace(/\*\*/g, '')}
           </p>
           {profile.totalSearches > 0 && (
-            <p className="type-card-description text-slate-500 mt-1 flex items-center gap-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-1 flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               {profile.totalSearches} searches · {profile.totalLeadsFound} leads found
             </p>

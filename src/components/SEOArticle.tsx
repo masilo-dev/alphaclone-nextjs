@@ -51,7 +51,7 @@ const SEOArticle: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="text-teal-400 text-xl">Loading...</div>
             </div>
         );
@@ -59,10 +59,10 @@ const SEOArticle: React.FC = () => {
 
     if (!article) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center">
                 <div className="text-center">
                     <h1 className="text-4xl font-bold text-white mb-4">Article Not Found</h1>
-                    <a href="/" className="text-teal-400 hover:text-teal-300">
+                    <a href="/" className="text-teal-400 hover:text-[var(--brand-blue-300)]">
                         Return to Home
                     </a>
                 </div>
@@ -100,12 +100,12 @@ const SEOArticle: React.FC = () => {
             </Helmet>
 
             {/* Article Content */}
-            <div className="min-h-screen bg-slate-950 py-20 px-4">
+            <div className="min-h-screen bg-[var(--ws-canvas)] py-20 px-4">
                 <article className="max-w-4xl mx-auto">
                     {/* Back Button */}
                     <a
                         href="/"
-                        className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 mb-8 transition-colors"
+                        className="inline-flex items-center gap-2 text-teal-400 hover:text-[var(--brand-blue-300)] mb-8 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Home
@@ -124,7 +124,7 @@ const SEOArticle: React.FC = () => {
                         </h1>
 
                         {/* Meta Info */}
-                        <div className="flex flex-wrap gap-6 text-slate-400 type-ui">
+                        <div className="flex flex-wrap gap-6 text-[var(--ws-text-muted)] type-ui">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-4 h-4" />
                                 {new Date(article.published_at).toLocaleDateString('en-US', {
@@ -147,7 +147,7 @@ const SEOArticle: React.FC = () => {
                             {article.tags.map(tag => (
                                 <span
                                     key={tag}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-slate-800 text-slate-300 type-caption rounded-full"
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] type-caption rounded-full"
                                 >
                                     <Tag className="w-3 h-3" />
                                     {tag}
@@ -162,14 +162,14 @@ const SEOArticle: React.FC = () => {
               prose-headings:text-white prose-headings:font-bold
               prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6
               prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
-              prose-p:text-slate-300 prose-p:leading-relaxed prose-p:mb-6
-              prose-a:text-teal-400 prose-a:no-underline hover:prose-a:text-teal-300
+              prose-p:text-[var(--ws-text-secondary)] prose-p:leading-relaxed prose-p:mb-6
+              prose-a:text-teal-400 prose-a:no-underline hover:prose-a:text-[var(--brand-blue-300)]
               prose-strong:text-white prose-strong:font-semibold
-              prose-ul:text-slate-300 prose-ul:my-6
-              prose-ol:text-slate-300 prose-ol:my-6
+              prose-ul:text-[var(--ws-text-secondary)] prose-ul:my-6
+              prose-ol:text-[var(--ws-text-secondary)] prose-ol:my-6
               prose-li:my-2
-              prose-code:text-teal-400 prose-code:bg-slate-800 prose-code:px-2 prose-code:py-1 prose-code:rounded
-              prose-pre:bg-slate-800 prose-pre:border prose-pre:border-slate-700
+              prose-code:text-teal-400 prose-code:bg-[var(--ws-surface-secondary)] prose-code:px-2 prose-code:py-1 prose-code:rounded
+              prose-pre:bg-[var(--ws-surface-secondary)] prose-pre:border prose-pre:border-[var(--ws-border)]
               prose-blockquote:border-l-4 prose-blockquote:border-teal-500 prose-blockquote:pl-6 prose-blockquote:italic"
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content.replace(/\n/g, '<br />')) }}
                     />
@@ -179,7 +179,7 @@ const SEOArticle: React.FC = () => {
                         <h3 className="text-2xl font-bold text-white mb-4">
                             Ready to Get Started?
                         </h3>
-                        <p className="text-slate-300 mb-6">
+                        <p className="text-[var(--ws-text-secondary)] mb-6">
                             Contact AlphaClone Systems today for a free consultation. Let's discuss how we can help transform your business.
                         </p>
                         <a

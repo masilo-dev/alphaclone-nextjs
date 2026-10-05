@@ -77,15 +77,15 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
             {/* Trigger Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white hover:bg-[var(--ws-surface-tertiary)] transition-colors"
             >
                 <div className="flex items-center gap-2">
-                    <UserPlus className="w-4 h-4 text-slate-400" />
+                    <UserPlus className="w-4 h-4 text-[var(--ws-text-muted)]" />
                     <span className="type-ui">
                         {selectedLead ? selectedLead.businessName : placeholder}
                     </span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-[var(--ws-text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown */}
@@ -98,17 +98,17 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                     />
 
                     {/* Dropdown Content */}
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-20 max-h-96 overflow-hidden flex flex-col">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg shadow-2xl z-20 max-h-96 overflow-hidden flex flex-col">
                         {/* Search */}
-                        <div className="p-3 border-b border-slate-800">
+                        <div className="p-3 border-b border-[var(--ws-border)]">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                                 <input
                                     type="text"
                                     placeholder="Search leads..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
+                                    className="w-full pl-10 pr-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
                                     autoFocus
                                 />
                             </div>
@@ -117,12 +117,12 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                         {/* Leads List */}
                         <div className="overflow-y-auto flex-1">
                             {loading ? (
-                                <div className="p-4 text-center text-slate-400 type-ui">
+                                <div className="p-4 text-center text-[var(--ws-text-muted)] type-ui">
                                     Loading leads...
                                 </div>
                             ) : filteredLeads.length === 0 ? (
                                 <div className="p-4 text-center">
-                                    <p className="text-slate-400 type-card-description mb-2">No leads match this search. Clear the search or add a new lead.</p>
+                                    <p className="text-[var(--ws-text-muted)] type-card-description mb-2">No leads match this search. Clear the search or add a new lead.</p>
                                     <a
                                         href="/dashboard/sales-agent"
                                         className="text-teal-400 type-caption hover:underline flex items-center justify-center gap-1"
@@ -136,25 +136,25 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                                     <button
                                         key={lead.id}
                                         onClick={() => handleSelect(lead)}
-                                        className="w-full px-4 py-3 hover:bg-slate-800 transition-colors text-left border-b border-slate-800 last:border-0"
+                                        className="w-full px-4 py-3 hover:bg-[var(--ws-surface-secondary)] transition-colors text-left border-b border-[var(--ws-border)] last:border-0"
                                     >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-white font-medium type-ui truncate">
                                                     {lead.businessName}
                                                 </h4>
-                                                <p className="text-slate-400 type-card-description truncate">
+                                                <p className="text-[var(--ws-text-muted)] type-card-description truncate">
                                                     {lead.email || lead.phone || 'No contact info'}
                                                 </p>
                                             </div>
                                             {lead.industry && (
-                                                <span className="ml-2 px-2 py-1 bg-slate-800 text-slate-400 type-caption rounded-full whitespace-nowrap">
+                                                <span className="ml-2 px-2 py-1 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] type-caption rounded-full whitespace-nowrap">
                                                     {lead.industry}
                                                 </span>
                                             )}
                                         </div>
                                         {lead.location && (
-                                            <p className="text-slate-500 type-card-description mt-1">
+                                            <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
                                                 {lead.location}
                                             </p>
                                         )}
@@ -164,8 +164,8 @@ const LeadSelector: React.FC<LeadSelectorProps> = ({
                         </div>
 
                         {/* Footer */}
-                        <div className="p-3 border-t border-slate-800 bg-slate-950">
-                            <p className="text-slate-500 type-card-description text-center">
+                        <div className="p-3 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]">
+                            <p className="text-[var(--ws-text-muted)] type-card-description text-center">
                                 {filteredLeads.length} lead{filteredLeads.length !== 1 ? 's' : ''} available
                             </p>
                         </div>

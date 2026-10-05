@@ -60,15 +60,15 @@ function IntegrationCard({
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:border-slate-600 transition-all flex flex-col"
+      className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-5 hover:border-slate-600 transition-all flex flex-col"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center border ${
-            isConnected ? 'bg-teal-500/20 border-teal-500/30' : 'bg-slate-700 border-slate-600'
+            isConnected ? 'bg-teal-500/20 border-teal-500/30' : 'bg-[var(--ws-surface-tertiary)] border-slate-600'
           }`}>
-            <Globe className={`w-5 h-5 ${isConnected ? 'text-teal-400' : 'text-slate-400'}`} />
+            <Globe className={`w-5 h-5 ${isConnected ? 'text-teal-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -84,7 +84,7 @@ function IntegrationCard({
                 </span>
               )}
             </div>
-            <p className="type-card-description text-slate-400 mt-0.5">{integration.description}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{integration.description}</p>
           </div>
         </div>
         <StatusBadge status={integration.status} />
@@ -93,18 +93,18 @@ function IntegrationCard({
       {/* Features */}
       <div className="space-y-1.5 mb-4 flex-1">
         {integration.features.slice(0, 3).map((f, i) => (
-          <div key={i} className="flex items-center gap-2 type-caption text-slate-400">
+          <div key={i} className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
             <CheckCircle className="w-3 h-3 text-teal-400 flex-shrink-0" />
             <span>{f}</span>
           </div>
         ))}
         {integration.features.length > 3 && (
-          <p className="type-card-description text-slate-500 pl-5">+{integration.features.length - 3} more</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] pl-5">+{integration.features.length - 3} more</p>
         )}
       </div>
 
       {/* Action */}
-      <div className="pt-3 border-t border-slate-700/60 flex items-center gap-2">
+      <div className="pt-3 border-t border-[var(--ws-border)]/60 flex items-center gap-2">
         {isConnected ? (
           <>
             <Button size="sm" variant="secondary" className="flex-1 type-caption" onClick={() => onDisconnect(integration.id)} disabled={isBusy}>
@@ -178,7 +178,7 @@ export function IntegrationMarketplaceDashboard() {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-xl font-bold text-white">Integration Marketplace</h2>
-          <p className="text-slate-400 type-card-description mt-1">
+          <p className="text-[var(--ws-text-muted)] type-card-description mt-1">
             Connect your tools to streamline your workflow.
             {connectedCount > 0 && (
               <span className="ml-2 px-2 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 type-caption font-semibold">
@@ -192,16 +192,16 @@ export function IntegrationMarketplaceDashboard() {
       {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
           <input
             type="text"
             placeholder="Search integrations…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-ui placeholder-slate-500 focus:outline-none focus:border-teal-500"
           />
         </div>
-        <label className="flex items-center gap-2 type-label text-slate-300 self-center cursor-pointer select-none">
+        <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)] self-center cursor-pointer select-none">
           <input
             type="checkbox"
             checked={showConnectedOnly}
@@ -222,7 +222,7 @@ export function IntegrationMarketplaceDashboard() {
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-medium transition-all ${
-                active ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                active ? 'bg-teal-600 text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
               }`}
             >
               <Icon className={`w-3.5 h-3.5 ${active ? 'text-white' : cat.color}`} />
@@ -249,7 +249,7 @@ export function IntegrationMarketplaceDashboard() {
       {filtered.length === 0 && (
         <div className="text-center py-14">
           <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400 type-card-description">No integrations match your filters.</p>
+          <p className="text-[var(--ws-text-muted)] type-card-description">No integrations match your filters.</p>
           <button
             onClick={() => { setSearchQuery(''); setSelectedCategory('all'); setShowConnectedOnly(false); }}
             className="mt-3 text-teal-400 type-caption underline"

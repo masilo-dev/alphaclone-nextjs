@@ -179,7 +179,7 @@ export default function GmailIntegration() {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
-                <p className="type-card-description text-slate-400">Verifying Gmail connection...</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Verifying Gmail connection...</p>
             </div>
         );
     }
@@ -196,7 +196,7 @@ export default function GmailIntegration() {
                         <Mail className="w-6 h-6 text-teal-400" />
                     </div>
                     <div>
-                        <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
+                        <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Gmail Integration</h2>
                             {status === 'connected' && (
@@ -206,7 +206,7 @@ export default function GmailIntegration() {
                                 </span>
                             )}
                         </div>
-                        <p className="type-card-description text-slate-400">Connect via SMTP/IMAP using a Google App Password.</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Connect via SMTP/IMAP using a Google App Password.</p>
                     </div>
                 </div>
                 {status === 'connected' && (
@@ -214,7 +214,7 @@ export default function GmailIntegration() {
                         variant="outline"
                         onClick={handleDisconnect}
                         disabled={isDisconnecting}
-                        className="border-slate-700 text-rose-300 hover:bg-rose-500/10"
+                        className="border-[var(--ws-border)] text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10"
                     >
                         <Unplug className="w-4 h-4 mr-2" />
                         Disconnect
@@ -243,36 +243,36 @@ export default function GmailIntegration() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Gmail Address</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Gmail Address</label>
                         <input
                             type="email"
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="your-email@gmail.com"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Google App Password</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Google App Password</label>
                         <div className="relative">
                             <input
                                 type="password"
                                 value={config.appPassword}
                                 onChange={(e) => setConfig({ ...config, appPassword: e.target.value })}
                                 placeholder="xxxx xxxx xxxx xxxx"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 pl-10 type-ui text-white outline-none focus:border-teal-500/40"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="type-caption font-black text-slate-500 uppercase tracking-widest">Sender Display Name</label>
+                        <label className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Sender Display Name</label>
                         <input
                             type="text"
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Name or Company"
-                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
+                            className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
                         />
                     </div>
                 </div>
@@ -286,7 +286,7 @@ export default function GmailIntegration() {
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Integration' : 'Connect Gmail'}
                     </Button>
-                    <p className="type-card-description text-slate-500 flex items-center gap-1">
+                    <p className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1">
                         <Lock className="w-3 h-3" />
                         Credentials are encrypted and stored locally per tenant.
                     </p>
@@ -294,20 +294,20 @@ export default function GmailIntegration() {
 
                 {status === 'connected' && (
                     <div className="pt-2 border-t border-white/5">
-                        <p className="type-caption font-black text-slate-500 uppercase tracking-widest mb-2">Test Connectivity</p>
+                        <p className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest mb-2">Test Connectivity</p>
                         <div className="flex flex-col md:flex-row gap-3">
                             <input
                                 type="email"
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-3 type-ui text-white outline-none focus:border-teal-500/40"
                             />
                             <Button
                                 type="button"
                                 onClick={handleSendTest}
                                 disabled={isTesting}
-                                className="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6"
+                                className="bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white font-bold px-6"
                             >
                                 {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
                                 Send Test

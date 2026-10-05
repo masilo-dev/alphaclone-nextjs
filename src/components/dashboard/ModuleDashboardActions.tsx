@@ -79,7 +79,7 @@ export function ModuleDashboardActions({
               <ol className="space-y-2 mt-3">
                 {playbook.map((step, index) => (
                   <li key={step} className="flex gap-3 type-ui text-[var(--ws-text-secondary)] leading-relaxed">
-                    <span className="shrink-0 w-5 h-5 rounded type-ui font-bold flex items-center justify-center bg-[var(--ws-active)] text-teal-300">
+                    <span className="shrink-0 w-5 h-5 rounded type-ui font-bold flex items-center justify-center bg-[var(--ws-active)] text-[var(--brand-blue-300)]">
                       {index + 1}
                     </span>
                     <span className="pt-0.5">{t(step)}</span>
@@ -98,10 +98,10 @@ export function ModuleDashboardActions({
                 >
                   <div className="flex items-center gap-2.5">
                     <action.icon className="w-4 h-4 text-teal-400 shrink-0" />
-                    <span className="type-ui font-semibold text-white group-hover:text-teal-300 truncate">
+                    <span className="type-ui font-semibold text-white group-hover:text-[var(--brand-blue-300)] truncate">
                       {t(action.label)}
                     </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500 ml-auto shrink-0" />
+                    <ChevronRight className="w-3.5 h-3.5 text-[var(--ws-text-muted)] ml-auto shrink-0" />
                   </div>
                 </button>
               ))}

@@ -152,7 +152,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
             case 'invoice':
                 return 'text-green-400';
             default:
-                return 'text-slate-400';
+                return 'text-[var(--ws-text-muted)]';
         }
     };
 
@@ -161,11 +161,11 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
             {/* Search Button */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] rounded-lg hover:bg-[var(--ws-surface-tertiary)] transition-colors"
             >
                 <Search className="w-4 h-4" />
                 <span className="type-ui">Search...</span>
-                <kbd className="hidden sm:inline-block px-2 py-0.5 type-caption bg-slate-900 border border-slate-700 rounded">
+                <kbd className="hidden sm:inline-block px-2 py-0.5 type-caption bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded">
                     ⌘K
                 </kbd>
             </button>
@@ -178,10 +178,10 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                         onClick={() => setIsOpen(false)}
                     />
                     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
-                        <div className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+                        <div className="w-full max-w-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl shadow-2xl overflow-hidden">
                             {/* Search Input */}
-                            <div className="flex items-center gap-3 p-4 border-b border-slate-800">
-                                <Search className="w-5 h-5 text-slate-400" />
+                            <div className="flex items-center gap-3 p-4 border-b border-[var(--ws-border)]">
+                                <Search className="w-5 h-5 text-[var(--ws-text-muted)]" />
                                 <input
                                     ref={inputRef}
                                     type="text"
@@ -195,7 +195,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                 {query && (
                                     <button
                                         onClick={() => setQuery('')}
-                                        className="text-slate-400 hover:text-white transition-colors"
+                                        className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                                     >
                                         <X className="w-5 h-5" />
                                     </button>
@@ -203,7 +203,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                             </div>
 
                             {/* Type Filters */}
-                            <div className="flex gap-2 p-3 border-b border-slate-800">
+                            <div className="flex gap-2 p-3 border-b border-[var(--ws-border)]">
                                 {(['all', 'project', 'message', 'invoice'] as SearchFilter[]).map(filter => (
                                     <button
                                         key={filter}
@@ -211,7 +211,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                         className={`px-3 py-1.5 rounded-lg type-caption font-medium capitalize transition-all ${
                                             typeFilter === filter
                                                 ? 'bg-blue-600 text-white'
-                                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                                : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
                                         }`}
                                     >
                                         {filter}
@@ -222,13 +222,13 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                             {/* Results */}
                             <div className="max-h-96 overflow-y-auto">
                                 {results.length === 0 && query && (
-                                    <div className="p-8 text-center text-slate-400">
+                                    <div className="p-8 text-center text-[var(--ws-text-muted)]">
                                         <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
                                         <p>No results found</p>
                                     </div>
                                 )}
                                 {results.length === 0 && !query && (
-                                    <div className="p-8 text-center text-slate-400">
+                                    <div className="p-8 text-center text-[var(--ws-text-muted)]">
                                         <p className="type-card-description">Start typing to search...</p>
                                         <div className="mt-4 type-caption space-y-1">
                                             <p>• Search projects by name or description</p>
@@ -242,11 +242,11 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                         key={result.id}
                                         onClick={() => handleSelect(result)}
                                         className={`w-full flex items-start gap-3 p-4 text-left transition-colors ${index === selectedIndex
-                                            ? 'bg-slate-800'
-                                            : 'hover:bg-slate-800/50'
+                                            ? 'bg-[var(--ws-surface-secondary)]'
+                                            : 'hover:bg-[var(--ws-surface-secondary)]/50'
                                             }`}
                                     >
-                                        <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>
+                                        <div className={`w-8 h-8 rounded-lg bg-[var(--ws-surface-secondary)] flex items-center justify-center flex-shrink-0 ${getColor(result.type)}`}>
                                             {getIcon(result.type)}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -254,12 +254,12 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                                                 {result.title}
                                             </p>
                                             {result.subtitle && (
-                                                <p className="text-slate-400 type-card-description mt-1 truncate">
+                                                <p className="text-[var(--ws-text-muted)] type-card-description mt-1 truncate">
                                                     {result.subtitle}
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="type-caption text-slate-500 uppercase">
+                                        <span className="type-caption text-[var(--ws-text-muted)] uppercase">
                                             {result.type}
                                         </span>
                                     </button>
@@ -267,11 +267,11 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ projects, messages, invoice
                             </div>
 
                             {/* Footer */}
-                            <div className="p-3 border-t border-slate-800 flex items-center justify-between type-caption text-slate-400">
+                            <div className="p-3 border-t border-[var(--ws-border)] flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                                 <div className="flex gap-4">
-                                    <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">↑↓</kbd> Navigate</span>
-                                    <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">Enter</kbd> Select</span>
-                                    <span><kbd className="px-1.5 py-0.5 bg-slate-800 rounded">Esc</kbd> Close</span>
+                                    <span><kbd className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded">↑↓</kbd> Navigate</span>
+                                    <span><kbd className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded">Enter</kbd> Select</span>
+                                    <span><kbd className="px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] rounded">Esc</kbd> Close</span>
                                 </div>
                                 <span>{results.length} results</span>
                             </div>

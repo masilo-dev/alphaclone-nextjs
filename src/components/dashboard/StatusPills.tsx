@@ -19,7 +19,7 @@ export function StatusPills({
       <DashboardPanelHeader title={title} subtitle={subtitle} />
       <div className="flex flex-wrap gap-2 content-start">
         {items.length === 0 ? (
-          <span className="type-ui text-slate-500">No health data</span>
+          <span className="type-ui text-[var(--ws-text-muted)]">No health data</span>
         ) : (
           items.map((item) => (
             <span

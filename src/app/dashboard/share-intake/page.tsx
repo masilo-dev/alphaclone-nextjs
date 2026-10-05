@@ -22,7 +22,7 @@ function ShareIntakeContent() {
   if (loading) {
     return (
       <NativeScreen className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--ws-text-muted)]" />
       </NativeScreen>
     );
   }
@@ -43,11 +43,11 @@ function ShareIntakeContent() {
       <NativeScreenHeader title="Shared to AlphaClone" onBack={() => router.push('/dashboard')} />
       <div className="px-4 py-4 space-y-4">
         {shared.combined ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 type-ui text-slate-300 whitespace-pre-wrap break-words">
+          <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/60 p-4 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap break-words">
             {shared.combined}
           </div>
         ) : (
-          <p className="type-card-description text-slate-400">Nothing was shared. Try sharing a link or note from another app.</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">Nothing was shared. Try sharing a link or note from another app.</p>
         )}
       </div>
 
@@ -90,7 +90,7 @@ export default function ShareIntakePage() {
     <Suspense
       fallback={
         <NativeScreen className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-[var(--ws-text-muted)]" />
         </NativeScreen>
       }
     >

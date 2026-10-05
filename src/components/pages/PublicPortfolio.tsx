@@ -53,12 +53,12 @@ const PublicPortfolio: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 relative">
+        <div className="min-h-screen bg-[var(--ws-canvas)] relative">
             {/* Animated Background - matching landing page */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 bg-slate-950" />
+                <div className="absolute inset-0 bg-[var(--ws-canvas)]" />
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/8 blur-[80px] animate-blob" style={{ animationDuration: '20s' }} />
-                <div className="absolute top-[-5%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-teal-400/6 blur-[80px] animate-blob" style={{ animationDuration: '25s', animationDelay: '2s' }} />
+                <div className="absolute top-[-5%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-[var(--brand-blue-400)]/6 blur-[80px] animate-blob" style={{ animationDuration: '25s', animationDelay: '2s' }} />
                 <div className="absolute bottom-[-10%] left-[10%] w-[40vw] h-[40vw] rounded-full bg-teal-600/7 blur-[80px] animate-blob" style={{ animationDuration: '30s', animationDelay: '4s' }} />
             </div>
 
@@ -73,10 +73,10 @@ const PublicPortfolio: React.FC = () => {
                             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
                                 Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-teal-600">Portfolio</span>
                             </h1>
-                            <p className="text-xl md:text-2xl text-slate-300 mb-8 animate-fade-in">
+                            <p className="text-xl md:text-2xl text-[var(--ws-text-secondary)] mb-8 animate-fade-in">
                                 Showcasing excellence in web development, mobile apps, and AI solutions
                             </p>
-                            <div className="flex flex-wrap gap-4 justify-center text-slate-400 animate-fade-in">
+                            <div className="flex flex-wrap gap-4 justify-center text-[var(--ws-text-muted)] animate-fade-in">
                                 <div className="flex items-center gap-2">
                                     <Check className="w-5 h-5 text-teal-400" />
                                     <span>{projects.length}+ Projects Delivered</span>
@@ -95,18 +95,18 @@ const PublicPortfolio: React.FC = () => {
                 </div>
 
                 {/* Filter Section */}
-                <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-lg border-b border-slate-800">
+                <div className="sticky top-0 z-40 bg-[var(--ws-panel)]/95 backdrop-blur-lg border-b border-[var(--ws-border)]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                             {/* Search */}
                             <div className="relative w-full md:w-96">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--ws-text-muted)]" />
                                 <input
                                     type="text"
                                     placeholder="Search projects..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-colors"
+                                    className="w-full pl-10 pr-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 transition-colors"
                                 />
                             </div>
 
@@ -118,7 +118,7 @@ const PublicPortfolio: React.FC = () => {
                                         onClick={() => setFilter(cat.id as any)}
                                         className={`px-6 py-3 rounded-lg font-medium transition-all ${filter === cat.id
                                             ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/25'
-                                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                            : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] hover:text-white'
                                             }`}
                                     >
                                         {cat.label} <span className="opacity-60">({cat.count})</span>
@@ -134,13 +134,13 @@ const PublicPortfolio: React.FC = () => {
                     {isLoading ? (
                         <div className="text-center py-20">
                             <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                            <p className="text-slate-400">Loading portfolio...</p>
+                            <p className="text-[var(--ws-text-muted)]">Loading portfolio...</p>
                         </div>
                     ) : filteredProjects.length === 0 ? (
                         <div className="text-center py-20">
                             <Globe className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                             <h3 className="text-2xl font-semibold text-white mb-2">No projects found</h3>
-                            <p className="text-slate-400">
+                            <p className="text-[var(--ws-text-muted)]">
                                 {searchQuery ? 'Try adjusting your search' : 'Check back soon for new projects'}
                             </p>
                         </div>
@@ -152,11 +152,11 @@ const PublicPortfolio: React.FC = () => {
                                     href={project.externalUrl || '#'}
                                     target={project.externalUrl ? '_blank' : '_self'}
                                     rel={project.externalUrl ? 'noopener noreferrer' : undefined}
-                                    className="group relative bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 hover:border-teal-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/20 animate-fade-in block"
+                                    className="group relative bg-[var(--ws-panel)] rounded-2xl overflow-hidden border border-[var(--ws-border)] hover:border-teal-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-teal-500/20 animate-fade-in block"
                                     style={{ animationDelay: `${index * 100}ms` }}
                                 >
                                     {/* Project Image */}
-                                    <div className="aspect-[16/10] relative overflow-hidden bg-slate-800">
+                                    <div className="aspect-[16/10] relative overflow-hidden bg-[var(--ws-surface-secondary)]">
                                         <Image
                                             src={project.image || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800'}
                                             alt={project.name}
@@ -188,12 +188,12 @@ const PublicPortfolio: React.FC = () => {
                                             {project.name}
                                         </h3>
 
-                                        <p className="text-slate-400 type-card-description mb-4 line-clamp-2">
+                                        <p className="text-[var(--ws-text-muted)] type-card-description mb-4 line-clamp-2">
                                             {project.description || 'A stunning project showcasing modern design and cutting-edge technology.'}
                                         </p>
 
-                                        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-                                            <span className="type-caption text-slate-500">Completed</span>
+                                        <div className="flex items-center justify-between pt-4 border-t border-[var(--ws-border)]">
+                                            <span className="type-caption text-[var(--ws-text-muted)]">Completed</span>
                                             <div className="flex items-center gap-2 text-teal-400">
                                                 <span className="type-ui font-medium">View Details</span>
                                                 <ArrowRight className="w-4 h-4" />

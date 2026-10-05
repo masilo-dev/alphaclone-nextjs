@@ -86,16 +86,16 @@ export default function EnhancedTeamChat() {
   };
 
   return (
-      <div className="flex flex-col h-[600px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="flex flex-col h-[600px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center">
+        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg">
               <MessageCircle className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
               <h3 className="font-bold text-white">Team Chat</h3>
-              <p className="type-caption text-slate-400">Real-time team collaboration</p>
+              <p className="type-caption text-[var(--ws-text-muted)]">Real-time team collaboration</p>
             </div>
           </div>
           <div className="flex -space-x-2">
@@ -103,13 +103,13 @@ export default function EnhancedTeamChat() {
               <div
                 key={m.id}
                 title={m.name}
-                className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center type-caption font-bold text-white"
+                className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-tertiary)] flex items-center justify-center type-caption font-bold text-white"
               >
                 {m.name?.charAt(0)}
               </div>
             ))}
             {teamMembers.length > 5 && (
-              <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center type-caption text-slate-400 font-bold">
+              <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-secondary)] flex items-center justify-center type-caption text-[var(--ws-text-muted)] font-bold">
                 +{teamMembers.length - 5}
               </div>
             )}
@@ -125,7 +125,7 @@ export default function EnhancedTeamChat() {
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Users className="w-12 h-12 text-slate-600 mb-3" />
-              <p className="text-slate-400 type-card-description">No messages yet. Start the conversation!</p>
+              <p className="text-[var(--ws-text-muted)] type-card-description">No messages yet. Start the conversation!</p>
             </div>
           ) : (
             messages.map(msg => {
@@ -135,7 +135,7 @@ export default function EnhancedTeamChat() {
               if (isSystem) {
                 return (
                   <div key={msg.id} className="flex justify-center">
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-1 type-caption text-slate-400 flex items-center gap-2">
+                    <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
                       <CheckCircle className="w-3 h-3 text-green-400" />
                       {msg.text}
                     </div>
@@ -145,17 +145,17 @@ export default function EnhancedTeamChat() {
 
               return (
                 <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                  <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold type-caption text-white">
+                  <div className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex-shrink-0 flex items-center justify-center font-bold type-caption text-white">
                     {(msg.senderName || 'U').charAt(0)}
                   </div>
                   <div className={`max-w-[70%] space-y-1 ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                    <div className="flex items-center gap-2 type-caption text-slate-400">
-                      <span className="font-bold text-slate-300">{isMe ? 'You' : msg.senderName}</span>
+                    <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
+                      <span className="font-bold text-[var(--ws-text-secondary)]">{isMe ? 'You' : msg.senderName}</span>
                       <span>{format(new Date(msg.timestamp), 'h:mm a')}</span>
                     </div>
                     <div className={`p-3 rounded-2xl type-ui ${isMe
                       ? 'bg-indigo-600 text-white rounded-tr-sm'
-                      : 'bg-slate-800 text-slate-200 rounded-tl-sm'
+                      : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-sm'
                       }`}>
                       {msg.text}
                     </div>
@@ -168,14 +168,14 @@ export default function EnhancedTeamChat() {
         </div>
 
         {/* Input */}
-        <div className="p-4 bg-slate-900 border-t border-slate-800">
+        <div className="p-4 bg-[var(--ws-panel)] border-t border-[var(--ws-border)]">
           <div className="relative">
             <textarea
               value={newMessage}
               onChange={e => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
+              className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
             />
             <button
               onClick={sendMessage}

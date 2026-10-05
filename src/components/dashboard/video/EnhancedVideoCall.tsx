@@ -472,7 +472,7 @@ export default function EnhancedVideoCall({
 
           <button
             onClick={onLeave}
-            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg"
+            className="p-2 text-red-400 hover:text-[var(--error-text,var(--error-500))] hover:bg-red-900/20 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>

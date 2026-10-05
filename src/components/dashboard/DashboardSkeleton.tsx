@@ -8,7 +8,7 @@ interface DashboardSkeletonProps {
 }
 
 function Pulse({ className }: { className?: string }) {
-  return <div className={`bg-slate-800/60 rounded-lg ac-skeleton-pulse ${className ?? ''}`} />;
+  return <div className={`bg-[var(--ws-surface-secondary)]/60 rounded-lg ac-skeleton-pulse ${className ?? ''}`} />;
 }
 
 export function DashboardSkeleton({ row = 'all' }: DashboardSkeletonProps) {

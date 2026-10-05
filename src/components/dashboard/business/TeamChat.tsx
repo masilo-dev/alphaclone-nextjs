@@ -196,24 +196,24 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 subject,
                 text: `${intro}\n\nUpdate:\n${messageText}\n\nOpen AlphaClone to reply in context.`,
                 html: `
-                    <div style="font-family: Inter, Arial, sans-serif; color: #e2e8f0; background: #020617; padding: 24px;">
-                        <div style="max-width: 720px; margin: 0 auto; background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.92)); border: 1px solid #1f2937; border-radius: 20px; overflow: hidden;">
-                            <div style="padding: 20px 24px; border-bottom: 1px solid #1f2937; background: rgba(15, 118, 110, 0.10);">
-                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; color: #2dd4bf; margin-bottom: 8px;">Internal team memo</div>
-                                <div style="font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.25;">${subject}</div>
-                                <div style="margin-top: 8px; color: #94a3b8; font-size: 13px;">From ${user.name || user.email} inside AlphaClone</div>
+                    <div style="font-family: Inter, Arial, sans-serif; color: var(--ws-border); background: var(--brand-violet-950); padding: 24px;">
+                        <div style="max-width: 720px; margin: 0 auto; background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.92)); border: 1px solid var(--ws-panel); border-radius: 20px; overflow: hidden;">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid var(--ws-panel); background: rgba(15, 118, 110, 0.10);">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--brand-blue-400); margin-bottom: 8px;">Internal team memo</div>
+                                <div style="font-size: 22px; font-weight: 700; color: var(--color-white); line-height: 1.25;">${subject}</div>
+                                <div style="margin-top: 8px; color: var(--ws-text-secondary); font-size: 13px;">From ${user.name || user.email} inside AlphaClone</div>
                             </div>
                             <div style="padding: 24px;">
-                                <div style="background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 20px;">
-                                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px;">Message</div>
-                                    <div style="white-space: pre-wrap; color: #e2e8f0; font-size: 15px; line-height: 1.7;">${messageText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                                <div style="background: var(--ws-canvas); border: 1px solid var(--ws-panel); border-radius: 16px; padding: 20px;">
+                                    <div style="font-size: 12px; color: var(--ws-text-secondary); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 10px;">Message</div>
+                                    <div style="white-space: pre-wrap; color: var(--ws-border); font-size: 15px; line-height: 1.7;">${messageText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
                                 </div>
                                 <div style="margin-top: 16px; display: grid; gap: 10px;">
-                                    <div style="color: #cbd5e1; font-size: 13px;">Use the business OS to reply, convert this into a task, or check the related inbox thread.</div>
-                                    <div style="color: #94a3b8; font-size: 12px;">This email was sent to ${recipients.length} teammates.</div>
+                                    <div style="color: var(--ws-border); font-size: 13px;">Use the business OS to reply, convert this into a task, or check the related inbox thread.</div>
+                                    <div style="color: var(--ws-text-secondary); font-size: 12px;">This email was sent to ${recipients.length} teammates.</div>
                                 </div>
                             </div>
-                            <div style="padding: 16px 24px; border-top: 1px solid #1f2937; color: #64748b; font-size: 12px;">
+                            <div style="padding: 16px 24px; border-top: 1px solid var(--ws-panel); color: var(--ws-text-muted); font-size: 12px;">
                                 AlphaClone team communication
                             </div>
                         </div>
@@ -335,7 +335,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
         if (msg.deliveredAt) {
             return { label: 'Delivered by email', icon: CheckCircle, color: 'text-sky-400' };
         }
-        return { label: 'Sending...', icon: Send, color: 'text-slate-500' };
+        return { label: 'Sending...', icon: Send, color: 'text-[var(--ws-text-muted)]' };
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -346,16 +346,16 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     };
 
     return (
-            <div className="flex flex-col h-[600px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="flex flex-col h-[600px] bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm flex justify-between items-center">
+                <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-sm flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-indigo-500/10 rounded-lg">
                             <MessageCircle className="w-5 h-5 text-indigo-400" />
                         </div>
                     <div>
                         <h3 className="font-bold text-white">Team Stream</h3>
-                        <p className="type-card-description text-slate-400">Internal chat, task handoff, and email delivery</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Internal chat, task handoff, and email delivery</p>
                     </div>
                 </div>
                     <div className="flex -space-x-2">
@@ -363,7 +363,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                             <Avatar key={m.user_id} src={m.user.avatar} name={m.user.name} email={m.user.email} size={32} className="border-2 border-slate-900" />
                         ))}
                         {teamMembers.length > 5 && (
-                            <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center type-caption font-bold text-slate-400">
+                            <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-secondary)] flex items-center justify-center type-caption font-bold text-[var(--ws-text-muted)]">
                                 +{teamMembers.length - 5}
                             </div>
                         )}
@@ -373,12 +373,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {loading ? (
-                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-slate-800/40 rounded-xl animate-pulse" />)}</div>
+                        <div className="space-y-3">{[...Array(4)].map((_, i) => <div key={i} className="h-10 bg-[var(--ws-surface-secondary)]/40 rounded-xl animate-pulse" />)}</div>
                     ) : messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 gap-2">
+                        <div className="flex flex-col items-center justify-center h-full text-center text-[var(--ws-text-muted)] gap-2">
                             <MessageCircle className="w-8 h-8 text-slate-700" />
                             <p className="type-card-description">No messages yet. Say hello to your team!</p>
-                            <p className="type-card-description">Tip: type <span className="font-mono text-slate-400">@name assign task …</span> to create a task.</p>
+                            <p className="type-card-description">Tip: type <span className="font-mono text-[var(--ws-text-muted)]">@name assign task …</span> to create a task.</p>
                         </div>
                     ) : messages.map((msg) => {
                         const isMe = msg.userId === user.id;
@@ -387,7 +387,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                         if (isSystem) {
                             return (
                                 <div key={msg.id} className="flex justify-center my-4">
-                                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-full px-4 py-1 type-caption text-slate-400 flex items-center gap-2">
+                                    <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)]/50 rounded-full px-4 py-1 type-caption text-[var(--ws-text-muted)] flex items-center gap-2">
                                         {msg.type === 'task_created' && <CheckCircle className="w-3 h-3 text-green-400" />}
                                         {msg.content}
                                     </div>
@@ -399,18 +399,18 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                                 <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
                                 <Avatar src={msg.userAvatar} name={msg.userName} size={32} />
                                 <div className={`max-w-[70%] space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                                    <div className="flex items-center gap-2 type-caption text-slate-400">
-                                        <span className="font-bold text-slate-300">{msg.userName}</span>
+                                    <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
+                                        <span className="font-bold text-[var(--ws-text-secondary)]">{msg.userName}</span>
                                         <span>{format(msg.timestamp, 'h:mm a')}</span>
                                     </div>
                                     <div className={`p-3 rounded-2xl type-ui ${
                                         isMe 
                                             ? 'bg-indigo-600 text-white rounded-tr-sm' 
-                                            : 'bg-slate-800 text-slate-200 rounded-tl-sm'
+                                            : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-sm'
                                     }`}>
                                         {msg.content}
                                     </div>
-                                    <div className={`flex items-center gap-1.5 type-ui ${isMe ? 'justify-end' : 'justify-start'} text-slate-500`}>
+                                    <div className={`flex items-center gap-1.5 type-ui ${isMe ? 'justify-end' : 'justify-start'} text-[var(--ws-text-muted)]`}>
                                         {(() => {
                                             const status = getDeliveryLabel(msg);
                                             const StatusIcon = status.icon;
@@ -430,7 +430,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 </div>
 
                 {/* Input */}
-                <div className="p-4 bg-slate-900 border-t border-slate-800">
+                <div className="p-4 bg-[var(--ws-panel)] border-t border-[var(--ws-border)]">
                     <div className="relative">
                         <textarea
                             ref={inputRef}
@@ -438,7 +438,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder="Type a message or use @ to assign tasks..."
-                            className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl pl-4 pr-12 py-3 type-ui text-white focus:outline-none focus:border-indigo-500 resize-none h-12"
                         />
                         <button
                             onClick={handleSendMessage}
@@ -447,13 +447,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                             <Send className="w-4 h-4" />
                         </button>
                     </div>
-                    <div className="flex gap-2 mt-2 type-caption text-slate-500">
+                    <div className="flex gap-2 mt-2 type-caption text-[var(--ws-text-muted)]">
                         <div className="flex items-center gap-1">
-                            <span className="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 font-mono">@name assign task</span>
+                            <span className="bg-[var(--ws-surface-secondary)] px-1.5 py-0.5 rounded border border-[var(--ws-border)] font-mono">@name assign task</span>
                             <span>to create task</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            <span className="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Email</span>
+                            <span className="bg-[var(--ws-surface-secondary)] px-1.5 py-0.5 rounded border border-[var(--ws-border)]">Email</span>
                             <span>delivers to teammates automatically</span>
                         </div>
                     </div>

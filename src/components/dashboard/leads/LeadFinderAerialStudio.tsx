@@ -167,7 +167,7 @@ export default function LeadFinderAerialStudio({ lead, allLeads = [], onSelectLe
     return (
       <Box borderWidth="1px" borderColor="whiteAlpha.200" borderRadius="xl" bg="gray.900" p={5}>
         <HStack spacing={2} mb={2}>
-          <Plane size={16} color="#2DD4BF" />
+          <Plane size={16} color="var(--brand-blue-400)" />
           <Text fontWeight="semibold" color="white">
             Aerial studio
           </Text>
@@ -205,7 +205,7 @@ export default function LeadFinderAerialStudio({ lead, allLeads = [], onSelectLe
       >
         <VStack align="start" spacing={0} minW={0}>
           <HStack spacing={2}>
-            <Plane size={14} color="#2DD4BF" />
+            <Plane size={14} color="var(--brand-blue-400)" />
             <Text fontSize="sm" fontWeight="semibold" color="white" noOfLines={1}>
               Aerial studio
             </Text>
@@ -336,7 +336,7 @@ export default function LeadFinderAerialStudio({ lead, allLeads = [], onSelectLe
           borderWidth="1px"
           borderColor="whiteAlpha.200"
         >
-          <MetaIcon size={12} color="#5EEAD4" />
+          <MetaIcon size={12} color="var(--brand-blue-300)" />
           <Text fontSize="var(--type-caption-size)" color="teal.200" fontWeight="bold" textTransform="uppercase">
             {MODE_META[mode].label} live
           </Text>

@@ -20,7 +20,7 @@ const InfiniteTicker: React.FC = () => {
                     {items.map((item, i) => (
                         <span key={i} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
-                            <span className="w-2 h-2 bg-slate-900 rounded-full" />
+                            <span className="w-2 h-2 bg-[var(--ws-panel)] rounded-full" />
                         </span>
                     ))}
                 </div>
@@ -30,7 +30,7 @@ const InfiniteTicker: React.FC = () => {
                     {items.map((item, i) => (
                         <span key={`dup-${i}`} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
-                            <span className="w-2 h-2 bg-slate-900 rounded-full" />
+                            <span className="w-2 h-2 bg-[var(--ws-panel)] rounded-full" />
                         </span>
                     ))}
                 </div>
@@ -40,7 +40,7 @@ const InfiniteTicker: React.FC = () => {
                     {items.map((item, i) => (
                         <span key={`dup2-${i}`} className="text-slate-900 font-bold type-caption tracking-widest uppercase flex items-center gap-4">
                             {item}
-                            <span className="w-2 h-2 bg-slate-900 rounded-full" />
+                            <span className="w-2 h-2 bg-[var(--ws-panel)] rounded-full" />
                         </span>
                     ))}
                 </div>

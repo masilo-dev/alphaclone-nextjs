@@ -68,8 +68,8 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                 aria-modal="true"
                 aria-labelledby="keyboard-shortcuts-title"
             >
-                <div className="bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-xl shadow-2xl w-full max-w-2xl max-h-[85dvh] overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-800">
+                <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-t-2xl sm:rounded-xl shadow-2xl w-full max-w-2xl max-h-[85dvh] overflow-hidden flex flex-col">
+                    <div className="p-6 border-b border-[var(--ws-border)]">
                         <div className="flex items-center justify-between mb-4">
                             <h2 id="keyboard-shortcuts-title" className="text-xl font-bold text-white flex items-center gap-2">
                                 <Command className="w-5 h-5 text-teal-400" aria-hidden />
@@ -79,20 +79,20 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                                 type="button"
                                 onClick={onClose}
                                 aria-label="Close"
-                                className="p-2 min-h-11 min-w-11 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
+                                className="p-2 min-h-11 min-w-11 text-[var(--ws-text-muted)] hover:text-white transition-colors rounded-lg hover:bg-[var(--ws-surface-secondary)]"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" aria-hidden />
+                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-[var(--ws-text-muted)]" aria-hidden />
                             <input
                                 type="search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search shortcuts..."
-                                className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2 pl-10 pr-4 type-ui text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
+                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg py-2 pl-10 pr-4 type-ui text-white placeholder-slate-400 focus:outline-none focus:border-teal-500"
                                 autoFocus
                             />
                         </div>
@@ -104,17 +104,17 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
 
                             return (
                                 <div key={category}>
-                                    <h3 className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                                    <h3 className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-3">
                                         {category}
                                     </h3>
                                     <div className="space-y-2">
                                         {categoryShortcuts.map((shortcut, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
+                                                className="flex items-center justify-between p-3 bg-[var(--ws-surface-secondary)]/50 rounded-lg hover:bg-[var(--ws-surface-secondary)] transition-colors"
                                             >
-                                                <span className="type-ui text-slate-300">{shortcut.description}</span>
-                                                <kbd className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-md type-caption font-mono text-slate-300">
+                                                <span className="type-ui text-[var(--ws-text-secondary)]">{shortcut.description}</span>
+                                                <kbd className="px-3 py-1.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-md type-caption font-mono text-[var(--ws-text-secondary)]">
                                                     {shortcut.key}
                                                 </kbd>
                                             </div>
@@ -125,15 +125,15 @@ const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen,
                         })}
 
                         {filteredShortcuts.length === 0 && (
-                            <div className="text-center py-8 text-slate-400">
+                            <div className="text-center py-8 text-[var(--ws-text-muted)]">
                                 <p>No shortcuts found</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="p-4 border-t border-slate-800 bg-slate-900/50">
-                        <p className="type-card-description text-slate-400 text-center">
-                            Press <kbd className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Esc</kbd> to close
+                    <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50">
+                        <p className="type-card-description text-[var(--ws-text-muted)] text-center">
+                            Press <kbd className="px-2 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded text-[var(--ws-text-secondary)]">Esc</kbd> to close
                         </p>
                     </div>
                 </div>

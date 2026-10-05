@@ -199,30 +199,30 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
     <>
       <div
         className={`
-          flex flex-col bg-slate-800 border border-slate-700 shadow-2xl overflow-hidden
+          flex flex-col bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] shadow-2xl overflow-hidden
           ${embedded ? 'h-full w-full rounded-xl' : 'fixed bottom-6 right-6 w-[400px] h-[650px] rounded-2xl z-50'}
         `}
       >
         {/* Header */}
-        <div className="p-4 border-b border-slate-700 bg-slate-900/50 backdrop-blur flex justify-between items-center">
+        <div className="p-4 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-500/10 rounded-lg">
               <Bot className="w-5 h-5 text-teal-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-100 type-ui">Alpha Assistant</h3>
-              <p className="type-card-description text-slate-400">Powered by Claude & GPT-4</p>
+              <h3 className="font-semibold text-[var(--ws-text-primary)] type-ui">Alpha Assistant</h3>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Powered by Claude & GPT-4</p>
             </div>
           </div>
           {!embedded && (
-            <button onClick={toggleOpen} className="text-slate-400 hover:text-white transition-colors">
+            <button onClick={toggleOpen} className="text-[var(--ws-text-muted)] hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           )}
         </div>
 
         {/* Mode Selector */}
-        <div className="flex overflow-x-auto p-2 bg-slate-900 border-b border-slate-700 gap-2 no-scrollbar">
+        <div className="flex overflow-x-auto p-2 bg-[var(--ws-panel)] border-b border-[var(--ws-border)] gap-2 no-scrollbar">
           {[
             { id: 'default', icon: Bot, label: 'Pro' },
             { id: 'thinking', icon: BrainCircuit, label: 'Reasoning' },
@@ -239,7 +239,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
                   ? m.id === 'email'
                     ? 'bg-blue-600 text-white'
                     : 'bg-teal-600 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'}
+                  : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)] hover:text-[var(--ws-text-secondary)]'}
               `}
             >
               <m.icon className="w-3.5 h-3.5" />
@@ -256,27 +256,27 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
         )}
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--ws-panel)]/50">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {msg.emailDraft ? (
-                <div className="max-w-[90%] w-full bg-slate-800 border border-blue-800/60 rounded-2xl rounded-bl-none overflow-hidden">
+                <div className="max-w-[90%] w-full bg-[var(--ws-surface-secondary)] border border-blue-800/60 rounded-2xl rounded-bl-none overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2 bg-blue-900/30 border-b border-blue-800/40">
                     <Mail className="w-3.5 h-3.5 text-blue-400" />
                     <span className="type-caption font-medium text-blue-300 uppercase tracking-wide">Email Draft</span>
                   </div>
                   <div className="p-3 space-y-2">
                     {msg.emailDraft.to && (
-                      <div className="type-caption text-slate-400">
-                        <span className="text-slate-500">To:</span>{' '}
-                        <span className="text-slate-200">{msg.emailDraft.to}</span>
+                      <div className="type-caption text-[var(--ws-text-muted)]">
+                        <span className="text-[var(--ws-text-muted)]">To:</span>{' '}
+                        <span className="text-[var(--ws-text-secondary)]">{msg.emailDraft.to}</span>
                       </div>
                     )}
                     <div className="type-caption">
-                      <span className="text-slate-500">Subject:</span>{' '}
-                      <span className="text-slate-100 font-medium">{msg.emailDraft.subject}</span>
+                      <span className="text-[var(--ws-text-muted)]">Subject:</span>{' '}
+                      <span className="text-[var(--ws-text-primary)] font-medium">{msg.emailDraft.subject}</span>
                     </div>
-                    <div className="type-caption text-slate-300 leading-relaxed whitespace-pre-wrap border-t border-slate-700 pt-2 max-h-36 overflow-y-auto">
+                    <div className="type-caption text-[var(--ws-text-secondary)] leading-relaxed whitespace-pre-wrap border-t border-[var(--ws-border)] pt-2 max-h-36 overflow-y-auto">
                       {msg.emailDraft.body}
                     </div>
                   </div>
@@ -296,7 +296,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
                     max-w-[85%] rounded-2xl p-3 type-ui leading-relaxed whitespace-pre-wrap
                     ${msg.role === 'user'
                       ? 'bg-teal-600 text-white rounded-br-none'
-                      : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-bl-none'}
+                      : 'bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-bl-none'}
                   `}
                 >
                   {msg.text}
@@ -306,9 +306,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
           ))}
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-bl-none p-4 flex items-center gap-2">
+              <div className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-2xl rounded-bl-none p-4 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
-                <span className="type-caption text-slate-400">
+                <span className="type-caption text-[var(--ws-text-muted)]">
                   {mode === 'thinking' ? 'Deep Thinking...' : mode === 'email' ? 'Drafting email...' : 'Processing...'}
                 </span>
               </div>
@@ -317,7 +317,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
         </div>
 
         {/* Input */}
-        <div className="p-4 bg-slate-800 border-t border-slate-700">
+        <div className="p-4 bg-[var(--ws-surface-secondary)] border-t border-[var(--ws-border)]">
           {selectedImage && (
             <div className="mb-2 relative inline-block h-16 w-16 overflow-hidden rounded-lg border border-slate-600">
               <Image
@@ -329,7 +329,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
               />
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute -top-2 -right-2 bg-slate-700 rounded-full p-0.5 border border-slate-500 hover:bg-slate-600"
+                className="absolute -top-2 -right-2 bg-[var(--ws-surface-tertiary)] rounded-full p-0.5 border border-slate-500 hover:bg-slate-600"
               >
                 <X className="w-3 h-3 text-white" />
               </button>
@@ -346,7 +346,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
             {mode !== 'email' && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl transition-colors"
+                className="p-3 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600 text-[var(--ws-text-secondary)] rounded-xl transition-colors"
                 title="Upload Image"
               >
                 <ImageIcon className="w-5 h-5" />
@@ -364,12 +364,12 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ embedded = false }) => {
                   ? 'Describe the email, e.g. "Write an outreach to Sarah at Acme about our pricing"'
                   : 'Ask Alpha anything...'
               }
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 type-ui text-slate-200 focus:outline-none focus:border-teal-500 pr-12"
+              className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500 pr-12"
             />
             <button
               onClick={handleSend}
               disabled={(!input.trim() && !selectedImage) || isLoading}
-              className={`absolute right-2 top-2 p-1.5 text-white rounded-lg transition-colors disabled:opacity-50 disabled:bg-slate-700
+              className={`absolute right-2 top-2 p-1.5 text-white rounded-lg transition-colors disabled:opacity-50 disabled:bg-[var(--ws-surface-tertiary)]
                 ${mode === 'email' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-teal-600 hover:bg-teal-500'}
               `}
             >

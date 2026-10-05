@@ -22,11 +22,11 @@ const sections = [
 
 export default function DocsPageContent() {
     return (
-        <div className="marketing-theme min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
+        <div className="marketing-theme min-h-screen bg-[var(--ws-canvas)] text-[var(--ws-text-secondary)] font-sans selection:bg-teal-500/30">
             <div className="flex">
                 {/* Sticky Sidebar Nav — Desktop */}
-                <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20 self-start h-[calc(100vh-5rem)] overflow-y-auto border-r border-slate-800/50 py-8 px-4">
-                    <p className="type-caption font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">On This Page</p>
+                <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20 self-start h-[calc(100vh-5rem)] overflow-y-auto border-r border-[var(--ws-border)]/50 py-8 px-4">
+                    <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4 px-2">On This Page</p>
                     <nav className="space-y-1">
                         {[
                             { id: 'onboarding', label: '1. Registration & Setup', icon: CheckCircle2 },
@@ -43,7 +43,7 @@ export default function DocsPageContent() {
                             <a
                                 key={item.id}
                                 href={`#${item.id}`}
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg type-ui text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg type-ui text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] transition-colors"
                             >
                                 <item.icon className="w-4 h-4 text-teal-500 flex-shrink-0" />
                                 {item.label}
@@ -51,7 +51,7 @@ export default function DocsPageContent() {
                         ))}
                     </nav>
                     <div className="mt-8 px-2">
-                        <Link href="/guide" className="flex items-center gap-2 text-teal-400 hover:text-teal-300 type-ui font-semibold">
+                        <Link href="/guide" className="flex items-center gap-2 text-teal-400 hover:text-[var(--brand-blue-300)] type-ui font-semibold">
                             <BookOpen className="w-4 h-4" />
                             Full Onboarding Guide
                             <ExternalLink className="w-3 h-3" />
@@ -62,10 +62,10 @@ export default function DocsPageContent() {
                 {/* Main Content */}
                 <article className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
                     {/* Sticky Mobile Nav */}
-                    <div className="lg:hidden sticky top-20 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
+                    <div className="lg:hidden sticky top-20 z-40 bg-[var(--ws-canvas)]/95 backdrop-blur-xl pb-4 pt-4 border-b border-[var(--ws-border)]/50 mb-8 mx-[-1rem] px-4 -mt-8">
                         <div className="relative">
                             <select
-                                className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-teal-500 shadow-lg"
+                                className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] text-white rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-teal-500 shadow-lg"
                                 onChange={(e) => {
                                     if (!e.target.value) return;
                                     const element = document.getElementById(e.target.value);
@@ -88,7 +88,7 @@ export default function DocsPageContent() {
                                 <option value="settings">10. Settings</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <ChevronRight className="w-5 h-5 text-slate-400 rotate-90" />
+                                <ChevronRight className="w-5 h-5 text-[var(--ws-text-muted)] rotate-90" />
                             </div>
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default function DocsPageContent() {
                             <span className="text-teal-400 type-caption font-semibold tracking-widest uppercase">Documentation</span>
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">AlphaClone Business OS — Full Reference</h1>
-                        <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
+                        <p className="text-[var(--ws-text-muted)] text-lg leading-relaxed max-w-2xl">
                             The complete technical and operational reference for the AlphaClone Business OS. This documentation covers every platform feature with step-by-step instructions, navigation paths, and best practices. For a guided walkthrough, visit the <Link href="/guide" className="text-teal-400 hover:underline">Platform Guide</Link>.
                         </p>
 
@@ -117,9 +117,9 @@ export default function DocsPageContent() {
                                 { label: 'Step-by-step', sub: 'navigation paths' },
                                 { label: 'Non-technical', sub: 'plain language' },
                             ].map((stat, i) => (
-                                <div key={i} className="p-3 bg-slate-900 rounded-lg border border-slate-800 text-center">
+                                <div key={i} className="p-3 bg-[var(--ws-panel)] rounded-lg border border-[var(--ws-border)] text-center">
                                     <div className="font-bold text-white type-ui">{stat.label}</div>
-                                    <div className="text-slate-500 type-caption">{stat.sub}</div>
+                                    <div className="text-[var(--ws-text-muted)] type-caption">{stat.sub}</div>
                                 </div>
                             ))}
                         </div>
@@ -138,11 +138,11 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Registration & Onboarding</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 leading-relaxed mb-6">
+                            <p className="text-[var(--ws-text-muted)] leading-relaxed mb-6">
                                 AlphaClone uses a guided onboarding wizard that walks new users through workspace setup, branding, and initial configuration. The entire process is designed to take under 30 minutes even for non-technical users.
                             </p>
                             <div className="space-y-4">
-                                <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800">
+                                <div className="p-8 rounded-3xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                     <h3 className="text-xl font-bold text-white mb-4">The AlphaClone Signup Process</h3>
                                     <ol className="space-y-6">
                                         {[
@@ -167,7 +167,7 @@ export default function DocsPageContent() {
                                                 <div className="w-7 h-7 rounded-full bg-teal-500 text-slate-950 flex-shrink-0 flex items-center justify-center type-caption font-bold">{step.n}</div>
                                                 <div>
                                                     <p className="text-white font-semibold mb-1">{step.title}</p>
-                                                    <p className="type-card-description text-slate-400 leading-relaxed">{step.body}</p>
+                                                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{step.body}</p>
                                                 </div>
                                             </li>
                                         ))}
@@ -187,7 +187,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Business Home — Mission Control</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-8 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-8 leading-relaxed">
                                 The Business Home is your real-time command center. From here you can see live stats across your entire operation, access any module via the sidebar, and use Global Command Search to navigate the platform instantly. Think of it as the Google Analytics and Slack notifications of your entire business combined into one screen.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -209,9 +209,9 @@ export default function DocsPageContent() {
                                         desc: 'The bell icon in the top bar shows real-time notifications: new lead qualifications from the Growth Agent, invoice payments received, upcoming meeting reminders, and team activity alerts. Configure which alerts you receive in Settings → Notifications.'
                                     },
                                 ].map((item, i) => (
-                                    <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                    <div key={i} className="p-6 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                         <h4 className={`${item.color} font-bold mb-3`}>{item.title}</h4>
-                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.desc}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -228,7 +228,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">CRM & Deals</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 The AlphaClone CRM is the central nervous system of the platform. Every client relationship, deal, communication, and financial interaction connects back to a CRM record. Unlike standalone CRM tools, AlphaClone's CRM is natively connected to invoicing, contracts, calendar events, and the AI Growth Agent — so context never needs to be duplicated between systems.
                             </p>
                             <div className="space-y-6">
@@ -250,12 +250,12 @@ export default function DocsPageContent() {
                                         body: 'Leads discovered by the Growth Agent appear directly in the CRM pipeline with an "AI Sourced" tag and full outreach conversation history. When the AI qualifies a lead as sales-ready, it creates a new deal in the Discovery stage and notifies you via the notification feed. From that point, you take over the conversation with full context already populated.',
                                     },
                                 ].map((item, i) => (
-                                    <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                    <div key={i} className="p-6 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                         <div className="flex items-center gap-2 mb-3">
                                             <ChevronRight className="w-4 h-4 text-teal-400" />
                                             <h4 className="text-white font-bold">{item.title}</h4>
                                         </div>
-                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.body}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{item.body}</p>
                                     </div>
                                 ))}
                             </div>
@@ -272,7 +272,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">AI Growth Agent</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-8 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-8 leading-relaxed">
                                 The AI Growth Agent supports lead discovery, outreach drafts, qualification workflows, and CRM handoff from one workspace. No separate setup, third-party API keys, or technical configuration required.
                             </p>
                             <div className="bg-gradient-to-br from-teal-900/20 to-blue-900/20 rounded-3xl p-8 border border-white/5 mb-6">
@@ -304,7 +304,7 @@ export default function DocsPageContent() {
                                             <div className="mt-1"><CheckCircle2 className="w-5 h-5 text-teal-500 flex-shrink-0" /></div>
                                             <div>
                                                 <p className="text-white font-bold mb-1">{step.title}</p>
-                                                <p className="text-slate-400 type-card-description leading-relaxed">{step.body}</p>
+                                                <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">{step.body}</p>
                                             </div>
                                         </li>
                                     ))}
@@ -323,42 +323,42 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Communications & Integrations</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-8 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-8 leading-relaxed">
                                 AlphaClone centralizes your communication stack with native Gmail integration, a built-in HD video platform, and smart scheduling via Calendly. All communication channels display CRM context simultaneously — you never need to switch tabs to see a client's history while reading their email or preparing for a call.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col">
+                                <div className="p-8 rounded-3xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] flex flex-col">
                                     <div className="flex items-center gap-3 mb-4">
                                         <Mail className="w-6 h-6 text-red-400" />
                                         <h4 className="text-xl font-bold text-white">Gmail Integration</h4>
                                     </div>
                                     <div className="space-y-3 flex-1">
-                                        <p className="type-card-description text-slate-400 leading-relaxed">Connect your Google account to read, draft, and send emails directly within the Business OS. Every email thread is contextually linked to the matching CRM contact automatically.</p>
-                                        <p className="type-card-description text-slate-400 leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
-                                        <p className="type-caption text-slate-400 leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">Connect your Google account to read, draft, and send emails directly within the Business OS. Every email thread is contextually linked to the matching CRM contact automatically.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
+                                        <p className="type-caption text-[var(--ws-text-muted)] leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
                                     </div>
                                     <p className="type-caption text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
                                 </div>
 
-                                <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col">
+                                <div className="p-8 rounded-3xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] flex flex-col">
                                     <div className="flex items-center gap-3 mb-4">
                                         <Video className="w-6 h-6 text-blue-400" />
                                         <h4 className="text-xl font-bold text-white">HD Video Platform</h4>
                                     </div>
                                     <div className="space-y-3 flex-1">
-                                        <p className="type-card-description text-slate-400 leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
-                                        <p className="type-card-description text-slate-400 leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
                                     </div>
                                     <p className="type-caption text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
                                 </div>
 
-                                <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col md:col-span-2">
+                                <div className="p-8 rounded-3xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] flex flex-col md:col-span-2">
                                     <div className="flex items-center gap-3 mb-4">
                                         <Calendar className="w-6 h-6 text-blue-500" />
                                         <h4 className="text-xl font-bold text-white">Calendly & Scheduling Integration</h4>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-6">
-                                        <p className="type-card-description text-slate-400 leading-relaxed">
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                                             Connect your Calendly account to enable branded client booking pages and automatic appointment syncing. Two connection methods are available:
                                             <br /><br />
                                             <strong className="text-white">Manual URL:</strong> Paste your Calendly URL in Settings → Integrations → Calendly. Immediate setup, no OAuth required. New appointments show in Calendly but not auto-synced to AlphaClone dashboard.
@@ -376,7 +376,7 @@ export default function DocsPageContent() {
                                             ].map((feat, i) => (
                                                 <div key={i} className="flex gap-3 type-caption">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-1.5 flex-shrink-0" />
-                                                    <span className="text-slate-300">{feat}</span>
+                                                    <span className="text-[var(--ws-text-secondary)]">{feat}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -397,7 +397,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Financial Suite & Accounting</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 The AlphaClone Financial Suite includes invoicing, quote management, double-entry accounting workflows, and financial reporting — all connected to your CRM so financial transactions can link to the right client record. Confirm your accounting and tax requirements before replacing dedicated accounting software.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -429,14 +429,14 @@ export default function DocsPageContent() {
                                         ]
                                     },
                                 ].map((col, i) => (
-                                    <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                    <div key={i} className="p-6 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                         <div className="flex items-center gap-2 mb-4">
                                             <col.icon className={`w-5 h-5 ${col.color}`} />
                                             <h4 className="font-bold text-white">{col.title}</h4>
                                         </div>
                                         <ul className="space-y-2">
                                             {col.items.map((item, ii) => (
-                                                <li key={ii} className="flex items-start gap-2 type-ui text-slate-400">
+                                                <li key={ii} className="flex items-start gap-2 type-ui text-[var(--ws-text-muted)]">
                                                     <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                                                     {item}
                                                 </li>
@@ -470,7 +470,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Contract Engine & E-Signatures</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 The Contract Engine allows you to draft agreement templates using AI assistance and collect electronic signatures without a separate signature tool. Review legal documents for your jurisdiction and business context before sending. Navigation: Dashboard → Contracts.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -479,12 +479,12 @@ export default function DocsPageContent() {
                                     { title: 'Send for Signature', desc: 'Click "Send for Signature." The client receives an email with a secure link. They can sign from any device — no AlphaClone account required on their end.' },
                                     { title: 'Storage & History', desc: 'Signed contracts are stored in Document Hub, linked to the client\'s CRM record. Both parties receive a signed PDF automatically upon completion.' },
                                 ].map((step, i) => (
-                                    <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                    <div key={i} className="p-5 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                         <div className="flex items-center gap-2 mb-3">
                                             <div className="w-6 h-6 rounded-full bg-violet-500 text-white flex items-center justify-center type-caption font-bold">{i + 1}</div>
                                             <h4 className="font-bold text-white type-ui">{step.title}</h4>
                                         </div>
-                                        <p className="type-card-description text-slate-400 leading-relaxed">{step.desc}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{step.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -501,7 +501,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Task & Project Management</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 AlphaClone includes a full project and task management system linked directly to your CRM and financial records. Projects are automatically created when deals move to "Won" in the pipeline, and tasks within those projects can be assigned to team members with deadlines and priority levels.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -511,9 +511,9 @@ export default function DocsPageContent() {
                                     { title: 'Team Assignment', desc: 'Assign tasks to any team member from the task card. Assignees receive a notification and the task appears in their personal My Tasks view. Managers can see all team tasks via the Team Board view.' },
                                     { title: 'Time Tracking', desc: 'Start a timer on any task to track time spent. Time logs are visible per task, per project, and per team member. Export time reports for client billing or internal productivity reviews.' },
                                 ].map((item, i) => (
-                                    <div key={i} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                    <div key={i} className="p-6 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)]">
                                         <h4 className="text-white font-bold mb-2">{item.title}</h4>
-                                        <p className="type-card-description text-slate-400 leading-relaxed">{item.desc}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -530,7 +530,7 @@ export default function DocsPageContent() {
                                     <h2 className="text-3xl font-bold text-white">Security & Compliance</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 AlphaClone includes security controls such as data encryption, role-based access, audit logging, and public policy pages. Baseline security controls are active by default.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -542,9 +542,9 @@ export default function DocsPageContent() {
                                     { title: 'GDPR Data Rights', desc: 'Data deletion and account lifecycle requests are supported through public policy pages and account controls.' },
                                     { title: '2FA Authentication', desc: 'Two-factor authentication available for all accounts. Enable via Settings → Security → Two-Factor Authentication. Supports authenticator apps and SMS.' },
                                 ].map((item, i) => (
-                                    <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 text-center">
+                                    <div key={i} className="p-5 rounded-2xl bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] text-center">
                                         <h5 className="text-white font-bold mb-2 type-ui">{item.title}</h5>
-                                        <p className="type-card-description text-slate-500 leading-relaxed">{item.desc}</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -554,14 +554,14 @@ export default function DocsPageContent() {
                         <div id="settings" className="scroll-mt-24">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="w-12 h-12 rounded-2xl bg-slate-500/10 border border-slate-500/20 flex items-center justify-center">
-                                    <Settings className="w-6 h-6 text-slate-400" />
+                                    <Settings className="w-6 h-6 text-[var(--ws-text-muted)]" />
                                 </div>
                                 <div>
-                                    <p className="type-caption text-slate-500 font-semibold uppercase tracking-wider mb-1">Module 10</p>
+                                    <p className="type-caption text-[var(--ws-text-muted)] font-semibold uppercase tracking-wider mb-1">Module 10</p>
                                     <h2 className="text-3xl font-bold text-white">Settings & Configuration</h2>
                                 </div>
                             </div>
-                            <p className="text-slate-400 mb-6 leading-relaxed">
+                            <p className="text-[var(--ws-text-muted)] mb-6 leading-relaxed">
                                 All platform-wide settings are available under the Settings icon in the sidebar. Organized into logical sections so you can find what you need without a search function.
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -573,11 +573,11 @@ export default function DocsPageContent() {
                                     { section: 'Finance', items: ['Invoice templates', 'Tax rates', 'Payment reminders'] },
                                     { section: 'Notifications', items: ['Email alert preferences', 'In-app notification settings', 'Digest frequency'] },
                                 ].map((group, i) => (
-                                    <div key={i} className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                                    <div key={i} className="p-4 rounded-xl bg-[var(--ws-panel)] border border-[var(--ws-border)]">
                                         <h5 className="text-teal-400 font-semibold type-ui mb-3">{group.section}</h5>
                                         <ul className="space-y-1">
                                             {group.items.map((item, ii) => (
-                                                <li key={ii} className="type-caption text-slate-500">{item}</li>
+                                                <li key={ii} className="type-caption text-[var(--ws-text-muted)]">{item}</li>
                                             ))}
                                         </ul>
                                     </div>
@@ -588,7 +588,7 @@ export default function DocsPageContent() {
                         {/* Support CTA */}
                         <div className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 p-12 rounded-3xl border border-white/5 text-center">
                             <h3 className="text-2xl font-bold text-white mb-4">Need Help or a Custom Deployment?</h3>
-                            <p className="text-slate-400 mb-8 max-w-xl mx-auto">
+                            <p className="text-[var(--ws-text-muted)] mb-8 max-w-xl mx-auto">
                                 The AlphaClone engineering team can assist with custom AI integration flows, private database clusters, security compliance audits, and enterprise onboarding for large teams.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">

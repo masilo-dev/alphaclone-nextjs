@@ -18,7 +18,7 @@ const FeaturesSection: React.FC = () => {
                     <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter text-white">
                         Operational <span className="hero-metallic-text">Standards.</span>
                     </h2>
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
+                    <p className="text-xl text-[var(--ws-text-muted)] max-w-2xl mx-auto font-medium">
                         Enterprise-grade reliability for high-performance service delivery.
                     </p>
                 </div>
@@ -28,7 +28,7 @@ const FeaturesSection: React.FC = () => {
                             <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
                                 <Check className="w-5 h-5 text-teal-400 group-hover:text-inherit" />
                             </div>
-                            <span className="text-slate-300 font-bold tracking-tight">{feature}</span>
+                            <span className="text-[var(--ws-text-secondary)] font-bold tracking-tight">{feature}</span>
                         </div>
                     ))}
                 </div>

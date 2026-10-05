@@ -1054,11 +1054,11 @@ const SalesAgent: React.FC = () => {
                         <span className="truncate">{t('Growth Agent')}</span>
                     </h2>
                 </div>
-                <div className="hidden md:flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
+                <div className="hidden md:flex flex-wrap bg-[var(--ws-surface-secondary)] p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
                     <button
                         type="button"
                         onClick={() => setActiveTab('omni')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
                     >
                         <Globe className="w-3.5 h-3.5" />
                         {t('AlphaClone System Lead')}
@@ -1066,21 +1066,21 @@ const SalesAgent: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setActiveTab('agent')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
                     >
                         {t('Agent Chat')}
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveTab('automation')}
-                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        className={`px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-[var(--ws-text-muted)] hover:text-white'}`}
                     >
                         {t('Automation')}
                     </button>
                     <button
                         type="button"
                         onClick={() => router.push('/dashboard/deals')}
-                        className="px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap text-slate-400 hover:text-white"
+                        className="px-3 sm:px-4 py-2 rounded-md type-caption sm:text-sm font-medium transition-all whitespace-nowrap text-[var(--ws-text-muted)] hover:text-white"
                     >
                         {t('Pipeline')}
                     </button>
@@ -1091,7 +1091,7 @@ const SalesAgent: React.FC = () => {
                     </label>
                     <select
                         id="growth-agent-view"
-                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 type-ui text-slate-100 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-primary)] [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
                         value={activeTab === 'agent' ? 'agent' : 'omni'}
                         onChange={(e) => {
                             const v = e.target.value;
@@ -1104,21 +1104,21 @@ const SalesAgent: React.FC = () => {
                             }
                         }}
                     >
-                        <option className="bg-slate-900 text-slate-100" value="omni">{t('Lead search')}</option>
-                        <option className="bg-slate-900 text-slate-100" value="agent">{t('Agent chat')}</option>
-                        <option className="bg-slate-900 text-slate-100" value="marketplace">{t('Integration marketplace')}</option>
+                        <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="omni">{t('Lead search')}</option>
+                        <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="agent">{t('Agent chat')}</option>
+                        <option className="bg-[var(--ws-panel)] text-[var(--ws-text-primary)]" value="marketplace">{t('Integration marketplace')}</option>
                     </select>
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 type-caption uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
+            <div className="rounded-2xl border border-white/5 bg-[var(--ws-panel)]/50 px-4 py-2 type-caption uppercase tracking-widest font-bold text-[var(--ws-text-muted)] flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                 {t('Finding Leads & Autonomous SDR System Active')}
             </div>
             {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
             {/* 
             {activeTab === 'leads' && (isVisualSearchActive || leads.length > 0) && (
-                <div className="fixed bottom-6 right-6 w-72 sm:w-80 h-48 sm:h-64 z-40 rounded-2xl overflow-hidden shadow-2xl border border-teal-500/30 bg-slate-950 pointer-events-none sm:pointer-events-auto">
+                <div className="fixed bottom-6 right-6 w-72 sm:w-80 h-48 sm:h-64 z-40 rounded-2xl overflow-hidden shadow-2xl border border-teal-500/30 bg-[var(--ws-canvas)] pointer-events-none sm:pointer-events-auto">
                     <AerialLeadNavigator
                         leads={leads}
                         isSearching={isVisualSearchActive}
@@ -1145,7 +1145,7 @@ const SalesAgent: React.FC = () => {
                     <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl type-ui sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}`}>
+                                <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl type-ui sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)] rounded-tl-none'}`}>
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
                                         components={{
@@ -1163,9 +1163,9 @@ const SalesAgent: React.FC = () => {
                         ))}
                     </div>
                     {/* Input Area */}
-                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col gap-4">
+                    <div className="p-4 bg-[var(--ws-canvas)] border-t border-[var(--ws-border)] flex flex-col gap-4">
                         {pendingSearch && (
-                            <div className="bg-slate-900 border border-teal-500/30 p-4 rounded-xl shadow-lg">
+                            <div className="bg-[var(--ws-panel)] border border-teal-500/30 p-4 rounded-xl shadow-lg">
                                 <h4 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <Search className="w-4 h-4 text-teal-400" /> Confirm AI Lead Search
                                 </h4>
@@ -1190,7 +1190,7 @@ const SalesAgent: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex gap-3 justify-end items-center mt-2">
-                                    <span className="type-caption text-slate-400 mr-auto flex items-center gap-1">
+                                    <span className="type-caption text-[var(--ws-text-muted)] mr-auto flex items-center gap-1">
                                         <AlertCircle className="w-3 h-3" /> Verify filters before searching
                                     </span>
                                     <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
@@ -1210,7 +1210,7 @@ const SalesAgent: React.FC = () => {
                         <div className="flex gap-4">
                             <input
                                 type="text"
-                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                                className="flex-1 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
                                 placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
                                 disabled={!aiConfigured}
                                 value={inputText}
@@ -1226,23 +1226,23 @@ const SalesAgent: React.FC = () => {
             {/* Email Preview Modal */}
             {viewingMessage && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl shadow-2xl animate-fade-in-up">
-                        <div className="flex justify-between items-center p-4 border-b border-slate-800">
+                    <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl w-full max-w-2xl shadow-2xl animate-fade-in-up">
+                        <div className="flex justify-between items-center p-4 border-b border-[var(--ws-border)]">
                             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                 <Mail className="w-5 h-5 text-teal-500" />
                                 Outreach Draft
                             </h3>
-                            <button onClick={() => setViewingMessage(null)} className="text-slate-500 hover:text-white">
+                            <button onClick={() => setViewingMessage(null)} className="text-[var(--ws-text-muted)] hover:text-white">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6">
-                            <p className="type-card-description text-slate-400 mb-4">Generated for: <span className="text-white font-medium">{viewingMessage.title}</span></p>
-                            <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 type-ui text-slate-300 font-mono whitespace-pre-wrap max-h-[400px] overflow-y-auto">
+                            <p className="type-card-description text-[var(--ws-text-muted)] mb-4">Generated for: <span className="text-white font-medium">{viewingMessage.title}</span></p>
+                            <div className="bg-[var(--ws-canvas)] p-4 rounded-lg border border-[var(--ws-border)] type-ui text-[var(--ws-text-secondary)] font-mono whitespace-pre-wrap max-h-[400px] overflow-y-auto">
                                 {viewingMessage.body}
                             </div>
                         </div>
-                        <div className="p-4 border-t border-slate-800 flex justify-end gap-3">
+                        <div className="p-4 border-t border-[var(--ws-border)] flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setViewingMessage(null)}>Close</Button>
                             <Button className="bg-teal-600 hover:bg-teal-500" onClick={() => {
                                 toast.success("Draft copied to clipboard!");

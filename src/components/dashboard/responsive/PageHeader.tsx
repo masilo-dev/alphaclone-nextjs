@@ -48,7 +48,7 @@ function ActionButton({
     action.variant === 'primary'
       ? WORKSPACE.action.primary
       : action.variant === 'danger'
-        ? 'ac-workspace-action-btn border border-red-500/40 text-red-300 hover:bg-red-500/10'
+        ? 'ac-workspace-action-btn border border-red-500/40 text-[var(--error-text,var(--error-500))] hover:bg-[var(--error-500)]/10'
         : WORKSPACE.action.secondary;
 
   const content = (
@@ -124,7 +124,7 @@ export function PageHeader({
               <React.Fragment key={`${crumb.label}-${i}`}>
                 {i > 0 ? <span aria-hidden>/</span> : null}
                 {crumb.href && !last ? (
-                  <Link href={crumb.href} className="hover:text-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 rounded">
+                  <Link href={crumb.href} className="hover:text-[var(--brand-blue-300)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-500 rounded">
                     {crumb.label}
                   </Link>
                 ) : (
@@ -146,7 +146,7 @@ export function PageHeader({
                 <Link
                   href={backHref}
                   aria-label="Go back"
-                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-slate-400 hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
+                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
@@ -155,7 +155,7 @@ export function PageHeader({
                   type="button"
                   onClick={onBack}
                   aria-label="Go back"
-                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-slate-400 hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
+                  className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5 -ml-1 shrink-0')}
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -168,7 +168,7 @@ export function PageHeader({
                   {moduleLabel}
                 </p>
               ) : null}
-              <h1 className={cn(WORKSPACE.typography.pageTitle, 'text-[var(--app-text,#fff)] truncate')}>
+              <h1 className={cn(WORKSPACE.typography.pageTitle, 'text-[var(--app-text,var(--color-white))] truncate')}>
                 {title}
               </h1>
               {description ? (
@@ -226,13 +226,13 @@ export function PageHeader({
                   />
                   <div
                     role="menu"
-                    className="absolute right-0 bottom-full mb-2 z-[70] w-56 rounded-xl border border-[var(--ws-border)] bg-slate-900 shadow-xl p-1"
+                    className="absolute right-0 bottom-full mb-2 z-[70] w-56 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-xl p-1"
                   >
                     {helpHref ? (
                       <Link
                         role="menuitem"
                         href={helpHref}
-                        className="flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg"
+                        className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg"
                         onClick={() => setMoreOpen(false)}
                       >
                         {helpLabel}
@@ -244,7 +244,7 @@ export function PageHeader({
                           key={a.label}
                           role="menuitem"
                           href={a.href}
-                          className="flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg"
+                          className="flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg"
                           onClick={() => setMoreOpen(false)}
                         >
                           {a.label}
@@ -255,7 +255,7 @@ export function PageHeader({
                           type="button"
                           role="menuitem"
                           disabled={a.disabled}
-                          className="w-full flex min-h-11 items-center px-3 type-ui text-slate-200 hover:bg-white/5 rounded-lg text-left disabled:opacity-50"
+                          className="w-full flex min-h-11 items-center px-3 type-ui text-[var(--ws-text-secondary)] hover:bg-white/5 rounded-lg text-left disabled:opacity-50"
                           onClick={() => {
                             a.onClick?.();
                             setMoreOpen(false);

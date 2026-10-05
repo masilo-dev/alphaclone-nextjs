@@ -271,12 +271,12 @@ export const notificationService = {
                     to: profile.email,
                     subject: params.title,
                     html: `
-                        <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                            <h2 style="color: #0d9488;">AlphaClone Platform</h2>
+                        <div style="font-family: sans-serif; padding: 20px; color: var(--text-primary);">
+                            <h2 style="color: var(--brand-blue-600);">AlphaClone Platform</h2>
                             <p>${params.message}</p>
-                            ${params.link ? `<a href="${baseUrl}${params.link}" style="display: inline-block; padding: 10px 20px; background: #0d9488; color: white; text-decoration: none; border-radius: 5px;">View Update</a>` : ''}
-                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                            <small style="color: #666;">This is an automated platform notification.</small>
+                            ${params.link ? `<a href="${baseUrl}${params.link}" style="display: inline-block; padding: 10px 20px; background: var(--brand-blue-600); color: white; text-decoration: none; border-radius: 5px;">View Update</a>` : ''}
+                            <hr style="border: none; border-top: 1px solid var(--surface-secondary); margin: 20px 0;" />
+                            <small style="color: var(--text-muted);">This is an automated platform notification.</small>
                         </div>
                     `,
                     isPlatformNotification: true

@@ -68,17 +68,17 @@ export default function WebhooksTab() {
     <ModulePageLayout
       header={<EnterprisePageHeader moduleKey="webhooks" />}
     >
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
+      <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://your-app.com/webhooks/alphaclone"
-          className="flex-1 min-w-[220px] bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+          className="flex-1 min-w-[220px] bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
         />
         <select
           value={event}
           onChange={(e) => setEvent(e.target.value)}
-          className="bg-slate-950 border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
+          className="bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-3 py-2 type-ui text-white"
         >
           {EVENT_OPTIONS.map((e) => (
             <option key={e} value={e}>{e}</option>
@@ -91,22 +91,22 @@ export default function WebhooksTab() {
           <Plus className="w-4 h-4" /> Add webhook
         </button>
       </div>
-      {newSecret && <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="type-ui font-semibold text-amber-300">Copy this signing secret now. It will not be shown again.</p><code className="mt-2 block break-all type-ui text-slate-300 select-all">{newSecret}</code><button onClick={() => setNewSecret(null)} className="mt-2 type-ui text-slate-500 hover:text-white">I saved it</button></div>}
+      {newSecret && <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="type-ui font-semibold text-[var(--warning-text,var(--warning-500))]">Copy this signing secret now. It will not be shown again.</p><code className="mt-2 block break-all type-ui text-[var(--ws-text-secondary)] select-all">{newSecret}</code><button onClick={() => setNewSecret(null)} className="mt-2 type-ui text-[var(--ws-text-muted)] hover:text-white">I saved it</button></div>}
 
       <div className="space-y-3 ac-scroll-full pb-24">
         {loading ? (
-          <p className="type-card-description text-slate-500 p-4">Loading webhooks…</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] p-4">Loading webhooks…</p>
         ) : hooks.length === 0 ? (
-          <p className="type-card-description text-slate-500 p-4">No webhooks configured.</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] p-4">No webhooks configured.</p>
         ) : (
           hooks.map((h) => (
-            <div key={h.id} className="bg-slate-900 border border-white/5 rounded-xl p-4 flex items-start gap-3">
+            <div key={h.id} className="bg-[var(--ws-panel)] border border-white/5 rounded-xl p-4 flex items-start gap-3">
               <WebhookIcon className="w-5 h-5 text-teal-400 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="type-card-description font-medium text-white break-all">{h.url}</p>
-                <p className="type-card-description text-slate-500 mt-1">{(h.events || []).join(', ')}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{(h.events || []).join(', ')}</p>
               </div>
-              <button onClick={() => void handleDelete(h.id)} className="text-slate-500 hover:text-red-400">
+              <button onClick={() => void handleDelete(h.id)} className="text-[var(--ws-text-muted)] hover:text-red-400">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>

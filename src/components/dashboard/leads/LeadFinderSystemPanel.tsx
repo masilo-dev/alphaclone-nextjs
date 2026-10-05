@@ -29,7 +29,7 @@ const STEP_LABELS: Record<string, string> = {
 function StatusDot({ ok }: { ok: boolean }) {
   return (
     <span
-      className={`inline-block w-2 h-2 rounded-full shrink-0 ${ok ? 'bg-emerald-400' : 'bg-amber-400'}`}
+      className={`inline-block w-2 h-2 rounded-full shrink-0 ${ok ? 'bg-[var(--success-500)]' : 'bg-[var(--warning-500)]'}`}
       aria-hidden
     />
   );
@@ -50,12 +50,12 @@ function PipelineBar({
   return (
     <div className="space-y-1">
       <div className="flex justify-between type-caption">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-slate-300 font-medium tabular-nums">
+        <span className="text-[var(--ws-text-muted)]">{label}</span>
+        <span className="text-[var(--ws-text-secondary)] font-medium tabular-nums">
           {value.toLocaleString()} ({pct}%)
         </span>
       </div>
-      <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -97,13 +97,13 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       <div className={panelClass}>
         <DashboardPanelHeader title="System analytics" subtitle="Loading pipeline data…" />
         {/* Blurred skeleton — perceived as "something's happening" instead of empty space */}
-        <div className="h-24 ac-skeleton-pulse rounded-lg bg-slate-800/40 backdrop-blur-sm saturate-50 animate-[pulse_1.8s_ease-in-out_infinite]" />
+        <div className="h-24 ac-skeleton-pulse rounded-lg bg-[var(--ws-surface-secondary)]/40 backdrop-blur-sm saturate-50 animate-[pulse_1.8s_ease-in-out_infinite]" />
         <div className="h-28 grid grid-cols-4 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-slate-800/50 bg-slate-900/50 ac-skeleton-pulse opacity-60 backdrop-blur-[2px]" />
+            <div key={i} className="rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 ac-skeleton-pulse opacity-60 backdrop-blur-[2px]" />
           ))}
         </div>
-        <div className="h-16 rounded-lg border border-slate-800/50 bg-slate-900/20 ac-skeleton-pulse saturate-0 backdrop-blur-sm" />
+        <div className="h-16 rounded-lg border border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/20 ac-skeleton-pulse saturate-0 backdrop-blur-sm" />
       </div>
     );
   }
@@ -119,7 +119,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
         <button
           type="button"
           onClick={() => void load()}
-          className="type-caption text-teal-400 hover:text-teal-300 flex items-center gap-1"
+          className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1"
         >
           <RefreshCw className="w-3 h-3" /> Retry
         </button>
@@ -149,7 +149,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
         <button
           type="button"
           onClick={() => void load()}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800"
+          className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
           title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -158,15 +158,15 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
 
       {/* EMPTY QUEUE: 0 leads → tell user exactly what to press below */}
       {hasNoPipelineData && (
-        <div className="rounded-xl border border-dashed border-slate-800 bg-gradient-to-br from-teal-500/10 to-violet-500/10 p-4 space-y-2.5">
+        <div className="rounded-xl border border-dashed border-[var(--ws-border)] bg-gradient-to-br from-teal-500/10 to-violet-500/10 p-4 space-y-2.5">
           <p className="type-card-description font-bold text-white flex items-center gap-2">
           <Zap className="w-4 h-4 text-teal-400" /> No leads in the queue yet
           </p>
-          <p className="type-card-description text-slate-400 leading-relaxed">
+          <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
           Run a <span className="font-semibold text-teal-400">Lead Finder campaign</span> below to start discovering prospects.
           Scrape an ICP search, enrich it'll flow through here as they hit the CRM and become outreach.
           </p>
-          <ol className="space-y-1 type-ui text-slate-400 pl-1">
+          <ol className="space-y-1 type-ui text-[var(--ws-text-muted)] pl-1">
             <li>Step 1: Pick an ideal customer profile (city, industry, keywords)</li>
             <li>Step 2: Run the scraper; watch discovery → enrichment → scoring → CRM.</li>
             <li>Step 3: Open a grade A/B leads arrive; then outreach here.</li>
@@ -176,7 +176,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
 
       {/* Pipeline funnel */}
       <div className="space-y-2.5">
-        <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+        <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)] flex items-center gap-1.5">
           <Activity className="w-3 h-3" /> Pipeline
         </p>
         <PipelineBar
@@ -208,12 +208,12 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Grade breakdown */}
       {gradeTotal > 0 && (
         <div className="space-y-2">
-          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500">Lead grades</p>
+          <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Lead grades</p>
           <div className="grid grid-cols-4 gap-2">
             {(['A', 'B', 'C', 'D'] as const).map((g) => (
-              <div key={g} className="rounded-lg border border-slate-800 bg-slate-900/50 px-2 py-1.5 text-center">
+              <div key={g} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-2 py-1.5 text-center">
                 <div className="text-lg font-bold text-white tabular-nums">{stats.leads.byGrade[g] ?? 0}</div>
-                <div className="type-ui text-slate-500">Grade {g}</div>
+                <div className="type-ui text-[var(--ws-text-muted)]">Grade {g}</div>
               </div>
             ))}
           </div>
@@ -223,14 +223,14 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Data sources */}
       {topSources.length > 0 && (
         <div className="space-y-2">
-          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+          <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)] flex items-center gap-1.5">
             <Database className="w-3 h-3" /> Sources
           </p>
           <div className="space-y-1">
             {topSources.map(([source, count]) => (
               <div key={source} className="flex justify-between type-caption">
-                <span className="text-slate-400 capitalize">{source.replace(/_/g, ' ')}</span>
-                <span className="text-slate-200 tabular-nums">{count}</span>
+                <span className="text-[var(--ws-text-muted)] capitalize">{source.replace(/_/g, ' ')}</span>
+                <span className="text-[var(--ws-text-secondary)] tabular-nums">{count}</span>
               </div>
             ))}
           </div>
@@ -238,14 +238,14 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       )}
 
       {/* System health */}
-      <div className="space-y-2 pt-2 border-t border-slate-800/80">
-        <p className="type-caption font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+      <div className="space-y-2 pt-2 border-t border-[var(--ws-border)]/80">
+        <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)] flex items-center gap-1.5">
           <Server className="w-3 h-3" /> Infrastructure
         </p>
         <ul className="space-y-1.5 type-caption">
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok={stats.system.leadSearch === 'in-process' || stats.system.leadSearch === 'external'} />
-            <Zap className="w-3 h-3 text-slate-500" />
+            <Zap className="w-3 h-3 text-[var(--ws-text-muted)]" />
             Lead search:{' '}
             <span className={stats.system.leadSearch === 'in-process' ? 'text-emerald-400' : 'text-blue-400'}>
               {stats.system.leadSearch === 'in-process'
@@ -253,25 +253,25 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
                 : 'External scraper service'}
             </span>
           </li>
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok={stats.system.foursquare === 'configured'} />
-            <Globe className="w-3 h-3 text-slate-500" />
+            <Globe className="w-3 h-3 text-[var(--ws-text-muted)]" />
             Foursquare:{' '}
-            <span className={stats.system.foursquare === 'configured' ? 'text-emerald-400' : 'text-slate-500'}>
+            <span className={stats.system.foursquare === 'configured' ? 'text-emerald-400' : 'text-[var(--ws-text-muted)]'}>
               {stats.system.foursquare === 'configured' ? 'Configured' : 'Not configured — OSM only'}
             </span>
           </li>
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok={stats.system.osm === 'available'} />
-            <CheckCircle2 className="w-3 h-3 text-slate-500" />
+            <CheckCircle2 className="w-3 h-3 text-[var(--ws-text-muted)]" />
             OpenStreetMap / Overpass: available
           </li>
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok />
-            <Globe className="w-3 h-3 text-slate-500" />
+            <Globe className="w-3 h-3 text-[var(--ws-text-muted)]" />
             Free stack: Wikidata · Photon · DuckDuckGo
           </li>
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok={stats.system.deepseek === 'configured'} />
             <SparklesIcon />
             DeepSeek (chat parsing):{' '}
@@ -279,7 +279,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
               {stats.system.deepseek === 'configured' ? 'Configured' : 'Missing — set DEEPSEEK_API_KEY on Railway web'}
             </span>
           </li>
-          <li className="flex items-center gap-2 text-slate-300">
+          <li className="flex items-center gap-2 text-[var(--ws-text-secondary)]">
             <StatusDot ok={stats.system.aiProviders === 'available'} />
             <SparklesIcon />
             AI enrichment:{' '}
@@ -293,17 +293,17 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
       {/* Recent runs */}
       {stats.recentRuns.length > 0 && !compact && (
         <div className="space-y-2">
-          <p className="type-caption font-semibold uppercase tracking-wider text-slate-500">Recent runs</p>
+          <p className="type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Recent runs</p>
           <div className="space-y-1.5 max-h-36 overflow-y-auto">
             {stats.recentRuns.slice(0, 5).map((run) => (
               <div
                 key={run.id}
-                className="flex items-center justify-between gap-2 type-caption rounded-lg border border-slate-800 px-2 py-1.5"
+                className="flex items-center justify-between gap-2 type-caption rounded-lg border border-[var(--ws-border)] px-2 py-1.5"
               >
-                <span className="text-slate-400 truncate">
+                <span className="text-[var(--ws-text-muted)] truncate">
                   {STEP_LABELS[run.currentStep] || run.currentStep}
                 </span>
-                <span className="text-slate-300 tabular-nums shrink-0">
+                <span className="text-[var(--ws-text-secondary)] tabular-nums shrink-0">
                   {run.sourceCount} found · {run.progress}%
                 </span>
               </div>
@@ -317,7 +317,7 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
 
 function SparklesIcon() {
   return (
-    <svg className="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="w-3 h-3 text-[var(--ws-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
     </svg>
   );

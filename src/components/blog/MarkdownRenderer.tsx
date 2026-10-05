@@ -44,11 +44,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     ),
                     code: ({ node, className, ...props }) => {
                         return (
-                            <code {...props} className={`${className} bg-slate-800 text-teal-300 rounded px-1.5 py-0.5 type-ui font-mono border border-white/10`} />
+                            <code {...props} className={`${className} bg-[var(--ws-surface-secondary)] text-[var(--brand-blue-300)] rounded px-1.5 py-0.5 type-ui font-mono border border-white/10`} />
                         );
                     },
                     pre: ({ node, ...props }) => (
-                        <pre {...props} className="bg-slate-900 border border-white/10 rounded-lg p-4 overflow-x-auto mb-6 custom-scrollbar" />
+                        <pre {...props} className="bg-[var(--ws-panel)] border border-white/10 rounded-lg p-4 overflow-x-auto mb-6 custom-scrollbar" />
                     ),
                     img: ({ node, ...props }) => (
                         <div className="relative w-full h-[300px] md:h-[500px] my-8 rounded-xl overflow-hidden border border-white/10 shadow-2xl">
@@ -63,11 +63,11 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     ),
                     table: ({ node, ...props }) => (
                         <div className="overflow-x-auto mb-8 rounded-lg border border-white/10 min-w-0">
-                            <table {...props} className="w-full min-w-[480px] text-left type-ui text-slate-300" />
+                            <table {...props} className="w-full min-w-[480px] text-left type-ui text-[var(--ws-text-secondary)]" />
                         </div>
                     ),
                     th: ({ node, ...props }) => (
-                        <th {...props} className="bg-slate-800/50 px-4 py-3 font-semibold text-white border-b border-white/10" />
+                        <th {...props} className="bg-[var(--ws-surface-secondary)]/50 px-4 py-3 font-semibold text-white border-b border-white/10" />
                     ),
                     td: ({ node, ...props }) => (
                         <td {...props} className="px-4 py-3 border-b border-white/5" />

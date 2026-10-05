@@ -55,7 +55,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   past_due: <AlertCircle className="h-3.5 w-3.5 text-amber-400 inline mr-1" />,
   suspended: <AlertCircle className="h-3.5 w-3.5 text-amber-400 inline mr-1" />,
   cancelled: <XCircle className="h-3.5 w-3.5 text-red-400 inline mr-1" />,
-  free: <Clock className="h-3.5 w-3.5 text-slate-400 inline mr-1" />,
+  free: <Clock className="h-3.5 w-3.5 text-[var(--ws-text-muted)] inline mr-1" />,
 };
 
 const SuperAdminSubscriptionsTab: React.FC = () => {
@@ -160,7 +160,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         accessor: (r) => (
           <div className="min-w-0">
             <span className="type-ui font-bold text-white block truncate">{r.tenant_name}</span>
-            <span className="type-ui text-slate-500 font-mono">{r.tenant_id.substring(0, 12)}…</span>
+            <span className="type-ui text-[var(--ws-text-muted)] font-mono">{r.tenant_id.substring(0, 12)}…</span>
           </div>
         ),
       },
@@ -170,7 +170,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.subscription_plan || '',
         accessor: (r) => (
-          <span className="capitalize font-semibold text-slate-200 type-caption">
+          <span className="capitalize font-semibold text-[var(--ws-text-secondary)] type-caption">
             {r.subscription_plan || 'free'}
           </span>
         ),
@@ -199,7 +199,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
           const amount = PLAN_MRR[r.subscription_plan || ''] || 0;
           const isActive = r.subscription_status === 'active' || r.subscription_status === 'trial';
           return (
-            <span className={`font-mono type-caption font-bold ${isActive && amount > 0 ? 'text-teal-300' : 'text-slate-500'}`}>
+            <span className={`font-mono type-caption font-bold ${isActive && amount > 0 ? 'text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-muted)]'}`}>
               {isActive && amount > 0 ? `$${amount}` : '—'}
             </span>
           );
@@ -211,7 +211,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.total_mcp_calls_today,
         accessor: (r) => (
-          <span className="font-mono type-caption text-slate-300">{r.total_mcp_calls_today ?? 0}</span>
+          <span className="font-mono type-caption text-[var(--ws-text-secondary)]">{r.total_mcp_calls_today ?? 0}</span>
         ),
       },
       {
@@ -220,7 +220,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         sortable: true,
         sortValue: (r) => r.total_leads_today,
         accessor: (r) => (
-          <span className="font-mono type-caption text-slate-300">{r.total_leads_today ?? 0}</span>
+          <span className="font-mono type-caption text-[var(--ws-text-secondary)]">{r.total_leads_today ?? 0}</span>
         ),
       },
       {
@@ -228,7 +228,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         header: 'Period Ends',
         accessor: (r) =>
           r.current_period_end ? (
-            <span className="type-caption text-slate-400">
+            <span className="type-caption text-[var(--ws-text-muted)]">
               {new Date(r.current_period_end).toLocaleDateString()}
               {r.cancel_at_period_end && (
                 <span className="ml-1.5 text-amber-400 type-ui font-bold">(cancels)</span>
@@ -248,7 +248,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 type-caption text-teal-400 hover:text-teal-300 font-mono"
+              className="inline-flex items-center gap-1 type-caption text-teal-400 hover:text-[var(--brand-blue-300)] font-mono"
             >
               {r.stripe_customer_id.substring(0, 14)}…
               <ExternalLink className="h-3 w-3 shrink-0" />
@@ -271,7 +271,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
                 <CreditCard className="w-6 h-6 text-teal-400" />
                 Subscriptions &amp; Billing
               </h2>
-              <p className="text-slate-400 type-card-description">
+              <p className="text-[var(--ws-text-muted)] type-card-description">
                 Real-time subscription state, Stripe IDs, and daily usage per tenant
               </p>
             </div>
@@ -279,7 +279,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
               type="button"
               onClick={() => void load()}
               disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50 self-start"
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] disabled:opacity-50 self-start"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -288,13 +288,13 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
         }
         toolbar={
           <div className="relative px-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
             <input
               type="text"
               placeholder="Search tenant, plan, or status…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
         }
@@ -310,7 +310,7 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
           {loading ? (
             <div className="divide-y divide-white/5">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />
+                <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />
               ))}
             </div>
           ) : (

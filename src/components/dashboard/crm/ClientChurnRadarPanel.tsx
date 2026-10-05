@@ -35,12 +35,12 @@ export function ClientChurnRadarPanel() {
           </div>
           <div>
             <h4 className="type-caption font-black text-white uppercase tracking-wider">Client Churn Risk & Health Radar</h4>
-            <p className="type-card-description text-slate-400">Predictive retention analytics & proactive recovery plays</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Predictive retention analytics & proactive recovery plays</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="type-caption text-slate-400 font-bold">
+          <span className="type-caption text-[var(--ws-text-muted)] font-bold">
             Average Health: <span className="text-teal-400 font-black">{avgHealth}%</span>
           </span>
           <span className="type-caption font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
@@ -62,8 +62,8 @@ export function ClientChurnRadarPanel() {
             onClick={() => setFilter(t.id as any)}
             className={`px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
               filter === t.id
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] border border-amber-500/30'
+                : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
             }`}
           >
             {t.label}
@@ -73,7 +73,7 @@ export function ClientChurnRadarPanel() {
 
       {/* Grid of Accounts */}
       {filteredRecords.length === 0 ? (
-        <p className="type-card-description text-slate-400">
+        <p className="type-card-description text-[var(--ws-text-muted)]">
           Churn risk is empty until live client activity, invoices, and contract dates are available. No sample accounts are shown.
         </p>
       ) : (
@@ -96,15 +96,15 @@ export function ClientChurnRadarPanel() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h5 className="type-card-title font-bold text-white">{r.company}</h5>
-                  <p className="type-card-description text-slate-400">{r.name}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">{r.name}</p>
                 </div>
                 <span
                   className={`type-caption font-black uppercase px-2.5 py-0.5 rounded-full border ${
                     isHigh
-                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                      ? 'bg-rose-500/20 text-[var(--error-text,var(--error-500))] border-rose-500/40'
                       : isMod
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      ? 'bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] border-amber-500/40'
+                      : 'bg-emerald-500/20 text-[var(--success-text,var(--success-500))] border-emerald-500/40'
                   }`}
                 >
                   {r.riskLevel}
@@ -114,15 +114,15 @@ export function ClientChurnRadarPanel() {
               {/* Progress Bar */}
               <div className="mt-3 space-y-1">
                 <div className="flex items-center justify-between type-ui font-bold">
-                  <span className="text-slate-400">Health Score</span>
+                  <span className="text-[var(--ws-text-muted)]">Health Score</span>
                   <span className={isHigh ? 'text-rose-400' : isMod ? 'text-amber-400' : 'text-emerald-400'}>
                     {r.healthScore} / 100
                   </span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-white/10">
+                <div className="w-full h-2 rounded-full bg-[var(--ws-canvas)] overflow-hidden border border-white/10">
                   <div
                     className={`h-full transition-all duration-500 ${
-                      isHigh ? 'bg-rose-500' : isMod ? 'bg-amber-500' : 'bg-emerald-400'
+                      isHigh ? 'bg-rose-500' : isMod ? 'bg-amber-500' : 'bg-[var(--success-500)]'
                     }`}
                     style={{ width: `${r.healthScore}%` }}
                   />
@@ -130,7 +130,7 @@ export function ClientChurnRadarPanel() {
               </div>
 
               {/* Signals */}
-              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-white/5">
+              <div className="grid grid-cols-3 gap-2 mt-3 type-ui text-[var(--ws-text-muted)] bg-[var(--ws-canvas)]/60 p-2 rounded-lg border border-white/5">
                 <div>
                   <span className="block font-bold text-white">{r.lastActiveDaysAgo}d ago</span>
                   <span>Last Active</span>
@@ -147,12 +147,12 @@ export function ClientChurnRadarPanel() {
 
               {/* Playbook Recommendation */}
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
-                <p className="type-card-description text-slate-300 italic truncate max-w-[240px]">
+                <p className="type-card-description text-[var(--ws-text-secondary)] italic truncate max-w-[240px]">
                   "{r.recommendedAction}"
                 </p>
                 <button
                   onClick={() => handleActionClick(r)}
-                  className="inline-flex items-center gap-1 type-ui font-bold text-amber-400 hover:text-amber-300 transition-colors shrink-0"
+                  className="inline-flex items-center gap-1 type-ui font-bold text-amber-400 hover:text-[var(--warning-text,var(--warning-500))] transition-colors shrink-0"
                 >
                   Playbook <ArrowUpRight size={12} />
                 </button>

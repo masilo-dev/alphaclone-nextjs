@@ -44,9 +44,9 @@ const PIPELINE_STAGES = [
 function statusTone(status: string): string {
   const s = status.toLowerCase();
   if (s === 'replied') return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-  if (s === 'failed') return 'text-red-400 bg-red-500/10 border-red-500/30';
+  if (s === 'failed') return 'text-red-400 bg-[var(--error-500)]/10 border-red-500/30';
   if (s === 'sent' || s === 'delivered') return 'text-sky-400 bg-sky-500/10 border-sky-500/30';
-  return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+  return 'text-[var(--ws-text-muted)] bg-slate-500/10 border-slate-500/30';
 }
 
 export default function MarketingOutreachPage() {
@@ -123,7 +123,7 @@ export default function MarketingOutreachPage() {
 
         {currentTenant?.id && loading && !data ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-[var(--ws-text-muted)]" />
           </div>
         ) : (
           <>
@@ -133,7 +133,7 @@ export default function MarketingOutreachPage() {
               <div className="ac-workspace-panel p-4 flex flex-wrap items-center gap-1">
                 {PIPELINE_STAGES.map((stage, i) => (
                   <React.Fragment key={stage.id}>
-                    <span className="type-ui font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-slate-800/50">
+                    <span className="type-ui font-medium text-[var(--ws-text-secondary)] px-2 py-1 rounded bg-[var(--ws-surface-secondary)]/50">
                       {stage.label}
                     </span>
                     {i < PIPELINE_STAGES.length - 1 ? (
@@ -144,7 +144,7 @@ export default function MarketingOutreachPage() {
               </div>
               <p className="type-card-description text-[var(--ws-text-secondary)] mt-2">
                 Marketing actions move CRM records through these stages.{' '}
-                <Link href="/dashboard/crm" className="text-teal-400 hover:text-teal-300">
+                <Link href="/dashboard/crm" className="text-teal-400 hover:text-[var(--brand-blue-300)]">
                   View CRM →
                 </Link>
               </p>
@@ -172,7 +172,7 @@ export default function MarketingOutreachPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-secondary)]">Recent outreach</h2>
-                <button type="button" onClick={load} className="type-ui text-slate-500 hover:text-slate-300 inline-flex items-center gap-1">
+                <button type="button" onClick={load} className="type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] inline-flex items-center gap-1">
                   <RefreshCw className="w-3 h-3" />
                   Refresh
                 </button>
@@ -183,7 +183,7 @@ export default function MarketingOutreachPage() {
                   <button
                     type="button"
                     onClick={() => setOutreachOpen(true)}
-                    className="inline-block mt-3 type-ui text-teal-400 hover:text-teal-300"
+                    className="inline-block mt-3 type-ui text-teal-400 hover:text-[var(--brand-blue-300)]"
                   >
                     Send your first outreach
                   </button>
@@ -221,12 +221,12 @@ export default function MarketingOutreachPage() {
                               <button
                                 type="button"
                                 onClick={() => router.push('/dashboard/marketing/outreach')}
-                                className="type-caption font-semibold uppercase text-amber-400 hover:text-amber-300"
+                                className="type-caption font-semibold uppercase text-amber-400 hover:text-[var(--warning-text,var(--warning-500))]"
                               >
                                 Retry
                               </button>
                             ) : row.status === 'replied' ? (
-                              <Link href="/dashboard/outreach/inbox" className="type-caption font-semibold uppercase text-teal-400 hover:text-teal-300">
+                              <Link href="/dashboard/outreach/inbox" className="type-caption font-semibold uppercase text-teal-400 hover:text-[var(--brand-blue-300)]">
                                 Review reply
                               </Link>
                             ) : (

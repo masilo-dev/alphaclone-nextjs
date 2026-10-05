@@ -461,7 +461,7 @@ export default function DeepDeskView() {
                   placeholder="Search tickets..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="!pl-9 !rounded-md !bg-slate-900 !border-slate-700 !type-caption"
+                  className="!pl-9 !rounded-md !bg-[var(--ws-panel)] !border-[var(--ws-border)] !type-caption"
                 />
               </Box>
 

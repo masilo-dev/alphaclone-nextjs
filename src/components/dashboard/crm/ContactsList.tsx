@@ -27,10 +27,10 @@ interface ContactsListProps {
 }
 
 const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgColor: string }> = {
-    active: { label: 'Active', color: 'text-emerald-300', bgColor: 'bg-emerald-500/15' },
-    inactive: { label: 'Inactive', color: 'text-slate-300', bgColor: 'bg-slate-500/15' },
+    active: { label: 'Active', color: 'text-[var(--success-text,var(--success-500))]', bgColor: 'bg-emerald-500/15' },
+    inactive: { label: 'Inactive', color: 'text-[var(--ws-text-secondary)]', bgColor: 'bg-slate-500/15' },
     unsubscribed: { label: 'Unsubscribed', color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
-    bounced: { label: 'Bounced', color: 'text-red-400', bgColor: 'bg-red-500/20' },
+    bounced: { label: 'Bounced', color: 'text-red-400', bgColor: 'bg-[var(--error-500)]/20' },
 };
 
 export default function ContactsList({ onEditContact, onCreateContact, highlightContactId }: ContactsListProps) {
@@ -228,7 +228,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-semibold text-white">Contacts</h2>
-                    <p className="type-card-description text-slate-300">Manage your contacts and leads</p>
+                    <p className="type-card-description text-[var(--ws-text-secondary)]">Manage your contacts and leads</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {selectedIds.length > 0 && (
@@ -242,7 +242,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                             </button>
                             <button
                                 onClick={() => setShowBulkDeleteConfirm(true)}
-                                className="flex items-center gap-2 px-3 py-2 type-ui text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                                className="flex items-center gap-2 px-3 py-2 type-ui text-red-400 hover:text-[var(--error-text,var(--error-500))] hover:bg-red-400/10 rounded-lg transition-colors"
                             >
                                 <Trash2 className="w-4 h-4" />
                                 Delete ({selectedIds.length})
@@ -252,7 +252,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                     <button
                         onClick={handleExportCSV}
                         disabled={total === 0 || exporting}
-                        className="flex items-center gap-2 px-3 py-2 type-ui text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 type-ui text-[var(--ws-text-secondary)] hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
                     >
                         <Download className="w-4 h-4" />
                         {exporting ? 'Exporting…' : 'Export'}
@@ -270,19 +270,19 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {/* Filters */}
             <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex-1 min-w-[200px] relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
                     <input
                         type="text"
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                        className="w-full pl-10 pr-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as ContactStatus | 'all')}
-                    className="px-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="all">All Status</option>
                     {Object.entries(STATUS_CONFIG).map(([status, config]) => (
@@ -292,20 +292,20 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                 <select
                     value={sortField}
                     onChange={(e) => setSortField(e.target.value as typeof sortField)}
-                    className="px-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
+                    className="px-4 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="createdAt">Sort by Date</option>
                     <option value="name">Sort by Name</option>
                 </select>
                 <button
                     onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white"
+                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-white"
                 >
                     {sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 <button
                     onClick={loadContacts}
-                    className="p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white"
+                    className="p-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-muted)] hover:text-white"
                     title="Refresh"
                 >
                     <RefreshCw className="w-4 h-4" />
@@ -314,10 +314,10 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Error */}
             {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 type-ui text-red-400 flex items-center gap-2">
+                <div className="bg-[var(--error-500)]/10 border border-red-500/30 rounded-lg p-4 type-ui text-red-400 flex items-center gap-2">
                     <XCircle className="w-4 h-4" />
                     {error}
-                    <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">
+                    <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-[var(--error-text,var(--error-500))]">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
@@ -325,12 +325,12 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
 
             {/* Contacts List */}
             {total === 0 ? (
-                <div className="text-center py-16 bg-slate-800/50 rounded-lg border border-slate-700">
+                <div className="text-center py-16 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
                     <User className="w-12 h-12 mx-auto text-slate-600 mb-4" />
-                    <p className="text-slate-400">
+                    <p className="text-[var(--ws-text-muted)]">
                         {searchQuery || statusFilter !== 'all' ? 'No contacts match these filters' : 'No contacts yet'}
                     </p>
-                    <p className="type-card-description text-slate-500 mt-1">
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                         {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Add your first contact to get started'}
                     </p>
                     <button
@@ -353,7 +353,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                     setSelectedIds(contacts.map((c) => c.id));
                                 }
                             }}
-                            className="inline-flex items-center gap-2 type-ui text-slate-400 hover:text-white"
+                            className="inline-flex items-center gap-2 type-ui text-[var(--ws-text-muted)] hover:text-white"
                         >
                             {allVisibleSelected ? <CheckCircle className="w-4 h-4 text-teal-400" /> : <div className="w-4 h-4 border border-slate-500 rounded" />}
                             {allVisibleSelected ? 'Deselect page' : `Select page (${contacts.length})`}
@@ -362,7 +362,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                             <button
                                 type="button"
                                 onClick={() => setSelectedIds([])}
-                                className="type-ui text-slate-500 hover:text-slate-300"
+                                className="type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
                             >
                                 Clear selection
                             </button>
@@ -374,7 +374,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                         return (
                             <div
                                 key={contact.id}
-                                className={`bg-slate-800 rounded-lg border p-4 hover:border-slate-600 transition-colors ${isSelected ? 'border-teal-500/50 ring-1 ring-teal-500/30' : 'border-slate-700'}`}
+                                className={`bg-[var(--ws-surface-secondary)] rounded-lg border p-4 hover:border-slate-600 transition-colors ${isSelected ? 'border-teal-500/50 ring-1 ring-teal-500/30' : 'border-[var(--ws-border)]'}`}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-4">
@@ -387,7 +387,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                                         : [...prev, contact.id]
                                                 );
                                             }}
-                                            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                                            className="flex-shrink-0 text-[var(--ws-text-muted)] hover:text-teal-400"
                                             aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
                                         >
                                             {isSelected ? <CheckCircle className="w-5 h-5 text-teal-400" /> : <div className="w-5 h-5 border border-slate-500 rounded" />}
@@ -409,7 +409,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                                     {status.label}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-4 mt-1 type-ui text-slate-400">
+                                            <div className="flex items-center gap-4 mt-1 type-ui text-[var(--ws-text-muted)]">
                                                 {contact.email && (
                                                     <span className="flex items-center gap-1">
                                                         <Mail className="w-3 h-3" />
@@ -429,7 +429,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-4 mt-1 type-caption text-slate-500">
+                                            <div className="flex items-center gap-4 mt-1 type-caption text-[var(--ws-text-muted)]">
                                                 <span className="flex items-center gap-1">
                                                     <Calendar className="w-3 h-3" />
                                                     Added {formatDate(contact.createdAt)}
@@ -475,21 +475,21 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                         </button>
                                         <Link
                                             href={`/dashboard/business/contracts?contactId=${encodeURIComponent(contact.id)}`}
-                                            className="p-2 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
+                                            className="p-2 text-sky-400 hover:text-[var(--info-text,var(--info-500))] hover:bg-sky-500/10 rounded-lg transition-colors"
                                             title="Create or view contracts"
                                         >
                                             <FileText className="w-4 h-4" />
                                         </Link>
                                         <Link
                                             href={`/dashboard/business/billing/manage?contactId=${encodeURIComponent(contact.id)}`}
-                                            className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                            className="p-2 text-emerald-400 hover:text-[var(--success-text,var(--success-500))] hover:bg-emerald-500/10 rounded-lg transition-colors"
                                             title="Create or view invoices"
                                         >
                                             <Receipt className="w-4 h-4" />
                                         </Link>
                                         <button
                                             onClick={() => setTimelineContact(contact)}
-                                            className="p-2 text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-colors"
+                                            className="p-2 text-teal-400 hover:text-[var(--brand-blue-300)] hover:bg-teal-500/10 rounded-lg transition-colors"
                                             title="View Activity Timeline"
                                         >
                                             <Activity className="w-4 h-4" />
@@ -503,7 +503,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                         </button>
                                         <button
                                             onClick={() => onEditContact?.(contact)}
-                                            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                                            className="p-2 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors"
                                             title="Edit Contact"
                                         >
                                             <Edit className="w-4 h-4" />
@@ -511,7 +511,7 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                         <button
                                             onClick={() => setShowDeleteConfirm(contact.id)}
                                             disabled={actionLoading === contact.id}
-                                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                                            className="p-2 text-red-400 hover:text-[var(--error-text,var(--error-500))] hover:bg-red-400/10 rounded-lg transition-colors"
                                             title="Delete Contact"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -522,14 +522,14 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                         );
                     })}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
-                        <p className="type-card-description text-slate-500">
+                        <p className="type-card-description text-[var(--ws-text-muted)]">
                             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
                         </p>
                         <div className="flex items-center gap-2">
                             <select
                                 value={String(pageSize)}
                                 onChange={(e) => setPageSize(Number(e.target.value))}
-                                className="px-3 py-2 bg-slate-900 border border-white/5 rounded-lg text-white type-ui focus:outline-none focus:border-emerald-500/50"
+                                className="px-3 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-lg text-white type-ui focus:outline-none focus:border-emerald-500/50"
                                 aria-label="Contacts per page"
                             >
                                 <option value="10">10 / page</option>
@@ -541,18 +541,18 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                 type="button"
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={page <= 1}
-                                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 type-ui hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Previous
                             </button>
-                            <span className="type-ui text-slate-400 font-semibold">
+                            <span className="type-ui text-[var(--ws-text-muted)] font-semibold">
                                 Page {page} / {pages}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setPage((p) => Math.min(pages, p + 1))}
                                 disabled={page >= pages}
-                                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 type-ui hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-2 rounded-lg bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] type-ui hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Next
                             </button>
@@ -574,15 +574,15 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {/* Bulk Delete Confirmation */}
             {showBulkDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-md w-full">
+                    <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-white mb-2">Delete {selectedIds.length} contacts?</h3>
-                        <p className="type-card-description text-slate-400 mb-6">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             This action cannot be undone. Selected contacts will be permanently deleted.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowBulkDeleteConfirm(false)}
-                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white transition-colors"
                             >
                                 Cancel
                             </button>
@@ -601,15 +601,15 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             {/* Delete Confirmation */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 max-w-md w-full">
+                    <div className="bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-white mb-2">Delete Contact?</h3>
-                        <p className="type-card-description text-slate-400 mb-6">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             This action cannot be undone. The contact will be permanently deleted.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowDeleteConfirm(null)}
-                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                                className="px-4 py-2 text-[var(--ws-text-muted)] hover:text-white transition-colors"
                             >
                                 Cancel
                             </button>
@@ -634,32 +634,32 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
             )}
             {previewContact && (
                 <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-overlay-backdrop)] backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
-                    <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-2xl">
+                    <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-[var(--ws-canvas)] shadow-2xl">
                         <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
                             <div>
                                 <p className="type-caption font-black uppercase tracking-caps text-cyan-300">Contact 360 preview</p>
                                 <h3 className="mt-1 text-xl font-bold text-white">{previewContact.fullName}</h3>
-                                <p className="mt-1 type-caption text-slate-400">{previewContact.company?.name || 'Independent contact'} · {previewContact.status}</p>
+                                <p className="mt-1 type-caption text-[var(--ws-text-muted)]">{previewContact.company?.name || 'Independent contact'} · {previewContact.status}</p>
                             </div>
-                            <button type="button" onClick={() => setPreviewContact(null)} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close Contact 360 preview"><X className="h-5 w-5" /></button>
+                            <button type="button" onClick={() => setPreviewContact(null)} className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-white/10 hover:text-white" aria-label="Close Contact 360 preview"><X className="h-5 w-5" /></button>
                         </div>
                         <div className="grid gap-4 p-5 sm:grid-cols-2">
                             <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
-                                <p className="type-caption font-black uppercase tracking-caps text-slate-500">Identity and contact</p>
-                                <div className="mt-3 space-y-2 type-ui text-slate-300">
+                                <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Identity and contact</p>
+                                <div className="mt-3 space-y-2 type-ui text-[var(--ws-text-secondary)]">
                                     <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-cyan-300" />{previewContact.email || 'No email recorded'}</p>
                                     <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-cyan-300" />{previewContact.phone || 'No phone recorded'}</p>
                                     <p className="flex items-center gap-2"><Building2 className="h-4 w-4 text-cyan-300" />{previewContact.company?.name || 'No company linked'}</p>
                                 </div>
                             </div>
                             <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
-                                <p className="type-caption font-black uppercase tracking-caps text-slate-500">Record context</p>
-                                <div className="mt-3 flex flex-wrap gap-2">{(previewContact.tags || []).slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 type-ui font-semibold text-violet-100">{tag}</span>)}{!(previewContact.tags || []).length ? <span className="type-ui text-slate-500">No tags yet</span> : null}</div>
-                                <button type="button" onClick={() => { setTimelineContact(previewContact); setPreviewContact(null); }} className="mt-4 inline-flex items-center gap-2 type-ui font-bold text-teal-300 hover:text-teal-200"><Activity className="h-3.5 w-3.5" /> View activity timeline</button>
+                                <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Record context</p>
+                                <div className="mt-3 flex flex-wrap gap-2">{(previewContact.tags || []).slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 type-ui font-semibold text-violet-100">{tag}</span>)}{!(previewContact.tags || []).length ? <span className="type-ui text-[var(--ws-text-muted)]">No tags yet</span> : null}</div>
+                                <button type="button" onClick={() => { setTimelineContact(previewContact); setPreviewContact(null); }} className="mt-4 inline-flex items-center gap-2 type-ui font-bold text-[var(--brand-blue-300)] hover:text-teal-200"><Activity className="h-3.5 w-3.5" /> View activity timeline</button>
                             </div>
                         </div>
                         <div className="border-t border-white/10 p-5">
-                            <p className="type-caption font-black uppercase tracking-caps text-slate-500">Continue the work from this record</p>
+                            <p className="type-caption font-black uppercase tracking-caps text-[var(--ws-text-muted)]">Continue the work from this record</p>
                             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {[
                                     ['/dashboard/marketing/outreach', 'Prepare outreach', Send],
@@ -668,9 +668,9 @@ export default function ContactsList({ onEditContact, onCreateContact, highlight
                                     ['/dashboard/business/calendar', 'View meetings', CalendarDays],
                                     ['/dashboard/tasks', 'Create task', CheckSquare],
                                     ['/dashboard/crm/unified-contacts', 'Open unified CRM', Users],
-                                ].map(([href, label, Icon]) => <Link key={String(label)} href={`${href}?contactId=${encodeURIComponent(previewContact.id)}`} onClick={() => setPreviewContact(null)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5 type-ui font-semibold text-slate-200 hover:border-cyan-300/30 hover:bg-cyan-300/[.06] hover:text-cyan-100"><Icon className="h-3.5 w-3.5 text-cyan-300" />{String(label)}</Link>)}
+                                ].map(([href, label, Icon]) => <Link key={String(label)} href={`${href}?contactId=${encodeURIComponent(previewContact.id)}`} onClick={() => setPreviewContact(null)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5 type-ui font-semibold text-[var(--ws-text-secondary)] hover:border-cyan-300/30 hover:bg-cyan-300/[.06] hover:text-cyan-100"><Icon className="h-3.5 w-3.5 text-cyan-300" />{String(label)}</Link>)}
                             </div>
-                            <p className="mt-3 type-card-description leading-5 text-slate-500">These shortcuts keep the contact ID attached as you move into the relevant workflow. The full client record remains the source of truth.</p>
+                            <p className="mt-3 type-card-description leading-5 text-[var(--ws-text-muted)]">These shortcuts keep the contact ID attached as you move into the relevant workflow. The full client record remains the source of truth.</p>
                         </div>
                     </div>
                 </div>

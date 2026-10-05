@@ -8,7 +8,7 @@ import type { LeadMapPin } from '@/components/leads/LeadMapView';
 const LeadMapView = dynamic(() => import('@/components/leads/LeadMapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[320px] md:h-[420px] rounded-xl border border-slate-700 bg-slate-950 flex items-center justify-center text-slate-500 type-ui">
+    <div className="w-full h-[320px] md:h-[420px] rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] flex items-center justify-center text-[var(--ws-text-muted)] type-ui">
       Loading map…
     </div>
   ),
@@ -32,18 +32,18 @@ export default function LeadFinderMapPanel({
   const pinned = leads.filter((l) => l.lat != null && l.lng != null);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2">
+    <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <MapPin className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
             <p className="type-card-description font-semibold text-white truncate">Reach map</p>
-            <p className="type-card-description text-slate-500 truncate">
+            <p className="type-card-description text-[var(--ws-text-muted)] truncate">
               {pinned.length} pinned · aerial satellite · free geodata
             </p>
           </div>
         </div>
-        <span className="type-caption uppercase tracking-wider text-slate-500 shrink-0">
+        <span className="type-caption uppercase tracking-wider text-[var(--ws-text-muted)] shrink-0">
           {previewRadiusKm} km
         </span>
       </div>
@@ -51,7 +51,7 @@ export default function LeadFinderMapPanel({
       {pinned.length === 0 ? (
         <div className="h-[280px] md:h-[360px] flex flex-col items-center justify-center gap-2 px-6 text-center bg-[radial-gradient(circle_at_30%_20%,rgba(20,184,166,0.12),transparent_55%)]">
           <MapPin className="w-8 h-8 text-slate-600" />
-          <p className="type-card-description text-slate-400">{emptyHint}</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">{emptyHint}</p>
         </div>
       ) : (
         <LeadMapView

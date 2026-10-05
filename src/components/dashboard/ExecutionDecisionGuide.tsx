@@ -56,7 +56,7 @@ export function ExecutionDecisionGuide({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="type-caption font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{t(title)}</p>
-          <p className="mt-0.5 type-card-description leading-5 text-slate-400">{t(description)}</p>
+          <p className="mt-0.5 type-card-description leading-5 text-[var(--ws-text-muted)]">{t(description)}</p>
         </div>
         <div className="flex flex-wrap gap-2 type-caption font-bold uppercase tracking-wider">
           {(['success', 'running', 'warning', 'danger'] as SemanticStatus[]).map((status) => {
@@ -84,10 +84,10 @@ export function ExecutionDecisionGuide({
                   </span>
                   {t(step.label)}
                 </span>
-                {step.href ? <ChevronRight className="h-4 w-4 text-slate-500" aria-hidden /> : null}
+                {step.href ? <ChevronRight className="h-4 w-4 text-[var(--ws-text-muted)]" aria-hidden /> : null}
               </div>
               <h3 className="mt-2 type-ui font-semibold text-white">{t(step.title)}</h3>
-              <p className="mt-0.5 type-card-description leading-5 text-slate-400">{t(step.description)}</p>
+              <p className="mt-0.5 type-card-description leading-5 text-[var(--ws-text-muted)]">{t(step.description)}</p>
             </>
           );
 
@@ -97,7 +97,7 @@ export function ExecutionDecisionGuide({
                 key={step.id}
                 type="button"
                 onClick={() => handleNavigate(step.href!)}
-                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-slate-900/70 cursor-pointer', style.border, style.bg)}
+                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-[var(--ws-panel)]/70 cursor-pointer', style.border, style.bg)}
               >
                 {content}
               </button>

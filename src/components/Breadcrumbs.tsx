@@ -27,7 +27,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
         <nav className={`flex items-center gap-2 type-ui ${className}`}>
             <button
                 onClick={() => handleClick('/dashboard')}
-                className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-[var(--ws-text-muted)] hover:text-white transition-colors"
             >
                 <Home className="w-4 h-4" />
                 <span className="hidden sm:inline">Home</span>
@@ -41,7 +41,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className = '' }) => {
                     ) : (
                         <button
                             onClick={() => handleClick(item.path)}
-                            className="text-slate-400 hover:text-white transition-colors"
+                            className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                         >
                             {item.label}
                         </button>

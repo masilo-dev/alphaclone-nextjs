@@ -166,7 +166,7 @@ export default function WhatsAppIntegration() {
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
-        <p className="type-card-description text-slate-400">Loading WhatsApp settings...</p>
+        <p className="type-card-description text-[var(--ws-text-muted)]">Loading WhatsApp settings...</p>
       </div>
     );
   }
@@ -183,9 +183,9 @@ export default function WhatsAppIntegration() {
             <MessageCircle className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <div className="type-caption font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
+            <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">Workspace Connector</div>
             <h2 className="text-lg font-bold text-white">WhatsApp Integration</h2>
-            <p className="type-card-description text-slate-400">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               Choose Meta Cloud API or Zernio routing for your WhatsApp inbox.
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function WhatsAppIntegration() {
       </div>
 
       {!metaConfigured && (
-        <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 type-ui">
+        <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-[var(--warning-text,var(--warning-500))] type-ui">
           Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Railway environment variables to fully secure your inbound webhooks.
         </div>
       )}
@@ -206,30 +206,30 @@ export default function WhatsAppIntegration() {
       <div className="p-6 space-y-6">
         {activeIntegration ? (
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-slate-950/45 border border-white/5 space-y-3">
+            <div className="p-4 rounded-lg bg-[var(--ws-canvas)]/45 border border-white/5 space-y-3">
               <h3 className="type-ui font-bold text-white flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Active Integration: {activeIntegration.alias}
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 type-caption text-slate-400">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 type-caption text-[var(--ws-text-muted)]">
                 <div>
-                  <span className="block text-slate-500">Provider</span>
-                  <code className="text-slate-300 font-mono">{String(activeIntegration.provider || activeIntegration.metadata?.provider || 'meta')}</code>
+                  <span className="block text-[var(--ws-text-muted)]">Provider</span>
+                  <code className="text-[var(--ws-text-secondary)] font-mono">{String(activeIntegration.provider || activeIntegration.metadata?.provider || 'meta')}</code>
                 </div>
                 <div>
-                  <span className="block text-slate-500">WABA ID</span>
-                  <code className="text-slate-300 font-mono">{activeIntegration.waba_id}</code>
+                  <span className="block text-[var(--ws-text-muted)]">WABA ID</span>
+                  <code className="text-[var(--ws-text-secondary)] font-mono">{activeIntegration.waba_id}</code>
                 </div>
                 <div>
-                  <span className="block text-slate-500">Phone Number ID</span>
-                  <code className="text-slate-300 font-mono">{activeIntegration.phone_number_id || 'n/a'}</code>
+                  <span className="block text-[var(--ws-text-muted)]">Phone Number ID</span>
+                  <code className="text-[var(--ws-text-secondary)] font-mono">{activeIntegration.phone_number_id || 'n/a'}</code>
                 </div>
                 <div>
-                  <span className="block text-slate-500">Access Token</span>
-                  <code className="text-slate-300 font-mono">{activeIntegration.access_token || 'managed by provider'}</code>
+                  <span className="block text-[var(--ws-text-muted)]">Access Token</span>
+                  <code className="text-[var(--ws-text-secondary)] font-mono">{activeIntegration.access_token || 'managed by provider'}</code>
                 </div>
                 <div>
-                  <span className="block text-slate-500">Webhook Status</span>
+                  <span className="block text-[var(--ws-text-muted)]">Webhook Status</span>
                   {activeIntegration.webhook_verified ? (
                     <span className="text-emerald-400 font-semibold">✓ Registered to platform</span>
                   ) : (
@@ -251,7 +251,7 @@ export default function WhatsAppIntegration() {
               <Button
                 onClick={handleDisconnect}
                 disabled={disconnecting}
-                className="border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                className="border border-red-500/30 bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 text-red-400"
               >
                 {disconnecting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
                 Disconnect
@@ -261,12 +261,12 @@ export default function WhatsAppIntegration() {
         ) : (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h3 className="type-ui font-bold text-slate-200 flex items-center gap-1.5">
+              <h3 className="type-ui font-bold text-[var(--ws-text-secondary)] flex items-center gap-1.5">
                 <HelpCircle className="w-4 h-4 text-emerald-400" />
                 Connection Steps
               </h3>
               {provider === 'meta' ? (
-                <ol className="type-ui text-slate-400 space-y-2 list-decimal list-inside">
+                <ol className="type-ui text-[var(--ws-text-muted)] space-y-2 list-decimal list-inside">
                   <li>
                     Log in to the{' '}
                     <a
@@ -281,11 +281,11 @@ export default function WhatsAppIntegration() {
                   <li>Create or select your Meta Business App.</li>
                   <li>Add the <strong>WhatsApp</strong> product to your App.</li>
                   <li>Go to <strong>API Setup</strong> and copy your <strong>Phone Number ID</strong> and <strong>WhatsApp Business Account ID</strong>.</li>
-                  <li>Generate a <strong>System User Access Token</strong> with <code className="text-emerald-300">whatsapp_business_messaging</code>.</li>
+                  <li>Generate a <strong>System User Access Token</strong> with <code className="text-[var(--success-text,var(--success-500))]">whatsapp_business_messaging</code>.</li>
                   <li>Enter the values below to connect.</li>
                 </ol>
               ) : (
-                <ol className="type-ui text-slate-400 space-y-2 list-decimal list-inside">
+                <ol className="type-ui text-[var(--ws-text-muted)] space-y-2 list-decimal list-inside">
                   <li>Save your WhatsApp account ID in <strong>Settings → Zernio</strong>.</li>
                   <li>Make sure the Zernio WhatsApp inbox is enabled for this tenant.</li>
                   <li>Choose a display name, then connect this tenant to Zernio routing.</li>
@@ -300,7 +300,7 @@ export default function WhatsAppIntegration() {
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     1-Click Meta Automatic Connect
                   </h4>
-                  <p className="type-card-description text-slate-300 mt-0.5">
+                  <p className="type-card-description text-[var(--ws-text-secondary)] mt-0.5">
                     Log in with your Meta account to connect your WhatsApp Business lines automatically without manual keys.
                   </p>
                 </div>
@@ -325,14 +325,14 @@ export default function WhatsAppIntegration() {
                   className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'meta'
                       ? 'border-emerald-500/40 bg-emerald-500/10'
-                      : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
                   }`}
                 >
                   <div className="flex items-center gap-2 type-ui font-bold text-white">
                     <Settings2 className="w-4 h-4 text-emerald-400" />
                     Meta Cloud API
                   </div>
-                  <p className="mt-1 type-card-description text-slate-400">Use your own WhatsApp Business App and token.</p>
+                  <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Use your own WhatsApp Business App and token.</p>
                 </button>
                 <button
                   type="button"
@@ -340,67 +340,67 @@ export default function WhatsAppIntegration() {
                   className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'zernio'
                       ? 'border-violet-500/40 bg-violet-500/10'
-                      : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-slate-500'
                   }`}
                 >
                   <div className="flex items-center gap-2 type-ui font-bold text-white">
                     <Settings2 className="w-4 h-4 text-violet-400" />
                     Zernio Routing
                   </div>
-                  <p className="mt-1 type-card-description text-slate-400">Use the tenant's Zernio WhatsApp account.</p>
+                  <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">Use the tenant's Zernio WhatsApp account.</p>
                 </button>
               </div>
 
               {provider === 'meta' ? (
                 <>
                   <div>
-                    <label className="block type-label font-semibold text-slate-400 mb-1.5">WhatsApp Business Account (WABA) ID</label>
+                    <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">WhatsApp Business Account (WABA) ID</label>
                     <input
                       type="text"
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
                       placeholder="e.g. 104857285918239"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block type-label font-semibold text-slate-400 mb-1.5">Phone Number ID</label>
+                    <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">Phone Number ID</label>
                     <input
                       type="text"
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
                       placeholder="e.g. 109827364528192"
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
                   <div>
-                    <label className="block type-caption font-semibold text-slate-400 mb-1.5">Meta Access Token</label>
+                    <label className="block type-caption font-semibold text-[var(--ws-text-muted)] mb-1.5">Meta Access Token</label>
                     <input
                       type="password"
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="EAABw..."
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 type-ui text-slate-300">
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 type-ui text-[var(--ws-text-secondary)]">
                   Zernio uses the WhatsApp account ID saved in <code className="text-violet-300">tenant.settings.zernio.whatsappAccountId</code>.
                   No Meta token or phone number ID is needed here.
                 </div>
               )}
 
               <div>
-                <label className="block type-label font-semibold text-slate-400 mb-1.5">Display Name / Alias (Optional)</label>
+                <label className="block type-label font-semibold text-[var(--ws-text-muted)] mb-1.5">Display Name / Alias (Optional)</label>
                 <input
                   type="text"
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="e.g. Primary Support Line"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
+                  className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 px-4 py-2.5 type-ui text-white outline-none focus:border-emerald-500/40"
                 />
               </div>
 

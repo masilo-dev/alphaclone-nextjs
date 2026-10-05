@@ -386,8 +386,8 @@ function wrapFacebookContractHtml(content: string, fontSize: number, lineSpacing
     html, body {
       margin: 0;
       padding: 0;
-      background: #ffffff;
-      color: #111827;
+      background: var(--color-white);
+      color: var(--ws-canvas);
       font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
       font-size: ${fontSize}px;
       line-height: ${lineSpacing};

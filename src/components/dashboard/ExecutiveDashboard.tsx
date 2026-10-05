@@ -147,9 +147,9 @@ export default function ExecutiveDashboard() {
   if (pageLoading || !stats) {
     return (
       <div className="p-6 space-y-4 animate-pulse">
-        <div className="h-8 w-64 bg-slate-800 rounded" />
+        <div className="h-8 w-64 bg-[var(--ws-surface-secondary)] rounded" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array(4).fill(0).map((_, i) => <div key={i} className="h-32 bg-slate-800 rounded-2xl" />)}
+          {Array(4).fill(0).map((_, i) => <div key={i} className="h-32 bg-[var(--ws-surface-secondary)] rounded-2xl" />)}
         </div>
       </div>
     );
@@ -184,7 +184,7 @@ export default function ExecutiveDashboard() {
             <button
               key={i}
               onClick={() => router.push(kpi.href)}
-              className="group relative bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-left hover:border-white/10 transition-all duration-200 hover:bg-slate-900/80"
+              className="group relative bg-[var(--ws-panel)]/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-left hover:border-white/10 transition-all duration-200 hover:bg-[var(--ws-panel)]/80"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
@@ -193,21 +193,21 @@ export default function ExecutiveDashboard() {
                 <span className={`type-ui font-black px-1.5 py-0.5 rounded-full ${
                   isUp
                     ? 'bg-emerald-500/15 text-emerald-400'
-                    : 'bg-red-500/15 text-red-400'
+                    : 'bg-[var(--error-500)]/15 text-red-400'
                 }`}>
                   {isUp ? '▲' : '▼'} {kpi.delta}
                 </span>
               </div>
 
               <div className="mb-1">
-                <div className="type-caption font-bold text-slate-500 uppercase tracking-wider mb-0.5">{kpi.label}</div>
+                <div className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-0.5">{kpi.label}</div>
                 <div className="text-xl font-black text-white">{kpi.value}</div>
-                <div className="type-ui text-slate-500 mt-0.5">{kpi.comparisonText}</div>
+                <div className="type-ui text-[var(--ws-text-muted)] mt-0.5">{kpi.comparisonText}</div>
               </div>
 
               {progress !== null && (
                 <div className="mt-3 space-y-1">
-                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[var(--ws-surface-secondary)] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${bar}`}
                       style={{ width: `${progress}%` }}
@@ -224,11 +224,11 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="xl:col-span-2 bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className="type-ui font-bold text-white">Performance Goals Configuration</h3>
             {!canEditGoals && (
-              <span className="type-caption font-bold uppercase tracking-wider text-slate-500">
+              <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">
                 View only
               </span>
             )}
@@ -236,7 +236,7 @@ export default function ExecutiveDashboard() {
           <div className="space-y-4">
             {(['revenue', 'clients', 'projects'] as const).map((key) => (
               <div key={key} className="space-y-1.5">
-                <div className="flex justify-between type-caption font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex justify-between type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">
                   <span>Target {key}</span>
                   <span className="text-white font-black">{goals[key].toLocaleString()}</span>
                 </div>
@@ -248,7 +248,7 @@ export default function ExecutiveDashboard() {
                   value={goals[key]}
                   onChange={(e) => saveGoals({ ...goals, [key]: Number(e.target.value) })}
                   disabled={!canEditGoals}
-                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-1.5 bg-[var(--ws-surface-secondary)] rounded-lg appearance-none cursor-pointer accent-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={`Target ${key}`}
                 />
               </div>
@@ -256,7 +256,7 @@ export default function ExecutiveDashboard() {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
+        <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-6 space-y-4">
           <h3 className="type-ui font-bold text-white">Success Rate</h3>
           <div className="flex flex-col items-center justify-center py-6 space-y-3">
              <div className="relative w-32 h-32">
@@ -271,10 +271,10 @@ export default function ExecutiveDashboard() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                    <span className="text-2xl font-black text-white">{stats.performance.onTimeDelivery}%</span>
-                   <span className="type-caption text-slate-500 font-bold uppercase">On-Time</span>
+                   <span className="type-caption text-[var(--ws-text-muted)] font-bold uppercase">On-Time</span>
                 </div>
              </div>
-             <p className="type-card-description text-slate-400 text-center leading-relaxed">
+             <p className="type-card-description text-[var(--ws-text-muted)] text-center leading-relaxed">
                System efficiency based on project milestones and automated checkpoints.
              </p>
           </div>

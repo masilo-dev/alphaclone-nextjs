@@ -313,41 +313,41 @@ export async function POST(req: Request) {
                 html: `
                     <!DOCTYPE html>
                     <html>
-                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 40px 20px;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--ws-canvas); margin: 0; padding: 40px 20px;">
+                        <div style="max-width: 600px; margin: 0 auto; background-color: var(--ws-panel); border-radius: 20px; overflow: hidden; border: 1px solid var(--ws-surface-tertiary); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
 
                             <!-- Header -->
-                            <div style="background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); padding: 40px; text-align: center;">
-                                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Meeting Confirmed</h1>
+                            <div style="background: linear-gradient(135deg, var(--brand-blue-500) 0%, var(--brand-blue-700) 100%); padding: 40px; text-align: center;">
+                                <h1 style="color: var(--color-white); margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Meeting Confirmed</h1>
                             </div>
 
                             <!-- Content -->
                             <div style="padding: 40px;">
-                                <p style="color: #e2e8f0; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                                <p style="color: var(--ws-border); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
                                     Hi <strong>${client_name}</strong>,<br><br>
                                     Your session for <strong>${booking_type_name || 'Meeting'}</strong> has been successfully scheduled. We are looking forward to speaking with you.
                                 </p>
 
                                 <!-- Details Card -->
-                                <div style="background-color: #0f172a; border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 1px solid #334155;">
+                                <div style="background-color: var(--ws-canvas); border-radius: 12px; padding: 25px; margin-bottom: 30px; border: 1px solid var(--ws-surface-tertiary);">
                                     <div style="margin-bottom: 20px;">
-                                        <p style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">DATE & TIME</p>
-                                        <p style="color: #f8fafc; font-size: 18px; font-weight: 600; margin: 0;">${dateStr}</p>
-                                        ${time_zone ? `<p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">(${time_zone})</p>` : ''}
+                                        <p style="color: var(--ws-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">DATE & TIME</p>
+                                        <p style="color: var(--ws-surface-secondary); font-size: 18px; font-weight: 600; margin: 0;">${dateStr}</p>
+                                        ${time_zone ? `<p style="color: var(--ws-text-muted); font-size: 13px; margin: 4px 0 0 0;">(${time_zone})</p>` : ''}
                                     </div>
                                     <div>
-                                         <p style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">VIDEO LINK</p>
-                                         <p style="color: #2dd4bf; font-size: 14px; margin: 0; word-break: break-all;">${maskedUrl}</p>
+                                         <p style="color: var(--ws-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 5px 0;">VIDEO LINK</p>
+                                         <p style="color: var(--brand-blue-400); font-size: 14px; margin: 0; word-break: break-all;">${maskedUrl}</p>
                                     </div>
                                 </div>
 
                                 <!-- CTA -->
                                 ${maskedUrl ? `
                                     <div style="text-align: center;">
-                                        <a href="${maskedUrl}" style="background-color: #14b8a6; color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; transition: background-color 0.2s; box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.3);">
+                                        <a href="${maskedUrl}" style="background-color: var(--brand-blue-500); color: var(--color-white); padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; transition: background-color 0.2s; box-shadow: 0 10px 15px -3px rgba(20, 184, 166, 0.3);">
                                             Join Video Call
                                         </a>
-                                        <p style="color: #64748b; font-size: 13px; margin-top: 20px;">
+                                        <p style="color: var(--ws-text-muted); font-size: 13px; margin-top: 20px;">
                                             Please click the button above at the scheduled time to join.
                                         </p>
                                     </div>
@@ -355,8 +355,8 @@ export async function POST(req: Request) {
                             </div>
 
                             <!-- Footer -->
-                            <div style="background-color: #020617; padding: 30px; text-align: center; border-top: 1px solid #334155;">
-                                <p style="color: #475569; font-size: 12px; margin: 0;">
+                            <div style="background-color: var(--brand-violet-950); padding: 30px; text-align: center; border-top: 1px solid var(--ws-surface-tertiary);">
+                                <p style="color: var(--ws-text-muted); font-size: 12px; margin: 0;">
                                     © ${new Date().getFullYear()} AlphaClone Systems. All rights reserved.
                                 </p>
                             </div>
@@ -383,11 +383,11 @@ export async function POST(req: Request) {
                         to: hostProfile.email,
                         subject: `New booking: ${client_name} — ${booking_type_name || 'Meeting'}`,
                         html: `
-                            <div style="font-family:sans-serif;padding:20px;color:#333;">
-                                <h2 style="color:#0d9488;">New client booking</h2>
+                            <div style="font-family:sans-serif;padding:20px;color:var(--text-primary);">
+                                <h2 style="color:var(--brand-blue-600);">New client booking</h2>
                                 <p><strong>${client_name}</strong> (${client_email}) booked <strong>${booking_type_name || 'Meeting'}</strong>.</p>
                                 <p><strong>When:</strong> ${dateStr}</p>
-                                ${maskedUrl ? `<p><a href="${maskedUrl}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Join meeting</a></p>` : ''}
+                                ${maskedUrl ? `<p><a href="${maskedUrl}" style="display:inline-block;padding:10px 20px;background:var(--brand-blue-600);color:var(--color-white);text-decoration:none;border-radius:6px;">Join meeting</a></p>` : ''}
                                 ${client_notes ? `<p><strong>Notes:</strong> ${client_notes}</p>` : ''}
                             </div>
                         `,

@@ -71,7 +71,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
   const menuPanel = open && anchor ? (
     <>
       <div
-        className="fixed inset-0 ac-layer-menu-backdrop bg-slate-950/20"
+        className="fixed inset-0 ac-layer-menu-backdrop bg-[var(--ws-canvas)]/20"
         aria-hidden="true"
         onClick={() => setOpen(false)}
       />
@@ -141,9 +141,9 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
                 onPwaSettings();
               }
             }}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--ac-accent,#356AF4)] hover:bg-[var(--surface-hover)] transition-colors font-medium border-t border-[var(--border-default)]"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 type-caption text-[var(--ac-accent,var(--brand-blue-500))] hover:bg-[var(--surface-hover)] transition-colors font-medium border-t border-[var(--border-default)]"
           >
-            <Smartphone className="w-4 h-4 text-[var(--ac-accent,#356AF4)]" />
+            <Smartphone className="w-4 h-4 text-[var(--ac-accent,var(--brand-blue-500))]" />
             {t('Install AlphaClone')}
           </button>
         )}
@@ -174,7 +174,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
             setOpen(false);
             onLogout();
           }}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 type-ui text-red-500 dark:text-red-400 hover:bg-red-500/10 border-t border-[var(--border-default)] transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 type-ui text-red-500 dark:text-red-400 hover:bg-[var(--error-500)]/10 border-t border-[var(--border-default)] transition-colors"
         >
           <LogOut className="w-4 h-4" />
           {t('Log out')}

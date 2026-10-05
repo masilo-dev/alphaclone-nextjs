@@ -116,22 +116,22 @@ export default function MFAEnrollment() {
 
     if (loading) {
         return (
-            <div className="flex items-center gap-3 p-4 bg-slate-800 rounded-xl border border-slate-700 h-24">
+            <div className="flex items-center gap-3 p-4 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] h-24">
                 <Loader2 className="w-5 h-5 text-teal-400 animate-spin" />
-                <span className="text-slate-400">Loading security settings...</span>
+                <span className="text-[var(--ws-text-muted)]">Loading security settings...</span>
             </div>
         );
     }
 
     return (
-        <div className="p-5 bg-slate-800 rounded-xl border border-slate-700">
+        <div className="p-5 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)]">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${isEnrolled ? 'bg-teal-500/20' : 'bg-slate-700'}`}>
+                    <div className={`p-2 rounded-lg ${isEnrolled ? 'bg-teal-500/20' : 'bg-[var(--ws-surface-tertiary)]'}`}>
                         {isEnrolled ? (
                             <ShieldCheck className="w-6 h-6 text-teal-400" />
                         ) : (
-                            <ShieldAlert className="w-6 h-6 text-slate-400" />
+                            <ShieldAlert className="w-6 h-6 text-[var(--ws-text-muted)]" />
                         )}
                     </div>
                     <div>
@@ -143,7 +143,7 @@ export default function MFAEnrollment() {
                                 </span>
                             )}
                         </h4>
-                        <p className="type-card-description text-slate-400">
+                        <p className="type-card-description text-[var(--ws-text-muted)]">
                             {isEnrolled
                                 ? 'Your account is secured with a TOTP authenticator app.'
                                 : 'Protect your account by requiring a code from your authenticator app.'}
@@ -154,7 +154,7 @@ export default function MFAEnrollment() {
                 {isEnrolled ? (
                     <button
                         onClick={unenroll}
-                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg type-ui font-bold transition-colors"
+                        className="px-4 py-2 bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 text-red-400 rounded-lg type-ui font-bold transition-colors"
                     >
                         Disable 2FA
                     </button>
@@ -173,10 +173,10 @@ export default function MFAEnrollment() {
             </div>
 
             {qrCodeData && !isEnrolled && (
-                <div className="mt-6 pt-6 border-t border-slate-700 animate-fade-in text-slate-400">
-                    <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-700">
+                <div className="mt-6 pt-6 border-t border-[var(--ws-border)] animate-fade-in text-[var(--ws-text-muted)]">
+                    <div className="bg-[var(--ws-panel)]/50 p-6 rounded-xl border border-[var(--ws-border)]">
                         <h5 className="font-bold text-white mb-2 text-lg">Set up Authenticator App</h5>
-                        <p className="type-card-description text-slate-400 mb-6">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mb-6">
                             1. Open your authenticator app (e.g., Google Authenticator, Authy, or 1Password).<br />
                             2. Scan the QR code below or enter the setup key manually.
                         </p>
@@ -192,31 +192,31 @@ export default function MFAEnrollment() {
 
                             <div className="flex-1 w-full space-y-5">
                                 <div>
-                                    <label className="type-caption text-slate-500 font-medium uppercase tracking-wider">Setup Key (Manual Entry)</label>
-                                    <div className="flex bg-slate-800 rounded-lg p-3 type-ui font-mono text-teal-400 border border-slate-700 mt-1">
+                                    <label className="type-caption text-[var(--ws-text-muted)] font-medium uppercase tracking-wider">Setup Key (Manual Entry)</label>
+                                    <div className="flex bg-[var(--ws-surface-secondary)] rounded-lg p-3 type-ui font-mono text-teal-400 border border-[var(--ws-border)] mt-1">
                                         {secret}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="type-caption text-slate-500 font-medium uppercase tracking-wider">Verification Code</label>
+                                    <label className="type-caption text-[var(--ws-text-muted)] font-medium uppercase tracking-wider">Verification Code</label>
                                     <div className="flex gap-3 mt-1">
                                         <Input
                                             value={verificationCode}
                                             onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                                             placeholder="123456"
-                                            className="font-mono tracking-caps text-center text-xl h-14 bg-slate-800 border-slate-700 text-white focus:border-teal-500"
+                                            className="font-mono tracking-caps text-center text-xl h-14 bg-[var(--ws-surface-secondary)] border-[var(--ws-border)] text-white focus:border-teal-500"
                                         />
                                         <Button
                                             onClick={verifyEnrollment}
                                             disabled={verificationCode.length !== 6 || verifying}
                                             isLoading={verifying}
-                                            className="bg-teal-500 hover:bg-teal-400 text-black font-bold whitespace-nowrap px-8 h-14 rounded-xl"
+                                            className="bg-teal-500 hover:bg-[var(--brand-blue-400)] text-black font-bold whitespace-nowrap px-8 h-14 rounded-xl"
                                         >
                                             Verify & Save
                                         </Button>
                                     </div>
-                                    <p className="type-card-description text-slate-500 mt-2 italic">Enter the 6-digit code generated by your app to verify setup.</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)] mt-2 italic">Enter the 6-digit code generated by your app to verify setup.</p>
                                 </div>
                             </div>
                         </div>

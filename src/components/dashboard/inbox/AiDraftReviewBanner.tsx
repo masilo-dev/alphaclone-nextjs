@@ -63,7 +63,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
         <p className="type-card-description font-bold text-violet-200">
           {drafts.length} AI draft{drafts.length === 1 ? '' : 's'} ready for review
         </p>
-        <p className="type-card-description text-slate-400 mt-1 truncate">
+        <p className="type-card-description text-[var(--ws-text-muted)] mt-1 truncate">
           Latest: reply to {latest.from || latest.fromEmail} — {latest.subject || '(no subject)'}
         </p>
         <div className="flex gap-2 mt-2">
@@ -80,7 +80,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
               setDismissed(true);
               toast('Open Drafts folder to review AI replies anytime.');
             }}
-            className="type-ui font-semibold text-slate-400 hover:text-white"
+            className="type-ui font-semibold text-[var(--ws-text-muted)] hover:text-white"
           >
             Dismiss
           </button>
@@ -89,7 +89,7 @@ export default function AiDraftReviewBanner({ onOpenDraft }: AiDraftReviewBanner
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="text-slate-500 hover:text-white p-1"
+        className="text-[var(--ws-text-muted)] hover:text-white p-1"
         aria-label="Dismiss AI draft notification"
       >
         <X className="w-4 h-4" />

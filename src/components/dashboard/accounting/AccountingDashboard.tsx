@@ -226,7 +226,7 @@ export default function AccountingDashboard() {
     if (loading) {
         return (
             <div className="relative space-y-6 max-w-7xl mx-auto pb-24 ac-scroll-full ac-enterprise-module px-2 sm:px-6">
-                <div className="ac-workspace-panel rounded-lg p-8 flex flex-col justify-center items-center min-h-[320px] text-slate-300 gap-4">
+                <div className="ac-workspace-panel rounded-lg p-8 flex flex-col justify-center items-center min-h-[320px] text-[var(--ws-text-secondary)] gap-4">
                     <Activity className="w-12 h-12 animate-pulse text-emerald-400" />
                     <p className="font-medium uppercase tracking-widest type-caption">Syncing Ledger...</p>
                 </div>
@@ -245,12 +245,12 @@ export default function AccountingDashboard() {
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-white uppercase tracking-tight">Activate your finance workspace</h3>
-                            <p className="text-slate-300 type-card-description mt-1 max-w-md">Your account structure is still empty. Load the standard business chart so revenue, expenses, and cashflow start flowing into the workspace.</p>
+                            <p className="text-[var(--ws-text-secondary)] type-card-description mt-1 max-w-md">Your account structure is still empty. Load the standard business chart so revenue, expenses, and cashflow start flowing into the workspace.</p>
                         </div>
                     </div>
                     <button 
                         onClick={handleInitializeAccounts}
-                        className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase type-caption rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-emerald-400 active:scale-95 transition-all"
+                        className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase type-caption rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-[var(--success-500)] active:scale-95 transition-all"
                     >
                         Load Starter Accounts
                     </button>
@@ -263,8 +263,8 @@ export default function AccountingDashboard() {
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Finance Hub</h1>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="type-caption font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Professional Edition</span>
-                        <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="type-caption font-bold text-slate-300 uppercase tracking-widest">Live Books</span>
+                        <div className="w-1 h-1 rounded-full bg-[var(--ws-surface-secondary)]" />
+                        <span className="type-caption font-bold text-[var(--ws-text-secondary)] uppercase tracking-widest">Live Books</span>
                     </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -272,7 +272,7 @@ export default function AccountingDashboard() {
                         <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white type-caption font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> New Entry</button>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-white/5 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
+                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-[var(--ws-panel)]/50 border border-white/5 text-[var(--ws-text-secondary)]"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
                             <Button className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Add Receipt</Button>
                         </>
                     )}
@@ -297,7 +297,7 @@ export default function AccountingDashboard() {
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-6 py-4 type-caption font-black uppercase tracking-caps whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-emerald-400 text-white bg-emerald-500/5' : 'border-transparent text-slate-400'}`}
+                        className={`px-6 py-4 type-caption font-black uppercase tracking-caps whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-emerald-400 text-white bg-emerald-500/5' : 'border-transparent text-[var(--ws-text-muted)]'}`}
                     >
                         {tab.label}
                     </button>
@@ -340,7 +340,7 @@ export default function AccountingDashboard() {
                                         <p className="type-card-description font-black text-white truncate">{tx.description}</p>
                                         <p className="type-caption text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
                                     </div>
-                                    <div className={`text-right font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                                    <div className={`text-right font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-[var(--ws-text-muted)]'}`}>
                                         {tx.type === 'income' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
@@ -356,12 +356,12 @@ export default function AccountingDashboard() {
                     <div className="space-y-8">
                         <div>
                             <div className="type-caption font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-emerald-500/20 pb-2">Operating Revenue</div>
-                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-slate-300">Gross Sales</span><span className="type-ui font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
+                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-[var(--ws-text-secondary)]">Gross Sales</span><span className="type-ui font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
                             <div className="flex justify-between items-center py-4 mt-2 bg-emerald-500/10 px-4 rounded-xl border border-emerald-500/20"><span className="type-caption font-black uppercase text-emerald-400">Gross Margin</span><span className="text-lg font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
                         </div>
                         <div>
                             <div className="type-caption font-black text-rose-400 uppercase tracking-widest mb-4 border-b border-rose-500/20 pb-2">Operating Expenses</div>
-                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-slate-300">G&A Expenses</span><span className="type-ui font-black text-rose-300">${stats.totalExpenses.toLocaleString()}</span></div>
+                            <div className="flex justify-between items-center py-2"><span className="type-ui font-bold text-[var(--ws-text-secondary)]">G&A Expenses</span><span className="type-ui font-black text-[var(--error-text,var(--error-500))]">${stats.totalExpenses.toLocaleString()}</span></div>
                         </div>
                         <div className="pt-6 border-t border-white/5">
                             <div className="p-6 bg-white/[0.03] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -378,7 +378,7 @@ export default function AccountingDashboard() {
                     <div className="flex justify-end">
                         <button
                             onClick={() => setOcrModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl type-caption font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-lg shadow-teal-500/20"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl type-caption font-black uppercase tracking-wider text-slate-950 bg-[var(--brand-blue-400)] hover:bg-teal-300 transition-colors shadow-lg shadow-teal-500/20"
                         >
                             Scan Receipt OCR
                         </button>
@@ -423,7 +423,7 @@ export default function AccountingDashboard() {
                         <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-toolbar)]">
                             <h3 className="type-caption font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-emerald-400" /> Pending & Recent Receipts</h3>
                             <div className="flex gap-2">
-                                <Button size="sm" variant="ghost" className="type-caption text-slate-300"><Filter size={14} className="mr-1" /> Filter</Button>
+                                <Button size="sm" variant="ghost" className="type-caption text-[var(--ws-text-secondary)]"><Filter size={14} className="mr-1" /> Filter</Button>
                                 <Button size="sm" className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}>
                                     <Upload size={14} className="mr-1" /> Add Receipt
                                 </Button>
@@ -447,8 +447,8 @@ export default function AccountingDashboard() {
                                             <div className="min-w-0">
                                                 <p className="type-card-description font-black text-white truncate">{receipt.description}</p>
                                                 <div className="flex items-center gap-3 mt-1">
-                                                    <span className="type-caption font-black text-slate-500 uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
-                                                    <div className="w-1 h-1 rounded-full bg-slate-800" />
+                                                    <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
+                                                    <div className="w-1 h-1 rounded-full bg-[var(--ws-surface-secondary)]" />
                                                     <span className={`type-caption font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>{receipt.status}</span>
                                                 </div>
                                             </div>

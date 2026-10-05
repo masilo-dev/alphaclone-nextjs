@@ -70,15 +70,15 @@ const StripeConnectSettings: React.FC = () => {
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                     Payment Processing (Stripe Connect)
                 </h3>
-                <p className="text-slate-400 mb-6">
+                <p className="text-[var(--ws-text-muted)] mb-6">
                     Connect your Stripe account to receive payments directly from your clients. AlphaClone does not take any percentage of your transactions.
                 </p>
             </div>
 
-            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : isPending ? 'bg-amber-500/5 border-amber-500/20' : 'bg-slate-900/50 border-slate-800'}`}>
+            <div className={`p-6 rounded-2xl border ${isConnected ? 'bg-teal-500/5 border-teal-500/20' : isPending ? 'bg-amber-500/5 border-amber-500/20' : 'bg-[var(--ws-panel)]/50 border-[var(--ws-border)]'}`}>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : isPending ? 'bg-amber-500/10 text-amber-400' : 'bg-slate-800 text-slate-500'}`}>
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${isConnected ? 'bg-teal-500/10 text-teal-400' : isPending ? 'bg-amber-500/10 text-amber-400' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                             <CreditCard className="w-6 h-6" />
                         </div>
                         <div>
@@ -91,10 +91,10 @@ const StripeConnectSettings: React.FC = () => {
                                 ) : isPending ? (
                                     <AlertCircle className="w-4 h-4 text-amber-400" />
                                 ) : (
-                                    <AlertCircle className="w-4 h-4 text-slate-500" />
+                                    <AlertCircle className="w-4 h-4 text-[var(--ws-text-muted)]" />
                                 )}
                             </div>
-                            <p className="type-card-description text-slate-400 max-w-md">
+                            <p className="type-card-description text-[var(--ws-text-muted)] max-w-md">
                                 {isConnected
                                     ? `Your account is ready to receive payments. Manage your funds and verification in the Stripe Express dashboard.`
                                     : isPending
@@ -118,21 +118,21 @@ const StripeConnectSettings: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-teal-400" />
                         0% Platform Fee
                     </h5>
-                    <p className="type-card-description text-slate-500 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         AlphaClone does not touch your money. All payments go directly from your clients to your Stripe account.
                     </p>
                 </div>
-                <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
+                <div className="p-4 bg-[var(--ws-panel)]/30 border border-[var(--ws-border)]/50 rounded-xl">
                     <h5 className="type-caption font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
                         <ShieldCheck className="w-4 h-4 text-teal-400" />
                         Secure & Verified
                     </h5>
-                    <p className="type-card-description text-slate-500 leading-relaxed">
+                    <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
                         Industry-standard encryption and identity verification powered by Stripe, for your peace of mind.
                     </p>
                 </div>

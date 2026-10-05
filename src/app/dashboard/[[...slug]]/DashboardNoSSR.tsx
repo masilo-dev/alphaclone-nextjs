@@ -18,8 +18,8 @@ const DashboardClientPage = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex h-screen bg-[#05070b] overflow-hidden" role="status" aria-label="Loading workspace">
-                <div className="hidden md:flex w-72 flex-col border-r border-white/5 bg-[#05070b] p-4 shrink-0">
+            <div className="flex h-screen bg-[var(--ws-canvas)] overflow-hidden" role="status" aria-label="Loading workspace">
+                <div className="hidden md:flex w-72 flex-col border-r border-white/5 bg-[var(--ws-canvas)] p-4 shrink-0">
                     <div className="h-12 w-40 rounded-2xl bg-white/6 mb-6" />
                     <div className="space-y-2">
                         {Array.from({ length: 8 }).map((_, i) => (
@@ -33,7 +33,7 @@ const DashboardClientPage = dynamic(
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                    <div className="flex h-20 items-center gap-4 border-b border-white/5 bg-[#05070b] px-5 md:px-6">
+                    <div className="flex h-20 items-center gap-4 border-b border-white/5 bg-[var(--ws-canvas)] px-5 md:px-6">
                         <div className="h-11 w-full max-w-xl rounded-2xl bg-white/5" />
                         <div className="hidden sm:flex h-11 w-11 rounded-full bg-white/5 ml-auto" />
                         <div className="h-11 w-32 rounded-2xl bg-white/5" />

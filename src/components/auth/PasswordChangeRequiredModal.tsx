@@ -50,18 +50,18 @@ export const PasswordChangeRequiredModal: React.FC<PasswordChangeRequiredModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-      <div className="bg-slate-900 border border-teal-500/30 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-teal-500/10 space-y-6">
+      <div className="bg-[var(--ws-panel)] border border-teal-500/30 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl shadow-teal-500/10 space-y-6">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-400">
             <Lock className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Password Update Required</h2>
-            <p className="type-card-description text-slate-400">Security Requirement #36</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Security Requirement #36</p>
           </div>
         </div>
 
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 type-caption text-amber-300 flex items-start gap-2">
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 type-caption text-[var(--warning-text,var(--warning-500))] flex items-start gap-2">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
           <p>
             Your account was initialized with a temporary password. For security compliance, you must set a new permanent password before continuing.
@@ -69,18 +69,18 @@ export const PasswordChangeRequiredModal: React.FC<PasswordChangeRequiredModalPr
         </div>
 
         {errorMsg && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 type-caption text-red-400">
+          <div className="bg-[var(--error-500)]/10 border border-red-500/20 rounded-xl p-3 type-caption text-red-400">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block type-caption font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <label className="block type-caption font-semibold text-[var(--ws-text-secondary)] uppercase tracking-wider mb-1">
               New Password
             </label>
             <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
               <input
                 type="password"
                 required
@@ -88,17 +88,17 @@ export const PasswordChangeRequiredModal: React.FC<PasswordChangeRequiredModalPr
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Minimum 8 characters..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white type-ui focus:outline-none focus:border-teal-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-ui focus:outline-none focus:border-teal-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block type-caption font-semibold text-slate-300 uppercase tracking-wider mb-1">
+            <label className="block type-caption font-semibold text-[var(--ws-text-secondary)] uppercase tracking-wider mb-1">
               Confirm New Password
             </label>
             <div className="relative">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)]" />
               <input
                 type="password"
                 required
@@ -106,7 +106,7 @@ export const PasswordChangeRequiredModal: React.FC<PasswordChangeRequiredModalPr
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white type-ui focus:outline-none focus:border-teal-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-ui focus:outline-none focus:border-teal-500"
               />
             </div>
           </div>

@@ -274,22 +274,22 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 24 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-5xl max-h-[100dvh] sm:max-h-[90vh] min-h-0 sm:min-h-0 bg-slate-950 border border-slate-800 rounded-none sm:rounded-2xl lg:rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
+        className="relative w-full max-w-5xl max-h-[100dvh] sm:max-h-[90vh] min-h-0 sm:min-h-0 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-none sm:rounded-2xl lg:rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between gap-3 flex-shrink-0 min-w-0">
+        <div className="p-4 sm:p-5 border-b border-[var(--ws-border)] flex items-center justify-between gap-3 flex-shrink-0 min-w-0">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
             </div>
             <div className="min-w-0">
               <h2 className="text-base sm:text-lg font-black text-white truncate">Outreach Automation</h2>
-              <p className="type-caption sm:text-xs text-slate-500 uppercase tracking-widest truncate">
+              <p className="type-caption sm:text-xs text-[var(--ws-text-muted)] uppercase tracking-widest truncate">
                 {industry} · {leadsWithRecipient.length} emailable · {leadsWithoutRecipient.length} phone-only
               </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="p-2 sm:p-2.5 text-slate-500 hover:text-white hover:bg-slate-900 rounded-xl transition-all shrink-0" aria-label="Close">
+          <button type="button" onClick={onClose} className="p-2 sm:p-2.5 text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-panel)] rounded-xl transition-all shrink-0" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -297,11 +297,11 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
         <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row">
 
           {/* ── Left: Config pane ──────────────────────────────────────────── */}
-          <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-800 lg:overflow-y-auto p-4 sm:p-5 space-y-5 sm:space-y-6 bg-slate-950/60 lg:max-h-full">
+          <div className="w-full lg:w-80 flex-shrink-0 border-b lg:border-b-0 lg:border-r border-[var(--ws-border)] lg:overflow-y-auto p-4 sm:p-5 space-y-5 sm:space-y-6 bg-[var(--ws-canvas)]/60 lg:max-h-full">
 
             {/* Lead summary */}
             <div className="space-y-2">
-              <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Selected Leads</p>
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Selected Leads</p>
               <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
                 {leads.map((l, i) => (
                   <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border type-caption ${l.qualification?.bgColor ?? ''} ${l.qualification?.borderColor ?? ''}`}>
@@ -326,14 +326,14 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
 
             {/* Tone */}
             <div className="space-y-2">
-              <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Tone of Voice</p>
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Tone of Voice</p>
               <div className="grid grid-cols-2 gap-2">
                 {TONES.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setTone(t.id)}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${tone === t.id ? 'bg-teal-500/10 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-400 hover:border-slate-700'}`}
+                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1 ${tone === t.id ? 'bg-teal-500/10 border-teal-500/40 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-[var(--ws-border)]'}`}
                   >
                     <t.Icon className="w-4 h-4 text-teal-400/90" aria-hidden />
                     <p className="type-caption font-bold uppercase tracking-wider">{t.label}</p>
@@ -344,30 +344,30 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
 
             {/* Custom context */}
             <div className="space-y-2">
-              <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Custom Instructions</p>
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Custom Instructions</p>
               <textarea
                 value={customContext}
                 onChange={e => setCustomContext(e.target.value)}
                 placeholder="e.g. Mention our 30-day free trial offer. Ask for a 10-min video call."
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 type-caption text-white min-h-[80px] resize-none focus:outline-none focus:border-teal-500 transition-all"
+                className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl p-3 type-caption text-white min-h-[80px] resize-none focus:outline-none focus:border-teal-500 transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Email Language</p>
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Email Language</p>
               <div className="relative">
-                <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ws-text-muted)] pointer-events-none" />
                 <select
                   value={languageMode}
                   onChange={(e) => setLanguageMode(e.target.value as CampaignLanguageMode)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500"
+                  className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl pl-9 pr-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500"
                 >
                   {CAMPAIGN_LANGUAGE_OPTIONS.map((option) => (
                     <option key={option.code} value={option.code}>{option.label}</option>
                   ))}
                 </select>
               </div>
-              <p className="type-card-description text-slate-500">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 Auto uses country, address, and company context. Ask mode makes MCP/UI request confirmation before sending.
               </p>
             </div>
@@ -375,11 +375,11 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
             {/* From address selector */}
             {senderOptions.length > 0 && (
               <div className="space-y-2">
-                <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Send From</p>
+                <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Send From</p>
                 <select
                   value={fromAddress}
                   onChange={e => setFromAddress(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500"
+                  className="w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-xl px-3 py-2 type-caption text-white focus:outline-none focus:border-teal-500"
                 >
                   {senderOptions.map(addr => (
                     <option key={addr} value={addr}>{addr}</option>
@@ -389,7 +389,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
             )}
 
             {/* Queue vs Send toggle */}
-            <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-3 p-3 bg-[var(--ws-panel)] rounded-xl border border-[var(--ws-border)]">
               <button
                 onClick={() => setQueueOnly(!queueOnly)}
                 className={`w-10 h-5 rounded-full transition-all relative ${queueOnly ? 'bg-amber-500' : 'bg-teal-500'}`}
@@ -398,17 +398,17 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
               </button>
               <div>
                 <p className="type-card-description font-bold text-white">{queueOnly ? 'Queue only' : 'Send immediately'}</p>
-                <p className="type-card-description text-slate-500">{queueOnly ? 'Review in CRM before sending' : 'Send now using selected providers'}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">{queueOnly ? 'Review in CRM before sending' : 'Send now using selected providers'}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="type-caption font-bold text-slate-500 uppercase tracking-widest">Outreach Providers</p>
+              <p className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Outreach Providers</p>
               <div className="grid grid-cols-2 gap-2">
                 {OUTREACH_PROVIDER_OPTIONS.map((provider) => {
                   const checked = selectedProviders.includes(provider.id);
                   return (
-                    <label key={provider.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-800 type-ui text-slate-300">
+                    <label key={provider.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-[var(--ws-panel)] border border-[var(--ws-border)] type-ui text-[var(--ws-text-secondary)]">
                       <input
                         type="checkbox"
                         checked={checked}
@@ -419,19 +419,19 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                             return next.length > 0 ? next : [provider.id];
                           });
                         }}
-                        className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                        className="w-3.5 h-3.5 rounded border-slate-600 bg-[var(--ws-panel)] text-teal-500 focus:ring-teal-500"
                       />
                       <span className="truncate">{provider.label}</span>
                     </label>
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 type-label text-slate-400">
+              <label className="flex items-center gap-2 type-label text-[var(--ws-text-muted)]">
                 <input
                   type="checkbox"
                   checked={balanceByDailyLimit}
                   onChange={(e) => setBalanceByDailyLimit(e.target.checked)}
-                  className="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                  className="w-3.5 h-3.5 rounded border-slate-600 bg-[var(--ws-panel)] text-teal-500 focus:ring-teal-500"
                 />
                 Balance by provider daily limits
               </label>
@@ -460,18 +460,18 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
               <div className="h-full flex flex-col items-center justify-center text-center gap-4 text-slate-600 py-16">
                 <Sparkles className="w-12 h-12 opacity-20" />
                 <p className="type-card-description px-2 max-w-md">
-                  Configure your tone and click <strong className="text-slate-400">Generate Emails</strong> to produce personalized outreach for {leads.length} lead{leads.length !== 1 ? 's' : ''}.
+                  Configure your tone and click <strong className="text-[var(--ws-text-muted)]">Generate Emails</strong> to produce personalized outreach for {leads.length} lead{leads.length !== 1 ? 's' : ''}.
                 </p>
                 {/* Pitch angle legend */}
                 {leads.length > 0 && (
                   <div className="mt-4 w-full max-w-sm space-y-2 text-left">
-                    <p className="type-caption text-slate-500 uppercase tracking-widest font-bold mb-2">Detected pitch angles</p>
+                    <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold mb-2">Detected pitch angles</p>
                     {[...new Set(leads.map(l => l.qualification.pitchAngle))].map(pa => (
-                      <div key={pa} className="flex items-start gap-2 p-2 bg-slate-900/50 rounded-lg border border-slate-800 type-caption">
+                      <div key={pa} className="flex items-start gap-2 p-2 bg-[var(--ws-panel)]/50 rounded-lg border border-[var(--ws-border)] type-caption">
                         <Zap className="w-3 h-3 text-teal-400 mt-0.5 flex-shrink-0" />
                         <div>
-                          <span className="font-bold text-teal-300">{PITCH_ANGLES[pa]?.label || pa}</span>
-                          <p className="text-slate-500 type-card-description mt-0.5">{PITCH_ANGLES[pa]?.hook}</p>
+                          <span className="font-bold text-[var(--brand-blue-300)]">{PITCH_ANGLES[pa]?.label || pa}</span>
+                          <p className="text-[var(--ws-text-muted)] type-card-description mt-0.5">{PITCH_ANGLES[pa]?.hook}</p>
                         </div>
                       </div>
                     ))}
@@ -481,7 +481,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
             )}
 
             {status === 'generating' && (
-              <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 py-16">
+              <div className="h-full flex flex-col items-center justify-center gap-4 text-[var(--ws-text-muted)] py-16">
                 <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
                 <p className="type-card-description">AI is writing {leads.length} personalized outreach drafts…</p>
                 <p className="type-card-description text-slate-600">Industry: {industry} · Tone: {tone}</p>
@@ -506,12 +506,12 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                   const isEditing = editingIdx === idx;
                   const pa = PITCH_ANGLES[email.pitchAngle];
                   return (
-                    <div key={idx} className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div key={idx} className="bg-[var(--ws-panel)]/70 border border-[var(--ws-border)] rounded-2xl overflow-hidden">
                       {/* Email header */}
-                      <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-2">
+                      <div className="px-4 py-3 border-b border-[var(--ws-border)] flex items-center justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="type-card-description font-bold text-white truncate">{email.business_name}</p>
-                          <p className="type-card-description text-slate-500 truncate">
+                          <p className="type-card-description text-[var(--ws-text-muted)] truncate">
                             To: {email.recipientEmail || 'No recipient email'}{email.languageLabel ? ` · ${email.languageLabel}` : ''}
                           </p>
                         </div>
@@ -520,8 +520,8 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                             email.recipientSource === 'lead'
                               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                               : email.recipientSource === 'inferred'
-                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-                                : 'bg-slate-700/40 border-slate-700 text-slate-400'
+                                ? 'bg-amber-500/10 border-amber-500/20 text-[var(--warning-text,var(--warning-500))]'
+                                : 'bg-[var(--ws-surface-tertiary)]/40 border-[var(--ws-border)] text-[var(--ws-text-muted)]'
                           }`}>
                             {email.recipientSource === 'lead' ? 'Verified recipient' : email.recipientSource === 'inferred' ? 'Inferred recipient' : 'No recipient'}
                           </span>
@@ -531,7 +531,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                             </span>
                           )}
                           <button onClick={() => setEditingIdx(isEditing ? null : idx)}
-                            className="p-1.5 text-slate-500 hover:text-white transition-all">
+                            className="p-1.5 text-[var(--ws-text-muted)] hover:text-white transition-all">
                             {isEditing ? <Eye className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
                           </button>
                         </div>
@@ -547,17 +547,17 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                               recipientSource: 'inferred',
                             } : em))}
                             placeholder="recipient@company.com"
-                            className="w-full mb-2 type-caption bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none"
+                            className="w-full mb-2 type-caption bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-1.5 text-[var(--ws-text-secondary)] focus:outline-none"
                           />
                         )}
                         {isEditing ? (
                           <input
                             value={email.subject}
                             onChange={e => setEmails(prev => prev.map((em, i) => i === idx ? { ...em, subject: e.target.value } : em))}
-                            className="w-full type-caption font-bold bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-teal-300 focus:outline-none"
+                            className="w-full type-caption font-bold bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-1.5 text-[var(--brand-blue-300)] focus:outline-none"
                           />
                         ) : (
-                          <p className="type-card-description font-bold text-teal-300 break-words">{email.subject}</p>
+                          <p className="type-card-description font-bold text-[var(--brand-blue-300)] break-words">{email.subject}</p>
                         )}
                       </div>
                       {/* Body */}
@@ -566,10 +566,10 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                           <textarea
                             value={email.body}
                             onChange={e => setEmails(prev => prev.map((em, i) => i === idx ? { ...em, body: e.target.value } : em))}
-                            className="w-full type-caption bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 resize-none min-h-[100px] focus:outline-none focus:border-teal-500"
+                            className="w-full type-caption bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-3 py-2 text-[var(--ws-text-secondary)] resize-none min-h-[100px] focus:outline-none focus:border-teal-500"
                           />
                         ) : (
-                          <p className="type-card-description text-slate-400 leading-relaxed whitespace-pre-wrap">{email.body}</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed whitespace-pre-wrap">{email.body}</p>
                         )}
                       </div>
                     </div>
@@ -579,7 +579,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
             )}
 
             {status === 'sending' && (
-              <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400 py-16">
+              <div className="h-full flex flex-col items-center justify-center gap-4 text-[var(--ws-text-muted)] py-16">
                 <Loader2 className="w-10 h-10 animate-spin text-teal-400" />
                 <p className="type-card-description">{queueOnly ? 'Queuing' : 'Sending'} your outreach campaign…</p>
               </div>
@@ -596,7 +596,7 @@ export function OutreachPanel({ leads, industry, onClose, onSendComplete }: Outr
                   ].map(s => (
                     <div key={s.label} className={`p-3 rounded-xl border text-center ${s.bg}`}>
                       <p className={`text-2xl font-black ${s.color}`}>{s.count}</p>
-                      <p className="type-caption text-slate-500 uppercase">{s.label}</p>
+                      <p className="type-caption text-[var(--ws-text-muted)] uppercase">{s.label}</p>
                     </div>
                   ))}
                 </div>

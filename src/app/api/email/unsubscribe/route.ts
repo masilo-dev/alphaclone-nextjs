@@ -12,14 +12,14 @@ function confirmationHtml(message: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unsubscribed</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:var(--ws-surface-secondary);font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td align="center" style="padding:48px 16px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:var(--color-white);border:1px solid var(--ws-border);border-radius:12px;">
           <tr>
             <td style="padding:40px 32px;text-align:center;">
-              <h1 style="margin:0 0 12px;font-size:24px;color:#0f172a;">${message}</h1>
+              <h1 style="margin:0 0 12px;font-size:24px;color:var(--ws-canvas);">${message}</h1>
             </td>
           </tr>
         </table>

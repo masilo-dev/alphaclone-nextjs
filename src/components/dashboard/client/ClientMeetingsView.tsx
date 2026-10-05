@@ -84,19 +84,19 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white">My Meetings</h2>
-                    <p className="text-slate-400">Scheduled video calls with your provider</p>
+                    <p className="text-[var(--ws-text-muted)]">Scheduled video calls with your provider</p>
                 </div>
             </div>
 
             {loading ? (
-                <div className="p-12 text-center text-slate-500">Loading meetings...</div>
+                <div className="p-12 text-center text-[var(--ws-text-muted)]">Loading meetings...</div>
             ) : upcomingMeetings.length === 0 ? (
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
-                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
+                <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-12 text-center">
+                    <div className="w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-full flex items-center justify-center mx-auto mb-4 text-[var(--ws-text-muted)]">
                         <Calendar className="w-8 h-8" />
                     </div>
                     <h3 className="text-lg font-medium text-white mb-2">No upcoming meetings</h3>
-                    <p className="text-slate-400 max-w-sm mx-auto">
+                    <p className="text-[var(--ws-text-muted)] max-w-sm mx-auto">
                         You don't have any video calls scheduled. Contact your service provider if you need to schedule one.
                     </p>
                 </div>
@@ -107,11 +107,11 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                         const dateToFormat = meeting.scheduled_at ? new Date(meeting.scheduled_at) : new Date(meeting.created_at);
 
                         return (
-                            <div key={meeting.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:bg-slate-800/30 transition-colors">
+                            <div key={meeting.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6 hover:bg-[var(--ws-surface-secondary)]/30 transition-colors">
                                 <div className="flex flex-col md:flex-row justify-between md:items-center gap-6">
                                     <div className="flex items-start gap-4">
-                                        <div className="flex flex-col items-center justify-center w-16 h-16 bg-slate-800 rounded-xl border border-slate-700 shrink-0">
-                                            <div className="type-caption uppercase font-bold text-slate-400">
+                                        <div className="flex flex-col items-center justify-center w-16 h-16 bg-[var(--ws-surface-secondary)] rounded-xl border border-[var(--ws-border)] shrink-0">
+                                            <div className="type-caption uppercase font-bold text-[var(--ws-text-muted)]">
                                                 {format(dateToFormat, 'MMM')}
                                             </div>
                                             <div className="text-2xl font-bold text-white">
@@ -120,7 +120,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-semibold text-white mb-1">{meeting.title}</h3>
-                                            <div className="flex flex-wrap gap-4 type-ui text-slate-400">
+                                            <div className="flex flex-wrap gap-4 type-ui text-[var(--ws-text-muted)]">
                                                 <span className="flex items-center gap-1.5">
                                                     <Clock className="w-4 h-4" />
                                                     {format(dateToFormat, 'h:mm a')}

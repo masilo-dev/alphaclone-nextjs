@@ -106,7 +106,7 @@ export function IntegratedIntelligencePanel() {
   if (isLoading) {
     return (
       <div className="ac-workspace-panel rounded-lg p-4">
-        <div className="flex items-center gap-2 text-slate-300 type-ui">
+        <div className="flex items-center gap-2 text-[var(--ws-text-secondary)] type-ui">
           <Loader2 className="w-4 h-4 animate-spin" />
           Building integrated intelligence snapshot...
         </div>
@@ -116,7 +116,7 @@ export function IntegratedIntelligencePanel() {
 
   if (error || !snapshot) {
     return (
-      <div className="ac-workspace-panel rounded-lg border-red-500/20 p-4 type-ui text-red-300">
+      <div className="ac-workspace-panel rounded-lg border-red-500/20 p-4 type-ui text-[var(--error-text,var(--error-500))]">
         Failed to load system intelligence snapshot.
       </div>
     );
@@ -128,19 +128,19 @@ export function IntegratedIntelligencePanel() {
         <div className="flex items-center gap-2">
           <BrainCircuit className="w-4 h-4 text-teal-400" />
           <div>
-            <h3 className="type-caption font-black uppercase tracking-widest text-slate-400">Integrated Intelligence</h3>
+            <h3 className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Integrated Intelligence</h3>
             <p className="type-card-description font-semibold text-white mt-0.5">System health and recommended action areas</p>
           </div>
         </div>
-        <div className="type-caption text-slate-400 text-right">
+        <div className="type-caption text-[var(--ws-text-muted)] text-right">
           Score {snapshot.overallScore.toFixed(1)} | Confidence {(snapshot.overallConfidence * 100).toFixed(0)}%
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {topModules.map((moduleAssessment) => (
-          <div key={moduleAssessment.module} className="rounded-lg border border-white/10 bg-slate-950/45 p-2.5">
-            <div className="type-caption uppercase tracking-wide text-slate-400">
+          <div key={moduleAssessment.module} className="rounded-lg border border-white/10 bg-[var(--ws-canvas)]/45 p-2.5">
+            <div className="type-caption uppercase tracking-wide text-[var(--ws-text-muted)]">
               {MODULE_LABELS[moduleAssessment.module]}
             </div>
             <div className="text-lg font-bold text-white">{moduleAssessment.score.toFixed(0)}</div>
@@ -149,12 +149,12 @@ export function IntegratedIntelligencePanel() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-3">
-        <div className="rounded-lg border border-white/10 bg-slate-950/40 p-3">
-          <div className="type-caption font-black uppercase tracking-widest text-teal-300 mb-2 flex items-center gap-1">
+        <div className="rounded-lg border border-white/10 bg-[var(--ws-canvas)]/40 p-3">
+          <div className="type-caption font-black uppercase tracking-widest text-[var(--brand-blue-300)] mb-2 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Priority Actions
           </div>
-          <ul className="space-y-1.5 type-ui text-slate-200">
+          <ul className="space-y-1.5 type-ui text-[var(--ws-text-secondary)]">
             {snapshot.topActions.slice(0, 4).map((item) => (
               <li key={item} className="line-clamp-2">
                 {item}
@@ -163,12 +163,12 @@ export function IntegratedIntelligencePanel() {
           </ul>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-slate-950/40 p-3">
-          <div className="type-caption font-black uppercase tracking-widest text-amber-300 mb-2 flex items-center gap-1">
+        <div className="rounded-lg border border-white/10 bg-[var(--ws-canvas)]/40 p-3">
+          <div className="type-caption font-black uppercase tracking-widest text-[var(--warning-text,var(--warning-500))] mb-2 flex items-center gap-1">
             <AlertTriangle className="w-3.5 h-3.5" />
             Systemic Risks
           </div>
-          <ul className="space-y-1.5 type-ui text-slate-200">
+          <ul className="space-y-1.5 type-ui text-[var(--ws-text-secondary)]">
             {snapshot.systemicRisks.slice(0, 4).map((item) => (
               <li key={item} className="line-clamp-2">
                 {item}
@@ -178,13 +178,13 @@ export function IntegratedIntelligencePanel() {
         </div>
       </div>
       {trendPoints.length > 1 && (
-        <div className="rounded-lg border border-white/10 bg-slate-950/40 p-3">
-          <div className="type-caption text-slate-400 mb-2 uppercase tracking-widest font-black">Trend</div>
+        <div className="rounded-lg border border-white/10 bg-[var(--ws-canvas)]/40 p-3">
+          <div className="type-caption text-[var(--ws-text-muted)] mb-2 uppercase tracking-widest font-black">Trend</div>
           <div className="flex items-end gap-1 h-16">
             {trendPoints.map((point, index) => (
               <div
                 key={`${point.timestamp}-${index}`}
-                className="flex-1 bg-teal-500/30 hover:bg-teal-400/60 rounded-sm"
+                className="flex-1 bg-teal-500/30 hover:bg-[var(--brand-blue-400)]/60 rounded-sm"
                 style={{ height: `${Math.max(8, Math.min(100, point.score))}%` }}
                 title={`${new Date(point.timestamp).toLocaleDateString()} - ${point.score.toFixed(1)}`}
               />

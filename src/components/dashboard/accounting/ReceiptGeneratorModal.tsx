@@ -38,7 +38,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         discountAmount: 0,
         taxRate: 0,
         notes: 'Thank you for your business.',
-        accentColor: '#34d399'
+        accentColor: 'var(--success-500)'
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -70,13 +70,13 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         const doc = new jsPDF();
         doc.setFillColor(receiptData.accentColor);
         doc.rect(0, 0, 210, 38, 'F');
-        doc.setTextColor('#ffffff');
+        doc.setTextColor('var(--color-white)');
         doc.setFontSize(24);
         doc.text('PAYMENT RECEIPT', 20, 23);
         doc.setFontSize(10);
         doc.text(receiptData.receiptNumber, 190, 18, { align: 'right' });
         doc.text(receiptData.date, 190, 25, { align: 'right' });
-        doc.setTextColor('#111827');
+        doc.setTextColor('var(--ws-canvas)');
         doc.setFontSize(11);
         doc.text(`Received from: ${receiptData.clientName}`, 20, 52);
         if (receiptData.clientEmail) doc.text(`Email: ${receiptData.clientEmail}`, 20, 59);
@@ -139,7 +139,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                         <User className="w-4 h-4 text-emerald-400" />
-                        <h3 className="type-caption font-black text-slate-300 uppercase tracking-widest">Client</h3>
+                        <h3 className="type-caption font-black text-[var(--ws-text-secondary)] uppercase tracking-widest">Client</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -155,7 +155,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                        <h3 className="type-caption font-black text-slate-300 uppercase tracking-widest">Items</h3>
+                        <h3 className="type-caption font-black text-[var(--ws-text-secondary)] uppercase tracking-widest">Items</h3>
                         <button onClick={handleAddItem} className="text-emerald-400 type-caption font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
                     </div>
                     <div className="space-y-3">
@@ -173,7 +173,7 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 </div>
 
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl flex flex-col items-end gap-2">
-                    <div className="flex justify-between w-full type-caption font-black text-slate-300 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
+                    <div className="flex justify-between w-full type-caption font-black text-[var(--ws-text-secondary)] uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
                     <div className="text-4xl font-black text-white tracking-tighter">${calculateTotal().toLocaleString()}</div>
                     <p className="type-caption font-black text-emerald-400 uppercase tracking-widest">Amount Paid</p>
                 </div>

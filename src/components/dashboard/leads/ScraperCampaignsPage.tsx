@@ -362,7 +362,7 @@ export default function ScraperCampaignsPage() {
           <div className="flex flex-wrap gap-2">
             <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => toast('CSV/XLSX import is not connected in this workspace yet. Use a new public-source search instead.') }><FileUp size={16}/>Import (not ready)</button>
             <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => setActive('Activity')}><History size={16}/>Search history</button>
-            <button className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`} onClick={() => setActive('Discover')}><Search size={16}/>New search</button>
+            <button className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`} onClick={() => setActive('Discover')}><Search size={16}/>New search</button>
           </div>
         </header>
 
@@ -450,7 +450,7 @@ export default function ScraperCampaignsPage() {
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="type-caption text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
-                <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
+                <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
               </div>
             </form>
             <aside className="space-y-4">
@@ -520,7 +520,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
   }));
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 type-caption text-amber-300">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
+      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="type-caption text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 type-caption text-[var(--warning-text,var(--warning-500))]">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
       {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
     </div>
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="type-caption uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
@@ -528,7 +528,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
       <button type="button" onClick={() => setView('list')} className={`${buttonClass} ${view === 'list' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}>List</button>
       <button type="button" onClick={() => setView('map')} className={`${buttonClass} ${view === 'map' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}><MapPin size={16}/>Map</button>
     </div>
-    {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between type-caption"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
+    {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between type-caption"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-[var(--brand-blue-400)] transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
     {!candidates.length && selected && (selected.discovered_count ?? 0) > 0 ? (
       <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center" role="status">
         <h2 className="font-semibold text-amber-100">Saving {selected.discovered_count} discovered businesses…</h2>
@@ -540,7 +540,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
     {view === 'map' ? (
       <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
     ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
-      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left type-caption"><thead className="border-b border-[var(--ws-border)] type-caption uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="type-caption font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-teal-300">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left type-caption"><thead className="border-b border-[var(--ws-border)] type-caption uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="type-caption font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-[var(--brand-blue-300)]">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs type-caption text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 type-caption font-semibold text-[var(--brand-blue-300)] hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 type-caption font-semibold text-[var(--error-text,var(--error-500))] hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
       <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="type-caption text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="type-caption font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 type-caption">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
   </div>;
@@ -602,7 +602,7 @@ function ListsPanel({
                   type="button"
                   disabled={addingToListId === list.id}
                   onClick={() => onAddAccepted(list.id)}
-                  className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}
+                  className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`}
                 >
                   <ListPlus size={16} />
                   {addingToListId === list.id ? 'Adding…' : `Add accepted (${acceptedCount})`}
@@ -625,7 +625,7 @@ function ListsPanel({
             placeholder="e.g. Harare restaurants — March"
             required
           />
-          <button disabled={creatingList} className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+          <button disabled={creatingList} className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`}>
             {creatingList ? 'Creating…' : 'Create list'}
           </button>
         </form>
@@ -668,7 +668,7 @@ function OutreachPanel({
       <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5 space-y-3">
         <h2 className="text-lg font-semibold">Launch outreach safely</h2>
         <p className="type-caption text-[var(--ws-text-secondary)]">Use the existing reviewed batch flow — consent checks, suppression, and audit trail stay enforced.</p>
-        <Link href="/dashboard/contacts" className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+        <Link href="/dashboard/contacts" className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`}>
           Open Contacts batch outreach
         </Link>
         <Link href="/dashboard/outreach" className={`${buttonClass} w-full border border-[var(--ws-border)] bg-[var(--ws-surface)]`}>
@@ -749,7 +749,7 @@ function SettingsPanel({
       <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 type-caption text-[var(--ws-text-secondary)]">
       Public-source limits are enforced by the search workers. Only phone or email contacts are saved.
       </div>
-      <button type="button" onClick={() => onSave(draft)} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+      <button type="button" onClick={() => onSave(draft)} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)]`}>
         Save workspace defaults
       </button>
     </div>

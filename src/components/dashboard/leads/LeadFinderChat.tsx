@@ -55,10 +55,10 @@ interface RunStatus {
 }
 
 const GRADE_STYLES: Record<string, string> = {
-  A: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+  A: 'bg-emerald-500/20 text-[var(--success-text,var(--success-500))] border-emerald-500/40',
   B: 'bg-blue-500/20 text-blue-300 border-blue-500/40',
-  C: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-  D: 'bg-slate-500/20 text-slate-400 border-slate-500/40',
+  C: 'bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] border-amber-500/40',
+  D: 'bg-slate-500/20 text-[var(--ws-text-muted)] border-slate-500/40',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -538,23 +538,23 @@ export default function LeadFinderChat({ onActivity }: Props) {
   );
 
   return (
-    <div className="flex flex-col flex-1 min-h-[420px] h-full ac-workspace-panel rounded-xl border border-slate-800 overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-[420px] h-full ac-workspace-panel rounded-xl border border-[var(--ws-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/80 bg-slate-900/40">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40">
         <div className="w-9 h-9 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-teal-400" />
         </div>
         <div className="min-w-0">
           <h2 className="text-white font-semibold type-ui">Lead search assistant</h2>
-          <p className="type-card-description text-slate-500 truncate">Natural language → directory scrape → CRM</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] truncate">Natural language → directory scrape → CRM</p>
         </div>
         {runStatus && runStatus.status === 'running' && (
-          <div className="ml-auto flex items-center gap-2 type-caption text-slate-400 shrink-0">
+          <div className="ml-auto flex items-center gap-2 type-caption text-[var(--ws-text-muted)] shrink-0">
             <Loader2 className="w-3 h-3 animate-spin text-teal-400" />
             <span className="hidden sm:inline">
               {STEP_LABELS[runStatus.current_step || ''] || 'Processing'}
             </span>
-            <span className="tabular-nums font-medium text-slate-300">{runStatus.progress}%</span>
+            <span className="tabular-nums font-medium text-[var(--ws-text-secondary)]">{runStatus.progress}%</span>
           </div>
         )}
       </div>
@@ -575,7 +575,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
               className={`max-w-[85%] rounded-xl px-4 py-3 type-ui whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-teal-700/80 text-white rounded-br-sm'
-                  : 'bg-slate-800/80 text-slate-200 rounded-bl-sm border border-slate-700/50'
+                  : 'bg-[var(--ws-surface-secondary)]/80 text-[var(--ws-text-secondary)] rounded-bl-sm border border-[var(--ws-border)]/50'
               }`}
             >
               {msg.content}
@@ -592,19 +592,19 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {pendingIntent && !campaignId && (
           <div className="mx-2 rounded-xl border border-teal-500/25 bg-teal-950/20 p-4 space-y-3">
             <p className="type-card-description text-teal-200 font-medium">Search plan</p>
-            <p className="type-card-description text-slate-400 leading-relaxed">{pendingIntent.summary}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">{pendingIntent.summary}</p>
             {pendingIntent.niche && (
               <p className="type-card-description text-emerald-400">Niche: {pendingIntent.niche}</p>
             )}
-            <p className="type-card-description text-slate-500">Target: SMB (1–200 employees) · enterprise domains excluded</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Target: SMB (1–200 employees) · enterprise domains excluded</p>
             <div className="flex flex-wrap gap-1">
               {pendingIntent.sources.map((s) => (
-                <span key={s} className="type-caption px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                <span key={s} className="type-caption px-2 py-0.5 rounded-full bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)]">
                   {s}
                 </span>
               ))}
               {pendingIntent.location?.city && (
-                <span className="type-caption px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                <span className="type-caption px-2 py-0.5 rounded-full bg-[var(--ws-surface-secondary)] text-[var(--ws-text-secondary)]">
                   📍 {pendingIntent.location.city}
                 </span>
               )}
@@ -623,11 +623,11 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {/* Progress bar */}
         {runStatus && runStatus.status === 'running' && (
           <div className="mx-2 space-y-2 ac-workspace-panel p-3">
-            <div className="flex justify-between type-caption text-slate-400">
+            <div className="flex justify-between type-caption text-[var(--ws-text-muted)]">
               <span>{STEP_LABELS[runStatus.current_step || ''] || 'Processing'}</span>
-              <span className="tabular-nums text-slate-300">{runStatus.progress ?? 5}%</span>
+              <span className="tabular-nums text-[var(--ws-text-secondary)]">{runStatus.progress ?? 5}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-1.5">
+            <div className="w-full bg-[var(--ws-surface-secondary)] rounded-full h-1.5">
               <div
                 className="bg-teal-500 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${runStatus.progress || 5}%` }}
@@ -635,15 +635,15 @@ export default function LeadFinderChat({ onActivity }: Props) {
             </div>
             <div className="grid grid-cols-3 gap-2 text-center type-caption">
               <div>
-                <div className="text-slate-500">Found</div>
+                <div className="text-[var(--ws-text-muted)]">Found</div>
                 <div className="text-white font-semibold tabular-nums">{runStatus.source_count ?? 0}</div>
               </div>
               <div>
-                <div className="text-slate-500">Enriched</div>
+                <div className="text-[var(--ws-text-muted)]">Enriched</div>
                 <div className="text-white font-semibold tabular-nums">{runStatus.enriched_count ?? 0}</div>
               </div>
               <div>
-                <div className="text-slate-500">CRM</div>
+                <div className="text-[var(--ws-text-muted)]">CRM</div>
                 <div className="text-white font-semibold tabular-nums">{runStatus.created_count ?? 0}</div>
               </div>
             </div>
@@ -655,7 +655,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             <button
               onClick={() => handleRetryNiche(retryAttempt)}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-600/50 text-amber-300 type-ui hover:bg-amber-950/30"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-600/50 text-[var(--warning-text,var(--warning-500))] type-ui hover:bg-amber-950/30"
             >
               <RefreshCw className="w-4 h-4" />
               Broaden niche search
@@ -667,12 +667,12 @@ export default function LeadFinderChat({ onActivity }: Props) {
         {leads.length > 0 && (
           <div className="space-y-2 mx-2">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <p className="type-card-description text-slate-300 font-medium">{leads.length} SMB leads</p>
+              <p className="type-card-description text-[var(--ws-text-secondary)] font-medium">{leads.length} SMB leads</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={qualifySelected}
                   disabled={selectedIds.size === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 type-caption text-white disabled:opacity-40"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] type-caption text-white disabled:opacity-40"
                 >
                   <CheckCircle2 className="w-3 h-3" />
                   Qualify
@@ -717,7 +717,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${
                   selectedIds.has(lead.id)
                     ? 'border-emerald-500/50 bg-emerald-950/20'
-                    : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'
+                    : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/40 hover:border-[var(--ws-border)]'
                 }`}
               >
                 <input
@@ -739,7 +739,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                       </span>
                     )}
                     {lead.score != null && (
-                      <span className="type-caption text-slate-500 flex items-center gap-0.5">
+                      <span className="type-caption text-[var(--ws-text-muted)] flex items-center gap-0.5">
                         <Star className="w-3 h-3" /> {lead.score}
                       </span>
                     )}
@@ -753,7 +753,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
                       <span className="type-caption text-indigo-400">in CRM</span>
                     )}
                   </div>
-                  <div className="type-caption text-slate-400 mt-0.5 flex flex-wrap gap-x-3">
+                  <div className="type-caption text-[var(--ws-text-muted)] mt-0.5 flex flex-wrap gap-x-3">
                     {lead.title && <span>{lead.title}</span>}
                     {lead.company && (
                       <span className="flex items-center gap-1">
@@ -780,7 +780,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-slate-500 type-ui px-2">
+          <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-ui px-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Thinking…
           </div>
@@ -789,7 +789,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-slate-800 bg-slate-900/40">
+      <div className="p-4 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -801,7 +801,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="e.g. Find owner-operated yoga studios in Denver — SMB only, no chains"
-            className="flex-1 rounded-xl bg-slate-800 border border-slate-700 px-4 py-3 type-ui text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
+            className="flex-1 rounded-xl bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] px-4 py-3 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:outline-none focus:border-emerald-500/50"
             disabled={loading}
           />
           <button

@@ -260,7 +260,7 @@ async function notifyScheduledTaskByEmail(task: ScheduledAiTask, output: string)
         html: `
           <p>Hi ${profile.name || 'there'},</p>
           <p>Your scheduled workspace task <strong>${task.name}</strong> finished successfully in <strong>${workspaceName}</strong>.</p>
-          <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:12px;">${snippet.replace(/</g, '&lt;')}</pre>
+          <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;background:var(--ws-canvas);color:var(--ws-border);padding:16px;border-radius:12px;">${snippet.replace(/</g, '&lt;')}</pre>
           <p><a href="${actionUrl}">Open automation dashboard</a></p>
         `,
         isPlatformNotification: true,

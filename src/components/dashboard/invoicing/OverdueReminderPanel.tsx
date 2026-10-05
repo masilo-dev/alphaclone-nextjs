@@ -101,9 +101,9 @@ export function OverdueReminderPanel() {
           <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
             <Bell className="text-orange-400" size={20} /> Overdue Reminders
           </h3>
-          <p className="type-card-description text-slate-400 mt-0.5">Send email or WhatsApp nudges to overdue clients</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">Send email or WhatsApp nudges to overdue clients</p>
         </div>
-        <button onClick={load} className="type-ui text-slate-400 hover:text-white border border-white/10 px-3 py-1.5 rounded-lg">
+        <button onClick={load} className="type-ui text-[var(--ws-text-muted)] hover:text-white border border-white/10 px-3 py-1.5 rounded-lg">
           Refresh
         </button>
       </div>
@@ -117,8 +117,8 @@ export function OverdueReminderPanel() {
       ) : items.length === 0 ? (
         <div className="ac-workspace-panel rounded-xl p-10 text-center">
           <CheckCircle2 className="text-emerald-400 mx-auto mb-3" size={36} />
-          <p className="text-slate-300 font-semibold">No overdue invoices!</p>
-          <p className="text-slate-500 type-card-description mt-1">All accounts are current.</p>
+          <p className="text-[var(--ws-text-secondary)] font-semibold">No overdue invoices!</p>
+          <p className="text-[var(--ws-text-muted)] type-card-description mt-1">All accounts are current.</p>
         </div>
       ) : (
         <div className="ac-workspace-panel rounded-xl overflow-hidden">
@@ -138,11 +138,11 @@ export function OverdueReminderPanel() {
                       {item.daysOverdue}d overdue
                     </span>
                   </div>
-                  <p className="type-card-description text-slate-400 mt-0.5">
+                  <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
                     Invoice #{item.invoice_number} · ${item.total_amount.toLocaleString()} · Due {new Date(item.due_date).toLocaleDateString()}
                   </p>
                   {item.lastReminderSent && (
-                    <p className="type-card-description text-slate-500 mt-0.5">
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">
                       Last reminder: {new Date(item.lastReminderSent).toLocaleDateString()}
                     </p>
                   )}
@@ -159,7 +159,7 @@ export function OverdueReminderPanel() {
                   <button
                     onClick={() => sendReminder(item, 'whatsapp')}
                     disabled={sending === item.id + 'whatsapp'}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-lg type-caption font-bold hover:bg-emerald-500/25 disabled:opacity-40 transition-all"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 text-[var(--success-text,var(--success-500))] border border-emerald-500/30 rounded-lg type-caption font-bold hover:bg-emerald-500/25 disabled:opacity-40 transition-all"
                   >
                     <MessageCircle size={13} />
                     WhatsApp

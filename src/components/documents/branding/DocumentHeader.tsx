@@ -55,7 +55,7 @@ export function DocumentHeader({
   showIssuerDetails = true,
   children,
 }: DocumentHeaderProps) {
-  const brandColor = branding.primaryBrandColor || branding.primaryColor || '#0f172a';
+  const brandColor = branding.primaryBrandColor || branding.primaryColor || 'var(--ws-canvas)';
   const badgeStyle = resolveStatusVariant(status, statusVariant);
 
   return (
@@ -75,7 +75,7 @@ export function DocumentHeader({
           {/* Main Document Title */}
           <h1
             className="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-slate-900"
-            style={{ color: brandColor !== '#ffffff' ? brandColor : '#0f172a' }}
+            style={{ color: brandColor !== 'var(--color-white)' ? brandColor : 'var(--ws-canvas)' }}
           >
             {title}
           </h1>
@@ -89,7 +89,7 @@ export function DocumentHeader({
 
           {/* Reference Number if any */}
           {referenceNumber && referenceNumber !== documentNumber && (
-            <div className="text-xs text-slate-500 font-mono mt-0.5">
+            <div className="text-xs text-[var(--ws-text-muted)] font-mono mt-0.5">
               Ref: {referenceNumber}
             </div>
           )}

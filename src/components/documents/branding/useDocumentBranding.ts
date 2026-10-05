@@ -43,7 +43,7 @@ export function useDocumentBranding(tenantProp?: TenantLikeInput | null): UseDoc
   return useMemo(() => {
     const branding = extractTenantBranding(effectiveTenant);
     const hasLogo = Boolean(branding.logoUrl && typeof branding.logoUrl === 'string' && branding.logoUrl.trim().length > 0);
-    const brandColor = branding.primaryColor || '#0f172a';
+    const brandColor = branding.primaryColor || 'var(--ws-canvas)';
 
     return {
       branding,

@@ -117,7 +117,7 @@ const getInitials = (name?: string) => {
 const entityKey = (entity: { type: string; id: string }) => `${entity.type}:${entity.id}`;
 
 const hashColor = (name?: string) => {
-  if (!name) return 'bg-slate-700';
+  if (!name) return 'bg-[var(--ws-surface-tertiary)]';
   const colors = [
     'bg-blue-600/80',
     'bg-emerald-600/80',
@@ -134,7 +134,7 @@ const hashColor = (name?: string) => {
 
 const sourceColors: Record<string, string> = {
   linkedin: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
-  manual:   'bg-slate-500/10 text-slate-400 border border-slate-500/20',
+  manual:   'bg-slate-500/10 text-[var(--ws-text-muted)] border border-slate-500/20',
   whatsapp: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   referral: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
   website:  'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border border-[var(--brand-blue-500)]/20',
@@ -145,10 +145,10 @@ const statusColors: Record<string, string> = {
   contacted:     'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   qualified:     'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   disqualified:  'bg-rose-500/10 text-rose-400 border border-rose-500/20',
-  lead:          'bg-slate-500/10 text-slate-400 border border-slate-500/20',
+  lead:          'bg-slate-500/10 text-[var(--ws-text-muted)] border border-slate-500/20',
   prospect:      'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
   customer:      'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border border-[var(--brand-blue-500)]/20',
-  lost:          'bg-red-500/10 text-red-400 border border-red-500/20',
+  lost:          'bg-[var(--error-500)]/10 text-red-400 border border-red-500/20',
 };
 
 // ── Swipeable Row ──────────────────────────────────────────────────────────────
@@ -179,7 +179,7 @@ const SwipeableRow: React.FC<{
   };
 
   return (
-    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-slate-900/70 shadow-sm transition-colors hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/90">
+    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-[var(--ws-panel)]/70 shadow-sm transition-colors hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]/90">
       {entity.type === 'lead' && (
         <>
           {/* Left action (green) */}
@@ -206,7 +206,7 @@ const SwipeableRow: React.FC<{
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleSelect(entity); }}
-            className="flex-shrink-0 rounded-lg border border-white/5 bg-slate-950/70 p-1 text-slate-500 transition-colors hover:border-[var(--brand-blue-500)]/30 hover:text-[var(--brand-blue-400)]"
+            className="flex-shrink-0 rounded-lg border border-white/5 bg-[var(--ws-canvas)]/70 p-1 text-[var(--ws-text-muted)] transition-colors hover:border-[var(--brand-blue-500)]/30 hover:text-[var(--brand-blue-400)]"
             aria-label={isSelected ? 'Deselect' : 'Select'}
           >
             {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
@@ -220,7 +220,7 @@ const SwipeableRow: React.FC<{
           <OnlineStatusBadge
             status={status}
             size="sm"
-            className="absolute -bottom-1 -right-1 border-2 border-slate-900 rounded-full bg-slate-900"
+            className="absolute -bottom-1 -right-1 border-2 border-slate-900 rounded-full bg-[var(--ws-panel)]"
           />
         </div>
 
@@ -229,7 +229,7 @@ const SwipeableRow: React.FC<{
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className="block type-ui font-bold text-white truncate">{entity.name}</span>
-              <span className="block type-ui text-slate-400 truncate">
+              <span className="block type-ui text-[var(--ws-text-muted)] truncate">
                 {entity.company || 'Private account'}
               </span>
             </div>
@@ -252,7 +252,7 @@ const SwipeableRow: React.FC<{
                 Teams
               </span>
             )}
-            <span className="truncate text-slate-500">
+            <span className="truncate text-[var(--ws-text-muted)]">
               {entity.email || entity.phone || 'No contact details'}
             </span>
           </div>
@@ -309,7 +309,7 @@ const SwipeableRow: React.FC<{
 
         {/* Right affordance */}
         <div className="flex items-center self-center flex-shrink-0 pl-1">
-          <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-[var(--ws-text-muted)] transition-colors" />
         </div>
       </motion.div>
     </div>
@@ -405,37 +405,37 @@ const LeadDetail: React.FC<{
   };
 
   const leadActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
         onClick={() => onUpdate(lead.id, 'contacted')}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <Phone className="w-5 h-5 text-amber-400" />
-        <span className="type-ui text-slate-400 font-bold">Mark Contacted</span>
+        <span className="type-ui text-[var(--ws-text-muted)] font-bold">Mark Contacted</span>
       </button>
       <button
         onClick={() => onQualify(lead)}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
       >
         <Sparkles className="w-5 h-5 text-[var(--brand-blue-400)] animate-pulse" />
         <span className="type-ui text-[var(--brand-blue-300)] font-bold">Qualify & Convert</span>
       </button>
       <button
         onClick={() => onUpdate(lead.id, 'disqualified')}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <X className="w-5 h-5 text-rose-500" />
-        <span className="type-ui text-slate-400 font-bold">Disqualify</span>
+        <span className="type-ui text-[var(--ws-text-muted)] font-bold">Disqualify</span>
       </button>
     </div>
   );
 
   return (
-    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
-          <ArrowLeft className="w-4 h-4 text-slate-300" />
+      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] transition-colors">
+          <ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" />
         </button>
         <span className="type-ui font-bold text-white">Lead Details</span>
       </div>
@@ -519,7 +519,7 @@ const LeadDetail: React.FC<{
               type="button"
               onClick={() => void handleDeleteLead()}
               disabled={deleting}
-              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-red-500/10 disabled:opacity-50"
+              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-[var(--error-500)]/10 disabled:opacity-50"
             >
               {deleting ? 'Deleting…' : 'Delete lead'}
             </button>
@@ -527,22 +527,22 @@ const LeadDetail: React.FC<{
         </div>
 
         {/* Read-only metadata */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl divide-y divide-white/5">
+        <div className="bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl divide-y divide-white/5">
           <div className="flex items-center gap-3 p-4">
-            <Clock className="w-5 h-5 text-slate-500 flex-shrink-0" />
+            <Clock className="w-5 h-5 text-[var(--ws-text-muted)] flex-shrink-0" />
             <div>
-              <span className="block type-caption text-slate-500 font-bold uppercase tracking-wider">Created At</span>
-              <span className="type-ui text-slate-300">
+              <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Created At</span>
+              <span className="type-ui text-[var(--ws-text-secondary)]">
                 {new Date(lead.created_at).toLocaleString()}
               </span>
             </div>
           </div>
           {lead.source && (
             <div className="flex items-center gap-3 p-4">
-              <Building className="w-5 h-5 text-slate-500 flex-shrink-0" />
+              <Building className="w-5 h-5 text-[var(--ws-text-muted)] flex-shrink-0" />
               <div>
-                <span className="block type-caption text-slate-500 font-bold uppercase tracking-wider">Source</span>
-                <span className="type-ui text-slate-300 capitalize">{lead.source}</span>
+                <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Source</span>
+                <span className="type-ui text-[var(--ws-text-secondary)] capitalize">{lead.source}</span>
               </div>
             </div>
           )}
@@ -552,17 +552,17 @@ const LeadDetail: React.FC<{
         <div>
           <div className="flex items-center gap-2 mb-3 px-1">
             <Activity className="w-4 h-4 text-[var(--brand-blue-400)]" />
-            <span className="type-caption font-bold uppercase tracking-wider text-slate-400">Activity History</span>
+            <span className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Activity History</span>
           </div>
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4">
+          <div className="bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl p-4">
             {loadingActivities ? (
-              <div className="flex items-center gap-2 text-slate-500 type-caption py-4 justify-center">
+              <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption py-4 justify-center">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading history…
               </div>
             ) : activities.length === 0 ? (
               <div className="text-center py-6">
                 <Clock className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-                <p className="type-card-description text-slate-500">No activity logged yet.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">No activity logged yet.</p>
                 <p className="type-caption text-slate-600 mt-1">Status changes and outreach will appear here.</p>
               </div>
             ) : (
@@ -570,11 +570,11 @@ const LeadDetail: React.FC<{
                 {activities.map((act, i) => (
                   <div key={act.id} className="flex gap-3 relative pb-4 last:pb-0">
                     {i !== activities.length - 1 && (
-                      <span className="absolute left-[7px] top-4 bottom-0 w-px bg-slate-800" />
+                      <span className="absolute left-[7px] top-4 bottom-0 w-px bg-[var(--ws-surface-secondary)]" />
                     )}
                     <span className="mt-1 w-3.5 h-3.5 rounded-full bg-[var(--brand-blue-500)]/20 border border-[var(--brand-blue-500)]/40 flex-shrink-0 z-10" />
                     <div className="min-w-0 flex-1">
-                      <p className="type-card-description text-slate-300 leading-relaxed">{act.description || act.type}</p>
+                      <p className="type-card-description text-[var(--ws-text-secondary)] leading-relaxed">{act.description || act.type}</p>
                       <p className="type-card-description text-slate-600 mt-0.5">{new Date(act.created_at).toLocaleString()}</p>
                     </div>
                   </div>
@@ -747,23 +747,23 @@ const Client360Detail: React.FC<{
   };
 
   const clientActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-slate-950/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-white/5` : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-[var(--ws-canvas)]/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-white/5` : 'fixed bottom-0 left-0 right-0 md:absolute bg-[var(--ws-canvas)]/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
         onClick={() => {
           if (inDrawer) onBack();
           onNewDeal(client);
         }}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <TrendingUp className="w-5 h-5 text-emerald-400" />
-        <span className="type-ui text-slate-400 font-bold">Add Deal</span>
+        <span className="type-ui text-[var(--ws-text-muted)] font-bold">Add Deal</span>
       </button>
       <button
         onClick={() => {
           if (inDrawer) onBack();
           onDraftContract(client);
         }}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
       >
         <ShieldCheck className="w-5 h-5 text-[var(--brand-blue-400)]" />
         <span className="type-ui text-[var(--brand-blue-300)] font-bold">Draft Contract</span>
@@ -773,20 +773,20 @@ const Client360Detail: React.FC<{
           if (inDrawer) onBack();
           router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/billing/manage' : '/dashboard/finance'}?create=1&clientId=${encodeURIComponent(client.id)}`);
         }}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-[var(--ws-panel)] transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
       >
         <DollarSign className="w-5 h-5 text-blue-400" />
-        <span className="type-ui text-slate-400 font-bold">Create Invoice</span>
+        <span className="type-ui text-[var(--ws-text-muted)] font-bold">Create Invoice</span>
       </button>
     </div>
   );
 
   return (
-    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-[var(--ws-canvas)] text-[var(--ws-text-primary)]'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
-          <ArrowLeft className="w-4 h-4 text-slate-300" />
+      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-[var(--ws-panel)]/60 sticky top-0 z-20 backdrop-blur-md">
+        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] transition-colors">
+          <ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" />
         </button>
         <span className="type-ui font-bold text-white">Client 360 Workspace</span>
       </div>
@@ -868,11 +868,11 @@ const Client360Detail: React.FC<{
             validate={(v) => v.trim() && !/^https?:\/\/.+/.test(v.trim()) ? 'Enter a valid URL (https://…)' : undefined}
           />
           <div>
-            <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Sales stage</label>
+            <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Sales stage</label>
             <select
               value={salesStage}
               onChange={(e) => setSalesStage(e.target.value as BusinessClient['sales_stage'])}
-              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
             >
               {(['lead', 'prospect', 'customer', 'lost'] as const).map((stage) => (
                 <option key={stage} value={stage}>{stage}</option>
@@ -880,13 +880,13 @@ const Client360Detail: React.FC<{
             </select>
           </div>
           <div>
-            <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Notes</label>
+            <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Notes</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Account notes…"
-              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+              className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
             />
           </div>
           <button
@@ -902,7 +902,7 @@ const Client360Detail: React.FC<{
               type="button"
               onClick={() => void handleDeleteClient()}
               disabled={deletingClient}
-              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-red-500/10 disabled:opacity-50"
+              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-[var(--error-500)]/10 disabled:opacity-50"
             >
               {deletingClient ? 'Archiving…' : 'Archive client'}
             </button>
@@ -947,28 +947,28 @@ const Client360Detail: React.FC<{
         />
 
         {/* AI Propensity & Health Panel */}
-        <div className={`bg-slate-900/50 border border-white/5 rounded-2xl ${isInstalledMobileCompanion ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}>
+        <div className={`bg-[var(--ws-panel)]/50 border border-white/5 rounded-2xl ${isInstalledMobileCompanion ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
               <h3 className="type-ui font-bold text-white">AI Client Health Insight</h3>
             </div>
-            {loadingAi && <Loader2 className="w-4 h-4 text-slate-500 animate-spin" />}
+            {loadingAi && <Loader2 className="w-4 h-4 text-[var(--ws-text-muted)] animate-spin" />}
           </div>
 
           {!client.email ? (
-            <div className="flex items-center gap-2 text-slate-500 type-caption py-2">
+            <div className="flex items-center gap-2 text-[var(--ws-text-muted)] type-caption py-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               <span>Provide an email to enable AI propensity scoring & 360-degree timeline logs.</span>
             </div>
           ) : loadingAi ? (
-            <div className="h-20 flex items-center justify-center text-slate-500 type-caption">
+            <div className="h-20 flex items-center justify-center text-[var(--ws-text-muted)] type-caption">
               Resolving profiles & calculating engagement health...
             </div>
           ) : churnRisk && isInstalledMobileCompanion ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="type-caption text-slate-400">Churn risk</span>
+                <span className="type-caption text-[var(--ws-text-muted)]">Churn risk</span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 type-ui font-semibold capitalize ${
                   churnRisk.risk_tier === 'low' ? 'bg-emerald-500/15 text-emerald-400' :
                   churnRisk.risk_tier === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
@@ -979,7 +979,7 @@ const Client360Detail: React.FC<{
                 </span>
               </div>
               {churnRisk.risk_factors[0] ? (
-                <p className="line-clamp-2 type-card-description leading-5 text-slate-300">{churnRisk.risk_factors[0]}</p>
+                <p className="line-clamp-2 type-card-description leading-5 text-[var(--ws-text-secondary)]">{churnRisk.risk_factors[0]}</p>
               ) : (
                 <p className="type-card-description text-emerald-400">Account health is stable</p>
               )}
@@ -987,7 +987,7 @@ const Client360Detail: React.FC<{
           ) : churnRisk ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="type-caption text-slate-400 font-medium">Churn Propensity Risk</span>
+                <span className="type-caption text-[var(--ws-text-muted)] font-medium">Churn Propensity Risk</span>
                 <span className={`type-caption font-bold px-2 py-0.5 rounded-full capitalize ${
                   churnRisk.risk_tier === 'low' ? 'bg-emerald-500/15 text-emerald-400' :
                   churnRisk.risk_tier === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
@@ -997,7 +997,7 @@ const Client360Detail: React.FC<{
                   {churnRisk.risk_tier} Risk ({Math.round(churnRisk.churn_probability * 100)}%)
                 </span>
               </div>
-              <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-[var(--ws-surface-secondary)] h-2 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     churnRisk.risk_tier === 'low' ? 'bg-emerald-500' :
@@ -1010,9 +1010,9 @@ const Client360Detail: React.FC<{
               </div>
               {churnRisk.risk_factors.length > 0 ? (
                 <div className="pt-2 space-y-1.5">
-                  <span className="block type-caption text-slate-500 font-bold uppercase tracking-wider">Risk Factors</span>
+                  <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Risk Factors</span>
                   {churnRisk.risk_factors.map((factor, idx) => (
-                    <div key={idx} className="flex gap-2 items-start type-caption text-slate-300 leading-normal">
+                    <div key={idx} className="flex gap-2 items-start type-caption text-[var(--ws-text-secondary)] leading-normal">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
                       <span>{factor}</span>
                     </div>
@@ -1031,12 +1031,12 @@ const Client360Detail: React.FC<{
         {/* Financial Portfolio Metrics */}
         {profile360 && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-900/40 p-4 border border-white/5 rounded-2xl">
-              <span className="block type-caption text-slate-500 font-bold uppercase tracking-wider">Lifetime Value</span>
+            <div className="bg-[var(--ws-panel)]/40 p-4 border border-white/5 rounded-2xl">
+              <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Lifetime Value</span>
               <span className="text-lg font-black text-white mt-1 block">${profile360.lifetime_value.toLocaleString()}</span>
             </div>
-            <div className="bg-slate-900/40 p-4 border border-white/5 rounded-2xl">
-              <span className="block type-caption text-slate-500 font-bold uppercase tracking-wider">Active Deals</span>
+            <div className="bg-[var(--ws-panel)]/40 p-4 border border-white/5 rounded-2xl">
+              <span className="block type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-wider">Active Deals</span>
               <span className="text-lg font-black text-[var(--brand-blue-400)] mt-1 block">
                 {profile360.active_deals_count} (${profile360.active_deals_value.toLocaleString()})
               </span>
@@ -1067,7 +1067,7 @@ const Client360Detail: React.FC<{
               onOpenComms={() => router.push('/dashboard/comms')}
             />
           ) : loadingAi ? (
-            <div className="h-20 flex items-center justify-center text-slate-500 type-caption">
+            <div className="h-20 flex items-center justify-center text-[var(--ws-text-muted)] type-caption">
               Loading activity…
             </div>
           ) : profile360?.timeline && profile360.timeline.length > 0 ? (
@@ -1077,8 +1077,8 @@ const Client360Detail: React.FC<{
                   <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[var(--brand-blue-500)] ring-4 ring-slate-950" />
                   <div className="flex flex-col gap-0.5">
                     <span className="type-caption font-bold text-white">{event.title}</span>
-                    <span className="type-ui text-slate-400">{event.description}</span>
-                    <span className="type-ui text-slate-500">
+                    <span className="type-ui text-[var(--ws-text-muted)]">{event.description}</span>
+                    <span className="type-ui text-[var(--ws-text-muted)]">
                       {new Date(event.timestamp).toLocaleDateString()} at {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -1086,7 +1086,7 @@ const Client360Detail: React.FC<{
               ))}
             </div>
           ) : (
-            <div className="bg-slate-900/30 p-6 rounded-2xl border border-white/5 border-dashed text-center text-slate-500 type-caption">
+            <div className="bg-[var(--ws-panel)]/30 p-6 rounded-2xl border border-white/5 border-dashed text-center text-[var(--ws-text-muted)] type-caption">
               {HUMAN_LABELS.needsResponse.replace('Customers', 'Start a conversation — messages and activity will appear here')}
             </div>
           )}
@@ -1131,30 +1131,30 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
       {lead && (
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
-            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Industry</label>
+            <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Industry</label>
             <input
               value={industry}
               onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. Technology, Finance, E-commerce"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Deal Target Value ($)</label>
+            <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Deal Target Value ($)</label>
             <input
               type="number"
               value={value}
               onChange={e => setValue(e.target.value)}
               placeholder="Target contract value"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
           <div className="flex gap-2 pt-2">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 type-caption font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
+              className="flex-1 py-2.5 type-caption font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] rounded-xl hover:bg-[var(--ws-surface-tertiary)] transition-colors"
             >
               Cancel
             </button>
@@ -1220,12 +1220,12 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
       title="Add Entity to CRM"
     >
       <div className="space-y-4 pt-2">
-        <div className="flex border border-white/5 p-1 rounded-xl bg-slate-950">
+        <div className="flex border border-white/5 p-1 rounded-xl bg-[var(--ws-canvas)]">
           {(['lead', 'client'] as const).map(t => (
             <button
               key={t}
               onClick={() => setType(t)}
-              className={`flex-1 py-1.5 type-caption font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-[var(--brand-blue-500)] text-white' : 'text-slate-500'}`}
+              className={`flex-1 py-1.5 type-caption font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)]'}`}
             >
               {t}
             </button>
@@ -1274,11 +1274,11 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
 
         {type === 'lead' ? (
           <div className="space-y-1">
-            <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Lead Source</label>
+            <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Lead Source</label>
             <select
               value={source}
               onChange={e => setSource(e.target.value)}
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-slate-300 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+              className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             >
               {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
                 <option key={src} value={src}>{src}</option>
@@ -1288,23 +1288,23 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
         ) : (
           <>
             <div className="space-y-1">
-              <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Industry</label>
+              <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Industry</label>
               <input
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
                 placeholder="e.g. Real Estate"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="block type-caption font-bold text-slate-500 uppercase tracking-wider">Target Portfolio Value ($)</label>
+              <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Target Portfolio Value ($)</label>
               <input
                 type="number"
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="e.g. 5000"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                className="w-full bg-[var(--ws-canvas)] border border-white/5 rounded-xl px-3 py-2 type-ui text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
           </>
@@ -1313,7 +1313,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
         <div className="flex gap-2 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 type-caption font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
+            className="flex-1 py-2.5 type-caption font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] rounded-xl hover:bg-[var(--ws-surface-tertiary)] transition-colors"
           >
             Cancel
           </button>
@@ -1340,10 +1340,10 @@ const STATUS_FILTERS: { label: string; value: LeadStatus | 'all' }[] = [
 
 // ── Pipeline Kanban ──────────────────────────────────────────────────────────
 const KANBAN_COLUMNS: { status: LeadStatus; label: string; accent: string; dot: string }[] = [
-  { status: 'new', label: 'New', accent: 'border-sky-500/30', dot: 'bg-sky-400' },
-  { status: 'contacted', label: 'Contacted', accent: 'border-amber-500/30', dot: 'bg-amber-400' },
+  { status: 'new', label: 'New', accent: 'border-sky-500/30', dot: 'bg-[var(--info-500)]' },
+  { status: 'contacted', label: 'Contacted', accent: 'border-amber-500/30', dot: 'bg-[var(--warning-500)]' },
   { status: 'qualified', label: 'Qualified', accent: 'border-[var(--brand-blue-500)]/30', dot: 'bg-[var(--brand-blue-400)]' },
-  { status: 'disqualified', label: 'Disqualified', accent: 'border-rose-500/30', dot: 'bg-rose-400' },
+  { status: 'disqualified', label: 'Disqualified', accent: 'border-rose-500/30', dot: 'bg-[var(--error-500)]' },
 ];
 
 const KanbanCard: React.FC<{
@@ -1369,7 +1369,7 @@ const KanbanCard: React.FC<{
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggleSelect(lead); }}
-            className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)]"
+            className="flex-shrink-0 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)]"
             aria-label={isSelected ? 'Deselect lead' : 'Select lead'}
           >
             {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
@@ -1392,7 +1392,7 @@ const KanbanCard: React.FC<{
         </div>
         <div className="min-w-0 flex-1">
           <p className="type-card-description font-bold text-white truncate">{lead.name}</p>
-          <p className="type-card-description text-slate-500 truncate">{lead.company || lead.business_name || lead.email || '—'}</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] truncate">{lead.company || lead.business_name || lead.email || '—'}</p>
         </div>
       </div>
     </div>
@@ -1413,7 +1413,7 @@ const KanbanColumn: React.FC<{
       <div className="flex items-center justify-between px-2 pb-2">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${col.dot}`} />
-          <span className="type-caption font-black uppercase tracking-wider text-slate-300">{col.label}</span>
+          <span className="type-caption font-black uppercase tracking-wider text-[var(--ws-text-secondary)]">{col.label}</span>
         </div>
         <span className="type-ui font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full px-2 py-0.5">{leads.length}</span>
       </div>
@@ -2284,7 +2284,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       onClick={() => handleCrmCommandAction(action)}
                       className={
                         isPrimary
-                          ? 'inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-blue-500)]/40 bg-[var(--brand-blue-500)]/20 px-3 py-1.5 type-ui font-bold text-[var(--brand-blue-100,#dbeafe)] transition-colors hover:bg-[var(--brand-blue-500)]/30'
+                          ? 'inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-blue-500)]/40 bg-[var(--brand-blue-500)]/20 px-3 py-1.5 type-ui font-bold text-[var(--brand-blue-100,var(--brand-blue-50))] transition-colors hover:bg-[var(--brand-blue-500)]/30'
                           : 'inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] px-2.5 py-1.5 type-ui font-bold text-[var(--ws-text-secondary)] transition-colors hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                       }
                     >
@@ -2346,7 +2346,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             className="flex-1 bg-transparent type-ui text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-muted)]"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="p-1 text-slate-500 hover:text-white">
+            <button onClick={() => setSearch('')} className="p-1 text-[var(--ws-text-muted)] hover:text-white">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
@@ -2429,7 +2429,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   setSelectedKeys(new Set(bulkSelectTargetKeys));
                 }
               }}
-              className="inline-flex items-center gap-1.5 type-caption font-semibold text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 type-caption font-semibold text-[var(--ws-text-muted)] hover:text-white transition-colors"
             >
               {allBulkSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
               {allBulkSelected ? 'Deselect all' : `Select all (${bulkSelectTargetKeys.length})`}
@@ -2447,7 +2447,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <button
                   type="button"
                   onClick={() => setSelectedKeys(new Set())}
-                  className="type-caption text-slate-500 hover:text-slate-300"
+                  className="type-caption text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]"
                 >
                   Clear
                 </button>
@@ -2455,7 +2455,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   type="button"
                   onClick={handleBulkDelete}
                   disabled={bulkDeleting}
-                  className="inline-flex items-center gap-1.5 type-caption font-bold text-rose-400 hover:text-rose-300 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 type-caption font-bold text-rose-400 hover:text-[var(--error-text,var(--error-500))] disabled:opacity-50"
                 >
                   {bulkDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                   Delete ({selectedCount})
@@ -2501,14 +2501,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         ) : loading ? (
           <div className="space-y-px">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-16 bg-slate-900/30 animate-pulse" />
+              <div key={i} className="h-16 bg-[var(--ws-panel)]/30 animate-pulse" />
             ))}
           </div>
         ) : filteredEntities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-500 px-4 text-center">
+          <div className="flex flex-col items-center justify-center py-24 text-[var(--ws-text-muted)] px-4 text-center">
             <Users className="w-12 h-12 mb-3 opacity-30 text-[var(--brand-blue-400)]" />
-            <p className="type-card-description font-bold text-slate-300">{t('No matching records')}</p>
-            <p className="type-card-description text-slate-500 max-w-xs mt-1 leading-normal">
+            <p className="type-card-description font-bold text-[var(--ws-text-secondary)]">{t('No matching records')}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] max-w-xs mt-1 leading-normal">
               {subView === 'leads' ? t('Swipe right to qualify/contact accounts, swipe left to archive.') : t('Add accounts or qualify leads to view them here.')}
             </p>
           </div>
@@ -2537,7 +2537,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                           toggleEntitySelection(entity);
                         }
                       }}
-                      className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)] cursor-pointer"
+                      className="flex-shrink-0 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] cursor-pointer"
                       aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
                     >
                       {selectedKeys.has(entityKey(entity)) ? (
@@ -2548,9 +2548,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white">{entity.name}</p>
-                      <p className="type-card-description text-slate-400">{entity.email || entity.phone || '-'}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)]">{entity.email || entity.phone || '-'}</p>
                     </div>
-                    <span className={`type-caption px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)]' : 'bg-slate-500/20 text-slate-400'}`}>
+                    <span className={`type-caption px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)]' : 'bg-slate-500/20 text-[var(--ws-text-muted)]'}`}>
                       {t(entity.status)}
                     </span>
                   </div>
@@ -2584,7 +2584,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 type="button"
                 disabled={loadingMoreLeads}
                 onClick={() => void loadMoreLeadPage()}
-                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-slate-400 hover:text-white disabled:opacity-50 bg-slate-900/40 border-t border-white/5 transition-colors"
+                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-white disabled:opacity-50 bg-[var(--ws-panel)]/40 border-t border-white/5 transition-colors"
               >
                 {loadingMoreLeads ? t('Loading more') : `${t('Showing')} ${leads.length.toLocaleString()} / ${leadTotal.toLocaleString()} — ${t('load more')}`}
               </button>
@@ -2592,7 +2592,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               <button
                 type="button"
                 onClick={loadMoreEntities}
-                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-slate-400 hover:text-white bg-slate-900/40 border-t border-white/5 transition-colors"
+                className="w-full py-3 type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] hover:text-white bg-[var(--ws-panel)]/40 border-t border-white/5 transition-colors"
               >
                 {t('Showing')} {Math.min(visibleCount, filteredEntities.length)} / {filteredEntities.length} — {t('scroll to load more')}
               </button>

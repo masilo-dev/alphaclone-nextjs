@@ -95,14 +95,14 @@ export default function FollowUpQueue() {
             <Bell className="w-5 h-5 text-teal-400" />
             Follow-up queue
           </h1>
-          <p className="type-card-description text-slate-400 mt-1">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
             Due follow-ups and stale pipeline records across deals, leads, contacts, and accounts.
           </p>
         </div>
         <button
           type="button"
           onClick={() => void load()}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-slate-300 hover:text-white type-ui"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] hover:text-white type-ui"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -110,27 +110,27 @@ export default function FollowUpQueue() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4">
-          <p className="type-caption text-slate-500 uppercase tracking-wide">Total</p>
+        <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/80 p-4">
+          <p className="type-caption text-[var(--ws-text-muted)] uppercase tracking-wide">Total</p>
           <p className="text-2xl font-bold text-white">{counts.total}</p>
         </div>
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
-          <p className="type-caption text-red-300 uppercase tracking-wide">High priority</p>
+        <div className="rounded-2xl border border-red-500/20 bg-[var(--error-500)]/5 p-4">
+          <p className="type-caption text-[var(--error-text,var(--error-500))] uppercase tracking-wide">High priority</p>
           <p className="text-2xl font-bold text-white">{counts.high}</p>
         </div>
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4">
-          <p className="type-caption text-amber-300 uppercase tracking-wide">Stale pipeline</p>
+          <p className="type-caption text-[var(--warning-text,var(--warning-500))] uppercase tracking-wide">Stale pipeline</p>
           <p className="text-2xl font-bold text-white">{counts.medium}</p>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-slate-400 gap-2">
+        <div className="flex items-center justify-center py-16 text-[var(--ws-text-muted)] gap-2">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading follow-ups…
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-10 text-center text-slate-400">
+        <div className="rounded-2xl border border-white/10 bg-[var(--ws-panel)]/50 p-10 text-center text-[var(--ws-text-muted)]">
           No follow-ups due right now. Your pipeline is up to date.
         </div>
       ) : (
@@ -138,11 +138,11 @@ export default function FollowUpQueue() {
           {items.map((item) => (
             <div
               key={`${item.entityType}-${item.id}`}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[var(--ws-panel)]/80 px-4 py-3"
             >
               <Link href={item.href} className="min-w-0 flex-1 hover:opacity-90">
                 <p className="type-card-description font-semibold text-white truncate">{item.title}</p>
-                <p className="type-card-description text-slate-400">
+                <p className="type-card-description text-[var(--ws-text-muted)]">
                   {item.reason}
                   {item.subtitle ? ` · ${item.subtitle}` : ''}
                 </p>
@@ -151,23 +151,23 @@ export default function FollowUpQueue() {
                 <button
                   type="button"
                   onClick={() => openSchedule(item)}
-                  className="type-caption font-bold uppercase px-2 py-1 rounded-full bg-teal-500/20 text-teal-300"
+                  className="type-caption font-bold uppercase px-2 py-1 rounded-full bg-teal-500/20 text-[var(--brand-blue-300)]"
                 >
                   Schedule
                 </button>
                 <span
                   className={`type-caption font-bold uppercase px-2 py-1 rounded-full ${
                     item.priority === 'high'
-                      ? 'bg-red-500/20 text-red-300'
+                      ? 'bg-[var(--error-500)]/20 text-[var(--error-text,var(--error-500))]'
                       : item.priority === 'medium'
-                        ? 'bg-amber-500/20 text-amber-300'
-                        : 'bg-slate-700 text-slate-300'
+                        ? 'bg-amber-500/20 text-[var(--warning-text,var(--warning-500))]'
+                        : 'bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)]'
                   }`}
                 >
                   {item.entityType}
                 </span>
                 <Link href={item.href}>
-                  <ArrowRight className="w-4 h-4 text-slate-500" />
+                  <ArrowRight className="w-4 h-4 text-[var(--ws-text-muted)]" />
                 </Link>
               </div>
             </div>
@@ -176,20 +176,20 @@ export default function FollowUpQueue() {
       )}
       {scheduleItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-5 space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[var(--ws-panel)] p-5 space-y-4">
             <h2 className="text-lg font-bold text-white">Schedule follow-up</h2>
-            <p className="type-card-description text-slate-400 truncate">{scheduleItem.title}</p>
+            <p className="type-card-description text-[var(--ws-text-muted)] truncate">{scheduleItem.title}</p>
             <input
               type="datetime-local"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white type-ui"
+              className="w-full px-3 py-2 rounded-xl bg-[var(--ws-surface-secondary)] border border-white/10 text-white type-ui"
             />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setScheduleItem(null)}
-                className="px-3 py-2 rounded-xl border border-white/10 text-slate-300 type-ui"
+                className="px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] type-ui"
               >
                 Cancel
               </button>

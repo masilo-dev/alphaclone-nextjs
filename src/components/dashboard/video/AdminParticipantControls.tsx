@@ -52,7 +52,7 @@ const AdminParticipantControls: React.FC<AdminParticipantControlsProps> = ({
             {/* Mute button */}
             <button
                 onClick={handleMute}
-                className="p-2 bg-red-500/90 hover:bg-red-600/90 backdrop-blur-sm rounded-full transition-colors"
+                className="p-2 bg-[var(--error-500)]/90 hover:bg-red-600/90 backdrop-blur-sm rounded-full transition-colors"
                 title={`Mute ${participant.userName}`}
             >
                 <MicOff className="w-3 h-3 text-white" />

@@ -94,7 +94,7 @@ function escapeHtml(value: unknown): string {
 }
 
 function row(label: string, value: unknown): string {
-  return `<tr><td style="padding:6px 12px;color:#64748b;">${escapeHtml(label)}</td><td style="padding:6px 12px;color:#0f172a;font-weight:600;">${escapeHtml(value ?? 'Not provided')}</td></tr>`;
+  return `<tr><td style="padding:6px 12px;color:var(--ws-text-muted);">${escapeHtml(label)}</td><td style="padding:6px 12px;color:var(--ws-canvas);font-weight:600;">${escapeHtml(value ?? 'Not provided')}</td></tr>`;
 }
 
 async function sendBonnieRegistrationEmail(event: Record<string, any>): Promise<{ ok: boolean; error?: string }> {
@@ -104,10 +104,10 @@ async function sendBonnieRegistrationEmail(event: Record<string, any>): Promise<
   const subject = `New AlphaClone registration: ${event.email}`;
   const dashboardUrl = defaultDashboardUrl();
   const html = ensureFooter(`
-    <div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;background:#f8fafc;">
-      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;">
-        <h1 style="margin:0 0 8px;font-size:22px;color:#0f172a;">New user registration</h1>
-        <p style="margin:0 0 20px;color:#475569;">A new user registered for AlphaClone Systems.</p>
+    <div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;background:var(--ws-surface-secondary);">
+      <div style="background:var(--color-white);border:1px solid var(--ws-border);border-radius:12px;padding:24px;">
+        <h1 style="margin:0 0 8px;font-size:22px;color:var(--ws-canvas);">New user registration</h1>
+        <p style="margin:0 0 20px;color:var(--ws-text-muted);">A new user registered for AlphaClone Systems.</p>
         <table style="border-collapse:collapse;width:100%;font-size:14px;">
           ${row('Email', event.email)}
           ${row('Name', event.name)}
@@ -122,7 +122,7 @@ async function sendBonnieRegistrationEmail(event: Record<string, any>): Promise<
           ${row('Source', event.source_url)}
         </table>
         <p style="margin:20px 0 0;">
-          <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:10px 14px;border-radius:8px;font-weight:700;">Open AlphaClone</a>
+          <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:var(--brand-blue-700);color:var(--color-white);text-decoration:none;padding:10px 14px;border-radius:8px;font-weight:700;">Open AlphaClone</a>
         </p>
       </div>
     </div>
@@ -164,24 +164,24 @@ async function sendFounderMotivationEmail(event: Record<string, any>): Promise<{
   const dashboardUrl = defaultDashboardUrl();
   const subject = 'A note from Bonnie at AlphaClone';
   const html = ensureFooter(`
-    <div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;background:#f8fafc;">
-      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:28px;">
-        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#0f766e;">AlphaClone Systems</p>
-        <h1 style="margin:0 0 16px;font-size:26px;line-height:1.25;color:#0f172a;">Before you make your next big decision, build a clearer room to think in.</h1>
-        <p style="margin:0 0 14px;color:#334155;line-height:1.65;">Hi ${escapeHtml(name)}, I am Bonnie, founder of AlphaClone Systems. I started this company because I kept seeing capable people make heavy decisions with scattered information: one conversation in email, one invoice in another tool, the real customer signal hidden in a note nobody had time to read.</p>
-        <p style="margin:0 0 14px;color:#334155;line-height:1.65;">That is where good teams lose momentum. Not because they are lazy. Because the truth of the business is split into too many places, and every important choice starts with rebuilding context from memory.</p>
-        <p style="margin:0 0 14px;color:#334155;line-height:1.65;">AlphaClone is meant to become the place where your business can think clearly. Add your real customers, leads, tasks, invoices, and conversations. Let Bonnie AI help connect the dots, surface what changed, and turn messy signals into next actions.</p>
-        <p style="margin:0 0 14px;color:#334155;line-height:1.65;">Here is the decision habit I want you to practice from day one: do not ask only, "What should I do?" Ask, "What evidence would make this decision obvious?" Then use your workspace to collect that evidence. Better decisions come from better context, shorter feedback loops, and fewer guesses disguised as confidence.</p>
-        <p style="margin:0 0 12px;color:#334155;line-height:1.65;">When you open your workspace, start with three things:</p>
-        <ol style="margin:0 0 18px 20px;padding:0;color:#334155;line-height:1.65;">
+    <div style="font-family:Inter,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px;background:var(--ws-surface-secondary);">
+      <div style="background:var(--color-white);border:1px solid var(--ws-border);border-radius:12px;padding:28px;">
+        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--brand-blue-700);">AlphaClone Systems</p>
+        <h1 style="margin:0 0 16px;font-size:26px;line-height:1.25;color:var(--ws-canvas);">Before you make your next big decision, build a clearer room to think in.</h1>
+        <p style="margin:0 0 14px;color:var(--ws-surface-tertiary);line-height:1.65;">Hi ${escapeHtml(name)}, I am Bonnie, founder of AlphaClone Systems. I started this company because I kept seeing capable people make heavy decisions with scattered information: one conversation in email, one invoice in another tool, the real customer signal hidden in a note nobody had time to read.</p>
+        <p style="margin:0 0 14px;color:var(--ws-surface-tertiary);line-height:1.65;">That is where good teams lose momentum. Not because they are lazy. Because the truth of the business is split into too many places, and every important choice starts with rebuilding context from memory.</p>
+        <p style="margin:0 0 14px;color:var(--ws-surface-tertiary);line-height:1.65;">AlphaClone is meant to become the place where your business can think clearly. Add your real customers, leads, tasks, invoices, and conversations. Let Bonnie AI help connect the dots, surface what changed, and turn messy signals into next actions.</p>
+        <p style="margin:0 0 14px;color:var(--ws-surface-tertiary);line-height:1.65;">Here is the decision habit I want you to practice from day one: do not ask only, "What should I do?" Ask, "What evidence would make this decision obvious?" Then use your workspace to collect that evidence. Better decisions come from better context, shorter feedback loops, and fewer guesses disguised as confidence.</p>
+        <p style="margin:0 0 12px;color:var(--ws-surface-tertiary);line-height:1.65;">When you open your workspace, start with three things:</p>
+        <ol style="margin:0 0 18px 20px;padding:0;color:var(--ws-surface-tertiary);line-height:1.65;">
           <li>Add one real customer or contact.</li>
           <li>Add one lead you want to win.</li>
           <li>Add one task that has been sitting in your head.</li>
         </ol>
-        <p style="margin:0 0 14px;color:#334155;line-height:1.65;">Then ask Bonnie: "What should I focus on first?"</p>
-        <p style="margin:0 0 22px;color:#334155;line-height:1.65;">AlphaClone will not replace your judgment. It will help you see the business clearly enough to use your judgment better. That is how the system starts becoming useful, and that is how your company starts compounding.</p>
-        <p style="margin:0 0 22px;color:#0f172a;line-height:1.55;font-weight:700;">Bonnie<br><span style="font-weight:500;color:#64748b;">Founder, AlphaClone Systems</span></p>
-        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:8px;font-weight:700;">Open your workspace</a>
+        <p style="margin:0 0 14px;color:var(--ws-surface-tertiary);line-height:1.65;">Then ask Bonnie: "What should I focus on first?"</p>
+        <p style="margin:0 0 22px;color:var(--ws-surface-tertiary);line-height:1.65;">AlphaClone will not replace your judgment. It will help you see the business clearly enough to use your judgment better. That is how the system starts becoming useful, and that is how your company starts compounding.</p>
+        <p style="margin:0 0 22px;color:var(--ws-canvas);line-height:1.55;font-weight:700;">Bonnie<br><span style="font-weight:500;color:var(--ws-text-muted);">Founder, AlphaClone Systems</span></p>
+        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:var(--brand-blue-700);color:var(--color-white);text-decoration:none;padding:12px 16px;border-radius:8px;font-weight:700;">Open your workspace</a>
       </div>
     </div>
   `);

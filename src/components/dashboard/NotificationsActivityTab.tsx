@@ -54,7 +54,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
         const resultText = meta.result ? ` — ${meta.result}` : '';
 
         return {
-          dot: isFailure ? '#f43f5e' : isAtRisk ? '#f59e0b' : '#14b8a6',
+          dot: isFailure ? 'var(--error-500)' : isAtRisk ? 'var(--warning-500)' : 'var(--brand-blue-500)',
           text: `${eventTitle}${actorName}${resultText}`,
           time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
         };
@@ -87,7 +87,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
               <Bell className="w-4 h-4 text-teal-400" />
               <span className="type-ui font-semibold text-white">In-app alerts</span>
               {unreadCount > 0 && (
-                <span className="type-ui font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">
+                <span className="type-ui font-black px-2 py-0.5 rounded-full bg-[var(--error-500)]/20 text-[var(--error-text,var(--error-500))]">
                   {unreadCount} unread
                 </span>
               )}
@@ -99,8 +99,8 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
                   onClick={() => setFilter(key)}
                   className={`type-caption px-3 py-1 rounded-lg border ${
                     filter === key
-                      ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
-                      : 'border-white/5 text-slate-400'
+                      ? 'border-teal-500/40 bg-teal-500/10 text-[var(--brand-blue-300)]'
+                      : 'border-white/5 text-[var(--ws-text-muted)]'
                   }`}
                 >
                   {key === 'all' ? 'All' : 'Unread'}
@@ -128,8 +128,8 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
                 >
                   <div className="flex-1 min-w-0">
                     <p className="type-card-description font-medium text-white">{n.title}</p>
-                    {n.message && <p className="type-card-description text-slate-400 mt-1">{n.message}</p>}
-                    <p className="type-card-description text-slate-500 mt-2">
+                    {n.message && <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{n.message}</p>}
+                    <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
                     </p>
                   </div>
@@ -156,13 +156,13 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
             {pushSupported ? (
               <button
                 onClick={() => subscribeToPush()}
-                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 text-left transition-colors hover:bg-slate-950"
+                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 text-left transition-colors hover:bg-[var(--ws-canvas)]"
               >
                 <p className="type-card-description text-white">{isSubscribed ? 'Push enabled' : 'Enable push notifications'}</p>
-                <p className="type-card-description text-slate-500 mt-1">Browser alerts for invoices, deals, and tasks</p>
+                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">Browser alerts for invoices, deals, and tasks</p>
               </button>
             ) : (
-              <div className="flex items-center gap-2 type-ui text-slate-500">
+              <div className="flex items-center gap-2 type-ui text-[var(--ws-text-muted)]">
                 <BellOff className="w-4 h-4" />
                 Push not supported in this browser
               </div>

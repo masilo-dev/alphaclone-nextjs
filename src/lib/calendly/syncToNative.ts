@@ -159,7 +159,7 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
           subject: `New Calendly booking: ${input.inviteeName || 'Guest'} - ${input.eventName}`,
           templateName: 'calendlyHostNotification',
           isPlatformNotification: true,
-          html: `<div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a"><h2>New demo booking</h2><p><strong>${escapeEmailValue(input.inviteeName || 'Guest')}</strong> (${escapeEmailValue(input.inviteeEmail)}) booked <strong>${escapeEmailValue(input.eventName)}</strong>.</p><p><strong>When:</strong> ${escapeEmailValue(when)}</p>${input.location ? `<p><a href="${escapeEmailValue(input.location)}">Open meeting</a></p>` : ''}</div>`,
+          html: `<div style="font-family:Arial,sans-serif;padding:24px;color:var(--ws-canvas)"><h2>New demo booking</h2><p><strong>${escapeEmailValue(input.inviteeName || 'Guest')}</strong> (${escapeEmailValue(input.inviteeEmail)}) booked <strong>${escapeEmailValue(input.eventName)}</strong>.</p><p><strong>When:</strong> ${escapeEmailValue(when)}</p>${input.location ? `<p><a href="${escapeEmailValue(input.location)}">Open meeting</a></p>` : ''}</div>`,
         });
       }
     } catch (notifyError) {

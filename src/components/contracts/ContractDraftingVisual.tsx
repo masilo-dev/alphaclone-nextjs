@@ -72,13 +72,13 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
     }, []);
 
     return (
-        <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-indigo-500/30">
+        <div className="absolute inset-0 z-50 bg-[var(--ws-canvas)] flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-indigo-500/30">
             {/* Subtle law/indigo background glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1)_0,transparent_70%)]" />
 
             {/* Top Status */}
             <div className="absolute top-8 left-0 w-full px-8 flex justify-center items-center z-10">
-                <div className="flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-5 py-2 border border-indigo-500/30 rounded-full">
+                <div className="flex items-center gap-3 bg-[var(--ws-panel)]/80 backdrop-blur-md px-5 py-2 border border-indigo-500/30 rounded-full">
                     <Scale className="w-5 h-5 text-indigo-400" />
                     <span className="text-white font-marketing-heading tracking-widest type-caption uppercase">Legal AI Core Active</span>
                 </div>
@@ -95,7 +95,7 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
                     className="relative w-[400px] h-[400px] transform-style-3d mb-12"
                 >
                     {/* The "Desk" Base */}
-                    <div className="absolute inset-0 bg-slate-800/40 border-2 border-indigo-500/20 rounded-xl shadow-[0_0_60px_rgba(99,102,241,0.2)]">
+                    <div className="absolute inset-0 bg-[var(--ws-surface-secondary)]/40 border-2 border-indigo-500/20 rounded-xl shadow-[0_0_60px_rgba(99,102,241,0.2)]">
                         {/* Grid lines */}
                         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
                     </div>
@@ -162,14 +162,14 @@ const ContractDraftingVisual: React.FC<ContractDraftingVisualProps> = ({
                         >
                             <CurrentIcon className="w-8 h-8 text-indigo-400 mb-3" />
                             <h3 className="text-xl md:text-2xl font-bold text-white tracking-wide">{phases[phase].title}</h3>
-                            <p className="text-slate-400 mt-2 type-card-description md:text-base font-medium">{phases[phase].subtitle}</p>
+                            <p className="text-[var(--ws-text-muted)] mt-2 type-card-description md:text-base font-medium">{phases[phase].subtitle}</p>
                         </motion.div>
                     </AnimatePresence>
                 </div>
             </div>
 
             {/* Bottom Progress Bar */}
-            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-slate-900">
+            <div className="absolute bottom-0 left-0 w-full h-1.5 bg-[var(--ws-panel)]">
                 <motion.div
                     className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500"
                     style={{ width: `${progress}%` }}

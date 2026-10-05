@@ -66,7 +66,7 @@ export function ErrorRecoveryBanner({
 
           {preservedNotice ? (
             <p className="text-xs font-medium text-emerald-400/90 mt-1 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--success-500)] shrink-0" />
               <span>{preservedNotice}</span>
             </p>
           ) : null}

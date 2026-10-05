@@ -24,8 +24,8 @@ import { EmptyState } from '../ui/EmptyState';
 const LeadMapView = dynamic(() => import('./LeadMapView'), {
   ssr: false,
   loading: () => (
-    <div className="w-full min-h-[min(100vw,260px)] h-[min(50svh,520px)] sm:min-h-[320px] md:h-[480px] max-h-[640px] flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/40">
-      <div className="text-slate-500 type-ui flex items-center gap-2">
+    <div className="w-full min-h-[min(100vw,260px)] h-[min(50svh,520px)] sm:min-h-[320px] md:h-[480px] max-h-[640px] flex items-center justify-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/40">
+      <div className="text-[var(--ws-text-muted)] type-ui flex items-center gap-2">
         <RefreshCw className="w-4 h-4 animate-spin" /> Loading map...
       </div>
     </div>
@@ -149,7 +149,7 @@ function StarRating({ rating }: { rating?: number }) {
       {Array.from({ length: full  }).map((_, i) => <Star key={`f${i}`} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
       {half && <Star className="w-3 h-3 fill-amber-400/50 text-amber-400" />}
       {Array.from({ length: empty }).map((_, i) => <Star key={`e${i}`} className="w-3 h-3 text-slate-700" />)}
-      <span className="ml-1 type-caption text-slate-400 font-mono">{rating.toFixed(1)}</span>
+      <span className="ml-1 type-caption text-[var(--ws-text-muted)] font-mono">{rating.toFixed(1)}</span>
     </div>
   );
 }
@@ -177,18 +177,18 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
         type="button" disabled={disabled}
         onClick={() => !disabled && setOpen(o => !o)}
         className={`w-full flex items-center gap-2 px-3 py-2.5 type-ui rounded-xl border transition-all outline-none ${
-          open ? 'border-teal-500 ring-2 ring-teal-500/20 bg-slate-900' : 'border-slate-700 bg-slate-900/80 hover:border-slate-600'
+          open ? 'border-teal-500 ring-2 ring-teal-500/20 bg-[var(--ws-panel)]' : 'border-[var(--ws-border)] bg-[var(--ws-panel)]/80 hover:border-slate-600'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <Building2 className="w-4 h-4 text-teal-400 flex-shrink-0" />
-        <span className={`flex-1 text-left truncate ${value ? 'text-white' : 'text-slate-500'}`}>
+        <span className={`flex-1 text-left truncate ${value ? 'text-white' : 'text-[var(--ws-text-muted)]'}`}>
           {value || 'Select industry...'}
         </span>
         {value && (
-          <X className="w-3.5 h-3.5 text-slate-500 hover:text-rose-400 flex-shrink-0"
+          <X className="w-3.5 h-3.5 text-[var(--ws-text-muted)] hover:text-rose-400 flex-shrink-0"
              onClick={e => { e.stopPropagation(); onChange(''); setSearch(''); }} />
         )}
-        <ChevronDown className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -196,16 +196,16 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
           <motion.div
             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 top-full mt-1 bg-slate-950 border border-slate-700 rounded-xl shadow-2xl"
+            className="absolute left-0 right-0 top-full mt-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl shadow-2xl"
             style={{ zIndex: 9999, maxWidth: '400px' }}
           >
             {/* Search box */}
-            <div className="p-2 border-b border-slate-800 bg-slate-950">
+            <div className="p-2 border-b border-[var(--ws-border)] bg-[var(--ws-canvas)]">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                 <input autoFocus type="text" placeholder="Search industries..."
                   value={search} onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 type-ui bg-slate-900 border border-slate-700 rounded-lg text-white outline-none focus:border-teal-500"
+                  className="w-full pl-8 pr-3 py-1.5 type-ui bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white outline-none focus:border-teal-500"
                 />
               </div>
               <p className="type-card-description text-slate-600 mt-1 px-0.5">{ALL_INDUSTRIES.length} industries · {Object.keys(INDUSTRY_GROUPS).length} categories</p>
@@ -215,7 +215,7 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
             <div className="overflow-y-auto" style={{ maxHeight: '300px' }}>
               {/* Custom option */}
               {search && !ALL_INDUSTRIES.some(i => i.toLowerCase() === search.toLowerCase()) && (
-                <div className="px-3 py-2 type-ui text-teal-400 hover:bg-teal-500/10 cursor-pointer border-b border-slate-800 flex items-center gap-2"
+                <div className="px-3 py-2 type-ui text-teal-400 hover:bg-teal-500/10 cursor-pointer border-b border-[var(--ws-border)] flex items-center gap-2"
                      onClick={() => { onChange(search); setOpen(false); setSearch(''); }}>
                   <Plus className="w-3.5 h-3.5" /> Use &quot;{search}&quot; as custom industry
                 </div>
@@ -225,10 +225,10 @@ function IndustrySelect({ value, onChange, disabled }: { value: string; onChange
                 if (!filtered.length) return null;
                 return (
                   <div key={group}>
-                    <p className="px-3 py-1 type-caption font-black text-slate-500 uppercase tracking-widest bg-slate-900/60 border-b border-slate-800/40">{group}</p>
+                    <p className="px-3 py-1 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest bg-[var(--ws-panel)]/60 border-b border-[var(--ws-border)]/40">{group}</p>
                     {filtered.map(industry => (
                       <div key={industry}
-                           className={`px-4 py-2 type-ui cursor-pointer transition-colors ${value === industry ? 'bg-teal-500/20 text-teal-300 font-semibold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                           className={`px-4 py-2 type-ui cursor-pointer transition-colors ${value === industry ? 'bg-teal-500/20 text-[var(--brand-blue-300)] font-semibold' : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)] hover:text-white'}`}
                            onClick={() => { onChange(industry); setOpen(false); setSearch(''); }}>
                         {industry}
                       </div>
@@ -784,13 +784,13 @@ export default function OmniLeadFinder() {
       <div className="p-3 sm:p-4 bg-gradient-to-r from-teal-900/40 via-slate-900/50 to-slate-900 rounded-xl border border-teal-500/20 shadow-xl backdrop-blur-xl">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-teal-300 type-caption font-bold tracking-wider uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/20 border border-teal-500/30 text-[var(--brand-blue-300)] type-caption font-bold tracking-wider uppercase mb-1">
               <Zap className="w-2.5 h-2.5 fill-current shrink-0" /> Enterprise Engine
             </div>
             <h1 className="text-lg sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-teal-200 to-emerald-300 break-words">
               AlphaClone Business Lead
             </h1>
-            <p className="text-slate-500 type-card-description sm:text-sm mt-0.5 leading-relaxed">
+            <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm mt-0.5 leading-relaxed">
               Intelligence: <span className="text-emerald-400 font-semibold">Multi-Engine Real-Time Search</span> · Status: Active
               {fallbackUsed && <span className="block sm:inline sm:ml-2 text-amber-400">Deep search coverage active</span>}
             </p>
@@ -808,8 +808,8 @@ export default function OmniLeadFinder() {
             )}
             {dailyQuota && (
               <div className="flex flex-wrap items-center gap-2 type-caption w-full sm:w-auto justify-between sm:justify-end">
-                <span className="text-slate-500 shrink-0">Daily quota:</span>
-                <div className="flex-1 sm:flex-initial min-w-[5rem] sm:w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                <span className="text-[var(--ws-text-muted)] shrink-0">Daily quota:</span>
+                <div className="flex-1 sm:flex-initial min-w-[5rem] sm:w-24 h-1.5 rounded-full bg-[var(--ws-surface-secondary)] overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       dailyQuota.remaining <= 20 ? 'bg-rose-500' :
@@ -833,13 +833,13 @@ export default function OmniLeadFinder() {
       <form onSubmit={handleSearch} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="type-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
               <Building2 className="w-3 h-3 text-teal-400" /> Industry *
             </label>
             <IndustrySelect value={niche} onChange={setNiche} disabled={scanning} />
           </div>
           <div className="space-y-1.5 flex-1">
-            <label className="type-caption font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
               <MapPin className="w-3 h-3 text-teal-400" /> Location (Street, City, or Global)
             </label>
             <div className="relative group">
@@ -849,20 +849,20 @@ export default function OmniLeadFinder() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 disabled={scanning}
-                className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 type-ui text-white focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all pr-12 hover:border-slate-600 shadow-inner"
+                className="w-full bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-xl px-4 py-2.5 type-ui text-white focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none transition-all pr-12 hover:border-slate-600 shadow-inner"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
                 <Globe className="w-3.5 h-3.5 text-teal-400" />
               </div>
             </div>
-            <p className="type-card-description text-slate-500 italic pl-1 flex items-center gap-1">
+            <p className="type-card-description text-[var(--ws-text-muted)] italic pl-1 flex items-center gap-1">
               <Zap className="w-2 h-2" /> Supports pinpoint street-level accuracy & worldwide scraping.
             </p>
             {locationNeedsCityRefinement && (
               <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="type-card-description font-semibold text-amber-300">Precision Wizard</p>
-                  <p className="type-card-description text-slate-400">Step {wizardStep} / 4</p>
+                  <p className="type-card-description font-semibold text-[var(--warning-text,var(--warning-500))]">Precision Wizard</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">Step {wizardStep} / 4</p>
                 </div>
                 <div className="grid grid-cols-4 gap-1">
                   {[1, 2, 3, 4].map((step) => (
@@ -870,14 +870,14 @@ export default function OmniLeadFinder() {
                       key={step}
                       type="button"
                       onClick={() => setWizardStep(step as 1 | 2 | 3 | 4)}
-                      className={`type-caption rounded-md px-1 py-1 border ${wizardStep === step ? 'border-amber-400 text-amber-300 bg-amber-500/10' : 'border-slate-700 text-slate-500'}`}
+                      className={`type-caption rounded-md px-1 py-1 border ${wizardStep === step ? 'border-amber-400 text-[var(--warning-text,var(--warning-500))] bg-amber-500/10' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
                     >
                       {step}
                     </button>
                   ))}
                 </div>
                 {wizardStep === 1 && (
-                  <p className="type-card-description text-slate-300">
+                  <p className="type-card-description text-[var(--ws-text-secondary)]">
                     Country detected as broad search area. Select an exact city next for precise results.
                   </p>
                 )}
@@ -889,7 +889,7 @@ export default function OmniLeadFinder() {
                       onChange={(e) => setSpecificCity(e.target.value)}
                       placeholder='Exact city (e.g. Harare)'
                       disabled={scanning}
-                      className="w-full bg-slate-900/80 border border-amber-500/40 rounded-xl px-3 py-2 type-caption text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
+                      className="w-full bg-[var(--ws-panel)]/80 border border-amber-500/40 rounded-xl px-3 py-2 type-caption text-white placeholder-slate-500 focus:ring-1 focus:ring-amber-500/40 focus:border-amber-500 outline-none"
                     />
                     {citySuggestions.length > 0 && (
                       <div className="max-h-24 overflow-y-auto space-y-1">
@@ -898,7 +898,7 @@ export default function OmniLeadFinder() {
                             key={suggestion}
                             type="button"
                             onClick={() => setSpecificCity(suggestion.split(',')[0])}
-                            className="w-full text-left type-caption px-2 py-1 rounded-md border border-slate-700 text-slate-300 hover:bg-slate-800"
+                            className="w-full text-left type-caption px-2 py-1 rounded-md border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
                           >
                             {suggestion}
                           </button>
@@ -918,12 +918,12 @@ export default function OmniLeadFinder() {
                       onChange={(e) => setSearchRadiusKm(Number(e.target.value))}
                       className="flex-1"
                     />
-                    <span className="type-caption text-slate-300 w-14 text-right">{searchRadiusKm} km</span>
+                    <span className="type-caption text-[var(--ws-text-secondary)] w-14 text-right">{searchRadiusKm} km</span>
                   </div>
                 )}
                 {wizardStep === 4 && (
-                  <div className="type-ui text-slate-300 space-y-1">
-                    <p className="flex items-center gap-1"><Target className="w-3 h-3 text-amber-300" /> Target: {effectiveLocation || 'Not set'}</p>
+                  <div className="type-ui text-[var(--ws-text-secondary)] space-y-1">
+                    <p className="flex items-center gap-1"><Target className="w-3 h-3 text-[var(--warning-text,var(--warning-500))]" /> Target: {effectiveLocation || 'Not set'}</p>
                     <p>Radius: {effectiveRadiusKm} km from city center</p>
                     <p>
                       Estimated density: {densityEstimate ? `${densityEstimate.averageLeads} leads average (${densityEstimate.samples} previous searches)` : 'No historical sample yet'}
@@ -934,14 +934,14 @@ export default function OmniLeadFinder() {
                   <button
                     type="button"
                     onClick={() => setWizardStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4) : prev))}
-                    className="type-caption px-2 py-1 rounded-md border border-slate-700 text-slate-300"
+                    className="type-caption px-2 py-1 rounded-md border border-[var(--ws-border)] text-[var(--ws-text-secondary)]"
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={() => setWizardStep((prev) => (prev < 4 ? ((prev + 1) as 1 | 2 | 3 | 4) : prev))}
-                    className="type-caption px-2 py-1 rounded-md border border-amber-500/40 text-amber-300"
+                    className="type-caption px-2 py-1 rounded-md border border-amber-500/40 text-[var(--warning-text,var(--warning-500))]"
                   >
                     Next
                   </button>
@@ -951,14 +951,14 @@ export default function OmniLeadFinder() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 p-3 bg-slate-900/40 rounded-xl border border-slate-800 min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] min-w-0">
           <div className="flex items-center gap-2 min-w-0 overflow-x-auto pb-0.5 -mx-0.5 px-0.5 [scrollbar-width:thin] sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="type-caption font-bold text-slate-400 uppercase tracking-wider shrink-0">Sort</span>
-            <div className="flex rounded-lg overflow-hidden border border-slate-700 type-caption sm:text-sm font-semibold shrink-0">
+            <ArrowUpDown className="w-3.5 h-3.5 text-[var(--ws-text-muted)] shrink-0" />
+            <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider shrink-0">Sort</span>
+            <div className="flex rounded-lg overflow-hidden border border-[var(--ws-border)] type-caption sm:text-sm font-semibold shrink-0">
               {([['default', 'Default'], ['rating_desc', 'Rating high'], ['rating_asc', 'Rating low']] as [SortMode, string][]).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setSortMode(mode)}
-                  className={`px-2 sm:px-2.5 py-1.5 sm:py-1 whitespace-nowrap transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+                  className={`px-2 sm:px-2.5 py-1.5 sm:py-1 whitespace-nowrap transition-all ${sortMode === mode ? 'bg-teal-500 text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]'}`}>
                   {label}
                 </button>
               ))}
@@ -966,19 +966,19 @@ export default function OmniLeadFinder() {
           </div>
 
           <div className="flex items-center gap-2 cursor-pointer select-none shrink-0" onClick={() => setAutoSave(v => !v)}>
-            <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${autoSave ? 'bg-teal-500' : 'bg-slate-700'}`}>
+            <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${autoSave ? 'bg-teal-500' : 'bg-[var(--ws-surface-tertiary)]'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${autoSave ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
-            <span className={`type-ui font-bold ${autoSave ? 'text-teal-400' : 'text-slate-500'}`}>
+            <span className={`type-ui font-bold ${autoSave ? 'text-teal-400' : 'text-[var(--ws-text-muted)]'}`}>
               <Save className="w-3 h-3 inline mr-1" />Auto-save enriched leads
             </span>
           </div>
 
           <div className="flex items-center gap-2 cursor-pointer select-none shrink-0" onClick={() => !scanning && setUsePlaywright(v => !v)}>
-            <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${usePlaywright ? 'bg-amber-500' : 'bg-slate-700'}`}>
+            <div className={`w-8 h-4 rounded-full transition-colors relative flex-shrink-0 ${usePlaywright ? 'bg-amber-500' : 'bg-[var(--ws-surface-tertiary)]'}`}>
               <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${usePlaywright ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </div>
-            <span className={`type-ui font-bold ${usePlaywright ? 'text-amber-400' : 'text-slate-500'}`}>
+            <span className={`type-ui font-bold ${usePlaywright ? 'text-amber-400' : 'text-[var(--ws-text-muted)]'}`}>
               <Zap className="w-3 h-3 inline mr-1" />Power Mode
             </span>
           </div>
@@ -994,7 +994,7 @@ export default function OmniLeadFinder() {
       <AnimatePresence>
         {scanning && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="p-3 bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
+            className="p-3 bg-[var(--ws-panel)]/50 rounded-xl border border-[var(--ws-border)] overflow-hidden">
             <div className="mb-2 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2">
               <div className="relative h-4 overflow-hidden">
                 <motion.div
@@ -1007,10 +1007,10 @@ export default function OmniLeadFinder() {
               <p className="mt-1 type-card-description text-cyan-300">Mission mode active: scanning territory and building lead route.</p>
             </div>
             <div className="flex justify-between type-ui mb-2">
-              <span className="text-teal-300 flex items-center gap-1.5"><RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> {progress.message}</span>
+              <span className="text-[var(--brand-blue-300)] flex items-center gap-1.5"><RefreshCw className="w-3 h-3 animate-spin text-emerald-400" /> {progress.message}</span>
               <span className="text-white font-mono font-bold">{progress.percent}%</span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-1.5">
+            <div className="w-full bg-[var(--ws-surface-secondary)] rounded-full h-1.5">
               <motion.div className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 h-full rounded-full"
                 animate={{ width: `${progress.percent}%` }} transition={{ duration: 0.4 }} />
             </div>
@@ -1019,43 +1019,43 @@ export default function OmniLeadFinder() {
       </AnimatePresence>
 
       {results.length > 0 && (
-        <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
+        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-teal-400" />
-              <span className="type-caption font-bold text-slate-300">Filter Results</span>
+              <span className="type-caption font-bold text-[var(--ws-text-secondary)]">Filter Results</span>
               {activeFilterCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-teal-500 text-slate-950 type-caption font-black flex items-center justify-center">{activeFilterCount}</span>
               )}
             </div>
-            <div className="flex items-center gap-3 type-ui text-slate-500">
+            <div className="flex items-center gap-3 type-ui text-[var(--ws-text-muted)]">
               <span>Total: <b className="text-white">{results.length}</b></span>
               <span>Showing: <b className="text-teal-400">{filteredResults.length}</b></span>
               {activeFilterCount > 0 && (
-                <button onClick={clearFilters} className="flex items-center gap-1 text-rose-400 hover:text-rose-300"><X className="w-3 h-3" /> Clear</button>
+                <button onClick={clearFilters} className="flex items-center gap-1 text-rose-400 hover:text-[var(--error-text,var(--error-500))]"><X className="w-3 h-3" /> Clear</button>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 min-w-0">
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Search results</label>
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Search results</label>
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                 <input type="text" placeholder="Search business name, email, phone, address..."
                   value={filterText} onChange={e => setFilterText(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950/60 border border-slate-800 rounded-lg type-ui text-slate-200 focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
+                  className="w-full pl-8 pr-3 py-1.5 bg-[var(--ws-canvas)]/60 border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] focus:ring-1 focus:ring-teal-500/30 focus:border-teal-500 outline-none"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Qualification</label>
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Qualification</label>
               <div className="flex flex-wrap gap-1">
                 {(['all','hot','warm','cold','skip'] as const).map(tier => (
                   <button key={tier} onClick={() => setFilterTier(tier)}
                     className={`px-2 py-1 rounded-lg type-caption font-semibold transition-all border ${
-                      filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                      filterTier === tier ? 'bg-teal-500/20 border-teal-500/40 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-600 hover:text-[var(--ws-text-secondary)]'
                     }`}>
                     {tier === 'all' ? 'All' : tier === 'hot' ? 'Hot' : tier === 'warm' ? 'Warm' : tier === 'cold' ? 'Cold' : 'Skip'}
                   </button>
@@ -1064,7 +1064,7 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Result Engine Status</label>
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Result Engine Status</label>
               <div className="flex items-center gap-1">
                 <div className="px-2 py-1 rounded-lg type-caption font-semibold bg-teal-500/10 border border-teal-500/20 text-teal-400">
                   All Engines Syncing
@@ -1073,11 +1073,11 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1">
-              <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Min Rating</label>
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Min Rating</label>
               <div className="flex items-center gap-1">
                 {[0,1,2,3,4,5].map(r => (
                   <button key={r} onClick={() => setFilterRating(r === filterRating ? 0 : r)}
-                    className={`px-1.5 py-1 rounded type-caption font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'border-slate-800 text-slate-500 hover:border-slate-600'}`}>
+                    className={`px-1.5 py-1 rounded type-caption font-bold transition-all border ${filterRating === r ? 'bg-amber-500/20 border-amber-500/40 text-[var(--warning-text,var(--warning-500))]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-slate-600'}`}>
                     {r === 0 ? 'Any' : `${r}★`}
                   </button>
                 ))}
@@ -1085,12 +1085,12 @@ export default function OmniLeadFinder() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="type-caption font-bold text-slate-500 uppercase tracking-wider">Has</label>
+              <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider">Has</label>
               <div className="flex flex-col gap-1.5">
                 {([['filterPhone', filterPhone, setFilterPhone, <Phone key="p" className="w-3 h-3" />, 'Phone'] as const,
                    ['filterEmail', filterEmail, setFilterEmail, <Mail key="m" className="w-3 h-3" />, 'Email'] as const]).map(([key, val, setter, icon, label]) => (
                   <button key={key} type="button" onClick={() => setter(!val)}
-                    className={`flex items-center gap-2 px-2.5 py-1 rounded-lg type-ui font-medium border transition-all ${val ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' : 'border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'}`}>
+                    className={`flex items-center gap-2 px-2.5 py-1 rounded-lg type-ui font-medium border transition-all ${val ? 'bg-teal-500/10 border-teal-500/30 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:border-[var(--ws-border)] hover:text-[var(--ws-text-secondary)]'}`}>
                     {icon} {label}
                     {val && <CheckCircle2 className="w-3 h-3 ml-auto text-teal-400" />}
                   </button>
@@ -1099,13 +1099,13 @@ export default function OmniLeadFinder() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center pt-1 border-t border-slate-800/50 flex-wrap">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center pt-1 border-t border-[var(--ws-border)]/50 flex-wrap">
             <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <button onClick={selectAll} className="type-ui text-teal-400 hover:text-teal-300 font-bold">Select all</button>
+              <button onClick={selectAll} className="type-ui text-teal-400 hover:text-[var(--brand-blue-300)] font-bold">Select all</button>
               {selectedSet.size > 0 && (
                 <>
                   <span className="text-slate-600">|</span>
-                  <button onClick={clearSelected} className="type-ui text-slate-500 hover:text-slate-300">Clear ({selectedSet.size})</button>
+                  <button onClick={clearSelected} className="type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]">Clear ({selectedSet.size})</button>
                   <button
                     onClick={() => setShowOutreach(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white type-ui font-bold rounded-lg transition-all shadow-lg shadow-teal-500/10"
@@ -1115,10 +1115,10 @@ export default function OmniLeadFinder() {
                 </>
               )}
             </div>
-            <div className="flex gap-1 bg-slate-950/70 rounded-lg p-0.5 border border-slate-800 self-start sm:self-auto shrink-0">
+            <div className="flex gap-1 bg-[var(--ws-canvas)]/70 rounded-lg p-0.5 border border-[var(--ws-border)] self-start sm:self-auto shrink-0">
               {(['grid', 'map'] as const).map(mode => (
                 <button key={mode} onClick={() => setViewMode(mode)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md type-caption font-semibold transition-all ${viewMode === mode ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'text-slate-500 hover:text-slate-300'}`}>
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md type-caption font-semibold transition-all ${viewMode === mode ? 'bg-teal-500/20 text-[var(--brand-blue-300)] border border-teal-500/30' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'}`}>
                   {mode === 'grid' ? <><LayoutGrid className="w-3.5 h-3.5" /> Grid</> : <><Map className="w-3.5 h-3.5" /> Map</>}
                 </button>
               ))}
@@ -1128,28 +1128,28 @@ export default function OmniLeadFinder() {
       )}
 
       {mapHistory.length > 0 && (
-        <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-3">
+        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-teal-400" />
-              <p className="type-card-description font-bold text-slate-300">Map Search History</p>
+              <p className="type-card-description font-bold text-[var(--ws-text-secondary)]">Map Search History</p>
             </div>
             <button
               type="button"
               onClick={() => setMapHistory([])}
-              className="type-ui text-slate-500 hover:text-rose-400"
+              className="type-ui text-[var(--ws-text-muted)] hover:text-rose-400"
             >
               Clear history
             </button>
           </div>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
             {mapHistory.map((entry) => (
-              <div key={entry.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div key={entry.id} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="min-w-0">
                   <p className="type-card-description text-white font-semibold truncate">
                     {entry.niche} in {entry.location}
                   </p>
-                  <p className="type-card-description text-slate-400">
+                  <p className="type-card-description text-[var(--ws-text-muted)]">
                     {new Date(entry.createdAt).toLocaleString()} | Radius {entry.radiusKm}km | Leads {entry.leadCount} ({entry.mappedLeadCount} mapped)
                   </p>
                 </div>
@@ -1167,7 +1167,7 @@ export default function OmniLeadFinder() {
                     setFilterTier('all');
                     toast.success('Loaded map history snapshot.');
                   }}
-                  className="px-2.5 py-1 rounded-lg border border-slate-700 type-ui text-slate-200 hover:bg-slate-800"
+                  className="px-2.5 py-1 rounded-lg border border-[var(--ws-border)] type-ui text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-secondary)]"
                 >
                   Open on map
                 </button>
@@ -1178,12 +1178,12 @@ export default function OmniLeadFinder() {
       )}
 
       {geocodePreview && !scanning && (
-        <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800 space-y-2">
+        <div className="p-3 bg-[var(--ws-panel)]/40 rounded-xl border border-[var(--ws-border)] space-y-2">
           <div className="flex items-center justify-between">
-            <p className="type-card-description font-semibold text-slate-300">Geocode preview before search</p>
-            <p className="type-card-description text-slate-500">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
+            <p className="type-card-description font-semibold text-[var(--ws-text-secondary)]">Geocode preview before search</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">{geocodeLoading ? 'Resolving...' : geocodePreview.type || 'location'}</p>
           </div>
-          <p className="type-card-description text-slate-400">{geocodePreview.displayName}</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">{geocodePreview.displayName}</p>
           <LeadMapView
             leads={[]}
             center={[geocodePreview.lat, geocodePreview.lng]}
@@ -1197,11 +1197,11 @@ export default function OmniLeadFinder() {
       {viewMode === 'map' && filteredResults.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between px-2">
-            <p className="type-card-description text-slate-400">Interactive map results</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Interactive map results</p>
             <button
               type="button"
               onClick={() => setMapCollapsed((prev) => !prev)}
-              className="type-caption px-2 py-1 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
+              className="type-caption px-2 py-1 rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:text-white hover:bg-[var(--ws-surface-secondary)]"
             >
               {mapCollapsed ? 'Expand map' : 'Minimize map'}
             </button>
@@ -1210,7 +1210,7 @@ export default function OmniLeadFinder() {
             <>
               <LeadMapView leads={filteredResults} />
               {filteredResults.filter(l => !l.lat).length > 0 && (
-                <p className="type-card-description text-slate-500 text-center">
+                <p className="type-card-description text-[var(--ws-text-muted)] text-center">
                   {filteredResults.filter(l => !l.lat).length} leads without coordinates hidden from map
                 </p>
               )}
@@ -1229,8 +1229,8 @@ export default function OmniLeadFinder() {
             const qual       = lead.qualification;
             return (
               <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.018 }}
-                className={`group bg-slate-900/60 border rounded-xl p-3.5 hover:bg-slate-800/70 transition-all duration-200 flex flex-col shadow cursor-pointer ${
-                  isSelected ? 'border-teal-500/60 ring-1 ring-teal-500/20 bg-slate-800/60' : 'border-slate-800 hover:border-teal-500/40'
+                className={`group bg-[var(--ws-panel)]/60 border rounded-xl p-3.5 hover:bg-[var(--ws-surface-secondary)]/70 transition-all duration-200 flex flex-col shadow cursor-pointer ${
+                  isSelected ? 'border-teal-500/60 ring-1 ring-teal-500/20 bg-[var(--ws-surface-secondary)]/60' : 'border-[var(--ws-border)] hover:border-teal-500/40'
                 }`}
                 onClick={() => toggleSelect(idx)}
               >
@@ -1241,17 +1241,17 @@ export default function OmniLeadFinder() {
                     }`}>
                       {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                     </div>
-                    <div className="border border-slate-700 group-hover:border-teal-500/50 rounded-lg p-0.5 bg-slate-800 flex-shrink-0 transition-colors">
+                    <div className="border border-[var(--ws-border)] group-hover:border-teal-500/50 rounded-lg p-0.5 bg-[var(--ws-surface-secondary)] flex-shrink-0 transition-colors">
                       <Avatar name={lead.business_name} size={26} shape="rounded" className="rounded-md" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-white font-semibold type-ui leading-tight truncate group-hover:text-teal-300 transition-colors">
+                      <h3 className="text-white font-semibold type-ui leading-tight truncate group-hover:text-[var(--brand-blue-300)] transition-colors">
                         {lead.business_name}
-                        {lead.country_code && <span className="ml-1.5 type-caption text-slate-500 font-black uppercase bg-slate-800 px-1 rounded">[{lead.country_code}]</span>}
+                        {lead.country_code && <span className="ml-1.5 type-caption text-[var(--ws-text-muted)] font-black uppercase bg-[var(--ws-surface-secondary)] px-1 rounded">[{lead.country_code}]</span>}
                       </h3>
                       {domain && (
                         <a href={lead.website} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                           className="text-slate-500 type-caption hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
+                           className="text-[var(--ws-text-muted)] type-caption hover:text-teal-400 flex items-center gap-1 mt-0.5 transition-colors truncate">
                           <Globe className="w-2.5 h-2.5 flex-shrink-0" /> {domain}
                         </a>
                       )}
@@ -1275,7 +1275,7 @@ export default function OmniLeadFinder() {
                       </p>
                     )}
                     {qual.insights.slice(0, 2).map((insight, i) => (
-                      <p key={i} className="type-card-description text-slate-500 flex items-center gap-1">
+                      <p key={i} className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-slate-600 flex-shrink-0" /> {insight}
                       </p>
                     ))}
@@ -1283,23 +1283,23 @@ export default function OmniLeadFinder() {
                 )}
 
                 {lead.rating && <div className="mb-1.5"><StarRating rating={lead.rating} /></div>}
-                {lead.category && <p className="type-card-description text-slate-500 truncate mb-1.5">{lead.category}</p>}
+                {lead.category && <p className="type-card-description text-[var(--ws-text-muted)] truncate mb-1.5">{lead.category}</p>}
 
-                <div className="flex-grow space-y-1.5 py-2 border-t border-slate-800/50">
+                <div className="flex-grow space-y-1.5 py-2 border-t border-[var(--ws-border)]/50">
                   <div className="flex items-center gap-1.5">
-                    <Mail className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                    <Mail className="w-3 h-3 text-[var(--ws-text-muted)] flex-shrink-0" />
                     {email
-                      ? <span className="type-caption font-medium text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{email}</span>
+                      ? <span className="type-caption font-medium text-emerald-400 bg-[var(--success-500)]/10 px-1.5 py-0.5 rounded border border-emerald-400/20 truncate">{email}</span>
                       : <span className="type-caption text-slate-600 italic">No email — phone outreach</span>}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Phone className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                    <span className="type-caption text-slate-300 truncate">{lead.phone || <span className="text-slate-600 italic">No phone</span>}</span>
+                    <Phone className="w-3 h-3 text-[var(--ws-text-muted)] flex-shrink-0" />
+                    <span className="type-caption text-[var(--ws-text-secondary)] truncate">{lead.phone || <span className="text-slate-600 italic">No phone</span>}</span>
                   </div>
                   {lead.address && (
                     <div className="flex items-start gap-1.5">
-                      <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0 mt-0.5" />
-                      <span className="type-caption text-slate-400 leading-tight line-clamp-2">{lead.address}</span>
+                      <MapPin className="w-3 h-3 text-[var(--ws-text-muted)] flex-shrink-0 mt-0.5" />
+                      <span className="type-caption text-[var(--ws-text-muted)] leading-tight line-clamp-2">{lead.address}</span>
                     </div>
                   )}
                 </div>
@@ -1309,7 +1309,7 @@ export default function OmniLeadFinder() {
                     className={`flex-1 flex items-center justify-center gap-1 py-1.5 type-caption font-medium rounded-lg border transition-all ${
                       isSaved
                         ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 cursor-default'
-                        : 'hover:bg-teal-600/20 text-teal-400 hover:text-teal-300 border-teal-500/20 hover:border-teal-500/40'
+                        : 'hover:bg-teal-600/20 text-teal-400 hover:text-[var(--brand-blue-300)] border-teal-500/20 hover:border-teal-500/40'
                     }`}>
                     {isSaved ? <><CheckCircle2 className="w-3 h-3" /> Saved</> : <><Plus className="w-3 h-3" /> CRM</>}
                   </button>
@@ -1336,7 +1336,7 @@ export default function OmniLeadFinder() {
             title="Nothing here. Aim elsewhere."
             description="Your filters are too tight. Loosen them up and find your next win."
             action={
-              <button onClick={clearFilters} className="type-caption font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-colors">
+              <button onClick={clearFilters} className="type-caption font-black uppercase tracking-widest text-teal-400 hover:text-[var(--brand-blue-300)] transition-colors">
                 Reset Scopes
               </button>
             }

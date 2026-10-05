@@ -146,7 +146,7 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--ws-text-muted)]" />
       </div>
     );
   }
@@ -154,7 +154,7 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="type-card-description text-slate-500">
+        <p className="type-card-description text-[var(--ws-text-muted)]">
           Tasks link to this project and sync to your calendar when they have a due date.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -182,14 +182,14 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a delivery task…"
-          className="flex-1 min-w-[140px] px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-[140px] px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <input
           type="date"
           value={newDueDate}
           onChange={(e) => setNewDueDate(e.target.value)}
           title="Due date — adds to calendar"
-          className="px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <button
           type="submit"
@@ -202,7 +202,7 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
       </form>
 
       {tasks.length === 0 ? (
-        <p className="type-card-description text-slate-500 text-center py-8">No tasks yet — add work items to run delivery from this project.</p>
+        <p className="type-card-description text-[var(--ws-text-muted)] text-center py-8">No tasks yet — add work items to run delivery from this project.</p>
       ) : (
         <div className="overflow-x-auto pb-2">
           <KanbanView
@@ -214,24 +214,24 @@ export function ProjectTasksKanban({ projectId, userId, projectDueDate, onTasksC
       )}
 
       {editingTask ? (
-        <div className="fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center bg-slate-950/80 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 p-4 space-y-3 shadow-xl">
+        <div className="fixed inset-0 ac-layer-modal flex items-end sm:items-center justify-center bg-[var(--ws-canvas)]/80 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-white/10 bg-[var(--ws-panel)] p-4 space-y-3 shadow-xl">
             <p className="type-card-description font-bold text-white truncate">{editingTask.title}</p>
-            <label className="block type-label text-slate-400">
+            <label className="block type-label text-[var(--ws-text-muted)]">
               Due date
               <input
                 type="date"
                 value={editDueDate}
                 onChange={(e) => setEditDueDate(e.target.value)}
-                className="mt-1 w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-lg text-white type-ui"
+                className="mt-1 w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/10 rounded-lg text-white type-ui"
               />
             </label>
-            <p className="type-card-description text-slate-500">Saving updates your dashboard calendar (and Google Calendar if connected).</p>
+            <p className="type-card-description text-[var(--ws-text-muted)]">Saving updates your dashboard calendar (and Google Calendar if connected).</p>
             <div className="flex gap-2 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingTask(null)}
-                className="px-3 py-2 type-caption text-slate-400 hover:text-white"
+                className="px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-white"
               >
                 Cancel
               </button>

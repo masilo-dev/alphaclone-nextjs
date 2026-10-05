@@ -286,18 +286,18 @@ export function ResendIntegration() {
   };
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-            status.isConnected ? 'bg-purple-500/20 border-purple-500/30' : 'bg-slate-800 border-slate-700'
+            status.isConnected ? 'bg-purple-500/20 border-purple-500/30' : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]'
           } border`}>
-            <Mail className={`w-6 h-6 ${status.isConnected ? 'text-purple-400' : 'text-slate-400'}`} />
+            <Mail className={`w-6 h-6 ${status.isConnected ? 'text-purple-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Resend Integration</h3>
-            <p className="type-card-description text-slate-400">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               {status.isConnected ? `Connected • Domain: ${status.domain}` : 'Connect your Resend account'}
             </p>
           </div>
@@ -333,19 +333,19 @@ export function ResendIntegration() {
           <div className="flex items-center gap-2 type-ui">
             <CheckCircle className="w-4 h-4 text-purple-400" />
             <span className="text-purple-400">Connected</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-slate-400">Domain: {status.domain}</span>
+            <span className="text-[var(--ws-text-muted)]">•</span>
+            <span className="text-[var(--ws-text-muted)]">Domain: {status.domain}</span>
             {status.lastSync && (
               <>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-400">Last sync: {new Date(status.lastSync).toLocaleDateString()}</span>
+                <span className="text-[var(--ws-text-muted)]">•</span>
+                <span className="text-[var(--ws-text-muted)]">Last sync: {new Date(status.lastSync).toLocaleDateString()}</span>
               </>
             )}
           </div>
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-white mb-2">Send Test Email</h4>
               <div className="space-y-2">
                 <input
@@ -353,20 +353,20 @@ export function ResendIntegration() {
                   placeholder="Recipient email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <input
                   type="text"
                   placeholder="Subject"
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <textarea
                   placeholder="Message"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500 resize-none"
                   rows={2}
                 />
                 <Button
@@ -381,7 +381,7 @@ export function ResendIntegration() {
               </div>
             </div>
 
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-white mb-2">Verified Domains</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {domains.length > 0 ? (
@@ -389,7 +389,7 @@ export function ResendIntegration() {
                     <div key={domain.id} className="flex items-center justify-between type-caption">
                       <div className="flex items-center gap-2">
                         <Code className="w-3 h-3 text-purple-400" />
-                        <span className="text-slate-400 truncate">{domain.name}</span>
+                        <span className="text-[var(--ws-text-muted)] truncate">{domain.name}</span>
                       </div>
                       <span className={`${
                         domain.status === 'verified' ? 'text-green-400' :
@@ -401,7 +401,7 @@ export function ResendIntegration() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 type-card-description">No domains verified</p>
+                  <p className="text-[var(--ws-text-muted)] type-card-description">No domains verified</p>
                 )}
               </div>
             </div>
@@ -417,13 +417,13 @@ export function ResendIntegration() {
           className="mt-4"
         >
           <div className={`p-4 rounded-lg border ${
-            clientError.type === 'error' ? 'bg-red-500/10 border-red-500/30' :
+            clientError.type === 'error' ? 'bg-[var(--error-500)]/10 border-red-500/30' :
             clientError.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30' :
             'bg-blue-500/10 border-blue-500/30'
           }`}>
             <div className="flex items-start gap-3">
               <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                clientError.type === 'error' ? 'bg-red-500/20' :
+                clientError.type === 'error' ? 'bg-[var(--error-500)]/20' :
                 clientError.type === 'warning' ? 'bg-yellow-500/20' :
                 'bg-blue-500/20'
               }`}>
@@ -437,8 +437,8 @@ export function ResendIntegration() {
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-white mb-1">{clientError.title}</h4>
-                <p className="type-card-description text-slate-300 mb-2">{clientError.message}</p>
-                <p className="type-card-description text-slate-400">{clientError.suggestion}</p>
+                <p className="type-card-description text-[var(--ws-text-secondary)] mb-2">{clientError.message}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">{clientError.suggestion}</p>
               </div>
             </div>
           </div>
@@ -459,7 +459,7 @@ export function ResendIntegration() {
                   <h4 className="text-lg font-semibold text-white mb-4">Connect Resend</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block type-label font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                         API Key
                       </label>
                       <Input
@@ -471,7 +471,7 @@ export function ResendIntegration() {
                       />
                     </div>
                     <div>
-                      <label className="block type-label font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                         Sending Domain
                       </label>
                       <Input
@@ -511,7 +511,7 @@ export function ResendIntegration() {
                     <CheckCircle className="w-4 h-4 text-purple-400" />
                     <span className="text-purple-400">Connected to Resend</span>
                   </div>
-                  <div className="mt-4 space-y-2 type-ui text-slate-400">
+                  <div className="mt-4 space-y-2 type-ui text-[var(--ws-text-muted)]">
                     <p>Domain: {status.domain}</p>
                     <p>Verified Domains: {domains.filter(d => d.status === 'verified').length}</p>
                   </div>

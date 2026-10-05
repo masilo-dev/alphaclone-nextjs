@@ -31,7 +31,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
         if (s >= 90) return { name: 'Hyperdrive', color: 'text-indigo-400', bg: 'bg-indigo-500/10' };
         if (s >= 70) return { name: 'Momentum', color: 'text-teal-400', bg: 'bg-teal-500/10' };
         if (s >= 40) return { name: 'Active', color: 'text-amber-400', bg: 'bg-amber-500/10' };
-        return { name: 'Stalled', color: 'text-slate-400', bg: 'bg-slate-500/10' };
+        return { name: 'Stalled', color: 'text-[var(--ws-text-muted)]', bg: 'bg-slate-500/10' };
     };
 
     const level = getLevel(score);
@@ -39,7 +39,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
     if (variant === 'global') {
         return (
             <div className={cn(
-                "flex items-center gap-4 bg-slate-950/40 backdrop-blur-md border border-white/5 rounded-full px-4 py-1.5 transition-all hover:border-teal-500/30 group",
+                "flex items-center gap-4 bg-[var(--ws-canvas)]/40 backdrop-blur-md border border-white/5 rounded-full px-4 py-1.5 transition-all hover:border-teal-500/30 group",
                 className
             )}>
                 {/* Score */}
@@ -80,7 +80,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
 
     return (
         <div className={cn(
-            "relative overflow-hidden bg-slate-950/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6",
+            "relative overflow-hidden bg-[var(--ws-canvas)]/40 backdrop-blur-xl border border-white/5 rounded-3xl p-6",
             "before:absolute before:inset-0 before:bg-gradient-to-br before:from-teal-500/5 before:to-transparent before:pointer-events-none",
             className
         )}>
@@ -114,7 +114,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-4xl font-black text-white tracking-tighter italic">{score}%</span>
-                        <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Momentum</span>
+                        <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Momentum</span>
                     </div>
                 </div>
 
@@ -125,11 +125,11 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                     <div className="space-y-1.5 px-4 border-l border-white/5">
                         <div className="flex items-center gap-2">
                             <Rocket className="w-4 h-4 text-teal-400" />
-                            <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Actions</span>
+                            <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Actions</span>
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black text-white italic">{actionsCompleted}</span>
-                            <span className="type-caption font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Done</span>
+                            <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase bg-white/5 px-2 rounded tracking-widest">Done</span>
                         </div>
                         <div className="type-caption font-black text-teal-500/80 uppercase tracking-tighter">
                             TODAY
@@ -140,11 +140,11 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                     <div className="space-y-1.5 px-4 border-l border-white/5">
                         <div className="flex items-center gap-2">
                             <Award className="w-4 h-4 text-amber-400" />
-                            <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Rewards</span>
+                            <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Rewards</span>
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black text-white italic">{rewardsUnlocked}</span>
-                            <span className="type-caption font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Won</span>
+                            <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase bg-white/5 px-2 rounded tracking-widest">Won</span>
                         </div>
                         <div className="type-caption font-black text-amber-500/80 uppercase tracking-tighter">
                             UNLOCKED
@@ -155,11 +155,11 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                     <div className="space-y-1.5 px-4 border-l border-white/5">
                         <div className="flex items-center gap-2">
                             <Flame className={cn("w-4 h-4", streak > 0 ? "text-orange-500 animate-pulse" : "text-slate-600")} />
-                            <span className="type-caption font-black text-slate-500 uppercase tracking-widest">Streak</span>
+                            <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">Streak</span>
                         </div>
                         <div className="flex items-baseline gap-1">
                             <span className="text-3xl font-black text-white italic">{streak}</span>
-                            <span className="type-caption font-bold text-slate-400 uppercase bg-white/5 px-2 rounded tracking-widest">Days</span>
+                            <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase bg-white/5 px-2 rounded tracking-widest">Days</span>
                         </div>
                         <div className="type-caption font-black text-teal-500 uppercase tracking-tighter flex items-center gap-1">
                             {streak > 0 ? 'KEEP IT ALIVE' : 'START NOW'}
@@ -173,7 +173,7 @@ export const MomentumHUD: React.FC<MomentumHUDProps> = ({
                             {level.name} MODE
                         </div>
                         <div className="space-y-1">
-                            <p className="type-caption text-slate-400 font-bold max-w-[180px] leading-tight uppercase tracking-tighter">
+                            <p className="type-caption text-[var(--ws-text-muted)] font-bold max-w-[180px] leading-tight uppercase tracking-tighter">
                                 {score >= 70 ? 'CRITICAL MOMENTUM ACHIEVED. DO NOT STOP.' : 'FEED THE SYSTEM. START THE SEQUENCE.'}
                             </p>
                             <p className="type-card-description text-amber-400 font-medium flex items-center gap-1">

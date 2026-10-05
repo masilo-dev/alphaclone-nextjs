@@ -30,7 +30,7 @@ function ChartMount({ height, children }: { height: number; children: React.Reac
   if (!mounted) {
     return (
       <div
-        className="w-full rounded-xl bg-slate-900/40 border border-white/5 animate-pulse"
+        className="w-full rounded-xl bg-[var(--ws-panel)]/40 border border-white/5 animate-pulse"
         style={{ height }}
       />
     );
@@ -56,15 +56,15 @@ const CustomTooltip = ({ active, payload, label, valuePrefix = '', valueSuffix =
   if (active && payload && payload.length) {
     return (
       <div className="dashboard-chart-tooltip backdrop-blur-md p-3 rounded-lg shadow-[0_10px_25px_-5px_rgba(0,0,0,0.5)]">
-        <p className="type-caption text-[#c0c0c0] font-black uppercase tracking-wider mb-1">{label}</p>
+        <p className="type-caption text-[var(--border-default)] font-black uppercase tracking-wider mb-1">{label}</p>
         {payload.map((entry: any, index: number) => (
           <div key={index} className="flex items-center gap-2 mt-1">
             <div 
               className="w-2 h-2 rounded-full" 
-              style={{ backgroundColor: entry.stroke || entry.fill || entry.color || '#adebb3' }} 
+              style={{ backgroundColor: entry.stroke || entry.fill || entry.color || 'var(--success-500)' }} 
             />
-            <span className="type-caption text-[#c0c0c0] font-medium">{entry.name || 'Value'}:</span>
-            <span className="type-caption text-[#f5f5f5] font-black">
+            <span className="type-caption text-[var(--border-default)] font-medium">{entry.name || 'Value'}:</span>
+            <span className="type-caption text-[var(--surface-secondary)] font-black">
               {valuePrefix}
               {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
               {valueSuffix}
@@ -107,8 +107,8 @@ export function StandardLineChart({
     <div className={cn("w-full dashboard-panel rounded-xl p-4", className)}>
       {!hasValues ? (
         <div style={{ height }} className="flex flex-col items-center justify-center text-center">
-          <p className="type-caption text-[#c0c0c0] uppercase tracking-wider font-black">No Trend Data</p>
-          <p className="type-card-description text-[#94a3b8] mt-1">Updates will render dynamically.</p>
+          <p className="type-caption text-[var(--border-default)] uppercase tracking-wider font-black">No Trend Data</p>
+          <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">Updates will render dynamically.</p>
         </div>
       ) : (
         <ChartMount height={height}>
@@ -123,12 +123,12 @@ export function StandardLineChart({
               <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
               <XAxis
                 dataKey={xKey}
-                tick={{ fill: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                tick={{ fill: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                tick={{ fill: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => `${valuePrefix}${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
@@ -181,8 +181,8 @@ export function StandardBarChart({
     <div className={cn("w-full dashboard-panel rounded-xl p-4", className)}>
       {!hasValues ? (
         <div style={{ height }} className="flex flex-col items-center justify-center text-center">
-          <p className="type-caption text-[#c0c0c0] uppercase tracking-wider font-black">No Bar Data</p>
-          <p className="type-card-description text-[#94a3b8] mt-1">Updates will render dynamically.</p>
+          <p className="type-caption text-[var(--border-default)] uppercase tracking-wider font-black">No Bar Data</p>
+          <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">Updates will render dynamically.</p>
         </div>
       ) : (
         <ChartMount height={height}>
@@ -191,12 +191,12 @@ export function StandardBarChart({
               <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
               <XAxis
                 dataKey={xKey}
-                tick={{ fill: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                tick={{ fill: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                tick={{ fill: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => `${valuePrefix}${v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}`}
@@ -246,8 +246,8 @@ export function StandardDonutChart({
     <div className={cn("w-full dashboard-panel rounded-xl p-4", className)}>
       {!hasValues ? (
         <div style={{ height }} className="flex flex-col items-center justify-center text-center">
-          <p className="type-caption text-[#c0c0c0] uppercase tracking-wider font-black">No Segment Data</p>
-          <p className="type-card-description text-[#94a3b8] mt-1">Segments will render dynamically.</p>
+          <p className="type-caption text-[var(--border-default)] uppercase tracking-wider font-black">No Segment Data</p>
+          <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">Segments will render dynamically.</p>
         </div>
       ) : (
         <ChartMount height={height}>
@@ -277,7 +277,7 @@ export function StandardDonutChart({
                 height={36} 
                 iconType="circle"
                 iconSize={8}
-                formatter={(value: string | number) => <span className="type-caption text-[#c0c0c0] font-bold uppercase tracking-wider">{value}</span>}
+                formatter={(value: string | number) => <span className="type-caption text-[var(--border-default)] font-bold uppercase tracking-wider">{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>

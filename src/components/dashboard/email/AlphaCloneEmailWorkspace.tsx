@@ -542,12 +542,12 @@ export default function AlphaCloneEmailWorkspace() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[620px] max-h-[calc(100dvh-5.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1220] text-slate-100 shadow-2xl max-md:h-[calc(100dvh-4.75rem)] max-md:min-h-[520px] max-md:max-h-[calc(100dvh-4.75rem)]">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[620px] max-h-[calc(100dvh-5.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--ws-canvas)] text-[var(--ws-text-primary)] shadow-2xl max-md:h-[calc(100dvh-4.75rem)] max-md:min-h-[520px] max-md:max-h-[calc(100dvh-4.75rem)]">
       
       {/* ------------------------------------------------------------- */}
       {/* TOP HEADER: UNIVERSAL SEARCH & SYSTEM ENGINE CONTROL */}
       {/* ------------------------------------------------------------- */}
-      <header className="flex min-h-[68px] items-center justify-between gap-3 overflow-x-auto px-4 py-3 bg-[#0F172A] border-b border-white/10 shrink-0 z-20 no-scrollbar lg:px-5">
+      <header className="flex min-h-[68px] items-center justify-between gap-3 overflow-x-auto px-4 py-3 bg-[var(--ws-canvas)] border-b border-white/10 shrink-0 z-20 no-scrollbar lg:px-5">
         
         {/* Left branding & Workspace tab selector */}
         <div className="flex min-w-max items-center gap-4">
@@ -562,17 +562,17 @@ export default function AlphaCloneEmailWorkspace() {
                   AI Business Workspace
                 </span>
               </div>
-              <p className="type-card-description text-slate-400 font-medium">Synced with CRM, Deals, Marketing & Bonnie AI</p>
+              <p className="type-card-description text-[var(--ws-text-muted)] font-medium">Synced with CRM, Deals, Marketing & Bonnie AI</p>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-xl bg-slate-950/60 border border-white/10">
+          <div className="hidden lg:flex items-center gap-1 ml-4 p-1 rounded-xl bg-[var(--ws-canvas)]/60 border border-white/10">
             <button
               onClick={() => setActiveTab('inbox')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'inbox'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <Inbox className="w-3.5 h-3.5" />
@@ -583,12 +583,12 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'campaigns'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <Send className="w-3.5 h-3.5" />
               Campaigns
-              <span className="px-1.5 py-0.2 rounded bg-slate-900 type-ui text-emerald-400 font-bold border border-emerald-500/30">
+              <span className="px-1.5 py-0.2 rounded bg-[var(--ws-panel)] type-ui text-emerald-400 font-bold border border-emerald-500/30">
                 {campaigns.length}
               </span>
             </button>
@@ -597,7 +597,7 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'sequences'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <Workflow className="w-3.5 h-3.5" />
@@ -608,7 +608,7 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'templates'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -619,7 +619,7 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'analytics'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <BarChart3 className="w-3.5 h-3.5" />
@@ -630,7 +630,7 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg type-caption font-bold transition-all ${
                 activeTab === 'health'
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
@@ -642,16 +642,16 @@ export default function AlphaCloneEmailWorkspace() {
         {/* Universal Search & Quick AI Bar */}
         <div className="flex min-w-[260px] flex-1 items-center gap-2 md:max-w-xl">
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[var(--ws-text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               id="universal-email-search"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Universal Search (Emails, CRM, Deals, Docs, Meetings...)"
-              className="w-full bg-slate-950/80 border border-white/10 rounded-xl pl-9 pr-9 py-2 type-caption text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full bg-[var(--ws-canvas)]/80 border border-white/10 rounded-xl pl-9 pr-9 py-2 type-caption text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 type-ui font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 type-ui font-mono text-[var(--ws-text-muted)] bg-[var(--ws-panel)] px-1.5 py-0.5 rounded border border-white/10">
               /
             </span>
           </div>
@@ -665,13 +665,13 @@ export default function AlphaCloneEmailWorkspace() {
                 value={aiCommandInput}
                 onChange={(e) => setAiCommandInput(e.target.value)}
                 placeholder="Bonnie AI: 'Draft SOW'..."
-                className="w-44 bg-emerald-950/30 border border-emerald-500/30 rounded-xl pl-8 pr-2 py-2 type-caption text-emerald-200 placeholder-emerald-500/60 focus:outline-none focus:w-60 transition-all"
+                className="w-44 bg-emerald-950/30 border border-emerald-500/30 rounded-xl pl-8 pr-2 py-2 type-caption text-[var(--success-text,var(--success-500))] placeholder-emerald-500/60 focus:outline-none focus:w-60 transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={aiCommandProcessing}
-              className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all disabled:opacity-50"
+              className="p-2 rounded-xl bg-emerald-500 hover:bg-[var(--success-500)] text-slate-950 font-bold transition-all disabled:opacity-50"
             >
               <Sparkles className="w-3.5 h-3.5" />
             </button>
@@ -681,9 +681,9 @@ export default function AlphaCloneEmailWorkspace() {
         {/* Connected Status & User Profile */}
         <div className="flex min-w-max items-center gap-3">
           {/* Accounts status badge */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-white/10 type-caption">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-slate-300 font-medium">Outlook + Zoho Synced</span>
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--ws-canvas)]/80 border border-white/10 type-caption">
+            <div className="w-2 h-2 rounded-full bg-[var(--success-500)] animate-pulse" />
+            <span className="text-[var(--ws-text-secondary)] font-medium">Outlook + Zoho Synced</span>
           </div>
 
           <button
@@ -697,7 +697,7 @@ export default function AlphaCloneEmailWorkspace() {
       </header>
 
       {/* MOBILE SCROLLABLE TAB NAV (Visible on max-lg screens) */}
-      <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto px-3 py-2 bg-[#0F172A] border-b border-white/10 shrink-0 no-scrollbar z-10">
+      <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto px-3 py-2 bg-[var(--ws-canvas)] border-b border-white/10 shrink-0 no-scrollbar z-10">
         {[
           { id: 'inbox', label: 'Inbox', icon: Inbox },
           { id: 'campaigns', label: 'Campaigns', icon: Send, badge: campaigns.length },
@@ -715,13 +715,13 @@ export default function AlphaCloneEmailWorkspace() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-bold whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'bg-slate-900/80 text-slate-400 border border-white/10 hover:text-white'
+                  : 'bg-[var(--ws-panel)]/80 text-[var(--ws-text-muted)] border border-white/10 hover:text-white'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="px-1.5 py-0.2 rounded bg-slate-950 type-ui text-emerald-400 font-bold border border-emerald-500/30">
+                <span className="px-1.5 py-0.2 rounded bg-[var(--ws-canvas)] type-ui text-emerald-400 font-bold border border-emerald-500/30">
                   {tab.badge}
                 </span>
               )}
@@ -743,7 +743,7 @@ export default function AlphaCloneEmailWorkspace() {
           <aside
             className={`${
               sidebarCollapsed ? 'w-16' : 'w-64'
-            } border-r border-white/10 bg-[#0F172A]/70 backdrop-blur-md flex flex-col transition-all duration-200 shrink-0 select-none min-h-0 max-md:hidden`}
+            } border-r border-white/10 bg-[var(--ws-canvas)]/70 backdrop-blur-md flex flex-col transition-all duration-200 shrink-0 select-none min-h-0 max-md:hidden`}
           >
             {/* Compose & Collapse toggle */}
             <div className="p-3 flex items-center justify-between border-b border-white/10">
@@ -759,7 +759,7 @@ export default function AlphaCloneEmailWorkspace() {
 
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="hidden md:flex p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 ml-1"
+                className="hidden md:flex p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5 ml-1"
                 title="Toggle Sidebar"
               >
                 <Sliders className="w-4 h-4" />
@@ -772,7 +772,7 @@ export default function AlphaCloneEmailWorkspace() {
               {/* CORE MAILBOX */}
               <div>
                 {!sidebarCollapsed && (
-                  <p className="px-3 py-1.5 type-caption font-bold tracking-wider text-slate-500 uppercase">
+                  <p className="px-3 py-1.5 type-caption font-bold tracking-wider text-[var(--ws-text-muted)] uppercase">
                     Mailbox Folders
                   </p>
                 )}
@@ -781,8 +781,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('inbox')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'inbox'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -800,8 +800,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('priority')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'priority'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -809,7 +809,7 @@ export default function AlphaCloneEmailWorkspace() {
                       {!sidebarCollapsed && <span>Priority AI</span>}
                     </div>
                     {!sidebarCollapsed && folderCounts.priority > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 type-ui font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] type-ui font-bold">
                         {folderCounts.priority}
                       </span>
                     )}
@@ -819,8 +819,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('starred')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'starred'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -828,7 +828,7 @@ export default function AlphaCloneEmailWorkspace() {
                       {!sidebarCollapsed && <span>Starred</span>}
                     </div>
                     {!sidebarCollapsed && folderCounts.starred > 0 && (
-                      <span className="type-ui font-bold text-slate-400">{folderCounts.starred}</span>
+                      <span className="type-ui font-bold text-[var(--ws-text-muted)]">{folderCounts.starred}</span>
                     )}
                   </button>
 
@@ -836,8 +836,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('sent')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'sent'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -850,12 +850,12 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('archive')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'archive'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Archive className="w-4 h-4 text-slate-400" />
+                      <Archive className="w-4 h-4 text-[var(--ws-text-muted)]" />
                       {!sidebarCollapsed && <span>Archive</span>}
                     </div>
                   </button>
@@ -864,8 +864,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('spam')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'spam'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -873,7 +873,7 @@ export default function AlphaCloneEmailWorkspace() {
                       {!sidebarCollapsed && <span>Spam</span>}
                     </div>
                     {!sidebarCollapsed && folderCounts.spam > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 type-ui font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-[var(--warning-text,var(--warning-500))] type-ui font-bold">
                         {folderCounts.spam}
                       </span>
                     )}
@@ -883,8 +883,8 @@ export default function AlphaCloneEmailWorkspace() {
                     onClick={() => setActiveFolder('trash')}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                       activeFolder === 'trash'
-                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
-                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        ? 'bg-emerald-500/15 text-[var(--success-text,var(--success-500))] font-bold border border-emerald-500/30'
+                        : 'text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -898,14 +898,14 @@ export default function AlphaCloneEmailWorkspace() {
               {/* CRM & WORKSPACE HUBS */}
               <div>
                 {!sidebarCollapsed && (
-                  <p className="px-3 py-1.5 type-caption font-bold tracking-wider text-slate-500 uppercase">
+                  <p className="px-3 py-1.5 type-caption font-bold tracking-wider text-[var(--ws-text-muted)] uppercase">
                     Workspace & Automation
                   </p>
                 )}
                 <div className="space-y-0.5">
                   <button
                     onClick={() => setActiveTab('campaigns')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:bg-white/5 hover:text-white transition-all"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white transition-all"
                   >
                     <div className="flex items-center gap-2.5">
                       <Target className="w-4 h-4 text-emerald-400" />
@@ -920,7 +920,7 @@ export default function AlphaCloneEmailWorkspace() {
 
                   <button
                     onClick={() => setActiveTab('sequences')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:bg-white/5 hover:text-white transition-all"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white transition-all"
                   >
                     <div className="flex items-center gap-2.5">
                       <Workflow className="w-4 h-4 text-teal-400" />
@@ -930,7 +930,7 @@ export default function AlphaCloneEmailWorkspace() {
 
                   <button
                     onClick={() => setActiveTab('analytics')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:bg-white/5 hover:text-white transition-all"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white transition-all"
                   >
                     <div className="flex items-center gap-2.5">
                       <BarChart3 className="w-4 h-4 text-teal-400" />
@@ -940,14 +940,14 @@ export default function AlphaCloneEmailWorkspace() {
 
                   <button
                     onClick={() => setActiveTab('health')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:bg-white/5 hover:text-white transition-all"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[var(--ws-text-secondary)] hover:bg-white/5 hover:text-white transition-all"
                   >
                     <div className="flex items-center gap-2.5">
                       <ShieldCheck className="w-4 h-4 text-emerald-400" />
                       {!sidebarCollapsed && <span>Domain Warmup</span>}
                     </div>
                     {!sidebarCollapsed && (
-                      <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-teal-300 type-ui font-bold">
+                      <span className="px-1.5 py-0.2 rounded bg-teal-500/20 text-[var(--brand-blue-300)] type-ui font-bold">
                         98%
                       </span>
                     )}
@@ -957,21 +957,21 @@ export default function AlphaCloneEmailWorkspace() {
 
               {/* CONNECTED ACCOUNTS OVERVIEW */}
               {!sidebarCollapsed && (
-                <div className="mt-auto p-3 rounded-xl bg-slate-950/60 border border-white/10 space-y-2">
+                <div className="mt-auto p-3 rounded-xl bg-[var(--ws-canvas)]/60 border border-white/10 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="type-caption font-bold uppercase text-slate-400">Connected Dispatchers</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                    <span className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Connected Dispatchers</span>
+                    <span className="w-2 h-2 rounded-full bg-[var(--success-500)]" />
                   </div>
                   <div className="space-y-1 type-ui">
-                    <div className="flex items-center justify-between text-slate-300">
+                    <div className="flex items-center justify-between text-[var(--ws-text-secondary)]">
                       <span>Outlook 365</span>
                       <span className="text-emerald-400 font-bold">Active</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-300">
+                    <div className="flex items-center justify-between text-[var(--ws-text-secondary)]">
                       <span>Zoho Enterprise</span>
                       <span className="text-emerald-400 font-bold">Active</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-400">
+                    <div className="flex items-center justify-between text-[var(--ws-text-muted)]">
                       <span>SendGrid Engine</span>
                       <span className="text-teal-400">Bulk Ready</span>
                     </div>
@@ -988,10 +988,10 @@ export default function AlphaCloneEmailWorkspace() {
           <div
             className={`${
               selectedThreadId ? 'hidden md:flex' : 'flex'
-            } w-full border-r border-white/10 bg-[#0B1220] flex-col shrink-0 min-h-0 select-none md:flex md:w-auto`}
+            } w-full border-r border-white/10 bg-[var(--ws-canvas)] flex-col shrink-0 min-h-0 select-none md:flex md:w-auto`}
           >
             {/* Filter toolbar */}
-            <div className="sticky top-0 z-10 p-3 border-b border-white/10 bg-[#0F172A] flex items-center justify-between gap-2 shrink-0">
+            <div className="sticky top-0 z-10 p-3 border-b border-white/10 bg-[var(--ws-canvas)] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
                   onClick={() => {
@@ -1002,7 +1002,7 @@ export default function AlphaCloneEmailWorkspace() {
                   className={`px-2.5 py-1 rounded-lg type-ui font-bold transition-all ${
                     !filterUnreadOnly && !filterCrmOnly && !filterHasMeeting
                       ? 'bg-emerald-500 text-slate-950'
-                      : 'bg-white/5 text-slate-400 hover:text-white'
+                      : 'bg-white/5 text-[var(--ws-text-muted)] hover:text-white'
                   }`}
                 >
                   All ({filteredThreads.length})
@@ -1010,7 +1010,7 @@ export default function AlphaCloneEmailWorkspace() {
                 <button
                   onClick={() => setFilterUnreadOnly(!filterUnreadOnly)}
                   className={`px-2.5 py-1 rounded-lg type-ui font-bold transition-all ${
-                    filterUnreadOnly ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:text-white'
+                    filterUnreadOnly ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-[var(--ws-text-muted)] hover:text-white'
                   }`}
                 >
                   Unread
@@ -1018,7 +1018,7 @@ export default function AlphaCloneEmailWorkspace() {
                 <button
                   onClick={() => setFilterCrmOnly(!filterCrmOnly)}
                   className={`px-2.5 py-1 rounded-lg type-ui font-bold transition-all ${
-                    filterCrmOnly ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:text-white'
+                    filterCrmOnly ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-[var(--ws-text-muted)] hover:text-white'
                   }`}
                 >
                   CRM Deals
@@ -1026,7 +1026,7 @@ export default function AlphaCloneEmailWorkspace() {
                 <button
                   onClick={() => setFilterHasMeeting(!filterHasMeeting)}
                   className={`px-2.5 py-1 rounded-lg type-ui font-bold transition-all ${
-                    filterHasMeeting ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:text-white'
+                    filterHasMeeting ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-[var(--ws-text-muted)] hover:text-white'
                   }`}
                 >
                   Meetings
@@ -1037,7 +1037,7 @@ export default function AlphaCloneEmailWorkspace() {
                 {selectedThreadIds.length > 0 && (
                   <button
                     onClick={handleBulkArchive}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 type-ui font-bold hover:bg-amber-500/30 flex items-center gap-1"
+                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-[var(--warning-text,var(--warning-500))] type-ui font-bold hover:bg-amber-500/30 flex items-center gap-1"
                   >
                     <Archive className="w-3 h-3" />
                     Archive ({selectedThreadIds.length})
@@ -1045,7 +1045,7 @@ export default function AlphaCloneEmailWorkspace() {
                 )}
                 <button
                   onClick={handleSelectAll}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+                  className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-white hover:bg-white/5"
                   title="Select All"
                 >
                   <CheckSquare className="w-4 h-4" />
@@ -1072,7 +1072,7 @@ export default function AlphaCloneEmailWorkspace() {
             {/* Email Threads List */}
             <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-white/5 custom-scrollbar">
               {filteredThreads.length === 0 ? (
-                <div className="p-12 text-center text-slate-500 space-y-3">
+                <div className="p-12 text-center text-[var(--ws-text-muted)] space-y-3">
                   <Mail className="w-10 h-10 mx-auto text-slate-600 stroke-[1.5]" />
                   <p className="type-card-description font-medium">No emails found matching your filters.</p>
                 </div>
@@ -1089,7 +1089,7 @@ export default function AlphaCloneEmailWorkspace() {
                         isSelected
                           ? 'bg-emerald-500/10 border-l-4 border-emerald-400'
                           : thread.unread
-                          ? 'bg-slate-900/80 hover:bg-slate-900'
+                          ? 'bg-[var(--ws-panel)]/80 hover:bg-[var(--ws-panel)]'
                           : 'hover:bg-white/[0.03]'
                       }`}
                     >
@@ -1114,7 +1114,7 @@ export default function AlphaCloneEmailWorkspace() {
                               className="w-7 h-7 rounded-full object-cover border border-white/10 shrink-0"
                             />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center type-ui font-bold text-slate-300 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-[var(--ws-surface-secondary)] flex items-center justify-center type-ui font-bold text-[var(--ws-text-secondary)] shrink-0">
                               {thread.senderName.charAt(0)}
                             </div>
                           )}
@@ -1123,21 +1123,21 @@ export default function AlphaCloneEmailWorkspace() {
                             <div className="flex items-center gap-1.5">
                               <span
                                 className={`type-caption truncate ${
-                                  thread.unread ? 'font-black text-white' : 'font-semibold text-slate-200'
+                                  thread.unread ? 'font-black text-white' : 'font-semibold text-[var(--ws-text-secondary)]'
                                 }`}
                               >
                                 {thread.senderName}
                               </span>
-                              <span className="type-ui text-slate-500 truncate">({thread.companyName})</span>
+                              <span className="type-ui text-[var(--ws-text-muted)] truncate">({thread.companyName})</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="type-caption text-slate-400 font-medium">{thread.timestamp}</span>
+                          <span className="type-caption text-[var(--ws-text-muted)] font-medium">{thread.timestamp}</span>
                           <button
                             onClick={(e) => handleToggleStar(thread.id, e)}
-                            className="text-slate-500 hover:text-yellow-400 transition-colors"
+                            className="text-[var(--ws-text-muted)] hover:text-yellow-400 transition-colors"
                           >
                             <Star
                               className={`w-3.5 h-3.5 ${thread.starred ? 'fill-yellow-400 text-yellow-400' : ''}`}
@@ -1153,7 +1153,7 @@ export default function AlphaCloneEmailWorkspace() {
                         </span>
 
                         {thread.dealValue && (
-                          <span className="px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/30 type-ui font-bold text-teal-300 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/30 type-ui font-bold text-[var(--brand-blue-300)] flex items-center gap-1">
                             <DollarSign className="w-3 h-3" />
                             ${thread.dealValue.toLocaleString()}
                           </span>
@@ -1170,35 +1170,35 @@ export default function AlphaCloneEmailWorkspace() {
                       {/* Subject */}
                       <p
                         className={`type-caption pl-6 mb-1 truncate ${
-                          thread.unread ? 'font-bold text-slate-100' : 'font-medium text-slate-300'
+                          thread.unread ? 'font-bold text-[var(--ws-text-primary)]' : 'font-medium text-[var(--ws-text-secondary)]'
                         }`}
                       >
                         {thread.subject}
                       </p>
 
                       {/* Preview Snippet */}
-                      <p className="type-card-description text-slate-400 line-clamp-1 pl-6 mb-2">{thread.preview}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-1 pl-6 mb-2">{thread.preview}</p>
 
                       {/* AI Summary Pill */}
                       <div className="pl-6">
-                        <div className="p-1.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 flex items-center gap-1.5 type-ui text-emerald-300">
+                        <div className="p-1.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20 flex items-center gap-1.5 type-ui text-[var(--success-text,var(--success-500))]">
                           <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
                           <span className="truncate">{thread.aiSummary}</span>
                         </div>
                       </div>
 
                       {/* Hover Actions overlay */}
-                      <div className="absolute right-3 bottom-3 hidden group-hover:flex items-center gap-1 p-1 rounded-lg bg-slate-900 border border-white/10 shadow-xl">
+                      <div className="absolute right-3 bottom-3 hidden group-hover:flex items-center gap-1 p-1 rounded-lg bg-[var(--ws-panel)] border border-white/10 shadow-xl">
                         <button
                           onClick={(e) => handleArchiveThread(thread.id, e)}
-                          className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10"
+                          className="p-1 rounded text-[var(--ws-text-muted)] hover:text-white hover:bg-white/10"
                           title="Archive"
                         >
                           <Archive className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => handleDeleteThread(thread.id, e)}
-                          className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/10"
+                          className="p-1 rounded text-[var(--ws-text-muted)] hover:text-rose-400 hover:bg-white/10"
                           title="Delete"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1214,21 +1214,21 @@ export default function AlphaCloneEmailWorkspace() {
           {/* --------------------------------------------------------- */}
           {/* RIGHT PANEL: THREADED CONVERSATION VIEW & CRM TIMELINE */}
           {/* --------------------------------------------------------- */}
-          <div className="flex-1 flex min-w-0 flex-col bg-[#080E1A] min-h-0 overflow-hidden">
+          <div className="flex-1 flex min-w-0 flex-col bg-[var(--brand-violet-950)] min-h-0 overflow-hidden">
             {selectedThread ? (
               <div className="flex-1 flex flex-col min-h-0">
                 
                 {/* Thread Header */}
-                <div className="sticky top-0 z-10 p-4 border-b border-white/10 bg-[#0F172A] flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
+                <div className="sticky top-0 z-10 p-4 border-b border-white/10 bg-[var(--ws-canvas)] flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
                   <div className="min-w-0 space-y-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <h2 className="truncate text-base font-black text-white">{selectedThread.subject}</h2>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 type-ui font-bold text-emerald-300">
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 type-ui font-bold text-[var(--success-text,var(--success-500))]">
                         {selectedThread.crmStatus}
                       </span>
                     </div>
-                    <p className="truncate type-card-description text-slate-400">
-                      Thread with <strong className="text-slate-200">{selectedThread.senderName}</strong> ({selectedThread.senderEmail}) — {selectedThread.companyName}
+                    <p className="truncate type-card-description text-[var(--ws-text-muted)]">
+                      Thread with <strong className="text-[var(--ws-text-secondary)]">{selectedThread.senderName}</strong> ({selectedThread.senderEmail}) — {selectedThread.companyName}
                     </p>
                   </div>
 
@@ -1236,21 +1236,21 @@ export default function AlphaCloneEmailWorkspace() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleQuickReply}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 type-caption font-bold transition-all flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-[var(--success-500)] text-slate-950 type-caption font-bold transition-all flex items-center gap-1.5"
                     >
                       <Send className="w-3.5 h-3.5" />
                       Reply
                     </button>
                     <button
                       onClick={() => handleArchiveThread(selectedThread.id)}
-                      className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white"
+                      className="p-2 rounded-xl bg-[var(--ws-panel)] border border-white/10 text-[var(--ws-text-muted)] hover:text-white"
                       title="Archive Thread"
                     >
                       <Archive className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteThread(selectedThread.id)}
-                      className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-rose-400"
+                      className="p-2 rounded-xl bg-[var(--ws-panel)] border border-white/10 text-[var(--ws-text-muted)] hover:text-rose-400"
                       title="Delete Thread"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1273,21 +1273,21 @@ export default function AlphaCloneEmailWorkspace() {
                         </div>
                         <span className="type-ui text-emerald-400/70 font-mono">Realtime CRM Sync</span>
                       </div>
-                      <p className="type-card-description text-emerald-200/90 leading-relaxed">
+                      <p className="type-card-description text-[var(--success-text,var(--success-500))]/90 leading-relaxed">
                         {selectedThread.aiSummary}
                       </p>
                       
                       {/* Sentiment & Opportunity Scores */}
                       <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-emerald-500/20 type-ui">
-                        <div className="flex items-center gap-1.5 text-slate-300">
+                        <div className="flex items-center gap-1.5 text-[var(--ws-text-secondary)]">
                           <span>Sentiment:</span>
                           <span className="font-bold text-emerald-400">{selectedThread.sentiment}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-300">
+                        <div className="flex items-center gap-1.5 text-[var(--ws-text-secondary)]">
                           <span>Relationship Health:</span>
                           <span className="font-bold text-teal-400">{selectedThread.relationshipScore}%</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-300">
+                        <div className="flex items-center gap-1.5 text-[var(--ws-text-secondary)]">
                           <span>Opportunity Value:</span>
                           <span className="font-bold text-emerald-400">${selectedThread.dealValue?.toLocaleString()}</span>
                         </div>
@@ -1298,7 +1298,7 @@ export default function AlphaCloneEmailWorkspace() {
                     {selectedThread.messages.map((msg) => (
                       <div
                         key={msg.id}
-                        className="p-5 rounded-2xl bg-[#0F172A]/60 border border-white/10 space-y-3"
+                        className="p-5 rounded-2xl bg-[var(--ws-canvas)]/60 border border-white/10 space-y-3"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -1307,30 +1307,30 @@ export default function AlphaCloneEmailWorkspace() {
                             </div>
                             <div>
                               <h4 className="type-card-title font-bold text-white">{msg.fromName}</h4>
-                              <p className="type-card-description text-slate-400">{msg.fromEmail}</p>
+                              <p className="type-card-description text-[var(--ws-text-muted)]">{msg.fromEmail}</p>
                             </div>
                           </div>
-                          <span className="type-caption text-slate-500">{msg.timestamp}</span>
+                          <span className="type-caption text-[var(--ws-text-muted)]">{msg.timestamp}</span>
                         </div>
 
                         <div
-                          className="type-caption text-slate-300 leading-relaxed space-y-2"
+                          className="type-caption text-[var(--ws-text-secondary)] leading-relaxed space-y-2"
                           dangerouslySetInnerHTML={{ __html: msg.body }}
                         />
 
                         {/* Attachments if any */}
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div className="pt-3 border-t border-white/5 space-y-2">
-                            <p className="type-caption font-bold uppercase text-slate-400">Attachments ({msg.attachments.length})</p>
+                            <p className="type-caption font-bold uppercase text-[var(--ws-text-muted)]">Attachments ({msg.attachments.length})</p>
                             <div className="flex flex-wrap gap-2">
                               {msg.attachments.map((att, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 border border-white/10 type-caption text-slate-300 hover:border-emerald-500/50 cursor-pointer"
+                                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--ws-panel)] border border-white/10 type-caption text-[var(--ws-text-secondary)] hover:border-emerald-500/50 cursor-pointer"
                                 >
                                   <Paperclip className="w-3.5 h-3.5 text-emerald-400" />
                                   <span>{att.name}</span>
-                                  <span className="type-ui text-slate-500">({att.size})</span>
+                                  <span className="type-ui text-[var(--ws-text-muted)]">({att.size})</span>
                                 </div>
                               ))}
                             </div>
@@ -1340,8 +1340,8 @@ export default function AlphaCloneEmailWorkspace() {
                     ))}
 
                     {/* Quick Inline Reply Field */}
-                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-white/10 space-y-3">
-                      <div className="flex items-center justify-between type-caption text-slate-400">
+                    <div className="p-4 rounded-2xl bg-[var(--ws-canvas)]/80 border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                         <span>Reply to {selectedThread.senderEmail}...</span>
                         <div className="flex items-center gap-2">
                           <button
@@ -1357,13 +1357,13 @@ export default function AlphaCloneEmailWorkspace() {
                         value={inlineReplyBody}
                         onChange={(e) => setInlineReplyBody(e.target.value)}
                         placeholder="Type your response or use Bonnie AI..."
-                        className="w-full h-24 bg-slate-900 border border-white/10 rounded-xl p-3 type-caption text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                        className="w-full h-24 bg-[var(--ws-panel)] border border-white/10 rounded-xl p-3 type-caption text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                       />
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={handleSendInlineReply}
                           disabled={inlineReplySending || !inlineReplyBody.trim()}
-                          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 type-caption font-black flex items-center gap-1.5"
+                          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-[var(--success-500)] disabled:opacity-50 text-slate-950 type-caption font-black flex items-center gap-1.5"
                         >
                           {inlineReplySending ? (
                             <>
@@ -1383,12 +1383,12 @@ export default function AlphaCloneEmailWorkspace() {
                   </div>
 
                   {/* CRM & Deal Intelligence Right Context Bar */}
-                  <div className="hidden min-h-0 overflow-y-auto border-l border-white/10 bg-[#0B1220] p-5 space-y-5 shrink-0 custom-scrollbar xl:block">
+                  <div className="hidden min-h-0 overflow-y-auto border-l border-white/10 bg-[var(--ws-canvas)] p-5 space-y-5 shrink-0 custom-scrollbar xl:block">
                     
                     {/* Contact Profile */}
                     <div className="space-y-3">
-                      <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">CRM Contact Card</h3>
-                      <div className="p-4 rounded-xl bg-slate-900/80 border border-white/10 space-y-2">
+                      <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">CRM Contact Card</h3>
+                      <div className="p-4 rounded-xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-2">
                         <div className="flex items-center gap-3">
                           {selectedThread.senderAvatar ? (
                             <img
@@ -1403,10 +1403,10 @@ export default function AlphaCloneEmailWorkspace() {
                           )}
                           <div>
                             <h4 className="type-card-title font-bold text-white">{selectedThread.senderName}</h4>
-                            <p className="type-card-description text-slate-400">{selectedThread.companyName}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">{selectedThread.companyName}</p>
                           </div>
                         </div>
-                        <div className="pt-2 border-t border-white/5 space-y-1 type-ui text-slate-300">
+                        <div className="pt-2 border-t border-white/5 space-y-1 type-ui text-[var(--ws-text-secondary)]">
                           <p><strong>Email:</strong> {selectedThread.senderEmail}</p>
                           <p><strong>CRM Status:</strong> <span className="text-emerald-400">{selectedThread.crmStatus}</span></p>
                         </div>
@@ -1416,13 +1416,13 @@ export default function AlphaCloneEmailWorkspace() {
                     {/* Deal Info */}
                     {selectedThread.dealValue && (
                       <div className="space-y-2">
-                        <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">Active Pipeline Deal</h3>
-                        <div className="p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 space-y-2">
+                        <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Active Pipeline Deal</h3>
+                        <div className="p-4 rounded-xl bg-[var(--ws-panel)]/80 border border-emerald-500/30 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="type-caption font-bold text-white">{selectedThread.dealName}</span>
                             <span className="type-caption font-black text-emerald-400">${selectedThread.dealValue.toLocaleString()}</span>
                           </div>
-                          <p className="type-card-description text-slate-400">Stage: Contract Review (95% probability)</p>
+                          <p className="type-card-description text-[var(--ws-text-muted)]">Stage: Contract Review (95% probability)</p>
                         </div>
                       </div>
                     )}
@@ -1430,13 +1430,13 @@ export default function AlphaCloneEmailWorkspace() {
                     {/* Meeting Card */}
                     {selectedThread.hasMeeting && selectedThread.meetingDetails && (
                       <div className="space-y-2">
-                        <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">Scheduled Calendar Sync</h3>
+                        <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Scheduled Calendar Sync</h3>
                         <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-2">
                           <div className="flex items-center gap-2 type-caption font-bold text-blue-300">
                             <CalendarIcon className="w-4 h-4 text-blue-400" />
                             <span>{selectedThread.meetingDetails.title}</span>
                           </div>
-                          <p className="type-card-description text-slate-300">
+                          <p className="type-card-description text-[var(--ws-text-secondary)]">
                             {selectedThread.meetingDetails.date} at {selectedThread.meetingDetails.time}
                           </p>
                           <a
@@ -1457,7 +1457,7 @@ export default function AlphaCloneEmailWorkspace() {
 
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center p-12 text-center text-slate-500">
+              <div className="flex-1 flex items-center justify-center p-12 text-center text-[var(--ws-text-muted)]">
                 <p>Select an email thread from the left panel to open the business conversation.</p>
               </div>
             )}
@@ -1473,20 +1473,20 @@ export default function AlphaCloneEmailWorkspace() {
         <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto custom-scrollbar">
           <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-5">
             <h2 className="type-ui font-black text-white">Campaign activity is managed in Campaign Builder</h2>
-            <p className="mt-1 type-card-description text-slate-300">
+            <p className="mt-1 type-card-description text-[var(--ws-text-secondary)]">
               Open the campaign workspace to view tenant-scoped recipients, drafts, delivery activity, and engagement records. This inbox never displays estimated campaign metrics as live data.
             </p>
             <button
               type="button"
               onClick={() => router.push('/dashboard/business/campaigns')}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 type-caption font-bold text-slate-950 hover:bg-emerald-400"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 type-caption font-bold text-slate-950 hover:bg-[var(--success-500)]"
             >
               Open Campaign Builder <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
 
           {/* Campaign List */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-4">
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="type-ui font-black text-white">Active Outreach Campaigns</h2>
               <button
@@ -1498,8 +1498,8 @@ export default function AlphaCloneEmailWorkspace() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left type-caption text-slate-300">
-                <thead className="type-caption uppercase font-bold text-slate-400 border-b border-white/10">
+              <table className="w-full text-left type-caption text-[var(--ws-text-secondary)]">
+                <thead className="type-caption uppercase font-bold text-[var(--ws-text-muted)] border-b border-white/10">
                   <tr>
                     <th className="p-3">Campaign Name</th>
                     <th className="p-3">Status</th>
@@ -1521,7 +1521,7 @@ export default function AlphaCloneEmailWorkspace() {
                       </td>
                       <td className="p-3">{camp.recipientCount.toLocaleString()}</td>
                       <td className="p-3 text-emerald-400 font-bold">{camp.openRate}%</td>
-                      <td className="p-3 text-teal-300 font-bold">{camp.replyRate}%</td>
+                      <td className="p-3 text-[var(--brand-blue-300)] font-bold">{camp.replyRate}%</td>
                       <td className="p-3 font-bold">{camp.meetingsBooked}</td>
                       <td className="p-3 text-emerald-400 font-bold">${camp.revenue.toLocaleString()}</td>
                     </tr>
@@ -1537,7 +1537,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* OTHER TABS: SEQUENCES / TEMPLATES / ANALYTICS / HEALTH */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'sequences' && (
-        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-slate-400 space-y-4 custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-[var(--ws-text-muted)] space-y-4 custom-scrollbar">
           <Workflow className="w-12 h-12 text-emerald-400 mx-auto stroke-[1.5]" />
           <h2 className="text-lg font-bold text-white">Multi-Channel Sequences Visual Engine</h2>
           <p className="type-card-description max-w-md mx-auto">
@@ -1553,11 +1553,11 @@ export default function AlphaCloneEmailWorkspace() {
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 <FileText className="w-5 h-5 text-teal-400" /> Enterprise Email Templates
               </h2>
-              <p className="type-card-description text-slate-400">Pre-approved sales, onboarding, and proposal templates with AI variable placeholders.</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">Pre-approved sales, onboarding, and proposal templates with AI variable placeholders.</p>
             </div>
             <button
               onClick={() => { setComposeSubject('Custom Enterprise Proposal'); setComposerOpen(true); }}
-              className="px-3.5 py-2 rounded-xl bg-emerald-500 text-slate-950 type-caption font-bold hover:bg-emerald-400 transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-emerald-500 text-slate-950 type-caption font-bold hover:bg-[var(--success-500)] transition-all flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" /> New Template
             </button>
@@ -1608,17 +1608,17 @@ export default function AlphaCloneEmailWorkspace() {
                 body: 'Hi {{firstName}},\n\nLooking forward to our upcoming sync. Here is the meeting link and agenda for our call on {{date}}.\n\nAgenda:\n1. Infrastructure overview\n2. Integrations demo\n3. Q&A\n\nSee you then!\n{{senderName}}',
               },
             ].map((tmpl, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 flex flex-col justify-between space-y-3 hover:border-emerald-500/40 transition-all">
+              <div key={idx} className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 flex flex-col justify-between space-y-3 hover:border-emerald-500/40 transition-all">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 type-ui font-bold text-emerald-400">
                       {tmpl.category}
                     </span>
-                    <FileText className="w-3.5 h-3.5 text-slate-500" />
+                    <FileText className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />
                   </div>
                   <h3 className="type-card-title font-bold text-white">{tmpl.title}</h3>
-                  <p className="type-card-description font-semibold text-slate-300 truncate">Subj: {tmpl.subject}</p>
-                  <p className="type-card-description text-slate-400 line-clamp-3 leading-relaxed">{tmpl.preview}</p>
+                  <p className="type-card-description font-semibold text-[var(--ws-text-secondary)] truncate">Subj: {tmpl.subject}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-3 leading-relaxed">{tmpl.preview}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -1627,7 +1627,7 @@ export default function AlphaCloneEmailWorkspace() {
                     setComposerOpen(true);
                     toast.success(`Loaded "${tmpl.title}" into composer!`);
                   }}
-                  className="w-full py-2 rounded-xl bg-slate-950 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 text-emerald-400 type-caption font-bold transition-all flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-xl bg-[var(--ws-canvas)] hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 text-emerald-400 type-caption font-bold transition-all flex items-center justify-center gap-1.5"
                 >
                   <CornerDownRight className="w-3.5 h-3.5" /> Use Template
                 </button>
@@ -1644,53 +1644,53 @@ export default function AlphaCloneEmailWorkspace() {
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-teal-400" /> Email Health & Deliverability Center
               </h2>
-              <p className="type-caption text-slate-400">Provider connection status is shown here. Domain and deliverability metrics appear only after a connected provider supplies them.</p>
+              <p className="type-caption text-[var(--ws-text-muted)]">Provider connection status is shown here. Domain and deliverability metrics appear only after a connected provider supplies them.</p>
             </div>
             <button
               type="button"
               onClick={() => router.push('/dashboard/settings')}
-              className="px-3.5 py-2 rounded-xl bg-slate-900 border border-white/10 type-caption font-bold text-slate-200 hover:text-white flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-[var(--ws-panel)] border border-white/10 type-caption font-bold text-[var(--ws-text-secondary)] hover:text-white flex items-center gap-1.5"
             >
               <Settings className="w-3.5 h-3.5" /> Provider settings
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="type-ui text-slate-400 font-medium">Active Dispatchers</span>
+            <div className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-1">
+              <span className="type-ui text-[var(--ws-text-muted)] font-medium">Active Dispatchers</span>
               <p className="text-2xl font-black text-white">{connectedProviders.length}</p>
-              <span className="type-ui text-slate-400 font-bold">Connected providers only</span>
+              <span className="type-ui text-[var(--ws-text-muted)] font-bold">Connected providers only</span>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="type-ui text-slate-400 font-medium">Deliverability metrics</span>
-              <p className="text-lg font-black text-slate-300">Not reported</p>
-              <span className="type-ui text-slate-400 font-bold">Connect a provider with reporting to view verified data</span>
+            <div className="p-4 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-1">
+              <span className="type-ui text-[var(--ws-text-muted)] font-medium">Deliverability metrics</span>
+              <p className="text-lg font-black text-[var(--ws-text-secondary)]">Not reported</p>
+              <span className="type-ui text-[var(--ws-text-muted)] font-bold">Connect a provider with reporting to view verified data</span>
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-2">
-            <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">DNS & Protocol Authentication</h3>
-            <p className="type-card-description text-slate-300">No workspace domain result has been verified in this view. Configure a sender domain and use the provider’s verified health report before relying on SPF, DKIM, DMARC, bounce, or complaint data.</p>
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-2">
+            <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">DNS & Protocol Authentication</h3>
+            <p className="type-card-description text-[var(--ws-text-secondary)]">No workspace domain result has been verified in this view. Configure a sender domain and use the provider’s verified health report before relying on SPF, DKIM, DMARC, bounce, or complaint data.</p>
           </div>
 
           {/* Dispatcher Connections */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-4">
-            <h3 className="type-caption font-bold uppercase tracking-wider text-slate-400">Connected Dispatch Providers</h3>
+          <div className="p-5 rounded-2xl bg-[var(--ws-panel)]/80 border border-white/10 space-y-4">
+            <h3 className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Connected Dispatch Providers</h3>
             <div className="divide-y divide-white/5 type-caption">
               {providerOptions.length > 0 ? providerOptions.map((prov, i) => (
                 <div key={i} className="py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[var(--success-500)] animate-pulse" />
                     <div>
                       <p className="font-bold text-white">{prov.label}</p>
-                      <p className="type-card-description text-slate-400">Provider ID: {prov.id}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)]">Provider ID: {prov.id}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded type-ui font-bold ${prov.connected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                  <span className={`px-2 py-0.5 rounded type-ui font-bold ${prov.connected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)]'}`}>
                     {prov.connected ? 'Connected & Synced' : 'Disconnected'}
                   </span>
                 </div>
-              )) : <p className="py-3 type-card-description text-slate-400">No email provider is connected to this workspace.</p>}
+              )) : <p className="py-3 type-card-description text-[var(--ws-text-muted)]">No email provider is connected to this workspace.</p>}
             </div>
           </div>
         </div>
@@ -1700,17 +1700,17 @@ export default function AlphaCloneEmailWorkspace() {
       {/* RICH EMAIL COMPOSER MODAL */}
       {/* ------------------------------------------------------------- */}
       {composerOpen && (
-        <div className="fixed inset-0 ac-layer-modal bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0F172A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 ac-layer-modal bg-[var(--ws-canvas)]/95 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-[var(--ws-canvas)] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
-            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-slate-900/60">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[var(--ws-panel)]/60">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-emerald-400" />
                 <h3 className="type-card-title font-bold text-white">New AlphaClone Message</h3>
               </div>
               <button
                 onClick={() => setComposerOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-[var(--ws-text-muted)] hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1718,7 +1718,7 @@ export default function AlphaCloneEmailWorkspace() {
 
             <div className="p-4 space-y-3 overflow-y-auto flex-1 type-caption">
               <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                <span className="w-12 text-slate-400 font-bold">To:</span>
+                <span className="w-12 text-[var(--ws-text-muted)] font-bold">To:</span>
                 <input
                   type="text"
                   value={composeTo}
@@ -1729,7 +1729,7 @@ export default function AlphaCloneEmailWorkspace() {
               </div>
 
               <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                <span className="w-12 text-slate-400 font-bold">Subject:</span>
+                <span className="w-12 text-[var(--ws-text-muted)] font-bold">Subject:</span>
                 <input
                   type="text"
                   value={composeSubject}
@@ -1741,7 +1741,7 @@ export default function AlphaCloneEmailWorkspace() {
 
               {/* AI Quick Prompts Toolbar */}
               <div className="flex items-center gap-2 py-1 overflow-x-auto type-ui">
-                <span className="text-slate-400 font-bold">Bonnie AI:</span>
+                <span className="text-[var(--ws-text-muted)] font-bold">Bonnie AI:</span>
                 <button
                   onClick={() => handleGenerateAiReply('professional')}
                   className="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold hover:bg-emerald-500/20"
@@ -1766,17 +1766,17 @@ export default function AlphaCloneEmailWorkspace() {
                 value={composeBody}
                 onChange={(e) => setComposeBody(e.target.value)}
                 placeholder="Write your email body..."
-                className="w-full h-56 bg-slate-950/60 border border-white/10 rounded-xl p-3 type-caption text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
+                className="w-full h-56 bg-[var(--ws-canvas)]/60 border border-white/10 rounded-xl p-3 type-caption text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50"
               />
             </div>
 
-            <div className="p-4 border-t border-white/10 bg-slate-900/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 type-caption text-slate-400">
+            <div className="p-4 border-t border-white/10 bg-[var(--ws-panel)]/60 flex items-center justify-between">
+              <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                 <span>Dispatch:</span>
                 <select
                   value={composeProvider}
                   onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                  className="bg-slate-950 border border-white/10 rounded-lg px-2 py-1 type-caption text-white focus:outline-none"
+                  className="bg-[var(--ws-canvas)] border border-white/10 rounded-lg px-2 py-1 type-caption text-white focus:outline-none"
                 >
                   <option value="auto">Auto (Best Deliverability)</option>
                   <option value="outlook">Microsoft Outlook 365</option>

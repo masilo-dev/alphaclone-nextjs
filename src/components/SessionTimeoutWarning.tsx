@@ -17,7 +17,7 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm ac-layer-urgent flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-yellow-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fade-in">
+            <div className="bg-[var(--ws-panel)] border border-yellow-500/50 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fade-in">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
                         <svg className="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -26,11 +26,11 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-white">Session Expiring Soon</h3>
-                        <p className="type-card-description text-slate-400">Your session will expire in {countdown} seconds</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">Your session will expire in {countdown} seconds</p>
                     </div>
                 </div>
 
-                <p className="text-slate-300 mb-6">
+                <p className="text-[var(--ws-text-secondary)] mb-6">
                     You've been inactive for a while. To protect your account, we'll log you out automatically unless you extend your session.
                 </p>
 
@@ -43,13 +43,13 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
                     </button>
                     <button
                         onClick={onLogout}
-                        className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg transition-colors"
+                        className="px-4 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] font-medium rounded-lg transition-colors"
                     >
                         Log Out Now
                     </button>
                 </div>
 
-                <div className="mt-4 text-center type-caption text-slate-500">
+                <div className="mt-4 text-center type-caption text-[var(--ws-text-muted)]">
                     Any unsaved changes will be lost if you log out
                 </div>
             </div>

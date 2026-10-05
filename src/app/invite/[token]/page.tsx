@@ -32,11 +32,11 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-20 text-white">
-      <section className="mx-auto max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center shadow-2xl">
+    <main className="min-h-screen bg-[var(--ws-canvas)] px-4 py-20 text-white">
+      <section className="mx-auto max-w-lg rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-8 text-center shadow-2xl">
         <h1 className="text-2xl font-bold">Workspace invitation</h1>
-        <p className="mt-3 text-slate-400">Accept this invitation using the same email address that received it.</p>
-        {error && <p className="mt-5 rounded-lg border border-red-500/30 bg-red-500/10 p-3 type-card-description text-red-300">{error}</p>}
+        <p className="mt-3 text-[var(--ws-text-muted)]">Accept this invitation using the same email address that received it.</p>
+        {error && <p className="mt-5 rounded-lg border border-red-500/30 bg-[var(--error-500)]/10 p-3 type-card-description text-[var(--error-text,var(--error-500))]">{error}</p>}
         {!loading && !user ? (
           <Link href={`/auth/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="mt-6 inline-flex rounded-lg bg-teal-500 px-5 py-3 font-semibold text-slate-950">Sign in to accept</Link>
         ) : (

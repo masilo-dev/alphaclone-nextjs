@@ -157,7 +157,7 @@ export async function notifyProjectClientDetails(params: {
   const sent = await sendClientProjectNoReplyEmail({
     tenantId, to: email, templateName: kind === 'created' ? 'projectCreatedClient' : 'projectDetailsUpdatedClient',
     subject: `${kind === 'created' ? 'New project' : 'Project update'}: ${title}`,
-    html: `<p>Hi ${escapeHtml(name || 'there')},</p><p>${intro}</p><p><strong>${escapeHtml(title)}</strong></p>${safeChanges.length ? `<ul>${safeChanges.map((change) => `<li>${change}</li>`).join('')}</ul>` : ''}${portalUrl ? `<p><a href="${escapeHtml(portalUrl)}">Open your project</a></p>` : ''}<p style="color:#64748b;font-size:12px">If you have client workspace access, you can message the business there.</p>`,
+    html: `<p>Hi ${escapeHtml(name || 'there')},</p><p>${intro}</p><p><strong>${escapeHtml(title)}</strong></p>${safeChanges.length ? `<ul>${safeChanges.map((change) => `<li>${change}</li>`).join('')}</ul>` : ''}${portalUrl ? `<p><a href="${escapeHtml(portalUrl)}">Open your project</a></p>` : ''}<p style="color:var(--ws-text-muted);font-size:12px">If you have client workspace access, you can message the business there.</p>`,
     text: [`Hi ${name || 'there'},`, '', intro, title, ...changes.slice(0, 8), portalUrl ? `Open your project: ${portalUrl}` : '', NOREPLY_FOOTER].filter(Boolean).join('\n'),
   });
   return { sent: sent.success, skipped: sent.error, email: sent.success ? email : undefined };
@@ -214,7 +214,7 @@ export async function notifyProjectClientProgressUpdate(params: {
   <li><strong>Stage:</strong> ${stage}</li>
 </ul>
 ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
-<p style="color:#64748b;font-size:12px;">Automated update — replies to this address are not monitored.</p>`;
+<p style="color:var(--ws-text-muted);font-size:12px;">Automated update — replies to this address are not monitored.</p>`;
 
   const sendResult = await sendClientProjectNoReplyEmail({
     tenantId,
@@ -290,7 +290,7 @@ export async function notifyProjectClientStageUpdate(params: {
   <li><strong>Progress:</strong> ${row.progress ?? 0}%</li>
 </ul>
 ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
-<p style="color:#64748b;font-size:12px;">Automated update — replies to this address are not monitored.</p>`;
+<p style="color:var(--ws-text-muted);font-size:12px;">Automated update — replies to this address are not monitored.</p>`;
 
   const sendResult = await sendClientProjectNoReplyEmail({
     tenantId,
@@ -357,9 +357,9 @@ export async function notifyProjectClientNote(params: {
   const htmlBody = `<p>${greeting}</p>
 <p>There is a new update on your project <strong>${row.name}</strong>.</p>
 ${fromLine}
-<blockquote style="border-left:3px solid #14b8a6;padding-left:12px;color:#cbd5e1;">${content.replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</blockquote>
+<blockquote style="border-left:3px solid var(--brand-blue-500);padding-left:12px;color:var(--ws-border);">${content.replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</blockquote>
 ${portalUrl ? `<p><a href="${portalUrl}">View project portal &amp; reply</a></p>` : ''}
-<p style="color:#64748b;font-size:12px;">This message was sent automatically. Use the portal link to message the team — do not reply to this email.</p>`;
+<p style="color:var(--ws-text-muted);font-size:12px;">This message was sent automatically. Use the portal link to message the team — do not reply to this email.</p>`;
 
   const sendResult = await sendClientProjectNoReplyEmail({
     tenantId,
@@ -433,9 +433,9 @@ export async function notifyProjectTeamClientPortalMessage(params: {
   const dashboardUrl = `${origin.replace(/\/$/, '')}/dashboard/business/projects`;
   const htmlBody = `<p>Hi ${profile.name || 'there'},</p>
 <p><strong>${authorName}</strong> left a message on the client portal for <strong>${projectName}</strong>:</p>
-<blockquote style="border-left:3px solid #14b8a6;padding-left:12px;color:#cbd5e1;">${content.replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</blockquote>
+<blockquote style="border-left:3px solid var(--brand-blue-500);padding-left:12px;color:var(--ws-border);">${content.replace(/</g, '&lt;').replace(/\n/g, '<br/>')}</blockquote>
 <p><a href="${dashboardUrl}">Open projects dashboard</a></p>
-<p style="color:#64748b;font-size:12px;">Automated notification — please do not reply.</p>`;
+<p style="color:var(--ws-text-muted);font-size:12px;">Automated notification — please do not reply.</p>`;
 
   const sendResult = await sendClientProjectNoReplyEmail({
     tenantId,
@@ -505,7 +505,7 @@ export async function notifyProjectFinished(params: {
 <p>Your project <strong>${row.name}</strong> is finished.</p>
 <p>The team has marked it complete. If anything still needs a follow-up, reply through the project portal or contact the owner directly.</p>
 ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
-<p style="color:#64748b;font-size:12px;">Automated update — replies to this address are not monitored.</p>`,
+<p style="color:var(--ws-text-muted);font-size:12px;">Automated update — replies to this address are not monitored.</p>`,
       text: [
         greeting,
         '',
@@ -561,7 +561,7 @@ ${portalUrl ? `<p><a href="${portalUrl}">View your project portal</a></p>` : ''}
 <p><strong>${row.name}</strong> is marked done.</p>
 <p>The client${clientEmail ? ` (${clientEmail})` : ''} ${clientResult.sent ? 'has been emailed' : 'could not be emailed automatically'}.</p>
 <p><a href="${dashboardUrl}">Open the project</a></p>
-<p style="color:#64748b;font-size:12px;">Automated notification from AlphaClone Systems.</p>`,
+<p style="color:var(--ws-text-muted);font-size:12px;">Automated notification from AlphaClone Systems.</p>`,
       });
       if (sendResult.success) {
         ownerResult.sent = true;

@@ -27,7 +27,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
             scale: mode === 'opening' ? 1.5 : 1,
             transition: { duration: 0.8, ease: [0.43, 0.13, 0.23, 0.96] }
           }}
-          className={`fixed inset-0 ac-layer-startup flex items-center justify-center bg-[#020D1A] overflow-hidden ${className}`}
+          className={`fixed inset-0 ac-layer-startup flex items-center justify-center bg-[var(--brand-violet-950)] overflow-hidden ${className}`}
         >
           {/* Animated Background */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-transparent" />
@@ -104,7 +104,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
                     delay: i * 0.1,
                     ease: "easeInOut"
                   }}
-                  className="w-1 h-4 bg-teal-400 rounded-full"
+                  className="w-1 h-4 bg-[var(--brand-blue-400)] rounded-full"
                 />
               ))}
             </motion.div>

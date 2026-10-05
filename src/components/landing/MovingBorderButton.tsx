@@ -38,14 +38,14 @@ export function MovingBorderButton({
                     className="absolute inset-[-150%] animate-moving-border"
                     style={{
                         background:
-                            'conic-gradient(from 0deg, transparent 0deg, #0077FF 60deg, #00D2A0 120deg, transparent 180deg)',
+                            'conic-gradient(from 0deg, transparent 0deg, var(--info-600) 60deg, var(--success-500) 120deg, transparent 180deg)',
                     }}
                 />
             </span>
 
             {/* Inner fill */}
             <span
-                className="relative z-10 flex items-center gap-2 rounded-[10px] bg-[#020D1A] px-8 py-4 text-base font-bold tracking-widest uppercase text-white transition-all duration-300 group-hover:bg-[#041626]"
+                className="relative z-10 flex items-center gap-2 rounded-[10px] bg-[var(--brand-violet-950)] px-8 py-4 text-base font-bold tracking-widest uppercase text-white transition-all duration-300 group-hover:bg-[var(--brand-violet-950)]"
                 style={{ minWidth: '200px', justifyContent: 'center' }}
             >
                 {children}

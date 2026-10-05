@@ -42,12 +42,12 @@ export function getVerificationStatus(lead: Lead): { label: string; className: s
 
 export function getStageBadge(stage: string): React.ReactNode {
   const stages: Record<string, { color: string; label: string }> = {
-    lead: { color: 'bg-slate-500/20 text-slate-400', label: 'Lead' },
+    lead: { color: 'bg-slate-500/20 text-[var(--ws-text-muted)]', label: 'Lead' },
     qualified: { color: 'bg-blue-500/20 text-blue-400', label: 'Qualified' },
     proposal: { color: 'bg-purple-500/20 text-purple-400', label: 'Proposal' },
     negotiation: { color: 'bg-orange-500/20 text-orange-400', label: 'Negotiation' },
     won: { color: 'bg-green-500/20 text-green-400', label: 'Won' },
-    lost: { color: 'bg-red-500/20 text-red-400', label: 'Lost' },
+    lost: { color: 'bg-[var(--error-500)]/20 text-red-400', label: 'Lost' },
     converted: { color: 'bg-teal-500/20 text-teal-400', label: 'Converted' },
   };
   const stageInfo = stages[stage] || stages.lead;
@@ -120,7 +120,7 @@ export function getNextBestAction(lead: Lead): {
   return {
     action: 'Schedule Follow-up',
     icon: <Calendar className="w-4 h-4" />,
-    color: 'text-slate-400',
+    color: 'text-[var(--ws-text-muted)]',
     reason: 'Keep momentum — schedule next touchpoint',
     priority: 'low',
   };

@@ -438,11 +438,11 @@ const ProductTour: React.FC<ProductTourProps> = ({
             callback={handleJoyrideCallback}
             styles={{
                 options: {
-                    primaryColor: '#4199A4',
-                    textColor: isDark ? '#F1F5F9' : '#0F172A',
-                    backgroundColor: isDark ? '#0D1526' : '#FFFFFF',
+                    primaryColor: 'var(--brand-teal)',
+                    textColor: isDark ? 'var(--ws-surface-secondary)' : 'var(--ws-canvas)',
+                    backgroundColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
                     overlayColor: isDark ? 'rgba(2, 13, 26, 0.78)' : 'rgba(15, 23, 42, 0.55)',
-                    arrowColor: isDark ? '#0D1526' : '#FFFFFF',
+                    arrowColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
                     zIndex: 10000,
                 },
                 spotlight: {
@@ -451,7 +451,7 @@ const ProductTour: React.FC<ProductTourProps> = ({
                 tooltip: {
                     borderRadius: '14px',
                     padding: '22px 24px',
-                    backgroundColor: isDark ? '#0D1526' : '#FFFFFF',
+                    backgroundColor: isDark ? 'var(--brand-violet-950)' : 'var(--color-white)',
                     border: isDark ? '1px solid rgba(65, 153, 164, 0.25)' : '1px solid rgba(33, 36, 70, 0.14)',
                     boxShadow: isDark
                         ? '0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
@@ -466,18 +466,18 @@ const ProductTour: React.FC<ProductTourProps> = ({
                     fontSize: '15px',
                     fontWeight: 700,
                     letterSpacing: '-0.01em',
-                    color: isDark ? '#FFFFFF' : '#0F172A',
+                    color: isDark ? 'var(--color-white)' : 'var(--ws-canvas)',
                     marginBottom: '8px',
                 },
                 tooltipContent: {
                     fontSize: '13px',
                     lineHeight: '1.5',
-                    color: isDark ? '#94A3B8' : '#475569',
+                    color: isDark ? 'var(--ws-text-secondary)' : 'var(--ws-text-muted)',
                     padding: '0 0 14px 0',
                 },
                 buttonNext: {
-                    backgroundColor: '#4199A4',
-                    color: '#FFFFFF',
+                    backgroundColor: 'var(--brand-teal)',
+                    color: 'var(--color-white)',
                     borderRadius: '8px',
                     padding: '9px 18px',
                     fontSize: '13px',
@@ -487,19 +487,19 @@ const ProductTour: React.FC<ProductTourProps> = ({
                     boxShadow: '0 1px 3px 0 rgba(65, 153, 164, 0.35)',
                 },
                 buttonBack: {
-                    color: isDark ? '#94A3B8' : '#64748B',
+                    color: isDark ? 'var(--ws-text-secondary)' : 'var(--ws-text-muted)',
                     marginRight: '12px',
                     fontSize: '13px',
                     fontWeight: 500,
                     cursor: 'pointer',
                 },
                 buttonSkip: {
-                    color: isDark ? '#64748B' : '#94A3B8',
+                    color: isDark ? 'var(--ws-text-muted)' : 'var(--ws-text-secondary)',
                     fontSize: '13px',
                     cursor: 'pointer',
                 },
                 buttonClose: {
-                    color: isDark ? '#94A3B8' : '#64748B',
+                    color: isDark ? 'var(--ws-text-secondary)' : 'var(--ws-text-muted)',
                     top: '16px',
                     right: '16px',
                     cursor: 'pointer',

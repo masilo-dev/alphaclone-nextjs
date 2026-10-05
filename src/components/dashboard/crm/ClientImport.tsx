@@ -90,7 +90,7 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
         <Modal isOpen={isOpen} onClose={onClose} title="Import Clients" maxWidth="max-w-xl">
             <div className="space-y-4">
                 <div
-                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-violet-500 bg-violet-500/10' : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragActive ? 'border-violet-500 bg-violet-500/10' : 'border-[var(--ws-border)] hover:border-slate-600 bg-[var(--ws-panel)]/50'
                         }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -109,28 +109,28 @@ export const ClientImportModal: React.FC<ClientImportModalProps> = ({ isOpen, on
                         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-3">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <Upload className="w-10 h-10 text-teal-400 mb-3" />
-                                <p className="mb-2 type-card-description text-slate-300">
+                                <p className="mb-2 type-card-description text-[var(--ws-text-secondary)]">
                                     <span className="font-semibold text-teal-400">Click to upload</span> or drag and drop
                                 </p>
-                                <p className="type-card-description text-slate-500">
+                                <p className="type-card-description text-[var(--ws-text-muted)]">
                                     CSV, XLS or XLSX (Max 100MB)
                                 </p>
                             </div>
                         </label>
                     ) : (
-                        <div className="flex items-center justify-between bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <div className="flex items-center justify-between bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                                     <FileText className="w-5 h-5 text-emerald-500" />
                                 </div>
                                 <div className="text-left">
                                     <p className="type-card-description font-medium text-white max-w-[200px] truncate">{file.name}</p>
-                                    <p className="type-card-description text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">{(file.size / 1024).toFixed(1)} KB</p>
                                 </div>
                             </div>
                             <button
                                 onClick={(e) => { e.preventDefault(); setFile(null); }}
-                                className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white"
+                                className="p-2 hover:bg-[var(--ws-surface-tertiary)] rounded-full text-[var(--ws-text-muted)] hover:text-white"
                             >
                                 <X className="w-4 h-4" />
                             </button>

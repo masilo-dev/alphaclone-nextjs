@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       subject: `Payment receipt - ${invoice.invoice_number}`,
       fromName: invoice.tenant?.name || 'AlphaClone',
       templateName: 'invoicePaymentReceipt',
-      html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#0f172a"><h2 style="color:#059669">Payment confirmed</h2><p>Thank you. This email confirms payment of <strong>${amount}</strong> for invoice <strong>${invoice.invoice_number}</strong>.</p><p>Payment recorded: ${new Date(paidAt).toLocaleDateString('en-GB')}</p><p><a href="${receiptUrl}">View receipt online</a></p><p style="font-size:12px;color:#64748b">A PDF receipt is attached for your records.</p></div>`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:var(--ws-canvas)"><h2 style="color:var(--success-600)">Payment confirmed</h2><p>Thank you. This email confirms payment of <strong>${amount}</strong> for invoice <strong>${invoice.invoice_number}</strong>.</p><p>Payment recorded: ${new Date(paidAt).toLocaleDateString('en-GB')}</p><p><a href="${receiptUrl}">View receipt online</a></p><p style="font-size:12px;color:var(--ws-text-muted)">A PDF receipt is attached for your records.</p></div>`,
       attachments: [{ filename: `Receipt_${invoice.invoice_number}.pdf`, content: pdfBase64, contentType: 'application/pdf' }],
     });
     if (!dispatch.success) return NextResponse.json({ error: dispatch.error || 'Receipt email delivery failed', code: dispatch.code }, { status: 502 });

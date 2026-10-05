@@ -243,7 +243,7 @@ export default function BonnieWorkspaceViews({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-2 py-2 dark:border-slate-800 dark:bg-slate-950">
+      <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-2 py-2 dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]">
         {VIEWS.map(({ id, label, icon: Icon }) => {
           const active = view === id;
           return (
@@ -254,7 +254,7 @@ export default function BonnieWorkspaceViews({
               className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 type-caption font-medium transition ${
                 active
                   ? 'bg-teal-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-[var(--ws-text-secondary)] dark:hover:bg-[var(--ws-panel)]'
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -271,8 +271,8 @@ export default function BonnieWorkspaceViews({
               onClick={() => onChangeView(id)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 type-ui font-medium transition ${
                 active
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
+                  ? 'bg-[var(--ws-surface-tertiary)] text-white'
+                  : 'text-[var(--ws-text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--ws-panel)]'
               }`}
             >
               <Icon className="h-3 w-3" />
@@ -287,7 +287,7 @@ export default function BonnieWorkspaceViews({
               if (selectedRunId || detail?.run?.id) void loadDetail(selectedRunId || detail.run.id);
               else void loadRuns();
             }}
-            className="ml-auto rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+            className="ml-auto rounded-lg p-1.5 text-[var(--ws-text-muted)] hover:bg-slate-100 dark:hover:bg-[var(--ws-panel)]"
             aria-label="Refresh view"
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -295,18 +295,18 @@ export default function BonnieWorkspaceViews({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60" aria-label="Bonnie workflow stages">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]/60" aria-label="Bonnie workflow stages">
         {['1 Plan', '2 Review', '3 Approve', '4 Execute', '5 Results'].map((stage, index) => (
           <React.Fragment key={stage}>
             <span className={`rounded-full border px-2 py-1 type-ui font-semibold ${
               (index === 0 && view === 'plan') || (index === 1 && view === 'approvals') || (index === 3 && view === 'activity') || (index === 4 && view === 'results')
-                ? 'border-teal-500/40 bg-teal-500/10 text-teal-700 dark:text-teal-300'
-                : 'border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400'
+                ? 'border-teal-500/40 bg-teal-500/10 text-teal-700 dark:text-[var(--brand-blue-300)]'
+                : 'border-slate-200 text-[var(--ws-text-muted)] dark:border-[var(--ws-border)] dark:text-[var(--ws-text-muted)]'
             }`}>{stage}</span>
-            {index < 4 ? <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span> : null}
+            {index < 4 ? <span className="text-[var(--ws-text-secondary)] dark:text-slate-700" aria-hidden="true">→</span> : null}
           </React.Fragment>
         ))}
-        <span className="ml-auto hidden type-ui text-slate-500 sm:inline">Bonnie pauses before external actions.</span>
+        <span className="ml-auto hidden type-ui text-[var(--ws-text-muted)] sm:inline">Bonnie pauses before external actions.</span>
       </div>
 
       {view === 'chat' ? (
@@ -314,9 +314,9 @@ export default function BonnieWorkspaceViews({
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <label className="type-label text-slate-500">Active run</label>
+            <label className="type-label text-[var(--ws-text-muted)]">Active run</label>
             <select
-              className="max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 type-caption dark:border-slate-700 dark:bg-slate-900"
+              className="max-w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 type-caption dark:border-[var(--ws-border)] dark:bg-[var(--ws-panel)]"
               value={detail?.run?.id || ''}
               onChange={(e) => {
                 const id = e.target.value;
@@ -335,7 +335,7 @@ export default function BonnieWorkspaceViews({
                 type="button"
                 disabled={acting}
                 onClick={() => void cancelRun()}
-                className="rounded-lg border border-rose-200 px-2 py-1 type-caption text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-300"
+                className="rounded-lg border border-rose-200 px-2 py-1 type-caption text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-[var(--error-text,var(--error-500))]"
               >
                 Cancel run
               </button>
@@ -343,33 +343,33 @@ export default function BonnieWorkspaceViews({
           </div>
 
           {!detail?.run && !loading && (
-            <p className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center type-card-description text-slate-500 dark:border-slate-800">
+            <p className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center type-card-description text-[var(--ws-text-muted)] dark:border-[var(--ws-border)]">
               No durable run selected. Start an objective in Chat or create an invoice collection run
               with the durable runtime enabled.
             </p>
           )}
 
-          {loading && <p className="type-card-description text-slate-500">Loading run state…</p>}
+          {loading && <p className="type-card-description text-[var(--ws-text-muted)]">Loading run state…</p>}
 
           {detail?.run && view === 'plan' && (
             <div className="space-y-3">
               <h3 className="type-ui font-semibold text-slate-900 dark:text-slate-50">
                 Operational plan
               </h3>
-              <p className="type-card-description text-slate-600 dark:text-slate-300">{detail.run.description}</p>
-              <p className="type-card-description text-slate-500">
+              <p className="type-card-description text-slate-600 dark:text-[var(--ws-text-secondary)]">{detail.run.description}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 Mode: {detail.run.execution_mode} · Progress: {Math.round(Number(detail.run.progress_pct) || 0)}%
               </p>
               <ol className="space-y-2">
                 {planTasks.map((t: any, idx: number) => (
                   <li
                     key={t.id}
-                    className="rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800"
+                    className="rounded-xl border border-slate-200 px-3 py-2 dark:border-[var(--ws-border)]"
                   >
-                    <p className="type-card-description font-medium text-slate-800 dark:text-slate-100">
+                    <p className="type-card-description font-medium text-slate-800 dark:text-[var(--ws-text-primary)]">
                       {idx + 1}. {t.title}
                     </p>
-                    <p className="type-card-description text-slate-500">
+                    <p className="type-card-description text-[var(--ws-text-muted)]">
                       {t.assigned_agent_id || 'unassigned'} · {String(t.status).replace(/_/g, ' ')} ·{' '}
                       {t.risk_level || 'low'} risk
                     </p>
@@ -382,17 +382,17 @@ export default function BonnieWorkspaceViews({
           {detail?.run && view === 'graph' && (
             <div className="space-y-3">
               <h3 className="type-ui font-semibold">Task graph</h3>
-              <p className="type-card-description text-slate-500">{progress?.summary}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">{progress?.summary}</p>
               <ul className="space-y-2">
                 {tasks.map((t: any) => (
                   <li
                     key={t.id}
-                    className="flex items-start gap-2 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800"
+                    className="flex items-start gap-2 rounded-xl border border-slate-200 px-3 py-2 dark:border-[var(--ws-border)]"
                   >
                     <GitBranch className="mt-0.5 h-3.5 w-3.5 text-teal-600" />
                     <div>
                       <p className="type-card-description font-medium">{t.title}</p>
-                      <p className="type-card-description text-slate-500">
+                      <p className="type-card-description text-[var(--ws-text-muted)]">
                         {String(t.status).replace(/_/g, ' ')}
                         {t.assigned_agent_id ? ` · ${t.assigned_agent_id}` : ''}
                         {t.task_type ? ` · ${t.task_type}` : ''}
@@ -409,19 +409,19 @@ export default function BonnieWorkspaceViews({
               <h3 className="type-ui font-semibold">Activity timeline</h3>
               <ul className="space-y-2">
                 {timeline.length === 0 && (
-                  <li className="type-caption text-slate-500">No transitions recorded yet.</li>
+                  <li className="type-caption text-[var(--ws-text-muted)]">No transitions recorded yet.</li>
                 )}
                 {timeline.map((row: any) => (
                   <li
                     key={row.id}
-                    className="rounded-xl border border-slate-200 px-3 py-2 type-caption dark:border-slate-800"
+                    className="rounded-xl border border-slate-200 px-3 py-2 type-caption dark:border-[var(--ws-border)]"
                   >
                     <span className="font-medium">
                       {row.from_state} → {row.to_state}
                     </span>
                     {row.trigger ? ` · ${row.trigger}` : ''}
                     {row.reason ? ` · ${row.reason}` : ''}
-                    <div className="type-ui text-slate-400">
+                    <div className="type-ui text-[var(--ws-text-muted)]">
                       {row.created_at ? new Date(row.created_at).toLocaleString() : ''}
                     </div>
                   </li>
@@ -433,7 +433,7 @@ export default function BonnieWorkspaceViews({
           {detail?.run && view === 'approvals' && (
             <div className="space-y-3">
               <h3 className="type-ui font-semibold">Pending durable approvals</h3>
-              <p className="type-card-description text-slate-500">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 Approvals pause side effects until you decide. Stale approvals are rejected after data changes.
               </p>
               <ul className="space-y-2">
@@ -445,21 +445,21 @@ export default function BonnieWorkspaceViews({
                       className="rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-3 dark:border-amber-900 dark:bg-amber-950/20"
                     >
                       <p className="type-card-description font-medium">{t.title}</p>
-                      <p className="type-card-description text-slate-500">{t.assigned_agent_id}</p>
+                      <p className="type-card-description text-[var(--ws-text-muted)]">{t.assigned_agent_id}</p>
                     </li>
                   ))}
                 {tasks.filter((t: any) => t.status === 'WAITING_FOR_APPROVAL').length === 0 && (
-                  <li className="type-caption text-slate-500">No tasks waiting for approval on this run.</li>
+                  <li className="type-caption text-[var(--ws-text-muted)]">No tasks waiting for approval on this run.</li>
                 )}
               </ul>
               {(detail.approvals || []).map((a: any) => (
                 <div
                   key={a.id}
-                  className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 dark:border-slate-800"
+                  className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 px-3 py-3 dark:border-[var(--ws-border)]"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="type-card-description font-medium">{a.proposed_action?.title || a.id}</p>
-                    <p className="type-caption text-slate-500">{a.status}</p>
+                    <p className="type-caption text-[var(--ws-text-muted)]">{a.status}</p>
                   </div>
                   {a.status === 'pending' && (
                     <>
@@ -491,18 +491,18 @@ export default function BonnieWorkspaceViews({
               <h3 className="type-ui font-semibold">Intervention inbox</h3>
               <ul className="space-y-2">
                 {interventions.length === 0 && (
-                  <li className="type-caption text-slate-500">No open interventions for this run.</li>
+                  <li className="type-caption text-[var(--ws-text-muted)]">No open interventions for this run.</li>
                 )}
                 {interventions.map((i: any) => (
                   <li
                     key={i.id}
-                    className="rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800"
+                    className="rounded-xl border border-slate-200 px-3 py-2 dark:border-[var(--ws-border)]"
                   >
                     <p className="type-card-description font-medium">{i.title}</p>
-                    <p className="type-card-description text-slate-500">{i.category}</p>
-                    {i.detail && <p className="mt-1 type-card-description text-slate-600 dark:text-slate-300">{i.detail}</p>}
+                    <p className="type-card-description text-[var(--ws-text-muted)]">{i.category}</p>
+                    {i.detail && <p className="mt-1 type-card-description text-slate-600 dark:text-[var(--ws-text-secondary)]">{i.detail}</p>}
                     {i.suggested_resolution && (
-                      <p className="mt-1 type-card-description text-teal-700 dark:text-teal-300">
+                      <p className="mt-1 type-card-description text-teal-700 dark:text-[var(--brand-blue-300)]">
                         {i.suggested_resolution}
                       </p>
                     )}
@@ -515,7 +515,7 @@ export default function BonnieWorkspaceViews({
           {detail?.run && view === 'audit' && (
             <div className="space-y-3">
               <h3 className="type-ui font-semibold">Audit trail</h3>
-              <p className="type-card-description text-slate-500">
+              <p className="type-card-description text-[var(--ws-text-muted)]">
                 State transitions are the authoritative audit for this run. Sensitive payloads are not shown.
               </p>
               <ul className="max-h-[60vh] space-y-1 overflow-y-auto font-mono type-ui">
@@ -532,11 +532,11 @@ export default function BonnieWorkspaceViews({
           {detail?.run && view === 'results' && (
             <div className="space-y-3">
               <h3 className="type-ui font-semibold">Verified results</h3>
-              <p className="type-card-description text-slate-600 dark:text-slate-300">
+              <p className="type-card-description text-slate-600 dark:text-[var(--ws-text-secondary)]">
                 {verification?.summary || progress?.summary || 'Verification pending until tasks settle.'}
               </p>
               {verification?.outcome && (
-                <p className="type-caption font-medium uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                <p className="type-caption font-medium uppercase tracking-wide text-teal-700 dark:text-[var(--brand-blue-300)]">
                   Outcome: {verification.outcome}
                 </p>
               )}
@@ -544,7 +544,7 @@ export default function BonnieWorkspaceViews({
                 {(verification?.checks || []).map((c: any) => (
                   <li
                     key={c.name}
-                    className="rounded-xl border border-slate-200 px-3 py-2 type-caption dark:border-slate-800"
+                    className="rounded-xl border border-slate-200 px-3 py-2 type-caption dark:border-[var(--ws-border)]"
                   >
                     <span className={c.passed ? 'text-teal-700' : 'text-rose-700'}>
                       {c.passed ? 'PASS' : 'FAIL'}
@@ -554,7 +554,7 @@ export default function BonnieWorkspaceViews({
                   </li>
                 ))}
               </ul>
-              <ul className="space-y-1 type-caption text-slate-500">
+              <ul className="space-y-1 type-caption text-[var(--ws-text-muted)]">
                 {tasks
                   .filter((t: any) => t.status === 'COMPLETED' || t.status === 'FAILED')
                   .map((t: any) => (
@@ -569,12 +569,12 @@ export default function BonnieWorkspaceViews({
             <div className="space-y-4">
               <div>
                 <h3 className="type-ui font-semibold">Governed outcomes</h3>
-                <p className="type-card-description text-slate-500">Launch multi-step missions on the Bonnie durable runtime. Dry-run by default; enable execute for provider writes.</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">Launch multi-step missions on the Bonnie durable runtime. Dry-run by default; enable execute for provider writes.</p>
               </div>
-              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-                <label className="type-caption font-black uppercase tracking-widest text-slate-500">Mission</label>
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-[var(--ws-border)]">
+                <label className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Mission</label>
                 <select
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 type-ui dark:border-slate-800 dark:bg-slate-950"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 type-ui dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
                   value={outcomeKey}
                   onChange={(e) => setOutcomeKey(e.target.value)}
                 >
@@ -582,7 +582,7 @@ export default function BonnieWorkspaceViews({
                     <option key={o.outcome_key} value={o.outcome_key}>{o.title}</option>
                   ))}
                 </select>
-                <label className="mt-3 flex items-center gap-2 type-label text-slate-600 dark:text-slate-300">
+                <label className="mt-3 flex items-center gap-2 type-label text-slate-600 dark:text-[var(--ws-text-secondary)]">
                   <input type="checkbox" checked={outcomeExecute} onChange={(e) => setOutcomeExecute(e.target.checked)} />
                   Execute provider writes (publish, send, invoice, schedule)
                 </label>
@@ -599,9 +599,9 @@ export default function BonnieWorkspaceViews({
                     ['lead_id', 'Lead ID'],
                   ].map(([key, label]) => (
                     <div key={key}>
-                      <label className="type-ui text-slate-500">{label}</label>
+                      <label className="type-ui text-[var(--ws-text-muted)]">{label}</label>
                       <input
-                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 type-caption dark:border-slate-800 dark:bg-slate-950"
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 type-caption dark:border-[var(--ws-border)] dark:bg-[var(--ws-canvas)]"
                         value={outcomeParams[key] || ''}
                         onChange={(e) => setOutcomeParams((prev) => ({ ...prev, [key]: e.target.value }))}
                       />
@@ -623,10 +623,10 @@ export default function BonnieWorkspaceViews({
               </div>
               <ul className="space-y-2">
                 {outcomesCatalog.map((o: any) => (
-                  <li key={o.outcome_key} className="rounded-lg border border-slate-200 px-3 py-2 type-caption dark:border-slate-800">
+                  <li key={o.outcome_key} className="rounded-lg border border-slate-200 px-3 py-2 type-caption dark:border-[var(--ws-border)]">
                     <p className="font-semibold">{o.title}</p>
-                    <p className="text-slate-500">{o.description}</p>
-                    <p className="mt-1 type-card-description text-slate-400">{o.step_count} steps · required: {(o.required_params || []).join(', ') || 'see mission'}</p>
+                    <p className="text-[var(--ws-text-muted)]">{o.description}</p>
+                    <p className="mt-1 type-card-description text-[var(--ws-text-muted)]">{o.step_count} steps · required: {(o.required_params || []).join(', ') || 'see mission'}</p>
                   </li>
                 ))}
               </ul>
@@ -637,7 +637,7 @@ export default function BonnieWorkspaceViews({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="type-ui font-semibold">Agent performance</h3>
-                  <p className="type-card-description text-slate-500">
+                  <p className="type-card-description text-[var(--ws-text-muted)]">
                     {analytics?.periodDays ? `Last ${analytics.periodDays} days` : analyticsComparison} · tenant-isolated execution evidence
                   </p>
                 </div>
@@ -649,7 +649,7 @@ export default function BonnieWorkspaceViews({
                 </div>
               ) : null}
               {analyticsError ? (
-                <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 type-ui text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 type-ui text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-[var(--error-text,var(--error-500))]">
                   {analyticsError}
                 </div>
               ) : null}
@@ -690,11 +690,11 @@ export default function BonnieWorkspaceViews({
                     ]}
                   />
                   <div className="grid gap-3 lg:grid-cols-2">
-                    <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                    <section className="rounded-xl border border-slate-200 p-3 dark:border-[var(--ws-border)]">
                       <h4 className="type-card-title font-semibold">Tool reliability</h4>
                       <div className="mt-2 max-h-80 overflow-y-auto">
                         <table className="w-full text-left type-ui">
-                          <thead className="text-slate-500">
+                          <thead className="text-[var(--ws-text-muted)]">
                             <tr>
                               <th className="pb-2">Tool</th>
                               <th>Calls</th>
@@ -717,23 +717,23 @@ export default function BonnieWorkspaceViews({
                         </table>
                       </div>
                     </section>
-                    <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                    <section className="rounded-xl border border-slate-200 p-3 dark:border-[var(--ws-border)]">
                       <h4 className="type-card-title font-semibold">Attributed revenue impact</h4>
                       <div className="mt-3 space-y-2">
                         {Object.entries(analytics.revenueByCurrency as Record<string, number>).length ? (
                           Object.entries(analytics.revenueByCurrency as Record<string, number>).map(([currency, amount]) => (
-                            <div key={currency} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
-                              <span className="type-caption text-slate-500">{currency}</span>
+                            <div key={currency} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-[var(--ws-panel)]">
+                              <span className="type-caption text-[var(--ws-text-muted)]">{currency}</span>
                               <span className="type-ui font-black text-teal-600">{Number(amount).toLocaleString()}</span>
                             </div>
                           ))
                         ) : (
-                          <p className="type-card-description text-slate-500">
+                          <p className="type-card-description text-[var(--ws-text-muted)]">
                             Revenue attribution will appear when outreach creates deals, contracts or paid invoices.
                           </p>
                         )}
                       </div>
-                      <div className="mt-4 rounded-lg border border-slate-200 p-3 type-caption dark:border-slate-800">
+                      <div className="mt-4 rounded-lg border border-slate-200 p-3 type-caption dark:border-[var(--ws-border)]">
                         <p className="font-semibold">Estimated model/tool cost</p>
                         <p className="mt-1 text-lg font-black">${Number(analytics.tools.estimatedCostUsd || 0).toFixed(4)}</p>
                       </div>
@@ -741,7 +741,7 @@ export default function BonnieWorkspaceViews({
                   </div>
                   {analytics.executionOutcomes ? (
                     <PlatformKpiGrid
-                      header={<p className="type-caption font-black uppercase tracking-widest text-slate-400">Execution reliability</p>}
+                      header={<p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Execution reliability</p>}
                       items={[
                         platformKpiFromNumbers({
                           label: 'Receipt completeness',
@@ -766,7 +766,7 @@ export default function BonnieWorkspaceViews({
                   ) : null}
                   {analytics.executionAssurance ? (
                     <PlatformKpiGrid
-                      header={<p className="type-caption font-black uppercase tracking-widest text-slate-400">Execution assurance</p>}
+                      header={<p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Execution assurance</p>}
                       items={[
                         platformKpiFromNumbers({
                           label: 'Outcome runs',

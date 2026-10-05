@@ -43,7 +43,7 @@ export default function EmailProviderSelector({
 
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      <label className="type-caption text-slate-500 uppercase font-black tracking-widest block px-0.5">
+      <label className="type-caption text-[var(--ws-text-muted)] uppercase font-black tracking-widest block px-0.5">
         Send via
       </label>
       <div className={`flex flex-wrap gap-2 ${compact ? '' : 'pb-1'}`}>
@@ -58,10 +58,10 @@ export default function EmailProviderSelector({
               onClick={() => !isDisabled && onChange(provider.id)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl type-caption font-black uppercase tracking-wide border transition-all ${
                 selected
-                  ? 'bg-teal-600/20 border-teal-500/40 text-teal-300'
+                  ? 'bg-teal-600/20 border-teal-500/40 text-[var(--brand-blue-300)]'
                   : isDisabled
                     ? 'border-white/5 text-slate-600 cursor-not-allowed opacity-50'
-                    : 'border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                    : 'border-white/10 text-[var(--ws-text-muted)] hover:text-white hover:border-white/20'
               }`}
             >
               {provider.native && <Mail className="w-3 h-3" />}
@@ -76,7 +76,7 @@ export default function EmailProviderSelector({
           );
         })}
       </div>
-      <p className="type-card-description text-slate-500 leading-relaxed">
+      <p className="type-card-description text-[var(--ws-text-muted)] leading-relaxed">
         Marketing campaigns use Zoho natively. This choice applies to replies, invoices, and document email.
       </p>
     </div>

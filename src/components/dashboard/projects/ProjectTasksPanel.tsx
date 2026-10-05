@@ -78,8 +78,8 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">Delivery tasks</span>
-        <span className="type-ui text-slate-500">
+        <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Delivery tasks</span>
+        <span className="type-ui text-[var(--ws-text-muted)]">
           {done.length}/{tasks.length} done
         </span>
       </div>
@@ -89,7 +89,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task for this project…"
-          className="flex-1 min-w-0 px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
+          className="flex-1 min-w-0 px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl text-white type-ui outline-none focus:border-[var(--brand-blue-500)]"
         />
         <button
           type="submit"
@@ -101,11 +101,11 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
         </button>
       </form>
 
-      <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5 max-h-56 overflow-y-auto custom-scrollbar">
+      <div className="space-y-2 bg-[var(--ws-canvas)]/20 rounded-lg p-3 border border-white/5 max-h-56 overflow-y-auto custom-scrollbar">
         {loading ? (
-          [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-slate-900/60 rounded animate-pulse" />)
+          [...Array(3)].map((_, i) => <div key={i} className="h-8 bg-[var(--ws-panel)]/60 rounded animate-pulse" />)
         ) : tasks.length === 0 ? (
-          <p className="type-card-description text-slate-500 py-2 text-center">No tasks yet — add work items to track delivery.</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] py-2 text-center">No tasks yet — add work items to track delivery.</p>
         ) : (
           <>
             {open.map((task) => (
@@ -115,8 +115,8 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
                 onClick={() => void toggleComplete(task)}
                 className="w-full flex items-start gap-2 py-1.5 text-left group"
               >
-                <Circle className="w-4 h-4 mt-0.5 shrink-0 text-slate-500 group-hover:text-[var(--brand-blue-400)]" />
-                <span className="type-ui text-slate-200 leading-snug">{task.title}</span>
+                <Circle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--ws-text-muted)] group-hover:text-[var(--brand-blue-400)]" />
+                <span className="type-ui text-[var(--ws-text-secondary)] leading-snug">{task.title}</span>
               </button>
             ))}
             {done.map((task) => (
@@ -127,7 +127,7 @@ export function ProjectTasksPanel({ projectId, userId, onProgressChange }: Proje
                 className="w-full flex items-start gap-2 py-1.5 text-left group"
               >
                 <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
-                <span className="type-ui text-slate-500 line-through leading-snug">{task.title}</span>
+                <span className="type-ui text-[var(--ws-text-muted)] line-through leading-snug">{task.title}</span>
               </button>
             ))}
           </>

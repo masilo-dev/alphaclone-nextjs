@@ -88,7 +88,7 @@ export const pwaService = {
         const notification = document.createElement('div');
         if (document.getElementById('alphaclone-update-available')) return;
         notification.id = 'alphaclone-update-available';
-        notification.className = 'fixed bottom-20 md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:max-w-md bg-slate-950 border border-teal-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl z-[140] flex items-center gap-4';
+        notification.className = 'fixed bottom-20 md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:max-w-md bg-[var(--ws-canvas)] border border-teal-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl z-[140] flex items-center gap-4';
         notification.innerHTML = `
             <div>
                 <p class="font-semibold">Update Available</p>

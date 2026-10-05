@@ -134,7 +134,7 @@ export default function BonnieLauncher() {
           </span>
         ) : null}
         {pendingCount > 0 ? (
-          <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background,#0C1220)] text-[10px] font-bold px-1">
+          <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background)] text-[10px] font-bold px-1">
             {pendingCount}
           </span>
         ) : null}

@@ -30,9 +30,9 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '', l
     const bodyContent = isHtml ? content : `<div style="white-space: pre-wrap;">${content}</div>`;
     // Theme-aware email canvas: in dark mode, use a softer dark surface so HTML
     // emails (designed for light-mode inboxes) don't blind users. Light-mode keeps white.
-    const canvasBg = isDark ? '#1A1E36' : '#ffffff';
-    const canvasFg = isDark ? '#E6EDF4' : '#1F2937';
-    const canvasLink = isDark ? '#52E0E1' : '#0ea5e9';
+    const canvasBg = isDark ? 'var(--ws-panel)' : 'var(--color-white)';
+    const canvasFg = isDark ? 'var(--ws-text-primary)' : 'var(--ws-panel)';
+    const canvasLink = isDark ? 'var(--brand-blue-400)' : 'var(--info-500)';
     return `
       <!DOCTYPE html>
       <html>
@@ -56,9 +56,9 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '', l
             a:hover { text-decoration: underline; }
             table { border-collapse: collapse; max-width: 100%; }
             blockquote {
-              border-left: 3px solid ${isDark ? '#3D4573' : '#E2E8F0'};
+              border-left: 3px solid ${isDark ? 'var(--brand-violet-500)' : 'var(--ws-border)'};
               padding-left: 14px;
-              color: ${isDark ? '#93A4C9' : '#64748B'};
+              color: ${isDark ? 'var(--ws-text-secondary)' : 'var(--ws-text-muted)'};
               margin: 14px 0;
             }
           </style>
@@ -133,7 +133,7 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '', l
     <div
       className={
         'w-full overflow-hidden ac-radius-panel border border-[var(--ws-border)] ' +
-        (isDark ? 'bg-[#1A1E36]' : 'bg-white') +
+        (isDark ? 'bg-[var(--ws-panel)]' : 'bg-white') +
         ' ' +
         className
       }

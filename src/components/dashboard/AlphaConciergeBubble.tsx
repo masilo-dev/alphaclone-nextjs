@@ -45,7 +45,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-white/20 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/20"
+                        className="mb-4 w-80 md:w-96 overflow-hidden rounded-2xl border border-white/20 bg-[var(--ws-panel)]/80 backdrop-blur-xl shadow-2xl shadow-indigo-500/20"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
@@ -65,7 +65,7 @@ export const AlphaConciergeBubble: React.FC = () => {
                                     <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                                         msg.role === 'user' 
                                             ? 'bg-indigo-600 text-white rounded-tr-none' 
-                                            : 'bg-white/10 text-slate-100 rounded-tl-none border border-white/5'
+                                            : 'bg-white/10 text-[var(--ws-text-primary)] rounded-tl-none border border-white/5'
                                     }`}>
                                         <p className="type-card-description">{msg.content}</p>
                                     </div>
@@ -113,12 +113,12 @@ export const AlphaConciergeBubble: React.FC = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsOpen(!isOpen)}
                 className={`flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-colors ${
-                    isOpen ? 'bg-slate-800 text-white' : 'bg-indigo-600 text-white'
+                    isOpen ? 'bg-[var(--ws-surface-secondary)] text-white' : 'bg-indigo-600 text-white'
                 }`}
             >
                 {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
                 {!isOpen && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 type-caption font-bold">
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--error-500)] type-caption font-bold">
                         1
                     </span>
                 )}

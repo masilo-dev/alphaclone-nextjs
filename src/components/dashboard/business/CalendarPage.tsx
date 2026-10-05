@@ -78,28 +78,28 @@ const SOURCE_CONFIG = {
     deal: {
         label: 'Deal',
         bg: 'bg-amber-500/15',
-        text: 'text-amber-300',
+        text: 'text-[var(--warning-text,var(--warning-500))]',
         dot: 'bg-amber-500',
         border: 'border-amber-500/30',
     },
     lead: {
         label: 'Lead',
         bg: 'bg-teal-500/15',
-        text: 'text-teal-300',
+        text: 'text-[var(--brand-blue-300)]',
         dot: 'bg-teal-500',
         border: 'border-teal-500/30',
     },
     event: {
         label: 'Meeting',
         bg: 'bg-sky-500/15',
-        text: 'text-sky-300',
+        text: 'text-[var(--info-text,var(--info-500))]',
         dot: 'bg-sky-500',
         border: 'border-sky-500/30',
     },
     google: {
         label: 'Connected calendar',
         bg: 'bg-rose-500/15',
-        text: 'text-rose-300',
+        text: 'text-[var(--error-text,var(--error-500))]',
         dot: 'bg-rose-500',
         border: 'border-rose-500/30',
     },
@@ -448,19 +448,19 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                            className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                            className="p-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setCurrentDate(new Date())}
-                            className="px-3 py-1.5 type-caption bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors font-medium"
+                            className="px-3 py-1.5 type-caption bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg transition-colors font-medium"
                         >
                             Today
                         </button>
                         <button
                             onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                            className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors"
+                            className="p-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg transition-colors"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -470,7 +470,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     <button
                         onClick={() => window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`}
                         title="Connect Google Calendar"
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 hover:text-white transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)] rounded-lg text-[var(--ws-text-secondary)] hover:text-white transition-colors"
                     >
                         <Mail className="w-4 h-4" />
                         <span className="type-ui font-medium">Google Calendar</span>
@@ -493,14 +493,14 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         onClick={() => toggleFilter(source)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full type-caption font-medium border transition-all ${activeFilters.has(source)
                             ? `${config.bg} ${config.text} ${config.border}`
-                            : 'bg-slate-900 text-slate-500 border-slate-700 opacity-50'
+                            : 'bg-[var(--ws-panel)] text-[var(--ws-text-muted)] border-[var(--ws-border)] opacity-50'
                             }`}
                     >
                         <div className={`w-2 h-2 rounded-full ${activeFilters.has(source) ? config.dot : 'bg-slate-600'}`} />
                         {config.label}
                     </button>
                 ))}
-                <span className="flex items-center type-caption text-slate-500 ml-1">
+                <span className="flex items-center type-caption text-[var(--ws-text-muted)] ml-1">
                     {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} this month
                 </span>
             </div>
@@ -520,11 +520,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             ) : null}
 
             {/* Desktop Calendar Grid */}
-            <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
+            <div className="hidden md:block bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl overflow-hidden">
                 {/* Day Headers */}
-                <div className="grid grid-cols-7 border-b border-slate-800">
+                <div className="grid grid-cols-7 border-b border-[var(--ws-border)]">
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="p-3 text-center type-ui font-semibold text-slate-400 border-r border-slate-800 last:border-r-0">
+                        <div key={day} className="p-3 text-center type-ui font-semibold text-[var(--ws-text-muted)] border-r border-[var(--ws-border)] last:border-r-0">
                             {day}
                         </div>
                     ))}
@@ -533,7 +533,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 {/* Calendar Days */}
                 <div className="grid grid-cols-7">
                     {Array.from({ length: startingDayOfWeek }).map((_, idx) => (
-                        <div key={`empty-${idx}`} className="min-h-[100px] border-r border-b border-slate-800 bg-slate-900/30" />
+                        <div key={`empty-${idx}`} className="min-h-[100px] border-r border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/30" />
                     ))}
 
                     {Array.from({ length: daysInMonth }).map((_, idx) => {
@@ -545,13 +545,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         return (
                             <div
                                 key={day}
-                                className="min-h-[100px] border-r border-b border-slate-800 p-2 hover:bg-slate-800/30 cursor-pointer transition-colors"
+                                className="min-h-[100px] border-r border-b border-[var(--ws-border)] p-2 hover:bg-[var(--ws-surface-secondary)]/30 cursor-pointer transition-colors"
                                 onClick={() => {
                                     setSelectedDate(date);
                                     setShowAddModal(true);
                                 }}
                             >
-                                <div className={`type-ui font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-slate-300'
+                                <div className={`type-ui font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-[var(--ws-text-secondary)]'
                                     }`}>
                                     {day}
                                 </div>
@@ -572,7 +572,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                         );
                                     })}
                                     {dayEvents.length > 3 && (
-                                        <div className="type-caption text-slate-500 pl-1">
+                                        <div className="type-caption text-[var(--ws-text-muted)] pl-1">
                                             +{dayEvents.length - 3} more
                                         </div>
                                     )}
@@ -656,8 +656,8 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
     if (upcoming.length === 0) return null;
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-            <h3 className="type-ui font-semibold text-slate-300 mb-3 flex items-center gap-2">
+        <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-4">
+            <h3 className="type-ui font-semibold text-[var(--ws-text-secondary)] mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Upcoming
             </h3>
@@ -669,12 +669,12 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
                         <button
                             key={event.id}
                             onClick={() => onSelectEvent(event)}
-                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/50 transition-colors text-left"
+                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--ws-surface-secondary)]/50 transition-colors text-left"
                         >
                             <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                             <div className="flex-1 min-w-0">
-                                <p className="type-card-description text-slate-200 truncate">{event.title}</p>
-                                <p className="type-card-description text-slate-500">
+                                <p className="type-card-description text-[var(--ws-text-secondary)] truncate">{event.title}</p>
+                                <p className="type-card-description text-[var(--ws-text-muted)]">
                                     {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     {event.startTime && ` · ${new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                 </p>
@@ -704,7 +704,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div
-                className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl"
+                className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-md w-full shadow-2xl"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-start justify-between mb-4">
@@ -738,22 +738,22 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                             }
                         />
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors shrink-0">
-                        <X className="w-5 h-5 text-slate-400" />
+                    <button onClick={onClose} className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded-lg transition-colors shrink-0">
+                        <X className="w-5 h-5 text-[var(--ws-text-muted)]" />
                     </button>
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex items-center gap-3 type-ui text-slate-300">
-                        <CalendarIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                        <CalendarIcon className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                         <span>
                             {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                         </span>
                     </div>
 
                     {event.startTime && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <Clock className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <Clock className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span>
                                 {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 {event.endTime && ` – ${new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
@@ -762,22 +762,22 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     )}
 
                     {event.clientName && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <UserIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <UserIcon className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span>{event.clientName}</span>
                         </div>
                     )}
 
                     {event.clientEmail && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <Mail className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <Mail className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span>{event.clientEmail}</span>
                         </div>
                     )}
 
                     {event.value && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <TrendingUp className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <TrendingUp className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span>
                                 {event.currency || 'USD'} {event.value.toLocaleString()} deal value
                             </span>
@@ -785,21 +785,21 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                     )}
 
                     {event.priority && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <CheckSquare className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <CheckSquare className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span className="capitalize">Priority: {event.priority}</span>
                         </div>
                     )}
 
                     {event.status && (
-                        <div className="flex items-center gap-3 type-ui text-slate-300">
-                            <Briefcase className="w-4 h-4 text-slate-500 shrink-0" />
+                        <div className="flex items-center gap-3 type-ui text-[var(--ws-text-secondary)]">
+                            <Briefcase className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
                             <span className="capitalize">Status: {event.status.replace(/_/g, ' ')}</span>
                         </div>
                     )}
 
                     {event.description && (
-                        <div className="mt-3 p-3 bg-slate-800/50 rounded-lg type-ui text-slate-400">
+                        <div className="mt-3 p-3 bg-[var(--ws-surface-secondary)]/50 rounded-lg type-ui text-[var(--ws-text-muted)]">
                             {event.description}
                         </div>
                     )}
@@ -809,7 +809,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'task' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/tasks')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Task Details
                             </button>
@@ -817,7 +817,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'project' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/business/projects')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Project Details
                             </button>
@@ -825,7 +825,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                         {event.source === 'deal' && (
                             <button
                                 onClick={() => (window.location.href = '/dashboard/leads')}
-                                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
+                                className="w-full py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                             >
                                 View Deal Details
                             </button>
@@ -834,7 +834,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => onEdit(event)}
-                                    className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 type-ui font-medium rounded-lg transition-colors border border-slate-700"
+                                    className="flex-1 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-ui font-medium rounded-lg transition-colors border border-[var(--ws-border)]"
                                 >
                                     Edit Event
                                 </button>
@@ -843,7 +843,7 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                                         const eventId = event.id.replace('event-', '');
                                         onDelete(eventId);
                                     }}
-                                    className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 type-ui font-medium rounded-lg transition-colors border border-red-500/20"
+                                    className="flex-1 py-2 bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 text-red-400 type-ui font-medium rounded-lg transition-colors border border-red-500/20"
                                 >
                                     Delete Event
                                 </button>
@@ -880,14 +880,14 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                 if (!isToday && dayEvents.length === 0) return null;
 
                 return (
-                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
+                    <div key={day} className={`bg-[var(--ws-panel)]/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
                         <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-[var(--brand-blue-500)]/5' : ''}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border-[var(--ws-border)]'}`}>
                                     <span className="text-lg font-black leading-none">{day}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="type-caption font-bold text-slate-400 uppercase tracking-widest">
+                                    <span className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
                                     {isToday && <span className="type-caption font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
@@ -895,9 +895,9 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                             </div>
                             <button
                                 onClick={() => onSelectDate(date)}
-                                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors border border-slate-700/50"
+                                className="p-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors border border-[var(--ws-border)]/50"
                             >
-                                <Plus className="w-4 h-4 text-slate-300" />
+                                <Plus className="w-4 h-4 text-[var(--ws-text-secondary)]" />
                             </button>
                         </div>
 
@@ -909,16 +909,16 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                         <button
                                             key={event.id}
                                             onClick={() => onSelectEvent(event)}
-                                            className="w-full bg-slate-950/50 border border-white/5 p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-slate-800/50 transition-colors"
+                                            className="w-full bg-[var(--ws-canvas)]/50 border border-white/5 p-3 rounded-lg flex items-center justify-between ml-14 text-left hover:bg-[var(--ws-surface-secondary)]/50 transition-colors"
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="type-ui font-bold text-white mb-1 truncate">{event.title}</h4>
-                                                <div className="flex items-center gap-2 type-caption text-slate-500">
+                                                <div className="flex items-center gap-2 type-caption text-[var(--ws-text-muted)]">
                                                     <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
                                                     <span className="uppercase tracking-wide type-caption">{cfg.label}</span>
                                                     {event.startTime && (
                                                         <>
-                                                            <div className="w-px h-3 bg-slate-700" />
+                                                            <div className="w-px h-3 bg-[var(--ws-surface-tertiary)]" />
                                                             <span>{new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         </>
                                                     )}
@@ -973,10 +973,10 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full">
+            <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-6 max-w-md w-full">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold">Add Event</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
+                    <button onClick={onClose} className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -989,7 +989,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -999,7 +999,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -1010,7 +1010,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.startTime}
                             onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -1021,7 +1021,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.endTime}
                             onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -1030,7 +1030,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         <select
                             value={formData.eventType}
                             onChange={e => setFormData({ ...formData, eventType: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         >
                             <option value="meeting">Meeting</option>
                             <option value="deadline">Deadline</option>
@@ -1043,7 +1043,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors"
                         >
                             Cancel
                         </button>

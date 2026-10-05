@@ -59,8 +59,8 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-700 px-5 py-4">
+      <div className="w-full max-w-lg rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[var(--ws-border)] px-5 py-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-teal-400" />
             <h2 className="text-lg font-bold text-white">Group Chat</h2>
@@ -68,14 +68,14 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white min-h-11 min-w-11"
+            className="rounded-lg p-2 text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-secondary)] hover:text-white min-h-11 min-w-11"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex border-b border-slate-700">
+        <div className="flex border-b border-[var(--ws-border)]">
           <button
             type="button"
             onClick={() => setActiveTab('create')}
@@ -83,7 +83,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
               'flex-1 px-4 py-3 type-ui font-medium transition-colors min-h-11',
               activeTab === 'create'
                 ? 'border-b-2 border-teal-500 text-teal-400'
-                : 'text-slate-400 hover:text-white'
+                : 'text-[var(--ws-text-muted)] hover:text-white'
             )}
           >
             Create Group
@@ -95,7 +95,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
               'flex-1 px-4 py-3 type-ui font-medium transition-colors min-h-11',
               activeTab === 'manage'
                 ? 'border-b-2 border-teal-500 text-teal-400'
-                : 'text-slate-400 hover:text-white'
+                : 'text-[var(--ws-text-muted)] hover:text-white'
             )}
           >
             Manage
@@ -106,7 +106,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
           {activeTab === 'create' ? (
             <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-slate-400">
+                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Group Name
                 </label>
                 <input
@@ -114,12 +114,12 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                   value={groupName}
                   onChange={e => setGroupName(e.target.value)}
                   placeholder="e.g. Design Team"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2.5 type-ui text-white placeholder:text-slate-500 focus:border-teal-500 focus:outline-none min-h-11"
+                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none min-h-11"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-slate-400">
+                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Description
                 </label>
                 <textarea
@@ -127,12 +127,12 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                   onChange={e => setGroupDescription(e.target.value)}
                   placeholder="Optional description"
                   rows={2}
-                  className="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-3 py-2.5 type-ui text-white placeholder:text-slate-500 focus:border-teal-500 focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-2.5 type-ui text-white placeholder:text-[var(--ws-text-muted)] focus:border-teal-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-slate-400">
+                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Privacy
                 </label>
                 <div className="flex gap-2">
@@ -143,7 +143,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                       'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 type-ui transition-colors min-h-11',
                       groupType === 'public'
                         ? 'border-teal-500/50 bg-teal-500/10 text-teal-400'
-                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:border-slate-600'
+                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/40 text-[var(--ws-text-muted)] hover:border-slate-600'
                     )}
                   >
                     <Globe className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                       'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 type-ui transition-colors min-h-11',
                       groupType === 'private'
                         ? 'border-teal-500/50 bg-teal-500/10 text-teal-400'
-                        : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:border-slate-600'
+                        : 'border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/40 text-[var(--ws-text-muted)] hover:border-slate-600'
                     )}
                   >
                     <Lock className="h-4 w-4" />
@@ -166,12 +166,12 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
               </div>
 
               <div>
-                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-slate-400">
+                <label className="mb-1.5 block type-caption font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">
                   Members ({selectedMembers.length})
                 </label>
-                <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-slate-700 bg-slate-800/30 p-2">
+                <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/30 p-2">
                   {teamMembers.length === 0 ? (
-                    <p className="py-4 text-center type-card-description text-slate-500">No team members available</p>
+                    <p className="py-4 text-center type-card-description text-[var(--ws-text-muted)]">No team members available</p>
                   ) : (
                     teamMembers.map(member => {
                       const selected = selectedMembers.includes(member.id);
@@ -184,13 +184,13 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
                             'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors min-h-11',
                             selected
                               ? 'bg-teal-500/10 text-white'
-                              : 'hover:bg-slate-700/50 text-slate-300'
+                              : 'hover:bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-secondary)]'
                           )}
                         >
                           <Avatar src={member.avatar_url} name={member.name} email={member.email} size={32} />
                           <div className="min-w-0 flex-1">
                             <p className="truncate type-card-description font-medium">{member.name}</p>
-                            <p className="truncate type-card-description text-slate-500">{member.role || member.email}</p>
+                            <p className="truncate type-card-description text-[var(--ws-text-muted)]">{member.role || member.email}</p>
                           </div>
                           <div
                             className={cn(
@@ -226,7 +226,7 @@ export default function GroupChatManager({ teamMembers, onClose, onGroupCreated 
               </button>
             </div>
           ) : (
-            <div className="py-8 text-center type-ui text-slate-500">
+            <div className="py-8 text-center type-ui text-[var(--ws-text-muted)]">
               <Users className="mx-auto mb-3 h-10 w-10 text-slate-600" />
               <p>Group management coming soon.</p>
               <p className="mt-1 type-card-description">Create a group to get started.</p>

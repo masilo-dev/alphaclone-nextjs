@@ -56,19 +56,19 @@ function VideoTileView({
 
     return (
         <div
-            className={`relative min-h-[120px] overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-none ${
+            className={`relative min-h-[120px] overflow-hidden bg-[var(--ws-panel)] ring-1 ring-white/5 shadow-none ${
                 isScreenShare ? 'h-full rounded-lg' : 'rounded-lg'
             }`}
         >
             <video
                 ref={ref}
-                className={`w-full h-full bg-slate-950 ${isScreenShare ? 'object-contain' : 'object-cover aspect-video'}`}
+                className={`w-full h-full bg-[var(--ws-canvas)] ${isScreenShare ? 'object-contain' : 'object-cover aspect-video'}`}
                 playsInline
                 autoPlay
                 muted={!isScreenShare}
             />
             <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 backdrop-blur-md">
-                {isScreenShare && <Monitor className="w-3.5 h-3.5 text-emerald-300" />}
+                {isScreenShare && <Monitor className="w-3.5 h-3.5 text-[var(--success-text,var(--success-500))]" />}
                 <span className="type-caption font-semibold text-white">{label}</span>
             </div>
         </div>
@@ -340,11 +340,11 @@ export default function LiveKitStage({
     const primaryScreen = screenTiles[0];
 
     return (
-        <div className="fixed inset-0 bg-slate-950 ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-[var(--ws-canvas)] ac-layer-overlay text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-16 sm:h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-4 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">
-                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--ws-panel)]/60 px-3 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[var(--error-500)] shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
                         <span className="type-caption sm:text-xs font-black uppercase tracking-caps text-white/90">
                             {formatElapsed(secondsElapsed)}
                         </span>
@@ -352,11 +352,11 @@ export default function LiveKitStage({
                 </div>
                 <div className="flex items-center gap-2 pointer-events-auto">
                     <div className="hidden sm:flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 backdrop-blur-md">
-                        <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                        <ShieldCheck className="w-4 h-4 text-[var(--success-text,var(--success-500))]" />
                         <span className="type-caption font-black uppercase text-emerald-100">Secure room</span>
                     </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-2.5 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
-                        <Wifi className="w-4 h-4 text-teal-300" />
+                    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--ws-panel)]/60 px-2.5 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
+                        <Wifi className="w-4 h-4 text-[var(--brand-blue-300)]" />
                         <span className="type-ui sm:text-xs font-semibold text-white/80 capitalize hidden sm:inline">
                             {connectionState} · {connectionQuality}
                         </span>
@@ -385,7 +385,7 @@ export default function LiveKitStage({
                         )}
                     </div>
                 ) : cameraTiles.length === 0 ? (
-                    <div className="flex h-full min-h-[200px] items-center justify-center bg-slate-950" aria-hidden />
+                    <div className="flex h-full min-h-[200px] items-center justify-center bg-[var(--ws-canvas)]" aria-hidden />
                 ) : (
                     <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
                         {cameraTiles.map((t) => (
@@ -397,7 +397,7 @@ export default function LiveKitStage({
 
             {showConnectionLayer ? (
                 <div
-                    className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-sm"
+                    className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-[var(--ws-canvas)]/95 backdrop-blur-sm"
                     role="status"
                     aria-live="polite"
                 >
@@ -408,14 +408,14 @@ export default function LiveKitStage({
                             <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
                         </div>
                         <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting…</h2>
-                        <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
+                        <p className="text-[var(--ws-text-muted)] font-medium">Securing your encrypted channel</p>
                     </div>
                 </div>
             ) : null}
 
             <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pointer-events-none">
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
-                <div className={`relative mx-auto flex max-w-2xl items-center justify-center gap-3 border border-white/5 bg-slate-950/40 p-3 ring-1 ring-white/10 pointer-events-auto sm:gap-5 sm:p-4 ${WORKSPACE.panel.radius} backdrop-blur-2xl`}>
+                <div className={`relative mx-auto flex max-w-2xl items-center justify-center gap-3 border border-white/5 bg-[var(--ws-canvas)]/40 p-3 ring-1 ring-white/10 pointer-events-auto sm:gap-5 sm:p-4 ${WORKSPACE.panel.radius} backdrop-blur-2xl`}>
                     <ControlBtn
                         onClick={() => void toggleMic()}
                         active={!micEnabled}
@@ -476,17 +476,17 @@ function ControlBtn({
             <span
                 className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-colors ${
                     danger
-                        ? 'bg-red-600 hover:bg-red-500 border-red-500/50 shadow-lg shadow-red-900/40 text-white'
+                        ? 'bg-red-600 hover:bg-[var(--error-500)] border-red-500/50 shadow-lg shadow-red-900/40 text-white'
                         : highlight
                           ? 'bg-teal-600 border-teal-400/50 text-white'
                           : active
-                            ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                            : 'bg-slate-800/80 border-white/10 text-slate-200 hover:bg-slate-700'
+                            ? 'bg-[var(--error-500)]/20 border-red-500/50 text-red-400'
+                            : 'bg-[var(--ws-surface-secondary)]/80 border-white/10 text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                 }`}
             >
                 <Icon className="w-5 h-5" />
             </span>
-            <span className="type-ui sm:text-xs font-medium text-slate-400">{label}</span>
+            <span className="type-ui sm:text-xs font-medium text-[var(--ws-text-muted)]">{label}</span>
         </button>
     );
 }

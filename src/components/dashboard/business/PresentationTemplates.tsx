@@ -38,7 +38,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Professional corporate presentation with modern design',
         category: 'Corporate',
         thumbnail: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=500&q=80',
-        colors: ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd'],
+        colors: ['var(--info-700)', 'var(--info-500)', 'var(--info-500)', 'var(--info-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 12,
         tags: ['corporate', 'professional', 'business'],
@@ -50,7 +50,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Cutting-edge technology presentation with dynamic elements',
         category: 'Technology',
         thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80',
-        colors: ['#7c3aed', '#a855f7', '#c084fc', '#ddd6fe'],
+        colors: ['var(--brand-violet-500)', 'var(--brand-violet-400)', 'var(--brand-violet-400)', 'var(--brand-violet-100)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 15,
         tags: ['technology', 'innovation', 'startup'],
@@ -62,7 +62,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Bold and creative design for creative agencies',
         category: 'Creative',
         thumbnail: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=500&q=80',
-        colors: ['#dc2626', '#ef4444', '#f87171', '#fca5a5'],
+        colors: ['var(--error-600)', 'var(--error-500)', 'var(--error-500)', 'var(--error-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 10,
         tags: ['creative', 'design', 'agency'],
@@ -74,7 +74,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Clean and minimal design for maximum impact',
         category: 'Minimal',
         thumbnail: '🤍',
-        colors: ['#1f2937', '#374151', '#6b7280', '#9ca3af'],
+        colors: ['var(--ws-panel)', 'var(--ws-surface-tertiary)', 'var(--ws-text-muted)', 'var(--ws-text-muted)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 8,
         tags: ['minimal', 'clean', 'modern'],
@@ -86,7 +86,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'Perfect for startup pitches and investor presentations',
         category: 'Startup',
         thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=500&q=80',
-        colors: ['#059669', '#10b981', '#34d399', '#6ee7b7'],
+        colors: ['var(--success-600)', 'var(--success-500)', 'var(--success-500)', 'var(--success-500)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 20,
         tags: ['startup', 'pitch', 'investor'],
@@ -98,7 +98,7 @@ const PRESENTATION_TEMPLATES: PresentationTemplate[] = [
         description: 'High-end luxury presentation for premium brands',
         category: 'Luxury',
         thumbnail: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=500&q=80',
-        colors: ['#1e293b', '#334155', '#475569', '#64748b'],
+        colors: ['var(--ws-panel)', 'var(--ws-surface-tertiary)', 'var(--ws-text-muted)', 'var(--ws-text-muted)'],
         fonts: ['Plus Jakarta Sans', 'Inter'],
         slideCount: 14,
         tags: ['luxury', 'premium', 'high-end'],
@@ -228,7 +228,7 @@ export default function PresentationTemplates() {
 
 
     const renderSlideContent = (slide: SlideContent, index: number) => {
-        const primaryColor = selectedTemplate?.colors[selectedColor] || '#1e40af';
+        const primaryColor = selectedTemplate?.colors[selectedColor] || 'var(--info-700)';
         const fontFamily = selectedTemplate?.fonts[selectedFont] || 'Inter';
 
         return (

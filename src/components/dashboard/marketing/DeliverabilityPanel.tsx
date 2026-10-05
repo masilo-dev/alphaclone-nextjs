@@ -68,7 +68,7 @@ export default function DeliverabilityPanel() {
   ];
 
   return (
-    <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-4">
+    <div className="bg-[var(--ws-panel)] border border-white/5 rounded-2xl p-4 space-y-4">
       <div className="flex items-center gap-2">
         <ShieldAlert className="w-5 h-5 text-teal-400" />
         <h3 className="type-ui font-bold text-white">Deliverability</h3>

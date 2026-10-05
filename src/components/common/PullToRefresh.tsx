@@ -98,11 +98,11 @@ export default function PullToRefresh({ onRefresh, children, className = '', ...
                     rotate: isRefreshing ? 360 : pullDistance * 2
                 }}
                 transition={isRefreshing ? { repeat: Infinity, duration: 1, ease: "linear" } : { type: 'spring', damping: 20 }}
-                className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-slate-800 border border-slate-700 p-2 rounded-full shadow-lg"
+                className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] p-2 rounded-full shadow-lg"
                 style={{ originX: 0.5 }}
             >
                 <RefreshCw
-                    className={`w-5 h-5 ${isRefreshing ? 'text-blue-400' : 'text-slate-400'}`}
+                    className={`w-5 h-5 ${isRefreshing ? 'text-blue-400' : 'text-[var(--ws-text-muted)]'}`}
                 />
             </motion.div>
 

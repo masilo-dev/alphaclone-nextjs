@@ -40,17 +40,17 @@ export default function HumanVerification({ onVerify, verified }: HumanVerificat
 
     return (
         <div className="w-full space-y-2">
-            <label className="type-caption text-slate-500 font-medium uppercase tracking-wider block text-center">
+            <label className="type-caption text-[var(--ws-text-muted)] font-medium uppercase tracking-wider block text-center">
                 Security Check
             </label>
             <div
                 ref={containerRef}
-                className={`relative h-14 rounded-xl flex items-center px-1.5 overflow-hidden transition-colors duration-500 ${isVerified ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-slate-800/80 border border-slate-700/80'
+                className={`relative h-14 rounded-xl flex items-center px-1.5 overflow-hidden transition-colors duration-500 ${isVerified ? 'bg-teal-500/10 border border-teal-500/30' : 'bg-[var(--ws-surface-secondary)]/80 border border-[var(--ws-border)]/80'
                     }`}
             >
                 <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isVerified ? 'opacity-0' : 'opacity-100'
                     }`}>
-                    <span className="type-caption font-semibold text-slate-400 tracking-widest uppercase truncate pl-12 pr-8">
+                    <span className="type-caption font-semibold text-[var(--ws-text-muted)] tracking-widest uppercase truncate pl-12 pr-8">
                         Slide key to unlock
                     </span>
                 </div>

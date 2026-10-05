@@ -120,7 +120,7 @@ export default function BonnieApprovalCard({
       p={3}
     >
       <HStack spacing={2} mb={2}>
-        <ShieldAlert size={16} color="#FBBF24" />
+        <ShieldAlert size={16} color="var(--warning-500)" />
         <Text fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wider" color="amber.300">
           Approval required
         </Text>

@@ -108,20 +108,20 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                 <div>
                     <div className="type-caption font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
                     <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Video rooms & booking links</h1>
-                    <p className="text-slate-400 type-card-description mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
+                    <p className="text-[var(--ws-text-muted)] type-card-description mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
                 </div>
                 <div className="flex gap-2">
                     {hasBooking && (
-                        <Button variant="outline" onClick={copyBookingLink} className="gap-2 border-slate-700 hover:bg-slate-800">
+                        <Button variant="outline" onClick={copyBookingLink} className="gap-2 border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]">
                             <Link className="w-4 h-4" />
                             Booking Link
                         </Button>
                     )}
-                    <Button onClick={() => setShowNativeBookingSettings(true)} variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                    <Button onClick={() => setShowNativeBookingSettings(true)} variant="outline" className="gap-2 border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]">
                         <Settings className="w-4 h-4" />
                         Native Booking
                     </Button>
-                    <Button onClick={() => setShowCalendlySettings(true)} variant="outline" className="gap-2 border-slate-700 hover:bg-slate-800">
+                    <Button onClick={() => setShowCalendlySettings(true)} variant="outline" className="gap-2 border-[var(--ws-border)] hover:bg-[var(--ws-surface-secondary)]">
                         <Calendar className="w-4 h-4" />
                         Calendly
                     </Button>
@@ -137,17 +137,17 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
 
             <div className="ac-workspace-panel rounded-lg p-6">
                 <div className="mb-4">
-                    <div className="type-caption font-black uppercase tracking-widest text-slate-400">Rooms</div>
+                    <div className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Rooms</div>
                     <h2 className="text-lg font-bold text-white mt-1">Active and upcoming meetings</h2>
                 </div>
                 {loading ? (
-                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-slate-800/40 rounded-xl animate-pulse" />)}</div>
+                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-[var(--ws-surface-secondary)]/40 rounded-xl animate-pulse" />)}</div>
                 ) : meetings.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10 text-center gap-3">
                         <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
                             <Video className="w-7 h-7 text-teal-400" />
                         </div>
-                        <p className="text-slate-400 max-w-md">No active meetings. Start an instant video room or share your booking link with clients.</p>
+                        <p className="text-[var(--ws-text-muted)] max-w-md">No active meetings. Start an instant video room or share your booking link with clients.</p>
                         <Button onClick={startInstantMeeting} disabled={starting} className="gap-2">
                             <Plus className="w-4 h-4" /> Start a meeting
                         </Button>
@@ -157,7 +157,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                         {meetings.map(m => (
                             <div key={m.id} className="flex items-center justify-between py-3 gap-3">
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-xl bg-[var(--ws-surface-secondary)] flex items-center justify-center flex-shrink-0">
                                         <Video className="w-5 h-5 text-teal-400" />
                                     </div>
                                     <div className="min-w-0">
@@ -165,7 +165,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                                             <p className="type-card-description font-semibold text-white truncate">{m.title || 'Untitled meeting'}</p>
                                             <MeetingProviderBadge meeting={m} />
                                         </div>
-                                        <p className="type-card-description text-slate-500 flex items-center gap-1 mt-0.5">
+                                        <p className="type-card-description text-[var(--ws-text-muted)] flex items-center gap-1 mt-0.5">
                                             <Clock className="w-3 h-3" />
                                             {new Date(m.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                                         </p>

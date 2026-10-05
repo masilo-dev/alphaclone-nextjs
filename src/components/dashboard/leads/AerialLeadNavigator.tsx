@@ -73,7 +73,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                         mapId: '4504f8b37365c3d0', // Use a Vector Map ID for 3D tilt
                         mapTypeId: mapType as google.maps.MapTypeId,
                         disableDefaultUI: true,
-                        backgroundColor: '#020617',
+                        backgroundColor: 'var(--brand-violet-950)',
                         gestureHandling: 'none' // Controlled by AI
                     });
                     setMap(googleMap);
@@ -186,7 +186,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
     }, [map, geocodedLeads, currentIndex]);
 
     return (
-        <div className="relative w-full h-full bg-slate-950 overflow-hidden font-sans">
+        <div className="relative w-full h-full bg-[var(--ws-canvas)] overflow-hidden font-sans">
             {/* Background Image - Worker/Office Theme */}
             <div className="absolute inset-0 bg-[url('/images/video/hero.png')] bg-cover bg-center grayscale-[0.5] brightness-[0.4]" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
@@ -199,7 +199,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-slate-900/90 backdrop-blur-2xl p-4 sm:p-6 rounded-2xl border border-teal-500/30 shadow-[0_0_50px_rgba(20,184,166,0.2)] text-center max-w-xs sm:max-w-sm"
+                            className="bg-[var(--ws-panel)]/90 backdrop-blur-2xl p-4 sm:p-6 rounded-2xl border border-teal-500/30 shadow-[0_0_50px_rgba(20,184,166,0.2)] text-center max-w-xs sm:max-w-sm"
                         >
                             <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4">
                                 <div className="absolute inset-0 border-2 sm:border-4 border-teal-500/20 rounded-full" />
@@ -224,7 +224,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                         className="h-full w-1/3 bg-gradient-to-r from-transparent via-teal-500 to-transparent"
                                     />
                                 </div>
-                                <div className="flex justify-between font-mono type-caption text-slate-500">
+                                <div className="flex justify-between font-mono type-caption text-[var(--ws-text-muted)]">
                                     <span>DATA LINK ESTABLISHED</span>
                                     <span>STREAM: ACTIVE</span>
                                 </div>
@@ -234,7 +234,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                 ) : (
                     <>
                         <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex flex-col gap-2 pointer-events-auto">
-                            <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-teal-500/30 flex items-center gap-2 max-w-fit">
+                            <div className="bg-[var(--ws-panel)]/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-teal-500/30 flex items-center gap-2 max-w-fit">
                                 <div className="w-2 h-2 sm:w-3 sm:h-3 bg-teal-500 rounded-full animate-pulse" />
                                 <span className="text-white font-mono type-caption sm:text-xs tracking-widest uppercase">Live Lead Feed</span>
                             </div>
@@ -246,7 +246,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
-                                        className="bg-slate-900/90 backdrop-blur-xl p-3 sm:p-4 rounded-xl border border-white/10 shadow-lg max-w-[200px] sm:max-w-xs"
+                                        className="bg-[var(--ws-panel)]/90 backdrop-blur-xl p-3 sm:p-4 rounded-xl border border-white/10 shadow-lg max-w-[200px] sm:max-w-xs"
                                     >
                                         <div className="flex items-start justify-between mb-2 sm:mb-3">
                                             <div className="min-w-0 pr-2">
@@ -262,7 +262,7 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <p className="text-slate-400 type-card-description leading-relaxed">
+                                            <p className="text-[var(--ws-text-muted)] type-card-description leading-relaxed">
                                                 {geocodedLeads[currentIndex].formatted_address}
                                             </p>
                                         </div>
@@ -275,8 +275,8 @@ export const AerialLeadNavigator: React.FC<AerialLeadNavigatorProps> = ({
                         <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 flex justify-end items-end">
                             <div className="flex items-center gap-2 sm:gap-4">
                                 {geocodedLeads.length > 0 && (
-                                    <div className="text-right bg-slate-900/80 backdrop-blur-md px-2 py-1.5 rounded-lg border border-white/5">
-                                        <div className="type-caption sm:text-xs text-slate-500 uppercase tracking-widest">Processed</div>
+                                    <div className="text-right bg-[var(--ws-panel)]/80 backdrop-blur-md px-2 py-1.5 rounded-lg border border-white/5">
+                                        <div className="type-caption sm:text-xs text-[var(--ws-text-muted)] uppercase tracking-widest">Processed</div>
                                         <div className="text-teal-400 font-mono type-ui sm:text-base font-bold leading-tight">
                                             {Math.round(((currentIndex + 1) / geocodedLeads.length) * 100 || 0)}%
                                         </div>

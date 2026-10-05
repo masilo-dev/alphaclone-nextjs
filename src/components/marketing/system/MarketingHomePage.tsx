@@ -63,14 +63,14 @@ const features = [
 ];
 
 const integrations = [
-  { name: 'LinkedIn', Icon: FaLinkedin, color: '#0a66c2' },
-  { name: 'Instagram', Icon: FaInstagram, color: '#d62976' },
-  { name: 'Facebook', Icon: FaFacebook, color: '#1877f2' },
-  { name: 'Outlook', Icon: FaMicrosoft, color: '#0078d4' },
-  { name: 'Zoho', Icon: SiZoho, color: '#e42527' },
-  { name: 'Brevo', Icon: SiBrevo, color: '#0b996e' },
-  { name: 'QuickBooks', Icon: SiQuickbooks, color: '#2ca01c' },
-  { name: 'Stripe', Icon: SiStripe, color: '#635bff' },
+  { name: 'LinkedIn', Icon: FaLinkedin, color: 'var(--logo-linkedin)' },
+  { name: 'Instagram', Icon: FaInstagram, color: 'var(--logo-instagram, var(--error-500))' },
+  { name: 'Facebook', Icon: FaFacebook, color: 'var(--logo-facebook)' },
+  { name: 'Outlook', Icon: FaMicrosoft, color: 'var(--logo-microsoft)' },
+  { name: 'Zoho', Icon: SiZoho, color: 'var(--logo-google-red)' },
+  { name: 'Brevo', Icon: SiBrevo, color: 'var(--success-600)' },
+  { name: 'QuickBooks', Icon: SiQuickbooks, color: 'var(--logo-quickbooks, var(--success-600))' },
+  { name: 'Stripe', Icon: SiStripe, color: 'var(--logo-stripe)' },
 ];
 
 const workflowSteps = [

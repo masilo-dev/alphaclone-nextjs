@@ -182,27 +182,27 @@ const ServicesPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white text-[#07152f]">
+        <div className="min-h-screen bg-white text-[var(--marketing-ink)]">
             {/* BLUF Summary — SSR rendered above the fold */}
             <div className="relative overflow-hidden">
                 <section className="relative flex flex-col items-center justify-center py-16 px-4">
                     <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn">
-                            <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] type-caption font-bold uppercase tracking-wider">
-                                <div className="w-2 h-2 rounded-full bg-[#0878f9]" />
+                            <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[var(--brand-blue-50)] border border-[var(--brand-blue-100)] text-[var(--marketing-link-hover)] type-caption font-bold uppercase tracking-wider">
+                                <div className="w-2 h-2 rounded-full bg-[var(--marketing-link)]" />
                                 <span>{t('The Bottom Line')}</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-marketing-heading tracking-tight text-[#07152f] mb-6 leading-tight">
+                            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-marketing-heading tracking-tight text-[var(--marketing-ink)] mb-6 leading-tight">
                                 {t('AI Business Execution')}{' '}
-                                <span className="text-[#0878f9]">
+                                <span className="text-[var(--marketing-link)]">
                                     {t('Layer.')}
                                 </span>
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
-                            <p className="text-lg sm:text-xl text-[#52627b] leading-relaxed max-w-3xl mx-auto">
+                            <p className="text-lg sm:text-xl text-[var(--marketing-muted)] leading-relaxed max-w-3xl mx-auto">
                                 {t(blufSummary)}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
@@ -214,12 +214,12 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Services — Full Detail */}
-                <section className="py-16 bg-white border-t border-[#dfe6ef]">
+                <section className="py-16 bg-white border-t border-[var(--marketing-border)]">
                     <div className="max-w-6xl mx-auto px-4">
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-16">
-                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">{t('Every Service, In Depth')}</h2>
-                                <p className="text-[#52627b] text-lg max-w-2xl mx-auto leading-relaxed">
+                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-4 tracking-tight">{t('Every Service, In Depth')}</h2>
+                                <p className="text-[var(--marketing-muted)] text-lg max-w-2xl mx-auto leading-relaxed">
                                     {t("Here's exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.")}
                                 </p>
                             </div>
@@ -230,37 +230,37 @@ const ServicesPage: React.FC = () => {
                                 <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={0.05}>
                                     <div
                                         id={service.title.toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}
-                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-[#dfe6ef]"
+                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-[var(--marketing-border)]"
                                     >
                                         {/* Left: Header + Description */}
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-11 h-11 rounded-xl border border-[#d0e4ff] bg-[#edf6ff] flex items-center justify-center flex-shrink-0">
-                                                    <service.icon className="w-5 h-5 text-[#0878f9]" />
+                                                <div className="w-11 h-11 rounded-xl border border-[var(--brand-blue-100)] bg-[var(--brand-blue-50)] flex items-center justify-center flex-shrink-0">
+                                                    <service.icon className="w-5 h-5 text-[var(--marketing-link)]" />
                                                 </div>
                                                 {service.badge && (
-                                                    <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] type-caption font-semibold">
+                                                    <span className="px-3 py-1 bg-[var(--brand-blue-50)] border border-[var(--brand-blue-100)] rounded-full text-[var(--marketing-link-hover)] type-caption font-semibold">
                                                         {t(service.badge)}
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="text-2xl font-bold font-marketing-heading text-[#07152f] mb-1 tracking-tight">{t(service.title)}</h3>
-                                            <p className="text-[#0878f9] type-card-description font-semibold mb-3">{t(service.subtitle)}</p>
-                                            <p className="text-[#33445e] leading-relaxed mb-3">{t(service.description)}</p>
-                                            <p className="text-[#52627b] leading-relaxed type-card-description">{t(service.extendedDescription)}</p>
-                                            <div className="mt-6 p-4 bg-[#edf6ff] border border-[#d0e4ff] rounded-xl">
+                                            <h3 className="text-2xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-1 tracking-tight">{t(service.title)}</h3>
+                                            <p className="text-[var(--marketing-link)] type-card-description font-semibold mb-3">{t(service.subtitle)}</p>
+                                            <p className="text-[var(--marketing-text-secondary)] leading-relaxed mb-3">{t(service.description)}</p>
+                                            <p className="text-[var(--marketing-muted)] leading-relaxed type-card-description">{t(service.extendedDescription)}</p>
+                                            <div className="mt-6 p-4 bg-[var(--brand-blue-50)] border border-[var(--brand-blue-100)] rounded-xl">
                                                 <div className="flex items-center gap-2">
-                                                    <TrendingUp className="w-4 h-4 text-[#0878f9] flex-shrink-0" />
-                                                    <span className="text-[#075fc7] type-ui font-semibold">{t(service.impact)}</span>
+                                                    <TrendingUp className="w-4 h-4 text-[var(--marketing-link)] flex-shrink-0" />
+                                                    <span className="text-[var(--marketing-link-hover)] type-ui font-semibold">{t(service.impact)}</span>
                                                 </div>
                                             </div>
                                         </div>
                                         {/* Right: Features */}
                                         <div>
-                                            <h4 className="type-caption font-bold text-[#76849a] uppercase tracking-wider mb-4">{t('Capabilities')}</h4>
+                                            <h4 className="type-caption font-bold text-[var(--marketing-muted-strong)] uppercase tracking-wider mb-4">{t('Capabilities')}</h4>
                                             <div className="space-y-3">
                                                 {service.features.map((f, fi) => (
-                                                    <p key={fi} className="text-[#33445e] type-card-description leading-relaxed border-l-2 border-[#d0e4ff] pl-3">
+                                                    <p key={fi} className="text-[var(--marketing-text-secondary)] type-card-description leading-relaxed border-l-2 border-[var(--brand-blue-100)] pl-3">
                                                         {t(f)}
                                                     </p>
                                                 ))}
@@ -278,14 +278,14 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Why Not Technical Users Love AlphaClone */}
-                <section className="py-16 bg-[#f7f9fc] border-y border-[#dfe6ef]">
+                <section className="py-16 bg-[var(--marketing-bg-secondary)] border-y border-[var(--marketing-border)]">
                     <div className="max-w-6xl mx-auto px-4">
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">
+                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-4 tracking-tight">
                                     {t('“I’m Not Technical” — That’s Exactly Who This Is For')}
                                 </h2>
-                                <p className="text-[#52627b] text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+                                <p className="text-[var(--marketing-muted)] text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
                                     {t('AlphaClone was built for business owners who want operational software without hiring an internal tools team. The core workflows use familiar records, approvals, and clear next actions.')}
                                 </p>
                             </div>
@@ -324,10 +324,10 @@ const ServicesPage: React.FC = () => {
                                 },
                             ].map((item, i) => (
                                 <AnimateIn key={i} type="stagger" index={i}>
-                                    <div className="p-6 rounded-2xl bg-white border border-[#dfe6ef] shadow-sm h-full">
-                                        <item.icon className="w-8 h-8 text-[#0878f9] mb-4" />
-                                        <h3 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{t(item.title)}</h3>
-                                        <p className="text-[#52627b] type-card-description leading-relaxed">{t(item.desc)}</p>
+                                    <div className="p-6 rounded-2xl bg-white border border-[var(--marketing-border)] shadow-sm h-full">
+                                        <item.icon className="w-8 h-8 text-[var(--marketing-link)] mb-4" />
+                                        <h3 className="text-lg font-bold font-marketing-heading text-[var(--marketing-ink)] mb-2">{t(item.title)}</h3>
+                                        <p className="text-[var(--marketing-muted)] type-card-description leading-relaxed">{t(item.desc)}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -339,18 +339,18 @@ const ServicesPage: React.FC = () => {
                 <section className="py-20 bg-white">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
-                            <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading mb-4 text-[#07152f] tracking-tight">
+                            <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading mb-4 text-[var(--marketing-ink)] tracking-tight">
                                 {t('Ready to Run Your Entire Business')} <br />
-                                {t('from')} <span className="text-[#0878f9]">{t('One Workspace?')}</span>
+                                {t('from')} <span className="text-[var(--marketing-link)]">{t('One Workspace?')}</span>
                             </h2>
-                            <p className="text-[#52627b] text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
+                            <p className="text-[var(--marketing-muted)] text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
                                 {t('Choose the plan that fits your execution needs, or book a demo to see the workflow before you begin.')}
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
                                 <PrimaryCTA className="w-full sm:w-auto">{t('Get started')}</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">{t('Book a Live Demo')}</SecondaryCTA>
                             </div>
-                            <p className="mt-6 text-[#76849a] type-caption font-bold uppercase tracking-wider">
+                            <p className="mt-6 text-[var(--marketing-muted-strong)] type-caption font-bold uppercase tracking-wider">
                                 {t(MARKETING_PRICING.startingPriceLine)} · <a href="/pricing" className="underline underline-offset-2">{t('See pricing for current details')}</a>
                             </p>
                         </AnimateIn>

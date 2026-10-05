@@ -287,18 +287,18 @@ export function SendGridIntegration() {
   };
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+    <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-            status.isConnected ? 'bg-green-500/20 border-green-500/30' : 'bg-slate-800 border-slate-700'
+            status.isConnected ? 'bg-green-500/20 border-green-500/30' : 'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]'
           } border`}>
-            <Send className={`w-6 h-6 ${status.isConnected ? 'text-green-400' : 'text-slate-400'}`} />
+            <Send className={`w-6 h-6 ${status.isConnected ? 'text-green-400' : 'text-[var(--ws-text-muted)]'}`} />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">SendGrid Integration</h3>
-            <p className="type-card-description text-slate-400">
+            <p className="type-card-description text-[var(--ws-text-muted)]">
               {status.isConnected ? `Connected • From: ${status.fromEmail}` : 'Connect your SendGrid account'}
             </p>
           </div>
@@ -334,19 +334,19 @@ export function SendGridIntegration() {
           <div className="flex items-center gap-2 type-ui">
             <CheckCircle className="w-4 h-4 text-green-400" />
             <span className="text-green-400">Connected</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-slate-400">From: {status.fromName} &lt;{status.fromEmail}&gt;</span>
+            <span className="text-[var(--ws-text-muted)]">•</span>
+            <span className="text-[var(--ws-text-muted)]">From: {status.fromName} &lt;{status.fromEmail}&gt;</span>
             {status.lastSync && (
               <>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-400">Last sync: {new Date(status.lastSync).toLocaleDateString()}</span>
+                <span className="text-[var(--ws-text-muted)]">•</span>
+                <span className="text-[var(--ws-text-muted)]">Last sync: {new Date(status.lastSync).toLocaleDateString()}</span>
               </>
             )}
           </div>
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-white mb-2">Send Test Email</h4>
               <div className="space-y-2">
                 <input
@@ -354,20 +354,20 @@ export function SendGridIntegration() {
                   placeholder="Recipient email"
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <input
                   type="text"
                   placeholder="Subject"
                   value={testSubject}
                   onChange={(e) => setTestSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500"
                 />
                 <textarea
                   placeholder="Message"
                   value={testMessage}
                   onChange={(e) => setTestMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg type-ui text-white placeholder-slate-500 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg type-ui text-white placeholder-slate-500 resize-none"
                   rows={2}
                 />
                 <Button
@@ -382,7 +382,7 @@ export function SendGridIntegration() {
               </div>
             </div>
 
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-lg p-3">
               <h4 className="type-ui font-medium text-white mb-2">Email Templates</h4>
               <div className="space-y-2 max-h-24 overflow-y-auto">
                 {templates.length > 0 ? (
@@ -390,13 +390,13 @@ export function SendGridIntegration() {
                     <div key={template.id} className="flex items-center justify-between type-caption">
                       <div className="flex items-center gap-2">
                         <Send className="w-3 h-3 text-blue-400" />
-                        <span className="text-slate-400 truncate">{template.name}</span>
+                        <span className="text-[var(--ws-text-muted)] truncate">{template.name}</span>
                       </div>
-                      <span className="text-slate-500">{template.subject}</span>
+                      <span className="text-[var(--ws-text-muted)]">{template.subject}</span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-slate-500 type-card-description">No templates found</p>
+                  <p className="text-[var(--ws-text-muted)] type-card-description">No templates found</p>
                 )}
               </div>
             </div>
@@ -412,13 +412,13 @@ export function SendGridIntegration() {
           className="mt-4"
         >
           <div className={`p-4 rounded-lg border ${
-            clientError.type === 'error' ? 'bg-red-500/10 border-red-500/30' :
+            clientError.type === 'error' ? 'bg-[var(--error-500)]/10 border-red-500/30' :
             clientError.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30' :
             'bg-blue-500/10 border-blue-500/30'
           }`}>
             <div className="flex items-start gap-3">
               <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                clientError.type === 'error' ? 'bg-red-500/20' :
+                clientError.type === 'error' ? 'bg-[var(--error-500)]/20' :
                 clientError.type === 'warning' ? 'bg-yellow-500/20' :
                 'bg-blue-500/20'
               }`}>
@@ -432,8 +432,8 @@ export function SendGridIntegration() {
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-white mb-1">{clientError.title}</h4>
-                <p className="type-card-description text-slate-300 mb-2">{clientError.message}</p>
-                <p className="type-card-description text-slate-400">{clientError.suggestion}</p>
+                <p className="type-card-description text-[var(--ws-text-secondary)] mb-2">{clientError.message}</p>
+                <p className="type-card-description text-[var(--ws-text-muted)]">{clientError.suggestion}</p>
               </div>
             </div>
           </div>
@@ -454,7 +454,7 @@ export function SendGridIntegration() {
                   <h4 className="text-lg font-semibold text-white mb-4">Connect SendGrid</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block type-label font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                         API Key
                       </label>
                       <Input
@@ -466,7 +466,7 @@ export function SendGridIntegration() {
                       />
                     </div>
                     <div>
-                      <label className="block type-label font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                         From Email
                       </label>
                       <Input
@@ -478,7 +478,7 @@ export function SendGridIntegration() {
                       />
                     </div>
                     <div>
-                      <label className="block type-label font-medium text-slate-300 mb-2">
+                      <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                         From Name
                       </label>
                       <Input
@@ -518,7 +518,7 @@ export function SendGridIntegration() {
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     <span className="text-green-400">Connected to SendGrid</span>
                   </div>
-                  <div className="mt-4 space-y-2 type-ui text-slate-400">
+                  <div className="mt-4 space-y-2 type-ui text-[var(--ws-text-muted)]">
                     <p>From: {status.fromName} &lt;{status.fromEmail}&gt;</p>
                     <p>Templates: {templates.length} available</p>
                   </div>

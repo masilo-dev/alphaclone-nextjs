@@ -97,13 +97,13 @@ const ImprovementsPage: React.FC = () => {
     const getSeverityColor = (severity: string) => {
         switch (severity) {
             case 'high':
-                return 'bg-red-500/10 text-red-400 border-red-500/20';
+                return 'bg-[var(--error-500)]/10 text-red-400 border-red-500/20';
             case 'medium':
                 return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
             case 'low':
                 return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             default:
-                return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                return 'bg-slate-500/10 text-[var(--ws-text-muted)] border-slate-500/20';
         }
     };
 
@@ -133,7 +133,7 @@ const ImprovementsPage: React.FC = () => {
             case 'resolved':
                 return 'bg-green-500/10 text-green-400';
             default:
-                return 'bg-slate-500/10 text-slate-400';
+                return 'bg-slate-500/10 text-[var(--ws-text-muted)]';
         }
     };
 
@@ -142,7 +142,7 @@ const ImprovementsPage: React.FC = () => {
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-bold text-white mb-2">Platform Improvements</h1>
-                <p className="text-slate-400">
+                <p className="text-[var(--ws-text-muted)]">
                     Exit-intent feedback submissions from users
                 </p>
             </div>
@@ -170,7 +170,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.status || ''}
                             onChange={(e) => handleFilterChange('status', e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Statuses</option>
                             <option value="new">New</option>
@@ -185,7 +185,7 @@ const ImprovementsPage: React.FC = () => {
                         <select
                             value={filters.severity || ''}
                             onChange={(e) => handleFilterChange('severity', e.target.value)}
-                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                         >
                             <option value="">All Priorities</option>
                             <option value="high">High</option>
@@ -198,12 +198,12 @@ const ImprovementsPage: React.FC = () => {
 
             {/* Improvements List */}
             {loading ? (
-                <div className="text-center py-12 text-slate-400">Loading improvements...</div>
+                <div className="text-center py-12 text-[var(--ws-text-muted)]">Loading improvements...</div>
             ) : improvements.length === 0 ? (
                 <Card className="p-12 text-center">
                     <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-400 mb-2">No improvements found</h3>
-                    <p className="text-slate-500 type-card-description">
+                    <h3 className="text-lg font-semibold text-[var(--ws-text-muted)] mb-2">No improvements found</h3>
+                    <p className="text-[var(--ws-text-muted)] type-card-description">
                         {Object.keys(filters).length > 0
                             ? 'Try adjusting your filters'
                             : 'Exit-intent submissions will appear here'}
@@ -232,17 +232,17 @@ const ImprovementsPage: React.FC = () => {
                                         </span>
 
                                         {/* User type */}
-                                        <span className="text-slate-400">
+                                        <span className="text-[var(--ws-text-muted)]">
                                             {improvement.user_type}
                                         </span>
 
                                         {/* Date */}
-                                        <span className="text-slate-500">
+                                        <span className="text-[var(--ws-text-muted)]">
                                             {improvement.created_at.toLocaleDateString()}
                                         </span>
 
                                         {/* Page URL */}
-                                        <span className="text-slate-500 truncate max-w-xs">
+                                        <span className="text-[var(--ws-text-muted)] truncate max-w-xs">
                                             {new URL(improvement.page_url).pathname}
                                         </span>
                                     </div>
@@ -264,7 +264,7 @@ const ImprovementsPage: React.FC = () => {
             {/* Detail Modal */}
             {selectedImprovement && (
                 <Modal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)}>
-                    <div className="bg-slate-900 rounded-3xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-[var(--ws-panel)] rounded-3xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
@@ -273,14 +273,14 @@ const ImprovementsPage: React.FC = () => {
                                     <span className={`px-2 py-1 rounded-md border type-caption font-medium ${getSeverityColor(selectedImprovement.severity)}`}>
                                         {selectedImprovement.severity.toUpperCase()}
                                     </span>
-                                    <span className="text-slate-400 type-ui">
+                                    <span className="text-[var(--ws-text-muted)] type-ui">
                                         {selectedImprovement.created_at.toLocaleString()}
                                     </span>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setDetailModalOpen(false)}
-                                className="text-slate-400 hover:text-white transition-colors"
+                                className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -288,8 +288,8 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Message */}
                         <div className="mb-6">
-                            <h3 className="type-ui font-semibold text-slate-400 mb-2">Message</h3>
-                            <div className="bg-slate-800 rounded-lg p-4">
+                            <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-2">Message</h3>
+                            <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
                                 <p className="text-white whitespace-pre-wrap">{selectedImprovement.message}</p>
                             </div>
                         </div>
@@ -297,26 +297,26 @@ const ImprovementsPage: React.FC = () => {
                         {/* Metadata */}
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <h3 className="type-ui font-semibold text-slate-400 mb-1">User Type</h3>
+                                <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">User Type</h3>
                                 <p className="text-white capitalize">{selectedImprovement.user_type}</p>
                             </div>
                             <div>
-                                <h3 className="type-ui font-semibold text-slate-400 mb-1">Source</h3>
+                                <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">Source</h3>
                                 <p className="text-white">{selectedImprovement.source} / {selectedImprovement.channel}</p>
                             </div>
                             <div className="col-span-2">
-                                <h3 className="type-ui font-semibold text-slate-400 mb-1">Page URL</h3>
+                                <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1">Page URL</h3>
                                 <a
                                     href={selectedImprovement.page_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-teal-400 hover:text-teal-300 type-ui break-all"
+                                    className="text-teal-400 hover:text-[var(--brand-blue-300)] type-ui break-all"
                                 >
                                     {selectedImprovement.page_url}
                                 </a>
                                 {selectedImprovement.screenshot_url && (
                                     <>
-                                        <h3 className="type-ui font-semibold text-slate-400 mb-1 mt-4">Screenshot</h3>
+                                        <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-1 mt-4">Screenshot</h3>
                                         <a
                                             href={selectedImprovement.screenshot_url}
                                             target="_blank"
@@ -332,11 +332,11 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Status Update */}
                         <div className="mb-6">
-                            <h3 className="type-caption font-semibold text-slate-400 mb-2">Status</h3>
+                            <h3 className="type-caption font-semibold text-[var(--ws-text-muted)] mb-2">Status</h3>
                             <select
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Improvement['status'])}
-                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-2 text-white focus:outline-none focus:border-teal-500"
                             >
                                 <option value="new">New</option>
                                 <option value="reviewed">Reviewed</option>
@@ -347,12 +347,12 @@ const ImprovementsPage: React.FC = () => {
 
                         {/* Admin Notes */}
                         <div className="mb-6">
-                            <h3 className="type-ui font-semibold text-slate-400 mb-2">Admin Notes (Internal)</h3>
+                            <h3 className="type-ui font-semibold text-[var(--ws-text-muted)] mb-2">Admin Notes (Internal)</h3>
                             <textarea
                                 value={editNotes}
                                 onChange={(e) => setEditNotes(e.target.value)}
                                 placeholder="Add internal notes about this improvement..."
-                                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
                                 rows={4}
                             />
                         </div>
@@ -368,7 +368,7 @@ const ImprovementsPage: React.FC = () => {
                             </Button>
                             <Button
                                 onClick={handleSaveChanges}
-                                className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+                                className="flex-1 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 font-semibold"
                                 disabled={isSaving}
                             >
                                 {isSaving ? (

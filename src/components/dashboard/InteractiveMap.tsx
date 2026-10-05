@@ -14,7 +14,7 @@ const LOCATIONS = [
 
 const InteractiveMap = () => {
     return (
-        <div className="relative w-full aspect-[16/9] max-w-5xl mx-auto bg-slate-900/20 rounded-3xl border border-slate-800/50 overflow-hidden backdrop-blur-xl group">
+        <div className="relative w-full aspect-[16/9] max-w-5xl mx-auto bg-[var(--ws-panel)]/20 rounded-3xl border border-[var(--ws-border)]/50 overflow-hidden backdrop-blur-xl group">
             {/* Simple CSS World Map Placeholder */}
             <div className="absolute inset-0 opacity-20 pointer-events-none">
                 <svg viewBox="0 0 1000 500" className="w-full h-full fill-slate-700">
@@ -44,13 +44,13 @@ const InteractiveMap = () => {
                             className="absolute -inset-4 bg-teal-500/20 rounded-full blur-md"
                         />
                         {/* Point */}
-                        <div className="w-2.5 h-2.5 bg-teal-400 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.8)] border border-white/20" />
+                        <div className="w-2.5 h-2.5 bg-[var(--brand-blue-400)] rounded-full shadow-[0_0_10px_rgba(45,212,191,0.8)] border border-white/20" />
 
                         {/* Label (Visible on Hover of Group) */}
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             whileHover={{ opacity: 1, y: 0 }}
-                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-slate-950/80 border border-slate-800 rounded type-caption text-teal-400 font-bold backdrop-blur-md pointer-events-none"
+                            className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 bg-[var(--ws-canvas)]/80 border border-[var(--ws-border)] rounded type-caption text-teal-400 font-bold backdrop-blur-md pointer-events-none"
                         >
                             {loc.name}
                         </motion.div>
@@ -61,14 +61,14 @@ const InteractiveMap = () => {
             {/* Map Stats */}
             <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
                 <div className="space-y-1">
-                    <div className="type-caption text-slate-500 uppercase tracking-widest font-bold">Global Infrastructure</div>
+                    <div className="type-caption text-[var(--ws-text-muted)] uppercase tracking-widest font-bold">Global Infrastructure</div>
                     <div className="text-2xl font-bold text-white flex items-center gap-2">
-                        20+ <span className="text-slate-500 type-ui font-normal">Countries Served</span>
+                        20+ <span className="text-[var(--ws-text-muted)] type-ui font-normal">Countries Served</span>
                     </div>
                 </div>
                 <div className="flex -space-x-3">
                     {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={`w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800`} />
+                        <div key={i} className={`w-8 h-8 rounded-full border-2 border-slate-900 bg-[var(--ws-surface-secondary)]`} />
                     ))}
                     <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-teal-500/20 flex items-center justify-center type-caption font-bold text-teal-400">
                         +50

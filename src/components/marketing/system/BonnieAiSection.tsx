@@ -68,7 +68,7 @@ export default function BonnieAiSection() {
               An Extra Operator for Your Team.
             </span>
           </h2>
-          <p className="text-slate-300 type-card-description sm:text-base leading-relaxed">
+          <p className="text-[var(--ws-text-secondary)] type-card-description sm:text-base leading-relaxed">
             Most SaaS AI is a generic chat box floating in a browser tab with zero knowledge of your actual business.
             Bonnie AI connects directly to your workspace memory via <strong className="text-white">Model Context Protocol (MCP)</strong> to execute real work safely.
           </p>
@@ -76,39 +76,39 @@ export default function BonnieAiSection() {
 
         {/* AI Capabilities Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
+          <div className="p-6 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 shadow-xl backdrop-blur-md">
             <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 mb-4">
               <Database className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">1. Grounded in Your Data</h3>
-            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-[var(--ws-text-secondary)] leading-relaxed">
               Bonnie AI reads your workspace records—client timelines, contract terms, active tasks, and billing states—so answers are always specific to your business.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
+          <div className="p-6 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 shadow-xl backdrop-blur-md">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4">
               <Braces className="w-5 h-5" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">2. Powered by MCP</h3>
-            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-[var(--ws-text-secondary)] leading-relaxed">
               Using Model Context Protocol, Bonnie AI invokes built-in platform actions safely—drafting proposals, scheduling tasks, and preparing invoice runs.
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
+          <div className="p-6 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/80 shadow-xl backdrop-blur-md">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
               <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">3. Human-in-the-Loop</h3>
-            <p className="type-card-description sm:text-sm text-slate-300 leading-relaxed">
+            <p className="type-card-description sm:text-sm text-[var(--ws-text-secondary)] leading-relaxed">
               You remain in full control. Critical actions like sending contracts or charging client cards require your explicit review and approval before execution.
             </p>
           </div>
         </div>
 
         {/* Interactive Example Demo */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
               <span className="type-caption font-bold text-cyan-400 uppercase tracking-wider font-mono">Interactive Demonstration</span>
@@ -124,7 +124,7 @@ export default function BonnieAiSection() {
                   className={`px-3 py-1.5 rounded-lg type-caption font-semibold transition-all ${
                     activeExampleIndex === idx
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                      : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-white'
+                      : 'bg-[var(--ws-canvas)] text-[var(--ws-text-muted)] border border-[var(--ws-border)] hover:text-white'
                   }`}
                 >
                   Prompt 0{idx + 1}
@@ -134,7 +134,7 @@ export default function BonnieAiSection() {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3">
-            <p className="type-card-description text-slate-300">
+            <p className="type-card-description text-[var(--ws-text-secondary)]">
               Product walkthrough using sample workspace data. Sign in to run Bonnie against your real records.
             </p>
             <button
@@ -149,17 +149,17 @@ export default function BonnieAiSection() {
           </div>
 
           {/* Interactive Code/Prompt Console */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-5 font-mono space-y-4">
+          <div className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-5 font-mono space-y-4">
             {/* User Input Prompt */}
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 1 ? 'opacity-100' : 'opacity-45'}`}>
-              <div className="flex items-center justify-between type-caption text-slate-400">
+              <div className="flex items-center justify-between type-caption text-[var(--ws-text-muted)]">
                 <span className="flex items-center gap-1.5 text-teal-400">
                   <Terminal className="w-3.5 h-3.5" />
                   <span>PLAIN-ENGLISH USER INSTRUCTION:</span>
                 </span>
-                <span className="type-ui text-slate-500">OPERATOR PROMPT</span>
+                <span className="type-ui text-[var(--ws-text-muted)]">OPERATOR PROMPT</span>
               </div>
-              <p className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 type-card-description sm:text-sm text-slate-100 leading-relaxed font-sans">
+              <p className="p-3 rounded-lg bg-[var(--ws-panel)]/90 border border-[var(--ws-border)] type-card-description sm:text-sm text-[var(--ws-text-primary)] leading-relaxed font-sans">
                 "{activeEx.prompt}"
               </p>
             </div>
@@ -173,7 +173,7 @@ export default function BonnieAiSection() {
                 </span>
                 <span className="type-ui text-cyan-500">SECURE DISPATCH</span>
               </div>
-              <p className="p-2.5 rounded-lg bg-slate-900 border border-cyan-900/40 type-card-description sm:text-sm text-cyan-300 font-mono">
+              <p className="p-2.5 rounded-lg bg-[var(--ws-panel)] border border-cyan-900/40 type-card-description sm:text-sm text-cyan-300 font-mono">
                 → {activeEx.mcpToolCall}
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function BonnieAiSection() {
                 </span>
                 <span className="type-caption text-emerald-500">REAL-TIME UPDATED</span>
               </div>
-              <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 type-card-description sm:text-sm text-emerald-200 leading-relaxed font-sans">
+              <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 type-card-description sm:text-sm text-[var(--success-text,var(--success-500))] leading-relaxed font-sans">
                 ✓ {activeEx.workspaceResult}
               </p>
             </div>

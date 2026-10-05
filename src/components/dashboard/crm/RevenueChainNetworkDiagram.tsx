@@ -15,7 +15,7 @@ const TONE_STYLES: Record<RevenueChainNetworkNode['tone'], { ring: string; fill:
     ok: { ring: 'stroke-teal-400/70', fill: 'fill-teal-500/20', text: 'text-teal-200' },
     warn: { ring: 'stroke-amber-400/80', fill: 'fill-amber-500/25', text: 'text-amber-200' },
     urgent: { ring: 'stroke-rose-400/90', fill: 'fill-rose-500/30', text: 'text-rose-200' },
-    idle: { ring: 'stroke-slate-600/80', fill: 'fill-slate-800/60', text: 'text-slate-400' },
+    idle: { ring: 'stroke-slate-600/80', fill: 'fill-slate-800/60', text: 'text-[var(--ws-text-muted)]' },
 };
 
 export function RevenueChainNetworkDiagram({
@@ -156,11 +156,11 @@ export function RevenueChainNetworkDiagram({
             )}
 
             {activeNode ? (
-                <div className="rounded-xl border border-white/10 bg-slate-900/70 px-3 py-2.5">
+                <div className="rounded-xl border border-white/10 bg-[var(--ws-panel)]/70 px-3 py-2.5">
                     <div className="flex items-start justify-between gap-3">
                         <div>
                             <p className="type-card-description font-semibold text-white">{activeNode.label}</p>
-                            <p className="mt-0.5 type-card-description text-slate-500 tabular-nums">
+                            <p className="mt-0.5 type-card-description text-[var(--ws-text-muted)] tabular-nums">
                                 {activeNode.volume} in pipeline
                                 {activeNode.leakCount > 0 ? ` · ${activeNode.leakCount} issue${activeNode.leakCount === 1 ? '' : 's'}` : ''}
                             </p>
@@ -168,17 +168,17 @@ export function RevenueChainNetworkDiagram({
                         <button
                             type="button"
                             onClick={() => router.push(activeNode.href)}
-                            className="shrink-0 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 type-caption font-bold uppercase tracking-wide text-teal-300 hover:bg-teal-500/20"
+                            className="shrink-0 rounded-lg border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 type-caption font-bold uppercase tracking-wide text-[var(--brand-blue-300)] hover:bg-teal-500/20"
                         >
                             {activeNode.actionLabel || 'Open'} →
                         </button>
                     </div>
                     {activeNode.detail && (
-                        <p className="mt-2 type-card-description leading-relaxed text-slate-400">{activeNode.detail}</p>
+                        <p className="mt-2 type-card-description leading-relaxed text-[var(--ws-text-muted)]">{activeNode.detail}</p>
                     )}
                 </div>
             ) : (
-                <p className="text-center type-card-description text-slate-500">
+                <p className="text-center type-card-description text-[var(--ws-text-muted)]">
                     Click any node to jump to that step in your revenue chain.
                 </p>
             )}

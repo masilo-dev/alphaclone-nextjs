@@ -182,47 +182,47 @@ export default function EmailDiscoveryTool() {
           <Search className="w-8 h-8 text-blue-400" />
           Free Email Discovery
         </h1>
-        <p className="text-slate-400">
+        <p className="text-[var(--ws-text-muted)]">
           Find business emails using only public data sources - no APIs needed, completely free
         </p>
         <div className="flex items-center justify-center gap-2 type-ui">
           <span className="text-green-400 font-medium">100% Free</span>
-          <span className="text-slate-500">•</span>
-          <span className="text-slate-400">Open Source Methods</span>
-          <span className="text-slate-500">•</span>
-          <span className="text-slate-400">Transparent</span>
+          <span className="text-[var(--ws-text-muted)]">•</span>
+          <span className="text-[var(--ws-text-muted)]">Open Source Methods</span>
+          <span className="text-[var(--ws-text-muted)]">•</span>
+          <span className="text-[var(--ws-text-muted)]">Transparent</span>
         </div>
       </div>
 
       {/* Input Form */}
-      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
+      <div className="bg-[var(--ws-surface-secondary)]/50 border border-[var(--ws-border)] rounded-xl p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
-              Domain * <span className="text-slate-500">(e.g., example.com)</span>
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
+              Domain * <span className="text-[var(--ws-text-muted)]">(e.g., example.com)</span>
             </label>
             <div className="relative">
-              <Globe className="absolute left-3 top-3 w-5 h-5 text-slate-500" />
+              <Globe className="absolute left-3 top-3 w-5 h-5 text-[var(--ws-text-muted)]" />
               <input
                 type="text"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="company.com"
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
           
           <div>
-            <label className="block type-label font-medium text-slate-300 mb-2">
-              Company Name <span className="text-slate-500">(optional, helps GitHub search)</span>
+            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
+              Company Name <span className="text-[var(--ws-text-muted)]">(optional, helps GitHub search)</span>
             </label>
             <input
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Acme Corp"
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-2.5 bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -258,8 +258,8 @@ export default function EmailDiscoveryTool() {
               className={`p-4 rounded-lg border ${
                 source.status === 'loading' ? 'bg-blue-500/10 border-blue-500/30' :
                 source.status === 'success' ? 'bg-green-500/10 border-green-500/30' :
-                source.status === 'error' ? 'bg-red-500/10 border-red-500/30' :
-                'bg-slate-800 border-slate-700'
+                source.status === 'error' ? 'bg-[var(--error-500)]/10 border-red-500/30' :
+                'bg-[var(--ws-surface-secondary)] border-[var(--ws-border)]'
               }`}
             >
               <div className="flex items-center gap-2 mb-2">
@@ -270,12 +270,12 @@ export default function EmailDiscoveryTool() {
                   source.status === 'loading' ? 'text-blue-400' :
                   source.status === 'success' ? 'text-green-400' :
                   source.status === 'error' ? 'text-red-400' :
-                  'text-slate-400'
+                  'text-[var(--ws-text-muted)]'
                 }`}>
                   {source.name}
                 </span>
               </div>
-              <p className="type-card-description text-slate-500">{source.description}</p>
+              <p className="type-card-description text-[var(--ws-text-muted)]">{source.description}</p>
               {source.count > 0 && (
                 <p className="type-card-description text-green-400 mt-1">{source.count} found</p>
               )}
@@ -297,7 +297,7 @@ export default function EmailDiscoveryTool() {
             </h2>
             <button
               onClick={exportEmails}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg type-ui text-slate-300 hover:text-white hover:bg-slate-700"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-[var(--ws-text-secondary)] hover:text-white hover:bg-[var(--ws-surface-tertiary)]"
             >
               <Download className="w-4 h-4" />
               Export CSV
@@ -309,7 +309,7 @@ export default function EmailDiscoveryTool() {
               const sourceInfo = SOURCE_INFO[email.source] || {
                 icon: <Search className="w-4 h-4" />,
                 description: 'Unknown source',
-                color: 'text-slate-400'
+                color: 'text-[var(--ws-text-muted)]'
               };
 
               return (
@@ -318,7 +318,7 @@ export default function EmailDiscoveryTool() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors"
+                  className="bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg p-4 hover:border-slate-600 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -331,26 +331,26 @@ export default function EmailDiscoveryTool() {
                         </span>
                         <button
                           onClick={() => copyEmail(email.email)}
-                          className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
+                          className="p-1 hover:bg-[var(--ws-surface-tertiary)] rounded text-[var(--ws-text-muted)] hover:text-white"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 type-ui">
-                        <span className="text-slate-400">
-                          Source: <span className="text-slate-300 capitalize">{email.source.replace(/_/g, ' ')}</span>
+                        <span className="text-[var(--ws-text-muted)]">
+                          Source: <span className="text-[var(--ws-text-secondary)] capitalize">{email.source.replace(/_/g, ' ')}</span>
                         </span>
                         
                         {email.name && (
-                          <span className="text-slate-400">
-                            Name: <span className="text-slate-300">{email.name}</span>
+                          <span className="text-[var(--ws-text-muted)]">
+                            Name: <span className="text-[var(--ws-text-secondary)]">{email.name}</span>
                           </span>
                         )}
                         
                         {email.title && (
-                          <span className="text-slate-400">
-                            Title: <span className="text-slate-300">{email.title}</span>
+                          <span className="text-[var(--ws-text-muted)]">
+                            Title: <span className="text-[var(--ws-text-secondary)]">{email.title}</span>
                           </span>
                         )}
 
@@ -361,7 +361,7 @@ export default function EmailDiscoveryTool() {
                         )}
                       </div>
 
-                      <p className="type-card-description text-slate-500 mt-2">
+                      <p className="type-card-description text-[var(--ws-text-muted)] mt-2">
                         {sourceInfo.description}
                       </p>
                     </div>
@@ -369,8 +369,8 @@ export default function EmailDiscoveryTool() {
                     <div className="flex flex-col items-end gap-2 ml-4">
                       {/* Confidence Score */}
                       <div className="flex items-center gap-2">
-                        <span className="type-caption text-slate-500">Confidence</span>
-                        <div className="w-16 bg-slate-700 h-2 rounded-full overflow-hidden">
+                        <span className="type-caption text-[var(--ws-text-muted)]">Confidence</span>
+                        <div className="w-16 bg-[var(--ws-surface-tertiary)] h-2 rounded-full overflow-hidden">
                           <div 
                             className={`h-full ${getConfidenceColor(email.confidence)}`}
                             style={{ width: `${email.confidence}%` }}
@@ -393,7 +393,7 @@ export default function EmailDiscoveryTool() {
                           Verified
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 type-caption text-slate-400">
+                        <span className="flex items-center gap-1 type-caption text-[var(--ws-text-muted)]">
                           <AlertCircle className="w-3 h-3" />
                           Unverified
                         </span>
@@ -408,7 +408,7 @@ export default function EmailDiscoveryTool() {
       )}
 
       {/* Transparency Section */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+      <div className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-xl p-6">
         <button
           onClick={() => setShowTransparency(!showTransparency)}
           className="flex items-center justify-between w-full text-left"
@@ -417,7 +417,7 @@ export default function EmailDiscoveryTool() {
             <Info className="w-5 h-5 text-blue-400" />
             <span className="font-semibold text-white">How This Works (Transparency)</span>
           </div>
-          <span className="text-slate-400">{showTransparency ? '−' : '+'}</span>
+          <span className="text-[var(--ws-text-muted)]">{showTransparency ? '−' : '+'}</span>
         </button>
 
         <AnimatePresence>
@@ -426,16 +426,16 @@ export default function EmailDiscoveryTool() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="mt-4 space-y-4 type-ui text-slate-400"
+              className="mt-4 space-y-4 type-ui text-[var(--ws-text-muted)]"
             >
               <p>
-                This tool uses only <strong className="text-slate-300">public data sources</strong> and 
-                <strong className="text-slate-300"> open APIs</strong> that don't require authentication. 
+                This tool uses only <strong className="text-[var(--ws-text-secondary)]">public data sources</strong> and 
+                <strong className="text-[var(--ws-text-secondary)]"> open APIs</strong> that don't require authentication. 
                 Here's exactly what we check:
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-800 p-3 rounded-lg">
+                <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                   <h4 className="font-medium text-white flex items-center gap-2 mb-2">
                     <Server className="w-4 h-4 text-blue-400" />
                     DNS Records
@@ -446,7 +446,7 @@ export default function EmailDiscoveryTool() {
                   </p>
                 </div>
 
-                <div className="bg-slate-800 p-3 rounded-lg">
+                <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                   <h4 className="font-medium text-white flex items-center gap-2 mb-2">
                     <Shield className="w-4 h-4 text-purple-400" />
                     WHOIS/RDAP
@@ -457,7 +457,7 @@ export default function EmailDiscoveryTool() {
                   </p>
                 </div>
 
-                <div className="bg-slate-800 p-3 rounded-lg">
+                <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                   <h4 className="font-medium text-white flex items-center gap-2 mb-2">
                     <Github className="w-4 h-4 text-gray-400" />
                     GitHub Public API
@@ -468,7 +468,7 @@ export default function EmailDiscoveryTool() {
                   </p>
                 </div>
 
-                <div className="bg-slate-800 p-3 rounded-lg">
+                <div className="bg-[var(--ws-surface-secondary)] p-3 rounded-lg">
                   <h4 className="font-medium text-white flex items-center gap-2 mb-2">
                     <Globe className="w-4 h-4 text-green-400" />
                     Website Scraping
@@ -489,7 +489,7 @@ export default function EmailDiscoveryTool() {
               </div>
 
               <p className="type-card-description">
-                <strong className="text-slate-300">No APIs used:</strong> Hunter.io, Apollo, 
+                <strong className="text-[var(--ws-text-secondary)]">No APIs used:</strong> Hunter.io, Apollo, 
                 ZoomInfo, or any paid services. Everything is free, public data.
               </p>
             </motion.div>
@@ -498,7 +498,7 @@ export default function EmailDiscoveryTool() {
       </div>
 
       {/* Footer */}
-      <p className="text-center type-card-description text-slate-500">
+      <p className="text-center type-card-description text-[var(--ws-text-muted)]">
         By using this tool, you agree to only use discovered emails in compliance with 
         applicable laws (CAN-SPAM, GDPR, etc.) and the target website's Terms of Service.
       </p>

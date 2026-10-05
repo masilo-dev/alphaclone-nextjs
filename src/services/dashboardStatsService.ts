@@ -139,7 +139,7 @@ async function fetchActivityFeed(
   supabase: SupabaseClient,
   tenantId: string,
   entityTypes?: string[],
-  dot: string = '#0d9488', // Teal-400 equivalent
+  dot: string = 'var(--brand-blue-600)', // Teal-400 equivalent
 ) : Promise<DashboardFeedItem[]> {
   const rows = await safeRows<{
     action: string;

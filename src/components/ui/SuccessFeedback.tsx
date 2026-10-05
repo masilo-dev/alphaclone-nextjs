@@ -70,7 +70,7 @@ export function SuccessFeedbackProvider({ children }: { children: React.ReactNod
                 <p className="type-card-description text-[var(--ws-text-secondary)] mt-1">{toast.detail}</p>
               ) : null}
               {toast.impact ? (
-                <p className="type-card-description text-emerald-300/80 mt-1.5">{toast.impact}</p>
+                <p className="type-card-description text-[var(--success-text,var(--success-500))]/80 mt-1.5">{toast.impact}</p>
               ) : null}
             </div>
             <button

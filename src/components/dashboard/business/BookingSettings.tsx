@@ -88,24 +88,24 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
     }, []);
 
     return (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[var(--ws-canvas)]/90 backdrop-blur-sm flex items-center justify-center z-[100] p-0 sm:p-4 animate-in fade-in duration-300">
             <div
                 className="absolute inset-0 bg-transparent"
                 onClick={onClose}
             />
-            <Card className="relative bg-slate-900 border border-slate-700 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+            <Card className="relative bg-[var(--ws-panel)] border border-[var(--ws-border)] sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-700 bg-slate-900/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 sm:p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" />
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-bold">Booking Settings</h2>
-                            <p className="text-slate-400 type-card-description sm:text-sm">Configure your public booking page</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm">Configure your public booking page</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg -mr-2 sm:mr-0">
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--ws-surface-secondary)] rounded-lg -mr-2 sm:mr-0">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -139,10 +139,10 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                         {/* 1. Main Toggle & Link */}
                         <div className="space-y-6">
                             {/* Enable Toggle */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 bg-slate-800 rounded-2xl border border-slate-700">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 bg-[var(--ws-surface-secondary)] rounded-2xl border border-[var(--ws-border)]">
                                 <div>
                                     <h3 className="font-bold text-white type-ui">Public Booking Page</h3>
-                                    <p className="type-card-description text-slate-500">Allow clients to book you online.</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">Allow clients to book you online.</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
@@ -151,7 +151,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
                                         className="sr-only peer"
                                     />
-                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                                    <div className="w-11 h-6 bg-[var(--ws-surface-tertiary)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
                                 </label>
                             </div>
 
@@ -159,11 +159,11 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                     {/* Link Display & Copy */}
                                     <div className="space-y-2">
-                                        <label className="type-caption font-bold text-slate-500 uppercase tracking-wider px-1">Your Booking Link</label>
+                                        <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider px-1">Your Booking Link</label>
                                         <div className="flex flex-col md:flex-row gap-2">
-                                            <div className="flex-1 bg-slate-950 border border-slate-700 rounded-xl flex items-center px-4 py-3 gap-2 overflow-hidden">
-                                                <Globe className="w-4 h-4 text-slate-500 shrink-0" />
-                                                <span className="type-ui text-slate-500 truncate inline-block max-w-[120px] sm:max-w-none">alphaclonesystems.com/book/</span>
+                                            <div className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl flex items-center px-4 py-3 gap-2 overflow-hidden">
+                                                <Globe className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" />
+                                                <span className="type-ui text-[var(--ws-text-muted)] truncate inline-block max-w-[120px] sm:max-w-none">alphaclonesystems.com/book/</span>
                                                 <input
                                                     value={settings.slug}
                                                     onChange={(e) => setSettings({ ...settings, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
@@ -176,7 +176,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                     const url = `${window.location.origin}/book/${settings.slug}`;
                                                     navigator.clipboard.writeText(url);
                                                 }}
-                                                className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-colors"
+                                                className="p-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl border border-[var(--ws-border)] transition-colors"
                                                 title="Copy Link"
                                             >
                                                 <Copy className="w-5 h-5" />
@@ -197,12 +197,12 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 href={`${typeof window !== 'undefined' ? window.location.origin : ''}/book/${settings.slug}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="block type-ui text-teal-400 hover:text-teal-300 px-1 truncate"
+                                                className="block type-ui text-teal-400 hover:text-[var(--brand-blue-300)] px-1 truncate"
                                             >
                                                 {typeof window !== 'undefined' ? `${window.location.origin}/book/${settings.slug}` : `/book/${settings.slug}`}
                                             </a>
                                         )}
-                                        <p className="type-card-description text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] px-1">Tip: Keep your slug short and simple.</p>
                                     </div>
                                 </div>
                             )}
@@ -211,8 +211,8 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                         {/* 2. Availability */}
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="type-caption font-black text-slate-500 uppercase tracking-caps px-2 leading-none">Service Frequency</h3>
-                                <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
+                                <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps px-2 leading-none">Service Frequency</h3>
+                                <div className="h-[1px] flex-1 bg-[var(--ws-surface-secondary)] mx-4 opacity-50" />
                             </div>
                             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3">
                                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
@@ -223,14 +223,14 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         h-12 sm:h-auto aspect-square sm:aspect-auto sm:py-4 rounded-2xl type-caption font-black uppercase tracking-widest border transition-all active:scale-95
                                         ${settings.availability.days.includes(idx)
                                                 ? 'bg-white text-slate-950 border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]'
-                                                : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600'}
+                                                : 'bg-[var(--ws-panel)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-slate-600'}
                                     `}
                                     >
                                         {day}
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-slate-800 p-6 rounded-3xl border border-slate-700">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-[var(--ws-surface-secondary)] p-6 rounded-3xl border border-[var(--ws-border)]">
                                 <div className="flex-1 w-full space-y-2">
                                     <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Shift Start</label>
                                     <input
@@ -246,11 +246,11 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
                                     />
                                 </div>
                                 <div className="hidden sm:block pt-6">
-                                    <div className="w-8 h-[2px] bg-slate-800 rounded-full" />
+                                    <div className="w-8 h-[2px] bg-[var(--ws-surface-secondary)] rounded-full" />
                                 </div>
                                 <div className="flex-1 w-full space-y-2">
                                     <label className="type-caption font-black text-slate-600 uppercase tracking-widest px-2">Shift End</label>
@@ -267,16 +267,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 }
                                             }
                                         })}
-                                        className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
+                                        className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-6 py-4 text-base font-bold text-white focus:border-teal-500 outline-none"
                                     />
                                 </div>
                             </div>
 
                             {/* Timezone Selector */}
-                            <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="bg-[var(--ws-surface-secondary)] p-6 rounded-3xl border border-[var(--ws-border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <label className="type-label font-bold text-white">Operational Timezone</label>
-                                    <p className="type-card-description text-slate-500">Your availability will be calculated based on this zone.</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">Your availability will be calculated based on this zone.</p>
                                 </div>
                                 <select
                                     value={settings.availability.timezone || 'UTC'}
@@ -287,7 +287,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             timezone: e.target.value
                                         }
                                     })}
-                                    className="w-full sm:w-64 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500"
+                                    className="w-full sm:w-64 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500"
                                 >
                                     <option value="UTC">UTC (Universal Time)</option>
                                     <option value="America/New_York">Eastern Time (US & Canada)</option>
@@ -304,10 +304,10 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                             </div>
 
                             {/* [NEW] Booking Logic Settings */}
-                            <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 space-y-6">
+                            <div className="bg-[var(--ws-surface-secondary)] p-6 rounded-3xl border border-[var(--ws-border)] space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="type-caption font-black text-slate-500 uppercase tracking-caps px-2 leading-none">Smart Logic</h3>
-                                    <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
+                                    <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps px-2 leading-none">Smart Logic</h3>
+                                    <div className="h-[1px] flex-1 bg-[var(--ws-surface-secondary)] mx-4 opacity-50" />
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                     {/* Buffer Time */}
@@ -317,7 +317,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.bufferTime || 15}
                                                 onChange={(e) => setSettings({ ...settings, bufferTime: parseInt(e.target.value) })}
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={0}>None</option>
                                                 <option value={5}>5 mins</option>
@@ -326,9 +326,9 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <option value={30}>30 mins</option>
                                                 <option value={60}>1 hour</option>
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 type-caption font-bold">MIN</div>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">MIN</div>
                                         </div>
-                                        <p className="type-card-description text-slate-500 px-2 leading-tight">Padding between meetings.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">Padding between meetings.</p>
                                     </div>
 
                                     {/* Min Notice */}
@@ -338,7 +338,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.minNotice || 4}
                                                 onChange={(e) => setSettings({ ...settings, minNotice: parseInt(e.target.value) })}
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={0}>Instant</option>
                                                 <option value={1}>1 hour</option>
@@ -347,9 +347,9 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <option value={24}>24 hours</option>
                                                 <option value={48}>48 hours</option>
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 type-caption font-bold">URS</div>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">URS</div>
                                         </div>
-                                        <p className="type-card-description text-slate-500 px-2 leading-tight">Prevent last-minute bookings.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">Prevent last-minute bookings.</p>
                                     </div>
 
                                     {/* Future Limit */}
@@ -359,16 +359,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             <select
                                                 value={settings.futureLimit || 60}
                                                 onChange={(e) => setSettings({ ...settings, futureLimit: parseInt(e.target.value) })}
-                                                className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
+                                                className="w-full bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-2xl px-4 py-3 type-ui font-bold text-white outline-none focus:border-teal-500 appearance-none"
                                             >
                                                 <option value={14}>2 weeks</option>
                                                 <option value={30}>30 days</option>
                                                 <option value={60}>60 days</option>
                                                 <option value={90}>3 months</option>
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 type-caption font-bold">DYS</div>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--ws-text-muted)] type-caption font-bold">DYS</div>
                                         </div>
-                                        <p className="type-card-description text-slate-500 px-2 leading-tight">How far ahead people can book.</p>
+                                        <p className="type-card-description text-[var(--ws-text-muted)] px-2 leading-tight">How far ahead people can book.</p>
                                     </div>
                                 </div>
                             </div>
@@ -377,8 +377,8 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                         {/* 3. Meeting Types */}
                         <div className="space-y-6 pb-6">
                             <div className="flex items-center justify-between">
-                                <h3 className="type-caption font-black text-slate-500 uppercase tracking-caps px-2 leading-none">Transmission Types</h3>
-                                <div className="h-[1px] flex-1 bg-slate-800 mx-4 opacity-50" />
+                                <h3 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps px-2 leading-none">Transmission Types</h3>
+                                <div className="h-[1px] flex-1 bg-[var(--ws-surface-secondary)] mx-4 opacity-50" />
                                 <button
                                     onClick={() => setSettings({
                                         ...settings,
@@ -387,16 +387,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                             { id: crypto.randomUUID(), name: 'New Meeting', duration: 30, price: 0 }
                                         ]
                                     })}
-                                    className="type-caption flex items-center gap-2 bg-slate-800 border border-slate-700 hover:border-slate-600 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
+                                    className="type-caption flex items-center gap-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] hover:border-slate-600 hover:bg-[var(--ws-surface-tertiary)] px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
                                 >
                                     <Plus className="w-3 h-3 text-teal-400" /> ADD TYPE
                                 </button>
                             </div>
                             <div className="space-y-4">
                                 {settings.meetingTypes.map((type, idx) => (
-                                    <div key={type.id} className="group flex flex-col sm:flex-row gap-4 sm:items-center bg-slate-900/40 p-5 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all">
+                                    <div key={type.id} className="group flex flex-col sm:flex-row gap-4 sm:items-center bg-[var(--ws-panel)]/40 p-5 rounded-2xl border border-[var(--ws-border)] hover:border-slate-600 transition-all">
                                         <div className="flex-1 flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-slate-950 border border-slate-700 rounded-xl flex items-center justify-center shrink-0">
+                                            <div className="w-10 h-10 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl flex items-center justify-center shrink-0">
                                                 <span className="type-caption font-black text-slate-600">0{idx + 1}</span>
                                             </div>
                                             <input
@@ -411,7 +411,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 placeholder="Meeting Name"
                                             />
                                         </div>
-                                        <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l sm:border-slate-800">
+                                        <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l sm:border-[var(--ws-border)]">
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     type="number"
@@ -421,16 +421,16 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                         newTypes[idx].duration = parseInt(e.target.value);
                                                         setSettings({ ...settings, meetingTypes: newTypes });
                                                     }}
-                                                    className="bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 w-24 text-center type-ui font-black text-teal-400"
+                                                    className="bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-2 w-24 text-center type-ui font-black text-teal-400"
                                                 />
-                                                <span className="type-caption font-black text-slate-500 uppercase tracking-widest">MIN</span>
+                                                <span className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-widest">MIN</span>
                                             </div>
                                             <button
                                                 onClick={() => {
                                                     const newTypes = settings.meetingTypes.filter((_, i) => i !== idx);
                                                     setSettings({ ...settings, meetingTypes: newTypes });
                                                 }}
-                                                className="p-3 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90"
+                                                className="p-3 text-slate-600 hover:text-red-400 hover:bg-[var(--error-500)]/10 rounded-xl transition-all active:scale-90"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>
@@ -443,17 +443,17 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 md:p-6 border-t border-slate-700 bg-slate-900/50 backdrop-blur-xl flex gap-4 shrink-0">
+                <div className="p-4 md:p-6 border-t border-[var(--ws-border)] bg-[var(--ws-panel)]/50 backdrop-blur-xl flex gap-4 shrink-0">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-4 type-caption font-black tracking-widest uppercase text-slate-500 hover:text-white hover:bg-slate-800 rounded-2xl transition-all"
+                        className="flex-1 py-4 type-caption font-black tracking-widest uppercase text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)] rounded-2xl transition-all"
                     >
                         DISCARD
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-[2] py-4 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 text-slate-950 font-black tracking-caps uppercase rounded-2xl transition-all shadow-[0_0_30px_rgba(45,212,191,0.2)] disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-3"
+                        className="flex-[2] py-4 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:bg-[var(--ws-surface-secondary)] text-slate-950 font-black tracking-caps uppercase rounded-2xl transition-all shadow-[0_0_30px_rgba(45,212,191,0.2)] disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-3"
                     >
                         {saving ? (
                             <>

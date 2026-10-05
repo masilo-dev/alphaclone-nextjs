@@ -37,8 +37,8 @@ export function useOverdueTaskNotifier(user: User | null) {
                         icon: '⚠️',
                         duration: 6000,
                         style: {
-                            background: '#ef4444', // Red for overdue
-                            color: '#fff',
+                            background: 'var(--error-500)', // Red for overdue
+                            color: 'var(--color-white)',
                         }
                     });
                 }

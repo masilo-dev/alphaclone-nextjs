@@ -72,8 +72,8 @@ export function EnterpriseDataTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-12 text-center">
-        <p className="type-card-description text-slate-400">{emptyMessage}</p>
+      <div className="rounded-xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-panel)]/40 px-4 py-12 text-center">
+        <p className="type-card-description text-[var(--ws-text-muted)]">{emptyMessage}</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export function EnterpriseDataTable<T>({
                       <td>
                         <button
                           type="button"
-                          className="min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-teal-400"
+                          className="min-h-11 min-w-11 flex items-center justify-center text-[var(--ws-text-muted)] hover:text-teal-400"
                           onClick={(e) => {
                             e.stopPropagation();
                             setExpandedId(isExpanded ? null : id);
@@ -139,7 +139,7 @@ export function EnterpriseDataTable<T>({
                   </tr>
                   {renderExpanded && isExpanded ? (
                     <tr>
-                      <td colSpan={columns.length + 1} className="bg-slate-900/50">
+                      <td colSpan={columns.length + 1} className="bg-[var(--ws-panel)]/50">
                         <div className="p-4">{renderExpanded(row)}</div>
                       </td>
                     </tr>
@@ -163,7 +163,7 @@ export function EnterpriseDataTable<T>({
               <div className="space-y-2">
                 {mobilePrimary.map((col) => (
                   <div key={col.id} className="flex justify-between gap-3 type-ui">
-                    <span className="text-slate-500 shrink-0">{col.header}</span>
+                    <span className="text-[var(--ws-text-muted)] shrink-0">{col.header}</span>
                     <span className="text-white text-right min-w-0">{col.accessor(row)}</span>
                   </div>
                 ))}
@@ -181,7 +181,7 @@ export function EnterpriseDataTable<T>({
                     {isExpanded ? 'Hide details' : 'Show details'}
                     {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
-                  {isExpanded ? <div className="pt-2 border-t border-slate-800">{renderExpanded(row)}</div> : null}
+                  {isExpanded ? <div className="pt-2 border-t border-[var(--ws-border)]">{renderExpanded(row)}</div> : null}
                 </>
               ) : null}
             </MobileDataCard>

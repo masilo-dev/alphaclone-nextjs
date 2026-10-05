@@ -73,8 +73,8 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
     const isAudioOff = !participant.audio.enabled || !participant.audio.track;
 
     const containerClasses = variant === 'stage'
-        ? "relative bg-slate-900 rounded-2xl overflow-hidden aspect-video group border border-slate-800 shadow-2xl transition-all hover:border-teal-500/30"
-        : "relative bg-slate-900 rounded-xl overflow-hidden aspect-video sm:aspect-square md:aspect-video group border border-slate-800 shadow-lg transition-all hover:border-teal-500/30";
+        ? "relative bg-[var(--ws-panel)] rounded-2xl overflow-hidden aspect-video group border border-[var(--ws-border)] shadow-2xl transition-all hover:border-teal-500/30"
+        : "relative bg-[var(--ws-panel)] rounded-xl overflow-hidden aspect-video sm:aspect-square md:aspect-video group border border-[var(--ws-border)] shadow-lg transition-all hover:border-teal-500/30";
 
     return (
         <div className={containerClasses}>
@@ -117,7 +117,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                         {variant === 'stage' && (
                             <>
                                 <p className="text-white font-semibold text-lg">{displayName}</p>
-                                <p className="text-slate-500 type-card-description mt-1">Camera is off</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description mt-1">Camera is off</p>
                             </>
                         )}
                     </div>
@@ -132,7 +132,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 transition-opacity duration-300">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${!isAudioOff ? 'bg-teal-500 animate-pulse' : 'bg-red-500'}`} />
+                            <div className={`w-2 h-2 rounded-full ${!isAudioOff ? 'bg-teal-500 animate-pulse' : 'bg-[var(--error-500)]'}`} />
                             <span className="text-white type-caption font-semibold tracking-wide shadow-black drop-shadow-md">
                                 {displayName} {isLocal && '(You)'}
                             </span>

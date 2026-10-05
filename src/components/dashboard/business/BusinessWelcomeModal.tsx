@@ -20,31 +20,31 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
       <div className="space-y-6 py-2 text-center">
-        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--brand-blue-500,#356AF4)]/30 bg-[var(--brand-blue-500,#356AF4)]/10 text-[var(--brand-blue-400,#91B5FF)]">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--brand-blue-500,var(--brand-blue-500))]/30 bg-[var(--brand-blue-500,var(--brand-blue-500))]/10 text-[var(--brand-blue-400,var(--brand-blue-300))]">
           <Sparkles className="h-5 w-5" aria-hidden="true" />
         </div>
         <div>
-          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,#91B5FF)]">
+          <p className="type-caption font-semibold uppercase tracking-caps text-[var(--brand-blue-400,var(--brand-blue-300))]">
             Welcome to AlphaClone
           </p>
           <h3 className="mt-2 text-2xl font-bold tracking-tight text-white">
             Welcome, {firstName}
           </h3>
-          <p className="mx-auto mt-3 max-w-md type-card-description leading-relaxed text-slate-400">
+          <p className="mx-auto mt-3 max-w-md type-card-description leading-relaxed text-[var(--ws-text-muted)]">
             You do not need to set up everything today. Choose one useful business outcome and AlphaClone will take you to the right starting point.
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4 text-left">
+        <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 p-4 text-left">
           <p className="type-card-description font-semibold text-white">Start with what matters now</p>
-          <p className="mt-1 type-card-description leading-relaxed text-slate-400">
+          <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">
             For example: get more local customers, post to social media, manage enquiries, send a promotion, or create an invoice.
           </p>
         </div>
 
         <Button
           onClick={onClose}
-          className="w-full bg-[var(--brand-blue-500,#356AF4)] hover:bg-[var(--brand-blue-600,#2854C5)] focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)]"
+          className="w-full bg-[var(--brand-blue-500,var(--brand-blue-500))] hover:bg-[var(--brand-blue-600,var(--brand-blue-600))] focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,var(--brand-blue-300))]"
         >
           Choose my first goal
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

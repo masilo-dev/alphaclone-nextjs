@@ -48,7 +48,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                         <PhoneMissed className="w-5 h-5 text-red-400" />
                         <div>
                             <p className="font-medium text-white">Missed Call</p>
-                            <p className="type-card-description text-slate-400">From {newMissedCall.caller_name || 'Unknown'}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)]">From {newMissedCall.caller_name || 'Unknown'}</p>
                         </div>
                         <Button
                             size="sm"
@@ -90,12 +90,12 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         <>
             <button
                 onClick={handleOpenModal}
-                className="relative p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-all"
+                className="relative p-2 rounded-lg bg-[var(--error-500)]/10 hover:bg-[var(--error-500)]/20 border border-red-500/20 transition-all"
                 aria-label={`${unseenCount} missed calls`}
             >
                 <PhoneMissed className="w-5 h-5 text-red-400" />
                 {unseenCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white type-caption font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error-500)] text-white type-caption font-bold rounded-full flex items-center justify-center">
                         {unseenCount > 9 ? '9+' : unseenCount}
                     </span>
                 )}
@@ -112,7 +112,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-400"></div>
                         </div>
                     ) : missedCalls.length === 0 ? (
-                        <div className="text-center py-8 text-slate-400">
+                        <div className="text-center py-8 text-[var(--ws-text-muted)]">
                             <PhoneMissed className="w-12 h-12 mx-auto mb-3 opacity-50" />
                             <p>No missed calls</p>
                         </div>
@@ -122,8 +122,8 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                 <div
                                     key={call.id}
                                     className={`p-4 rounded-lg border transition-all ${call.seen_at
-                                        ? 'bg-slate-800/30 border-slate-700/30'
-                                        : 'bg-red-500/10 border-red-500/20'
+                                        ? 'bg-[var(--ws-surface-secondary)]/30 border-[var(--ws-border)]/30'
+                                        : 'bg-[var(--error-500)]/10 border-red-500/20'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">
@@ -138,10 +138,10 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                                 <p className="font-medium text-white">
                                                     {call.caller_name || 'Unknown'}
                                                 </p>
-                                                <p className="type-card-description text-slate-400">
+                                                <p className="type-card-description text-[var(--ws-text-muted)]">
                                                     {new Date(call.attempted_at).toLocaleString()}
                                                 </p>
-                                                <p className="type-card-description text-slate-500 capitalize">
+                                                <p className="type-card-description text-[var(--ws-text-muted)] capitalize">
                                                     {call.call_type} call
                                                 </p>
                                             </div>
@@ -160,7 +160,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                         </div>
                     )}
 
-                    <div className="pt-4 border-t border-slate-700">
+                    <div className="pt-4 border-t border-[var(--ws-border)]">
                         <Button
                             variant="outline"
                             onClick={() => setShowModal(false)}

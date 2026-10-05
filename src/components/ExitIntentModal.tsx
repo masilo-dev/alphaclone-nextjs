@@ -94,7 +94,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
             {/* Bottom sheet modal */}
-            <div className="pointer-events-auto w-full max-w-2xl bg-slate-900 border border-slate-700 rounded-t-2xl shadow-2xl p-6 animate-slide-up">
+            <div className="pointer-events-auto w-full max-w-2xl bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-t-2xl shadow-2xl p-6 animate-slide-up">
                 {showConfirmation ? (
                     // Confirmation state
                     <div className="flex flex-col items-center justify-center py-8">
@@ -102,7 +102,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                             <CheckCircle className="w-8 h-8 text-teal-400" />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">Thank You!</h3>
-                        <p className="text-slate-400 text-center">
+                        <p className="text-[var(--ws-text-muted)] text-center">
                             Your feedback has been submitted and will help us improve the platform.
                         </p>
                     </div>
@@ -114,13 +114,13 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                 <h3 className="text-lg font-bold text-white mb-1">
                                     Before you go...
                                 </h3>
-                                <p className="type-card-description text-slate-400">
+                                <p className="type-card-description text-[var(--ws-text-muted)]">
                                     What do you think should be improved on this platform?
                                 </p>
                             </div>
                             <button
                                 onClick={handleDismiss}
-                                className="text-slate-400 hover:text-white transition-colors"
+                                className="text-[var(--ws-text-muted)] hover:text-white transition-colors"
                                 aria-label="Close"
                             >
                                 <X className="w-5 h-5" />
@@ -134,7 +134,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     placeholder="Share your thoughts..."
-                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                    className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
                                     rows={3}
                                     disabled={isSubmitting}
                                 />
@@ -142,7 +142,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
 
                             {/* Severity selector */}
                             <div>
-                                <label className="type-label text-slate-400 mb-2 block">
+                                <label className="type-label text-[var(--ws-text-muted)] mb-2 block">
                                     Priority (optional)
                                 </label>
                                 <div className="flex gap-2">
@@ -153,11 +153,11 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                             disabled={isSubmitting}
                                             className={`flex-1 px-4 py-2 rounded-lg type-ui font-medium transition-all ${severity === level
                                                     ? level === 'high'
-                                                        ? 'bg-red-500 text-white'
+                                                        ? 'bg-[var(--error-500)] text-white'
                                                         : level === 'medium'
                                                             ? 'bg-orange-500 text-white'
                                                             : 'bg-blue-500 text-white'
-                                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                                    : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-surface-tertiary)]'
                                                 }`}
                                         >
                                             {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -178,7 +178,7 @@ const ExitIntentModal: React.FC<ExitIntentModalProps> = ({ user }) => {
                                 </Button>
                                 <Button
                                     onClick={handleSubmit}
-                                    className="flex-1 bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
+                                    className="flex-1 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-slate-950 font-semibold"
                                     disabled={!message.trim() || isSubmitting}
                                 >
                                     {isSubmitting ? 'Submitting...' : 'Submit'}

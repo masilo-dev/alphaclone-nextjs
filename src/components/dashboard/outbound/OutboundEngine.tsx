@@ -110,7 +110,7 @@ const DNS_STATUS_BADGE: Record<string, string> = {
   healthy: 'bg-emerald-100 text-emerald-700',
   warning: 'bg-amber-100 text-amber-700',
   critical: 'bg-red-100 text-red-700',
-  unknown: 'bg-slate-100 text-slate-500',
+  unknown: 'bg-slate-100 text-[var(--ws-text-muted)]',
 };
 
 const FUNNEL_STAGES = [
@@ -120,7 +120,7 @@ const FUNNEL_STAGES = [
   { key: 'contacted', label: 'Contacted', color: 'bg-indigo-300' },
   { key: 'replied', label: 'Replied', color: 'bg-violet-300' },
   { key: 'interested', label: 'Interested', color: 'bg-emerald-300' },
-  { key: 'meeting', label: 'Meeting', color: 'bg-emerald-400' },
+  { key: 'meeting', label: 'Meeting', color: 'bg-[var(--success-500)]' },
   { key: 'customer', label: 'Customer', color: 'bg-emerald-500' },
 ];
 
@@ -156,14 +156,14 @@ function MetricCard({
       warning ? 'border-amber-200' : 'border-slate-200'
     )}>
       <div className="flex items-start justify-between">
-        <span className="text-sm font-medium text-slate-500">{label}</span>
+        <span className="text-sm font-medium text-[var(--ws-text-muted)]">{label}</span>
         <span className={cn('p-1.5 rounded-lg', tones[tone])}>
           <Icon size={15} />
         </span>
       </div>
       <div className="flex items-end gap-2">
         <span className="text-2xl font-bold text-slate-900">{value}</span>
-        {sub && <span className="text-xs text-slate-400 mb-0.5">{sub}</span>}
+        {sub && <span className="text-xs text-[var(--ws-text-muted)] mb-0.5">{sub}</span>}
       </div>
     </div>
   );
@@ -313,7 +313,7 @@ export default function OutboundEngine() {
 
   if (!tenantId) {
     return (
-      <div className="flex items-center justify-center h-64 text-slate-400">
+      <div className="flex items-center justify-center h-64 text-[var(--ws-text-muted)]">
         <Loader2 className="animate-spin mr-2" size={18} /> Loading workspace…
       </div>
     );
@@ -330,12 +330,12 @@ export default function OutboundEngine() {
             </div>
             <div>
               <h1 className="text-base font-semibold text-slate-900">Outbound Engine</h1>
-              <p className="text-xs text-slate-500">Discover → Qualify → Send → Reply → Book → Convert</p>
+              <p className="text-xs text-[var(--ws-text-muted)]">Discover → Qualify → Send → Reply → Book → Convert</p>
             </div>
           </div>
           <Button
             size="sm"
-            className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
             onClick={() => router.push('/dashboard/leads/finder')}
           >
             <Plus size={13} className="mr-1" /> Add Leads
@@ -353,8 +353,8 @@ export default function OutboundEngine() {
               className={cn(
                 'flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                 tab === id
-                  ? 'border-[#356AF4] text-[#356AF4]'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-500)]'
+                  : 'border-transparent text-[var(--ws-text-muted)] hover:text-slate-700 hover:border-slate-300'
               )}
             >
               <Icon size={14} />
@@ -409,7 +409,7 @@ function OverviewTab({ overview, loading, onRefresh }: {
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700">What's happening</h2>
-        <button onClick={onRefresh} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+        <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
           <RefreshCw size={12} /> Refresh
         </button>
       </div>
@@ -490,7 +490,7 @@ function OverviewTab({ overview, loading, onRefresh }: {
               >
                 <div>
                   <p className="text-sm font-medium text-slate-800">{c.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{c.sent.toLocaleString()} sent · {(c.bounceRate * 100).toFixed(1)}% bounce</p>
+                  <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{c.sent.toLocaleString()} sent · {(c.bounceRate * 100).toFixed(1)}% bounce</p>
                 </div>
                 <Badge className={cn(
                   'text-xs',
@@ -527,7 +527,7 @@ function OverviewTab({ overview, loading, onRefresh }: {
                 >
                   <div>
                     <p className="text-sm font-medium text-slate-900">{name}{company ? ` · ${company}` : ''}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">
                       {new Date(r.occurred_at).toLocaleDateString()} · Positive reply
                     </p>
                   </div>
@@ -562,7 +562,7 @@ function LeadsTab({
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]" />
           <Input
             value={search}
             onChange={(e) => onSearch(e.target.value)}
@@ -570,10 +570,10 @@ function LeadsTab({
             className="pl-9 text-sm h-9 bg-white"
           />
         </div>
-        <button onClick={onRefresh} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+        <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
           <RefreshCw size={12} /> Refresh
         </button>
-        <Button size="sm" className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs h-9">
+        <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs h-9">
           <Plus size={13} className="mr-1" /> Import CSV
         </Button>
       </div>
@@ -586,7 +586,7 @@ function LeadsTab({
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 {['Company', 'Contact', 'Stage', 'Source', 'Last Activity'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider">
                     {h}
                   </th>
                 ))}
@@ -605,10 +605,10 @@ function LeadsTab({
                 ))
               ) : leads.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-400 text-sm">
+                  <td colSpan={5} className="px-4 py-12 text-center text-[var(--ws-text-muted)] text-sm">
                     No leads found.{' '}
                     <button
-                      className="text-[#356AF4] hover:underline"
+                      className="text-[var(--brand-blue-500)] hover:underline"
                       onClick={() => window.location.href = '/dashboard/leads/finder'}
                     >
                       Discover leads
@@ -623,8 +623,8 @@ function LeadsTab({
                     <td className="px-4 py-3">
                       <StageBadge stage={lead.stage || lead.status || 'new'} />
                     </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">{lead.source || '—'}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">
+                    <td className="px-4 py-3 text-[var(--ws-text-muted)] text-xs">{lead.source || '—'}</td>
+                    <td className="px-4 py-3 text-[var(--ws-text-muted)] text-xs">
                       {lead.updated_at ? new Date(lead.updated_at).toLocaleDateString() : '—'}
                     </td>
                   </tr>
@@ -644,14 +644,14 @@ function LeadsTab({
               </div>
             ))
           ) : leads.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">No leads found.</div>
+            <div className="p-8 text-center text-[var(--ws-text-muted)] text-sm">No leads found.</div>
           ) : (
             leads.map((lead) => (
               <div key={lead.id} className="p-4 flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-900">{lead.business_name || '—'}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{lead.contact_name || ''}</p>
-                  <p className="text-xs text-slate-400 mt-1">{lead.source || ''}</p>
+                  <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{lead.contact_name || ''}</p>
+                  <p className="text-xs text-[var(--ws-text-muted)] mt-1">{lead.source || ''}</p>
                 </div>
                 <StageBadge stage={lead.stage || lead.status || 'new'} />
               </div>
@@ -662,7 +662,7 @@ function LeadsTab({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center justify-between text-xs text-[var(--ws-text-muted)]">
           <span>{total} total leads</span>
           <div className="flex items-center gap-2">
             <button
@@ -711,12 +711,12 @@ function CampaignsTab({ campaigns, loading, onRefresh }: {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700">Email campaigns</h2>
         <div className="flex gap-2">
-          <button onClick={onRefresh} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+          <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
             <RefreshCw size={12} /> Refresh
           </button>
           <Button
             size="sm"
-            className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
             onClick={() => window.location.href = '/dashboard/business/campaigns'}
           >
             <ArrowUpRight size={13} className="mr-1" /> Manage
@@ -730,11 +730,11 @@ function CampaignsTab({ campaigns, loading, onRefresh }: {
         </div>
       ) : campaigns.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-slate-200 p-12 text-center">
-          <Mail size={32} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500 text-sm">No campaigns yet</p>
+          <Mail size={32} className="mx-auto text-[var(--ws-text-secondary)] mb-3" />
+          <p className="text-[var(--ws-text-muted)] text-sm">No campaigns yet</p>
           <Button
             size="sm"
-            className="mt-4 bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs"
+            className="mt-4 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs"
             onClick={() => window.location.href = '/dashboard/business/campaigns'}
           >
             Create first campaign
@@ -753,7 +753,7 @@ function CampaignsTab({ campaigns, loading, onRefresh }: {
               >
                 <div>
                   <p className="text-sm font-medium text-slate-900">Campaign</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-3 mt-1 text-xs text-[var(--ws-text-muted)]">
                     <span>{sent.toLocaleString()} sent</span>
                     {delivered > 0 && <span>{delivered.toLocaleString()} delivered</span>}
                     {replies > 0 && <span>{replies} replies</span>}
@@ -826,10 +826,10 @@ function MailboxesTab({
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700">Sending mailboxes</h2>
         <div className="flex gap-2">
-          <button onClick={onRefresh} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">
+          <button onClick={onRefresh} className="text-xs text-[var(--ws-text-muted)] hover:text-slate-600 flex items-center gap-1">
             <RefreshCw size={12} /> Refresh
           </button>
-          <Button size="sm" className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs" onClick={onToggleAdd}>
+          <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs" onClick={onToggleAdd}>
             <Plus size={13} className="mr-1" /> Add Mailbox
           </Button>
         </div>
@@ -876,7 +876,7 @@ function MailboxesTab({
             </div>
           )}
           <div className="flex gap-2">
-            <Button size="sm" className="bg-[#356AF4] hover:bg-[#2a57d4] text-white text-xs" onClick={saveMailbox} disabled={saving || !form.email_address || !form.name}>
+            <Button size="sm" className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-xs" onClick={saveMailbox} disabled={saving || !form.email_address || !form.name}>
               {saving ? <Loader2 size={13} className="animate-spin mr-1" /> : null} Save mailbox
             </Button>
             <Button size="sm" variant="outline" className="text-xs" onClick={onToggleAdd}>Cancel</Button>
@@ -890,9 +890,9 @@ function MailboxesTab({
         </div>
       ) : mailboxes.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-slate-200 p-12 text-center">
-          <Shield size={32} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500 text-sm">No mailboxes configured</p>
-          <p className="text-slate-400 text-xs mt-1">Add a sending mailbox to enable outbound campaigns</p>
+          <Shield size={32} className="mx-auto text-[var(--ws-text-secondary)] mb-3" />
+          <p className="text-[var(--ws-text-muted)] text-sm">No mailboxes configured</p>
+          <p className="text-[var(--ws-text-muted)] text-xs mt-1">Add a sending mailbox to enable outbound campaigns</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -905,7 +905,7 @@ function MailboxesTab({
                   <div className="flex items-start gap-3">
                     <div className={cn('mt-0.5 h-2.5 w-2.5 rounded-full shrink-0',
                       m.connection_state === 'connected' ? 'bg-emerald-500' :
-                      m.connection_state === 'error' ? 'bg-red-500' : 'bg-slate-300'
+                      m.connection_state === 'error' ? 'bg-[var(--error-500)]' : 'bg-slate-300'
                     )} />
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -917,7 +917,7 @@ function MailboxesTab({
                           <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Primary domain</span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">{m.email_address}</p>
+                      <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{m.email_address}</p>
                     </div>
                   </div>
                   <Badge className={cn('text-xs shrink-0',
@@ -932,13 +932,13 @@ function MailboxesTab({
 
                 {/* Daily limit bar */}
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-[var(--ws-text-muted)]">
                     <span>Daily limit</span>
                     <span>{m.messages_sent_today} / {m.daily_limit} sent</span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className={cn('h-full rounded-full transition-all', usagePercent >= 90 ? 'bg-red-500' : usagePercent >= 70 ? 'bg-amber-500' : 'bg-emerald-500')}
+                      className={cn('h-full rounded-full transition-all', usagePercent >= 90 ? 'bg-[var(--error-500)]' : usagePercent >= 70 ? 'bg-amber-500' : 'bg-emerald-500')}
                       style={{ width: `${usagePercent}%` }}
                     />
                   </div>
@@ -957,7 +957,7 @@ function MailboxesTab({
                   <button
                     onClick={() => onCheckDns(m.id)}
                     disabled={checkingDns === m.id}
-                    className="text-xs text-[#356AF4] hover:underline flex items-center gap-1 disabled:opacity-50"
+                    className="text-xs text-[var(--brand-blue-500)] hover:underline flex items-center gap-1 disabled:opacity-50"
                   >
                     {checkingDns === m.id ? <Loader2 size={11} className="animate-spin" /> : <Globe size={11} />}
                     Check DNS
@@ -1030,9 +1030,9 @@ function RepliesTab({ tenantId }: { tenantId: string }) {
         </div>
       ) : replies.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-slate-200 p-12 text-center">
-          <Inbox size={32} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500 text-sm">No replies yet</p>
-          <p className="text-slate-400 text-xs mt-1">Replies from your campaigns will appear here</p>
+          <Inbox size={32} className="mx-auto text-[var(--ws-text-secondary)] mb-3" />
+          <p className="text-[var(--ws-text-muted)] text-sm">No replies yet</p>
+          <p className="text-[var(--ws-text-muted)] text-xs mt-1">Replies from your campaigns will appear here</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1057,7 +1057,7 @@ function RepliesTab({ tenantId }: { tenantId: string }) {
                   <div>
                     <p className="text-sm font-medium text-slate-900">{name}</p>
                     {replyText && (
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">"{replyText}…"</p>
+                      <p className="text-xs text-[var(--ws-text-muted)] mt-1 line-clamp-2">"{replyText}…"</p>
                     )}
                   </div>
                   <Badge className={cn('text-xs shrink-0',
@@ -1118,7 +1118,7 @@ function AnalyticsTab({ campaigns, loading, tenantId }: {
 
             return (
               <div key={stage.key} className="flex items-center gap-4">
-                <div className="w-24 text-right text-xs text-slate-500 font-medium shrink-0">
+                <div className="w-24 text-right text-xs text-[var(--ws-text-muted)] font-medium shrink-0">
                   {stage.label}
                 </div>
                 <div className="flex-1 flex items-center gap-3">
@@ -1133,7 +1133,7 @@ function AnalyticsTab({ campaigns, loading, tenantId }: {
                     </div>
                   </div>
                   {conversion && (
-                    <div className="text-xs text-slate-400 w-12 shrink-0">
+                    <div className="text-xs text-[var(--ws-text-muted)] w-12 shrink-0">
                       {conversion}%
                     </div>
                   )}
@@ -1152,7 +1152,7 @@ function AnalyticsTab({ campaigns, loading, tenantId }: {
           { label: 'Campaigns tracked', value: campaigns.length.toString() },
         ].map((m) => (
           <div key={m.label} className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-            <p className="text-xs text-slate-500">{m.label}</p>
+            <p className="text-xs text-[var(--ws-text-muted)]">{m.label}</p>
             <p className="text-xl font-bold text-slate-900 mt-1">{m.value}</p>
           </div>
         ))}
@@ -1211,7 +1211,7 @@ function SettingsTab({ tenantId }: { tenantId: string }) {
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">{item.desc}</p>
               </div>
             </div>
             <Button

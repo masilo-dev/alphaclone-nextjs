@@ -73,14 +73,14 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl"
+                        className="fixed inset-0 bg-[var(--ws-canvas)]/80 backdrop-blur-xl"
                     />
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="w-full max-w-xl bg-slate-900 border border-teal-500/20 rounded-3xl shadow-2xl overflow-hidden relative"
+                        className="w-full max-w-xl bg-[var(--ws-panel)] border border-teal-500/20 rounded-3xl shadow-2xl overflow-hidden relative"
                     >
                         {/* Shimmer Border */}
                         <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent animate-shimmer" />
@@ -91,9 +91,9 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     <div className="p-1.5 bg-teal-500/10 rounded-lg">
                                         <Zap className="w-4 h-4 text-teal-400" />
                                     </div>
-                                    <h2 className="type-caption font-black text-slate-500 uppercase tracking-caps">Quick Neural Capture</h2>
+                                    <h2 className="type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">Quick Neural Capture</h2>
                                 </div>
-                                <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+                                <button onClick={onClose} className="text-[var(--ws-text-muted)] hover:text-white transition-colors">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -112,13 +112,13 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Add details (optional)..."
                                         rows={2}
-                                        className="w-full bg-transparent border-none focus:ring-0 type-ui text-slate-400 placeholder-slate-700 p-0 resize-none"
+                                        className="w-full bg-transparent border-none focus:ring-0 type-ui text-[var(--ws-text-muted)] placeholder-slate-700 p-0 resize-none"
                                     />
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/5">
                                     {/* Priority Picker */}
-                                    <div className="flex items-center gap-1 bg-slate-950/50 p-1 rounded-xl border border-white/5">
+                                    <div className="flex items-center gap-1 bg-[var(--ws-canvas)]/50 p-1 rounded-xl border border-white/5">
                                         {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
                                             <button
                                                 key={p}
@@ -127,7 +127,7 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                                 className={`px-3 py-1.5 rounded-lg type-caption font-black uppercase tracking-widest transition-all ${
                                                     priority === p 
                                                     ? 'bg-teal-500 text-slate-950' 
-                                                    : 'text-slate-500 hover:text-slate-300'
+                                                    : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                                 }`}
                                             >
                                                 {p}
@@ -136,13 +136,13 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                     </div>
 
                                     {/* Due Date */}
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-950/50 rounded-xl border border-white/5 group hover:border-teal-500/30 transition-all">
-                                        <Calendar className="w-3.5 h-3.5 text-slate-500 group-hover:text-teal-400" />
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--ws-canvas)]/50 rounded-xl border border-white/5 group hover:border-teal-500/30 transition-all">
+                                        <Calendar className="w-3.5 h-3.5 text-[var(--ws-text-muted)] group-hover:text-teal-400" />
                                         <input
                                             type="date"
                                             value={dueDate}
                                             onChange={(e) => setDueDate(e.target.value)}
-                                            className="bg-transparent border-none focus:ring-0 type-caption font-black uppercase tracking-widest text-slate-400 placeholder-slate-700 p-0 cursor-pointer"
+                                            className="bg-transparent border-none focus:ring-0 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] placeholder-slate-700 p-0 cursor-pointer"
                                         />
                                     </div>
                                 </div>
@@ -150,11 +150,11 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                 <div className="flex items-center justify-between pt-4">
                                     <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
-                                            <span className="px-1.5 py-0.5 bg-slate-950 rounded border border-white/5">ESC</span>
+                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-white/5">ESC</span>
                                             <span>Close</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 type-caption font-bold text-slate-600 uppercase tracking-wider">
-                                            <span className="px-1.5 py-0.5 bg-slate-950 rounded border border-white/5">⌘ + ENTER</span>
+                                            <span className="px-1.5 py-0.5 bg-[var(--ws-canvas)] rounded border border-white/5">⌘ + ENTER</span>
                                             <span>Capture</span>
                                         </div>
                                     </div>
@@ -164,8 +164,8 @@ export const QuickTaskOverlay: React.FC<QuickTaskOverlayProps> = ({ isOpen, onCl
                                         disabled={isSubmitting || !title.trim()}
                                         className={`px-6 py-2.5 rounded-xl font-black type-caption uppercase tracking-caps transition-all flex items-center gap-2 ${
                                             !title.trim() 
-                                            ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
-                                            : 'bg-teal-500 text-slate-950 hover:bg-teal-400 shadow-lg shadow-teal-500/20'
+                                            ? 'bg-[var(--ws-surface-secondary)] text-slate-600 cursor-not-allowed' 
+                                            : 'bg-teal-500 text-slate-950 hover:bg-[var(--brand-blue-400)] shadow-lg shadow-teal-500/20'
                                         }`}
                                     >
                                         {isSubmitting ? (

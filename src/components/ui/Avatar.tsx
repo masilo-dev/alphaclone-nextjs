@@ -117,10 +117,10 @@ export function Avatar({
   if (fallbackType === 'icon') {
     return (
       <div 
-        className={`flex items-center justify-center bg-slate-700 ${shapeClass} ${className}`}
+        className={`flex items-center justify-center bg-[var(--ws-surface-tertiary)] ${shapeClass} ${className}`}
         style={containerStyle}
       >
-        <User className="text-slate-400" style={{ width: size * 0.6, height: size * 0.6 }} />
+        <User className="text-[var(--ws-text-muted)]" style={{ width: size * 0.6, height: size * 0.6 }} />
       </div>
     );
   }

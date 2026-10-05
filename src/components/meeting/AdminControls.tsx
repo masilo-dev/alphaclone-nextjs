@@ -75,7 +75,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
     };
 
     return (
-        <div className="bg-slate-900 border-t border-slate-800 p-4">
+        <div className="bg-[var(--ws-panel)] border-t border-[var(--ws-border)] p-4">
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-teal-400" />
@@ -89,7 +89,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <button
                     onClick={muteAll}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors type-ui text-white"
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg transition-colors type-ui text-white"
                     title="Mute all participants"
                 >
                     <MicOff className="w-4 h-4" />
@@ -100,7 +100,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                     onClick={lockMeeting}
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors type-ui text-white ${isMeetingLocked
                         ? 'bg-yellow-600 hover:bg-yellow-700'
-                        : 'bg-slate-800 hover:bg-slate-700'
+                        : 'bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                         }`}
                     title={isMeetingLocked ? 'Unlock meeting' : 'Lock meeting'}
                 >
@@ -112,7 +112,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                     onClick={toggleRecording}
                     className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors type-ui text-white ${isRecording
                         ? 'bg-red-600 hover:bg-red-700'
-                        : 'bg-slate-800 hover:bg-slate-700'
+                        : 'bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)]'
                         }`}
                     title={isRecording ? 'Stop recording' : 'Start recording'}
                 >
@@ -130,7 +130,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
                 </button>
             </div>
 
-            <p className="type-card-description text-slate-500 mt-2 text-center">
+            <p className="type-card-description text-[var(--ws-text-muted)] mt-2 text-center">
                 Admin controls affect all participants
             </p>
         </div>

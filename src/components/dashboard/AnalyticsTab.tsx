@@ -28,8 +28,8 @@ const REPORTS = [
 ];
 
 const METRIC_COLORS = {
-  revenue: '#14b8a6',
-  projects: '#8b5cf6',
+  revenue: 'var(--brand-blue-500)',
+  projects: 'var(--brand-violet-400)',
 } as const;
 
 type ChartMetric = 'revenue' | 'projects';
@@ -137,7 +137,7 @@ const AnalyticsTab: React.FC = () => {
               key={m}
               type="button"
               onClick={() => setMetric(m)}
-              className={`flex-1 py-1.5 rounded-lg type-ui font-bold capitalize transition-all ${metric === m ? 'text-[#f5f5f5]' : 'text-[#94a3b8] bg-transparent'}`}
+              className={`flex-1 py-1.5 rounded-lg type-ui font-bold capitalize transition-all ${metric === m ? 'text-[var(--surface-secondary)]' : 'text-[var(--ws-text-secondary)] bg-transparent'}`}
               style={{
                 backgroundColor: metric === m ? `${METRIC_COLORS[m]}33` : undefined,
                 color: metric === m ? METRIC_COLORS[m] : undefined,
@@ -167,15 +167,15 @@ const AnalyticsTab: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-teal-400" />
-              <span className="type-ui font-semibold text-white group-hover:text-teal-300">{name}</span>
-              <ChevronRight className="w-4 h-4 ml-auto text-slate-500 group-hover:text-teal-400" />
+              <span className="type-ui font-semibold text-white group-hover:text-[var(--brand-blue-300)]">{name}</span>
+              <ChevronRight className="w-4 h-4 ml-auto text-[var(--ws-text-muted)] group-hover:text-teal-400" />
             </div>
           </button>
         ))}
       </div>
 
       {isValidating ? (
-        <p className="type-card-description text-slate-500 text-right">Refreshing metrics…</p>
+        <p className="type-card-description text-[var(--ws-text-muted)] text-right">Refreshing metrics…</p>
       ) : null}
     </div>
   );

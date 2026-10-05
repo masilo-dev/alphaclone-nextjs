@@ -13,6 +13,11 @@ import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
 import { useTenant } from '@/contexts/TenantContext';
 import { strategicThinkerService } from '../../services/StrategicThinkerService';
+import {
+    CALENDAR_EVENT_TYPE_COLORS,
+    CALENDAR_TASK_COLORS,
+    CALENDAR_UI,
+} from '@/constants/calendarEventColors';
 
 /**
  * Helper to parse Calendly Q&A JSON
@@ -407,24 +412,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             const isCompleted = event.metadata?.status === 'completed';
             const isOverdue = event.end_time && isBefore(new Date(event.end_time), new Date()) && !isCompleted;
 
-            if (isCompleted) return '#10b981'; // Green (Completed)
-            if (isOverdue) return '#ef4444';   // Red (Overdue)
-            return '#f59e0b';                  // Amber (Pending)
+            if (isCompleted) return CALENDAR_TASK_COLORS.completed;
+            if (isOverdue) return CALENDAR_TASK_COLORS.overdue;
+            return CALENDAR_TASK_COLORS.pending;
         }
 
-        switch (type) {
-            case 'call': return '#10b981'; // Green
-            case 'meeting': return '#3b82f6'; // Blue
-            case 'reminder': return '#f59e0b'; // Orange
-            case 'deadline': return '#ef4444'; // Red
-            case 'invoice': return '#ef4444'; // Red (Money Owed)
-            case 'project': return '#8b5cf6';
-            case 'milestone': return '#ec4899';
-            case 'lead': return '#14b8a6';
-            case 'deal': return '#f59e0b';
-            case 'suggestion': return '#6366f1'; // Indigo (AI Suggestion)
-            default: return '#3b82f6';
-        }
+        return CALENDAR_EVENT_TYPE_COLORS[type] ?? CALENDAR_EVENT_TYPE_COLORS.default;
     };
 
     const extractMeetingUrl = (event: CalendarEvent) => {
@@ -477,7 +470,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             backgroundColor: getEventColor(event.type, event),
             borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
-            textColor: '#ffffff',
+            textColor: CALENDAR_UI.textOnEvent,
             extendedProps: { ...event }
         }));
 
@@ -487,9 +480,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             start: s.start,
             end: s.end,
             backgroundColor: 'transparent',
-            borderColor: '#6366f1',
+            borderColor: CALENDAR_UI.suggestionBorder,
             borderStyle: 'dashed',
-            textColor: '#818cf8',
+            textColor: CALENDAR_UI.suggestionText,
             className: 'ai-suggestion-event',
             extendedProps: { ...s, isSuggestion: true }
         }));
@@ -501,7 +494,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         return (
             <div className="flex flex-col items-center justify-center h-64">
                 <Loader2 className="w-12 h-12 text-teal-500 animate-spin mb-4" />
-                <div className="text-slate-400">Loading calendar...</div>
+                <div className="text-[var(--ws-text-muted)]">Loading calendar...</div>
             </div>
         );
     }
@@ -516,7 +509,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         <CalendarIcon className="w-5 h-5 md:w-6 md:h-6 text-teal-400" />
                         Calendar
                     </h2>
-                    <p className="text-slate-400 mt-1">Manage your schedule and meetings</p>
+                    <p className="text-[var(--ws-text-muted)] mt-1">Manage your schedule and meetings</p>
                 </div>
                 <div className="flex gap-2">
                     <Button 
@@ -530,7 +523,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-calendar' });
                         }}
-                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                        className="bg-[var(--ws-panel)] hover:bg-[var(--ws-surface-secondary)] text-violet-400 border-white/5"
                     >
                         <Sparkles className="w-4 h-4 mr-2" />
                         Nexus Schedule
@@ -546,62 +539,62 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 <style>{`
                     /* Dark theme for FullCalendar */
                     .calendar-dark-theme .fc {
-                        color: #e2e8f0;
+                        color: var(--ws-border);
                     }
 
                     .calendar-dark-theme .fc-theme-standard td,
                     .calendar-dark-theme .fc-theme-standard th {
-                        border-color: #334155;
+                        border-color: var(--ws-surface-tertiary);
                     }
 
                     .calendar-dark-theme .fc-theme-standard .fc-scrollgrid {
-                        border-color: #334155;
+                        border-color: var(--ws-surface-tertiary);
                     }
 
                     .calendar-dark-theme .fc-col-header-cell {
-                        background: #1e293b;
-                        color: #94a3b8;
+                        background: var(--ws-panel);
+                        color: var(--ws-text-secondary);
                         font-weight: var(--weight-semibold);
                         padding: 12px 8px;
-                        border-color: #334155;
+                        border-color: var(--ws-surface-tertiary);
                     }
 
                     .calendar-dark-theme .fc-daygrid-day {
-                        background: #0f172a;
+                        background: var(--ws-canvas);
                     }
 
                     .calendar-dark-theme .fc-daygrid-day:hover {
-                        background: #1e293b;
+                        background: var(--ws-panel);
                     }
 
                     .calendar-dark-theme .fc-daygrid-day-number {
-                        color: #e2e8f0;
+                        color: var(--ws-border);
                         padding: 8px;
                         font-weight: var(--weight-medium);
                     }
 
                     .calendar-dark-theme .fc-day-today {
-                        background: #0d9488 !important;
+                        background: var(--brand-blue-600) !important;
                         background-color: rgba(13, 148, 136, 0.1) !important;
                     }
 
                     .calendar-dark-theme .fc-day-today .fc-daygrid-day-number {
-                        color: #14b8a6;
+                        color: var(--brand-blue-500);
                         font-weight: var(--weight-bold);
                     }
 
                     .calendar-dark-theme .fc-button {
-                        background: #1e293b;
-                        border-color: #334155;
-                        color: #e2e8f0;
+                        background: var(--ws-panel);
+                        border-color: var(--ws-surface-tertiary);
+                        color: var(--ws-border);
                         text-transform: capitalize;
                         font-weight: var(--weight-medium);
                         padding: 8px 16px;
                     }
 
                     .calendar-dark-theme .fc-button:hover {
-                        background: #334155;
-                        border-color: #475569;
+                        background: var(--ws-surface-tertiary);
+                        border-color: var(--ws-text-muted);
                     }
 
                     .calendar-dark-theme .fc-button:focus {
@@ -609,13 +602,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     }
 
                     .calendar-dark-theme .fc-button-active {
-                        background: #0d9488 !important;
-                        border-color: #0d9488 !important;
+                        background: var(--brand-blue-600) !important;
+                        border-color: var(--brand-blue-600) !important;
                         color: white !important;
                     }
 
                     .calendar-dark-theme .fc-toolbar-title {
-                        color: #f1f5f9;
+                        color: var(--ws-surface-secondary);
                         font-size: var(--text-lg); /* ~18px Max */
                         font-weight: var(--weight-bold);
                     }
@@ -668,16 +661,16 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                     .calendar-dark-theme .fc-timegrid-slot {
                         height: 3em;
-                        border-color: #334155;
+                        border-color: var(--ws-surface-tertiary);
                     }
 
                     .calendar-dark-theme .fc-timegrid-slot-label {
-                        color: #94a3b8;
+                        color: var(--ws-text-secondary);
                         font-size: var(--type-ui-size);
                     }
 
                     .calendar-dark-theme .fc-day-other .fc-daygrid-day-number {
-                        color: #475569;
+                        color: var(--ws-text-muted);
                     }
 
                     .calendar-dark-theme .fc-h-event {
@@ -685,7 +678,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     }
 
                     .calendar-dark-theme .fc-more-link {
-                        color: #14b8a6;
+                        color: var(--brand-blue-500);
                         font-weight: var(--weight-semibold);
                     }
                 `}</style>
@@ -734,16 +727,16 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     title="Schedule Conflict Detected"
                 >
                     <div className="space-y-4">
-                        <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                        <div className="flex items-start gap-3 p-4 bg-[var(--error-500)]/10 border border-red-500/30 rounded-lg">
                             <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-red-300 font-semibold mb-1">Overlapping Event</p>
-                                <p className="text-slate-400 type-card-description">
+                                <p className="text-[var(--error-text,var(--error-500))] font-semibold mb-1">Overlapping Event</p>
+                                <p className="text-[var(--ws-text-muted)] type-card-description">
                                     Your new event conflicts with an existing event:
                                 </p>
-                                <div className="mt-2 p-2 bg-slate-900/50 rounded">
+                                <div className="mt-2 p-2 bg-[var(--ws-panel)]/50 rounded">
                                     <p className="text-white font-medium">{conflictWarning.title}</p>
-                                    <p className="text-slate-400 type-card-description">
+                                    <p className="text-[var(--ws-text-muted)] type-card-description">
                                         {format(new Date(conflictWarning.start_time), 'MMM d, h:mm a')} - {format(new Date(conflictWarning.end_time), 'h:mm a')}
                                     </p>
                                 </div>
@@ -809,8 +802,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     </div>
                                     {(selectedEvent.type === 'task' || selectedEvent.type === 'invoice') && (
                                         <Badge variant={
-                                            selectedEvent.color === '#10b981' ? 'success' : // Completed
-                                                selectedEvent.color === '#ef4444' ? 'error' : // Overdue
+                                            selectedEvent.color === CALENDAR_TASK_COLORS.completed ? 'success' :
+                                                selectedEvent.color === CALENDAR_TASK_COLORS.overdue ? 'error' :
                                                     'warning' // Pending
                                         }>
                                             {selectedEvent.type === 'task'
@@ -828,12 +821,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 if (qa) {
                                     return (
                                         <div className="space-y-4">
-                                            <div className="type-ui font-semibold text-slate-300 border-b border-slate-700 pb-2">Questions & Answers</div>
+                                            <div className="type-ui font-semibold text-[var(--ws-text-secondary)] border-b border-[var(--ws-border)] pb-2">Questions & Answers</div>
                                             <div className="grid gap-3">
                                                 {qa.map((item, idx) => (
-                                                    <div key={idx} className="bg-slate-900/50 p-3 rounded border border-slate-800">
+                                                    <div key={idx} className="bg-[var(--ws-panel)]/50 p-3 rounded border border-[var(--ws-border)]">
                                                         <div className="type-caption font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
-                                                        <div className="text-slate-300 type-ui whitespace-pre-wrap">{item.answer}</div>
+                                                        <div className="text-[var(--ws-text-secondary)] type-ui whitespace-pre-wrap">{item.answer}</div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -843,22 +836,22 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                                 return (
                                     <div>
-                                        <div className="type-ui font-semibold text-slate-300 mb-2">Description</div>
-                                        <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
+                                        <div className="type-ui font-semibold text-[var(--ws-text-secondary)] mb-2">Description</div>
+                                        <div className="text-[var(--ws-text-muted)] leading-relaxed">{selectedEvent.description}</div>
                                     </div>
                                 );
                             })()}
 
                             {/* Time Details */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                                    <div className="type-caption font-semibold text-slate-400 mb-1">Start Time</div>
+                                <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
+                                    <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">Start Time</div>
                                     <div className="text-white font-semibold">
                                         {format(new Date(selectedEvent.start_time), 'PPp')}
                                     </div>
                                 </div>
-                                <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
-                                    <div className="type-caption font-semibold text-slate-400 mb-1">End Time</div>
+                                <div className="bg-[var(--ws-surface-secondary)]/50 p-4 rounded-lg border border-[var(--ws-border)]">
+                                    <div className="type-caption font-semibold text-[var(--ws-text-muted)] mb-1">End Time</div>
                                     <div className="text-white font-semibold">
                                         {format(new Date(selectedEvent.end_time), 'PPp')}
                                     </div>
@@ -867,9 +860,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
                             {/* Location */}
                             {selectedEvent.location && (
-                                <div className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                <div className="flex items-center gap-3 p-4 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
                                     <MapPin className="w-5 h-5 text-teal-400 flex-shrink-0" />
-                                    <span className="text-slate-300">{selectedEvent.location}</span>
+                                    <span className="text-[var(--ws-text-secondary)]">{selectedEvent.location}</span>
                                 </div>
                             )}
 
@@ -882,7 +875,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     <div className="flex flex-col gap-3 p-4 bg-teal-500/10 rounded-lg border border-teal-500/30">
                                         <div className="flex items-center gap-3">
                                             <Video className="w-5 h-5 text-teal-400 flex-shrink-0" />
-                                            <span className="text-teal-300 font-semibold">Join the meeting</span>
+                                            <span className="text-[var(--brand-blue-300)] font-semibold">Join the meeting</span>
                                         </div>
                                         <Button
                                             onClick={() => {
@@ -901,7 +894,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             })()}
 
                             {/* Actions */}
-                            <div className="flex gap-3 pt-4 border-t border-slate-800">
+                            <div className="flex gap-3 pt-4 border-t border-[var(--ws-border)]">
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowEventModal(false)}
@@ -915,7 +908,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                             if (selectedEvent.type === 'task') window.location.href = '/dashboard/tasks';
                                             if (selectedEvent.type === 'invoice') window.location.href = '/dashboard/business/billing';
                                         }}
-                                        className="flex-1 bg-slate-700 hover:bg-slate-600"
+                                        className="flex-1 bg-[var(--ws-surface-tertiary)] hover:bg-slate-600"
                                     >
                                         View {selectedEvent.type === 'task' ? 'Task' : 'Invoice'}
                                     </Button>
@@ -923,7 +916,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     <Button
                                         onClick={() => handleDeleteEvent(selectedEvent.id, true)}
                                         disabled={isSaving}
-                                        className="flex-1 bg-red-600 hover:bg-red-500"
+                                        className="flex-1 bg-red-600 hover:bg-[var(--error-500)]"
                                     >
                                         {isSaving ? 'Canceling...' : 'Cancel Calendly Meeting'}
                                     </Button>
@@ -931,7 +924,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     <Button
                                         onClick={() => handleDeleteEvent(selectedEvent.id, false)}
                                         disabled={isSaving}
-                                        className="flex-1 bg-red-600 hover:bg-red-500"
+                                        className="flex-1 bg-red-600 hover:bg-[var(--error-500)]"
                                     >
                                         Delete Event
                                     </Button>
@@ -950,11 +943,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             />
 
                             <div>
-                                <label className="block type-label font-medium text-slate-300 mb-2">Description</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Description</label>
                                 <textarea
                                     value={newEvent.description}
                                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
                                     rows={3}
                                     placeholder="Add event description..."
                                 />
@@ -978,11 +971,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             </div>
 
                             <div>
-                                <label className="block type-label font-medium text-slate-300 mb-2">Event Type</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Event Type</label>
                                 <select
                                     value={newEvent.type}
                                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
                                 >
                                     <option value="meeting">Meeting</option>
                                     <option value="call">Video Call</option>
@@ -1002,14 +995,14 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             {/* Custom Questions Section */}
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <label className="type-label font-medium text-slate-300">Intake Questions (Q&A)</label>
+                                    <label className="type-label font-medium text-[var(--ws-text-secondary)]">Intake Questions (Q&A)</label>
                                     <button
                                         type="button"
                                         onClick={() => setNewEvent({
                                             ...newEvent,
                                             questions: [...(newEvent as any).questions, { id: Date.now().toString(), text: '' }]
                                         })}
-                                        className="type-caption text-teal-400 hover:text-teal-300 font-semibold"
+                                        className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] font-semibold"
                                     >
                                         + Add Question
                                     </button>
@@ -1024,7 +1017,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                                 setNewEvent({ ...newEvent, questions: newQs } as any);
                                             }}
                                             placeholder={`Question ${idx + 1}`}
-                                            className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white type-ui focus:outline-none focus:border-teal-500"
+                                            className="flex-1 px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white type-ui focus:outline-none focus:border-teal-500"
                                         />
                                         {(newEvent as any).questions.length > 1 && (
                                             <button
@@ -1033,7 +1026,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                                     const newQs = (newEvent as any).questions.filter((_: any, i: number) => i !== idx);
                                                     setNewEvent({ ...newEvent, questions: newQs } as any);
                                                 }}
-                                                className="p-2 text-red-400 hover:text-red-300"
+                                                className="p-2 text-red-400 hover:text-[var(--error-text,var(--error-500))]"
                                             >
                                                 <X className="w-4 h-4" />
                                             </button>

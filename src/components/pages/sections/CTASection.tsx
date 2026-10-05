@@ -11,7 +11,7 @@ const CTASection: React.FC = () => {
                 <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter text-white">
                     Ready for <span className="hero-metallic-text">Unified Control?</span>
                 </h2>
-                <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
+                <p className="text-xl text-[var(--ws-text-muted)] mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
                     Get started and build one connected execution workspace for your business.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -26,7 +26,7 @@ const CTASection: React.FC = () => {
                         </button>
                     </Link>
                 </div>
-                <p className="mt-10 type-caption font-black text-slate-500 uppercase tracking-caps">
+                <p className="mt-10 type-caption font-black text-[var(--ws-text-muted)] uppercase tracking-caps">
                     No Credit Card Required • Clear Trial Terms • Cancel Anytime
                 </p>
             </div>

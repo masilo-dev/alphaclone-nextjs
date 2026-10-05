@@ -175,7 +175,7 @@ export function ChartOfAccountsPage() {
         {
             id: 'type',
             header: 'Type',
-            accessor: (a) => <span className="capitalize text-slate-300">{accountTypeLabels[a.accountType]}</span>,
+            accessor: (a) => <span className="capitalize text-[var(--ws-text-secondary)]">{accountTypeLabels[a.accountType]}</span>,
         },
         {
             id: 'balance',
@@ -209,7 +209,7 @@ export function ChartOfAccountsPage() {
                 header={(
                     <div className="px-1 pb-2">
                         <h1 className="text-lg font-semibold text-white">Chart of Accounts</h1>
-                        <p className="type-card-description text-slate-300">Manage your accounting accounts</p>
+                        <p className="type-card-description text-[var(--ws-text-secondary)]">Manage your accounting accounts</p>
                     </div>
                 )}
                 toolbar={(
@@ -219,19 +219,19 @@ export function ChartOfAccountsPage() {
                             placeholder="Search accounts..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="flex-1 min-w-[180px] px-3 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                            className="flex-1 min-w-[180px] px-3 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl type-ui text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                         />
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value as AccountType | 'all')}
-                            className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-emerald-500/50"
+                            className="px-3 py-2 bg-[var(--ws-panel)] border border-white/5 rounded-xl type-ui text-white focus:outline-none focus:border-emerald-500/50"
                         >
                             <option value="all">All types</option>
                             {Object.entries(accountTypeLabels).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
                             ))}
                         </select>
-                        <label className="flex items-center gap-2 type-label text-slate-300">
+                        <label className="flex items-center gap-2 type-label text-[var(--ws-text-secondary)]">
                             <input
                                 type="checkbox"
                                 checked={showInactive}
@@ -243,7 +243,7 @@ export function ChartOfAccountsPage() {
                         <button
                             type="button"
                             onClick={handleInitializeDefaults}
-                            className="px-3 py-2 rounded-xl border border-white/10 text-slate-300 type-caption font-bold hover:bg-white/5"
+                            className="px-3 py-2 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] type-caption font-bold hover:bg-white/5"
                         >
                             Initialize defaults
                         </button>
@@ -258,13 +258,13 @@ export function ChartOfAccountsPage() {
                 )}
             >
                 {error && (
-                    <div className="mx-2 mb-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl type-ui">
+                    <div className="mx-2 mb-3 bg-[var(--error-500)]/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl type-ui">
                         {error}
                     </div>
                 )}
                 <div className="px-2 pb-20">
                     {loading ? (
-                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-[var(--ws-panel)]/40 animate-pulse" />)}</div>
                     ) : (
                         <EnterpriseDataTable
                             columns={accountColumns}
@@ -299,11 +299,11 @@ export function ChartOfAccountsPage() {
                         validate={(v) => !v.trim() ? 'Account name is required' : undefined}
                     />
                     <div>
-                        <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Account type</label>
+                        <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Account type</label>
                         <select
                             value={formData.accountType}
                             onChange={(e) => setFormData({ ...formData, accountType: e.target.value as AccountType })}
-                            className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-emerald-500/50"
+                            className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-emerald-500/50"
                         >
                             {Object.entries(accountTypeLabels).map(([value, label]) => (
                                 <option key={value} value={value}>{label}</option>
@@ -311,11 +311,11 @@ export function ChartOfAccountsPage() {
                         </select>
                     </div>
                     <div>
-                        <label className="block type-caption font-bold text-slate-400 uppercase tracking-wider mb-1">Normal balance</label>
+                        <label className="block type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1">Normal balance</label>
                         <select
                             value={formData.normalBalance}
                             onChange={(e) => setFormData({ ...formData, normalBalance: e.target.value as 'debit' | 'credit' })}
-                            className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-emerald-500/50"
+                            className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-white/5 rounded-xl type-caption text-white focus:outline-none focus:border-emerald-500/50"
                         >
                             <option value="debit">Debit</option>
                             <option value="credit">Credit</option>
@@ -331,7 +331,7 @@ export function ChartOfAccountsPage() {
                         <button
                             type="button"
                             onClick={closeDrawer}
-                            className="flex-1 min-h-11 rounded-xl border border-white/10 text-slate-300 type-ui font-semibold"
+                            className="flex-1 min-h-11 rounded-xl border border-white/10 text-[var(--ws-text-secondary)] type-ui font-semibold"
                         >
                             Cancel
                         </button>
@@ -350,7 +350,7 @@ export function ChartOfAccountsPage() {
                                 handleDelete(editingAccount.id);
                                 closeDrawer();
                             }}
-                            className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-red-500/10"
+                            className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 type-ui font-semibold hover:bg-[var(--error-500)]/10"
                         >
                             Delete account
                         </button>

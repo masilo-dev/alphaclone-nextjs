@@ -41,10 +41,10 @@ import { canApproveHighRisk } from '@/lib/bonnie/bonnieRiskPolicy';
 // ── Risk badge ────────────────────────────────────────────────────────────────
 
 const RISK_STYLES: Record<string, string> = {
-  critical: 'border-rose-500/40 bg-rose-500/10 text-rose-300',
+  critical: 'border-rose-500/40 bg-rose-500/10 text-[var(--error-text,var(--error-500))]',
   high: 'border-orange-500/40 bg-orange-500/10 text-orange-300',
   medium: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  low: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+  low: 'border-emerald-500/40 bg-emerald-500/10 text-[var(--success-text,var(--success-500))]',
 };
 
 const RISK_ICONS: Record<string, React.ReactNode> = {
@@ -88,7 +88,7 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
 
   if (!editableKeys.length) {
     return (
-      <p className="type-card-description text-slate-500 italic">No editable fields in this payload.</p>
+      <p className="type-card-description text-[var(--ws-text-muted)] italic">No editable fields in this payload.</p>
     );
   }
 
@@ -96,7 +96,7 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
     <div className="space-y-2">
       {editableKeys.map((key) => (
         <div key={key}>
-          <label className="mb-0.5 block type-caption font-bold uppercase tracking-widest text-slate-500">
+          <label className="mb-0.5 block type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)]">
             {key}
           </label>
           {typeof localArgs[key] === 'string' && String(localArgs[key]).length > 80 ? (
@@ -104,14 +104,14 @@ function InlineArgEditor({ args, onChange }: InlineEditorProps) {
               rows={3}
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 type-ui text-slate-200 focus:border-teal-500 focus:outline-none"
+              className="w-full resize-none rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2.5 py-1.5 type-ui text-[var(--ws-text-secondary)] focus:border-teal-500 focus:outline-none"
             />
           ) : (
             <input
               type="text"
               value={String(localArgs[key])}
               onChange={(e) => handleFieldChange(key, e.target.value)}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 type-ui text-slate-200 focus:border-teal-500 focus:outline-none"
+              className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-2.5 py-1.5 type-ui text-[var(--ws-text-secondary)] focus:border-teal-500 focus:outline-none"
             />
           )}
         </div>
@@ -133,13 +133,13 @@ function EditHistoryTimeline({ history }: { history: EditHistoryEntry[] }) {
   if (!history.length) return null;
   return (
     <div className="mt-3 space-y-2">
-      <p className="type-caption font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+      <p className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] flex items-center gap-1">
         <History className="h-3 w-3" /> Edit history ({history.length})
       </p>
-      <div className="space-y-1.5 border-l-2 border-slate-800 pl-3">
+      <div className="space-y-1.5 border-l-2 border-[var(--ws-border)] pl-3">
         {history.map((entry, i) => (
-          <div key={i} className="type-ui text-slate-500">
-            <span className="text-slate-400 font-semibold">
+          <div key={i} className="type-ui text-[var(--ws-text-muted)]">
+            <span className="text-[var(--ws-text-muted)] font-semibold">
               {entry.action ? entry.action.replace(/_/g, ' ') : 'Edited'}
             </span>{' '}
             · {new Date(entry.timestamp).toLocaleTimeString()}
@@ -213,7 +213,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="rounded-lg border border-white/10 bg-slate-900 overflow-hidden"
+      className="rounded-lg border border-white/10 bg-[var(--ws-panel)] overflow-hidden"
     >
       {/* Card header */}
       <div className="flex items-start gap-3 px-4 py-3">
@@ -230,13 +230,13 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             {approval.toolName && (
-              <span className="rounded bg-slate-800 px-2 py-0.5 font-mono type-ui text-slate-300 border border-slate-700/60">
+              <span className="rounded bg-[var(--ws-surface-secondary)] px-2 py-0.5 font-mono type-ui text-[var(--ws-text-secondary)] border border-[var(--ws-border)]/60">
                 {approval.toolName}
               </span>
             )}
             <RiskBadge risk={approval.riskLevel} />
             {hasEdits && (
-              <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-teal-300">
+              <span className="rounded-full border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 type-ui font-bold text-[var(--brand-blue-300)]">
                 Edited
               </span>
             )}
@@ -253,24 +253,24 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           </div>
 
           {approval.reason && (
-            <p className="mt-1 type-card-description text-slate-300 leading-snug">
+            <p className="mt-1 type-card-description text-[var(--ws-text-secondary)] leading-snug">
               {approval.reason}
             </p>
           )}
 
-          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-slate-950/50 p-2.5 type-ui text-slate-400">
+          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-[var(--ws-canvas)]/50 p-2.5 type-ui text-[var(--ws-text-muted)]">
             <p>
-              <span className="font-bold uppercase tracking-wider text-slate-500">What:</span>{' '}
+              <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">What:</span>{' '}
               {approval.toolName
                 ? `Bonnie wants to run ${approval.toolName.replace(/_/g, ' ')}`
                 : 'Bonnie wants to take an action in your workspace'}
             </p>
             <p>
-              <span className="font-bold uppercase tracking-wider text-slate-500">Why:</span>{' '}
+              <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Why:</span>{' '}
               {approval.reason || 'This needs your OK before it can change customer or money data.'}
             </p>
             <p>
-              <span className="font-bold uppercase tracking-wider text-slate-500">Impact:</span>{' '}
+              <span className="font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Impact:</span>{' '}
               {isHighRisk
                 ? 'High impact — may contact customers, move money, or change critical records.'
                 : 'Updates workspace records; review the details before approving.'}
@@ -284,15 +284,15 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
           </div>
 
           {target && (
-            <p className="mt-1 flex items-center gap-1 type-card-description text-slate-500">
+            <p className="mt-1 flex items-center gap-1 type-card-description text-[var(--ws-text-muted)]">
               <Wrench className="h-3 w-3 shrink-0" />
               Target:&nbsp;
-              <span className="font-mono text-slate-400 truncate">{target}</span>
+              <span className="font-mono text-[var(--ws-text-muted)] truncate">{target}</span>
             </p>
           )}
 
           {isHighRisk && !canApprove && (
-            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-1.5 type-ui text-rose-300">
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-2.5 py-1.5 type-ui text-[var(--error-text,var(--error-500))]">
               <Lock className="h-3 w-3 shrink-0" />
               Only workspace admins can approve high-risk actions. Contact your workspace owner.
             </div>
@@ -303,7 +303,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="mt-1 shrink-0 text-slate-600 hover:text-slate-300 transition-colors"
+          className="mt-1 shrink-0 text-slate-600 hover:text-[var(--ws-text-secondary)] transition-colors"
         >
           {expanded
             ? <ChevronDown className="h-4 w-4" />
@@ -321,24 +321,24 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-slate-800 px-4 py-3 space-y-3">
+            <div className="border-t border-[var(--ws-border)] px-4 py-3 space-y-3">
               {/* Draft preview or raw payload */}
               {!editing && draft && (
                 <div>
-                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-slate-500">
+                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                     Content preview
                   </p>
-                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 type-ui text-slate-300 whitespace-pre-wrap custom-scrollbar">
+                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-[var(--ws-border)]/60 bg-[var(--ws-canvas)] p-3 type-ui text-[var(--ws-text-secondary)] whitespace-pre-wrap custom-scrollbar">
                     {draft}
                   </pre>
                 </div>
               )}
               {!editing && !draft && approval.payload && Object.keys(approval.payload).length > 0 && (
                 <div>
-                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-slate-500">
+                  <p className="mb-1 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">
                     Raw payload
                   </p>
-                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-slate-700/60 bg-slate-950 p-3 type-ui text-slate-400 custom-scrollbar">
+                  <pre className="max-h-48 overflow-y-auto rounded-xl border border-[var(--ws-border)]/60 bg-[var(--ws-canvas)] p-3 type-ui text-[var(--ws-text-muted)] custom-scrollbar">
                     {JSON.stringify(approval.payload, null, 2)}
                   </pre>
                 </div>
@@ -347,7 +347,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
               {/* Inline editor */}
               {editing && (
                 <div>
-                  <p className="mb-2 type-caption font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                  <p className="mb-2 type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)] flex items-center gap-1">
                     <Pencil className="h-3 w-3" /> Edit arguments
                   </p>
                   <InlineArgEditor
@@ -362,7 +362,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
                 <button
                   type="button"
                   onClick={() => setEditing((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 type-ui text-slate-300 hover:border-teal-500/40 hover:text-teal-300 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]/60 px-3 py-1.5 type-ui text-[var(--ws-text-secondary)] hover:border-teal-500/40 hover:text-[var(--brand-blue-300)] transition-colors"
                 >
                   <Pencil className="h-3 w-3" />
                   {editing ? 'Preview' : 'Edit arguments'}
@@ -377,14 +377,14 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       </AnimatePresence>
 
       {/* Action bar */}
-      <div className="flex items-center gap-2 border-t border-slate-800 bg-slate-950/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-t border-[var(--ws-border)] bg-[var(--ws-canvas)]/50 px-4 py-2.5">
         {confirming === 'approve' && (
-          <p className="mr-auto type-card-description text-emerald-300 font-semibold animate-pulse">
+          <p className="mr-auto type-card-description text-[var(--success-text,var(--success-500))] font-semibold animate-pulse">
             Click again to confirm approval →
           </p>
         )}
         {confirming === 'reject' && (
-          <p className="mr-auto type-card-description text-rose-300 font-semibold animate-pulse">
+          <p className="mr-auto type-card-description text-[var(--error-text,var(--error-500))] font-semibold animate-pulse">
             Click again to confirm rejection →
           </p>
         )}
@@ -420,8 +420,8 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
             confirming === 'approve'
               ? 'bg-emerald-600 text-white'
               : !canApprove
-                ? 'border border-slate-700 text-slate-600 cursor-not-allowed'
-                : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20'
+                ? 'border border-[var(--ws-border)] text-slate-600 cursor-not-allowed'
+                : 'bg-emerald-500/10 border border-emerald-500/30 text-[var(--success-text,var(--success-500))] hover:bg-emerald-500/20'
           }`}
         >
           {isProcessing && confirming === 'approve'
@@ -506,7 +506,7 @@ export default function ApprovalCenter() {
               </span>
             )}
           </div>
-          <p className="type-card-description text-slate-500 ml-10">
+          <p className="type-card-description text-[var(--ws-text-muted)] ml-10">
             Review and authorise Bonnie&apos;s pending actions. High-risk actions require admin approval.
           </p>
         </div>
@@ -515,7 +515,7 @@ export default function ApprovalCenter() {
           type="button"
           onClick={() => refresh()}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 type-caption text-slate-400 hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] px-3 py-2 type-caption text-[var(--ws-text-muted)] hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -544,10 +544,10 @@ export default function ApprovalCenter() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center justify-center py-24 text-center"
         >
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-slate-800 bg-slate-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)]">
             <Inbox className="h-7 w-7 text-slate-600" />
           </div>
-          <h3 className="type-ui font-bold text-slate-400">No pending approvals</h3>
+          <h3 className="type-ui font-bold text-[var(--ws-text-muted)]">No pending approvals</h3>
           <p className="mt-1 type-card-description text-slate-600 max-w-xs">
             Bonnie will ask for your sign-off here whenever an action carries medium-or-higher risk.
             High-risk actions require a workspace admin.

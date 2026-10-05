@@ -29,7 +29,7 @@ export function stampSignatureCanvas(
   { fullName, date = new Date(), locale }: SignatureStampOptions,
 ): void {
   ctx.font = '14px Arial';
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = 'var(--ws-text-muted)';
   ctx.textAlign = 'right';
   ctx.fillText(`Signed by: ${fullName}`, width - 10, height - 10);
   ctx.textAlign = 'left';
@@ -44,7 +44,7 @@ export async function stampSavedSignature(cleanDataUrl: string, options: Signatu
   canvas.height = img.naturalHeight || img.height || 240;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas is not available in this browser');
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = 'var(--color-white)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   stampSignatureCanvas(ctx, canvas.width, canvas.height, options);

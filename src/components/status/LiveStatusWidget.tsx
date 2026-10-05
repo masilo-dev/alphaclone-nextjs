@@ -62,10 +62,10 @@ export default function LiveStatusWidget({ initialStatus, initialLatency, initia
   }, [fetchLiveStatus]);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-slate-900/60 p-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/10 bg-[var(--ws-panel)]/60 p-4">
       <div>
-        <p role="status" className="type-ui font-semibold text-slate-200">Live check: {STATUS_LABELS[status]}</p>
-        <p className="mt-1 type-caption text-slate-400">
+        <p role="status" className="type-ui font-semibold text-[var(--ws-text-secondary)]">Live check: {STATUS_LABELS[status]}</p>
+        <p className="mt-1 type-caption text-[var(--ws-text-muted)]">
           {status === 'unknown' ? 'Health could not be verified.' : `API responded in ${latency ?? '—'}ms.`}
           {' '}Last check attempt: <time dateTime={lastChecked}>{new Date(lastChecked).toLocaleTimeString()}</time>.
           {' '}Refreshes in {countdown}s.
@@ -75,7 +75,7 @@ export default function LiveStatusWidget({ initialStatus, initialLatency, initia
         type="button"
         onClick={() => void fetchLiveStatus()}
         disabled={isRefreshing}
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/10 bg-slate-800 px-4 type-ui font-medium text-slate-200 hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400 disabled:opacity-50"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/10 bg-[var(--ws-surface-secondary)] px-4 type-ui font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-surface-tertiary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400 disabled:opacity-50"
       >
         <RefreshCw aria-hidden="true" className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
         {isRefreshing ? 'Checking…' : 'Refresh status'}

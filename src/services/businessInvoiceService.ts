@@ -336,16 +336,16 @@ export const businessInvoiceService = {
 
         // Design Tokens - Refined for "Premium" look
         const colors = {
-            primary: '#1e293b',    // Slate-800
-            accent: metadata?.accentColor || '#0ea5e9',     // Sky-500
-            success: '#10b981',    // Emerald-500
-            danger: '#ef4444',     // Red-500
-            dark: '#0f172a',       // Slate-900
-            light: '#f8fafc',      // Slate-50
-            border: '#e2e8f0',     // Slate-200
-            text: '#475569',       // Slate-600
-            white: '#ffffff',
-            muted: '#94a3b8'       // Slate-400
+            primary: 'var(--ws-panel)',    // Slate-800
+            accent: metadata?.accentColor || 'var(--info-500)',     // Sky-500
+            success: 'var(--success-500)',    // Emerald-500
+            danger: 'var(--error-500)',     // Red-500
+            dark: 'var(--ws-canvas)',       // Slate-900
+            light: 'var(--ws-surface-secondary)',      // Slate-50
+            border: 'var(--ws-border)',     // Slate-200
+            text: 'var(--ws-text-muted)',       // Slate-600
+            white: 'var(--color-white)',
+            muted: 'var(--ws-text-secondary)'       // Slate-400
         };
 
         const margin = 20;

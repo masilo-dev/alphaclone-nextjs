@@ -50,7 +50,7 @@ export function QuoteVersionPanel({ quoteId, userId }: QuoteVersionPanelProps) {
             <button
               type="button"
               onClick={() => handleRestore(v.version)}
-              className="text-teal-400 hover:text-teal-300 flex items-center gap-1 type-ui"
+              className="text-teal-400 hover:text-[var(--brand-blue-300)] flex items-center gap-1 type-ui"
             >
               <RotateCcw className="w-3 h-3" aria-hidden="true" />
               Restore

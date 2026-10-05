@@ -221,12 +221,12 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
         handleExport('xlsx', 'revenue');
     };
 
-    const COLORS = ['#adebb3', '#00f0ff', '#7f00ff', '#ffb347', '#f87171'];
+    const COLORS = ['var(--success-500)', 'var(--brand-blue-400)', 'var(--brand-violet-500)', 'var(--warning-500)', 'var(--error-500)'];
 
     if (loading) {
         return (
             <div className="ac-scroll-full ac-enterprise-module min-h-0 flex items-center justify-center py-12">
-                <div className="text-[#c0c0c0]">Loading reports...</div>
+                <div className="text-[var(--border-default)]">Loading reports...</div>
             </div>
         );
     }
@@ -311,15 +311,15 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h3 className="text-lg font-bold flex items-center gap-2">
-                            <BrainCircuit className="w-5 h-5 text-[#adebb3]" />
+                            <BrainCircuit className="w-5 h-5 text-[var(--success-500)]" />
                             Intelligence Trajectory
                         </h3>
-                        <p className="type-card-description text-[#c0c0c0]">Module-level trend and drilldown actions for operators</p>
+                        <p className="type-card-description text-[var(--border-default)]">Module-level trend and drilldown actions for operators</p>
                     </div>
                     <select
                         value={intelligenceModule}
                         onChange={(e) => setIntelligenceModule(e.target.value)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[#adebb3]"
+                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[var(--success-500)]"
                     >
                         <option value="overall">Overall system</option>
                         <option value="crm">CRM</option>
@@ -337,7 +337,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 bg-white/5 border border-white/5 rounded-2xl p-5">
-                        <h4 className="type-ui font-semibold text-[#e5e7eb] mb-3">Score Trend</h4>
+                        <h4 className="type-ui font-semibold text-[var(--ws-border)] mb-3">Score Trend</h4>
                         <StandardLineChart
                             data={intelligencePoints.map((point) => ({
                                 ...point,
@@ -347,7 +347,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             xKey="label"
                             yKey="value"
                             name="Score"
-                            color="#adebb3"
+                            color="var(--success-500)"
                             height={220}
                         />
                     </div>
@@ -359,21 +359,21 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         {intelligenceSummary && (
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-3 space-y-3">
                                 <div>
-                            <div className="type-caption text-[#adebb3] font-semibold mb-1">Top Actions</div>
+                            <div className="type-caption text-[var(--success-500)] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
                                         {(Array.isArray(intelligenceSummary.topActions) ? intelligenceSummary.topActions : []).slice(0, 2).map((item) => (
-                                            <li key={item} className="type-caption text-[#e5e7eb] line-clamp-2">{item}</li>
+                                            <li key={item} className="type-caption text-[var(--ws-border)] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
                                 </div>
                                 <div>
-                            <div className="type-caption text-[#facc15] font-semibold mb-1 flex items-center gap-1">
+                            <div className="type-caption text-[var(--warning-500)] font-semibold mb-1 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" />
                                         Top Risks
                                     </div>
                                     <ul className="space-y-1">
                                         {(Array.isArray(intelligenceSummary.systemicRisks) ? intelligenceSummary.systemicRisks : []).slice(0, 2).map((item) => (
-                                            <li key={item} className="type-caption text-[#e5e7eb] line-clamp-2">{item}</li>
+                                            <li key={item} className="type-caption text-[var(--ws-border)] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -387,27 +387,27 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Revenue & Expenses</h3>
+                    <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Revenue & Expenses</h3>
                     <WrapChart height={300}>
                         <BarChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
-                            <XAxis dataKey="month" stroke="#c0c0c0" />
-                            <YAxis stroke="#c0c0c0" />
+                            <XAxis dataKey="month" stroke="var(--border-default)" />
+                            <YAxis stroke="var(--border-default)" />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
-                                labelStyle={{ color: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
-                                itemStyle={{ color: '#f5f5f5', fontSize: 'var(--type-caption-size)' }}
+                                labelStyle={{ color: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                                itemStyle={{ color: 'var(--surface-secondary)', fontSize: 'var(--type-caption-size)' }}
                             />
                             <Legend />
-                            <Bar dataKey="revenue" fill="#adebb3" name="Revenue" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="expenses" fill="#f87171" name="Expenses" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="revenue" fill="var(--success-500)" name="Revenue" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="expenses" fill="var(--error-500)" name="Expenses" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </WrapChart>
                 </div>
 
                 {/* Client Distribution */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Client Distribution</h3>
+                    <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Client Distribution</h3>
                     <StandardDonutChart
                         data={clientData.map((entry, index) => ({
                             name: entry.name,
@@ -420,25 +420,25 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 
                 {/* Project Status */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Project Status</h3>
+                    <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Project Status</h3>
                     <WrapChart height={300}>
                         <BarChart data={projectData} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
-                            <XAxis type="number" stroke="#c0c0c0" />
-                            <YAxis dataKey="name" type="category" stroke="#c0c0c0" width={100} />
+                            <XAxis type="number" stroke="var(--border-default)" />
+                            <YAxis dataKey="name" type="category" stroke="var(--border-default)" width={100} />
                             <Tooltip
                                 contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
-                                labelStyle={{ color: '#c0c0c0', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
-                                itemStyle={{ color: '#f5f5f5', fontSize: 'var(--type-caption-size)' }}
+                                labelStyle={{ color: 'var(--border-default)', fontSize: 'var(--type-caption-size)', fontWeight: 'bold' }}
+                                itemStyle={{ color: 'var(--surface-secondary)', fontSize: 'var(--type-caption-size)' }}
                             />
-                            <Bar dataKey="value" fill="#7f00ff" radius={[0, 4, 4, 0]} />
+                            <Bar dataKey="value" fill="var(--brand-violet-500)" radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </WrapChart>
                 </div>
 
                 {/* Revenue Trend */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Revenue Trend</h3>
+                    <h3 className="text-lg font-bold text-[var(--surface-secondary)] mb-4">Revenue Trend</h3>
                     <StandardLineChart
                         data={revenueData.map((d) => ({
                             ...d,
@@ -448,7 +448,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         xKey="label"
                         yKey="value"
                         name="Revenue"
-                        color="#adebb3"
+                        color="var(--success-500)"
                         valuePrefix="$"
                         height={300}
                     />

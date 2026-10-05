@@ -95,8 +95,8 @@ function TabLink({
         'inline-flex items-center gap-1.5 shrink-0 rounded-lg border px-2.5 min-h-11 type-ui font-semibold transition-colors',
         compact ? 'py-1' : 'py-1.5',
         isActive
-          ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
-          : 'border-transparent bg-white/[0.03] text-slate-400 hover:text-slate-200 hover:border-white/10'
+          ? 'border-teal-500/40 bg-teal-500/10 text-[var(--brand-blue-300)]'
+          : 'border-transparent bg-white/[0.03] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)] hover:border-white/10'
       )}
     >
       <Icon className="w-3.5 h-3.5" aria-hidden="true" />
@@ -135,8 +135,8 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
           className={cn(
             'inline-flex items-center gap-1.5 min-h-11 rounded-lg border px-2.5 py-1.5 type-ui font-semibold transition-colors',
             secondaryActive || moreOpen
-              ? 'border-teal-500/40 bg-teal-500/10 text-teal-300'
-              : 'border-transparent bg-white/[0.03] text-slate-400 hover:text-slate-200'
+              ? 'border-teal-500/40 bg-teal-500/10 text-[var(--brand-blue-300)]'
+              : 'border-transparent bg-white/[0.03] text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
           )}
         >
           <MoreHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
@@ -152,7 +152,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
             />
             <div
               role="menu"
-              className="absolute left-0 top-full ac-layer-menu mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-slate-900 p-1 shadow-lg"
+              className="absolute left-0 top-full ac-layer-menu mt-1 min-w-[180px] rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-1 shadow-lg"
             >
               {SALES_SECONDARY_TABS.map((tab) => {
                 const isActive = isSalesWorkspaceTabActive(pathname, tab.href);
@@ -165,7 +165,7 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
                     onClick={() => setMoreOpen(false)}
                     className={cn(
                       'flex items-center gap-2 min-h-11 rounded-md px-3 type-ui font-medium',
-                      isActive ? 'bg-teal-500/10 text-teal-300' : 'text-slate-300 hover:bg-white/5'
+                      isActive ? 'bg-teal-500/10 text-[var(--brand-blue-300)]' : 'text-[var(--ws-text-secondary)] hover:bg-white/5'
                     )}
                   >
                     <Icon className="w-3.5 h-3.5" aria-hidden="true" />

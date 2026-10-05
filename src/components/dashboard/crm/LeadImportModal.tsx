@@ -107,13 +107,13 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
             <div className="space-y-4">
                 <div className="flex gap-4">
                     <div className="relative flex-1">
-                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ws-text-muted)]" />
                         <input
                             type="text"
                             placeholder="Search growth leads..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-white/10 rounded-lg type-ui text-slate-300 focus:outline-none focus:border-teal-500"
+                            className="w-full pl-9 pr-4 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-lg type-ui text-[var(--ws-text-secondary)] focus:outline-none focus:border-teal-500"
                         />
                     </div>
                     <Button
@@ -132,24 +132,24 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                             <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
                         </div>
                     ) : filteredLeads.length === 0 ? (
-                        <div className="p-12 text-center text-slate-500">
+                        <div className="p-12 text-center text-[var(--ws-text-muted)]">
                             {searchTerm ? 'No leads match your search.' : 'No unlinked leads found.'}
                         </div>
                     ) : (
                         <table className="w-full min-w-[520px] text-left border-collapse">
-                            <thead className="sticky top-0 bg-slate-950 z-10 border-b border-white/5">
+                            <thead className="sticky top-0 bg-[var(--ws-canvas)] z-10 border-b border-white/5">
                                 <tr>
                                     <th className="p-4 w-10 text-center">
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.size === filteredLeads.length && filteredLeads.length > 0}
                                             onChange={toggleSelectAll}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                            className="w-4 h-4 rounded border-[var(--ws-border)] bg-[var(--ws-panel)] text-teal-500 focus:ring-teal-500"
                                         />
                                     </th>
-                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Business Name</th>
-                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Industry</th>
-                                    <th className="p-4 type-caption font-bold text-slate-400 uppercase tracking-widest">Location</th>
+                                    <th className="p-4 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Business Name</th>
+                                    <th className="p-4 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Industry</th>
+                                    <th className="p-4 type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Location</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -164,15 +164,15 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                                                 type="checkbox"
                                                 checked={selectedIds.has(lead.id)}
                                                 onChange={() => { }} // Controlled by row click
-                                                className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-teal-500"
+                                                className="w-4 h-4 rounded border-[var(--ws-border)] bg-[var(--ws-panel)] text-teal-500 focus:ring-teal-500"
                                             />
                                         </td>
                                         <td className="p-4">
                                             <div className="font-bold text-white">{lead.businessName}</div>
-                                            <div className="type-caption text-slate-500">{lead.email || 'No email'}</div>
+                                            <div className="type-caption text-[var(--ws-text-muted)]">{lead.email || 'No email'}</div>
                                         </td>
-                                        <td className="p-4 type-table-cell text-slate-400">{lead.industry || '-'}</td>
-                                        <td className="p-4 type-table-cell text-slate-400">{lead.location || '-'}</td>
+                                        <td className="p-4 type-table-cell text-[var(--ws-text-muted)]">{lead.industry || '-'}</td>
+                                        <td className="p-4 type-table-cell text-[var(--ws-text-muted)]">{lead.location || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -181,7 +181,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                    <div className="type-caption text-slate-500">
+                    <div className="type-caption text-[var(--ws-text-muted)]">
                         {selectedIds.size} leads selected for import
                     </div>
                     <div className="flex gap-3">

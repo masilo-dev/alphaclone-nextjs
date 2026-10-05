@@ -77,7 +77,7 @@ export default function CustomContextMenu({ items, children, className = '', as:
                             left: position.x,
                             zIndex: 10000,
                         }}
-                        className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1.5 min-w-[200px] overflow-hidden"
+                        className="bg-[var(--ws-panel)]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1.5 min-w-[200px] overflow-hidden"
                     >
                         {items.map((item, idx) => (
                             <button
@@ -87,7 +87,7 @@ export default function CustomContextMenu({ items, children, className = '', as:
                                     item.onClick();
                                     closeMenu();
                                 }}
-                                className={`w-full flex items-center justify-between px-3 py-2 type-ui transition-colors hover:bg-blue-600/20 group ${item.destructive ? 'text-red-400 hover:bg-red-500/10' : 'text-slate-200'
+                                className={`w-full flex items-center justify-between px-3 py-2 type-ui transition-colors hover:bg-blue-600/20 group ${item.destructive ? 'text-red-400 hover:bg-[var(--error-500)]/10' : 'text-[var(--ws-text-secondary)]'
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export default function CustomContextMenu({ items, children, className = '', as:
                                     <span>{item.label}</span>
                                 </div>
                                 {item.shortcut && (
-                                    <span className="type-caption text-slate-500 font-mono tracking-tighter">
+                                    <span className="type-caption text-[var(--ws-text-muted)] font-mono tracking-tighter">
                                         {item.shortcut}
                                     </span>
                                 )}

@@ -50,12 +50,12 @@ export function OutreachSequencePanel({
           <h4 className="type-caption font-black text-white uppercase tracking-wider flex items-center gap-2">
             <Send size={15} className="text-teal-400" /> Automated Drip Sequence Engine
           </h4>
-          <p className="type-caption text-slate-400">Multi-step Brevo email & WhatsApp outreach pipeline</p>
+          <p className="type-caption text-[var(--ws-text-muted)]">Multi-step Brevo email & WhatsApp outreach pipeline</p>
         </div>
         <button
           onClick={handleStartSequence}
           disabled={running}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg type-caption font-bold text-slate-950 bg-[var(--brand-blue-400)] hover:bg-teal-300 transition-colors disabled:opacity-50"
         >
           <Play size={12} /> {running ? 'Enrolled' : 'Start Sequence'}
         </button>
@@ -63,7 +63,7 @@ export function OutreachSequencePanel({
 
       <div className="space-y-3">
         <div>
-          <label className="block type-caption font-bold uppercase tracking-wider text-slate-400 mb-1">
+          <label className="block type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
             Select Sequence Template
           </label>
           <select
@@ -73,13 +73,13 @@ export function OutreachSequencePanel({
               setActiveStepIndex(0);
               setRunning(false);
             }}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
+            className="w-full px-3 py-2 bg-[var(--ws-panel)] border border-white/10 rounded-xl text-white type-caption font-bold outline-none focus:border-teal-500/50"
           >
             {sequences.map(s => (
               <option key={s.id} value={s.id}>{s.name} - ({s.steps.length} Steps)</option>
             ))}
           </select>
-          <p className="type-card-description text-slate-400 mt-1">{currentSeq.description}</p>
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-1">{currentSeq.description}</p>
         </div>
 
         <div className="relative pl-6 space-y-3 pt-2">
@@ -94,14 +94,14 @@ export function OutreachSequencePanel({
                     isCompleted
                       ? 'bg-emerald-500 text-slate-950'
                       : isCurrent
-                      ? 'bg-teal-400 text-slate-950 ring-4 ring-teal-400/20'
-                      : 'bg-slate-800 text-slate-400 border border-white/10'
+                      ? 'bg-[var(--brand-blue-400)] text-slate-950 ring-4 ring-teal-400/20'
+                      : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-white/10'
                   }`}
                 >
                   {isCompleted ? <CheckCircle2 size={12} /> : idx + 1}
                 </div>
                 <div className={`flex-1 rounded-xl p-3 border transition-all ${
-                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-slate-900/50 border-white/5'
+                  isCurrent ? 'bg-teal-500/10 border-teal-500/30' : 'bg-[var(--ws-panel)]/50 border-white/5'
                 }`}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -112,15 +112,15 @@ export function OutreachSequencePanel({
                       )}
                       <span className="type-caption font-bold text-white">{step.title}</span>
                     </div>
-                    <span className="type-ui font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">
+                    <span className="type-ui font-bold text-[var(--ws-text-muted)] bg-white/5 px-2 py-0.5 rounded-full">
                       Day {step.day}
                     </span>
                   </div>
-                  <p className="type-card-description text-slate-400 mt-1 italic">"{step.template}"</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)] mt-1 italic">"{step.template}"</p>
                   <div className="mt-2 text-right">
                     <button
                       onClick={() => handleExecuteStep(idx)}
-                      className="inline-flex items-center gap-1 type-ui font-bold text-teal-400 hover:text-teal-300 transition-colors"
+                      className="inline-flex items-center gap-1 type-ui font-bold text-teal-400 hover:text-[var(--brand-blue-300)] transition-colors"
                     >
                       {step.channel === 'whatsapp' ? 'Open WhatsApp' : 'Dispatch Now'} <ExternalLink size={10} />
                     </button>

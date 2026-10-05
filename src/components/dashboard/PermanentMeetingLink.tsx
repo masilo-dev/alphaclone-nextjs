@@ -129,7 +129,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                     <AlertCircle className="w-6 h-6 text-red-400 shrink-0 mt-1" />
                     <div className="flex-1">
                         <h3 className="text-lg font-bold text-white mb-2">Failed to Load Room</h3>
-                        <p className="type-card-description text-red-300 mb-4">{roomData.error}</p>
+                        <p className="type-card-description text-[var(--error-text,var(--error-500))] mb-4">{roomData.error}</p>
                         <Button onClick={initializeRoom} variant="outline" size="sm">
                             Retry
                         </Button>

@@ -80,7 +80,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative w-full max-w-2xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+                className="relative w-full max-w-2xl bg-[var(--ws-panel)] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
                 {/* Header */}
                 <div className="p-6 border-b border-white/5 bg-gradient-to-r from-teal-600/10 to-teal-600/10 flex items-center justify-between shadow-sm">
@@ -133,7 +133,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                             <button 
                                 key={lead.id}
                                 onClick={() => toggleSelection(lead.email as string)}
-                                className={`w-full text-left bg-slate-950/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-white/5 hover:border-teal-500/30 hover:bg-teal-500/5'}`}
+                                className={`w-full text-left bg-[var(--ws-canvas)]/40 border rounded-2xl p-4 transition-all group relative overflow-hidden flex items-center justify-between ${selectedEmails.has(lead.email as string) ? 'border-teal-500 bg-teal-500/5' : 'border-white/5 hover:border-teal-500/30 hover:bg-teal-500/5'}`}
                             >
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-white text-base group-hover:text-teal-200 transition-colors">{lead.businessName}</h3>
@@ -164,7 +164,7 @@ export default function CRMContactPickerModal({ isOpen, onClose, onSelectContact
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-6 border-t border-white/5 bg-slate-950/50 flex items-center justify-between">
+                <div className="p-6 border-t border-white/5 bg-[var(--ws-canvas)]/50 flex items-center justify-between">
                     <p className="type-card-description font-bold text-gray-500">
                         {selectedEmails.size} recipients selected
                     </p>

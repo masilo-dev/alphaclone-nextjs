@@ -39,7 +39,7 @@ export default function PromotionMonthBanner({
         </div>
         <Link
           href={`${TRIAL_HREF}&plan=enterprise`}
-          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-[#0878f9] hover:bg-[#075fc7] px-4 py-2.5 type-ui font-semibold text-white transition-colors shadow-sm"
+          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-[var(--marketing-link)] hover:bg-[var(--marketing-link-hover)] px-4 py-2.5 type-ui font-semibold text-white transition-colors shadow-sm"
         >
           Explore {PREMIUM_UNLIMITED.planName}
         </Link>

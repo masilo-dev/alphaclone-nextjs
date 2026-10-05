@@ -38,48 +38,48 @@ export default function FaqPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 space-y-14">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold font-marketing-heading text-[#07152f] mb-3 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-3 tracking-tight">
             Frequently asked questions
           </h1>
-          <p className="text-[#52627b] text-base sm:text-lg leading-relaxed">
+          <p className="text-[var(--marketing-muted)] text-base sm:text-lg leading-relaxed">
             Start with why teams switch — then drill into features and comparisons if you are evaluating tools.
           </p>
         </div>
 
         <section id="outcomes" className="scroll-mt-24">
-          <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
+          <h2 className="text-xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-1.5 tracking-tight">
             Why teams use AlphaClone
           </h2>
-          <p className="type-card-description text-[#76849a] mb-6">
+          <p className="type-card-description text-[var(--marketing-muted-strong)] mb-6">
             Outcomes, fit, setup, and trust — the questions buyers ask first.
           </p>
           <MarketingFaqAccordion items={FAQ_BUYER_ITEMS} />
-          <p className="mt-6 type-card-description text-[#52627b]">
+          <p className="mt-6 type-card-description text-[var(--marketing-muted)]">
             See workflow stories by team type on{' '}
-            <Link href="/results" className="text-[#075fc7] hover:text-[#0878f9] font-semibold underline underline-offset-2">
+            <Link href="/results" className="text-[var(--marketing-link-hover)] hover:text-[var(--marketing-link)] font-semibold underline underline-offset-2">
               /results
             </Link>
             .
           </p>
         </section>
 
-        <section id="features" className="scroll-mt-24 pt-8 border-t border-[#dfe6ef]">
-          <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
+        <section id="features" className="scroll-mt-24 pt-8 border-t border-[var(--marketing-border)]">
+          <h2 className="text-xl font-bold font-marketing-heading text-[var(--marketing-ink)] mb-1.5 tracking-tight">
             Features &amp; comparisons
           </h2>
-          <p className="type-card-description text-[#76849a] mb-6">
+          <p className="type-card-description text-[var(--marketing-muted-strong)] mb-6">
             Integrations, modules, and how AlphaClone maps to tools you may already use.
           </p>
           <MarketingFaqAccordion items={FAQ_PRODUCT_ITEMS} />
         </section>
 
-        <div className="rounded-2xl border border-[#dfe6ef] bg-[#f7f9fc] p-8 text-center">
-          <p className="type-card-description text-[#33445e] mb-5 font-medium">
+        <div className="rounded-2xl border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] p-8 text-center">
+          <p className="type-card-description text-[var(--marketing-text-secondary)] mb-5 font-medium">
             Still deciding? Review the plans or book a demo using a real lead-to-invoice workflow.
           </p>
           <Link
             href="/auth/login?register=true&type=business&plan=starter"
-            className="inline-flex px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm type-ui"
+            className="inline-flex px-6 py-3 rounded-xl bg-[var(--marketing-ink)] hover:bg-[var(--brand-violet-700)] text-white font-semibold transition-colors shadow-sm type-ui"
           >
             Get started
           </Link>

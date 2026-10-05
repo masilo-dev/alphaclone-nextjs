@@ -37,7 +37,7 @@ export default function PublicBusinessProjectPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-teal-400">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center text-teal-400">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="animate-pulse">Loading project status...</p>
@@ -48,25 +48,25 @@ export default function PublicBusinessProjectPage() {
 
     if (error || !project) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-400 p-6">
+            <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center text-red-400 p-6">
                 <div className="text-center max-w-md">
                     <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-                    <p className="text-slate-400 mb-8">This project information is not public or the link has expired. Please contact your project manager for access.</p>
-                    <a href="/" className="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white transition-all">Go to Homepage</a>
+                    <p className="text-[var(--ws-text-muted)] mb-8">This project information is not public or the link has expired. Please contact your project manager for access.</p>
+                    <a href="/" className="px-6 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] rounded-lg text-white transition-all">Go to Homepage</a>
                 </div>
             </div>
         );
     }
 
     const statusColors: any = {
-        Active: 'text-teal-400 bg-teal-400/10 border-teal-500/20',
+        Active: 'text-teal-400 bg-[var(--brand-blue-400)]/10 border-teal-500/20',
         Pending: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
         Completed: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
         Declined: 'text-red-400 bg-red-400/10 border-red-400/20'
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12 selection:bg-teal-500/30">
+        <div className="min-h-screen bg-[var(--ws-canvas)] text-white p-6 md:p-12 selection:bg-teal-500/30">
             {/* Background Glow */}
             <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-screen pointer-events-none overflow-hidden">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full"></div>
@@ -83,7 +83,7 @@ export default function PublicBusinessProjectPage() {
                     <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-500 break-words">
                         {project.name}
                     </h1>
-                    <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400">
+                    <div className="flex flex-wrap items-center justify-center gap-6 text-[var(--ws-text-muted)]">
                         <div className="flex items-center gap-2">
                             <Briefcase className="w-4 h-4" />
                             <span>Business Project</span>
@@ -98,7 +98,7 @@ export default function PublicBusinessProjectPage() {
                 </div>
 
                 {/* Progress Visualizer */}
-                <Card className="p-5 sm:p-8 md:p-12 border-slate-800 bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden group">
+                <Card className="p-5 sm:p-8 md:p-12 border-[var(--ws-border)] bg-[var(--ws-panel)]/40 backdrop-blur-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                         <Briefcase className="w-32 h-32" />
                     </div>
@@ -107,15 +107,15 @@ export default function PublicBusinessProjectPage() {
                         {/* Big Percent */}
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                             <div className="text-center md:text-left">
-                                <p className="text-slate-500 type-caption font-medium uppercase tracking-widest mb-2">Overall Completion</p>
+                                <p className="text-[var(--ws-text-muted)] type-caption font-medium uppercase tracking-widest mb-2">Overall Completion</p>
                                 <div className="text-6xl sm:text-8xl font-black text-white flex items-baseline">
                                     {project.progress}
                                     <span className="text-teal-500 text-3xl sm:text-4xl ml-2">%</span>
                                 </div>
                             </div>
 
-                            <div className="w-full sm:w-48 bg-slate-800/50 rounded-2xl p-6 border border-white/5 text-center">
-                                <p className="text-slate-500 type-caption uppercase mb-2">Current Phase</p>
+                            <div className="w-full sm:w-48 bg-[var(--ws-surface-secondary)]/50 rounded-2xl p-6 border border-white/5 text-center">
+                                <p className="text-[var(--ws-text-muted)] type-caption uppercase mb-2">Current Phase</p>
                                 <p className={`text-lg font-bold capitalize ${statusColors[project.status].split(' ')[0]}`}>
                                     {project.status.replace('_', ' ')}
                                 </p>
@@ -124,7 +124,7 @@ export default function PublicBusinessProjectPage() {
 
                         {/* Progress Bar */}
                         <div className="space-y-4">
-                            <div className="h-6 bg-slate-950/50 border border-white/5 rounded-full p-1 shadow-inner relative overflow-hidden">
+                            <div className="h-6 bg-[var(--ws-canvas)]/50 border border-white/5 rounded-full p-1 shadow-inner relative overflow-hidden">
                                 <div
                                     className="h-full rounded-full bg-gradient-to-r from-teal-500 via-cyan-400 to-teal-400 transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(20,184,166,0.3)]"
                                     style={{ width: `${project.progress}%` }}
@@ -137,8 +137,8 @@ export default function PublicBusinessProjectPage() {
                         {/* Description */}
                         {project.description && (
                             <div className="pt-8 border-t border-white/5">
-                                <h3 className="type-caption font-semibold text-slate-500 uppercase tracking-widest mb-4">Project Brief</h3>
-                                <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
+                                <h3 className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Project Brief</h3>
+                                <p className="text-lg text-[var(--ws-text-secondary)] leading-relaxed max-w-2xl">
                                     {project.description}
                                 </p>
                             </div>
@@ -149,9 +149,9 @@ export default function PublicBusinessProjectPage() {
                 {/* Footer Section */}
                 <div className="text-center space-y-8 pt-12">
                     <div className="flex items-center justify-center gap-3">
-                        <div className="h-px w-12 bg-slate-800"></div>
+                        <div className="h-px w-12 bg-[var(--ws-surface-secondary)]"></div>
                         <p className="text-slate-600 font-mono type-card-description">SECURE UPDATES POWERED BY ALPHACLONE</p>
-                        <div className="h-px w-12 bg-slate-800"></div>
+                        <div className="h-px w-12 bg-[var(--ws-surface-secondary)]"></div>
                     </div>
 
                     <button
@@ -162,7 +162,7 @@ export default function PublicBusinessProjectPage() {
                         <div className="absolute inset-x-0 bottom-0 h-0 group-hover:h-full bg-teal-500 transition-all duration-300"></div>
                     </button>
 
-                    <p className="text-slate-500 type-card-description">
+                    <p className="text-[var(--ws-text-muted)] type-card-description">
                         &copy; {new Date().getFullYear()} AlphaClone Systems. All systems operational.
                     </p>
                 </div>

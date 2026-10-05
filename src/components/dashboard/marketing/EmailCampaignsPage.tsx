@@ -65,15 +65,15 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
                 AlphaClone keeps delivery safeguards in place while showing only what you need at each step. Your campaign stays a draft until you review and choose to send or schedule it.
               </p>
             </div>
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] px-3 py-2 type-caption text-[var(--ws-text-tertiary)]">
-              <CheckCircle2 className="h-4 w-4 text-[var(--success-text,#6FE0AD)]" aria-hidden="true" />
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,var(--ws-canvas))] px-3 py-2 type-caption text-[var(--ws-text-tertiary)]">
+              <CheckCircle2 className="h-4 w-4 text-[var(--success-text)]" aria-hidden="true" />
               You can go back without losing your draft.
             </p>
           </div>
 
           <ol className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {CAMPAIGN_STEPS.map(({ number, title, description, Icon }) => (
-              <li key={number} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] p-4 transition-colors hover:border-[var(--ac-accent)]/50">
+              <li key={number} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,var(--ws-canvas))] p-4 transition-colors hover:border-[var(--ac-accent)]/50">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ac-accent-muted)] type-caption font-semibold text-[var(--ac-accent)]">{number}</span>
                   <Icon className="ml-auto h-4 w-4 text-[var(--ac-accent)]" aria-hidden="true" />

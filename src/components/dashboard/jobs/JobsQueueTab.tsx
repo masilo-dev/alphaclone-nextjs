@@ -143,7 +143,7 @@ export default function JobsQueueTab() {
     >
       <div className="ac-scroll-full pb-24">
         {loading ? (
-          <p className="p-6 type-card-description text-slate-500">Loading queue…</p>
+          <p className="p-6 type-card-description text-[var(--ws-text-muted)]">Loading queue…</p>
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Clock}

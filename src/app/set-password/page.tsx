@@ -151,7 +151,7 @@ function SetPasswordContent() {
                                         className={`h-1.5 rounded-full transition-colors ${
                                             on
                                                 ? i < 2
-                                                    ? 'bg-amber-400'
+                                                    ? 'bg-[var(--warning-500)]'
                                                     : 'bg-emerald-500'
                                                 : 'bg-[color:var(--border-strong)]'
                                         }`}

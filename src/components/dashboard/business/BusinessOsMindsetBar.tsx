@@ -15,7 +15,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
     return (
         <aside
             aria-label="Business operating guidance"
-            className={`rounded-xl border border-slate-800/80 bg-slate-900/70 shrink-0 ${
+            className={`rounded-xl border border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/70 shrink-0 ${
                 compact ? 'px-3 py-2.5 mb-3' : 'px-4 py-3 mb-4 md:mb-6'
             }`}
         >
@@ -26,19 +26,19 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                     <Route className={`text-violet-400 ${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <p className="type-caption font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    <p className="type-caption font-bold uppercase tracking-wider text-[var(--ws-text-muted)] mb-1">
                         Business OS mindset
                     </p>
                     <p
-                        className={`text-slate-200 font-medium leading-snug ${compact ? 'type-caption' : 'type-ui'}`}
+                        className={`text-[var(--ws-text-secondary)] font-medium leading-snug ${compact ? 'type-caption' : 'type-ui'}`}
                     >
                         {g.mindset}
                     </p>
                     {!compact && (
-                        <p className="type-card-description text-slate-400 mt-2 leading-relaxed">{g.outcome}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-2 leading-relaxed">{g.outcome}</p>
                     )}
                     {compact && (
-                        <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{g.outcome}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">{g.outcome}</p>
                     )}
                     <div className="flex flex-wrap gap-2 mt-2.5">
                         {g.actions.map((a) => (
@@ -46,7 +46,7 @@ export function BusinessOsMindsetBar({ activeTab, setActiveTab }: Props) {
                                 key={a.tab + a.label}
                                 type="button"
                                 onClick={() => setActiveTab(a.tab)}
-                                className="type-ui font-semibold px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/80 text-teal-400 hover:text-teal-300 hover:border-teal-500/40 transition-colors"
+                                className="type-ui font-semibold px-2.5 py-1 rounded-lg bg-[var(--ws-surface-secondary)]/80 border border-[var(--ws-border)]/80 text-teal-400 hover:text-[var(--brand-blue-300)] hover:border-teal-500/40 transition-colors"
                             >
                                 {a.label}
                             </button>

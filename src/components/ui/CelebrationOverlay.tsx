@@ -34,7 +34,7 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                         initial={{ opacity: 0, scale: 0.8, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.8, y: -20 }}
-                        className="bg-slate-900 border-2 border-teal-500 rounded-[2rem] p-8 max-w-md w-full shadow-[0_0_50px_rgba(20,184,166,0.3)] backdrop-blur-xl pointer-events-auto relative overflow-hidden"
+                        className="bg-[var(--ws-panel)] border-2 border-teal-500 rounded-[2rem] p-8 max-w-md w-full shadow-[0_0_50px_rgba(20,184,166,0.3)] backdrop-blur-xl pointer-events-auto relative overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-blue-500/10" />
                         
@@ -50,13 +50,13 @@ export const CelebrationOverlay: React.FC<CelebrationOverlayProps> = ({
                                 Achievement Unlocked
                             </p>
                             
-                            <p className="text-slate-300 text-lg font-medium">
+                            <p className="text-[var(--ws-text-secondary)] text-lg font-medium">
                                 {message}
                             </p>
                             
                             <button 
                                 onClick={onClose}
-                                className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"
+                                className="absolute top-4 right-4 text-[var(--ws-text-muted)] hover:text-white transition-colors"
                             >
                                 <X className="w-6 h-6" />
                             </button>

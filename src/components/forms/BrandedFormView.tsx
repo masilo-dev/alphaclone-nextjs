@@ -33,7 +33,7 @@ function buildSchema(fields: FormField[]) {
 }
 
 export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) {
-  const accent = tenant.brandColor || '#14b8a6';
+  const accent = tenant.brandColor || 'var(--brand-blue-500)';
   const fields = form.fields || [];
   const schema = useMemo(() => buildSchema(fields), [fields]);
 
@@ -122,7 +122,7 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
               {tenant.name.charAt(0)}
             </div>
           )}
-          <p className="type-caption font-bold uppercase tracking-widest text-slate-500 mb-1">{tenant.name}</p>
+          <p className="type-caption font-bold uppercase tracking-widest text-[var(--ws-text-muted)] mb-1">{tenant.name}</p>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{form.title}</h1>
           {form.description && <p className="text-slate-600 mt-2 type-card-description leading-relaxed">{form.description}</p>}
         </div>
@@ -188,7 +188,7 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
             {isSubmitting ? 'Sending...' : 'Submit'}
           </button>
 
-          <p className="text-center type-card-description text-slate-400 pt-1">Powered by AlphaClone</p>
+          <p className="text-center type-card-description text-[var(--ws-text-muted)] pt-1">Powered by AlphaClone</p>
         </form>
       </div>
     </div>

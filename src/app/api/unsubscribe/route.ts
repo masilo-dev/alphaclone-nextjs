@@ -10,17 +10,17 @@ export const dynamic = 'force-dynamic';
 
 function confirmationHtml(message: string, preferencesUrl?: string): string {
   const prefsLink = preferencesUrl
-    ? `<p style="margin:20px 0 0;"><a href="${preferencesUrl}" style="color:#0284c7;text-decoration:underline;">Manage email preferences</a></p>`
+    ? `<p style="margin:20px 0 0;"><a href="${preferencesUrl}" style="color:var(--info-600);text-decoration:underline;">Manage email preferences</a></p>`
     : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Email Preferences</title></head>
-<body style="margin:0;padding:0;background:#060d1a;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background:var(--brand-violet-950);font-family:Arial,Helvetica,sans-serif;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:48px 16px;">
-<table role="presentation" width="600" style="max-width:600px;width:100%;background:#0f172a;border-radius:12px;border:1px solid rgba(45,212,191,0.2);">
-<tr><td style="padding:40px 32px;text-align:center;color:#fff;">
+<table role="presentation" width="600" style="max-width:600px;width:100%;background:var(--ws-canvas);border-radius:12px;border:1px solid rgba(45,212,191,0.2);">
+<tr><td style="padding:40px 32px;text-align:center;color:var(--color-white);">
 <h1 style="margin:0 0 12px;font-size:24px;">${message}</h1>
-<p style="margin:0;font-size:15px;line-height:1.6;color:#94a3b8;">Marketing and outreach emails are suppressed for this address. Essential account, security, and invoice communications may still be sent when required.</p>
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--ws-text-secondary);">Marketing and outreach emails are suppressed for this address. Essential account, security, and invoice communications may still be sent when required.</p>
 ${prefsLink}
 </td></tr></table></td></tr></table></body></html>`;
 }

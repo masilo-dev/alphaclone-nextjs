@@ -52,7 +52,7 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
         {
             label: 'X / Twitter',
             icon: Share2,
-            color: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
+            color: 'bg-slate-500/10 text-[var(--ws-text-secondary)] border-slate-500/20',
             href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(referralLink)}`,
         },
     ];
@@ -65,18 +65,18 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-white">Refer & Grow</h1>
-                    <p className="text-slate-400">Share AlphaClone with other businesses using your personal link.</p>
+                    <p className="text-[var(--ws-text-muted)]">Share AlphaClone with other businesses using your personal link.</p>
                 </div>
             </div>
 
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <label className="type-caption font-bold text-slate-400 uppercase tracking-widest">Your referral link</label>
+            <div className="bg-[var(--ws-panel)]/60 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
+                <label className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest">Your referral link</label>
                 <div className="flex flex-col sm:flex-row gap-2">
                     <input
                         readOnly
                         value={referralLink}
                         onClick={(e) => (e.target as HTMLInputElement).select()}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 type-ui text-slate-200 font-mono"
+                        className="flex-1 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl px-4 py-3 type-ui text-[var(--ws-text-secondary)] font-mono"
                     />
                     <button
                         onClick={copyLink}
@@ -103,9 +103,9 @@ const ReferralsPage: React.FC<ReferralsPageProps> = ({ user, tenant }) => {
                 </div>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+            <div className="bg-[var(--ws-panel)]/40 border border-[var(--ws-border)] rounded-2xl p-6">
                 <h3 className="type-ui font-bold text-white mb-3">How it works</h3>
-                <ol className="space-y-2 type-ui text-slate-400 list-decimal list-inside">
+                <ol className="space-y-2 type-ui text-[var(--ws-text-muted)] list-decimal list-inside">
                     <li>Share your unique link with other business owners.</li>
                     <li>They sign up for AlphaClone using your link.</li>
                     <li>You both unlock rewards once they activate their workspace.</li>

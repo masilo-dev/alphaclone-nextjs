@@ -32,7 +32,7 @@ const OnlineStatusBadge: React.FC<OnlineStatusBadgeProps> = ({
             pulse: false
         },
         busy: {
-            color: 'bg-red-500',
+            color: 'bg-[var(--error-500)]',
             label: 'Busy',
             pulse: false
         },
@@ -54,7 +54,7 @@ const OnlineStatusBadge: React.FC<OnlineStatusBadgeProps> = ({
                 )}
             </div>
             {showLabel && (
-                <span className="type-caption font-medium text-slate-400">{config.label}</span>
+                <span className="type-caption font-medium text-[var(--ws-text-muted)]">{config.label}</span>
             )}
         </div>
     );

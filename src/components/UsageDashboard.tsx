@@ -34,9 +34,9 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
             case 'ok':
                 return 'bg-emerald-500';
             case 'approaching':
-                return 'bg-amber-400';
+                return 'bg-[var(--warning-500)]';
             case 'exceeded':
-                return 'bg-red-500';
+                return 'bg-[var(--error-500)]';
             default:
                 return 'bg-slate-500';
         }
@@ -64,7 +64,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/70 p-8">
+            <div className="flex items-center justify-center rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-8">
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-500"></div>
             </div>
         );
@@ -84,7 +84,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                                 <span
                                     className={`rounded px-2 py-1 type-caption font-medium ${
                                         alert.alert_type === 'exceeded'
-                                            ? 'bg-red-500/20 text-red-100'
+                                            ? 'bg-[var(--error-500)]/20 text-red-100'
                                             : 'bg-amber-500/20 text-amber-100'
                                     }`}
                                 >
@@ -95,7 +95,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                     </div>
                     <a
                         href="/dashboard/business/settings"
-                        className="mt-3 inline-block type-ui font-medium text-teal-300 hover:text-teal-200"
+                        className="mt-3 inline-block type-ui font-medium text-[var(--brand-blue-300)] hover:text-teal-200"
                     >
                         Review billing and quotas -&gt;
                     </a>
@@ -106,9 +106,9 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                 {usage.map((metric) => {
                     const isUnlimited = metric.limit_value < 0;
                     return (
-                    <div key={metric.metric_name} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+                    <div key={metric.metric_name} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/70 p-4">
                         <div className="mb-2 flex items-center justify-between">
-                            <h4 className="type-ui font-medium text-slate-200">{formatMetricName(metric.metric_name)}</h4>
+                            <h4 className="type-ui font-medium text-[var(--ws-text-secondary)]">{formatMetricName(metric.metric_name)}</h4>
                             {isUnlimited ? (
                                 <span className="type-caption font-semibold text-violet-300">Unlimited</span>
                             ) : (
@@ -120,7 +120,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                         </div>
 
                         {!isUnlimited && (
-                            <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                            <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full bg-[var(--ws-surface-secondary)]">
                                 <div
                                     className={`absolute left-0 top-0 h-full transition-all ${getStatusColor(metric.status)}`}
                                     style={{ width: `${Math.min(metric.percentage_used, 100)}%` }}
@@ -129,7 +129,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                         )}
 
                         <div className="flex items-center justify-between type-ui">
-                            <span className="text-slate-400">
+                            <span className="text-[var(--ws-text-muted)]">
                                 {isUnlimited
                                     ? `${metric.current_value.toLocaleString()} used today (analytics only)`
                                     : `${metric.current_value.toLocaleString()} / ${metric.limit_value.toLocaleString()}`}
@@ -140,7 +140,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                                         metric.status === 'exceeded'
                                             ? 'text-red-400'
                                             : metric.status === 'approaching'
-                                                ? 'text-amber-300'
+                                                ? 'text-[var(--warning-text,var(--warning-500))]'
                                                 : 'text-emerald-400'
                                     }`}
                                 >
@@ -150,7 +150,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                         </div>
 
                         {!isUnlimited && (
-                            <div className="mt-2 type-caption text-slate-500">{getStatusText(metric.status)}</div>
+                            <div className="mt-2 type-caption text-[var(--ws-text-muted)]">{getStatusText(metric.status)}</div>
                         )}
                     </div>
                     );
@@ -164,7 +164,7 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
                     </p>
                     <a
                         href="/dashboard/business/settings"
-                        className="inline-block rounded-lg bg-teal-500 px-4 py-2 font-medium text-slate-950 transition-colors hover:bg-teal-400"
+                        className="inline-block rounded-lg bg-teal-500 px-4 py-2 font-medium text-slate-950 transition-colors hover:bg-[var(--brand-blue-400)]"
                     >
                         View Plans & Upgrade
                     </a>

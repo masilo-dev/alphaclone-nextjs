@@ -93,14 +93,14 @@ export const contractService = {
         body {
             margin: 0;
             padding: 28px;
-            color: #0f172a;
-            background: #ffffff;
+            color: var(--ws-canvas);
+            background: var(--color-white);
             font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
             line-height: 1.6;
             font-size: 12px;
         }
         h1, h2, h3, h4 {
-            color: #0f172a;
+            color: var(--ws-canvas);
             font-weight: 700;
             margin: 20px 0 10px 0;
         }
@@ -363,7 +363,7 @@ export const contractService = {
      */
     generateProfessionalPDF(contract: any, tenant?: any) {
         const doc = new jsPDF();
-        const primaryColor = '#14b8a6'; // Teal-500
+        const primaryColor = 'var(--brand-blue-500)'; // Teal-500
         if (!contract) {
             console.error('generateProfessionalPDF: No contract provided');
             return doc;
@@ -578,7 +578,7 @@ export const contractService = {
                 const title = String(contract.title || 'Contract').replace(/</g, '&lt;');
                 printWindow.document.open();
                 printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title>
-<style>body{font-family:Georgia,"Times New Roman",serif;color:#0f172a;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;} h1,h2,h3{color:#0f766e;}</style>
+<style>body{font-family:Georgia,"Times New Roman",serif;color:var(--ws-canvas);line-height:1.6;padding:40px;max-width:800px;margin:0 auto;} h1,h2,h3{color:var(--brand-blue-700);}</style>
 </head><body>${rawContent}</body></html>`);
                 printWindow.document.close();
                 setTimeout(() => {

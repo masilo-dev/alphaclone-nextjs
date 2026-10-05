@@ -117,7 +117,7 @@ export function EmptyState({
                 <Link
                   key={t.href}
                   href={t.href}
-                  className="block type-ui text-teal-400 hover:text-teal-300"
+                  className="block type-ui text-teal-400 hover:text-[var(--brand-blue-300)]"
                 >
                   {t.label}
                 </Link>

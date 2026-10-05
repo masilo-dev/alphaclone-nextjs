@@ -42,23 +42,23 @@ export default function DataRequestForm() {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
+    <form onSubmit={submit} className="space-y-4 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-5">
       <div>
-        <label className="mb-2 block type-label font-medium text-slate-200">Email address</label>
+        <label className="mb-2 block type-label font-medium text-[var(--ws-text-secondary)]">Email address</label>
         <input
           type="email"
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-teal-500"
+          className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
         />
       </div>
       <div>
-        <label className="mb-2 block type-label font-medium text-slate-200">Request type</label>
+        <label className="mb-2 block type-label font-medium text-[var(--ws-text-secondary)]">Request type</label>
         <select
           value={requestType}
           onChange={(event) => setRequestType(event.target.value)}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-teal-500"
+          className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
         >
           <option>Access My Data</option>
           <option>Correct My Data</option>
@@ -67,12 +67,12 @@ export default function DataRequestForm() {
         </select>
       </div>
       <div>
-        <label className="mb-2 block type-label font-medium text-slate-200">Additional details</label>
+        <label className="mb-2 block type-label font-medium text-[var(--ws-text-secondary)]">Additional details</label>
         <textarea
           value={details}
           onChange={(event) => setDetails(event.target.value)}
           rows={5}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-teal-500"
+          className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] px-3 py-2 text-[var(--ws-text-primary)] outline-none focus:border-teal-500"
         />
       </div>
       {turnstileEnabled && (
@@ -87,11 +87,11 @@ export default function DataRequestForm() {
       <button
         type="submit"
         disabled={loading || (turnstileEnabled && !turnstileToken)}
-        className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-lg bg-teal-500 px-4 py-2 type-ui font-semibold text-slate-950 hover:bg-[var(--brand-blue-400)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? 'Submitting...' : 'Submit request'}
       </button>
-      {status && <p className="type-caption text-slate-300">{status}</p>}
+      {status && <p className="type-caption text-[var(--ws-text-secondary)]">{status}</p>}
     </form>
   );
 }

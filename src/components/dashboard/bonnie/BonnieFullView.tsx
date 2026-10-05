@@ -364,7 +364,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     return (
       <Flex h="calc(100vh - 140px)" align="center" justify="center" bg="gray.950" p={8} textAlign="center">
         <VStack spacing={3} maxW="md">
-          <Brain size={36} color="#0D9488" />
+          <Brain size={36} color="var(--brand-blue-600)" />
           <Heading size="md" color="white">
             Select a workspace
           </Heading>

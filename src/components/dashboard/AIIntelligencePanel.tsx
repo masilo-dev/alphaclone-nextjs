@@ -120,7 +120,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
         return (
             <div className={`min-h-[200px] p-6 flex flex-col items-center justify-center gap-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
-                <p className="text-slate-500 type-caption font-black uppercase tracking-widest">Scanning Module Logic...</p>
+                <p className="text-[var(--ws-text-muted)] type-caption font-black uppercase tracking-widest">Scanning Module Logic...</p>
             </div>
         );
     }
@@ -166,16 +166,16 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                         <Zap className="w-5 h-5 text-teal-400" />
                         {title}
                     </h3>
-                    <p className="type-caption text-slate-500 mt-1 uppercase tracking-widest font-mono">Real-time Intelligence Stream</p>
+                    <p className="type-caption text-[var(--ws-text-muted)] mt-1 uppercase tracking-widest font-mono">Real-time Intelligence Stream</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right">
-                        <p className="type-caption text-slate-500 uppercase font-black">Performance</p>
+                        <p className="type-caption text-[var(--ws-text-muted)] uppercase font-black">Performance</p>
                         <p className={`text-2xl font-black tracking-tighter ${scoreColor}`}>
                             {Math.round(data.module.score)}%
                         </p>
                     </div>
-                    <div className="w-12 h-12 rounded-2xl border border-white/10 bg-slate-950 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-2xl border border-white/10 bg-[var(--ws-canvas)] flex items-center justify-center">
                         <Radar className={`w-6 h-6 ${scoreColor} animate-pulse`} />
                     </div>
                 </div>
@@ -184,7 +184,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Actions Section */}
                 <div className="space-y-4">
-                    <h4 className="type-caption text-slate-400 font-black uppercase tracking-caps mb-2 flex items-center gap-2">
+                    <h4 className="type-caption text-[var(--ws-text-muted)] font-black uppercase tracking-caps mb-2 flex items-center gap-2">
                         <Play className="w-3 h-3" />
                         Recommended Actions
                     </h4>
@@ -202,7 +202,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                                     key={i}
                                     onClick={() => handleExecuteAction(action)}
                                     disabled={!!executingAction}
-                                    className="group relative flex w-full items-start gap-4 rounded-lg border border-[var(--ws-border)] bg-slate-950 p-4 text-left transition-all hover:border-teal-500/40 hover:bg-slate-900"
+                                    className="group relative flex w-full items-start gap-4 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-canvas)] p-4 text-left transition-all hover:border-teal-500/40 hover:bg-[var(--ws-panel)]"
                                 >
                                     <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
                                         {executingAction === action ? (
@@ -212,8 +212,8 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                                         )}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="type-card-description font-bold text-slate-200 line-clamp-1">{action}</p>
-                                        <p className="type-caption text-slate-500 mt-1 uppercase">Autonomous Execution Ready</p>
+                                        <p className="type-card-description font-bold text-[var(--ws-text-secondary)] line-clamp-1">{action}</p>
+                                        <p className="type-caption text-[var(--ws-text-muted)] mt-1 uppercase">Autonomous Execution Ready</p>
                                     </div>
                                     <ArrowRight className="w-4 h-4 text-slate-600 ml-auto group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />
                                 </button>
@@ -224,13 +224,13 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
 
                 {/* Risks Section */}
                 <div className="space-y-4">
-                    <h4 className="type-caption text-slate-400 font-black uppercase tracking-caps mb-2 flex items-center gap-2">
+                    <h4 className="type-caption text-[var(--ws-text-muted)] font-black uppercase tracking-caps mb-2 flex items-center gap-2">
                         <AlertTriangle className="w-3 h-3" />
                         Systemic Risks
                     </h4>
                     <div className="space-y-3">
                         {data.systemicRisks.length === 0 ? (
-                            <div className="p-4 rounded-2xl border border-dashed border-white/5 type-caption text-slate-500 text-center">
+                            <div className="p-4 rounded-2xl border border-dashed border-white/5 type-caption text-[var(--ws-text-muted)] text-center">
                                 No critical vulnerabilities detected in this vector.
                             </div>
                         ) : (
@@ -255,11 +255,11 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
             <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                    <span className="type-caption text-slate-500 uppercase font-bold tracking-widest">Nexus Intelligence: Operational</span>
+                    <span className="type-caption text-[var(--ws-text-muted)] uppercase font-bold tracking-widest">Nexus Intelligence: Operational</span>
                 </div>
                 <button 
                     onClick={loadIntelligence}
-                    className="type-caption text-teal-400 hover:text-teal-300 font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
+                    className="type-caption text-teal-400 hover:text-[var(--brand-blue-300)] font-black uppercase tracking-widest flex items-center gap-1 transition-colors"
                 >
                     <Settings className="w-3 h-3" />
                     Recalibrate Scan

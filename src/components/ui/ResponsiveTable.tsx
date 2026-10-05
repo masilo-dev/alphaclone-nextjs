@@ -43,7 +43,7 @@ export function MobileDataCard({
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`w-full text-left rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-3 min-h-11 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
+      className={`w-full text-left rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]/50 p-4 space-y-3 min-h-11 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
     >
       {children}
     </Tag>

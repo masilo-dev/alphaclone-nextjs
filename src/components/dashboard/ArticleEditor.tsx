@@ -93,7 +93,7 @@ const ArticleEditor: React.FC = () => {
 
     if (editing) {
         return (
-            <div className="bg-slate-800 rounded-lg p-6">
+            <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-white">
                         {isNew ? 'New Article' : 'Edit Article'}
@@ -121,7 +121,7 @@ const ArticleEditor: React.FC = () => {
                                 setEditing(null);
                                 setIsNew(false);
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-600"
+                            className="flex items-center gap-2 px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded hover:bg-slate-600"
                         >
                             <X className="w-4 h-4" />
                             Cancel
@@ -132,69 +132,69 @@ const ArticleEditor: React.FC = () => {
                 <div className="space-y-4">
                     {/* Title */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Title *
                         </label>
                         <input
                             type="text"
                             value={editing.title}
                             onChange={(e) => setEditing({ ...editing, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="Article title"
                         />
                     </div>
 
                     {/* Slug */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             URL Slug *
                         </label>
                         <input
                             type="text"
                             value={editing.slug}
                             onChange={(e) => setEditing({ ...editing, slug: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="article-url-slug"
                         />
-                        <p className="type-card-description text-slate-400 mt-1">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                             URL: /blog/{editing.slug || 'article-url-slug'}
                         </p>
                     </div>
 
                     {/* Meta Description */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Meta Description * (150-160 characters)
                         </label>
                         <textarea
                             value={editing.meta_description}
                             onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             rows={2}
                             placeholder="Brief description for search engines"
                         />
-                        <p className="type-card-description text-slate-400 mt-1">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                             {editing.meta_description.length} / 160 characters
                         </p>
                     </div>
 
                     {/* Category */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Category *
                         </label>
                         <input
                             type="text"
                             value={editing.category}
                             onChange={(e) => setEditing({ ...editing, category: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="e.g., Web Development, AI, Software"
                         />
                     </div>
 
                     {/* Keywords */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Keywords (comma-separated)
                         </label>
                         <input
@@ -204,14 +204,14 @@ const ArticleEditor: React.FC = () => {
                                 ...editing,
                                 meta_keywords: e.target.value.split(',').map(k => k.trim())
                             })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="keyword1, keyword2, keyword3"
                         />
                     </div>
 
                     {/* Tags */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Tags (comma-separated)
                         </label>
                         <input
@@ -221,24 +221,24 @@ const ArticleEditor: React.FC = () => {
                                 ...editing,
                                 tags: e.target.value.split(',').map(t => t.trim())
                             })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none"
                             placeholder="tag1, tag2, tag3"
                         />
                     </div>
 
                     {/* Content */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             Content * (Markdown supported)
                         </label>
                         <textarea
                             value={editing.content}
                             onChange={(e) => setEditing({ ...editing, content: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
+                            className="w-full px-4 py-2 bg-[var(--ws-surface-tertiary)] text-white rounded border border-slate-600 focus:border-teal-500 focus:outline-none font-mono type-ui"
                             rows={20}
                             placeholder="Write your article content here... Use markdown for formatting."
                         />
-                        <p className="type-card-description text-slate-400 mt-1">
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                             {editing.content.split(/\s+/).length} words
                         </p>
                     </div>
@@ -251,7 +251,7 @@ const ArticleEditor: React.FC = () => {
                             onChange={(e) => setEditing({ ...editing, published: e.target.checked })}
                             className="w-4 h-4"
                         />
-                        <label className="type-label text-slate-300">
+                        <label className="type-label text-[var(--ws-text-secondary)]">
                             Publish article (make visible to search engines)
                         </label>
                     </div>
@@ -266,7 +266,7 @@ const ArticleEditor: React.FC = () => {
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-white">SEO Articles</h2>
-                    <p className="text-slate-400">Manage your SEO content</p>
+                    <p className="text-[var(--ws-text-muted)]">Manage your SEO content</p>
                 </div>
                 <button
                     onClick={() => {
@@ -282,83 +282,83 @@ const ArticleEditor: React.FC = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-slate-800 rounded-lg p-4">
+                <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
                     <div className="text-2xl font-bold text-white">{articles.length}</div>
-                    <div className="type-ui text-slate-400">Total Articles</div>
+                    <div className="type-ui text-[var(--ws-text-muted)]">Total Articles</div>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-4">
+                <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
                     <div className="text-2xl font-bold text-teal-400">
                         {articles.filter(a => a.published).length}
                     </div>
-                    <div className="type-ui text-slate-400">Published</div>
+                    <div className="type-ui text-[var(--ws-text-muted)]">Published</div>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-4">
+                <div className="bg-[var(--ws-surface-secondary)] rounded-lg p-4">
                     <div className="text-2xl font-bold text-violet-400">
                         {articles.reduce((sum: number, a: Article) => sum + (a.views || 0), 0)}
                     </div>
-                    <div className="type-ui text-slate-400">Total Views</div>
+                    <div className="type-ui text-[var(--ws-text-muted)]">Total Views</div>
                 </div>
             </div>
 
             {/* Articles List */}
             <ResponsiveTableMobile>
                 {articles.map((article) => (
-                    <MobileDataCard key={article.id} className="border-slate-700 bg-slate-800">
+                    <MobileDataCard key={article.id} className="border-[var(--ws-border)] bg-[var(--ws-surface-secondary)]">
                         <div className="min-w-0">
                             <p className="text-white font-medium truncate">{article.title}</p>
-                            <p className="type-card-description text-slate-400 truncate">/blog/{article.slug}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] truncate">/blog/{article.slug}</p>
                         </div>
                         <div className="flex flex-wrap gap-2 type-caption">
-                            <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">{article.category}</span>
-                            <span className="text-slate-400">{article.views || 0} views</span>
+                            <span className="px-2 py-1 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded">{article.category}</span>
+                            <span className="text-[var(--ws-text-muted)]">{article.views || 0} views</span>
                             {article.published ? (
                                 <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded">Published</span>
                             ) : (
-                                <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Draft</span>
+                                <span className="px-2 py-1 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] rounded">Draft</span>
                             )}
                         </div>
                         <div className={`${rowActionsClass} justify-end`}>
-                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-teal-400 rounded-lg border border-slate-600 type-ui">
+                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-[var(--ws-text-muted)] hover:text-teal-400 rounded-lg border border-slate-600 type-ui">
                                 {article.published ? 'Unpublish' : 'Publish'}
                             </button>
-                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-violet-400 rounded-lg border border-slate-600 type-ui">Edit</button>
+                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-[var(--ws-text-muted)] hover:text-violet-400 rounded-lg border border-slate-600 type-ui">Edit</button>
                             <button onClick={() => handleDelete(article.id)} className="min-h-11 px-3 py-2 text-red-400 rounded-lg border border-red-500/30 type-ui">Delete</button>
                         </div>
                     </MobileDataCard>
                 ))}
             </ResponsiveTableMobile>
 
-            <ResponsiveTableDesktop className="bg-slate-800 rounded-lg min-w-0">
+            <ResponsiveTableDesktop className="bg-[var(--ws-surface-secondary)] rounded-lg min-w-0">
                 <table className="w-full min-w-[640px]">
-                    <thead className="bg-slate-700">
+                    <thead className="bg-[var(--ws-surface-tertiary)]">
                         <tr>
-                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Title</th>
-                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Category</th>
-                            <th className="px-4 py-3 text-left type-table-header font-semibold text-slate-300">Views</th>
-                            <th className="px-4 py-3 text-left type-caption font-semibold text-slate-300">Status</th>
-                            <th className="px-4 py-3 text-right type-table-header font-semibold text-slate-300">Actions</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-[var(--ws-text-secondary)]">Title</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-[var(--ws-text-secondary)]">Category</th>
+                            <th className="px-4 py-3 text-left type-table-header font-semibold text-[var(--ws-text-secondary)]">Views</th>
+                            <th className="px-4 py-3 text-left type-caption font-semibold text-[var(--ws-text-secondary)]">Status</th>
+                            <th className="px-4 py-3 text-right type-table-header font-semibold text-[var(--ws-text-secondary)]">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
                         {articles.map((article) => (
-                            <tr key={article.id} className="hover:bg-slate-700/50">
+                            <tr key={article.id} className="hover:bg-[var(--ws-surface-tertiary)]/50">
                                 <td className="px-4 py-3">
                                     <div className="text-white font-medium">{article.title}</div>
-                                    <div className="type-caption text-slate-400">/blog/{article.slug}</div>
+                                    <div className="type-caption text-[var(--ws-text-muted)]">/blog/{article.slug}</div>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <span className="px-2 py-1 bg-slate-700 text-slate-300 type-caption rounded">
+                                    <span className="px-2 py-1 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] type-caption rounded">
                                         {article.category}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-slate-300">{article.views || 0}</td>
+                                <td className="px-4 py-3 text-[var(--ws-text-secondary)]">{article.views || 0}</td>
                                 <td className="px-4 py-3">
                                     {article.published ? (
                                         <span className="px-2 py-1 bg-teal-500/20 text-teal-400 type-caption rounded">
                                             Published
                                         </span>
                                     ) : (
-                                        <span className="px-2 py-1 bg-slate-700 text-slate-400 type-caption rounded">
+                                        <span className="px-2 py-1 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] type-caption rounded">
                                             Draft
                                         </span>
                                     )}
@@ -367,21 +367,21 @@ const ArticleEditor: React.FC = () => {
                                     <div className="flex justify-end gap-2">
                                         <button
                                             onClick={() => togglePublished(article)}
-                                            className="p-2 text-slate-400 hover:text-teal-400"
+                                            className="p-2 text-[var(--ws-text-muted)] hover:text-teal-400"
                                             title={article.published ? 'Unpublish' : 'Publish'}
                                         >
                                             {article.published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                         </button>
                                         <button
                                             onClick={() => setEditing(article)}
-                                            className="p-2 text-slate-400 hover:text-violet-400"
+                                            className="p-2 text-[var(--ws-text-muted)] hover:text-violet-400"
                                             title="Edit"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(article.id)}
-                                            className="p-2 text-slate-400 hover:text-red-400"
+                                            className="p-2 text-[var(--ws-text-muted)] hover:text-red-400"
                                             title="Delete"
                                         >
                                             <Trash2 className="w-4 h-4" />

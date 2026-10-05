@@ -5,7 +5,7 @@ import BonnieFullView from '@/components/dashboard/bonnie/BonnieFullView';
 
 function BonnieWorkspaceInner() {
   return (
-    <div className="min-h-dvh bg-slate-950">
+    <div className="min-h-dvh bg-[var(--ws-canvas)]">
       <BonnieFullView variant="popout" />
     </div>
   );
@@ -13,7 +13,7 @@ function BonnieWorkspaceInner() {
 
 export default function BonnieWorkspaceClient() {
   return (
-    <Suspense fallback={<div className="min-h-dvh bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-dvh bg-[var(--ws-canvas)]" />}>
       <BonnieWorkspaceInner />
     </Suspense>
   );

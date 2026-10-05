@@ -87,14 +87,14 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     },
                     theme: {
                         colors: {
-                            accent: '#14b8a6', // Teal-500
-                            accentText: '#ffffff',
-                            background: '#020617', // Slate-950
-                            backgroundAccent: '#0f172a', // Slate-900
-                            baseText: '#f8fafc', // Slate-50
-                            border: '#1e293b', // Slate-800
-                            mainAreaBg: '#020617',
-                            mainAreaBgAccent: '#0f172a',
+                            accent: 'var(--brand-blue-500)', // Teal-500
+                            accentText: 'var(--color-white)',
+                            background: 'var(--brand-violet-950)', // Slate-950
+                            backgroundAccent: 'var(--ws-canvas)', // Slate-900
+                            baseText: 'var(--ws-surface-secondary)', // Slate-50
+                            border: 'var(--ws-panel)', // Slate-800
+                            mainAreaBg: 'var(--brand-violet-950)',
+                            mainAreaBgAccent: 'var(--ws-canvas)',
                         }
                     }
                 });
@@ -178,14 +178,14 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     }, [roomUrl, user.name, user.role, callId]);
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+        <div className="fixed inset-0 z-50 bg-[var(--ws-canvas)] flex flex-col">
             {/* Loading overlay */}
             {isJoining && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-50">
+                <div className="absolute inset-0 flex items-center justify-center bg-[var(--ws-panel)] z-50">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
                         <p className="text-white text-xl font-medium mb-2">Joining meeting...</p>
-                        <p className="text-slate-400 type-card-description">Please wait while we connect you</p>
+                        <p className="text-[var(--ws-text-muted)] type-card-description">Please wait while we connect you</p>
                     </div>
                 </div>
             )}
@@ -198,7 +198,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
 
                     {/* Waiting State Overlay */}
                     {!isJoining && participantCount === 1 && (
-                        <div className="absolute top-4 left-4 z-10 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
+                        <div className="absolute top-4 left-4 z-10 bg-[var(--ws-panel)]/80 backdrop-blur px-4 py-2 rounded-lg border border-teal-500/30 flex items-center gap-2 animate-pulse">
                             <div className="w-2 h-2 bg-teal-500 rounded-full" />
                             <span className="type-ui font-medium text-teal-100">Waiting for others to join...</span>
                         </div>

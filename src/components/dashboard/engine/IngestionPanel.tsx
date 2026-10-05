@@ -27,17 +27,17 @@ interface IngestionEvent {
 }
 
 const INTENT_STYLE: Record<string, string> = {
-    unknown:  'bg-slate-700/50 text-slate-400 border-slate-700',
-    low:      'bg-slate-600/30 text-slate-400 border-slate-600',
+    unknown:  'bg-[var(--ws-surface-tertiary)]/50 text-[var(--ws-text-muted)] border-[var(--ws-border)]',
+    low:      'bg-slate-600/30 text-[var(--ws-text-muted)] border-slate-600',
     medium:   'bg-blue-500/15 text-blue-400 border-blue-500/30',
     high:     'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    urgent:   'bg-red-500/15 text-red-400 border-red-500/30',
+    urgent:   'bg-[var(--error-500)]/15 text-red-400 border-red-500/30',
 };
 
 const SOURCE_ICONS: Record<string, React.ReactNode> = {
     facebook_group: <Facebook className="w-3.5 h-3.5 text-blue-400" />,
     facebook_lead:  <Facebook className="w-3.5 h-3.5 text-blue-400" />,
-    manual:         <FileText className="w-3.5 h-3.5 text-slate-400" />,
+    manual:         <FileText className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />,
     form:           <MessageSquare className="w-3.5 h-3.5 text-teal-400" />,
     sms:            <MessageSquare className="w-3.5 h-3.5 text-green-400" />,
     webhook:        <Globe className="w-3.5 h-3.5 text-purple-400" />,
@@ -142,14 +142,14 @@ export default function IngestionPanel() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">Lead Ingestion</h2>
-                    <p className="type-card-description text-slate-400">Capture raw content → auto-detect intent → create leads</p>
+                    <p className="type-card-description text-[var(--ws-text-muted)]">Capture raw content → auto-detect intent → create leads</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl type-ui text-slate-400 hover:text-white transition-colors">
+                    <button onClick={loadEvents} className="flex items-center gap-1.5 px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl type-ui text-[var(--ws-text-muted)] hover:text-white transition-colors">
                         <RefreshCw className="w-3.5 h-3.5" /> Refresh
                     </button>
                     <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold type-ui transition-colors">
+                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl font-semibold type-ui transition-colors">
                         <Plus className="w-4 h-4" /> Ingest Content
                     </button>
                     {selectedLeadIds.length > 0 && (
@@ -164,7 +164,7 @@ export default function IngestionPanel() {
             {/* Architecture note */}
             <div className="flex gap-3 p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                 <Zap className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" />
-                <div className="type-caption text-teal-300 space-y-1">
+                <div className="type-caption text-[var(--brand-blue-300)] space-y-1">
                     <p className="font-semibold">Ingestion Engine → Processing Engine → Workflow Engine</p>
                     <p className="text-teal-400">Paste any content (Facebook group post, chat message, ad comment). The engine detects keywords, scores intent 0–100, auto-creates a lead for HIGH/URGENT signals, and fires your active workflows.</p>
                     <p className="text-teal-500">API endpoint: <code className="text-teal-400">POST /api/engine/ingest</code> · Use webhooks for automated ingestion from any source.</p>
@@ -179,26 +179,26 @@ export default function IngestionPanel() {
                     { label: 'Leads Created', value: leadsCreated, color: 'text-teal-400' },
                     { label: 'Sources', value: sources.length, color: 'text-blue-400' },
                 ].map(s => (
-                    <div key={s.label} className="bg-slate-800/60 border border-slate-700 rounded-xl p-3 text-center">
+                    <div key={s.label} className="bg-[var(--ws-surface-secondary)]/60 border border-[var(--ws-border)] rounded-xl p-3 text-center">
                         <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                        <p className="type-card-description text-slate-500 mt-0.5">{s.label}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5">{s.label}</p>
                     </div>
                 ))}
             </div>
 
             {/* Manual ingestion form */}
             {showForm && (
-                <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 space-y-4">
+                <div className="bg-[var(--ws-panel)]/80 border border-[var(--ws-border)] rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="font-bold text-white">Ingest Content</h3>
-                        <button onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
+                        <button onClick={() => setShowForm(false)} className="text-[var(--ws-text-muted)] hover:text-white"><X className="w-4 h-4" /></button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source</label>
                             <select value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white focus:outline-none focus:border-teal-500 type-ui">
                                 <option value="manual">Manual</option>
                                 <option value="facebook_group">Facebook Group</option>
                                 <option value="facebook_lead">Facebook Lead</option>
@@ -209,41 +209,41 @@ export default function IngestionPanel() {
                             </select>
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Author / Name</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Author / Name</label>
                             <input value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))}
                                 placeholder="John Doe"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                         <div>
-                            <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
+                            <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Contact (email/phone)</label>
                             <input value={form.author_contact} onChange={e => setForm(f => ({ ...f, author_contact: e.target.value }))}
                                 placeholder="john@example.com"
-                                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                                className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                         </div>
                     </div>
 
                     <div>
-                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Content *</label>
+                        <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Content *</label>
                         <textarea value={form.raw_content} onChange={e => setForm(f => ({ ...f, raw_content: e.target.value }))}
                             rows={5}
                             placeholder="Paste content here — Facebook post, message, comment, ad response, etc.&#10;&#10;Example: 'Hi, I'm looking for a web developer urgently. Need a website for my restaurant. Budget $2000. DM me.'"
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
+                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui resize-none font-mono" />
                     </div>
 
                     <div>
-                        <label className="type-caption font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Source URL (optional)</label>
+                        <label className="type-caption font-semibold text-[var(--ws-text-muted)] uppercase tracking-wider mb-1 block">Source URL (optional)</label>
                         <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
                             placeholder="https://facebook.com/groups/..."
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
+                            className="w-full px-3 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 type-ui" />
                     </div>
 
                     <div className="flex gap-3">
                         <button onClick={handleSubmit} disabled={submitting}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-500 hover:bg-[var(--brand-blue-400)] disabled:opacity-50 text-white rounded-xl font-semibold type-ui transition-colors">
                             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                             {submitting ? 'Processing...' : 'Process & Ingest'}
                         </button>
-                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-slate-800 border border-slate-700 text-slate-300 rounded-xl type-ui">Cancel</button>
+                        <button onClick={() => setShowForm(false)} className="px-5 py-2.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--ws-text-secondary)] rounded-xl type-ui">Cancel</button>
                     </div>
                 </div>
             )}
@@ -251,7 +251,7 @@ export default function IngestionPanel() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
                 <select value={intentFilter} onChange={e => setIntentFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
                     <option value="all">All Intents</option>
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -260,13 +260,13 @@ export default function IngestionPanel() {
                     <option value="unknown">Unknown</option>
                 </select>
                 <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
+                    className="px-3 py-1.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg type-ui text-white focus:outline-none focus:border-teal-500">
                     <option value="all">All Sources</option>
                     {sources.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
                 {(intentFilter !== 'all' || sourceFilter !== 'all') && (
                     <button onClick={() => { setIntentFilter('all'); setSourceFilter('all'); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-red-500/20">
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[var(--error-500)]/10 border border-red-500/20 rounded-lg type-caption text-red-400 hover:bg-[var(--error-500)]/20">
                         <X className="w-3 h-3" /> Clear
                     </button>
                 )}
@@ -274,22 +274,22 @@ export default function IngestionPanel() {
 
             {/* Events list */}
             {filtered.length === 0 ? (
-                <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
+                <div className="text-center py-16 border border-dashed border-[var(--ws-border)] rounded-2xl">
                     <Database className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400 font-semibold">No ingestion events yet</p>
+                    <p className="text-[var(--ws-text-muted)] font-semibold">No ingestion events yet</p>
                     <p className="text-slate-600 type-card-description mt-1 mb-4">Click "Ingest Content" to manually capture a lead, or send data to <code className="text-teal-400">/api/engine/ingest</code></p>
-                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-ui font-semibold">
+                    <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-ui font-semibold">
                         Ingest First Content
                     </button>
                 </div>
             ) : (
                 <div className="space-y-2">
                     {filtered.map(event => (
-                        <div key={event.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors">
+                        <div key={event.id} className="bg-[var(--ws-panel)]/50 border border-[var(--ws-border)] rounded-2xl p-4 hover:border-[var(--ws-border)] transition-colors">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-3 min-w-0 flex-1">
                                     <div className="flex-shrink-0 mt-0.5 flex flex-col gap-3">
-                                        {SOURCE_ICONS[event.source] || <Globe className="w-3.5 h-3.5 text-slate-500" />}
+                                        {SOURCE_ICONS[event.source] || <Globe className="w-3.5 h-3.5 text-[var(--ws-text-muted)]" />}
                                         {event.lead_id && (
                                                     <div 
                                                         onClick={(e) => {
@@ -302,7 +302,7 @@ export default function IngestionPanel() {
                                                                     : [...prev, leadId].slice(0, 20)
                                                             );
                                                         }}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${event.lead_id ? (selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-slate-500') : 'border-slate-700 hover:border-slate-500'}`}
+                                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-all ${event.lead_id ? (selectedLeadIds.includes(event.lead_id) ? 'bg-teal-500 border-teal-500' : 'border-[var(--ws-border)] hover:border-slate-500') : 'border-[var(--ws-border)] hover:border-slate-500'}`}
                                                     >
                                                         {event.lead_id && selectedLeadIds.includes(event.lead_id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                                                     </div>
@@ -310,15 +310,15 @@ export default function IngestionPanel() {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                                            <span className="type-caption text-slate-500 capitalize">{event.source.replace('_', ' ')}</span>
-                                            {event.author_name && <span className="type-caption font-medium text-slate-300">{event.author_name}</span>}
-                                            {event.author_contact && <span className="type-caption text-slate-500">{event.author_contact}</span>}
+                                            <span className="type-caption text-[var(--ws-text-muted)] capitalize">{event.source.replace('_', ' ')}</span>
+                                            {event.author_name && <span className="type-caption font-medium text-[var(--ws-text-secondary)]">{event.author_name}</span>}
+                                            {event.author_contact && <span className="type-caption text-[var(--ws-text-muted)]">{event.author_contact}</span>}
                                         </div>
-                                        <p className="type-card-description text-slate-300 line-clamp-2">{event.raw_content}</p>
+                                        <p className="type-card-description text-[var(--ws-text-secondary)] line-clamp-2">{event.raw_content}</p>
                                         {event.keywords_found?.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
                                                 {event.keywords_found.slice(0, 5).map(kw => (
-                                                    <span key={kw} className="type-caption px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-500">{kw}</span>
+                                                    <span key={kw} className="type-caption px-1.5 py-0.5 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded text-[var(--ws-text-muted)]">{kw}</span>
                                                 ))}
                                             </div>
                                         )}

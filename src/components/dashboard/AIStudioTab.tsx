@@ -272,22 +272,22 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     <Sparkles className="w-6 h-6 text-teal-400" />
                     AI Studio
                 </h2>
-                <p className="text-slate-400 mt-1">
+                <p className="text-[var(--ws-text-muted)] mt-1">
                     Create logos, images, and content with AI
                     {user.role !== 'admin' && ' • 3 generations per day'}
                 </p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
+            <div className="flex gap-2 border-b border-[var(--ws-border)] pb-2 overflow-x-auto">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-all whitespace-nowrap ${
                             activeTab === tab.id
-                                ? 'bg-slate-800 text-white border-b-2 border-teal-500'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                ? 'bg-[var(--ws-surface-secondary)] text-white border-b-2 border-teal-500'
+                                : 'text-[var(--ws-text-muted)] hover:text-white hover:bg-[var(--ws-surface-secondary)]/50'
                         }`}
                     >
                         <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? tab.color : ''}`} />
@@ -298,16 +298,16 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
             {/* Conversation Memory */}
             {conversationHistory.length > 0 && (
-                <div className="bg-slate-900/60 backdrop-blur border border-slate-700 rounded-2xl p-4">
+                <div className="bg-[var(--ws-panel)]/60 backdrop-blur border border-[var(--ws-border)] rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-purple-400" />
                             <span className="type-ui font-semibold text-purple-400">Conversation Memory</span>
-                            <span className="type-caption text-slate-500">({conversationHistory.length} messages)</span>
+                            <span className="type-caption text-[var(--ws-text-muted)]">({conversationHistory.length} messages)</span>
                         </div>
                         <button
                             onClick={clearConversationHistory}
-                            className="type-caption text-slate-500 hover:text-red-400 transition-colors"
+                            className="type-caption text-[var(--ws-text-muted)] hover:text-red-400 transition-colors"
                         >
                             Clear
                         </button>
@@ -318,7 +318,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 key={idx}
                                 className={`p-2 rounded-lg type-ui ${
                                     msg.type === 'user'
-                                        ? 'bg-teal-500/10 border border-teal-500/20 text-teal-300'
+                                        ? 'bg-teal-500/10 border border-teal-500/20 text-[var(--brand-blue-300)]'
                                         : 'bg-purple-500/10 border border-purple-500/20 text-purple-300'
                                 }`}
                             >
@@ -326,11 +326,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                     <span className="type-caption font-semibold uppercase">
                                         {msg.type === 'user' ? 'You' : 'AI'}
                                     </span>
-                                    <span className="type-caption text-slate-500">
+                                    <span className="type-caption text-[var(--ws-text-muted)]">
                                         {new Date(msg.timestamp).toLocaleTimeString()}
                                     </span>
                                 </div>
-                                <p className="text-slate-300 line-clamp-2">{msg.content}</p>
+                                <p className="text-[var(--ws-text-secondary)] line-clamp-2">{msg.content}</p>
                             </div>
                         ))}
                     </div>
@@ -341,23 +341,23 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
             <Card className="p-6">
                 <div className="space-y-6">
                     {/* Rate Limit Display */}
-                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <div className="flex items-center justify-between p-4 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-[var(--ws-border)]">
                         <div className="flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-teal-400" />
-                            <span className="text-slate-300">Daily Usage</span>
+                            <span className="text-[var(--ws-text-secondary)]">Daily Usage</span>
                         </div>
                         {getRemainingDisplay(activeTab)}
                     </div>
 
                     {/* Prompt Input */}
                     <div>
-                        <label className="block type-label font-medium text-slate-300 mb-2">
+                        <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">
                             {activeTab === 'content' ? 'What do you want to write?' : 'Describe what you want to generate'}
                         </label>
                         <textarea
                             value={prompt}
                             onChange={(e) => setPrompt(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
+                            className="w-full px-4 py-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none"
                             rows={4}
                             placeholder={
                                 activeTab === 'logo' ? 'e.g., A modern tech startup logo with blue and green colors' :
@@ -370,11 +370,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {/* Options */}
                     {activeTab === 'logo' && (
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">Style</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Style</label>
                             <select
                                 value={style}
                                 onChange={(e) => setStyle(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
                             >
                                 <option value="modern">Modern</option>
                                 <option value="minimalist">Minimalist</option>
@@ -386,11 +386,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
                     {activeTab === 'image' && (
                         <div>
-                            <label className="block type-label font-medium text-slate-300 mb-2">Size</label>
+                            <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Size</label>
                             <select
                                 value={imageSize}
                                 onChange={(e) => setImageSize(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
                             >
                                 <option value="1024x1024">Square (1024x1024)</option>
                                 <option value="1792x1024">Landscape (1792x1024)</option>
@@ -402,11 +402,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     {activeTab === 'content' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block type-label font-medium text-slate-300 mb-2">Content Type</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">Content Type</label>
                                 <select
                                     value={contentType}
                                     onChange={(e) => setContentType(e.target.value as any)}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
                                 >
                                     <option value="general">General</option>
                                     <option value="blog">Blog Post</option>
@@ -415,11 +415,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block type-label font-medium text-slate-300 mb-2">AI Model</label>
+                                <label className="block type-label font-medium text-[var(--ws-text-secondary)] mb-2">AI Model</label>
                                 <select
                                     value={selectedModel}
                                     onChange={(e) => setSelectedModel(e.target.value)}
-                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                    className="w-full px-4 py-2 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-lg text-white focus:outline-none focus:border-teal-500"
                                 >
                                     {CLAUDE_MODELS.map(model => (
                                         <option key={model.id} value={model.id}>
@@ -427,7 +427,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="type-card-description text-slate-500 mt-1">
+                                <p className="type-card-description text-[var(--ws-text-muted)] mt-1">
                                     {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
                                 </p>
                             </div>
@@ -438,7 +438,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     <Button
                         onClick={handleGenerate}
                         disabled={isGenerating || (!prompt.trim()) || (user.role !== 'admin' && remainingGenerations[activeTab] <= 0)}
-                        className="w-full bg-teal-600 hover:bg-teal-500 disabled:bg-slate-700 disabled:text-slate-500"
+                        className="w-full bg-teal-600 hover:bg-teal-500 disabled:bg-[var(--ws-surface-tertiary)] disabled:text-[var(--ws-text-muted)]"
                     >
                         {isGenerating ? (
                             <>
@@ -455,20 +455,20 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
 
                     {/* Result Display */}
                     {generatedResult && (
-                        <div className="p-6 bg-slate-800/50 rounded-lg border border-teal-500/30">
+                        <div className="p-6 bg-[var(--ws-surface-secondary)]/50 rounded-lg border border-teal-500/30">
                             <div className="type-ui font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
                                     <div className="mb-3">
                                         <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
                                     </div>
-                                    <pre className="whitespace-pre-wrap text-slate-300 type-ui leading-relaxed bg-slate-900/50 p-4 rounded-lg">
+                                    <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)]/50 p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <div className="aspect-square relative w-full overflow-hidden rounded-lg border border-slate-700">
+                                    <div className="aspect-square relative w-full overflow-hidden rounded-lg border border-[var(--ws-border)]">
                                         <Image
                                             src={generatedResult}
                                             alt="Generated"
@@ -502,7 +502,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                 ) : history.length === 0 ? (
                     <Card className="p-12 text-center">
                         <Sparkles className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                        <p className="text-slate-400">No generations yet. Start creating!</p>
+                        <p className="text-[var(--ws-text-muted)]">No generations yet. Start creating!</p>
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -511,11 +511,11 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                 {/* Asset Preview */}
                                 <div className="relative mb-3">
                                     {asset.asset_type === 'content' ? (
-                                        <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700 h-40 flex items-center justify-center">
+                                        <div className="bg-[var(--ws-surface-secondary)]/50 p-6 rounded-lg border border-[var(--ws-border)] h-40 flex items-center justify-center">
                                             <FileText className="w-12 h-12 text-slate-600" />
                                         </div>
                                     ) : (
-                                        <div className="relative w-full h-40 overflow-hidden rounded-lg border border-slate-700">
+                                        <div className="relative w-full h-40 overflow-hidden rounded-lg border border-[var(--ws-border)]">
                                             <Image
                                                 src={asset.url || ''}
                                                 alt={asset.prompt}
@@ -545,7 +545,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                         )}
                                         <button
                                             onClick={() => handleDeleteAsset(asset.id)}
-                                            className="p-2 bg-red-600 rounded-lg hover:bg-red-500 transition-colors"
+                                            className="p-2 bg-red-600 rounded-lg hover:bg-[var(--error-500)] transition-colors"
                                             title="Delete"
                                         >
                                             <Trash2 className="w-4 h-4 text-white" />
@@ -564,8 +564,8 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             {asset.asset_type}
                                         </span>
                                     </div>
-                                    <p className="type-card-description text-slate-400 line-clamp-2 mb-2">{asset.prompt}</p>
-                                    <p className="type-card-description text-slate-500">
+                                    <p className="type-card-description text-[var(--ws-text-muted)] line-clamp-2 mb-2">{asset.prompt}</p>
+                                    <p className="type-card-description text-[var(--ws-text-muted)]">
                                         {new Date(asset.created_at).toLocaleDateString()}
                                     </p>
                                 </div>
@@ -594,7 +594,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                         </div>
                     ) : (
                         <div className="prose prose-invert max-w-none">
-                            <pre className="whitespace-pre-wrap text-slate-300 type-ui leading-relaxed bg-slate-900/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
+                            <pre className="whitespace-pre-wrap text-[var(--ws-text-secondary)] type-ui leading-relaxed bg-[var(--ws-panel)]/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
                                 {previewModal.content}
                             </pre>
                         </div>

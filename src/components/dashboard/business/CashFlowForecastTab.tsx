@@ -169,13 +169,13 @@ export default function CashFlowForecastTab() {
             <TrendingUp className="w-5 h-5 text-teal-400" />
             Cash Flow & Liquidity Forecast
           </h2>
-          <p className="type-card-description text-slate-400">Model inflows and payables to stay completely ahead of your business expenses</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">Model inflows and payables to stay completely ahead of your business expenses</p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-caption font-bold transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             New Projection
@@ -221,20 +221,20 @@ export default function CashFlowForecastTab() {
 
       {/* SVG Chart Section */}
       {projections.length > 0 && (
-        <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-6">
-          <h3 className="type-caption font-bold text-slate-400 uppercase tracking-widest mb-4">Liquidity Projection Timeline</h3>
-          <div className="relative w-full h-32 bg-slate-950/40 border border-slate-850 rounded-2xl p-2 flex items-end">
+        <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-6">
+          <h3 className="type-caption font-bold text-[var(--ws-text-muted)] uppercase tracking-widest mb-4">Liquidity Projection Timeline</h3>
+          <div className="relative w-full h-32 bg-[var(--ws-canvas)]/40 border border-slate-850 rounded-2xl p-2 flex items-end">
             <svg className="w-full h-full overflow-visible" viewBox="0 0 500 120" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--brand-blue-400)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="var(--brand-blue-400)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               {/* Grid lines */}
-              <line x1="0" y1="20" x2="500" y2="20" stroke="#1e293b" strokeWidth="0.5" />
-              <line x1="0" y1="60" x2="500" y2="60" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="3" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="#1e293b" strokeWidth="0.5" />
+              <line x1="0" y1="20" x2="500" y2="20" stroke="var(--ws-panel)" strokeWidth="0.5" />
+              <line x1="0" y1="60" x2="500" y2="60" stroke="var(--ws-panel)" strokeWidth="0.5" strokeDasharray="3" />
+              <line x1="0" y1="100" x2="500" y2="100" stroke="var(--ws-panel)" strokeWidth="0.5" />
               
               {/* Path & area */}
               <path
@@ -243,7 +243,7 @@ export default function CashFlowForecastTab() {
               />
               <polyline
                 fill="none"
-                stroke="#2dd4bf"
+                stroke="var(--brand-blue-400)"
                 strokeWidth="2.5"
                 points={getChartPoints()}
               />
@@ -256,30 +256,30 @@ export default function CashFlowForecastTab() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Table list */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-slate-900/20 border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+          <div className="bg-[var(--ws-panel)]/20 border border-[var(--ws-border)] rounded-3xl overflow-hidden">
+            <div className="p-4 border-b border-[var(--ws-border)] flex justify-between items-center">
               <span className="type-caption font-bold text-white uppercase tracking-wider">Scheduled cash movements</span>
             </div>
 
             <div className="divide-y divide-slate-850">
               {loading ? (
-                <div className="p-8 text-center text-slate-500">Loading forecast data...</div>
+                <div className="p-8 text-center text-[var(--ws-text-muted)]">Loading forecast data...</div>
               ) : projections.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 space-y-2">
+                <div className="p-8 text-center text-[var(--ws-text-muted)] space-y-2">
                   <DollarSign className="w-8 h-8 mx-auto opacity-30 text-teal-400" />
                   <p className="type-card-description font-semibold">No projection entries yet</p>
                   <p className="type-card-description">Schedule future revenue and payouts to preview cash runway.</p>
                 </div>
               ) : (
                 projections.map(proj => (
-                  <div key={proj.id} className="p-4 hover:bg-slate-900/10 flex items-center justify-between transition-colors">
+                  <div key={proj.id} className="p-4 hover:bg-[var(--ws-panel)]/10 flex items-center justify-between transition-colors">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${proj.type === 'inflow' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                         {proj.type === 'inflow' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                       </div>
                       <div>
                         <p className="type-card-description font-bold text-white">{proj.category}</p>
-                        <p className="type-card-description text-slate-400">{proj.description || 'No description'}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">{proj.description || 'No description'}</p>
                       </div>
                     </div>
 
@@ -288,12 +288,12 @@ export default function CashFlowForecastTab() {
                         <p className={`type-card-description font-black font-mono ${proj.type === 'inflow' ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {proj.type === 'inflow' ? '+' : '-'}${proj.amount.toLocaleString()}
                         </p>
-                        <p className="type-card-description text-slate-500">{new Date(proj.projection_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)]">{new Date(proj.projection_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
                       </div>
 
                       <button
                         onClick={() => handleDelete(proj.id)}
-                        className="p-1 hover:bg-slate-800 rounded text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1 hover:bg-[var(--ws-surface-secondary)] rounded text-[var(--ws-text-muted)] hover:text-red-400 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -306,8 +306,8 @@ export default function CashFlowForecastTab() {
         </div>
 
         {/* AI Outlook Forecast Sidebar */}
-        <div className="bg-slate-900/30 border border-slate-800 rounded-3xl p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="bg-[var(--ws-panel)]/30 border border-[var(--ws-border)] rounded-3xl p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-[var(--ws-border)] pb-3">
             <h4 className="type-caption font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
               AI Liquidity Forecast
@@ -315,7 +315,7 @@ export default function CashFlowForecastTab() {
             <button
               onClick={handleRunAiForecast}
               disabled={runningAi || projections.length === 0}
-              className="p-1 text-slate-400 hover:text-white disabled:opacity-50 transition-colors"
+              className="p-1 text-[var(--ws-text-muted)] hover:text-white disabled:opacity-50 transition-colors"
               title="Run AI cash flow forecasting evaluation"
             >
               {runningAi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
@@ -325,25 +325,25 @@ export default function CashFlowForecastTab() {
           {aiInsights ? (
             <div className="space-y-4">
               <div className="p-4 bg-violet-500/5 border border-violet-500/10 rounded-2xl space-y-3">
-                <div className="flex gap-2 items-start type-caption text-slate-300 leading-relaxed font-semibold">
+                <div className="flex gap-2 items-start type-caption text-[var(--ws-text-secondary)] leading-relaxed font-semibold">
                   <Lightbulb className="w-4 h-4 text-violet-400 flex-shrink-0 mt-0.5" />
                   <p>{aiInsights}</p>
                 </div>
               </div>
 
-              <div className="p-3 bg-teal-500/5 rounded-xl border border-teal-500/10 type-ui text-teal-300 flex items-center gap-2">
+              <div className="p-3 bg-teal-500/5 rounded-xl border border-teal-500/10 type-ui text-[var(--brand-blue-300)] flex items-center gap-2">
                 <Check className="w-3.5 h-3.5" />
                 Treasury cash flow trajectory within safety limit.
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center text-slate-500 space-y-3">
+            <div className="p-8 text-center text-[var(--ws-text-muted)] space-y-3">
               <BrainIcon className="w-8 h-8 mx-auto text-slate-600 animate-pulse" />
               <p className="type-card-description font-medium">Predict future runway periods and cash flow risks with machine intelligence.</p>
               <button
                 onClick={handleRunAiForecast}
                 disabled={runningAi || projections.length === 0}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl type-caption font-bold"
+                className="px-4 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] disabled:opacity-50 text-white rounded-xl type-caption font-bold"
               >
                 Evaluate Runway
               </button>
@@ -355,30 +355,30 @@ export default function CashFlowForecastTab() {
       {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
+          <div className="bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-canvas)]/40">
               <h3 className="font-bold text-white type-ui">Add Cash Flow Projection</h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white type-ui">Close</button>
+              <button onClick={() => setShowModal(false)} className="text-[var(--ws-text-muted)] hover:text-white type-ui">Close</button>
             </div>
 
             <form onSubmit={handleSave} className="p-5 space-y-4">
               <div>
-                <label className="type-caption font-black uppercase text-slate-400 block mb-1">Projection Date</label>
+                <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Projection Date</label>
                 <input
                   type="date"
                   required
                   value={form.projection_date}
                   onChange={e => setForm(f => ({ ...f, projection_date: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
-                <label className="type-caption font-black uppercase text-slate-400 block mb-1">Movement Type</label>
+                <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Movement Type</label>
                 <select
                   value={form.type}
                   onChange={e => setForm(f => ({ ...f, type: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
                 >
                   <option value="inflow">Inflow (Incoming cash)</option>
                   <option value="outflow">Outflow (Outgoing cost)</option>
@@ -387,7 +387,7 @@ export default function CashFlowForecastTab() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="type-caption font-black uppercase text-slate-400 block mb-1">Amount (USD)</label>
+                  <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Amount (USD)</label>
                   <input
                     type="number"
                     required
@@ -395,31 +395,31 @@ export default function CashFlowForecastTab() {
                     placeholder="2500"
                     value={form.amount}
                     onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500 font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="type-caption font-black uppercase text-slate-400 block mb-1">Category</label>
+                  <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Category</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Project Phase 2, Hosting"
                     value={form.category}
                     onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                    className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="type-caption font-black uppercase text-slate-400 block mb-1">Description</label>
+                <label className="type-caption font-black uppercase text-[var(--ws-text-muted)] block mb-1">Description</label>
                 <input
                   type="text"
                   placeholder="Additional context notes"
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
+                  className="w-full px-3 py-2 bg-[var(--ws-canvas)] border border-[var(--ws-border)] rounded-xl text-white type-caption focus:outline-none focus:border-teal-500"
                 />
               </div>
 
@@ -427,14 +427,14 @@ export default function CashFlowForecastTab() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl type-caption font-bold transition-all disabled:opacity-50"
+                  className="flex-1 py-2 bg-teal-500 hover:bg-[var(--brand-blue-400)] text-white rounded-xl type-caption font-bold transition-all disabled:opacity-50"
                 >
                   {saving ? 'Recording...' : 'Add Projection'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl type-caption font-bold"
+                  className="flex-1 py-2 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-secondary)] rounded-xl type-caption font-bold"
                 >
                   Cancel
                 </button>

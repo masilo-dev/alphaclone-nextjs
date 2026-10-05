@@ -35,7 +35,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: index * 0.2, duration: 0.9, ease: 'easeOut' }}
-            className="bg-slate-950/40 rounded-[2.5rem] border border-slate-800/50 hover:border-teal-500/30 transition-all backdrop-blur-md relative overflow-hidden group flex flex-col h-full"
+            className="bg-[var(--ws-canvas)]/40 rounded-[2.5rem] border border-[var(--ws-border)]/50 hover:border-teal-500/30 transition-all backdrop-blur-md relative overflow-hidden group flex flex-col h-full"
         >
             {/* Top Gradient Container — no external image needed */}
             <div className={`relative h-48 w-full overflow-hidden bg-gradient-to-br ${gradient}`}>
@@ -50,7 +50,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                 {/* Bottom fade overlay */}
                 <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950 to-transparent z-10" />
                 {/* Floating Icon Badge */}
-                <div className="absolute bottom-4 left-6 z-20 w-12 h-12 bg-slate-900/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 shadow-2xl group-hover:scale-110 transition-transform">
+                <div className="absolute bottom-4 left-6 z-20 w-12 h-12 bg-[var(--ws-panel)]/80 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 shadow-2xl group-hover:scale-110 transition-transform">
                     <service.icon className={`w-6 h-6 ${accent}`} />
                 </div>
             </div>
@@ -64,7 +64,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                     </div>
                 </div>
 
-            <p className="text-slate-400 type-card-description mb-6 leading-relaxed flex-1">
+            <p className="text-[var(--ws-text-muted)] type-card-description mb-6 leading-relaxed flex-1">
                 {service.summary}
             </p>
 
@@ -76,11 +76,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="pt-6 border-t border-slate-800/50 mt-2 space-y-4">
-                            <div className="type-caption text-slate-500 font-bold uppercase tracking-widest">Specifications</div>
+                        <div className="pt-6 border-t border-[var(--ws-border)]/50 mt-2 space-y-4">
+                            <div className="type-caption text-[var(--ws-text-muted)] font-bold uppercase tracking-widest">Specifications</div>
                             <ul className="space-y-3 pb-4">
                                 {service.details.map((detail, idx) => (
-                                    <li key={idx} className="flex items-start type-ui text-slate-300">
+                                    <li key={idx} className="flex items-start type-ui text-[var(--ws-text-secondary)]">
                                         <CheckCircle2 className="w-4 h-4 text-teal-400 mr-2 flex-shrink-0 mt-0.5" />
                                         <span>{detail}</span>
                                     </li>
@@ -88,7 +88,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                             </ul>
                             {service.showExtra && (
                                 <div className="mb-4 pt-4">
-                                    <React.Suspense fallback={<div className="h-40 bg-slate-900 animate-pulse rounded-xl" />}>
+                                    <React.Suspense fallback={<div className="h-40 bg-[var(--ws-panel)] animate-pulse rounded-xl" />}>
                                         {service.showExtra}
                                     </React.Suspense>
                                 </div>
@@ -100,7 +100,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
 
             <button
                 onClick={() => setExpanded(!expanded)}
-                className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-800 type-ui font-bold text-slate-300 transition-all button-fill-hover group/btn"
+                className="w-full mt-4 flex items-center justify-center gap-2 py-4 rounded-2xl border border-[var(--ws-border)] type-ui font-bold text-[var(--ws-text-secondary)] transition-all button-fill-hover group/btn"
             >
                 <span className="relative z-10 flex items-center gap-2">
                     {expanded ? 'Collapse Details' : 'View Full Specifications'}

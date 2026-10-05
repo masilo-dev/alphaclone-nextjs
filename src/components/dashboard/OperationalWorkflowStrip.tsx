@@ -36,16 +36,16 @@ export function OperationalWorkflowStrip({
 
   return (
     <section
-      className={`rounded-2xl border border-white/5 bg-slate-900/55 px-3 py-2.5 ${className}`}
+      className={`rounded-2xl border border-white/5 bg-[var(--ws-panel)]/55 px-3 py-2.5 ${className}`}
       aria-label={t('Workflow guidance')}
     >
       <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <div className="flex-1 min-w-0">
-          <p className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 type-caption font-bold uppercase tracking-caps text-slate-500">
+          <p className="inline-flex h-5 items-center rounded-full border border-white/5 bg-[var(--ws-canvas)]/70 px-2 type-caption font-bold uppercase tracking-caps text-[var(--ws-text-muted)]">
             {t('Finish the job')}
           </p>
           <p className="mt-1 type-card-description font-semibold text-white">{t(title)}</p>
-          <p className="mt-1 type-card-description leading-relaxed text-slate-400 line-clamp-2">
+          <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)] line-clamp-2">
             {t(playbook[0])}
           </p>
         </div>
@@ -55,7 +55,7 @@ export function OperationalWorkflowStrip({
               key={link.resolvedHref + link.label}
               type="button"
               onClick={() => router.push(link.resolvedHref)}
-              className="inline-flex h-8 items-center rounded-full border border-slate-700 bg-slate-950/40 px-2.5 type-ui font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+              className="inline-flex h-8 items-center rounded-full border border-[var(--ws-border)] bg-[var(--ws-canvas)]/40 px-2.5 type-ui font-bold text-[var(--ws-text-secondary)] transition-colors hover:border-slate-500 hover:text-white"
             >
               {t(link.label)}
             </button>

@@ -93,7 +93,7 @@ function UnifiedInboxContent({
       ) : null}
 
       {!hideTabSwitcher ? (
-      <p className="type-card-description text-slate-500 px-1">
+      <p className="type-card-description text-[var(--ws-text-muted)] px-1">
         {activeTab === 'mailbox'
           ? 'Read and send from your connected Outlook or Zoho mailbox. Choose Brevo, SendGrid, or Resend when you compose.'
           : 'WhatsApp, social, and synced email activity in one feed — with AI draft replies you approve before sending.'}
@@ -131,7 +131,7 @@ export default function UnifiedInbox(props: UnifiedInboxProps) {
       fallback={
         <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
           <Loader2 className="w-10 h-10 text-[var(--brand-blue-500)] animate-spin" aria-hidden="true" />
-          <p className="type-card-description text-slate-400">Loading inbox…</p>
+          <p className="type-card-description text-[var(--ws-text-muted)]">Loading inbox…</p>
         </div>
       }
     >

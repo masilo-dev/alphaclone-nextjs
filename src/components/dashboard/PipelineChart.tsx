@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useTenant } from '@/contexts/TenantContext';
+import { BRAND_BLUE, BRAND_VIOLET, DARK_NEUTRALS, LIGHT_NEUTRALS, SEMANTIC } from '@/constants/brand';
 
 // Data source: `deals` table (same source as the get_pipeline_summary MCP tool and DealsTab).
 // Previously queried non-existent `business_deals`, silently showing demo data.
@@ -29,7 +30,13 @@ interface PipelineData {
   count: number;
 }
 
-const COLORS = ['#3182ce', '#4299e1', '#63b3ed', '#805ad5', '#319795'];
+const COLORS = [
+  SEMANTIC.info[600],
+  SEMANTIC.info[500],
+  BRAND_BLUE[300],
+  BRAND_VIOLET[500],
+  SEMANTIC.productivity[500],
+];
 
 export function PipelineChart() {
   const { currentTenant, isLoading: tenantLoading } = useTenant();
@@ -40,7 +47,7 @@ export function PipelineChart() {
   const bgCard = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-  const gridColor = useColorModeValue('#edf2f7', '#2d3748');
+  const gridColor = useColorModeValue(LIGHT_NEUTRALS.surfaceTertiary, DARK_NEUTRALS.surfaceTertiary);
   const labelColor = useColorModeValue('gray.600', 'gray.400');
 
   useEffect(() => {

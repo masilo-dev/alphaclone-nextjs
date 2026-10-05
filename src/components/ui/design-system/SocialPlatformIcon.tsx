@@ -27,15 +27,15 @@ export type SocialPlatform =
   | 'globe';
 
 const PLATFORM_CONFIG: Record<SocialPlatform, { icon: React.ElementType; colorClass: string; bgClass: string }> = {
-  linkedin: { icon: Linkedin, colorClass: 'text-[#0A66C2]', bgClass: 'bg-[#0A66C2]/10' },
-  facebook: { icon: Facebook, colorClass: 'text-[#1877F2]', bgClass: 'bg-[#1877F2]/10' },
-  instagram: { icon: Instagram, colorClass: 'text-[#E1306C]', bgClass: 'bg-[#E1306C]/10' },
-  twitter: { icon: Twitter, colorClass: 'text-[#1DA1F2]', bgClass: 'bg-[#1DA1F2]/10' },
-  x: { icon: Twitter, colorClass: 'text-slate-200', bgClass: 'bg-white/10' },
-  tiktok: { icon: Music2, colorClass: 'text-[#FE2C55]', bgClass: 'bg-[#FE2C55]/10' },
-  whatsapp: { icon: MessageCircle, colorClass: 'text-[#25D366]', bgClass: 'bg-[#25D366]/10' },
-  mail: { icon: Mail, colorClass: 'text-[#EA4335]', bgClass: 'bg-[#EA4335]/10' },
-  chrome: { icon: Chrome, colorClass: 'text-[#4285F4]', bgClass: 'bg-[#4285F4]/10' },
+  linkedin: { icon: Linkedin, colorClass: 'text-[var(--logo-linkedin)]', bgClass: 'bg-[var(--logo-linkedin)]/10' },
+  facebook: { icon: Facebook, colorClass: 'text-[var(--logo-facebook)]', bgClass: 'bg-[var(--logo-facebook)]/10' },
+  instagram: { icon: Instagram, colorClass: 'text-[var(--logo-instagram)]', bgClass: 'bg-[var(--logo-instagram)]/10' },
+  twitter: { icon: Twitter, colorClass: 'text-[var(--logo-twitter)]', bgClass: 'bg-[var(--logo-twitter)]/10' },
+  x: { icon: Twitter, colorClass: 'text-[var(--ws-text-secondary)]', bgClass: 'bg-white/10' },
+  tiktok: { icon: Music2, colorClass: 'text-[var(--logo-tiktok, var(--error-500))]', bgClass: 'bg-[var(--logo-tiktok, var(--error-500))]/10' },
+  whatsapp: { icon: MessageCircle, colorClass: 'text-[var(--logo-whatsapp)]', bgClass: 'bg-[var(--logo-whatsapp)]/10' },
+  mail: { icon: Mail, colorClass: 'text-[var(--logo-google-red)]', bgClass: 'bg-[var(--logo-google-red)]/10' },
+  chrome: { icon: Chrome, colorClass: 'text-[var(--logo-google-blue)]', bgClass: 'bg-[var(--logo-google-blue)]/10' },
   globe: { icon: Globe, colorClass: 'text-teal-400', bgClass: 'bg-teal-500/10' },
 };
 

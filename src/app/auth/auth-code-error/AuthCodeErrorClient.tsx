@@ -9,13 +9,13 @@ export default function AuthCodeErrorClient() {
   const error = searchParams?.get('error') || 'sign_in_failed';
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center space-y-4">
-        <div className="w-14 h-14 mx-auto rounded-full bg-red-500/10 flex items-center justify-center">
+    <div className="min-h-screen bg-[var(--ws-canvas)] flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-[var(--ws-panel)] border border-[var(--ws-border)] rounded-2xl p-8 text-center space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-full bg-[var(--error-500)]/10 flex items-center justify-center">
           <AlertTriangle className="w-7 h-7 text-red-400" />
         </div>
         <h1 className="text-xl font-bold text-white">Sign-in could not be completed</h1>
-        <p className="type-card-description text-slate-400">
+        <p className="type-card-description text-[var(--ws-text-muted)]">
           {error === 'linkedin_sync_failed'
             ? 'Your account signed in, but LinkedIn could not be connected. You can retry from Settings → Integrations.'
             : error === 'zoho_auth_failed'
@@ -33,7 +33,7 @@ export default function AuthCodeErrorClient() {
           >
             Back to login
           </Link>
-          <Link href="/dashboard" className="type-ui text-slate-500 hover:text-slate-300">
+          <Link href="/dashboard" className="type-ui text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]">
             Go to dashboard
           </Link>
         </div>

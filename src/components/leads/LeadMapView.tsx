@@ -82,7 +82,7 @@ function MapZoomControls() {
       <button
         type="button"
         onClick={() => map.zoomIn()}
-        className="w-8 h-8 rounded-md border border-slate-700 bg-slate-900/90 text-white text-base font-bold hover:bg-slate-800"
+        className="w-8 h-8 rounded-md border border-[var(--ws-border)] bg-[var(--ws-panel)]/90 text-white text-base font-bold hover:bg-[var(--ws-surface-secondary)]"
         aria-label="Zoom in"
       >
         +
@@ -90,7 +90,7 @@ function MapZoomControls() {
       <button
         type="button"
         onClick={() => map.zoomOut()}
-        className="w-8 h-8 rounded-md border border-slate-700 bg-slate-900/90 text-white text-base font-bold hover:bg-slate-800"
+        className="w-8 h-8 rounded-md border border-[var(--ws-border)] bg-[var(--ws-panel)]/90 text-white text-base font-bold hover:bg-[var(--ws-surface-secondary)]"
         aria-label="Zoom out"
       >
         -
@@ -313,49 +313,49 @@ export default function LeadMapView({
   }
 
   return (
-    <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+    <div className="relative w-full min-h-[240px] h-[min(50svh,520px)] sm:h-[min(55svh,480px)] md:h-[480px] max-h-[640px] rounded-xl overflow-hidden border border-[var(--ws-border)] shadow-2xl">
       {/* Legend + map style */}
-      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 ac-layer-map-controls max-w-[calc(100%-1rem)] flex flex-col gap-1 bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border border-slate-700 type-caption sm:text-xs font-semibold">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 ac-layer-map-controls max-w-[calc(100%-1rem)] flex flex-col gap-1 bg-[var(--ws-panel)]/90 backdrop-blur-md rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border border-[var(--ws-border)] type-caption sm:text-xs font-semibold">
         <div className="flex items-center gap-1 mb-1">
           <button
             type="button"
             onClick={() => setMapStyle('satellite')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Aerial
           </button>
           <button
             type="button"
             onClick={() => setMapStyle('hybrid')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'hybrid' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'hybrid' ? 'border-teal-500/60 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Hybrid
           </button>
           <button
             type="button"
             onClick={() => setMapStyle('detailed')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Streets
           </button>
           <button
             type="button"
             onClick={() => setMapStyle('dark')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-[var(--brand-blue-300)]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Dark
           </button>
           <button
             type="button"
             onClick={() => setShowRoute((prev) => !prev)}
-            className={`px-1.5 py-0.5 rounded border ${showRoute ? 'border-cyan-500/60 text-cyan-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${showRoute ? 'border-cyan-500/60 text-cyan-300' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Route
           </button>
           <button
             type="button"
             onClick={() => setShowHeat((prev) => !prev)}
-            className={`px-1.5 py-0.5 rounded border ${showHeat ? 'border-rose-500/60 text-rose-300' : 'border-slate-700 text-slate-400'}`}
+            className={`px-1.5 py-0.5 rounded border ${showHeat ? 'border-rose-500/60 text-[var(--error-text,var(--error-500))]' : 'border-[var(--ws-border)] text-[var(--ws-text-muted)]'}`}
           >
             Heat
           </button>
@@ -363,23 +363,23 @@ export default function LeadMapView({
             <button
               type="button"
               onClick={() => setFocusedLeadKey(null)}
-              className="px-1.5 py-0.5 rounded border border-amber-500/50 text-amber-300"
+              className="px-1.5 py-0.5 rounded border border-amber-500/50 text-[var(--warning-text,var(--warning-500))]"
             >
               Clear focus
             </button>
           )}
         </div>
-        <p className="text-slate-400 uppercase tracking-wider mb-0.5">Sources</p>
+        <p className="text-[var(--ws-text-muted)] uppercase tracking-wider mb-0.5">Sources</p>
         <span className="text-blue-400">HERE Maps</span>
         <span className="text-emerald-400">OpenStreetMap</span>
         <span className="text-pink-400">Firecrawl AI</span>
       </div>
 
       {/* Pin count */}
-      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 ac-layer-map-controls max-w-[min(calc(100%-5rem),14rem)] bg-slate-900/90 backdrop-blur-md rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 border border-slate-700 type-caption sm:text-sm font-bold text-white flex items-center gap-1.5">
+      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 ac-layer-map-controls max-w-[min(calc(100%-5rem),14rem)] bg-[var(--ws-panel)]/90 backdrop-blur-md rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 border border-[var(--ws-border)] type-caption sm:text-sm font-bold text-white flex items-center gap-1.5">
         <MapPin className="w-3.5 h-3.5 text-teal-400 shrink-0" aria-hidden />
         <span className="truncate">
-          {pinnable.length} <span className="text-slate-400 font-normal">/ {leads.length} mapped</span>
+          {pinnable.length} <span className="text-[var(--ws-text-muted)] font-normal">/ {leads.length} mapped</span>
         </span>
       </div>
 
@@ -387,7 +387,7 @@ export default function LeadMapView({
         center={center}
         zoom={zoom}
         scrollWheelZoom
-        style={{ width: '100%', height: '100%', background: '#0f172a' }}
+        style={{ width: '100%', height: '100%', background: 'var(--ws-canvas)' }}
         className="lead-map"
       >
         {/* Dark OpenStreetMap tile */}
@@ -411,17 +411,17 @@ export default function LeadMapView({
             <Marker position={previewCenter} icon={DefaultIcon}>
               <Popup>Search center preview</Popup>
             </Marker>
-            <Circle center={previewCenter} radius={Math.max(previewRadiusKm, 1) * 1000} pathOptions={{ color: '#14b8a6', fillOpacity: 0.08 }} />
+            <Circle center={previewCenter} radius={Math.max(previewRadiusKm, 1) * 1000} pathOptions={{ color: 'var(--brand-blue-500)', fillOpacity: 0.08 }} />
           </>
         )}
         {routePoints.length > 1 && (
-          <Polyline positions={routePoints} pathOptions={{ color: '#38bdf8', weight: 3, opacity: 0.7, dashArray: '6 6' }} />
+          <Polyline positions={routePoints} pathOptions={{ color: 'var(--info-500)', weight: 3, opacity: 0.7, dashArray: '6 6' }} />
         )}
         {focusedLead && (
           <>
-            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={1000} pathOptions={{ color: '#22d3ee', fillOpacity: 0.04 }} />
-            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={3000} pathOptions={{ color: '#f59e0b', fillOpacity: 0.03 }} />
-            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={5000} pathOptions={{ color: '#ef4444', fillOpacity: 0.02 }} />
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={1000} pathOptions={{ color: 'var(--info-500)', fillOpacity: 0.04 }} />
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={3000} pathOptions={{ color: 'var(--warning-500)', fillOpacity: 0.03 }} />
+            <Circle center={[focusedLead.lat!, focusedLead.lng!]} radius={5000} pathOptions={{ color: 'var(--error-500)', fillOpacity: 0.02 }} />
           </>
         )}
         {heatPoints.map((point, idx) => (
@@ -430,8 +430,8 @@ export default function LeadMapView({
             center={[point.lat, point.lng]}
             radius={point.radius}
             pathOptions={{
-              color: '#f43f5e',
-              fillColor: '#fb7185',
+              color: 'var(--error-500)',
+              fillColor: 'var(--error-500)',
               fillOpacity: point.opacity,
               opacity: 0,
             }}
@@ -442,7 +442,7 @@ export default function LeadMapView({
             key={idx}
             position={[lead.lat!, lead.lng!]}
             icon={clusteredMarkers ? L.divIcon({
-              html: `<div style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:var(--type-caption-size);font-weight:var(--weight-bold);">${lead.count}</div>`,
+              html: `<div style="background:var(--ws-canvas);border:1px solid var(--ws-surface-tertiary);color:var(--ws-border);border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:var(--type-caption-size);font-weight:var(--weight-bold);">${lead.count}</div>`,
               className: '',
               iconSize: [32, 32],
               iconAnchor: [16, 16],
@@ -471,7 +471,7 @@ export default function LeadMapView({
 
                 {/* Category */}
                 {lead.category && (
-                  <p className="type-card-description text-slate-500">{lead.category}</p>
+                  <p className="type-card-description text-[var(--ws-text-muted)]">{lead.category}</p>
                 )}
 
                 {/* Rating */}
@@ -483,14 +483,14 @@ export default function LeadMapView({
 
                 {lead.address && (
                   <p className="type-card-description text-slate-600 leading-snug break-words">
-                    <span className="font-semibold text-slate-500">Address: </span>
+                    <span className="font-semibold text-[var(--ws-text-muted)]">Address: </span>
                     {lead.address}
                   </p>
                 )}
 
                 {lead.phone && (
                   <p className="type-card-description text-slate-700">
-                    <span className="font-semibold text-slate-500">Phone: </span>
+                    <span className="font-semibold text-[var(--ws-text-muted)]">Phone: </span>
                     {lead.phone}
                   </p>
                 )}
@@ -567,7 +567,7 @@ export default function LeadMapView({
 
       {/* CSS tweak — keeps popup content clean */}
       <style>{`
-        .lead-map .leaflet-container { background: #0f172a; }
+        .lead-map .leaflet-container { background: var(--ws-canvas); }
         .lead-popup .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
         .lead-popup .leaflet-popup-content { margin: 0; }
       `}</style>

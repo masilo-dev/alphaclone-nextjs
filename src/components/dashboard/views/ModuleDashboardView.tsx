@@ -44,9 +44,9 @@ function DesktopModuleOnly({ children }: { children: React.ReactNode }) {
 function ChartSkeleton() {
   return (
     <div className="ac-workspace-panel ac-chart-enter p-5 min-h-[280px] ac-skeleton-pulse">
-      <div className="h-3 w-28 bg-slate-800 rounded mb-2" />
-      <div className="h-2.5 w-40 bg-slate-800/70 rounded mb-6" />
-      <div className="h-[200px] bg-slate-800/40 rounded-lg" />
+      <div className="h-3 w-28 bg-[var(--ws-surface-secondary)] rounded mb-2" />
+      <div className="h-2.5 w-40 bg-[var(--ws-surface-secondary)]/70 rounded mb-6" />
+      <div className="h-[200px] bg-[var(--ws-surface-secondary)]/40 rounded-lg" />
     </div>
   );
 }
@@ -258,26 +258,26 @@ function DashboardContent({
                 'ac-workspace-panel rounded-lg p-4 text-left transition-all',
                 featured
                   ? 'border-teal-500/30 bg-teal-500/5 hover:border-teal-500/40'
-                  : 'hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/70'
+                  : 'hover:border-[var(--brand-blue-500)]/20 hover:bg-[var(--ws-panel)]/70'
               )}
             >
               <div className="mb-3 flex items-center gap-2">
                 <span className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-lg',
-                  featured ? 'bg-teal-500/15 text-teal-300' : 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)]'
+                  featured ? 'bg-teal-500/15 text-[var(--brand-blue-300)]' : 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)]'
                 )}>
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className={cn(
                   'type-caption font-black uppercase tracking-widest',
-                  featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
+                  featured ? 'text-[var(--brand-blue-300)]' : 'text-[var(--brand-blue-400)]'
                 )}>{t(label)}</span>
               </div>
               <h3 className="type-ui font-semibold text-white">{t(title)}</h3>
-              <p className="mt-1 type-card-description leading-relaxed text-slate-400">{t(description)}</p>
+              <p className="mt-1 type-card-description leading-relaxed text-[var(--ws-text-muted)]">{t(description)}</p>
               <span className={cn(
                 'mt-4 inline-flex items-center gap-1 type-ui font-bold',
-                featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
+                featured ? 'text-[var(--brand-blue-300)]' : 'text-[var(--brand-blue-400)]'
               )}>
                 {t(cta)}
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
@@ -341,7 +341,7 @@ function DashboardContent({
       {overviewQuickModules ? (
         <div className="ac-workspace-panel rounded-lg p-4">
           <div className="flex items-center justify-between gap-3 mb-3">
-            <span className="type-caption font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
+            <span className="type-caption font-black uppercase tracking-widest text-[var(--ws-text-muted)]">Workspace Modules</span>
             <button
               type="button"
               onClick={() => router.push('/dashboard/settings')}
@@ -357,17 +357,17 @@ function DashboardContent({
                 key={`${label}-${href}`}
                 type="button"
                 onClick={() => router.push(href)}
-                className="h-10 rounded-lg bg-slate-950/40 border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2 min-w-0 px-2"
+                className="h-10 rounded-lg bg-[var(--ws-canvas)]/40 border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2 min-w-0 px-2"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-label={label}
               >
                 <Icon className="w-4 h-4 shrink-0 text-[var(--brand-blue-400)]" />
-                <span className="type-ui font-bold text-slate-300 truncate">{label}</span>
+                <span className="type-ui font-bold text-[var(--ws-text-secondary)] truncate">{label}</span>
               </button>
             ))}
           </div>
 
-          <p className="type-card-description text-slate-500 mt-3">
+          <p className="type-card-description text-[var(--ws-text-muted)] mt-3">
             Tip: Tap a module tile to jump straight into CRM, Deals, Invoicing, and more.
           </p>
         </div>
@@ -503,7 +503,7 @@ export function SocialDashboard() {
         moduleId="social"
         endpoint="/api/social/stats"
         chartType="line"
-        chartColor="#D74673"
+        chartColor="var(--communication-500, var(--error-500))"
         chartTitle="Posts published"
         chartSubtitle="Last 14 days"
       />

@@ -29,7 +29,7 @@ export function CrmNextStepsPanel({
                 <div className="min-w-0">
                     <h2 className="type-caption font-bold text-white tracking-tight">{heading}</h2>
                     {subheading ? (
-                        <p className="type-card-description text-slate-400 mt-0.5 leading-relaxed">{subheading}</p>
+                        <p className="type-card-description text-[var(--ws-text-muted)] mt-0.5 leading-relaxed">{subheading}</p>
                     ) : null}
                 </div>
             </div>
@@ -40,21 +40,21 @@ export function CrmNextStepsPanel({
                             ? 'border-amber-500/30 bg-amber-950/20'
                             : item.tone === 'success'
                               ? 'border-emerald-500/25 bg-emerald-950/15'
-                              : 'border-slate-700/80 bg-slate-900/40';
+                              : 'border-[var(--ws-border)]/80 bg-[var(--ws-panel)]/40';
                     return (
                         <li
                             key={item.id}
                             className={`rounded-lg border px-3 py-2.5 ${border}`}
                         >
-                            <p className="type-card-description font-semibold text-slate-100 leading-snug">{item.title}</p>
-                            <p className="type-card-description text-slate-400 mt-1 leading-relaxed">{item.detail}</p>
+                            <p className="type-card-description font-semibold text-[var(--ws-text-primary)] leading-snug">{item.title}</p>
+                            <p className="type-card-description text-[var(--ws-text-muted)] mt-1 leading-relaxed">{item.detail}</p>
                             {(item.actionLabel && item.href) || (item.actionLabel && item.onAction) ? (
                                 <div className="mt-2">
                                     {item.onAction ? (
                                         <button
                                             type="button"
                                             onClick={item.onAction}
-                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-[var(--brand-blue-300)] transition-colors"
                                         >
                                             {item.actionLabel}
                                             <ArrowRight className="w-3.5 h-3.5" aria-hidden />
@@ -62,7 +62,7 @@ export function CrmNextStepsPanel({
                                     ) : item.href ? (
                                         <Link
                                             href={item.href}
-                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                            className="inline-flex items-center gap-1.5 type-caption font-semibold text-teal-400 hover:text-[var(--brand-blue-300)] transition-colors"
                                         >
                                             {item.actionLabel}
                                             <ArrowRight className="w-3.5 h-3.5" aria-hidden />

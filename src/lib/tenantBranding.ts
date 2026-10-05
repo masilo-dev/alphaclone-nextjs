@@ -48,7 +48,7 @@ export function extractTenantBranding(
     'Unconfigured Business';
 
   const logo = branding.companyLogo || branding.logoUrl || branding.logo || bSettings.logo_url || tenant.logo_url || (tenant as any).logo || undefined;
-  const primaryColor = tenant.brand_color_primary || bSettings.brand_color_primary || branding.primaryBrandColor || branding.primaryColor || branding.brand_color_primary || '#0f172a';
+  const primaryColor = tenant.brand_color_primary || bSettings.brand_color_primary || branding.primaryBrandColor || branding.primaryColor || branding.brand_color_primary || 'var(--ws-canvas)';
   const secondaryColor = tenant.brand_color_secondary || bSettings.brand_color_secondary || branding.secondaryColor || branding.brand_color_secondary || undefined;
   const email = bSettings.email || branding.businessEmail || branding.supportEmail || (settings.support_email as string) || undefined;
   const phone = bSettings.phone || branding.businessPhone || branding.phone || undefined;

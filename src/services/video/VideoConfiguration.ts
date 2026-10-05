@@ -68,10 +68,10 @@ export interface VideoUIConfig {
  */
 export const DEFAULT_VIDEO_CONFIG: VideoUIConfig = {
     branding: {
-        primaryColor: '#14b8a6', // Teal-500
-        accentColor: '#3b82f6',  // Blue-500
-        backgroundColor: '#111827', // Gray-900
-        textColor: '#ffffff',
+        primaryColor: 'var(--brand-blue-500)', // Teal-500
+        accentColor: 'var(--info-500)',  // Blue-500
+        backgroundColor: 'var(--ws-canvas)', // Gray-900
+        textColor: 'var(--color-white)',
     },
 
     layout: {

@@ -20,20 +20,20 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                 className="absolute inset-0 bg-transparent"
                 onClick={onClose}
             />
-            <Card className="relative bg-[#0a0a0a] border border-slate-800/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+            <Card className="relative bg-[var(--ws-canvas)] border border-[var(--ws-border)]/50 sm:rounded-3xl p-0 flex flex-col w-full max-w-2xl h-full sm:h-auto sm:max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
                 {/* Header */}
-                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-xl shrink-0">
+                <div className="flex items-start sm:items-center justify-between p-4 sm:p-6 border-b border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-2 sm:p-3 bg-teal-500/10 rounded-xl">
                             <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-teal-400" />
                         </div>
                         <div>
                             <h2 className="text-lg sm:text-xl font-bold">Booking & Calendly</h2>
-                            <p className="text-slate-400 type-card-description sm:text-sm">Configure your automated booking system</p>
+                            <p className="text-[var(--ws-text-muted)] type-card-description sm:text-sm">Configure your automated booking system</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg -mr-2 sm:mr-0">
-                        <X className="w-5 h-5 text-slate-400" />
+                    <button onClick={onClose} className="p-2 hover:bg-[var(--ws-surface-secondary)] rounded-lg -mr-2 sm:mr-0">
+                        <X className="w-5 h-5 text-[var(--ws-text-muted)]" />
                     </button>
                 </div>
 
@@ -43,10 +43,10 @@ export const CalendlySettingsModal: React.FC<CalendlySettingsModalProps> = ({ on
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-xl flex justify-end shrink-0">
+                <div className="p-6 border-t border-[var(--ws-border)]/50 bg-[var(--ws-panel)]/50 backdrop-blur-xl flex justify-end shrink-0">
                     <button
                         onClick={onClose}
-                        className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+                        className="px-8 py-3 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-surface-tertiary)] text-white type-caption font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
                     >
                         CLOSE
                     </button>

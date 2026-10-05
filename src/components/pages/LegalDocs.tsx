@@ -331,7 +331,7 @@ export function PrivacyPolicy() {
                'Zero-knowledge architecture for financial data (your accountant sees only what you grant)',
             ]} />
             <div className="mt-4 p-4 border border-sky-200 bg-sky-50 rounded-xl">
-               <h4 className="text-teal-300 type-ui font-semibold mb-2">Data Breach Notification Policy</h4>
+               <h4 className="text-[var(--brand-blue-300)] type-ui font-semibold mb-2">Data Breach Notification Policy</h4>
                <p className="text-[var(--marketing-text-secondary)] type-card-description leading-relaxed">
                   In the event of a security breach that poses a high risk to the rights and freedoms of individuals (e.g., unauthorized access to unencrypted personal data), AlphaClone Systems will notify all affected users and relevant supervisory authorities without undue delay, and in any event within 72 hours of becoming aware of the breach. Notifications will include the nature of the breach, potential consequences, and the mitigation measures taken.
                </p>

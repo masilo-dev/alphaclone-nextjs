@@ -133,7 +133,7 @@ export const TaskCountdown: React.FC<TaskCountdownProps> = ({
 
     return (
         <span
-            className={`inline-flex items-center gap-1 type-caption font-medium ${isSoon ? 'text-amber-500' : 'text-slate-400'}`}
+            className={`inline-flex items-center gap-1 type-caption font-medium ${isSoon ? 'text-amber-500' : 'text-[var(--ws-text-muted)]'}`}
             title={`${t('Due')} ${dueLabel}`}
         >
             <Clock className="w-3.5 h-3.5" aria-hidden />

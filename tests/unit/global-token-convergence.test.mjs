@@ -15,6 +15,8 @@ test('alphaclone-theme exposes Untitled-style semantic tokens with teal brand', 
   assert.match(theme, /--color-fg-brand-primary/);
   assert.match(theme, /--ac-accent:\s*var\(--brand-blue-500\)/);
   assert.match(theme, /--ac-bonnie:\s*var\(--brand-blue-500\)/);
+  assert.match(theme, /--marketing-ink:/);
+  assert.match(theme, /--marketing-link:/);
   assert.doesNotMatch(theme, /#8950[Ff]5|#356[Aa][Ff]4|#00f0ff|#7f00ff/);
 });
 

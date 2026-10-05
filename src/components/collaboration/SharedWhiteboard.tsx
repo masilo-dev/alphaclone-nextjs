@@ -12,7 +12,7 @@ interface SharedWhiteboardProps {
 const SharedWhiteboard: React.FC<SharedWhiteboardProps> = ({ onClose }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const [color, setColor] = useState('#2dd4bf');
+    const [color, setColor] = useState('var(--brand-blue-400)');
     const [brushSize, setBrushSize] = useState(3);
 
     useEffect(() => {
@@ -79,13 +79,13 @@ const SharedWhiteboard: React.FC<SharedWhiteboardProps> = ({ onClose }) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
-    const colors = ['#2dd4bf', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444', '#ffffff', '#000000'];
+    const colors = ['var(--brand-blue-400)', 'var(--brand-violet-400)', 'var(--info-500)', 'var(--warning-500)', 'var(--error-500)', 'var(--color-white)', 'var(--color-black)'];
 
     return (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
             <Card className="w-full max-w-6xl max-h-[90vh] flex flex-col">
                 {/* Toolbar */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)]">
                     <div className="flex items-center gap-4">
                         <div className="flex gap-2">
                             {colors.map((c) => (
@@ -93,7 +93,7 @@ const SharedWhiteboard: React.FC<SharedWhiteboardProps> = ({ onClose }) => {
                                     key={c}
                                     onClick={() => setColor(c)}
                                     className={`w-8 h-8 rounded border-2 transition-all ${
-                                        color === c ? 'border-white scale-110' : 'border-slate-700'
+                                        color === c ? 'border-white scale-110' : 'border-[var(--ws-border)]'
                                     }`}
                                     style={{ backgroundColor: c }}
                                 />
@@ -107,7 +107,7 @@ const SharedWhiteboard: React.FC<SharedWhiteboardProps> = ({ onClose }) => {
                             onChange={(e) => setBrushSize(Number(e.target.value))}
                             className="w-24"
                         />
-                        <span className="type-ui text-slate-400">{brushSize}px</span>
+                        <span className="type-ui text-[var(--ws-text-muted)]">{brushSize}px</span>
                     </div>
 
                     <div className="flex items-center gap-2">
