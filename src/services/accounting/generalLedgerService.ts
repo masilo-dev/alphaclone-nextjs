@@ -89,27 +89,21 @@ export const generalLedgerService = {
         try {
             const tenantId = this.getTenantId();
 
-            let query = supabase
-                .from('general_ledger')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .eq('account_id', accountId);
-
-            if (filters?.startDate) {
-                query = query.gte('entry_date', filters.startDate);
-            }
-            if (filters?.endDate) {
-                query = query.lte('entry_date', filters.endDate);
-            }
-
-            const { data, error } = await query
-                .order('entry_date', { ascending: true })
-                .order('entry_number', { ascending: true })
-                .limit(filters?.limit || 1000);
+            // general_ledger is a materialized view (no RLS) and direct SELECT is
+            // revoked from `authenticated` (migration 20260911062116). The
+            // SECURITY DEFINER RPC enforces tenant membership, so it is the only
+            // read path — fail closed on error instead of falling back.
+            const { data, error } = await supabase.rpc('get_general_ledger_entries', {
+                p_tenant_id: tenantId,
+                p_account_id: accountId,
+                p_start_date: filters?.startDate || null,
+                p_end_date: filters?.endDate || null,
+                p_limit: filters?.limit || 1000,
+            });
 
             if (error) throw error;
 
-            const entries = (data || []).map(this.mapGLEntry);
+            const entries = ((data as any[]) || []).map(this.mapGLEntry);
 
             return { entries, error: null };
         } catch (err: any) {
@@ -132,25 +126,19 @@ export const generalLedgerService = {
         try {
             const tenantId = this.getTenantId();
 
-            let query = supabase
-                .from('general_ledger')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .gte('entry_date', startDate)
-                .lte('entry_date', endDate);
-
-            if (filters?.accountType) {
-                query = query.eq('account_type', filters.accountType);
-            }
-            if (filters?.sourceType) {
-                query = query.eq('source_type', filters.sourceType);
-            }
-
-            const { data, error } = await query.order('entry_date', { ascending: true });
+            // RPC-only read path (see getAccountEntries for rationale).
+            const { data, error } = await supabase.rpc('get_general_ledger_entries', {
+                p_tenant_id: tenantId,
+                p_start_date: startDate,
+                p_end_date: endDate,
+                p_account_type: filters?.accountType || null,
+                p_source_type: filters?.sourceType || null,
+                p_limit: 5000,
+            });
 
             if (error) throw error;
 
-            const entries = (data || []).map(this.mapGLEntry);
+            const entries = ((data as any[]) || []).map(this.mapGLEntry);
 
             return { entries, error: null };
         } catch (err: any) {

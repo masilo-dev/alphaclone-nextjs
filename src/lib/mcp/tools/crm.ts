@@ -578,7 +578,7 @@ registerTool('crm', {
           status: 'active',
           notes: args.notes || null,
           original_lead_id: args.lead_id || null,
-          lead_source: args.source || null,
+          lead_source: args.source ? args.source : null,
           custom_fields: {
             synced_from: 'business_clients',
             business_client_id: client.id,

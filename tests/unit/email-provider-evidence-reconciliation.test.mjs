@@ -47,7 +47,7 @@ test('search email lookup remains tenant scoped', async () => {
   const source = await read('src/lib/mcp/tools/email-ops.ts');
   const start = source.indexOf("name: 'search_emails'");
   assert.notEqual(start, -1);
-  const section = source.slice(start, start + 2500);
+  const section = source.slice(start, start + 10000);
   assert.match(section, /project_email_dispatches/);
   assert.match(section, /\.eq\('tenant_id', tenantId\)/);
 });

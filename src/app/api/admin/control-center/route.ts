@@ -129,11 +129,13 @@ export async function GET() {
     const admin = createSupabaseAdminClient();
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [tenantResult, errorResult, emailResult, auditResult, users] = await Promise.all([
+    const [tenantResult, errorResult, emailResult, auditResult, workerResult, failedJobsResult, users] = await Promise.all([
       admin.from('tenants').select('id,name,subscription_status,subscription_tier', { count: 'exact' }).is('deletion_pending_at', null).order('created_at', { ascending: false }).limit(100),
       admin.from('error_logs').select('id,tenant_id,error_type,error_message,message,endpoint,status_code,severity,created_at').gte('created_at', since24h).order('created_at', { ascending: false }).limit(50),
       admin.from('email_logs').select('id,status,provider,to_email,subject,error,created_at').gte('created_at', since24h).order('created_at', { ascending: false }).limit(50),
       admin.from('security_logs').select('id,event_type,severity,created_at,event_details').order('created_at', { ascending: false }).limit(25),
+      admin.from('worker_heartbeats').select('worker_id, worker_type, status, last_heartbeat_at, metadata').order('last_heartbeat_at', { ascending: false }).limit(10),
+      admin.from('durable_jobs').select('id, status', { count: 'exact', head: true }).in('status', ['failed', 'dead_letter', 'exhausted']),
       listAllAuthUsers(admin),
     ]);
 
@@ -145,6 +147,7 @@ export async function GET() {
     const errors = errorResult.data || [];
     const emails = emailResult.data || [];
     const tenants = tenantResult.data || [];
+    const workers = workerResult.data || [];
 
     return NextResponse.json({
       success: true,
@@ -155,12 +158,20 @@ export async function GET() {
         criticalErrors24h: errors.filter((row) => ['critical', 'error'].includes(String(row.severity || '').toLowerCase())).length,
         emails24h: emails.filter((row) => row.status === 'sent').length,
         emailFailures24h: emails.filter((row) => row.status === 'failed').length,
+        activeWorkers: workers.length,
+        failedDurableJobs: failedJobsResult.count ?? 0,
       },
       tenants: tenants.map((tenant) => ({
         id: tenant.id,
         name: tenant.name,
         status: tenant.subscription_status || 'active',
         plan: tenant.subscription_tier || 'free',
+      })),
+      workers: workers.map((w) => ({
+        workerId: w.worker_id,
+        type: w.worker_type,
+        status: w.status,
+        lastHeartbeat: w.last_heartbeat_at,
       })),
       recentErrors: errors,
       recentEmails: emails,

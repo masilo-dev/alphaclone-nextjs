@@ -119,7 +119,7 @@ export default function PublicContractPage() {
             if (!response.ok || !payload.success) throw new Error(payload.error || 'Unable to record your signature');
             setContract(payload.contract || contract);
             setSigned(true);
-            toast.success('Your signature has been recorded. A completion receipt will be available after all required signers finish.');
+            toast.success('Your signature has been recorded. The authoritative agreement and completion receipt will be available after all required signers finish.');
 
         } catch (error) {
             console.error('Signing error:', error);

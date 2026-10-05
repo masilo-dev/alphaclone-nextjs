@@ -244,6 +244,9 @@ export function assertTenantStoragePath(params: {
   userId?: string | null;
 }): void {
   const path = String(params.filePath || '').replace(/^\/+/, '');
+  if (path.includes('..') || path.includes('\\')) {
+    throw new PlatformTenantError('Invalid storage path', 'NOT_FOUND');
+  }
   const expectedPrefix = `tenant/${params.tenantId}/`;
   if (path.startsWith(expectedPrefix)) return;
 

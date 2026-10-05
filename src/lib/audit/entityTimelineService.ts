@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { formatAttributionLabel, attributionFromMetadata } from '@/lib/audit/sourceAttribution';
+import { formatAttributionLabel, attributionFromMetadata } from './sourceAttribution';
 
 export type EntityType = 'lead' | 'client' | 'contact' | 'deal' | 'quote' | 'contract' | 'invoice' | 'project';
 
@@ -163,7 +163,7 @@ export async function buildClientTimeline(
   const items: EntityTimelineItem[] = [];
   const { data: client } = await admin
     .from('business_clients')
-    .select('id, name, email, created_at, sales_stage')
+    .select('id, name, email, created_at, sales_stage, crm_contact_id')
     .eq('tenant_id', tenantId)
     .eq('id', clientId)
     .maybeSingle();
@@ -175,16 +175,105 @@ export async function buildClientTimeline(
       category: 'lead_activity',
       title: 'Client record created',
       description: client.sales_stage ? `Stage: ${client.sales_stage}` : 'Added to CRM',
-      source_label: 'AlphaClone UI',
+      source_label: 'AlphaClone CRM',
     });
   }
 
   const email = String(client?.email || '').trim().toLowerCase();
-  const [outreachItems, auditItems] = await Promise.all([
+  const contactId = client?.crm_contact_id;
+
+  const [
+    outreachItems,
+    auditItems,
+    contractsRes,
+    invoicesRes,
+    projectsRes,
+    dealsRes,
+  ] = await Promise.all([
     fetchOutreachByEmail(admin, tenantId, email),
     fetchAuditTimelineItems(admin, tenantId, clientId),
+    admin
+      .from('contracts')
+      .select('id, title, status, lifecycle_status, created_at, signed_at, client_signed_at, value')
+      .eq('tenant_id', tenantId)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    admin
+      .from('business_invoices')
+      .select('id, invoice_number, status, lifecycle_status, created_at, paid_at, total')
+      .eq('tenant_id', tenantId)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    admin
+      .from('projects')
+      .select('id, name, status, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    contactId
+      ? admin
+          .from('deals')
+          .select('id, name, stage, value, currency, created_at')
+          .eq('tenant_id', tenantId)
+          .eq('contact_id', contactId)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [] }),
   ]);
+
   items.push(...outreachItems, ...auditItems);
+
+  for (const c of contractsRes.data || []) {
+    items.push({
+      id: `client-contract-${c.id}`,
+      timestamp: c.client_signed_at || c.signed_at || c.created_at,
+      category: 'contract',
+      title: c.signed_at || c.client_signed_at ? 'Contract signed' : 'Contract created',
+      description: `${c.title || 'Agreement'}${c.value ? ` · Value: ${c.value}` : ''}`,
+      status: c.lifecycle_status || c.status,
+      source_label: 'Contracts Engine',
+    });
+  }
+
+  for (const inv of invoicesRes.data || []) {
+    items.push({
+      id: `client-invoice-${inv.id}`,
+      timestamp: inv.paid_at || inv.created_at,
+      category: 'invoice',
+      title: inv.paid_at ? 'Invoice paid' : `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
+      description: `Total: ${inv.total ?? '—'} · Status: ${inv.lifecycle_status || inv.status}`,
+      status: inv.lifecycle_status || inv.status,
+      source_label: 'Billing Engine',
+    });
+  }
+
+  for (const p of projectsRes.data || []) {
+    items.push({
+      id: `client-project-${p.id}`,
+      timestamp: p.created_at,
+      category: 'project',
+      title: `Project: ${p.name || 'Client Project'}`,
+      description: `Status: ${p.status}`,
+      status: p.status,
+      source_label: 'Project Hub',
+    });
+  }
+
+  for (const d of dealsRes.data || []) {
+    items.push({
+      id: `client-deal-${d.id}`,
+      timestamp: d.created_at,
+      category: 'deal',
+      title: `Deal: ${d.name || 'Commercial Opportunity'}`,
+      description: `Stage: ${d.stage} · ${d.currency || 'USD'} ${d.value || 0}`,
+      status: d.stage,
+      source_label: 'CRM Pipeline',
+    });
+  }
+
   return sortTimeline(items);
 }
 

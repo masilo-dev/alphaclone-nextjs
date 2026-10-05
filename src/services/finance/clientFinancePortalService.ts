@@ -94,7 +94,7 @@ export async function getClientFinancePortalData(
     .select('id, invoice_number, status, total, due_date, issue_date, metadata, is_public')
     .eq('tenant_id', client.tenant_id)
     .eq('client_id', client.id)
-    .in('status', ['sent', 'viewed', 'partially_paid', 'overdue'])
+    .in('status', ['sent', 'viewed', 'partially_paid', 'overdue', 'paid', 'completed'])
     .order('issue_date', { ascending: false })
     .limit(50);
 

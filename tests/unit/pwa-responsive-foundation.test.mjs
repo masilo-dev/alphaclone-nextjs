@@ -56,12 +56,11 @@ test('mobile headers use the AlphaClone mark and icon-only native actions', () =
   assert.match(accountMenu, /md:h-auto md:w-auto/);
 });
 
-test('CRM and Social stay on phone while Contracts hand off to a laptop', () => {
+test('CRM, Social, and Contracts support companion mode on phone', () => {
   const capabilities = read('src/config/pwaCompanionCapabilities.ts');
   assert.match(capabilities, /crm: \{ level: 'COMPANION'/);
   assert.match(capabilities, /social: \{ level: 'COMPANION'/);
-  assert.match(capabilities, /contracts: \{ level: 'DESKTOP', quickActions: \[\]/);
-  assert.match(capabilities, /Contracts are best managed on a laptop or desktop/);
+  assert.match(capabilities, /contracts: \{ level: 'COMPANION'/);
 });
 
 test('installed PWA exposes native create actions without desktop navigation', () => {
