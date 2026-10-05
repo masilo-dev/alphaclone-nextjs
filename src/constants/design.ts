@@ -164,7 +164,7 @@ export const INTERACTIVE_TOKENS = {
   zModal: 1200,
   zOverlay: 1100,
   transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-  focusRing: '0 0 0 2px #356AF4',
+  focusRing: '0 0 0 2px var(--focus-ring)',
   disabledOpacity: 0.5,
 } as const;
 

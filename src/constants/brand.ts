@@ -27,18 +27,22 @@ export const BRAND = {
 } as const;
 
 export const BRAND_VIOLET = {
-  50: '#F5F1FF',
-  100: '#ECE5FF',
-  200: '#DDD0FF',
-  300: '#C4AAFF',
-  400: '#A77BFF',
-  500: '#8950F5',
-  600: '#7434DE',
-  700: '#6128B9',
-  800: '#512697',
-  900: '#45247B',
-  950: '#2B1253',
+  /** @deprecated Name kept for legacy imports — values are navy intelligence, not purple. */
+  50: '#F2F4F8',
+  100: '#E4E8F0',
+  200: '#C8D0E0',
+  300: '#9AA8C0',
+  400: '#6B7C9A',
+  500: '#3D4F73',
+  600: '#212446',
+  700: '#1A1D38',
+  800: '#15182A',
+  900: '#101322',
+  950: '#0A0C16',
 } as const;
+
+/** Preferred alias for intelligence / Bonnie accent (navy slate). */
+export const BRAND_INTELLIGENCE = BRAND_VIOLET;
 
 export const LIGHT_NEUTRALS = {
   appBackground: '#F6F7F9',
@@ -165,22 +169,22 @@ export const MODULE_IDENTITY: Record<
 > = {
   dashboard: { primary: '#212446', supporting: '#4199A4', label: 'Dashboard', meaning: 'Whole-business intelligence' },
   crm: { primary: '#16A36A', supporting: '#0F9F8F', label: 'CRM', meaning: 'Relationships and customer health' },
-  leads: { primary: '#3196E8', supporting: '#356AF4', label: 'Leads', meaning: 'New business opportunities' },
+  leads: { primary: '#3196E8', supporting: '#4199A4', label: 'Leads', meaning: 'New business opportunities' },
   pipeline: { primary: '#E69222', supporting: '#DE6A28', label: 'Sales Pipeline', meaning: 'Deal movement and conversion' },
-  email: { primary: '#DE4C7A', supporting: '#8950F5', label: 'Email', meaning: 'Communication and engagement' },
-  outreach: { primary: '#DE4C7A', supporting: '#8950F5', label: 'Outreach', meaning: 'Communication and engagement' },
+  email: { primary: '#DE4C7A', supporting: '#4199A4', label: 'Email', meaning: 'Communication and engagement' },
+  outreach: { primary: '#DE4C7A', supporting: '#306F78', label: 'Outreach', meaning: 'Communication and engagement' },
   invoicing: { primary: '#149C86', supporting: '#16A36A', label: 'Invoicing', meaning: 'Billing and cash collection' },
   quotations: { primary: '#B77818', supporting: '#E69222', label: 'Quotations', meaning: 'Commercial proposals' },
   money: { primary: '#168C5C', supporting: '#3196E8', label: 'Money Hub', meaning: 'Financial movement' },
-  projects: { primary: '#356AF4', supporting: '#5653D9', label: 'Projects', meaning: 'Delivery and execution' },
+  projects: { primary: '#4199A4', supporting: '#212446', label: 'Projects', meaning: 'Delivery and execution' },
   tasks: { primary: '#0F9F8F', supporting: '#16A36A', label: 'Tasks', meaning: 'Productivity and completion' },
-  calendar: { primary: '#8950F5', supporting: '#6D4AFF', label: 'Calendar', meaning: 'Time and scheduling' },
+  calendar: { primary: '#3D4F73', supporting: '#4199A4', label: 'Calendar', meaning: 'Time and scheduling' },
   documents: { primary: '#C98219', supporting: '#E69222', label: 'Documents', meaning: 'Business knowledge and files' },
   marketing: { primary: '#0D91A6', supporting: '#3196E8', label: 'Marketing Hub', meaning: 'Campaign performance' },
-  social: { primary: '#D74673', supporting: '#8950F5', label: 'Social Media', meaning: 'Publishing and engagement' },
-  reports: { primary: '#5653D9', supporting: '#356AF4', label: 'Reports', meaning: 'Analysis and insight' },
-  goals: { primary: '#7D56D9', supporting: '#16A36A', label: 'Goals', meaning: 'Progress and outcomes' },
-  nexus: { primary: '#6D4AFF', supporting: '#0F9F8F', label: 'Nexus', meaning: 'Connected workflows' },
+  social: { primary: '#D74673', supporting: '#3D4F73', label: 'Social Media', meaning: 'Publishing and engagement' },
+  reports: { primary: '#3D4F73', supporting: '#4199A4', label: 'Reports', meaning: 'Analysis and insight' },
+  goals: { primary: '#306F78', supporting: '#16A36A', label: 'Goals', meaning: 'Progress and outcomes' },
+  nexus: { primary: '#212446', supporting: '#0F9F8F', label: 'Nexus', meaning: 'Connected workflows' },
   bonnie: { primary: '#4199A4', supporting: '#212446', label: 'Bonnie AI', meaning: 'Assistance and intelligence' },
   settings: { primary: '#64748B', supporting: '#4199A4', label: 'Settings', meaning: 'Administration and control' },
 };

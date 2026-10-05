@@ -9,17 +9,20 @@ Canonical tokens and shell for the authenticated Alphaclone Systems platform.
 | Brand colours, module identity, chart rules | `src/constants/brand.ts` |
 | Workspace / enterprise layout tokens | `src/constants/design.ts` |
 | CSS variables + shell chrome | `src/app/globals.css` |
+| Untitled-aligned finishing theme (authoritative aliases) | `src/styles/alphaclone-theme.css` |
 | Custom module icons | `src/components/icons/alphaclone/` |
 | Shared OS primitives | `src/components/ui/os/` |
 | Module subnavigation map | `src/lib/dashboard/moduleSubnav.ts` |
 
 ## Brand rules
 
-- Primary action colour: brand blue (`#356AF4`)
-- Bonnie / intelligence: violet (`#8950F5`)
-- Sidebar: deep navy in both light and dark mode
-- Light canvas: `#F5F7FB`; dark canvas: `#0C1220`
+- Brand / secondary action: teal (`#4199A4`) — maps to Untitled `--color-brand-*`
+- Primary CTA: coral (`#FB7268`) via `--interactive-primary`
+- Intelligence / Bonnie: navy slate (`#3D4F73` → `#212446`) — **not purple**
+- Sidebar: deep navy in both light and dark mode (`#212446` / `#15182A`)
+- Light canvas: `#F6F7F9`; dark canvas: `#0D0F18`
 - Do not flood module pages with the module colour — use it for icons, active markers, accents, and chart series
+- Do not reintroduce electric blue (`#356AF4`), neon cyan, or purple AI glow as global accents
 
 ## Shared primitives
 
