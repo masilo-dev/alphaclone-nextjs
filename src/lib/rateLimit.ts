@@ -3,7 +3,12 @@ import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { securityLogService } from '../services/securityLogService';
-import { getActiveRedisBackend, getRedisAsync, isRedisConfigured } from '@/lib/redis/client';
+import {
+    getActiveRedisBackend,
+    getRedisAsync,
+    isRedisConfigured,
+    type RedisBackend,
+} from '@/lib/redis/client';
 
 // Fallback to in-memory rate limiting if Redis is not configured
 // WARNING: This will not work across multiple server instances
@@ -121,6 +126,53 @@ function parseWindow(window: string): number {
     }
 }
 
+function isProductionRuntime(): boolean {
+    return (
+        process.env.NODE_ENV === 'production' ||
+        process.env.RAILWAY_ENVIRONMENT === 'production'
+    );
+}
+
+/**
+ * Paths where silent in-memory fallback is unacceptable in production (RATE-001).
+ * When distributed Redis is unavailable, these fail closed (deny) rather than
+ * pretending multi-instance protection exists.
+ */
+export function isSensitiveRateLimitPath(pathname: string | null | undefined): boolean {
+    const path = String(pathname || '');
+    return (
+        path.includes('/auth/') ||
+        path.includes('/api/auth/') ||
+        path.includes('/api/mcp') ||
+        path.includes('/api/email/send') ||
+        path.includes('/api/social/') ||
+        path.includes('/api/invoices/send') ||
+        path.includes('/api/quotes/send') ||
+        path.includes('/api/contracts/') ||
+        path.includes('/api/client-portal-auth/') ||
+        path.includes('/api/scraper/') ||
+        path.includes('/api/ai/') ||
+        path.includes('/api/outreach') ||
+        path.includes('/api/leads/searches')
+    );
+}
+
+function denyDistributedUnavailable(limit: number): {
+    success: boolean;
+    remaining: number;
+    reset: number;
+    limit: number;
+    backend: 'unavailable';
+} {
+    return {
+        success: false,
+        remaining: 0,
+        reset: Date.now() + 60_000,
+        limit,
+        backend: 'unavailable',
+    };
+}
+
 /**
  * Apply rate limiting to a request
  */
@@ -133,9 +185,11 @@ export async function rateLimit(
     remaining: number;
     reset: number;
     limit: number;
+    backend?: RedisBackend | 'memory' | 'unavailable';
 }> {
     // 1. Determine identifier (IP address or provided custom identifier)
     const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
+    const pathname = request && 'nextUrl' in request ? request.nextUrl.pathname : '';
 
     // 2. Railway / standard Redis uses a shared fixed-window counter.
     const backend = getActiveRedisBackend();
@@ -153,13 +207,17 @@ export async function rateLimit(
                 remaining: Math.max(config.limit - count, 0),
                 reset: Date.now() + (ttl > 0 ? ttl : windowMs),
                 limit: config.limit,
+                backend,
             };
             if (!result.success && request) {
                 await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
             }
             return result;
         } catch (error) {
-            console.error('Railway Redis rate limit error, falling back:', error);
+            console.error('Railway Redis rate limit error:', error);
+            if (isProductionRuntime() && isSensitiveRateLimitPath(pathname)) {
+                return denyDistributedUnavailable(config.limit);
+            }
         }
     }
 
@@ -191,25 +249,37 @@ export async function rateLimit(
                 remaining: result.remaining,
                 reset: result.reset,
                 limit: config.limit,
+                backend: 'upstash',
             };
         } catch (error) {
-            console.error('Redis Rate Limit Error, falling back to in-memory:', error);
+            console.error('Redis Rate Limit Error:', error);
+            if (isProductionRuntime() && isSensitiveRateLimitPath(pathname)) {
+                return denyDistributedUnavailable(config.limit);
+            }
         }
     }
 
-    // 4. Fallback to In-Memory rate limiting
-    // Note: window is a string (e.g. '15m'), we need to parse it to ms
+    // 4. Production sensitive routes: never pretend in-memory is distributed protection.
+    if (isProductionRuntime() && isSensitiveRateLimitPath(pathname)) {
+        console.error(
+            '[rateLimit] Distributed Redis unavailable for sensitive path; failing closed:',
+            pathname
+        );
+        return denyDistributedUnavailable(config.limit);
+    }
+
+    // 5. Dev / non-sensitive fallback to in-memory (single-instance only)
     const windowMs = parseWindow(config.window);
     const result = checkInMemoryRateLimit(id, config.limit, windowMs);
 
     if (!result.success && request) {
-        // Log violation for in-memory as well (non-blocking)
         logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
     }
 
     return {
         ...result,
         limit: config.limit,
+        backend: 'memory',
     };
 }
 

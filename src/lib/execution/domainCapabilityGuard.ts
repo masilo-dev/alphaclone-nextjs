@@ -4,6 +4,7 @@ import {
   type PolicySource,
 } from '@/lib/ai/ToolPolicyGate';
 import { normalizeExecutionErrorCode } from '@/lib/execution/executionErrorTaxonomy';
+import { mcpToolRequiresIdempotency } from '@/lib/mcp/toolRiskTiers';
 
 const EXTERNAL_WRITE_IDEMPOTENCY_CAPABILITIES = new Set([
   'send_email',
@@ -26,6 +27,7 @@ const EXTERNAL_WRITE_IDEMPOTENCY_CAPABILITIES = new Set([
 export function capabilityRequiresIdempotencyKey(capability: string): boolean {
   const n = capability.toLowerCase();
   if (EXTERNAL_WRITE_IDEMPOTENCY_CAPABILITIES.has(n)) return true;
+  if (mcpToolRequiresIdempotency(n)) return true;
   if (/(^send_|^publish_|^create_invoice|^send_invoice|^create_project)/.test(n)) return true;
   return false;
 }

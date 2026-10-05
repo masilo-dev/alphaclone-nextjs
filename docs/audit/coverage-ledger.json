@@ -1,0 +1,57 @@
+{
+  "audit_id": "alphaclone-2026-10-05-readonly",
+  "methodology": "cloudflare/security-audit-skill",
+  "generated_at": "2026-10-05T13:45:00.000Z",
+  "units": [
+    {
+      "coverage_id": "ARCH-01",
+      "surface": "repository",
+      "boundary": "system",
+      "subsystem": "architecture",
+      "attack_class": "reconnaissance",
+      "status": "covered",
+      "reviewed_paths": ["src/app", "src/lib", "src/services", "artifacts/audit"],
+      "unresolved": []
+    },
+    {
+      "coverage_id": "API-01",
+      "surface": "http",
+      "boundary": "internet",
+      "subsystem": "app-router",
+      "attack_class": "api-enumeration",
+      "status": "covered",
+      "reviewed_paths": ["src/app/api/**/route.ts"],
+      "unresolved": ["78 routes auth=manual_review need human label"]
+    },
+    {
+      "coverage_id": "TENANT-RLS-01",
+      "surface": "database",
+      "boundary": "tenant-isolation",
+      "subsystem": "supabase",
+      "attack_class": "bola/idor",
+      "status": "candidate",
+      "reviewed_paths": ["RLS_COVERAGE_REPORT.md", "artifacts/audit/rls-policies.json"],
+      "unresolved": ["Live grants for anon/authenticated on data_requests not exported in repo"]
+    },
+    {
+      "coverage_id": "LLM-MCP-01",
+      "surface": "mcp",
+      "boundary": "llm-execution",
+      "subsystem": "mcp",
+      "attack_class": "excessive-agency",
+      "status": "covered",
+      "reviewed_paths": ["src/app/api/mcp/route.ts", "artifacts/audit/mcp-exposure-report.json"],
+      "unresolved": ["Per-tool tenant arg override not fuzzed"]
+    },
+    {
+      "coverage_id": "PORTAL-IDOR-01",
+      "surface": "client-portal",
+      "boundary": "client-client",
+      "subsystem": "finance-portal",
+      "attack_class": "idor",
+      "status": "blocked",
+      "reviewed_paths": ["src/app/api/client-finance/document/route.ts"],
+      "unresolved": ["Requires staging Playwright with two clients"]
+    }
+  ]
+}

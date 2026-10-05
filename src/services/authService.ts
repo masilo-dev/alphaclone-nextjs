@@ -641,6 +641,16 @@ export const authService = {
                 console.warn('Session cleanup failed:', sessionResult.reason);
             }
 
+            // PWA-CACHE-001: ask service worker to drop non-static caches after logout.
+            if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration('/');
+                    registration?.active?.postMessage({ type: 'CLEAR_AUTH_CACHES' });
+                } catch {
+                    // non-fatal
+                }
+            }
+
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error' };

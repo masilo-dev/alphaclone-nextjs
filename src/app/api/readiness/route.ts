@@ -55,6 +55,18 @@ export async function GET() {
   }
 
   const opsReady = optionalOpsReady();
+
+  let rateLimitBackend: 'railway' | 'upstash' | 'none' | 'unknown' = 'unknown';
+  let rateLimitDistributed = false;
+  try {
+    const { getActiveRedisBackend, isRedisConfigured } = await import('@/lib/redis/client');
+    rateLimitBackend = getActiveRedisBackend();
+    rateLimitDistributed = isRedisConfigured() && rateLimitBackend !== 'none';
+  } catch {
+    rateLimitBackend = 'none';
+    rateLimitDistributed = false;
+  }
+
   // The dedicated liveness endpoint is cheap. Readiness must never claim the
   // database is ready when it was intentionally not checked.
   const healthy = configured && dbStatus === 'ready';
@@ -63,6 +75,11 @@ export async function GET() {
     configuration: configured ? 'ready' : 'degraded',
     database: dbStatus,
     ops: opsReady ? 'ready' : 'degraded',
+    rate_limit: {
+      backend: rateLimitBackend,
+      distributed: rateLimitDistributed,
+      status: rateLimitDistributed ? 'ready' : 'degraded',
+    },
     responseTime: Date.now() - startedAt,
     timestamp: new Date().toISOString(),
   };

@@ -35,28 +35,38 @@ export type AuthenticatedClientPortal = {
   sessionJti: string;
 };
 
-const SHARED_SECRET_CANDIDATE_ENVS = [
-  'CLIENT_PORTAL_SESSION_SIGNING_SECRET',
-  'ENCRYPTION_SECRET',
-  'BONNIE_EVENT_SIGNING_SECRET',
-  'SUPABASE_SERVICE_ROLE_KEY',
-] as const;
+/** Dedicated portal signing secret only — never fall back to service-role or other app secrets. */
+export const CLIENT_PORTAL_SIGNING_SECRET_ENV = 'CLIENT_PORTAL_SESSION_SIGNING_SECRET';
+export const CLIENT_PORTAL_SIGNING_SECRET_MIN_LENGTH = 32;
 
-function getSessionSigningSecret(): Buffer {
-  for (const name of SHARED_SECRET_CANDIDATE_ENVS) {
-    const raw = process.env[name];
-    if (raw && raw.length >= 32) return Buffer.from(raw, 'utf8');
+/**
+ * Resolve the HMAC signing secret for client-portal session JWTs.
+ * Production fail-closed: CLIENT_PORTAL_SESSION_SIGNING_SECRET (32+) is mandatory.
+ * Development may use a per-boot ephemeral secret when unset.
+ */
+export function getSessionSigningSecret(): Buffer {
+  const raw = process.env[CLIENT_PORTAL_SIGNING_SECRET_ENV]?.trim();
+  if (raw && raw.length >= CLIENT_PORTAL_SIGNING_SECRET_MIN_LENGTH) {
+    return Buffer.from(raw, 'utf8');
   }
-  if (process.env.NODE_ENV === 'production') {
+
+  const isProd =
+    process.env.NODE_ENV === 'production' ||
+    process.env.RAILWAY_ENVIRONMENT === 'production';
+
+  if (isProd) {
     throw new Error(
-      '[clientPortalAuth] No 32+ byte signing secret available. Set CLIENT_PORTAL_SESSION_SIGNING_SECRET (preferred), ENCRYPTION_SECRET, or BONNIE_EVENT_SIGNING_SECRET.'
+      `[clientPortalAuth] ${CLIENT_PORTAL_SIGNING_SECRET_ENV} is required in production (${CLIENT_PORTAL_SIGNING_SECRET_MIN_LENGTH}+ characters). ` +
+        'Do not reuse SUPABASE_SERVICE_ROLE_KEY, ENCRYPTION_SECRET, or other shared secrets.'
     );
   }
-  // Development fallback: deterministic per-boot secret so cookies don't persist across
-  // reboots (intentional security hygiene for dev).
-  console.warn('[clientPortalAuth] Using per-boot dev signing secret. Set ENCRYPTION_SECRET in prod.');
+
+  // Development fallback: per-boot secret so cookies do not persist across reboots.
+  console.warn(
+    `[clientPortalAuth] Using per-boot dev signing secret. Set ${CLIENT_PORTAL_SIGNING_SECRET_ENV} for stable portal sessions.`
+  );
   return Buffer.from(
-    (globalThis as any).__CLIENT_PORTAL_DEV_SECRET ||= randomBytes(48).toString('hex'),
+    ((globalThis as any).__CLIENT_PORTAL_DEV_SECRET ||= randomBytes(48).toString('hex')),
     'utf8'
   );
 }
