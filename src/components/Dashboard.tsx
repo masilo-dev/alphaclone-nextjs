@@ -1622,7 +1622,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     try {
       const response = await fetch(
-        "/api/stripe/create-legacy-invoice-session",
+        "/api/stripe/create-invoice-session",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
